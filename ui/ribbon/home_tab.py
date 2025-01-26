@@ -1,9 +1,10 @@
-from PySide6.QtWidgets import QWidget, QHBoxLayout, QGroupBox, QVBoxLayout, QPushButton
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QGroupBox, QPushButton
+
 
 class HomeTab(QWidget):
     def __init__(self):
         super().__init__()
-        layout = QHBoxLayout()
+        layout = QVBoxLayout()
         
         # View Options group
         view_group = QGroupBox("View")

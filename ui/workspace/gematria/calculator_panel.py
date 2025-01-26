@@ -1,6 +1,6 @@
-from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout,
-                              QTextEdit, QComboBox, QLabel, QPushButton,
-                              QFileDialog, QMessageBox, QDialog)
+from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout,
+                            QTextEdit, QComboBox, QLabel, QPushButton,
+                            QFileDialog, QMessageBox, QDialog)
 from core.gematria.calculator import GematriaCalculator
 from core.database.word_repository import WordRepository
 import csv
@@ -17,7 +17,7 @@ class CalculatorPanel(QWidget):
     def init_ui(self):
         layout = QVBoxLayout()
         
-        # Input section
+        # Input section with text area and cipher selection
         input_layout = QHBoxLayout()
         self.text_input = QTextEdit()
         self.text_input.setPlaceholderText("Enter text to calculate...")
@@ -32,7 +32,7 @@ class CalculatorPanel(QWidget):
         input_layout.addWidget(self.text_input, stretch=3)
         input_layout.addWidget(self.cipher_select, stretch=1)
         
-        # Results section
+        # Results section with value display and action buttons
         results_layout = QHBoxLayout()
         self.value_label = QLabel("Value:")
         self.value_display = QLabel("0")

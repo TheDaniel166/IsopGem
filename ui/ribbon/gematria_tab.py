@@ -1,5 +1,5 @@
-from PySide6.QtWidgets import (QWidget, QHBoxLayout, QGroupBox, 
-                              QVBoxLayout, QPushButton)
+from PyQt5.QtWidgets import (QWidget, QHBoxLayout, QGroupBox,
+                            QVBoxLayout, QPushButton)
 
 class GematriaTab(QWidget):
     def __init__(self):

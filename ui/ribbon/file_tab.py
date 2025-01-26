@@ -1,4 +1,5 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QGroupBox, QPushButton
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QGroupBox, QPushButton
+
 
 class FileTab(QWidget):
     def __init__(self):

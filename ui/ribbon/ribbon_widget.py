@@ -1,5 +1,5 @@
-from PySide6.QtWidgets import (QTabWidget, QWidget, QHBoxLayout,
-                              QGroupBox, QPushButton)
+from PyQt5.QtWidgets import (QTabWidget, QWidget, QHBoxLayout,
+                            QGroupBox, QPushButton)
 from .file_tab import FileTab
 from .home_tab import HomeTab
 
@@ -50,10 +50,10 @@ class GematriaTab(QWidget):
         
         self.search_button = QPushButton("Search")
         self.saved_button = QPushButton("Saved")
+        self.text_analysis_button = QPushButton("Text Analysis")
         
         number_layout.addWidget(self.search_button)
         number_layout.addWidget(self.saved_button)
-        self.text_analysis_button = QPushButton("Text Analysis")
         number_layout.addWidget(self.text_analysis_button)
         
         number_group.setLayout(number_layout)

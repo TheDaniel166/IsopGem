@@ -1,5 +1,5 @@
-from PySide6.QtWidgets import QMainWindow
-from PySide6.QtCore import Qt
+from PyQt5.QtWidgets import QMainWindow
+from PyQt5.QtCore import Qt
 from ui.ribbon.ribbon_widget import RibbonWidget
 from ui.workspace.panel_manager import PanelManager
 from ui.actions.gematria_actions import GematriaActions

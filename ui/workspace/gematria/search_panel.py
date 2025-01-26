@@ -1,6 +1,6 @@
-from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout,
-                              QLineEdit, QPushButton, QComboBox,
-                              QLabel, QDialog, QTextEdit, QMessageBox)
+from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout,
+                            QLineEdit, QPushButton, QComboBox,
+                            QLabel, QDialog, QTextEdit, QMessageBox)
 from core.database.word_repository import WordRepository
 
 class SearchPanel(QWidget):
@@ -13,10 +13,13 @@ class SearchPanel(QWidget):
     def init_ui(self):
         layout = QVBoxLayout()
         
-        # Search input section
+        # Search input section with horizontal layout
         search_layout = QHBoxLayout()
+        
+        # Initialize input widgets
         self.value_input = QLineEdit()
         self.value_input.setPlaceholderText("Enter value to search...")
+        
         self.cipher_select = QComboBox()
         self.cipher_select.addItems([
             'Global',
@@ -25,16 +28,20 @@ class SearchPanel(QWidget):
             'Hebrew Gadol',
             'Greek'
         ])
+        
         self.search_button = QPushButton("Search")
         
+        # Add widgets to search layout
         search_layout.addWidget(self.value_input)
         search_layout.addWidget(self.cipher_select)
         search_layout.addWidget(self.search_button)
         
+        # Add search layout to main layout
         layout.addLayout(search_layout)
         self.setLayout(layout)
 
     def connect_signals(self):
+        # Connect search button click to search function
         self.search_button.clicked.connect(self.search_value)
 
     def search_value(self):
@@ -42,6 +49,7 @@ class SearchPanel(QWidget):
             search_value = int(self.value_input.text())
             selected_cipher = self.cipher_select.currentText()
             
+            # Perform search based on cipher selection
             if selected_cipher == 'Global':
                 results = self.word_repository.find_by_value_global(search_value)
             else:
@@ -57,15 +65,17 @@ class SearchPanel(QWidget):
             QMessageBox.information(self, "Search Results", "No matches found")
             return
         
+        # Create results dialog
         dialog = QDialog(self)
         dialog.setWindowTitle(f"Search Results for Value: {self.value_input.text()}")
         layout = QVBoxLayout()
         
+        # Create and configure results display
         result_text = QTextEdit()
         result_text.setReadOnly(True)
-        
         result_text.append(f"Words/Phrases with value {self.value_input.text()}:\n")
         
+        # Add results to display
         for word, cipher_type in results:
             result_text.append(f"• {word} ({cipher_type})")
         

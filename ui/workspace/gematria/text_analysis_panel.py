@@ -1,20 +1,20 @@
-from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout,
-                              QTextEdit, QComboBox, QLabel, QPushButton,
-                              QSpinBox, QFileDialog, QCheckBox, QSplitter,
-                              QLineEdit, QGroupBox)
-from PySide6.QtCore import (Qt, QPropertyAnimation, QParallelAnimationGroup, 
-                           Property, QPoint, QPointF, QSequentialAnimationGroup,
-                           QEasingCurve)
-from PySide6.QtGui import (QTextCharFormat, QColor, QTextCursor, QPalette, 
-                          QBrush, QLinearGradient, QRadialGradient,
-                          QSyntaxHighlighter, QPainter)
+from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout,
+                            QTextEdit, QComboBox, QLabel, QPushButton,
+                            QSpinBox, QFileDialog, QCheckBox, QSplitter,
+                            QLineEdit, QGroupBox)
+from PyQt5.QtCore import (Qt, QPropertyAnimation, QParallelAnimationGroup,
+                         pyqtProperty, QPoint, QPointF, QSequentialAnimationGroup,
+                         QEasingCurve)
+from PyQt5.QtGui import (QTextCharFormat, QColor, QTextCursor, QPalette,
+                        QBrush, QLinearGradient, QRadialGradient,
+                        QSyntaxHighlighter, QPainter)
 from core.gematria.calculator import GematriaCalculator
 import random
 import re
-from PySide6.QtCore import Signal
+from PyQt5.QtCore import pyqtSignal
 
 class ToggleSwitch(QWidget):
-    clicked = Signal(bool)
+    clicked = pyqtSignal(bool)
     
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -26,7 +26,7 @@ class ToggleSwitch(QWidget):
         self.animation.setEasingCurve(QEasingCurve.InOutQuad)
         self._position = 0
         
-    @Property(int)  
+    @pyqtProperty(int)
     def position(self):
         return self._position
     
@@ -38,19 +38,19 @@ class ToggleSwitch(QWidget):
     def is_checked(self):
         return self._is_checked
     
-def mousePressEvent(self, event):
-    self._is_checked = not self._is_checked
-    
-    # Set animation start and end positions
-    start = self._position
-    end = 35 if self._is_checked else 5
-    
-    self.animation.setStartValue(start)
-    self.animation.setEndValue(end)
-    self.animation.start()
-    
-    self.update()
-    self.clicked.emit(self._is_checked)
+    def mousePressEvent(self, event):
+        self._is_checked = not self._is_checked
+        
+        # Set animation start and end positions
+        start = self._position
+        end = 35 if self._is_checked else 5
+        
+        self.animation.setStartValue(start)
+        self.animation.setEndValue(end)
+        self.animation.start()
+        
+        self.update()
+        self.clicked.emit(self._is_checked)
 
 
     
@@ -80,12 +80,6 @@ class AnimatedHighlighter(QSyntaxHighlighter):
         self.fade_animation = QPropertyAnimation(self, b'alpha')
         self.fade_animation.setDuration(400)
         self.fade_animation.setEasingCurve(QEasingCurve.InOutQuad)
-        
-        self.gradients = {
-            'raw': self.create_gradient(QColor(255, 255, 0)),
-            'smart': self.create_gradient(QColor(0, 255, 0)),
-            'hover': self.create_gradient(QColor(255, 165, 0))
-        }
 
     def create_gradient(self, base_color):
         gradient = QLinearGradient(QPoint(0, 0), QPoint(0, 30))
@@ -98,7 +92,7 @@ class AnimatedHighlighter(QSyntaxHighlighter):
                                     base_color.blue(),
                                     int(self._alpha * 0.7)))
         return gradient
-    @Property(int)
+    @pyqtProperty(int)
     def alpha(self):
         return self._alpha
 

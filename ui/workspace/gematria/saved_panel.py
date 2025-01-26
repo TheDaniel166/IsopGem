@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import (QWidget, QVBoxLayout, QTextEdit, 
+from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QTextEdit, 
                               QLabel, QPushButton)
 from core.database.word_repository import WordRepository
 

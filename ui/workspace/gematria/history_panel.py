@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QTextEdit, QLabel
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QTextEdit, QLabel
 from core.database.word_repository import WordRepository
 
 class HistoryPanel(QWidget):
@@ -11,11 +11,12 @@ class HistoryPanel(QWidget):
     def init_ui(self):
         layout = QVBoxLayout()
         
-        # Add header
+        # Header with styled label
         header = QLabel("Recent Calculations (Last 20)")
         header.setStyleSheet("font-size: 14px; font-weight: bold;")
         layout.addWidget(header)
         
+        # Text display area
         self.history_text = QTextEdit()
         self.history_text.setReadOnly(True)
         layout.addWidget(self.history_text)

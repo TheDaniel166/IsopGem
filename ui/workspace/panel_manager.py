@@ -1,5 +1,5 @@
-from PySide6.QtWidgets import QDockWidget, QSizePolicy
-from PySide6.QtCore import Qt, QSettings, QSize
+from PyQt5.QtWidgets import QDockWidget, QSizePolicy
+from PyQt5.QtCore import Qt, QSettings, QSize
 
 from .gematria.text_analysis_panel import TextAnalysisPanel
 from .gematria.calculator_panel import CalculatorPanel
@@ -21,10 +21,8 @@ class PanelManager:
         self.max_size = QSize(1920, 1080)
 
     def create_panel(self, name, panel_type):
-        # Create new panel instance
         panel = self._create_new_panel(name, panel_type)
         if panel:
-            # Generate unique ID without checking existing panels
             panel_id = f"{panel_type}_{len(self.panels)}"
             self.panels[panel_id] = panel
             self._position_panel(panel, panel_id)
@@ -48,7 +46,6 @@ class PanelManager:
         dock.setMaximumSize(self.max_size)
         dock.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         
-        # Create and set content
         content = self._create_panel_content(panel_type)
         if content:
             dock.setWidget(content)

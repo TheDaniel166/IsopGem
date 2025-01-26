@@ -1,14 +1,14 @@
-from PySide6.QtGui import QAction
+from PyQt5.QtWidgets import QAction
+
 
 class GematriaActions:
     def __init__(self, main_window):
         self.main_window = main_window
         self.panel_manager = main_window.panel_manager
         self.gematria_tab = main_window.ribbon.gematria_tab
-      
-
+    
     def connect_actions(self):
-        # Only connect the ribbon buttons once
+        # Connect ribbon buttons to panel creation
         self.gematria_tab.calc_button.clicked.connect(
             lambda: self.panel_manager.create_panel('Calculator', 'calculator'))
         self.gematria_tab.history_button.clicked.connect(
