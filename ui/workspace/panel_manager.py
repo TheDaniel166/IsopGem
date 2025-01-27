@@ -12,7 +12,7 @@ from .gematria.suggestions_panel import SuggestionsPanel
 from .gematria.search_panel import SearchPanel
 from .gematria.saved_panel import SavedPanel
 from ui.workspace.gematria.grid.grid_config_dialog import GridConfigDialog
-
+from ui.workspace.document_manager.categories.category_panel import CategoryPanel
 
 
 
@@ -54,13 +54,16 @@ class PanelManager:
             'search': SearchPanel,
             'saved': SavedPanel,
             'text_analysis': TextAnalysisPanel,
-            'grid_analysis': GridConfigDialog
+            'grid_analysis': GridConfigDialog,
+            'import': self._handle_import,
+            'categories': CategoryPanel,
         }
         
         if panel_type.lower() in panel_classes:
+            if panel_type.lower() == 'import':
+                return panel_classes[panel_type.lower()]()
             return panel_classes[panel_type.lower()]()
         return None
-
 
 
     def _create_new_panel(self, name, panel_type):
@@ -205,4 +208,9 @@ class PanelManager:
         panel.move(base_x + x_offset, base_y + y_offset)
         self.panel_positions[panel_type] = (base_x + x_offset, base_y + y_offset)
 
+    def _handle_import(self):
+        # Get document actions from main window
+        doc_actions = self.main_window.document_actions
+        # Show import dialog
+        doc_actions.show_import_dialog()
 
