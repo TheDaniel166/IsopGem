@@ -1,40 +1,37 @@
-from PyQt5.QtWidgets import QMainWindow
-from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QSizePolicy
 from ui.ribbon.ribbon_widget import RibbonWidget
 from ui.workspace.panel_manager import PanelManager
-from ui.actions.gematria_actions import GematriaActions
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.ribbon = RibbonWidget()
+        self.setWindowTitle("IsopGem")
+        self.setup_ui()
+    
+    def setup_ui(self):
+        # Central widget setup
+        self.central_widget = QWidget()
+        self.setCentralWidget(self.central_widget)
+        self.layout = QVBoxLayout(self.central_widget)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setSpacing(0)
+        
+        # Create panel workspace with visual properties
+        self.workspace = QWidget()
+        self.workspace.setStyleSheet("background-color: #ffffff;")
+        self.workspace.setMinimumHeight(300)
+        self.workspace.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        
+        # Initialize panel manager
         self.panel_manager = PanelManager(self)
         
-        # Call initialization methods
-        self.init_window()
-        self.init_ui_components()
-        self.init_actions()
+        # Create ribbon with size constraints
+        self.ribbon = RibbonWidget(self.panel_manager)
+        self.ribbon.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         
-        # Restore previous layout if exists
-        self.panel_manager.restore_layout()
-
-    def init_window(self):
-        self.setWindowTitle("IsopGem")
-        self.resize(1200, 800)
-        self.setDockOptions(
-            QMainWindow.AllowTabbedDocks |
-            QMainWindow.AllowNestedDocks
-        )
-
-    def init_ui_components(self):
-        # Initialize ribbon interface
-        self.ribbon = RibbonWidget()
-        self.setMenuWidget(self.ribbon)
-
-    def init_actions(self):
-        self.gematria_actions = GematriaActions(self)
-        self.gematria_actions.connect_actions()
-
-    def closeEvent(self, event):
-        self.panel_manager.save_layout()
-        super().closeEvent(event)
+        # Add components to layout with proper stretching
+        self.layout.addWidget(self.ribbon, 0)
+        self.layout.addWidget(self.workspace, 1)
+        
+        # Set initial window size
+        self.setMinimumSize(800, 600)

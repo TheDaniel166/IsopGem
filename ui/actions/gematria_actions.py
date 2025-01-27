@@ -23,3 +23,5 @@ class GematriaActions:
             lambda: self.panel_manager.create_panel('Saved', 'saved'))
         self.gematria_tab.text_analysis_button.clicked.connect(
             lambda: self.panel_manager.create_panel('Text Analysis', 'text_analysis'))
+        self.gematria_tab.grid_analysis_button.clicked.connect(
+            lambda: self.panel_manager.create_panel('Grid Analysis', 'grid_analysis'))

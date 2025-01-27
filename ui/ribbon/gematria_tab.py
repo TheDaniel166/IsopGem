@@ -1,69 +1,76 @@
-from PyQt5.QtWidgets import (QWidget, QHBoxLayout, QGroupBox,
-                            QVBoxLayout, QPushButton)
+from PyQt5.QtWidgets import (QWidget, QHBoxLayout, QGroupBox, QPushButton)
 
 class GematriaTab(QWidget):
-    def __init__(self):
+    def __init__(self, panel_manager):
         super().__init__()
+        self.panel_manager = panel_manager
+        self.init_ui()
+        self.connect_actions()
+
+    def init_ui(self):
         layout = QHBoxLayout()
         
-        # Word/Phrase Calculator group
-        calc_group = QGroupBox("Word/Phrase Calculator")
-        calc_layout = QVBoxLayout()
-        calc_group.setLayout(calc_layout)
+        # Word/Phrase group
+        word_group = QGroupBox("Word/Phrase")
+        word_layout = QHBoxLayout()
         
-        # Store button references
-        self.calc_button = QPushButton("Calculate Value")
-        self.breakdown_button = QPushButton("Word Breakdown")
+        self.calc_button = QPushButton("Calculate")
+        self.history_button = QPushButton("History")
         self.reverse_button = QPushButton("Reverse Calculate")
-        self.suggest_button = QPushButton("Phrase Suggestions")
+        self.suggestions_button = QPushButton("Phrase Suggestions")
         
-        calc_layout.addWidget(self.calc_button)
-        calc_layout.addWidget(self.breakdown_button)
-        calc_layout.addWidget(self.reverse_button)
-        calc_layout.addWidget(self.suggest_button)
+        word_layout.addWidget(self.calc_button)
+        word_layout.addWidget(self.history_button)
+        word_layout.addWidget(self.reverse_button)
+        word_layout.addWidget(self.suggestions_button)
+        
+        word_group.setLayout(word_layout)
         
         # Number Search group
-        search_group = QGroupBox("Number Search")
-        search_layout = QVBoxLayout()
-        search_group.setLayout(search_layout)
+        number_group = QGroupBox("Number Search")
+        number_layout = QHBoxLayout()
         
-        self.value_search_button = QPushButton("Value Search")
-        self.pattern_search_button = QPushButton("Pattern Search")
-        self.relation_button = QPushButton("Relationship Finder")
+        self.search_button = QPushButton("Search")
+        self.saved_button = QPushButton("Saved")
+        self.text_analysis_button = QPushButton("Text Analysis")
         
-        search_layout.addWidget(self.value_search_button)
-        search_layout.addWidget(self.pattern_search_button)
-        search_layout.addWidget(self.relation_button)
+        number_layout.addWidget(self.search_button)
+        number_layout.addWidget(self.saved_button)
+        number_layout.addWidget(self.text_analysis_button)
         
-        # Custom Cipher group
-        cipher_group = QGroupBox("Custom Cipher")
-        cipher_layout = QVBoxLayout()
-        cipher_group.setLayout(cipher_layout)
+        number_group.setLayout(number_layout)
         
-        self.create_cipher_button = QPushButton("Create Cipher")
-        self.edit_cipher_button = QPushButton("Edit Cipher")
-        self.import_export_button = QPushButton("Import/Export")
+        # Extra group
+        extra_group = QGroupBox("Extra")
+        extra_layout = QHBoxLayout()
+        extra_group.setLayout(extra_layout)
         
-        cipher_layout.addWidget(self.create_cipher_button)
-        cipher_layout.addWidget(self.edit_cipher_button)
-        cipher_layout.addWidget(self.import_export_button)
+        self.grid_analysis_button = QPushButton("Grid Analysis")
+        extra_layout.addWidget(self.grid_analysis_button)
         
-        # Text Analysis group
-        analysis_group = QGroupBox("Text Analysis")
-        analysis_layout = QVBoxLayout()
-        analysis_group.setLayout(analysis_layout)
+        # Add groups to main layout
+        layout.addWidget(word_group)
+        layout.addWidget(number_group)
+        layout.addWidget(extra_group)
+        layout.addStretch()
         
-        self.grid_button = QPushButton("Grid Placement")
-        self.els_button = QPushButton("ELS Tools")
-        self.heatmap_button = QPushButton("Heat Maps")
-        
-        analysis_layout.addWidget(self.grid_button)
-        analysis_layout.addWidget(self.els_button)
-        analysis_layout.addWidget(self.heatmap_button)
-        
-        # Add all groups to layout
-        layout.addWidget(calc_group)
-        layout.addWidget(search_group)
-        layout.addWidget(cipher_group)
-        layout.addWidget(analysis_group)
         self.setLayout(layout)
+
+    def connect_actions(self):
+        # Connect each button to its corresponding panel creation
+        self.calc_button.clicked.connect(
+            lambda: self.panel_manager.create_panel('calculator'))
+        self.history_button.clicked.connect(
+            lambda: self.panel_manager.create_panel('history'))
+        self.reverse_button.clicked.connect(
+            lambda: self.panel_manager.create_panel('reverse'))
+        self.suggestions_button.clicked.connect(
+            lambda: self.panel_manager.create_panel('suggestions'))
+        self.search_button.clicked.connect(
+            lambda: self.panel_manager.create_panel('search'))
+        self.saved_button.clicked.connect(
+            lambda: self.panel_manager.create_panel('saved'))
+        self.text_analysis_button.clicked.connect(
+            lambda: self.panel_manager.create_panel('text_analysis'))
+        self.grid_analysis_button.clicked.connect(
+            lambda: self.panel_manager.create_panel('grid_analysis'))

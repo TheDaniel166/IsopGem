@@ -11,12 +11,11 @@ class CalculatorPanel(QWidget):
         super().__init__()
         self.calculator = GematriaCalculator()
         self.word_repository = WordRepository()
+        self.content_layout = QVBoxLayout(self)
         self.init_ui()
         self.connect_signals()
 
     def init_ui(self):
-        layout = QVBoxLayout()
-        
         # Input section with text area and cipher selection
         input_layout = QHBoxLayout()
         self.text_input = QTextEdit()
@@ -32,7 +31,7 @@ class CalculatorPanel(QWidget):
         input_layout.addWidget(self.text_input, stretch=3)
         input_layout.addWidget(self.cipher_select, stretch=1)
         
-        # Results section with value display and action buttons
+        # Results section
         results_layout = QHBoxLayout()
         self.value_label = QLabel("Value:")
         self.value_display = QLabel("0")
@@ -49,9 +48,10 @@ class CalculatorPanel(QWidget):
         results_layout.addWidget(self.save_button)
         results_layout.addWidget(self.import_button)
         
-        layout.addLayout(input_layout)
-        layout.addLayout(results_layout)
-        self.setLayout(layout)
+        # Add layouts to content_layout once
+        self.content_layout.addLayout(input_layout)
+        self.content_layout.addLayout(results_layout)
+
 
     def connect_signals(self):
         self.calculate_button.clicked.connect(self.calculate_value)
