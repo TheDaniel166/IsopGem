@@ -5,6 +5,7 @@ from ui.workspace.panel_manager import PanelManager
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.search_results = None  # Storage for search results
         self.setWindowTitle("IsopGem")
         self.setup_ui()
     

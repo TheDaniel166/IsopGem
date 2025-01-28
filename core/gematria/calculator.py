@@ -68,3 +68,57 @@ class GematriaCalculator:
             'Greek': self.calculate_greek
         }
         return calculators[cipher_type](text)
+
+# TODO: Add more cipher systems:
+# TODO: Add Latin/Roman numeral system
+# TODO: Add Arabic Abjad system
+# TODO: Add Sanskrit numerology
+# TODO: Add Chinese numerology
+# TODO: Add Coptic system
+# TODO: Add custom cipher creation capability
+
+# TODO: Add variant Hebrew methods:
+# TODO: Add Mispar Katan (reduced value)
+# TODO: Add Mispar Kolel (plus 1 for the word)
+# TODO: Add AtBash cipher
+# TODO: Add AlBam cipher
+# TODO: Add Mispar Siduri (ordinal value)
+# TODO: Add Mispar Bone'eh (building value)
+
+# TODO: Add variant Greek methods:
+# TODO: Add Isopsephy variants
+# TODO: Add Modern Greek values
+
+# TODO: Add input validation:
+# TODO: Add character validation for each cipher system
+# TODO: Add warning system for invalid characters
+# TODO: Add support for mixed script detection
+# TODO: Add validation for custom cipher definitions
+
+# TODO: Add advanced calculation features:
+# TODO: Add word root analysis
+# TODO: Add phrase relationship detection
+# TODO: Add numerical pattern detection
+# TODO: Add mathematical relationships between words
+# TODO: Add support for calculations across different cipher systems
+# TODO: Add support for compound calculations
+
+# TODO: Add analysis tools:
+# TODO: Add statistical analysis of results
+# TODO: Add frequency analysis
+# TODO: Add pattern matching algorithms
+# TODO: Add common value detection
+
+# TODO: Add performance improvements:
+# TODO: Add caching mechanism for frequent calculations
+# TODO: Add batch processing capabilities
+# TODO: Add parallel processing for large texts
+# TODO: Optimize character normalization
+# TODO: Add memory efficient processing for large texts
+
+# TODO: Add documentation features:
+# TODO: Add historical context for each cipher
+# TODO: Add calculation method documentation
+# TODO: Add usage examples
+# TODO: Add cipher system metadata
+# TODO: Add version tracking for cipher systems

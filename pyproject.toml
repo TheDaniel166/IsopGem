@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "isopgem"
+version = "0.1.0"
+description = "Gematria and Document Analysis Tool"
+requires-python = ">=3.8"
+dependencies = [
+    "PyQt5>=5.15",
+]
+
+[tool.setuptools]
+package-dir = {'' = '.'}
+packages = [
+    "core",
+    "core.database",
+    "core.document_editor",
+    "core.gematria",
+    "core.import_system",
+    "core.import_system.converters",
+    "ui",
+    "ui.actions",
+    "ui.ribbon",
+    "ui.workspace",
+    "ui.workspace.document_manager",
+    "ui.workspace.document_manager.categories",
+    "ui.workspace.gematria",
+    "ui.workspace.gematria.grid"
+] 

@@ -72,7 +72,7 @@ class CategoryPanel(QWidget):
         current_item = self.tree.currentItem()
         if current_item and current_item.parent() == self.custom_root:
             category = current_item.text(0)
-            self.category_manager.custom_categories.remove(category)
+            self.category_manager.remove_custom_category(category)
             self.refresh_categories()
         
     def refresh_categories(self):

@@ -1,7 +1,8 @@
 from PyQt5.QtWidgets import (QDockWidget, QWidget, QMenu, QPushButton, 
-                            QLabel, QHBoxLayout, QSizePolicy)
+                            QLabel, QHBoxLayout, QSizePolicy, QTabWidget,
+                            QColorDialog, QFontDialog, QSpinBox, QWidgetAction)
 from PyQt5.QtCore import Qt, QSettings, QSize
-from PyQt5.QtGui import QIcon, QCursor
+from PyQt5.QtGui import QIcon, QCursor, QColor, QPalette
 
 # Panel imports
 from .gematria.text_analysis_panel import TextAnalysisPanel
@@ -9,8 +10,10 @@ from .gematria.calculator_panel import CalculatorPanel
 from .gematria.history_panel import HistoryPanel
 from .gematria.reverse_panel import ReversePanel
 from .gematria.suggestions_panel import SuggestionsPanel
-from .gematria.search_panel import SearchPanel
+# from .gematria.search_panel import SearchPanel  # Comment out or remove this line
 from .gematria.saved_panel import SavedPanel
+from .gematria.search_results_panel import SearchResultsPanel
+from .gematria.analysis_results_panel import AnalysisResultsPanel
 from ui.workspace.gematria.grid.grid_config_dialog import GridConfigDialog
 from ui.workspace.document_manager.categories.category_panel import CategoryPanel
 
@@ -28,22 +31,63 @@ class PanelManager:
         self.min_size = QSize(200, 100)
         self.max_size = QSize(1920, 1080)
         
-        # New customization features
-        self.panel_styles = {}
-        self.opacity_levels = {}
-        self.custom_borders = {}
+        # Enhanced customization features
+        self.panel_themes = {
+            'dark': {
+                'background': '#2b2b2b',
+                'border': '#333333',
+                'text': '#ffffff',
+                'button': '#3d3d3d',
+                'button_hover': '#4d4d4d'
+            },
+            'light': {
+                'background': '#f0f0f0',
+                'border': '#cccccc',
+                'text': '#000000',
+                'button': '#e0e0e0',
+                'button_hover': '#d0d0d0'
+            },
+            'blue': {
+                'background': '#1e2433',
+                'border': '#3498db',
+                'text': '#ffffff',
+                'button': '#2c3e50',
+                'button_hover': '#34495e'
+            }
+        }
+        
+        # Load saved customizations
+        self.current_theme = self.settings.value('panel_theme', 'dark')
 
     def create_panel(self, panel_type):
-        # Create new panel instance
+        print(f"DEBUG: Creating panel of type {panel_type}")  # Debug print
         panel = self._create_new_panel(panel_type.title(), panel_type)
         if panel:
-            # Generate unique ID
+            print("DEBUG: Panel created successfully")  # Debug print
             panel_id = f"{panel_type}_{len(self.panels)}"
             self.panels[panel_id] = panel
-            self._position_panel(panel, panel_id)
+            
+            # Set panel properties
+            panel.setFeatures(QDockWidget.DockWidgetClosable | 
+                             QDockWidget.DockWidgetMovable | 
+                             QDockWidget.DockWidgetFloatable)
+            panel.setAllowedAreas(Qt.AllDockWidgetAreas)
+            
+            # Setup customization
+            self._setup_panel_customization(panel, panel_type)
+            
+            # Add to main window with proper tab position
+            self.main_window.setTabPosition(Qt.RightDockWidgetArea, QTabWidget.North)
+            self.main_window.addDockWidget(Qt.RightDockWidgetArea, panel)
+            panel.setFloating(True)
+            
+            self._position_panel(panel, panel_type)
             panel.show()
             panel.raise_()
             return panel
+        else:
+            print("DEBUG: Failed to create panel")  # Debug print
+            return None
 
     def _create_panel_content(self, panel_type):
         panel_classes = {
@@ -51,8 +95,9 @@ class PanelManager:
             'history': HistoryPanel,
             'reverse': ReversePanel,
             'suggestions': SuggestionsPanel,
-            'search': SearchPanel,
             'saved': SavedPanel,
+            'search_results': SearchResultsPanel,
+            'analysis_results': AnalysisResultsPanel,
             'text_analysis': TextAnalysisPanel,
             'grid_analysis': GridConfigDialog,
             'import': self._handle_import,
@@ -60,7 +105,11 @@ class PanelManager:
         }
         
         if panel_type.lower() in panel_classes:
-            if panel_type.lower() == 'import':
+            if panel_type.lower() == 'search_results':
+                return SearchResultsPanel(self.main_window.search_results)
+            elif panel_type.lower() == 'analysis_results':
+                return AnalysisResultsPanel(self.main_window.analysis_results)
+            elif panel_type.lower() == 'import':
                 return panel_classes[panel_type.lower()]()
             return panel_classes[panel_type.lower()]()
         return None
@@ -68,21 +117,9 @@ class PanelManager:
 
     def _create_new_panel(self, name, panel_type):
         dock = QDockWidget(name, self.main_window)
-        
-        # Set floating state first for proper styling
         dock.setFloating(True)
         
-        # Set features and constraints
-        dock.setFeatures(QDockWidget.DockWidgetClosable | QDockWidget.DockWidgetMovable)
-        dock.setAllowedAreas(Qt.NoDockWidgetArea)
-        
-        # Apply initial border style
-        self._set_panel_border(dock, "#333333")
-        
-        # Add customization features
-        self._setup_panel_customization(dock, panel_type)
-        
-        # Set content
+        # Create content
         content = self._create_panel_content(panel_type)
         if content:
             dock.setWidget(content)
@@ -92,31 +129,35 @@ class PanelManager:
 
 
     def _setup_panel_customization(self, dock, panel_type):
-        # Create custom title bar
         title_bar = QWidget()
         layout = QHBoxLayout(title_bar)
         layout.setContentsMargins(4, 4, 4, 4)
         
-        # Settings button
-        settings_btn = QPushButton()
-        settings_btn.setIcon(QIcon("assets/settings.png"))
-        settings_btn.clicked.connect(lambda: self._show_panel_settings(dock, panel_type))
+        # Theme selector button
+        theme_btn = QPushButton()
+        theme_btn.setIcon(QIcon("assets/icons/settings.png"))
+        theme_btn.setToolTip("Change Theme")
+        theme_btn.clicked.connect(lambda: self._show_theme_menu(dock))
         
-        # Window control buttons
+        # Customize button
+        customize_btn = QPushButton()
+        customize_btn.setIcon(QIcon("assets/icons/settings.png"))  # Using settings icon for now
+        customize_btn.setToolTip("Customize Panel")
+        customize_btn.clicked.connect(lambda: self._show_customization_menu(dock))
+        
+        # Window controls with icons (using text for now until we have icons)
         minimize_btn = QPushButton("-")
         maximize_btn = QPushButton("□")
         close_btn = QPushButton("×")
         
-        # Store original geometry for minimize/maximize
-        dock.original_geometry = None
-        
-        # Connect window controls
+        # Connect controls
         minimize_btn.clicked.connect(lambda: self._minimize_panel(dock))
         maximize_btn.clicked.connect(lambda: self._maximize_panel(dock))
         close_btn.clicked.connect(dock.close)
         
-        # Add all elements to layout
-        layout.addWidget(settings_btn)
+        # Add elements to layout
+        layout.addWidget(theme_btn)
+        layout.addWidget(customize_btn)
         layout.addStretch()
         layout.addWidget(QLabel(panel_type.title()))
         layout.addStretch()
@@ -124,10 +165,111 @@ class PanelManager:
         layout.addWidget(maximize_btn)
         layout.addWidget(close_btn)
         
-        # Set initial border style
-        self._set_panel_border(dock, "#333333")
-        
         dock.setTitleBarWidget(title_bar)
+        self._apply_theme(dock, self.current_theme)
+
+    def _show_theme_menu(self, dock):
+        menu = QMenu()
+        
+        for theme_name in self.panel_themes.keys():
+            action = menu.addAction(theme_name.title())
+            action.triggered.connect(
+                lambda checked, t=theme_name: self._apply_theme(dock, t))
+        
+        menu.addSeparator()
+        menu.addAction("Custom Theme", lambda: self._create_custom_theme(dock))
+        
+        menu.exec_(QCursor.pos())
+
+    def _show_customization_menu(self, dock):
+        menu = QMenu()
+        
+        # Opacity control
+        opacity_menu = menu.addMenu("Opacity")
+        opacity_widget = QWidget()
+        opacity_layout = QHBoxLayout(opacity_widget)
+        
+        opacity_spin = QSpinBox()
+        opacity_spin.setRange(20, 100)
+        opacity_spin.setValue(int(dock.windowOpacity() * 100))
+        opacity_spin.valueChanged.connect(
+            lambda v: dock.setWindowOpacity(v / 100))
+        
+        opacity_layout.addWidget(QLabel("Opacity:"))
+        opacity_layout.addWidget(opacity_spin)
+        opacity_layout.setContentsMargins(8, 4, 8, 4)
+        
+        # Create a QWidgetAction to hold the opacity controls
+        opacity_action = QWidgetAction(opacity_menu)
+        opacity_action.setDefaultWidget(opacity_widget)
+        opacity_menu.addAction(opacity_action)
+        
+        # Border customization
+        menu.addAction("Change Border Color", 
+                      lambda: self._choose_border_color(dock))
+        
+        # Font customization
+        menu.addAction("Change Font", 
+                      lambda: self._choose_font(dock))
+        
+        # Background customization
+        menu.addAction("Change Background", 
+                      lambda: self._choose_background(dock))
+        
+        # Reset option
+        menu.addSeparator()
+        menu.addAction("Reset to Default", 
+                      lambda: self._apply_theme(dock, self.current_theme))
+        
+        menu.exec_(QCursor.pos())
+
+    def _apply_theme(self, dock, theme_name):
+        theme = self.panel_themes[theme_name]
+        
+        style = f"""
+            QDockWidget {{
+                border: 2px solid {theme['border']};
+                background-color: {theme['background']};
+            }}
+            QWidget {{
+                background-color: {theme['background']};
+                color: {theme['text']};
+            }}
+            QPushButton {{
+                background-color: {theme['button']};
+                border: none;
+                padding: 4px;
+                min-width: 20px;
+                border-radius: 2px;
+            }}
+            QPushButton:hover {{
+                background-color: {theme['button_hover']};
+            }}
+            QLabel {{
+                color: {theme['text']};
+            }}
+        """
+        
+        dock.setStyleSheet(style)
+        self.current_theme = theme_name
+        self.settings.setValue('panel_theme', theme_name)
+
+    def _choose_border_color(self, dock):
+        color = QColorDialog.getColor()
+        if color.isValid():
+            self._set_panel_border(dock, color.name())
+
+    def _choose_font(self, dock):
+        font, ok = QFontDialog.getFont()
+        if ok:
+            dock.widget().setFont(font)
+
+    def _choose_background(self, dock):
+        color = QColorDialog.getColor()
+        if color.isValid():
+            style = dock.styleSheet()
+            style += f"\nQWidget {{ background-color: {color.name()}; }}"
+            dock.setStyleSheet(style)
 
     def _minimize_panel(self, dock):
         if not dock.original_geometry:
@@ -168,34 +310,6 @@ class PanelManager:
             }}
         """
         dock.setStyleSheet(style)
-
-    def _show_panel_settings(self, dock, panel_type):
-        menu = QMenu()
-        
-        # Opacity submenu
-        opacity_menu = menu.addMenu("Opacity")
-        for opacity in [25, 50, 75, 100]:
-            action = opacity_menu.addAction(f"{opacity}%")
-            action.triggered.connect(
-                lambda checked, o=opacity: self._set_panel_opacity(dock, o/100))
-        
-        # Border customization
-        border_menu = menu.addMenu("Border")
-        colors = {"Default": "#333", "Blue": "#00f", "Red": "#f00"}
-        for name, color in colors.items():
-            action = border_menu.addAction(name)
-            action.triggered.connect(
-                lambda checked, c=color: self._set_panel_border(dock, c))
-        
-        menu.exec_(QCursor.pos())
-
-    def _set_panel_opacity(self, dock, value):
-        dock.setWindowOpacity(value)
-        self.opacity_levels[dock] = value
-
-    def _set_panel_border(self, dock, color):
-        dock.setStyleSheet(f"QDockWidget {{ border: 2px solid {color}; }}")
-        self.custom_borders[dock] = color
 
     def _position_panel(self, panel, panel_type):
         # Calculate offset based on existing panels

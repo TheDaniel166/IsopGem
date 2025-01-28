@@ -16,10 +16,44 @@ class CalculatorPanel(QWidget):
         self.connect_signals()
 
     def init_ui(self):
-        # Input section with text area and cipher selection
-        input_layout = QHBoxLayout()
+        # Main layout with spacing and margins
+        self.content_layout.setSpacing(20)
+        self.content_layout.setContentsMargins(20, 20, 20, 20)
+        
+        # Input section with better organization
+        input_section = QWidget()
+        input_layout = QVBoxLayout(input_section)
+        input_layout.setSpacing(10)
+        
+        # Add header for input section
+        input_header = QLabel("Calculate Gematria")
+        input_header.setStyleSheet("""
+            QLabel {
+                font-size: 16px;
+                font-weight: bold;
+                color: #2c3e50;
+            }
+        """)
+        
+        # Improve text input appearance
         self.text_input = QTextEdit()
         self.text_input.setPlaceholderText("Enter text to calculate...")
+        self.text_input.setMinimumHeight(100)
+        self.text_input.setStyleSheet("""
+            QTextEdit {
+                border: 2px solid #bdc3c7;
+                border-radius: 5px;
+                padding: 8px;
+                background-color: #ffffff;
+            }
+            QTextEdit:focus {
+                border-color: #3498db;
+            }
+        """)
+        
+        # Cipher selection with label
+        cipher_layout = QHBoxLayout()
+        cipher_label = QLabel("Select Cipher:")
         self.cipher_select = QComboBox()
         self.cipher_select.addItems([
             'TQ English',
@@ -27,31 +61,103 @@ class CalculatorPanel(QWidget):
             'Hebrew Gadol',
             'Greek'
         ])
+        self.cipher_select.setStyleSheet("""
+            QComboBox {
+                padding: 5px;
+                border: 2px solid #bdc3c7;
+                border-radius: 5px;
+                min-width: 150px;
+            }
+            QComboBox::drop-down {
+                border: none;
+                padding-right: 10px;
+            }
+        """)
+        cipher_layout.addWidget(cipher_label)
+        cipher_layout.addWidget(self.cipher_select)
+        cipher_layout.addStretch()
         
-        input_layout.addWidget(self.text_input, stretch=3)
-        input_layout.addWidget(self.cipher_select, stretch=1)
+        # Results section with better styling
+        results_section = QWidget()
+        results_section.setStyleSheet("""
+            QWidget {
+                background-color: #f8f9fa;
+                border-radius: 8px;
+                padding: 10px;
+            }
+        """)
+        results_layout = QHBoxLayout(results_section)
         
-        # Results section
-        results_layout = QHBoxLayout()
-        self.value_label = QLabel("Value:")
+        value_section = QVBoxLayout()
+        self.value_label = QLabel("Calculated Value")
+        self.value_label.setStyleSheet("font-weight: bold; color: #2c3e50;")
         self.value_display = QLabel("0")
-        self.value_display.setStyleSheet("font-size: 18px; font-weight: bold;")
+        self.value_display.setStyleSheet("""
+            font-size: 24px;
+            font-weight: bold;
+            color: #2980b9;
+            padding: 10px;
+        """)
+        value_section.addWidget(self.value_label)
+        value_section.addWidget(self.value_display)
+        
+        # Button styling
+        button_style = """
+            QPushButton {
+                padding: 8px 15px;
+                border-radius: 5px;
+                font-weight: bold;
+                min-width: 100px;
+            }
+        """
         
         self.calculate_button = QPushButton("Calculate")
-        self.save_button = QPushButton("Save")
-        self.import_button = QPushButton("Import File")
+        self.calculate_button.setStyleSheet(button_style + """
+            QPushButton {
+                background-color: #2980b9;
+                color: white;
+            }
+            QPushButton:hover {
+                background-color: #3498db;
+            }
+        """)
         
-        results_layout.addWidget(self.value_label)
-        results_layout.addWidget(self.value_display)
+        self.save_button = QPushButton("Save")
+        self.save_button.setStyleSheet(button_style + """
+            QPushButton {
+                background-color: #27ae60;
+                color: white;
+            }
+            QPushButton:hover {
+                background-color: #2ecc71;
+            }
+        """)
+        
+        self.import_button = QPushButton("Import")
+        self.import_button.setStyleSheet(button_style + """
+            QPushButton {
+                background-color: #f39c12;
+                color: white;
+            }
+            QPushButton:hover {
+                background-color: #f1c40f;
+            }
+        """)
+        
+        # Add everything to layouts
+        input_layout.addWidget(input_header)
+        input_layout.addWidget(self.text_input)
+        input_layout.addLayout(cipher_layout)
+        
+        results_layout.addLayout(value_section)
         results_layout.addStretch()
         results_layout.addWidget(self.calculate_button)
         results_layout.addWidget(self.save_button)
         results_layout.addWidget(self.import_button)
         
-        # Add layouts to content_layout once
-        self.content_layout.addLayout(input_layout)
-        self.content_layout.addLayout(results_layout)
-
+        self.content_layout.addWidget(input_section)
+        self.content_layout.addWidget(results_section)
+        self.content_layout.addStretch()
 
     def connect_signals(self):
         self.calculate_button.clicked.connect(self.calculate_value)
@@ -70,9 +176,23 @@ class CalculatorPanel(QWidget):
         text = self.text_input.toPlainText()
         cipher = self.cipher_select.currentText()
         value = int(self.value_display.text())
-        if text.strip():
-            self.word_repository.save_word(text, cipher, value)
-            QMessageBox.information(self, "Success", "Word saved successfully!")
+        
+        if not text.strip():
+            QMessageBox.warning(self, "Error", "Please enter text to save.")
+            return
+        
+        # Check if word exists
+        if self.word_repository.word_exists(text, cipher):
+            QMessageBox.information(
+                self, 
+                "Duplicate Entry", 
+                f"'{text}' already exists in the database with cipher {cipher}."
+            )
+            return
+        
+        # Save if it's new
+        self.word_repository.save_word(text, cipher, value)
+        QMessageBox.information(self, "Success", "Word saved successfully!")
 
     def import_csv(self):
         file_path, _ = QFileDialog.getOpenFileName(
@@ -112,6 +232,9 @@ class CalculatorPanel(QWidget):
 
     def import_csv_file(self, file_path, cipher_type):
         try:
+            duplicates = []
+            imported = 0
+            
             with open(file_path, 'r', encoding='utf-8') as file:
                 csv_reader = csv.reader(file)
                 next(csv_reader)  # Skip header row
@@ -119,8 +242,23 @@ class CalculatorPanel(QWidget):
                     if len(row) >= 2:
                         text = row[0]
                         value = int(row[1])
-                        self.word_repository.save_word(text, cipher_type, value)
-            QMessageBox.information(self, "Success", "CSV data imported successfully!")
+                        
+                        if not self.word_repository.word_exists(text, cipher_type):
+                            self.word_repository.save_word(text, cipher_type, value)
+                            imported += 1
+                        else:
+                            duplicates.append(text)
+            
+            # Show results
+            message = f"Successfully imported {imported} entries."
+            if duplicates:
+                message += f"\n\nSkipped {len(duplicates)} duplicate entries:"
+                message += f"\n{', '.join(duplicates[:5])}"
+                if len(duplicates) > 5:
+                    message += f"... and {len(duplicates) - 5} more"
+            
+            QMessageBox.information(self, "Import Results", message)
+            
         except Exception as e:
             QMessageBox.warning(self, "Error", f"Failed to import CSV: {str(e)}")
 

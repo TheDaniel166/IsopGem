@@ -5,7 +5,6 @@ class GematriaTab(QWidget):
         super().__init__()
         self.panel_manager = panel_manager
         self.init_ui()
-        self.connect_actions()
 
     def init_ui(self):
         layout = QHBoxLayout()
@@ -15,9 +14,20 @@ class GematriaTab(QWidget):
         word_layout = QHBoxLayout()
         
         self.calc_button = QPushButton("Calculate")
+        self.calc_button.clicked.connect(
+            lambda: self.panel_manager.create_panel('calculator'))
+            
         self.history_button = QPushButton("History")
+        self.history_button.clicked.connect(
+            lambda: self.panel_manager.create_panel('history'))
+            
         self.reverse_button = QPushButton("Reverse Calculate")
+        self.reverse_button.clicked.connect(
+            lambda: self.panel_manager.create_panel('reverse'))
+            
         self.suggestions_button = QPushButton("Phrase Suggestions")
+        self.suggestions_button.clicked.connect(
+            lambda: self.panel_manager.create_panel('suggestions'))
         
         word_layout.addWidget(self.calc_button)
         word_layout.addWidget(self.history_button)
@@ -30,11 +40,14 @@ class GematriaTab(QWidget):
         number_group = QGroupBox("Number Search")
         number_layout = QHBoxLayout()
         
-        self.search_button = QPushButton("Search")
         self.saved_button = QPushButton("Saved")
+        self.saved_button.clicked.connect(
+            lambda: self.panel_manager.create_panel('saved'))
+            
         self.text_analysis_button = QPushButton("Text Analysis")
+        self.text_analysis_button.clicked.connect(
+            lambda: self.panel_manager.create_panel('text_analysis'))
         
-        number_layout.addWidget(self.search_button)
         number_layout.addWidget(self.saved_button)
         number_layout.addWidget(self.text_analysis_button)
         
@@ -43,10 +56,14 @@ class GematriaTab(QWidget):
         # Extra group
         extra_group = QGroupBox("Extra")
         extra_layout = QHBoxLayout()
-        extra_group.setLayout(extra_layout)
         
         self.grid_analysis_button = QPushButton("Grid Analysis")
+        self.grid_analysis_button.clicked.connect(
+            lambda: self.panel_manager.create_panel('grid_analysis'))
+            
         extra_layout.addWidget(self.grid_analysis_button)
+        
+        extra_group.setLayout(extra_layout)
         
         # Add groups to main layout
         layout.addWidget(word_group)
@@ -55,22 +72,3 @@ class GematriaTab(QWidget):
         layout.addStretch()
         
         self.setLayout(layout)
-
-    def connect_actions(self):
-        # Connect each button to its corresponding panel creation
-        self.calc_button.clicked.connect(
-            lambda: self.panel_manager.create_panel('calculator'))
-        self.history_button.clicked.connect(
-            lambda: self.panel_manager.create_panel('history'))
-        self.reverse_button.clicked.connect(
-            lambda: self.panel_manager.create_panel('reverse'))
-        self.suggestions_button.clicked.connect(
-            lambda: self.panel_manager.create_panel('suggestions'))
-        self.search_button.clicked.connect(
-            lambda: self.panel_manager.create_panel('search'))
-        self.saved_button.clicked.connect(
-            lambda: self.panel_manager.create_panel('saved'))
-        self.text_analysis_button.clicked.connect(
-            lambda: self.panel_manager.create_panel('text_analysis'))
-        self.grid_analysis_button.clicked.connect(
-            lambda: self.panel_manager.create_panel('grid_analysis'))

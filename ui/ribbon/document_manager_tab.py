@@ -1,6 +1,14 @@
+import sys
+import os
+
+# Add project root to path
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QGroupBox, 
                             QPushButton, QLineEdit, QStackedWidget, QLabel,
-                            QTreeView, QCalendarWidget, QListWidget)
+                            QTreeView, QCalendarWidget, QListWidget, QListWidgetItem)
 from PyQt5.QtCore import Qt
 from ui.workspace.document_manager.categories.actions import DocumentActions 
 
@@ -26,10 +34,15 @@ class DocumentManagerTab(QWidget):
 
         # Connect actions after panels are created
         create_new_btn = self.details_panel.findChild(QPushButton, "Create New")
-        import_btn = self.details_panel.findChild(QPushButton, "Import")  # Changed from actions_group to details_panel
+        import_btn = self.details_panel.findChild(QPushButton, "Import")
         
         create_new_btn.clicked.connect(self.document_actions.create_new_document)
         import_btn.clicked.connect(self.document_actions.show_import_dialog)
+        
+        # Configure document buttons
+        all_docs_btn = QPushButton("All Documents")
+        all_docs_btn.setObjectName("AllDocuments")
+        all_docs_btn.clicked.connect(self.show_documents_page)
         
     def create_navigation_panel(self):
         nav_panel = QWidget()
@@ -42,6 +55,7 @@ class DocumentManagerTab(QWidget):
         # Configure document buttons
         all_docs_btn = QPushButton("All Documents")
         all_docs_btn.setObjectName("AllDocuments")
+        all_docs_btn.clicked.connect(self.show_documents_page)
         
         categories_btn = QPushButton("Categories")
         categories_btn.setObjectName("Categories")
@@ -154,11 +168,13 @@ class DocumentManagerTab(QWidget):
         
         # Column 1
         dashboard_view = QListWidget()
-        documents_view = QListWidget()
+        self.recent_documents_list = QListWidget()  # Store reference for updates
+        self.recent_documents_list.itemDoubleClicked.connect(self.open_recent_document)
+        
         layout.addWidget(QLabel("Dashboard"), 0, 0)
         layout.addWidget(dashboard_view, 1, 0)
-        layout.addWidget(QLabel("Documents"), 2, 0)
-        layout.addWidget(documents_view, 3, 0)
+        layout.addWidget(QLabel("Recent Documents"), 2, 0)  # Changed label
+        layout.addWidget(self.recent_documents_list, 3, 0)
         
         # Column 2
         notes_view = QListWidget()
@@ -180,16 +196,67 @@ class DocumentManagerTab(QWidget):
         layout.setColumnStretch(1, 1)
         layout.setColumnStretch(2, 1)
         
+        # Initial population of recent documents
+        self.update_recent_documents()
+        
         page.setLayout(layout)
         return page
+
+    def update_recent_documents(self):
+        """Update the recent documents list in the dashboard"""
+        self.recent_documents_list.clear()
+        recent_docs = self.document_actions.get_recent_documents()
         
+        for doc in recent_docs:
+            item = QListWidgetItem(doc['name'])
+            item.setData(Qt.UserRole, doc['path'])  # Store full path
+            self.recent_documents_list.addItem(item)
+
+    def open_recent_document(self, item):
+        """Handle double-click on recent document"""
+        file_path = item.data(Qt.UserRole)
+        if file_path:
+            self.document_actions.open_document(file_path)
+
     def create_documents_page(self):
         page = QWidget()
         layout = QVBoxLayout()
-        tree = QTreeView()
-        layout.addWidget(tree)
+        
+        # Create TreeView for documents
+        self.documents_tree = QTreeView()
+        self.documents_tree.setHeaderHidden(True)
+        self.documents_tree.setExpandsOnDoubleClick(True)
+        self.documents_tree.setSelectionMode(QTreeView.SingleSelection)
+        
+        # Set the model from DocumentActions
+        self.documents_tree.setModel(self.document_actions.get_all_documents())
+        
+        # Connect double-click to open document
+        self.documents_tree.doubleClicked.connect(self.open_selected_document)
+        
+        layout.addWidget(self.documents_tree)
         page.setLayout(layout)
         return page
+
+    def open_selected_document(self, index):
+        """Handle document selection from TreeView"""
+        # Get the item from the model
+        item = self.documents_tree.model().itemFromIndex(index)
+        
+        # Check if it's a document (not a category)
+        if item and item.parent():  # Items with parent are documents
+            file_path = item.data()
+            if file_path:
+                self.document_actions.open_document(file_path)
+
+    def update_document_views(self):
+        """Update all document views after changes"""
+        # Update TreeView
+        self.documents_tree.setModel(self.document_actions.get_all_documents())
+        self.documents_tree.expandAll()
+        
+        # Update recent documents list
+        self.update_recent_documents()
         
     def create_notes_page(self):
         page = QWidget()
@@ -208,3 +275,18 @@ class DocumentManagerTab(QWidget):
         layout.addWidget(task_list)
         page.setLayout(layout)
         return page
+
+    def show_documents_page(self):
+        """Switch to documents page and refresh view"""
+        self.content_stack.setCurrentIndex(1)  # Assuming documents page is at index 1
+        self.update_document_views()
+
+    # TODO: Future enhancements
+    # 1. Add icons for documents and categories
+    # 2. Add right-click context menu
+    # 3. Add sorting and filtering
+    # 4. Show document metadata (date, size)
+    # 5. Add drag-and-drop support
+    # 6. Add search functionality
+    # 7. Add favorites system
+    # 8. Add document preview panel
