@@ -94,6 +94,9 @@ class DocumentManagerTab(QWidget):
         
         calendar_btn = QPushButton("Calendar View")
         calendar_btn.setObjectName("CalendarView")
+        calendar_btn.clicked.connect(
+            lambda: self.panel_manager.create_panel('calendar')
+        )
         
         tasks_layout.addWidget(todo_btn)
         tasks_layout.addWidget(calendar_btn)

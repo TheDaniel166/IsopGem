@@ -1,12 +1,19 @@
 from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QSizePolicy
 from ui.ribbon.ribbon_widget import RibbonWidget
 from ui.workspace.panel_manager import PanelManager
+from ui.workspace.auxiliary_window_manager import AuxiliaryWindowManager
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.search_results = None  # Storage for search results
         self.setWindowTitle("IsopGem")
+        self.resize(1200, 800)
+        
+        # Initialize managers
+        self.panel_manager = PanelManager(self)
+        self.auxiliary_window_manager = AuxiliaryWindowManager(self)
+        
         self.setup_ui()
     
     def setup_ui(self):
@@ -22,9 +29,6 @@ class MainWindow(QMainWindow):
         self.workspace.setStyleSheet("background-color: #ffffff;")
         self.workspace.setMinimumHeight(300)
         self.workspace.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        
-        # Initialize panel manager
-        self.panel_manager = PanelManager(self)
         
         # Create ribbon with size constraints
         self.ribbon = RibbonWidget(self.panel_manager)

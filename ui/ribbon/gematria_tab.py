@@ -61,7 +61,12 @@ class GematriaTab(QWidget):
         self.grid_analysis_button.clicked.connect(
             lambda: self.panel_manager.create_panel('grid_analysis'))
             
+        self.create_cipher_button = QPushButton("Create Cipher")
+        self.create_cipher_button.clicked.connect(
+            lambda: self.panel_manager.create_panel('create_cipher'))
+            
         extra_layout.addWidget(self.grid_analysis_button)
+        extra_layout.addWidget(self.create_cipher_button)
         
         extra_group.setLayout(extra_layout)
         

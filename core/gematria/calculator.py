@@ -69,6 +69,16 @@ class GematriaCalculator:
         }
         return calculators[cipher_type](text)
 
+    def calculate_with_custom_cipher(self, text, custom_cipher):
+        """Calculate value using a custom cipher"""
+        clean_text = self.strip_marks(text)
+        total = 0
+        for char in clean_text:
+            value = custom_cipher.get_value(char)
+            print(f"DEBUG: Char '{char}' has value {value}")
+            total += value
+        return total
+
 # TODO: Add more cipher systems:
 # TODO: Add Latin/Roman numeral system
 # TODO: Add Arabic Abjad system

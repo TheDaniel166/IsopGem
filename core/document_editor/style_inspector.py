@@ -3,10 +3,16 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 
 class StyleInspector(QDockWidget):
-    def __init__(self, editor, parent=None):
-        super().__init__("Style Inspector", parent)
+    def __init__(self, editor):
+        super().__init__("Style Inspector")  # Add title
         self.editor = editor
+        self.setup_ui()
         
+        # Connect to editor's cursor position change signal
+        self.editor.editor.cursorPositionChanged.connect(self.update_properties)
+        self.update_properties()
+        
+    def setup_ui(self):
         widget = QWidget()
         layout = QVBoxLayout(widget)
         
@@ -14,27 +20,41 @@ class StyleInspector(QDockWidget):
         self.properties = QTreeWidget()
         self.properties.setHeaderLabels(["Property", "Value"])
         self.properties.setAlternatingRowColors(True)
+        self.properties.setColumnWidth(0, 150)  # Set width for property column
         
         layout.addWidget(self.properties)
         self.setWidget(widget)
         
-        # Update when cursor position changes
-        self.editor.cursorPositionChanged.connect(self.update_properties)
-        
     def update_properties(self):
-        self.properties.clear()
-        cursor = self.editor.textCursor()
+        """Update displayed properties"""
+        cursor = self.editor.editor.textCursor()
         char_format = cursor.charFormat()
         block_format = cursor.blockFormat()
         
-        # Character formatting
-        char_root = QTreeWidgetItem(["Character Format"])
-        self.properties.addTopLevelItem(char_root)
+        # Clear existing items
+        self.properties.clear()
         
-        self.add_property(char_root, "Font", char_format.font().family())
-        self.add_property(char_root, "Size", f"{char_format.font().pointSize()}pt")
-        self.add_property(char_root, "Weight", self.get_weight_name(char_format.font().weight()))
-        self.add_property(char_root, "Color", char_format.foreground().color().name())
+        # Add character format properties
+        char_item = QTreeWidgetItem(["Character Format"])
+        self.properties.addTopLevelItem(char_item)
+        char_item.setExpanded(True)  # Expand by default
+        
+        # Font properties
+        font = char_format.font()
+        self.add_property(char_item, "Font Family", font.family())
+        self.add_property(char_item, "Font Size", f"{font.pointSize()}pt")
+        self.add_property(char_item, "Font Weight", self.get_weight_name(font.weight()))
+        self.add_property(char_item, "Italic", str(font.italic()))
+        self.add_property(char_item, "Underline", str(font.underline()))
+        
+        # Color properties
+        color = char_format.foreground().color()
+        self.add_property(char_item, "Text Color", color.name())
+        
+        # Background color
+        bg_color = char_format.background().color()
+        if bg_color.alpha() > 0:
+            self.add_property(char_item, "Background", bg_color.name())
         
         # Paragraph formatting
         para_root = QTreeWidgetItem(["Paragraph Format"])

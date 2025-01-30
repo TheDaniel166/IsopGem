@@ -322,3 +322,23 @@ class WordRepository:
         """, (search_pattern, search_pattern, search_pattern))
         
         return cursor.fetchall()
+
+    def search_words_by_cipher(self, search_text, cipher_type):
+        """Search words with a specific cipher type"""
+        try:
+            # Try to convert search text to number for value search
+            value = int(search_text)
+            query = """
+                SELECT word, cipher_type FROM saved_words 
+                WHERE value = ? AND cipher_type = ?
+                ORDER BY word
+            """
+            return self.conn.cursor().execute(query, (value, cipher_type)).fetchall()
+        except ValueError:
+            # Text search
+            query = """
+                SELECT word, cipher_type FROM saved_words 
+                WHERE word LIKE ? AND cipher_type = ?
+                ORDER BY word
+            """
+            return self.conn.cursor().execute(query, (f"%{search_text}%", cipher_type)).fetchall()

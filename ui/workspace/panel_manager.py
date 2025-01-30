@@ -28,6 +28,7 @@ from .tq_operations.zodiacal_heptagons_panel import ZodiacalHeptagonsPanel
 from .tq_operations.kamea_maut_panel import KameaMautPanel
 from .tq_operations.kamea_bafomet_panel import KameaBafometPanel
 from .tq_operations.kamea_creator_panel import KameaCreatorPanel
+from .document_manager.calendar_panel import CalendarPanel
 
 
 
@@ -115,7 +116,7 @@ class PanelManager:
             'create_cipher': CreateCipherPanel,
             'import': self._handle_import,
             'categories': CategoryPanel,
-            'quadset_analysis': QuadsetAnalysisPanel,
+            'quadset_analysis': lambda: QuadsetAnalysisPanel(self.main_window),
             'converse_analysis': ConverseAnalysisPanel,
             'pair_transitions': PairTransitionsPanel,
             'series_transitions': SeriesTransitionsPanel,
@@ -125,7 +126,8 @@ class PanelManager:
             'zodiacal_heptagons': ZodiacalHeptagonsPanel,
             'kamea_of_maut': KameaMautPanel,
             'kamea_of_bafomet': KameaBafometPanel,
-            'kamea_creator': KameaCreatorPanel
+            'kamea_creator': KameaCreatorPanel,
+            'calendar': CalendarPanel
         }
         
         if panel_type.lower() in panel_classes:
@@ -169,7 +171,7 @@ class PanelManager:
                     print("Creating new QuadsetAnalysisPanel")
                     quadset_dock = QDockWidget("Quadset Analysis", self.main_window)
                     quadset_dock.setFloating(True)
-                    quadset_panel = QuadsetAnalysisPanel()
+                    quadset_panel = QuadsetAnalysisPanel(self.main_window)
                     quadset_dock.setWidget(quadset_panel)
                     quadset_dock.resize(self.default_size)
                     

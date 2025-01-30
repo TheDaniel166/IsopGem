@@ -10,20 +10,30 @@ from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QToolBar,
 from PyQt5.QtGui import (QTextCharFormat, QColor, QTextCursor, QTextListFormat,
                         QTextTableFormat, QImage, QTextFrameFormat, QFont,
                         QTextBlockFormat, QPainter, QTextImageFormat, QTextFormat,
-                        QTransform, QPen, QPixmap)
-from PyQt5.QtCore import Qt, QSizeF, QRect, QSize, QTimer
+                        QTransform, QPen, QPixmap, QIcon, QTextDocument)
+from PyQt5.QtCore import (Qt, QSizeF, QRect, QSize, QTimer, QSettings, 
+                         QRegularExpression)
 from PyQt5.QtPrintSupport import QPrinter, QPrintDialog, QPrintPreviewDialog
-from PyQt5.QtWidgets import QApplication
+
 import os
 import math
 from datetime import datetime
-from PyQt5.QtCore import QSettings
-from zlib import compress, decompress  # Add to imports
-from .style_inspector import StyleInspector
+from zlib import compress, decompress
+
+# Change to absolute imports
+from core.document_editor.style_inspector import StyleInspector
+from core.document_editor.image_handler import ImageHandler
+from core.document_editor.table_handler import TableHandler
+from core.document_editor.format_handler import FormatHandler
 
 class DocumentEditor(QWidget):
     def __init__(self):
         super().__init__()
+        # Initialize handlers
+        self.image_handler = ImageHandler(self)
+        self.table_handler = TableHandler(self)
+        self.format_handler = FormatHandler(self)
+        
         # Initialize instance variables first
         self.current_file = None
         self.resize_handles_visible = False
@@ -46,9 +56,6 @@ class DocumentEditor(QWidget):
 
         # Then setup UI and connections
         self.setup_ui()
-        self.setup_editor()
-        self.setup_toolbars()
-        self.setup_status_bar()
         self.setup_connections()
         
         # Finally, setup features that depend on UI elements
@@ -58,16 +65,57 @@ class DocumentEditor(QWidget):
     def setup_ui(self):
         self.layout = QVBoxLayout(self)
         
-        # Main toolbar
+        # Create toolbars
         self.main_toolbar = QToolBar()
         self.format_toolbar = QToolBar()
         self.insert_toolbar = QToolBar()
         
-        # Editor
+        # Create editor first
         self.editor = QTextEdit()
         
-        # Status bar
+        # Create status bar
         self.status_bar = QStatusBar()
+        
+        # Now setup toolbars after editor is created
+        self.setup_file_toolbar()
+        
+        # Initialize handlers
+        self.format_handler = FormatHandler(self)
+        self.table_handler = TableHandler(self)
+        self.image_handler = ImageHandler(self)
+        
+        # Get format actions and widgets
+        format_items = self.format_handler.setup_format_actions()
+        
+        # Store references to frequently used widgets
+        self.font_family = format_items['font_family']
+        self.font_size = format_items['font_size']
+        self.format_painter = format_items['format_painter']
+        
+        # Add format items to toolbar
+        self.format_toolbar.addWidget(self.font_family)
+        self.format_toolbar.addWidget(self.font_size)
+        self.format_toolbar.addSeparator()
+        self.format_toolbar.addAction(format_items['bold'])
+        self.format_toolbar.addAction(format_items['italic'])
+        self.format_toolbar.addAction(format_items['underline'])
+        self.format_toolbar.addSeparator()
+        self.format_toolbar.addAction(format_items['align_left'])
+        self.format_toolbar.addAction(format_items['align_center'])
+        self.format_toolbar.addAction(format_items['align_right'])
+        self.format_toolbar.addAction(format_items['align_justify'])
+        self.format_toolbar.addSeparator()
+        self.format_toolbar.addAction(format_items['text_color'])
+        self.format_toolbar.addAction(format_items['highlight'])
+        self.format_toolbar.addWidget(format_items['style_combo'])
+        self.format_toolbar.addAction(self.format_painter)
+        self.format_toolbar.addSeparator()
+        self.format_toolbar.addAction(format_items['bullet_list'])
+        self.format_toolbar.addAction(format_items['numbered_list'])
+        
+        # Add table and image buttons
+        self.insert_toolbar.addWidget(self.table_handler.setup_table_actions())
+        self.insert_toolbar.addWidget(self.image_handler.setup_image_actions())
         
         # Add to layout
         self.layout.addWidget(self.main_toolbar)
@@ -78,908 +126,11 @@ class DocumentEditor(QWidget):
         
         self.setLayout(self.layout)
 
-    def setup_editor(self):
-        # Editor settings
-        self.editor.setAcceptRichText(True)
-        self.editor.setAutoFormatting(QTextEdit.AutoAll)
-        
-        # Default font
-        font = QFont("Arial", 11)
-        self.editor.setFont(font)
-        
-        # Document settings
-        doc = self.editor.document()
-        doc.setDocumentMargin(20)
-        
-        # Clear undo stack and set initial state
-        doc.clearUndoRedoStacks()
-        doc.setModified(False)
-        
-        # Enable drag and drop
-        self.editor.setAcceptDrops(True)
-
-    def setup_toolbars(self):
-        # Main Toolbar - File Operations
-        self.setup_file_toolbar()
-        
-        # Format Toolbar - Text Formatting
-        self.setup_format_toolbar()
-        
-        # Insert Toolbar - Tables, Images, etc.
-        self.setup_insert_toolbar()
-
-    def setup_file_toolbar(self):
-        # File operations
-        new_action = self.create_action("New", self.new_document, "Ctrl+N")
-        open_action = self.create_action("Open", self.open_document, "Ctrl+O")
-        save_action = self.create_action("Save", self.save_document, "Ctrl+S")
-        print_action = self.create_action("Print", self.print_document, "Ctrl+P")
-        preview_action = self.create_action("Print Preview", self.print_preview)
-        
-        # Add undo/redo actions
-        self.undo_action = self.create_action("Undo", self.editor.undo, "Ctrl+Z")
-        self.redo_action = self.create_action("Redo", self.editor.redo, "Ctrl+Shift+Z")
-        
-        # Update undo/redo availability
-        self.undo_action.setEnabled(False)
-        self.redo_action.setEnabled(False)
-        
-        # Add to toolbar
-        self.main_toolbar.addAction(new_action)
-        self.main_toolbar.addAction(open_action)
-        self.main_toolbar.addAction(save_action)
-        self.main_toolbar.addSeparator()
-        self.main_toolbar.addAction(self.undo_action)
-        self.main_toolbar.addAction(self.redo_action)
-        self.main_toolbar.addSeparator()
-        self.main_toolbar.addAction(print_action)
-        self.main_toolbar.addAction(preview_action)
-        
-        # Add settings action
-        settings_action = self.create_action("Settings", self.show_auto_save_settings)
-        self.main_toolbar.addSeparator()
-        self.main_toolbar.addAction(settings_action)
-
-    def setup_format_toolbar(self):
-        # Font family
-        self.font_family = QFontComboBox()
-        self.font_family.setMinimumWidth(150)
-        
-        # Font size
-        self.font_size = QSpinBox()
-        self.font_size.setMinimum(6)
-        self.font_size.setMaximum(72)
-        self.font_size.setValue(11)
-        
-        # Text formatting
-        bold_action = self.create_action("Bold", self.toggle_bold, "Ctrl+B", checkable=True)
-        italic_action = self.create_action("Italic", self.toggle_italic, "Ctrl+I", checkable=True)
-        underline_action = self.create_action("Underline", self.toggle_underline, "Ctrl+U", checkable=True)
-        
-        # Text alignment
-        align_left = self.create_action("Left", lambda: self.align_text('left'))
-        align_center = self.create_action("Center", lambda: self.align_text('center'))
-        align_right = self.create_action("Right", lambda: self.align_text('right'))
-        align_justify = self.create_action("Justify", lambda: self.align_text('justify'))
-        
-        # Colors
-        text_color_action = self.create_action("Text Color", self.text_color)
-        highlight_action = self.create_action("Highlight", self.highlight_color)
-        
-        # Add text styles
-        self.style_combo = QComboBox()
-        self.style_combo.setMinimumWidth(120)
-        self.style_combo.addItems([
-            "Normal",
-            "Heading 1",
-            "Heading 2",
-            "Heading 3",
-            "Heading 4",
-            "Title",
-            "Subtitle"
-        ])
-        self.style_combo.currentTextChanged.connect(self.apply_text_style)
-        
-        # Line spacing
-        line_spacing_menu = QMenu("Line Spacing", self)
-        for spacing in [1.0, 1.15, 1.5, 2.0]:
-            action = QAction(f"{spacing:.2f}", self)
-            action.setData(spacing)
-            action.triggered.connect(lambda checked, s=spacing: self.set_line_spacing(s))
-            line_spacing_menu.addAction(action)
-        
-        # Add custom line spacing option
-        line_spacing_menu.addSeparator()
-        custom_line_action = QAction("Custom...", self)
-        custom_line_action.triggered.connect(self.show_custom_line_spacing)
-        line_spacing_menu.addAction(custom_line_action)
-        
-        line_spacing_button = QPushButton("Line Spacing")
-        line_spacing_button.setMenu(line_spacing_menu)
-        
-        # Paragraph spacing
-        para_spacing_menu = QMenu("Paragraph Spacing", self)
-        for spacing in [0, 6, 12, 18, 24]:
-            action = QAction(f"{spacing}pt", self)
-            action.setData(spacing)
-            action.triggered.connect(lambda checked, s=spacing: self.set_paragraph_spacing(s))
-            para_spacing_menu.addAction(action)
-            
-        # Add custom paragraph spacing option
-        para_spacing_menu.addSeparator()
-        custom_para_action = QAction("Custom...", self)
-        custom_para_action.triggered.connect(self.show_custom_paragraph_spacing)
-        para_spacing_menu.addAction(custom_para_action)
-        
-        para_spacing_button = QPushButton("Paragraph Spacing")
-        para_spacing_button.setMenu(para_spacing_menu)
-        
-        # Add to toolbar
-        self.format_toolbar.addWidget(self.font_family)
-        self.format_toolbar.addWidget(self.font_size)
-        self.format_toolbar.addSeparator()
-        self.format_toolbar.addAction(bold_action)
-        self.format_toolbar.addAction(italic_action)
-        self.format_toolbar.addAction(underline_action)
-        self.format_toolbar.addSeparator()
-        self.format_toolbar.addAction(align_left)
-        self.format_toolbar.addAction(align_center)
-        self.format_toolbar.addAction(align_right)
-        self.format_toolbar.addAction(align_justify)
-        self.format_toolbar.addSeparator()
-        self.format_toolbar.addAction(text_color_action)
-        self.format_toolbar.addAction(highlight_action)
-        self.format_toolbar.addWidget(self.style_combo)
-        self.format_toolbar.addWidget(line_spacing_button)
-        self.format_toolbar.addWidget(para_spacing_button)
-        self.format_toolbar.addSeparator()
-        
-        # Add format painter
-        self.format_painter = self.create_action(
-            "Format Painter", 
-            self.toggle_format_painter,
-            checkable=True
-        )
-        self.format_toolbar.addAction(self.format_painter)
-        
-        # Store copied format
-        self.copied_format = None
-
-    def setup_insert_toolbar(self):
-        # Create table button and menu
-        table_button = QPushButton("Table")
-        table_menu = QMenu()
-        table_button.setMenu(table_menu)
-        
-        # Table insertion submenu
-        insert_submenu = QMenu("Insert", self)
-        insert_table_action = self.create_action("Custom Table...", self.show_table_dialog)
-        insert_submenu.addAction(insert_table_action)
-        
-        # Add table templates
-        insert_submenu.addSeparator()
-        templates = {
-            "Simple 2x2": (2, 2),
-            "Header Row 3x3": (3, 3),
-            "Calendar 7x5": (5, 7),
-            "Contact Card 2x3": (2, 3)
-        }
-        for name, (rows, cols) in templates.items():
-            action = QAction(name, self)
-            action.triggered.connect(lambda checked, r=rows, c=cols, n=name: 
-                                  self.insert_table_template(r, c, n))
-            insert_submenu.addAction(action)
-        
-        table_menu.addMenu(insert_submenu)
-        table_menu.addSeparator()
-        
-        # Row/Column operations
-        row_menu = QMenu("Row", self)
-        row_menu.addAction(self.create_action("Insert Row Above", self.insert_row_above))
-        row_menu.addAction(self.create_action("Insert Row Below", self.insert_row_below))
-        row_menu.addAction(self.create_action("Delete Row", self.delete_row))
-        table_menu.addMenu(row_menu)
-        
-        col_menu = QMenu("Column", self)
-        col_menu.addAction(self.create_action("Insert Column Left", self.insert_column_left))
-        col_menu.addAction(self.create_action("Insert Column Right", self.insert_column_right))
-        col_menu.addAction(self.create_action("Delete Column", self.delete_column))
-        table_menu.addMenu(col_menu)
-        
-        table_menu.addSeparator()
-        
-        # Table formatting
-        format_menu = QMenu("Format", self)
-        format_menu.addAction(self.create_action("Table Properties...", self.show_table_format_dialog))
-        format_menu.addAction(self.create_action("Cell Properties...", self.show_cell_format_dialog))
-        
-        # Border presets submenu
-        border_presets = QMenu("Border Presets", self)
-        border_presets.addAction(self.create_action("No Borders", lambda: self.apply_border_preset("none")))
-        border_presets.addAction(self.create_action("All Borders", lambda: self.apply_border_preset("all")))
-        border_presets.addAction(self.create_action("Outside Borders", lambda: self.apply_border_preset("outside")))
-        border_presets.addAction(self.create_action("Inside Borders", lambda: self.apply_border_preset("inside")))
-        format_menu.addMenu(border_presets)
-        
-        table_menu.addMenu(format_menu)
-        
-        # Add to toolbar
-        self.insert_toolbar.addWidget(table_button)
-        
-        # Add other insert toolbar items (images, lists, etc.)
-        # ... rest of your existing insert toolbar setup ...
-
-    def setup_status_bar(self):
-        """Setup the status bar with document information"""
-        # Create permanent widgets for the status bar
-        self.word_count_label = QLabel("Words: 0")
-        self.char_count_label = QLabel("Characters: 0")
-        self.paragraph_count_label = QLabel("Paragraphs: 0")
-        self.page_count_label = QLabel("Pages: 0")
-        self.cursor_pos_label = QLabel("Line: 1, Column: 1")
-        self.zoom_label = QLabel("100%")
-        self.file_info_label = QLabel()
-        
-        # Add widgets to status bar
-        self.status_bar.addPermanentWidget(self.word_count_label)
-        self.status_bar.addPermanentWidget(QLabel("|"))
-        self.status_bar.addPermanentWidget(self.char_count_label)
-        self.status_bar.addPermanentWidget(QLabel("|"))
-        self.status_bar.addPermanentWidget(self.paragraph_count_label)
-        self.status_bar.addPermanentWidget(QLabel("|"))
-        self.status_bar.addPermanentWidget(self.page_count_label)
-        self.status_bar.addPermanentWidget(QLabel("|"))
-        self.status_bar.addPermanentWidget(self.cursor_pos_label)
-        self.status_bar.addPermanentWidget(QLabel("|"))
-        self.status_bar.addPermanentWidget(self.zoom_label)
-        self.status_bar.addPermanentWidget(QLabel("|"))
-        self.status_bar.addPermanentWidget(self.file_info_label)
-        
-        # Initial update
-        self.update_status_bar()
-
-    def update_status_bar(self):
-        """Update all status bar information"""
-        # Get text statistics
-        text = self.editor.toPlainText()
-        char_count = len(text)
-        word_count = len(text.split()) if text else 0
-        
-        # Count paragraphs (non-empty lines)
-        paragraphs = [p for p in text.split('\n') if p.strip()]
-        paragraph_count = len(paragraphs)
-        
-        # Estimate page count (roughly 250 words per page)
-        page_count = max(1, math.ceil(word_count / 250))
-        
-        # Update statistics labels
-        self.word_count_label.setText(f"Words: {word_count}")
-        self.char_count_label.setText(f"Characters: {char_count}")
-        self.paragraph_count_label.setText(f"Paragraphs: {paragraph_count}")
-        self.page_count_label.setText(f"Pages: {page_count}")
-        
-        # Get cursor position
-        cursor = self.editor.textCursor()
-        line = cursor.blockNumber() + 1
-        column = cursor.columnNumber() + 1
-        self.cursor_pos_label.setText(f"Line: {line}, Column: {column}")
-        
-        # Update file information
-        self.update_file_info()
-        
-        # Get selection info
-        if cursor.hasSelection():
-            selection = cursor.selectedText()
-            sel_chars = len(selection)
-            sel_words = len(selection.split()) if selection else 0
-            self.status_bar.showMessage(
-                f"Selected: {sel_words} words, {sel_chars} characters", 
-                2000
-            )
-
-    def update_file_info(self):
-        """Update file information in status bar"""
-        if self.current_file:
-            try:
-                # Get file stats
-                stats = os.stat(self.current_file)
-                size = self.format_file_size(stats.st_size)
-                modified = datetime.fromtimestamp(stats.st_mtime)
-                modified_str = modified.strftime("%Y-%m-%d %H:%M")
-                
-                # Get file type
-                file_type = os.path.splitext(self.current_file)[1].upper()[1:]
-                if not file_type:
-                    file_type = "TXT"
-                
-                # Update label
-                self.file_info_label.setText(
-                    f"{file_type} | {size} | Modified: {modified_str}"
-                )
-            except Exception:
-                self.file_info_label.setText("No file information available")
-        else:
-            self.file_info_label.setText("New Document")
-
-    def format_file_size(self, size_in_bytes):
-        """Format file size in human-readable format"""
-        for unit in ['B', 'KB', 'MB', 'GB']:
-            if size_in_bytes < 1024:
-                return f"{size_in_bytes:.1f} {unit}"
-            size_in_bytes /= 1024
-        return f"{size_in_bytes:.1f} TB"
-
-    def save_file(self, file_name):
-        """Save document to file"""
-        try:
-            with open(file_name, 'w', encoding='utf-8') as file:
-                file.write(self.editor.toHtml())
-            self.current_file = file_name
-            self.editor.document().setModified(False)
-            self.status_bar.showMessage(f"Saved {file_name}")
-            self.update_file_info()
-            
-            # Add to recent files and create backup
-            self.add_to_recent_files(file_name)
-            self.create_backup()
-            return True
-        except Exception as e:
-            self.status_bar.showMessage(f"Failed to save {file_name}: {str(e)}")
-            return False
-
-    def text_changed(self):
-        """Handle text changes"""
-        self.status_bar.showMessage("Document modified")
-        self.update_edit_status()
-        self.update_status_bar()  # Update statistics when text changes
-
-    def cursor_position_changed(self):
-        """Update UI based on cursor position"""
-        cursor = self.editor.textCursor()
-        
-        # Update format buttons
-        format = cursor.charFormat()
-        self.update_format_buttons(format)
-        
-        # Update style combo based on current block format
-        self.update_style_combo(cursor)
-        
-        # Update status bar
-        self.update_status_bar()
-
-    def selection_changed(self):
-        """Handle selection changes"""
-        cursor = self.editor.textCursor()
-        if cursor.hasSelection():
-            selection = cursor.selectedText()
-            sel_chars = len(selection)
-            sel_words = len(selection.split()) if selection else 0
-            self.status_bar.showMessage(
-                f"Selected: {sel_words} words, {sel_chars} characters",
-                2000
-            )
-        else:
-            self.status_bar.clearMessage()
-
-    def update_format_buttons(self, format):
-        """Update format button states"""
-        font = format.font()
-        self.font_family.setCurrentFont(font)
-        self.font_size.setValue(int(font.pointSize()))
-        
-        # Update formatting buttons
-        bold_action = self.format_toolbar.actions()[3]  # Bold action
-        italic_action = self.format_toolbar.actions()[4]  # Italic action
-        underline_action = self.format_toolbar.actions()[5]  # Underline action
-        
-        bold_action.setChecked(font.bold())
-        italic_action.setChecked(font.italic())
-        underline_action.setChecked(font.underline())
-
-    def toggle_bold(self, checked):
-        """Toggle bold formatting"""
-        fmt = QTextCharFormat()
-        fmt.setFontWeight(QFont.Bold if checked else QFont.Normal)
-        self.merge_format(fmt)
-
-    def toggle_italic(self, checked):
-        """Toggle italic formatting"""
-        fmt = QTextCharFormat()
-        fmt.setFontItalic(checked)
-        self.merge_format(fmt)
-
-    def toggle_underline(self, checked):
-        """Toggle underline formatting"""
-        fmt = QTextCharFormat()
-        fmt.setFontUnderline(checked)
-        self.merge_format(fmt)
-
-    def text_color(self):
-        """Change text color"""
-        color = QColorDialog.getColor(self.editor.textColor(), self)
-        if color.isValid():
-            fmt = QTextCharFormat()
-            fmt.setForeground(color)
-            self.merge_format(fmt)
-
-    def highlight_color(self):
-        """Change text background color"""
-        color = QColorDialog.getColor(self.editor.textBackgroundColor(), self)
-        if color.isValid():
-            fmt = QTextCharFormat()
-            fmt.setBackground(color)
-            self.merge_format(fmt)
-
-    def align_text(self, alignment):
-        """Set text alignment"""
-        if alignment == 'left':
-            self.editor.setAlignment(Qt.AlignLeft)
-        elif alignment == 'center':
-            self.editor.setAlignment(Qt.AlignCenter)
-        elif alignment == 'right':
-            self.editor.setAlignment(Qt.AlignRight)
-        elif alignment == 'justify':
-            self.editor.setAlignment(Qt.AlignJustify)
-
-    def merge_format(self, format):
-        """Apply the given format to the selected text or at cursor position"""
-        cursor = self.editor.textCursor()
-        if not cursor.hasSelection():
-            cursor.select(QTextCursor.WordUnderCursor)
-        cursor.mergeCharFormat(format)
-        self.editor.mergeCurrentCharFormat(format)
-
-    def create_action(self, text, slot, shortcut=None, checkable=False):
-        """Create a QAction with the given parameters"""
-        action = QAction(text, self)
-        action.triggered.connect(slot)
-        if shortcut:
-            action.setShortcut(shortcut)
-        if checkable:
-            action.setCheckable(True)
-        return action
-
-    def show_table_dialog(self):
-        """Show dialog for table insertion"""
-        dialog = TableDialog(self)
-        if dialog.exec_() == QDialog.Accepted:
-            rows = dialog.rows_spin.value()
-            cols = dialog.cols_spin.value()
-            self.insert_table(rows, cols)
-
-    def insert_table(self, rows, cols):
-        """Insert table at current cursor position"""
-        cursor = self.editor.textCursor()
-        table_format = QTextTableFormat()
-        table_format.setCellPadding(5)
-        table_format.setCellSpacing(0)
-        table_format.setBorder(1)
-        
-        # Create table
-        table = cursor.insertTable(rows, cols, table_format)
-        QApplication.processEvents()
-        
-        return table
-
-    def merge_table_cells(self):
-        """Merge selected table cells"""
-        cursor = self.editor.textCursor()
-        if cursor.hasSelection():
-            table = cursor.currentTable()
-            if table:
-                cell = table.cellAt(cursor)
-                if cell.isValid():
-                    table.mergeCells(cursor)
-
-    def split_table_cells(self):
-        """Split merged table cells"""
-        cursor = self.editor.textCursor()
-        table = cursor.currentTable()
-        if table:
-            cell = table.cellAt(cursor)
-            if cell.isValid():
-                table.splitCell(cell.row(), cell.column(), 1, 1)
-
-    def insert_image(self):
-        """Insert an image at cursor position"""
-        file_name, _ = QFileDialog.getOpenFileName(
-            self, "Insert Image", "",
-            "Images (*.png *.jpg *.bmp *.gif)"
-        )
-        if file_name:
-            image = QImage(file_name)
-            if not image.isNull():
-                cursor = self.editor.textCursor()
-                image_format = QTextImageFormat()
-                image_format.setName(file_name)
-                # Scale image if too large
-                if image.width() > 800:
-                    image = image.scaledToWidth(800, Qt.SmoothTransformation)
-                image_format.setWidth(image.width())
-                image_format.setHeight(image.height())
-                cursor.insertImage(image_format)
-
-    def insert_list(self, list_style):
-        """Insert a list with the specified style"""
-        cursor = self.editor.textCursor()
-        list_format = QTextListFormat()
-        list_format.setStyle(list_style)
-        cursor.createList(list_format)
-
-    def show_table_format_dialog(self):
-        """Show dialog for table formatting"""
-        cursor = self.editor.textCursor()
-        table = cursor.currentTable()
-        if table:
-            dialog = TableFormatDialog(self, table)
-            if dialog.exec_() == QDialog.Accepted:
-                self.apply_table_format(table, dialog.get_format())
-
-    def apply_table_format(self, table, format_data):
-        """Apply formatting to table"""
-        table_format = table.format()
-        
-        # Convert Qt.PenStyle to QTextFrameFormat.BorderStyle
-        border_style_map = {
-            Qt.NoPen: QTextFrameFormat.BorderStyle_None,
-            Qt.SolidLine: QTextFrameFormat.BorderStyle_Solid,
-            Qt.DashLine: QTextFrameFormat.BorderStyle_Dashed,
-            Qt.DotLine: QTextFrameFormat.BorderStyle_Dotted,
-            Qt.DashDotLine: QTextFrameFormat.BorderStyle_Dot_Dash,
-            Qt.DashDotDotLine: QTextFrameFormat.BorderStyle_Dot_Dot_Dash
-        }
-        
-        # Apply formatting
-        table_format.setBorder(format_data['border_width'])
-        table_format.setBorderStyle(border_style_map.get(format_data['border_style'], QTextFrameFormat.BorderStyle_Solid))
-        table_format.setBorderBrush(format_data['border_color'])
-        table_format.setCellPadding(format_data['padding'])
-        table_format.setCellSpacing(format_data['spacing'])
-        table_format.setWidth(format_data['width'])
-        
-        if format_data['background_color']:
-            table_format.setBackground(format_data['background_color'])
-            
-        table.setFormat(table_format)
-
-    def show_image_resize_dialog(self):
-        """Show dialog for image resizing"""
-        cursor = self.editor.textCursor()
-        image_format = cursor.charFormat().toImageFormat()
-        if image_format.isValid():
-            dialog = ImageResizeDialog(self, image_format)
-            if dialog.exec_() == QDialog.Accepted:
-                self.apply_image_format(cursor, dialog.get_format())
-
-    def align_image(self, alignment):
-        """Align the selected image"""
-        cursor = self.editor.textCursor()
-        image_format = cursor.charFormat().toImageFormat()
-        if image_format.isValid():
-            block_format = QTextBlockFormat()
-            if alignment == 'left':
-                block_format.setAlignment(Qt.AlignLeft)
-            elif alignment == 'center':
-                block_format.setAlignment(Qt.AlignCenter)
-            elif alignment == 'right':
-                block_format.setAlignment(Qt.AlignRight)
-            cursor.mergeBlockFormat(block_format)
-
-    def apply_image_format(self, cursor, format_data):
-        """Apply formatting to image"""
-        image_format = cursor.charFormat().toImageFormat()
-        if image_format.isValid():
-            image_format.setWidth(format_data['width'])
-            image_format.setHeight(format_data['height'])
-            cursor.mergeCharFormat(image_format)
-
-    def show_cell_format_dialog(self):
-        """Show dialog for cell formatting"""
-        cursor = self.editor.textCursor()
-        table = cursor.currentTable()
-        if table:
-            cell = table.cellAt(cursor)
-            if cell.isValid():
-                dialog = TableCellFormatDialog(self, cell)
-                if dialog.exec_() == QDialog.Accepted:
-                    self.apply_cell_format(cell, dialog.get_format())
-
-    def apply_cell_format(self, cell, format_data):
-        """Apply formatting to specific cell"""
-        cursor = cell.firstCursorPosition()
-        block_format = cursor.blockFormat()
-        
-        # Background color
-        block_format.setBackground(QColor(format_data['background_color']))
-        
-        # Borders
-        block_format.setProperty(QTextFormat.TableCellBorderStyle, format_data['border_style'])
-        block_format.setProperty(QTextFormat.TableCellBorderWidth, format_data['border_width'])
-        block_format.setProperty(QTextFormat.TableCellBorderColor, QColor(format_data['border_color']))
-        
-        # Alignment
-        block_format.setAlignment(format_data['alignment'])
-        
-        cursor.setBlockFormat(block_format)
-
-    def rotate_image(self, degrees):
-        """Rotate the selected image"""
-        cursor = self.editor.textCursor()
-        image_format = cursor.charFormat().toImageFormat()
-        if image_format.isValid():
-            image = QImage(image_format.name())
-            transform = QTransform().rotate(degrees)
-            rotated_image = image.transformed(transform, Qt.SmoothTransformation)
-            
-            # Save rotated image to temp file
-            temp_path = f"{image_format.name()}_rotated.png"
-            rotated_image.save(temp_path)
-            
-            # Update image in document
-            new_format = QTextImageFormat()
-            new_format.setName(temp_path)
-            new_format.setWidth(rotated_image.width())
-            new_format.setHeight(rotated_image.height())
-            cursor.insertImage(new_format)
-
-    def apply_image_filter(self, filter_type):
-        """Apply filter to the selected image"""
-        cursor = self.editor.textCursor()
-        image_format = cursor.charFormat().toImageFormat()
-        if image_format.isValid():
-            image = QImage(image_format.name())
-            
-            if filter_type == 'grayscale':
-                filtered = image.convertToFormat(QImage.Format_Grayscale8)
-            elif filter_type == 'sepia':
-                filtered = self.apply_sepia_filter(image)
-            elif filter_type == 'blur':
-                # New blur implementation
-                pixmap = QPixmap.fromImage(image)
-                scene = QGraphicsScene()
-                item = QGraphicsPixmapItem(pixmap)
-                blur = QGraphicsBlurEffect()
-                blur.setBlurRadius(5)
-                item.setGraphicsEffect(blur)
-                scene.addItem(item)
-                
-                # Render the blurred result
-                filtered = QImage(image.size(), QImage.Format_ARGB32)
-                filtered.fill(Qt.transparent)
-                painter = QPainter(filtered)
-                scene.render(painter, filtered.rect(), scene.sceneRect())
-                painter.end()
-            
-            # Save filtered image
-            temp_path = f"{image_format.name()}_{filter_type}.png"
-            filtered.save(temp_path)
-            
-            # Update image in document
-            new_format = QTextImageFormat()
-            new_format.setName(temp_path)
-            new_format.setWidth(filtered.width())
-            new_format.setHeight(filtered.height())
-            cursor.insertImage(new_format)
-
-    def apply_sepia_filter(self, image):
-        """Apply sepia filter to image"""
-        for y in range(image.height()):
-            for x in range(image.width()):
-                color = QColor(image.pixel(x, y))
-                r, g, b = color.red(), color.green(), color.blue()
-                tr = int(0.393 * r + 0.769 * g + 0.189 * b)
-                tg = int(0.349 * r + 0.686 * g + 0.168 * b)
-                tb = int(0.272 * r + 0.534 * g + 0.131 * b)
-                image.setPixel(x, y, QColor(
-                    min(tr, 255),
-                    min(tg, 255),
-                    min(tb, 255)
-                ).rgb())
-        return image
-
-    def paintEvent(self, event):
-        """Override paint event to draw resize handles"""
-        super().paintEvent(event)
-        if self.resize_handles_visible:
-            painter = QPainter(self)
-            painter.setRenderHint(QPainter.Antialiasing)
-            
-            # Draw handles
-            for position, rect in self.handle_rects.items():
-                if position == self.current_handle:
-                    # Highlight active handle
-                    painter.setBrush(QColor(0, 120, 215))  # Blue when active
-                    painter.setPen(QPen(QColor(255, 255, 255), 1))
-                else:
-                    # Normal handle appearance
-                    painter.setBrush(QColor(255, 255, 255))  # White
-                    painter.setPen(QPen(QColor(0, 120, 215), 1))  # Blue border
-                
-                painter.drawRect(rect)
-
-    def mousePressEvent(self, event):
-        """Handle mouse press events for resize handles"""
-        if event.button() == Qt.LeftButton:
-            cursor = self.editor.cursorForPosition(event.pos())
-            image_format = cursor.charFormat().toImageFormat()
-            if image_format.isValid():
-                # Get image rectangle
-                image_rect = self.editor.document().documentLayout().blockBoundingRect(cursor.block())
-                handle_size = 8  # Size of resize handles
-                
-                # Create handle rectangles
-                self.handle_rects = {
-                    'top-left': QRect(
-                        image_rect.left() - handle_size//2,
-                        image_rect.top() - handle_size//2,
-                        handle_size, handle_size
-                    ),
-                    'top-right': QRect(
-                        image_rect.right() - handle_size//2,
-                        image_rect.top() - handle_size//2,
-                        handle_size, handle_size
-                    ),
-                    'bottom-left': QRect(
-                        image_rect.left() - handle_size//2,
-                        image_rect.bottom() - handle_size//2,
-                        handle_size, handle_size
-                    ),
-                    'bottom-right': QRect(
-                        image_rect.right() - handle_size//2,
-                        image_rect.bottom() - handle_size//2,
-                        handle_size, handle_size
-                    )
-                }
-                
-                # Check if click is on any handle
-                for position, rect in self.handle_rects.items():
-                    if rect.contains(event.pos()):
-                        self.resizing_image = True
-                        self.resize_start_pos = event.pos()
-                        self.original_size = QSize(image_format.width(), image_format.height())
-                        self.current_handle = position
-                        self.setCursor(self.get_resize_cursor(position))
-                        event.accept()
-                        self.update()  # Redraw handles
-                        return
-                
-                # Show handles when clicking on image
-                self.resize_handles_visible = True
-                self.update()  # Redraw to show handles
-
-        if self.format_painter.isChecked() and self.copied_format:
-            cursor = self.editor.cursorForPosition(event.pos())
-            if event.modifiers() & Qt.ShiftModifier:
-                # Apply to whole paragraph
-                cursor.movePosition(QTextCursor.StartOfBlock)
-                cursor.movePosition(QTextCursor.EndOfBlock, QTextCursor.KeepAnchor)
-            else:
-                # Apply to word
-                cursor.select(QTextCursor.WordUnderCursor)
-            
-            cursor.mergeCharFormat(self.copied_format['char'])
-            cursor.mergeBlockFormat(self.copied_format['block'])
-            
-            # Turn off format painter unless Ctrl is held
-            if not (event.modifiers() & Qt.ControlModifier):
-                self.format_painter.setChecked(False)
-                self.copied_format = None
-                self.editor.viewport().setCursor(Qt.IBeamCursor)
-        else:
-            super().mousePressEvent(event)
-
-    def mouseMoveEvent(self, event):
-        """Handle mouse move events for image resizing"""
-        if hasattr(self, 'resizing_image') and self.resizing_image:
-            cursor = self.editor.textCursor()
-            image_format = cursor.charFormat().toImageFormat()
-            if image_format.isValid():
-                delta = event.pos() - self.resize_start_pos
-                new_size = self.calculate_new_size(delta)
-                
-                # Update image size
-                image_format.setWidth(max(10, new_size.width()))
-                image_format.setHeight(max(10, new_size.height()))
-                cursor.mergeCharFormat(image_format)
-                
-                # Update handle positions
-                self.update_handle_positions(event.pos())
-        else:
-            # Update cursor shape on hover
-            for position, rect in self.handle_rects.items():
-                if rect.contains(event.pos()):
-                    self.setCursor(self.get_resize_cursor(position))
-                    self.current_handle = position
-                    self.update()  # Redraw handles
-                    return
-            self.setCursor(Qt.ArrowCursor)
-            self.current_handle = None
-            self.update()  # Redraw handles
-
-    def calculate_new_size(self, delta):
-        """Calculate new size based on resize handle and delta"""
-        new_width = self.original_size.width()
-        new_height = self.original_size.height()
-        
-        if self.current_handle in ['top-right', 'bottom-right']:
-            new_width += delta.x()
-        if self.current_handle in ['bottom-left', 'bottom-right']:
-            new_height += delta.y()
-        if self.current_handle in ['top-left', 'bottom-left']:
-            new_width -= delta.x()
-        if self.current_handle in ['top-left', 'top-right']:
-            new_height -= delta.y()
-        
-        # Maintain aspect ratio if Shift is pressed
-        if QApplication.keyboardModifiers() & Qt.ShiftModifier:
-            ratio = self.original_size.width() / self.original_size.height()
-            if abs(delta.x()) > abs(delta.y()):
-                new_height = new_width / ratio
-            else:
-                new_width = new_height * ratio
-        
-        return QSize(new_width, new_height)
-
-    def get_resize_cursor(self, position):
-        """Get appropriate cursor shape for resize handle"""
-        if position in ['top-left', 'bottom-right']:
-            return Qt.SizeFDiagCursor
-        elif position in ['top-right', 'bottom-left']:
-            return Qt.SizeBDiagCursor
-        return Qt.ArrowCursor
-
-    def mouseReleaseEvent(self, event):
-        """Handle mouse release events"""
-        super().mouseReleaseEvent(event)
-        if hasattr(self, 'resizing_image'):
-            self.resizing_image = False
-            self.current_handle = None
-            self.setCursor(Qt.ArrowCursor)
-            self.update()  # Redraw handles
-
-    def leaveEvent(self, event):
-        """Handle mouse leave events"""
-        super().leaveEvent(event)
-        self.resize_handles_visible = False
-        self.current_handle = None
-        self.update()  # Remove handles
-
-    def update_edit_status(self):
-        """Update edit status information in status bar"""
-        undo_available = self.editor.document().isUndoAvailable()
-        redo_available = self.editor.document().isRedoAvailable()
-        
-        # Create status message
-        status_parts = []
-        if undo_available:
-            status_parts.append("Undo available")
-        if redo_available:
-            status_parts.append("Redo available")
-        
-        if status_parts:
-            status = " | ".join(status_parts)
-        else:
-            status = "No changes"
-        
-        # Add to permanent status bar widget
-        if not hasattr(self, 'edit_status_label'):
-            self.edit_status_label = QLabel()
-            self.status_bar.addPermanentWidget(self.edit_status_label)
-        
-        self.edit_status_label.setText(status)
-
-    def clear_undo_stack(self):
-        """Clear the undo stack when loading a new document"""
-        self.editor.document().clearUndoRedoStacks()
-        self.update_edit_status()
-
     def setup_connections(self):
         """Setup signal connections"""
-        # Existing connections
-        self.font_family.currentFontChanged.connect(self.font_family_changed)
-        self.font_size.valueChanged.connect(self.font_size_changed)
+        # Document change connections
+        self.editor.document().contentsChanged.connect(self.text_changed)
         self.editor.cursorPositionChanged.connect(self.cursor_position_changed)
-        self.editor.textChanged.connect(self.text_changed)
         
         # Add undo/redo connections
         document = self.editor.document()
@@ -989,17 +140,65 @@ class DocumentEditor(QWidget):
         # Clear undo stack when loading new document
         document.clearUndoRedoStacks()
 
-    def setup_auto_save(self):
-        """Setup auto-save timer"""
-        self.auto_save_timer = QTimer(self)
-        self.auto_save_timer.timeout.connect(self.auto_save)
-        self.auto_save_timer.start(self.auto_save_interval)
+    def text_changed(self):
+        """Handle text content changes"""
+        # Update document modified state
+        document = self.editor.document()
+        document.setModified(True)
+        
+        # Update window title to show modified state
+        window_title = self.window().windowTitle()
+        if not window_title.startswith('*'):
+            self.window().setWindowTitle(f'*{window_title}')
+        
+        # Trigger auto-save if enabled
+        if hasattr(self, 'auto_save_timer'):
+            self.auto_save_timer.start()
+        
+        # Update status bar
+        word_count = len(self.editor.toPlainText().split())
+        char_count = len(self.editor.toPlainText())
+        self.status_bar.showMessage(f'Words: {word_count} | Characters: {char_count}')
 
-    def auto_save(self):
-        """Perform auto-save if document is modified"""
-        if self.editor.document().isModified() and self.current_file:
-            self.save_file(self.current_file)
-            self.status_bar.showMessage("Auto-saved", 2000)
+    def cursor_position_changed(self):
+        """Handle cursor position changes"""
+        cursor = self.editor.textCursor()
+        
+        # Update format toolbar states
+        if hasattr(self, 'format_handler'):
+            # Get current character format
+            char_format = cursor.charFormat()
+            
+            # Update font family combo
+            font = char_format.font()
+            self.font_family.setCurrentFont(font)
+            
+            # Update font size spinner
+            size = char_format.fontPointSize()
+            if size > 0:
+                self.font_size.setValue(int(size))
+        
+        # Update status bar position info
+        block = cursor.blockNumber() + 1
+        col = cursor.columnNumber() + 1
+        self.status_bar.showMessage(f'Line: {block} | Column: {col}')
+
+    def setup_auto_save(self):
+        """Setup auto-save functionality"""
+        self.auto_save_timer = QTimer(self)  # Make timer a child of editor
+        self.auto_save_timer.timeout.connect(self._auto_save)
+        self.auto_save_timer.setInterval(self.auto_save_interval)
+        self.auto_save_timer.start()
+
+    def _auto_save(self):
+        """Auto-save current document"""
+        if self.current_file and self.editor.document().isModified():
+            try:
+                self.save_document_as(self.current_file)
+                self.editor.document().setModified(False)  # Reset modified state
+                print(f"Auto-saved to {self.current_file}")  # Debug info
+            except Exception as e:
+                print(f"Auto-save failed: {str(e)}")
 
     def load_recent_files(self):
         """Load recent files list from settings"""
@@ -1014,45 +213,37 @@ class DocumentEditor(QWidget):
 
     def add_to_recent_files(self, file_path):
         """Add file to recent files list"""
+        if not hasattr(self, 'recent_files'):
+            self.recent_files = []
+        
+        # Remove if already exists
         if file_path in self.recent_files:
             self.recent_files.remove(file_path)
+        
+        # Add to start of list
         self.recent_files.insert(0, file_path)
+        
+        # Keep only last 10 files
         while len(self.recent_files) > self.max_recent_files:
             self.recent_files.pop()
-        self.save_recent_files()
-        self.update_recent_files_menu()
+        
+        # Update menu if it exists
+        if hasattr(self, 'update_recent_files_menu'):
+            self.update_recent_files_menu()
 
     def update_recent_files_menu(self):
-        """Update recent files menu"""
-        if not hasattr(self, 'recent_files_menu'):
-            self.recent_files_menu = QMenu("Recent Files", self)
-            # Create action for the menu
-            recent_files_action = QAction("Recent Files", self)
-            recent_files_action.setMenu(self.recent_files_menu)
-            # Insert after New action
-            self.main_toolbar.insertAction(self.main_toolbar.actions()[1], recent_files_action)
-        
-        self.recent_files_menu.clear()
-        for file_path in self.recent_files:
-            if os.path.exists(file_path):
-                action = QAction(os.path.basename(file_path), self)
-                action.setData(file_path)
-                action.setStatusTip(file_path)
-                action.triggered.connect(lambda checked, f=file_path: self.open_recent_file(f))
-                self.recent_files_menu.addAction(action)
-
-    def open_recent_file(self, file_path):
-        """Open a file from recent files list"""
-        if os.path.exists(file_path):
-            self.load_file(file_path)
-        else:
-            QMessageBox.warning(
-                self, "File Not Found",
-                f"The file {file_path} no longer exists."
-            )
-            self.recent_files.remove(file_path)
-            self.save_recent_files()
-            self.update_recent_files_menu()
+        """Update the recent files menu"""
+        if hasattr(self, 'recent_files_menu'):
+            self.recent_files_menu.clear()
+            
+            for file_path in self.recent_files:
+                if os.path.exists(file_path):
+                    action = QAction(os.path.basename(file_path), self)
+                    action.setData(file_path)
+                    action.setStatusTip(file_path)
+                    action.triggered.connect(
+                        lambda checked, f=file_path: self.load_document(f))
+                    self.recent_files_menu.addAction(action)
 
     def show_auto_save_settings(self):
         """Show auto-save settings dialog"""
@@ -1069,7 +260,7 @@ class DocumentEditor(QWidget):
         
         if auto_save_enabled:
             self.auto_save_interval = interval_minutes * 60 * 1000  # Convert to milliseconds
-            self.auto_save_timer.start(self.auto_save_interval)
+            self.auto_save_timer.setInterval(self.auto_save_interval)
         else:
             self.auto_save_timer.stop()
 
@@ -1540,6 +731,451 @@ class DocumentEditor(QWidget):
                 self.editor.viewport().setCursor(Qt.IBeamCursor)
         else:
             super().mousePressEvent(event)
+
+    def resize_selected_image(self):
+        """Show resize dialog for selected image"""
+        cursor = self.editor.textCursor()
+        if cursor.charFormat().isImageFormat():
+            self.show_image_properties(cursor)
+
+    def toggle_resize_handles(self, checked):
+        """Toggle visibility of image resize handles"""
+        self.resize_handles_visible = checked
+        if not checked:
+            self.clear_resize_handles()
+        else:
+            self.update_resize_handles()
+        self.editor.viewport().update()
+
+    def update_resize_handles(self):
+        """Update resize handles for all images in the document"""
+        if not self.resize_handles_visible:
+            return
+            
+        self.handle_rects = {}
+        cursor = self.editor.textCursor()
+        cursor.movePosition(QTextCursor.Start)
+        
+        while not cursor.atEnd():
+            format = cursor.charFormat()
+            if format.isImageFormat():
+                image_format = format.toImageFormat()
+                rect = self.editor.document().documentLayout().blockBoundingRect(cursor.block())
+                pos = rect.topLeft()
+                size = QSizeF(image_format.width(), image_format.height())
+                
+                # Create handle rectangles
+                handle_size = 8
+                handles = {
+                    'top-left': QRectF(pos.x(), pos.y(), handle_size, handle_size),
+                    'top-right': QRectF(pos.x() + size.width() - handle_size, pos.y(), handle_size, handle_size),
+                    'bottom-left': QRectF(pos.x(), pos.y() + size.height() - handle_size, handle_size, handle_size),
+                    'bottom-right': QRectF(pos.x() + size.width() - handle_size, pos.y() + size.height() - handle_size, handle_size, handle_size)
+                }
+                self.handle_rects[cursor.position()] = handles
+                
+            cursor.movePosition(QTextCursor.NextCharacter)
+
+    def clear_resize_handles(self):
+        """Clear all resize handles"""
+        self.handle_rects = {}
+        self.current_handle = None
+        self.editor.viewport().update()
+
+    def mousePressEvent(self, event):
+        """Handle mouse press for resize handles"""
+        if self.resize_handles_visible:
+            pos = event.pos()
+            for position, handles in self.handle_rects.items():
+                for handle_pos, rect in handles.items():
+                    if rect.contains(pos):
+                        self.current_handle = (position, handle_pos)
+                        return
+        super().mousePressEvent(event)
+
+    def mouseMoveEvent(self, event):
+        """Handle mouse move for image resizing"""
+        if self.current_handle:
+            position, handle_pos = self.current_handle
+            cursor = self.editor.textCursor()
+            cursor.setPosition(position)
+            
+            if cursor.charFormat().isImageFormat():
+                image_format = cursor.charFormat().toImageFormat()
+                rect = self.editor.document().documentLayout().blockBoundingRect(cursor.block())
+                delta = event.pos() - rect.topLeft()
+                
+                # Calculate new size based on handle position and mouse movement
+                new_width = image_format.width()
+                new_height = image_format.height()
+                
+                if 'right' in handle_pos:
+                    new_width = max(10, delta.x())
+                if 'bottom' in handle_pos:
+                    new_height = max(10, delta.y())
+                    
+                # Update image size
+                new_format = QTextImageFormat()
+                new_format.setName(image_format.name())
+                new_format.setWidth(new_width)
+                new_format.setHeight(new_height)
+                cursor.mergeCharFormat(new_format)
+                
+                self.update_resize_handles()
+                
+        super().mouseMoveEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        """Handle mouse release for resize handles"""
+        self.current_handle = None
+        super().mouseReleaseEvent(event)
+
+    def editor_drag_enter_event(self, event):
+        """Delegate drag enter events to image handler"""
+        self.image_handler.handle_drag_enter(event)
+
+    def editor_drop_event(self, event):
+        """Delegate drop events to image handler"""
+        self.image_handler.handle_drop(event)
+
+    def insert_image_at_position(self, file_path, pos):
+        """Insert image at the specified position"""
+        cursor = self.editor.cursorForPosition(pos)
+        image = QImage(file_path)
+        if not image.isNull():
+            image_format = QTextImageFormat()
+            image_format.setName(file_path)
+            
+            # Set reasonable default size
+            max_width = 800
+            if image.width() > max_width:
+                image = image.scaledToWidth(max_width, Qt.SmoothTransformation)
+            
+            image_format.setWidth(image.width())
+            image_format.setHeight(image.height())
+            
+            # Store original size and rotation
+            image_format.setProperty(1, image.width())
+            image_format.setProperty(2, image.height())
+            image_format.setProperty(3, 0)  # Rotation angle
+            
+            cursor.insertImage(image_format)
+
+    def rotate_image(self, angle):
+        """Rotate the selected image"""
+        cursor = self.editor.textCursor()
+        if cursor.charFormat().isImageFormat():
+            image_format = cursor.charFormat().toImageFormat()
+            file_path = image_format.name()
+            
+            # Load and rotate image
+            image = QImage(file_path)
+            transform = QTransform().rotate(angle)
+            rotated = image.transformed(transform, Qt.SmoothTransformation)
+            
+            # Save rotated image
+            temp_path = f"{file_path}_rotated.png"
+            rotated.save(temp_path)
+            
+            # Update format
+            new_format = QTextImageFormat()
+            new_format.setName(temp_path)
+            new_format.setWidth(rotated.width())
+            new_format.setHeight(rotated.height())
+            
+            # Update rotation property
+            current_rotation = image_format.property(3) or 0
+            new_rotation = (current_rotation + angle) % 360
+            new_format.setProperty(3, new_rotation)
+            
+            cursor.mergeCharFormat(new_format)
+
+    def flip_image_horizontal(self):
+        """Flip image horizontally"""
+        self._flip_image(True, False)
+
+    def flip_image_vertical(self):
+        """Flip image vertically"""
+        self._flip_image(False, True)
+
+    def _flip_image(self, horizontal, vertical):
+        """Internal method to flip image"""
+        cursor = self.editor.textCursor()
+        if cursor.charFormat().isImageFormat():
+            image_format = cursor.charFormat().toImageFormat()
+            file_path = image_format.name()
+            
+            image = QImage(file_path)
+            flipped = image.mirrored(horizontal, vertical)
+            
+            temp_path = f"{file_path}_flipped.png"
+            flipped.save(temp_path)
+            
+            new_format = QTextImageFormat()
+            new_format.setName(temp_path)
+            new_format.setWidth(flipped.width())
+            new_format.setHeight(flipped.height())
+            
+            cursor.mergeCharFormat(new_format)
+
+    def add_image_border(self):
+        """Add border to image"""
+        cursor = self.editor.textCursor()
+        if cursor.charFormat().isImageFormat():
+            dialog = ImageBorderDialog(self)
+            if dialog.exec_() == QDialog.Accepted:
+                border_settings = dialog.get_border_settings()
+                self.apply_image_border(cursor, border_settings)
+
+    def apply_image_border(self, cursor, settings):
+        """Apply border to image"""
+        image_format = cursor.charFormat().toImageFormat()
+        file_path = image_format.name()
+        
+        image = QImage(file_path)
+        
+        # Create new image with border
+        bordered = QImage(
+            image.width() + 2 * settings['width'],
+            image.height() + 2 * settings['width'],
+            QImage.Format_ARGB32
+        )
+        bordered.fill(settings['color'])
+        
+        # Draw original image in center
+        painter = QPainter(bordered)
+        painter.drawImage(settings['width'], settings['width'], image)
+        painter.end()
+        
+        # Save and update
+        temp_path = f"{file_path}_bordered.png"
+        bordered.save(temp_path)
+        
+        new_format = QTextImageFormat()
+        new_format.setName(temp_path)
+        new_format.setWidth(bordered.width())
+        new_format.setHeight(bordered.height())
+        
+        cursor.mergeCharFormat(new_format)
+
+    def crop_image(self):
+        """Show image cropping dialog"""
+        cursor = self.editor.textCursor()
+        if cursor.charFormat().isImageFormat():
+            dialog = ImageCropDialog(self, cursor.charFormat().toImageFormat())
+            if dialog.exec_() == QDialog.Accepted:
+                self.apply_image_crop(cursor, dialog.get_crop_rect())
+
+    def reset_image_size(self):
+        """Reset image to its original size"""
+        cursor = self.editor.textCursor()
+        if cursor.charFormat().isImageFormat():
+            image_format = cursor.charFormat().toImageFormat()
+            
+            # Get original size from stored properties
+            original_width = image_format.property(1)
+            original_height = image_format.property(2)
+            
+            if original_width and original_height:
+                # Create new format with original dimensions
+                new_format = QTextImageFormat()
+                new_format.setName(image_format.name())
+                new_format.setWidth(original_width)
+                new_format.setHeight(original_height)
+                
+                # Preserve other properties
+                new_format.setProperty(1, original_width)
+                new_format.setProperty(2, original_height)
+                new_format.setProperty(3, image_format.property(3) or 0)  # Rotation
+                
+                cursor.mergeCharFormat(new_format)
+
+    def setup_file_toolbar(self):
+        """Setup file operations toolbar"""
+        # File operations
+        new_action = self.create_action("New", self.new_document, "Ctrl+N")
+        open_action = self.create_action("Open", self.open_document, "Ctrl+O")
+        save_action = self.create_action("Save", self.save_document, "Ctrl+S")
+        save_as_action = self.create_action("Save As...", self.save_document_as)
+        print_action = self.create_action("Print", self.print_document, "Ctrl+P")
+        
+        # Undo/Redo
+        self.undo_action = self.create_action("Undo", self.editor.undo, "Ctrl+Z")
+        self.redo_action = self.create_action("Redo", self.editor.redo, "Ctrl+Shift+Z")
+        
+        # Add to toolbar
+        self.main_toolbar.addAction(new_action)
+        self.main_toolbar.addAction(open_action)
+        self.main_toolbar.addAction(save_action)
+        self.main_toolbar.addAction(save_as_action)
+        self.main_toolbar.addSeparator()
+        self.main_toolbar.addAction(self.undo_action)
+        self.main_toolbar.addAction(self.redo_action)
+        self.main_toolbar.addSeparator()
+        self.main_toolbar.addAction(print_action)
+
+    def create_action(self, text, slot, shortcut=None, checkable=False):
+        """Helper to create an action"""
+        action = QAction(text, self)
+        action.triggered.connect(slot)
+        if shortcut:
+            action.setShortcut(shortcut)
+        if checkable:
+            action.setCheckable(True)
+        return action
+
+    def new_document(self):
+        """Create new document"""
+        if self.maybe_save():
+            self.editor.clear()
+            self.current_file = None
+            self.editor.document().setModified(False)
+            self.window().setWindowTitle("New Document")
+
+    def open_document(self):
+        """Open document from file"""
+        if self.maybe_save():
+            file_name, _ = QFileDialog.getOpenFileName(
+                self, "Open Document", "",
+                "All Files (*);;Text Files (*.txt);;HTML Files (*.html)"
+            )
+            if file_name:
+                self.load_file(file_name)
+
+    def save_document(self):
+        """Save current document"""
+        if not self.current_file:
+            return self.save_document_as()
+        return self.save_file(self.current_file)
+
+    def save_document_as(self):
+        """Save document with new name"""
+        file_name, _ = QFileDialog.getSaveFileName(
+            self, "Save As", "",
+            "All Files (*);;Text Files (*.txt);;HTML Files (*.html)"
+        )
+        if file_name:
+            return self.save_file(file_name)
+        return False
+
+    def open_document(self):
+        """Open document from file"""
+        if self.maybe_save():
+            file_name, _ = QFileDialog.getOpenFileName(
+                self, "Open Document", "",
+                "All Files (*);;Text Files (*.txt);;HTML Files (*.html)"
+            )
+            if file_name:
+                self.load_file(file_name)
+
+    def save_file(self, file_name):
+        """Save document to file"""
+        try:
+            with open(file_name, 'w', encoding='utf-8') as file:
+                file.write(self.editor.toHtml() if file_name.endswith('.html') 
+                          else self.editor.toPlainText())
+            
+            self.current_file = file_name
+            self.editor.document().setModified(False)
+            self.window().setWindowTitle(os.path.basename(file_name))
+            self.add_to_recent_files(file_name)
+            return True
+        except Exception as e:
+            QMessageBox.warning(self, "Save Error", f"Failed to save file: {str(e)}")
+            return False
+
+    def print_document(self):
+        """Print the current document"""
+        printer = QPrinter(QPrinter.HighResolution)
+        dialog = QPrintDialog(printer, self)
+        
+        if dialog.exec_() == QDialog.Accepted:
+            self.editor.print_(printer)
+
+    def save_document_as(self, filepath):
+        """Save document to specified path"""
+        try:
+            if filepath.endswith('.html'):
+                with open(filepath, 'w', encoding='utf-8') as f:
+                    f.write(self.editor.toHtml())
+            else:
+                with open(filepath, 'w', encoding='utf-8') as f:
+                    f.write(self.editor.toPlainText())
+            self.current_file = filepath
+            return True
+        except Exception as e:
+            print(f"Error saving document: {str(e)}")
+            return False
+
+    def load_document(self, filepath):
+        """Load document from specified path"""
+        try:
+            with open(filepath, 'r', encoding='utf-8') as f:
+                if filepath.endswith('.html'):
+                    self.editor.setHtml(f.read())
+                else:
+                    self.editor.setPlainText(f.read())
+            self.current_file = filepath
+            return True
+        except Exception as e:
+            print(f"Error loading document: {str(e)}")
+            return False
+
+    def get_document_statistics(self):
+        """Get document statistics"""
+        text = self.editor.toPlainText()
+        # Split by whitespace and filter out empty strings
+        words = [word for word in text.split() if word.strip()]
+        return {
+            'words': len(words),
+            'characters': len(text),
+            'lines': len(text.splitlines()) or 1
+        }
+
+    def find_text(self, text, forward=True, use_regex=False):
+        """Find text in document"""
+        flags = QTextDocument.FindFlags()
+        if not forward:
+            flags |= QTextDocument.FindBackward
+        
+        if use_regex:
+            # Use QRegularExpression instead of QRegExp
+            regex = QRegularExpression(text)
+            return self.editor.find(regex, flags)
+        else:
+            return self.editor.find(text, flags)
+
+    def replace_text(self, find_text, replace_with):
+        """Replace single occurrence of text"""
+        cursor = self.editor.textCursor()
+        if cursor.hasSelection() and cursor.selectedText() == find_text:
+            cursor.insertText(replace_with)
+            return True
+        return self.find_text(find_text)
+
+    def replace_all(self, find_text, replace_with):
+        """Replace all occurrences of text"""
+        count = 0
+        # Start from beginning
+        cursor = self.editor.textCursor()
+        cursor.movePosition(QTextCursor.Start)
+        self.editor.setTextCursor(cursor)
+        
+        while self.find_text(find_text):
+            cursor = self.editor.textCursor()
+            cursor.insertText(replace_with)
+            count += 1
+        
+        return count
+
+    def get_font_size(self):
+        """Get current font size"""
+        cursor = self.textCursor()
+        char_format = cursor.charFormat()
+        size = char_format.fontPointSize()
+        if size <= 0:  # If no explicit size set
+            size = self.currentCharFormat().fontPointSize()
+        return size
 
 class TableDialog(QDialog):
     """Dialog for table insertion"""
@@ -2137,7 +1773,6 @@ class DocumentRuler(QWidget):
                 painter.translate(0, pixel)
                 painter.rotate(-90)
                 painter.drawText(-15, 0, 15, 15, Qt.AlignCenter, str(int(cm)))
-                painter.restore()
             else:
                 painter.drawLine(18, pixel, self.width(), pixel)
 

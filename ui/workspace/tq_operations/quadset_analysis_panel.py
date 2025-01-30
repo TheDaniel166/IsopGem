@@ -1,17 +1,22 @@
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
-    QLabel, QLineEdit, QPushButton, QGroupBox, QTabWidget, QFrame
+    QLabel, QLineEdit, QPushButton, QGroupBox, QTabWidget, QFrame, QMenu
 )
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QCursor
 from core.tq_operations.base_converter import BaseConverter, TernaryVisualizer
 from core.tq_operations.number_properties import NumberProperties
-from ui.workspace.tq_operations.geometry_visualizer import GeometryVisualizerDialog
+from .geometry.visualizer import GeometryVisualizer
+from .geometry.items import GeometryLine
+import math
+import re
 
 class QuadsetAnalysisPanel(QWidget):
-    def __init__(self):
+    def __init__(self, main_window):
         super().__init__()
         self.base_converter = BaseConverter()
         self.number_properties = NumberProperties()
+        self.main_window = main_window  # Store the reference directly
         self.init_ui()
 
     def init_ui(self):
@@ -118,6 +123,9 @@ class QuadsetAnalysisPanel(QWidget):
         # Add everything to main layout
         main_layout.addLayout(top_bar)
         main_layout.addLayout(columns_layout)
+        
+        # Add status bar
+        self.create_status_bar()
 
     def format_large_number(self, n):
         """Format large numbers with commas for readability"""
@@ -125,66 +133,46 @@ class QuadsetAnalysisPanel(QWidget):
 
     def perform_analysis(self):
         try:
-            print("Starting analysis...")
             # Get and validate input
             decimal_num = int(self.number_input.text())
             if decimal_num < 0:
                 raise ValueError("Number must be positive")
             if decimal_num > 999999999:
                 raise ValueError("Number must be less than 1 billion")
-            print(f"Input number: {decimal_num}")
             
             # Convert to ternary - don't pad if longer than 6 digits
-            print("Converting to ternary...")
             base_ternary = self.base_converter.to_base_3(decimal_num)
-            print(f"Base ternary: {base_ternary}")
             
             if len(base_ternary) < 6:
                 base_ternary = base_ternary.zfill(6)
-            print(f"Padded ternary: {base_ternary}")
             
             # Calculate all variations
-            print("Calculating variations...")
             variations = {
                 'Base': base_ternary,
                 'Conrune': self.get_conrune(base_ternary),
                 'Reune': self.get_reune(base_ternary),
             }
             variations['Conreune'] = self.get_conrune(variations['Reune'])
-            print(f"Variations calculated: {variations}")
             
             # Update display for each variation
-            print("Updating displays...")
             for name, ternary in variations.items():
-                print(f"Processing {name}...")
                 # Update ternary label with formatted text
                 self.labels[f"{name}_ternary"].setText(f"Ternary: {ternary}")
                 
                 # Convert to decimal and update label with formatted text
                 decimal = self.base_converter.to_decimal(ternary)
-                print(f"{name} decimal: {decimal}")
                 self.labels[f"{name}_decimal"].setText(f"Decimal: {decimal}")
                 
                 # Update visualizer
-                print(f"Updating visualizer for {name}...")
                 self.visualizers[name].display_ternary(ternary)
                 
-                # Update properties for each number - pass variations dictionary
-                print(f"Updating properties for {name}...")
+                # Update properties for each number
                 self.update_properties(name, decimal, variations)
-                print(f"Finished processing {name}")
             
             # Update relationships after all numbers are processed
-            print("Updating relationships...")
             self.update_relationships(variations)
-            print("Analysis complete!")
             
         except Exception as e:
-            print(f"Error occurred: {str(e)}")
-            print(f"Error type: {type(e)}")
-            import traceback
-            traceback.print_exc()
-            
             for name in ['Base', 'Conrune', 'Reune', 'Conreune']:
                 self.labels[f"{name}_ternary"].setText("Error")
                 self.labels[f"{name}_decimal"].setText(str(e))
@@ -235,25 +223,21 @@ class QuadsetAnalysisPanel(QWidget):
 
     def update_properties(self, name, decimal_num, variations):
         """Update the properties tab for a given number"""
-        print(f"Starting property update for {name} with number {decimal_num}")
         layout = self.properties_widgets[name]
         
         # Clear existing properties
-        print("Clearing existing properties...")
         while layout.count():
             item = layout.takeAt(0)
             if item.widget():
                 item.widget().deleteLater()
             
         # Add properties
-        print("Adding new properties...")
         properties = [
             ("Decimal", self.format_large_number(decimal_num)),
         ]
         
         # Optimize factor calculation for large numbers
         if decimal_num < 1000000:  # Only calculate factors for reasonable numbers
-            print("Calculating factors...")
             factors = self.number_properties.get_factors(decimal_num)
             properties.extend([
                 ("Factors", ", ".join(map(self.format_large_number, factors))),
@@ -332,25 +316,25 @@ class QuadsetAnalysisPanel(QWidget):
                 (f"LCM with {other_num}", str(lcm))
             ])
 
-        print("Creating property labels...")
         for prop_name, value in properties:
-            label = QLabel(f"{prop_name}: {value}")
-            label.setStyleSheet("""
-                QLabel {
-                    font-family: monospace;
-                    padding: 3px;
-                }
-            """)
-            
-            # Make star numbers and centered polygonal numbers clickable
-            if prop_name in ["Star Number", "Centered Polygonal"]:
-                label.setCursor(Qt.PointingHandCursor)
-                label.mousePressEvent = lambda e, p=prop_name, v=value: self.show_geometry_visualization(p, v)
-                
+            label = self.create_property_label(prop_name, value)
             layout.addWidget(label)
         
         layout.addStretch()
-        print(f"Property update complete for {name}")
+
+    def create_property_label(self, prop_type, value):
+        """Create a clickable label for properties that have visualizations."""
+        label = QLabel(f"{prop_type}: {value}")
+        
+        # Make properties clickable if they have visualizations
+        if any(x in prop_type.lower() for x in [
+            "star", "polygonal", "centered", "triangular", "square"
+        ]):
+            label.setStyleSheet("QLabel { color: blue; text-decoration: underline; }")
+            label.setCursor(Qt.PointingHandCursor)
+            label.mousePressEvent = lambda e: self.show_geometry_visualization(prop_type, value)
+        
+        return label
 
     def get_digital_root(self, n):
         """Calculate the digital root of a number"""
@@ -406,41 +390,224 @@ class QuadsetAnalysisPanel(QWidget):
                     elif item.layout():
                         print(f"{indent}  Nested layout: {item.layout().__class__.__name__}")
 
+    def update_properties_panel(self, properties):
+        """Update the properties panel with the given properties."""
+        # Clear existing widgets
+        for i in reversed(range(self.properties_layout.count())): 
+            self.properties_layout.itemAt(i).widget().setParent(None)
+            
+        layout = self.properties_layout
+        
+        for prop_name, value in properties:
+            label = QLabel(f"{prop_name}: {value}")
+            label.setStyleSheet("""
+                QLabel {
+                    font-family: monospace;
+                    padding: 3px;
+                }
+            """)
+            
+            # Make visualization properties clickable
+            if any(x in prop_name for x in ["Star", "Polygonal", "Centered"]):
+                label.setStyleSheet("""
+                    QLabel {
+                        font-family: monospace;
+                        padding: 3px;
+                        color: blue;
+                        text-decoration: underline;
+                    }
+                """)
+                label.setCursor(Qt.PointingHandCursor)
+                label.mousePressEvent = lambda e, p=prop_name, v=value: self.show_geometry_visualization(p, v)
+                
+            layout.addWidget(label)
+        
+        layout.addStretch()
+
     def show_geometry_visualization(self, prop_type, value):
+        """Show geometry visualization for properties in auxiliary window."""
         try:
-            if "star" in prop_type.lower():
-                # Handle multiple star numbers in the value
-                # Format: "Yes - 6-pointed star(n=4), 8-pointed star(n=3)"
+            if "Star" in prop_type:
+                # Handle star numbers
                 star_parts = value.split("Yes - ")[1].split(", ")
-                for star_part in star_parts:
-                    try:
-                        # Extract points (e.g., "6" from "6-pointed")
-                        points = int(star_part.split('-')[0])
-                        # Extract position (e.g., "4" from "n=4)")
-                        position = int(star_part.split('n=')[1].split(')')[0])
-                        
-                        dialog = GeometryVisualizerDialog('star', points, position, self)
-                        dialog.exec_()
-                    except (IndexError, ValueError) as e:
-                        print(f"Error parsing star number: {star_part} - {str(e)}")
-                        
-            elif "centered" in prop_type.lower():
-                # Handle multiple centered polygonal numbers
-                # Format: "centered 5-gonal(n=3), centered 6-gonal(n=2)"
+                if len(star_parts) > 1:
+                    menu = QMenu(self)
+                    for part in star_parts:
+                        sides = int(part.split('-')[0])
+                        menu.addAction(f"{sides}-pointed Star", 
+                            lambda s=sides: self.main_window.auxiliary_window_manager.create_window(
+                                name=f"{s}-pointed Star",
+                                window_type="geometry_visualizer",
+                                sides=s,
+                                layers=1
+                            ))
+                    menu.exec_(QCursor.pos())
+                else:
+                    sides = int(star_parts[0].split('-')[0])
+                    self.main_window.auxiliary_window_manager.create_window(
+                        name=f"{sides}-pointed Star",
+                        window_type="geometry_visualizer",
+                        sides=sides,
+                        layers=1
+                    )
+                    
+            elif "Centered" in prop_type:
+                # Handle centered polygonal numbers
                 centered_parts = value.split(", ")
-                for centered_part in centered_parts:
-                    try:
-                        # Extract points (e.g., "5" from "5-gonal")
-                        points = int(centered_part.split('-')[0].split()[-1])
-                        # Extract position (e.g., "3" from "n=3)")
-                        position = int(centered_part.split('n=')[1].split(')')[0])
+                if len(centered_parts) > 1:
+                    menu = QMenu(self)
+                    for part in centered_parts:
+                        sides = int(part.split('-')[0].split()[-1])
+                        n = int(part.split('n=')[1].split(')')[0])
+                        menu.addAction(f"Centered {sides}-gon (n={n})", 
+                            lambda s=sides, l=n: self.main_window.auxiliary_window_manager.create_window(
+                                name=f"Centered {s}-gon",
+                                window_type="geometry_visualizer",
+                                sides=s,
+                                layers=l
+                            ))
+                    menu.exec_(QCursor.pos())
+                else:
+                    sides = int(centered_parts[0].split('-')[0].split()[-1])
+                    n = int(centered_parts[0].split('n=')[1].split(')')[0])
+                    self.main_window.auxiliary_window_manager.create_window(
+                        name=f"Centered {sides}-gon",
+                        window_type="geometry_visualizer",
+                        sides=sides,
+                        layers=n
+                    )
+                    
+            elif "Polygonal" in prop_type:
+                # Handle multiple polygonal numbers
+                polygonal_parts = value.split(", ")
+                
+                if len(polygonal_parts) > 1:
+                    menu = QMenu(self)
+                    for part in polygonal_parts:
+                        # Parse "k-gonal(n=x)" format
+                        sides = int(part.split("-")[0])
+                        position = int(part.split("n=")[1].split(")")[0])
                         
-                        dialog = GeometryVisualizerDialog('centered_polygon', points, position, self)
-                        dialog.exec_()
-                    except (IndexError, ValueError) as e:
-                        print(f"Error parsing centered polygon: {centered_part} - {str(e)}")
+                        # Create submenu for each polygonal number
+                        submenu = QMenu(f"{sides}-gonal number (n={position})", menu)
+                        menu.addMenu(submenu)
                         
+                        # Add visualization options to submenu
+                        submenu.addAction("Show as Centered", 
+                            lambda checked=False, s=sides, p=position: 
+                            self.main_window.auxiliary_window_manager.create_window(
+                                name=f"Centered {s}-gonal Number (n={p})",
+                                window_type="geometry_visualizer",
+                                sides=s,
+                                layers=p
+                            ))
+                        submenu.addAction("Show as Regular", 
+                            lambda checked=False, s=sides, p=position: 
+                            self.main_window.auxiliary_window_manager.create_window(
+                                name=f"Regular {s}-gonal Number (n={p})",
+                                window_type="geometry_visualizer",
+                                visualization_type="polygonal",
+                                sides=s,
+                                n=p
+                            ))
+                    menu.exec_(QCursor.pos())
+                else:
+                    # Single polygonal number - parse "k-gonal(n=x)" format
+                    sides = int(value.split("-")[0])
+                    position = int(value.split("n=")[1].split(")")[0])
+                    
+                    menu = QMenu(self)
+                    menu.addAction("Show as Centered", 
+                        lambda checked=False: 
+                        self.main_window.auxiliary_window_manager.create_window(
+                            name=f"Centered {sides}-gonal Number (n={position})",
+                            window_type="geometry_visualizer",
+                            sides=sides,
+                            layers=position
+                        ))
+                    menu.addAction("Show as Regular", 
+                        lambda checked=False: 
+                        self.main_window.auxiliary_window_manager.create_window(
+                            name=f"Regular {sides}-gonal Number (n={position})",
+                            window_type="geometry_visualizer",
+                            visualization_type="polygonal",
+                            sides=sides,
+                            n=position
+                        ))
+                    menu.exec_(QCursor.pos())
+                
         except Exception as e:
-            print(f"Error in geometry visualization: {str(e)}")
+            print(f"Error in geometry visualization: {e}")
             print(f"Property type: {prop_type}")
-            print(f"Value: {value}") 
+            print(f"Value: {value}")
+
+    def create_polygon(self, sides, center_pos):
+        """Create a regular polygon"""
+        self.geometry_visualizer.create_centered_polygon(sides)
+
+    def handle_selection_changed(self):
+        """Handle changes in geometry selection"""
+        selected_items = self.geometry_visualizer.scene.selectedItems()
+        self.update_selection_info(selected_items)
+        self.update_button_states(selected_items)
+
+    def update_selection_info(self, selected_items):
+        """Update information about selected items"""
+        from .geometry.items import GeometryPoint, GeometryLine
+        
+        points = [item for item in selected_items if isinstance(item, GeometryPoint)]
+        lines = [item for item in selected_items if isinstance(item, GeometryLine)]
+        
+        selection_info = []
+        if points:
+            point_numbers = [point.number for point in points]
+            selection_info.append(f"Selected Points: {', '.join(map(str, point_numbers))}")
+        if lines:
+            line_info = []
+            for line in lines:
+                line_info.append(f"{line.start_point.number}-{line.end_point.number}")
+            selection_info.append(f"Selected Lines: {', '.join(line_info)}")
+            
+        self.status_label.setText(" | ".join(selection_info) if selection_info else "No Selection")
+
+    def update_button_states(self, selected_items):
+        """Enable/disable buttons based on selection state"""
+        from .geometry.items import GeometryPoint, GeometryLine
+        
+        has_selection = len(selected_items) > 0
+        has_points = any(isinstance(item, GeometryPoint) for item in selected_items)
+        has_lines = any(isinstance(item, GeometryLine) for item in selected_items)
+        
+        # Update button states
+        if hasattr(self, 'delete_btn'):
+            self.delete_btn.setEnabled(has_selection)
+        if hasattr(self, 'connect_btn'):
+            self.connect_btn.setEnabled(len([item for item in selected_items 
+                                           if isinstance(item, GeometryPoint)]) == 2)
+
+    def get_line_connections(self, line):
+        """Get all connections for a line"""
+        if not isinstance(line, GeometryLine):
+            return []
+        return [(line.start_num, line.end_num)]
+
+    def remove_line(self, line):
+        """Remove a line from the scene and data structures"""
+        if line in self.geometry_visualizer.custom_lines:
+            self.geometry_visualizer.custom_lines.remove(line)
+        elif line in self.geometry_visualizer.pattern_lines:
+            self.geometry_visualizer.pattern_lines.remove(line)
+        self.geometry_visualizer.scene.removeItem(line)
+
+    def remove_connections(self, connections):
+        """Remove connections from the connection tracking"""
+        for start_num, end_num in connections:
+            if hasattr(self.geometry_visualizer, 'connection_manager'):
+                self.geometry_visualizer.connection_manager.remove_connection(start_num, end_num)
+
+    def create_status_bar(self):
+        """Create a status bar for selection info"""
+        status_layout = QHBoxLayout()
+        self.status_label = QLabel("No Selection")
+        status_layout.addWidget(self.status_label)
+        self.layout().addLayout(status_layout) 

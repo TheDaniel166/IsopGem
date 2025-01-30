@@ -1,0 +1,21 @@
+{
+  "name": "Greek in full",
+  "description": "",
+  "case_sensitive": false,
+  "active_scripts": {
+    "english": false,
+    "greek": true,
+    "hebrew": false
+  },
+  "english_values": {},
+  "greek_values": {
+    "Α": 532,
+    "Β": 311,
+    "Γ": 85,
+    "α": 532,
+    "β": 311,
+    "γ": 85
+  },
+  "hebrew_values": {},
+  "hebrew_finals": {}
+}

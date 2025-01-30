@@ -1,5 +1,7 @@
 {
+    "python.defaultInterpreterPath": "c:\\Users\\Administrator\\source\\repos\\IsopGem\\venv\\Scripts\\python.exe",
     "python.analysis.extraPaths": [
-        "./IsopGem"
-    ]
+        "${workspaceFolder}"
+    ],
+    "python.pythonPath": "c:\\Users\\Administrator\\source\\repos\\IsopGem\\venv\\Scripts\\python.exe"
 }

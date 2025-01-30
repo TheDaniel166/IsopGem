@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout,
                             QFileDialog, QMessageBox, QDialog)
 from core.gematria.calculator import GematriaCalculator
 from core.database.word_repository import WordRepository
+from core.gematria.cipher_manager import CipherManager
 import csv
 import openpyxl
 
@@ -11,9 +12,11 @@ class CalculatorPanel(QWidget):
         super().__init__()
         self.calculator = GematriaCalculator()
         self.word_repository = WordRepository()
+        self.cipher_manager = CipherManager()
         self.content_layout = QVBoxLayout(self)
         self.init_ui()
         self.connect_signals()
+        self.load_ciphers()
 
     def init_ui(self):
         # Main layout with spacing and margins
@@ -55,12 +58,6 @@ class CalculatorPanel(QWidget):
         cipher_layout = QHBoxLayout()
         cipher_label = QLabel("Select Cipher:")
         self.cipher_select = QComboBox()
-        self.cipher_select.addItems([
-            'TQ English',
-            'Hebrew Standard',
-            'Hebrew Gadol',
-            'Greek'
-        ])
         self.cipher_select.setStyleSheet("""
             QComboBox {
                 padding: 5px;
@@ -164,10 +161,61 @@ class CalculatorPanel(QWidget):
         self.save_button.clicked.connect(self.save_word)
         self.import_button.clicked.connect(self.import_csv)
 
+    def load_ciphers(self):
+        """Load all available ciphers into the combo box"""
+        # Keep track of current selection
+        current = self.cipher_select.currentText()
+        
+        # Clear and add built-in ciphers
+        self.cipher_select.clear()
+        built_in_ciphers = [
+            'TQ English',
+            'Hebrew Standard',
+            'Hebrew Gadol',
+            'Greek'
+        ]
+        self.cipher_select.addItems(built_in_ciphers)
+        
+        # Add separator and custom ciphers
+        if self.cipher_manager.get_cipher_names():
+            self.cipher_select.insertSeparator(len(built_in_ciphers))
+            for cipher_name in self.cipher_manager.get_cipher_names():
+                self.cipher_select.addItem(f"Custom: {cipher_name}")
+        
+        # Restore previous selection if possible
+        index = self.cipher_select.findText(current)
+        if index >= 0:
+            self.cipher_select.setCurrentIndex(index)
+
     def calculate_value(self):
         text = self.text_input.toPlainText()
         cipher = self.cipher_select.currentText()
-        value = self.calculator.calculate(text, cipher)
+        
+        # Validate inputs
+        if not text.strip():
+            QMessageBox.warning(self, "Error", "Please enter text to calculate")
+            return
+            
+        if not cipher:
+            QMessageBox.warning(self, "Error", "Please select a cipher type")
+            return
+        
+        # Handle custom ciphers
+        if cipher.startswith("Custom: "):
+            cipher_name = cipher.replace("Custom: ", "")
+            custom_cipher = self.cipher_manager.load_cipher(cipher_name)
+            if custom_cipher:
+                value = self.calculator.calculate_with_custom_cipher(text, custom_cipher)
+            else:
+                QMessageBox.warning(self, "Error", f"Custom cipher '{cipher_name}' not found")
+                return
+        else:
+            try:
+                value = self.calculator.calculate(text, cipher)
+            except KeyError:
+                QMessageBox.warning(self, "Error", f"Invalid cipher type: '{cipher}'")
+                return
+            
         self.value_display.setText(str(value))
         if text.strip():
             self.word_repository.add_to_history(text, cipher, value)

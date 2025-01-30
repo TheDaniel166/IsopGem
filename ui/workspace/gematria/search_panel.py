@@ -4,13 +4,45 @@ from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout,
                             QFrame, QScrollArea, QGridLayout)
 from PyQt5.QtCore import Qt
 from core.database.word_repository import WordRepository
+from core.gematria.cipher_manager import CipherManager
 
 class SearchPanel(QWidget):
     def __init__(self):
         super().__init__()
         self.word_repository = WordRepository()
+        self.cipher_manager = CipherManager()
         self.init_ui()
         self.connect_signals()
+        self.load_ciphers()
+
+    def load_ciphers(self):
+        """Load all available ciphers into the combo box"""
+        # Keep track of current selection
+        current = self.cipher_select.currentText()
+        
+        # Clear and add Global option
+        self.cipher_select.clear()
+        self.cipher_select.addItem('Global')
+        
+        # Add built-in ciphers
+        built_in_ciphers = [
+            'TQ English',
+            'Hebrew Standard',
+            'Hebrew Gadol',
+            'Greek'
+        ]
+        self.cipher_select.addItems(built_in_ciphers)
+        
+        # Add separator and custom ciphers
+        if self.cipher_manager.get_cipher_names():
+            self.cipher_select.insertSeparator(len(built_in_ciphers) + 1)  # +1 for Global
+            for cipher_name in self.cipher_manager.get_cipher_names():
+                self.cipher_select.addItem(f"Custom: {cipher_name}")
+        
+        # Restore previous selection if possible
+        index = self.cipher_select.findText(current)
+        if index >= 0:
+            self.cipher_select.setCurrentIndex(index)
 
     def init_ui(self):
         layout = QVBoxLayout()
@@ -66,13 +98,6 @@ class SearchPanel(QWidget):
         cipher_label = QLabel("Cipher:")
         cipher_label.setStyleSheet("font-weight: bold; color: #2c3e50;")
         self.cipher_select = QComboBox()
-        self.cipher_select.addItems([
-            'Global',
-            'TQ English',
-            'Hebrew Standard',
-            'Hebrew Gadol',
-            'Greek'
-        ])
         self.cipher_select.setStyleSheet("""
             QComboBox {
                 padding: 8px;
@@ -122,9 +147,14 @@ class SearchPanel(QWidget):
             search_value = int(self.value_input.text())
             selected_cipher = self.cipher_select.currentText()
             
-            # Perform search based on cipher selection
-            if selected_cipher == 'Global':
+            # Handle custom ciphers
+            if selected_cipher.startswith("Custom: "):
+                cipher_name = selected_cipher.replace("Custom: ", "")
+                results = self.word_repository.find_by_value(search_value, selected_cipher)
+            # Handle Global search
+            elif selected_cipher == 'Global':
                 results = self.word_repository.find_by_value_global(search_value)
+            # Handle built-in ciphers
             else:
                 results = self.word_repository.find_by_value(search_value, selected_cipher)
             
@@ -212,3 +242,27 @@ class SearchPanel(QWidget):
         
         dialog.setLayout(layout)
         dialog.exec()
+
+    def import_dialog(self):
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Select Cipher Type")
+        layout = QVBoxLayout()
+        
+        cipher_combo = QComboBox()
+        
+        # Add built-in ciphers
+        built_in_ciphers = [
+            'TQ English',
+            'Hebrew Standard',
+            'Hebrew Gadol',
+            'Greek'
+        ]
+        cipher_combo.addItems(built_in_ciphers)
+        
+        # Add custom ciphers
+        if self.cipher_manager.get_cipher_names():
+            cipher_combo.insertSeparator(len(built_in_ciphers))
+            for cipher_name in self.cipher_manager.get_cipher_names():
+                cipher_combo.addItem(f"Custom: {cipher_name}")
+        
+        # ... rest of import dialog code ...
