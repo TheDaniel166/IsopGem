@@ -1,0 +1,80 @@
+/* Modern Panel Styling */
+
+QDockWidget {
+    background: rgba(245, 245, 245, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+}
+
+QDockWidget::title {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                              stop:0 #f8f8f8, stop:1 #e8e8e8);
+    padding: 8px;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+QDockWidget > QWidget {
+    background: transparent;
+    border: none;
+    padding: 4px;
+}
+
+/* Main Window Separator (Resize Handle) */
+QMainWindow::separator {
+    background: rgba(0, 0, 0, 0.05);
+    width: 4px;
+    height: 4px;
+}
+
+QMainWindow::separator:hover {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+/* Scrollbars for panel content */
+QScrollBar:vertical {
+    border: none;
+    background: rgba(0, 0, 0, 0.05);
+    width: 8px;
+    border-radius: 4px;
+    margin: 0px;
+}
+
+QScrollBar::handle:vertical {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+    min-height: 20px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background: rgba(0, 0, 0, 0.3);
+}
+
+QScrollBar::add-line:vertical,
+QScrollBar::sub-line:vertical {
+    height: 0px;
+}
+
+QScrollBar:horizontal {
+    border: none;
+    background: rgba(0, 0, 0, 0.05);
+    height: 8px;
+    border-radius: 4px;
+    margin: 0px;
+}
+
+QScrollBar::handle:horizontal {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+    min-width: 20px;
+}
+
+QScrollBar::handle:horizontal:hover {
+    background: rgba(0, 0, 0, 0.3);
+}
+
+QScrollBar::add-line:horizontal,
+QScrollBar::sub-line:horizontal {
+    width: 0px;
+}

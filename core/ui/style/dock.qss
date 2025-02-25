@@ -1,0 +1,43 @@
+/* Dock Widget Title Bar */
+#dockWidgetTitleBar {
+    background: #2d2d2d;
+    border: none;
+    height: 24px;
+}
+
+#dockWidgetTitleLabel {
+    color: #ffffff;
+    font-size: 12px;
+}
+
+/* Title Bar Buttons */
+#dockWidgetMinButton,
+#dockWidgetMaxButton,
+#dockWidgetCloseButton {
+    background: transparent;
+    border: none;
+    padding: 2px;
+}
+
+#dockWidgetMinButton:hover,
+#dockWidgetMaxButton:hover,
+#dockWidgetCloseButton:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+}
+
+#dockWidgetCloseButton:hover {
+    background: #c42b1c;
+}
+
+/* Dock Widget */
+QDockWidget {
+    titlebar-close-icon: url(close.png);
+    titlebar-normal-icon: url(float.png);
+}
+
+QDockWidget::title {
+    background: #2d2d2d;
+    padding-left: 5px;
+    padding-top: 2px;
+}

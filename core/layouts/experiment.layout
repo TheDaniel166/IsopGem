@@ -1,0 +1,44 @@
+{
+  "Properties_1": {
+    "geometry": "01d9d0cb000300000000027800000132000003a3000003440000027800000151000003a300000344000000000000000007800000027800000151000003a300000344",
+    "floating": true,
+    "visible": true,
+    "area": 2,
+    "pos": [
+      632,
+      306
+    ],
+    "size": [
+      300,
+      500
+    ]
+  },
+  "Properties_2": {
+    "geometry": "01d9d0cb00030000fffffbaa00000159fffffcd50000036bfffffbaa00000178fffffcd50000036b00000001000000000780fffffbaa00000178fffffcd50000036b",
+    "floating": true,
+    "visible": true,
+    "area": 2,
+    "pos": [
+      -1110,
+      345
+    ],
+    "size": [
+      300,
+      500
+    ]
+  },
+  "Console_1": {
+    "geometry": "01d9d0cb0003000000000000000001db000004af0000030a0000000000000000ffffffffffffffff0000000100000000078000000000000001db000004af0000030a",
+    "floating": false,
+    "visible": true,
+    "area": 8,
+    "pos": [
+      0,
+      475
+    ],
+    "size": [
+      1200,
+      304
+    ]
+  }
+}
