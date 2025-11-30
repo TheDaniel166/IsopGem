@@ -1,0 +1,13 @@
+PyQt6>=6.6.0
+Whoosh>=2.7.4
+pandas>=2.0.0
+openpyxl>=3.1.0
+odfpy>=1.4.1
+python-docx>=1.1.0
+pypdf>=3.17.0
+striprtf>=0.0.26
+SQLAlchemy>=2.0.0
+mammoth>=1.6.0
+PyMuPDF>=1.23.0
+pdf2docx
+pdf2docx
