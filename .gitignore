@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtualenvs
+venv/
+.env
+.venv/
+
+# IDEs
+.vscode/
+.idea/
+
+# Build/
+build/
+dist/
+*.egg-info/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+src/data/
+
+# Saved documents and local data
+src/saved_documents/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+*~
+
+# PyInstaller
+*.spec
+
+# Coverage and test artifacts
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Misc
+*.swp
+
+# Local config
+config/app_config.py
