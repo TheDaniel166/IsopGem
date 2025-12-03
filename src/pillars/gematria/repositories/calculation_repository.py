@@ -26,7 +26,7 @@ class CalculationRepository:
         if index_dir is None:
             # Default to user's home directory
             home = Path.home()
-            index_dir = home / '.isopgem' / 'calculations'
+            index_dir = str(home / '.isopgem' / 'calculations')
         
         self.index_dir = Path(index_dir)
         self.index_dir.mkdir(parents=True, exist_ok=True)

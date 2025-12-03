@@ -44,7 +44,7 @@ class SQLiteCalculationRepository:
                 entity = CalculationEntity(id=record.id or str(uuid.uuid4()))
                 session.add(entity)
                 if not record.id:
-                    record.id = entity.id
+                    record.id = str(entity.id)
                     record.date_created = datetime.utcnow()
             if not record.date_created:
                 record.date_created = datetime.utcnow()
