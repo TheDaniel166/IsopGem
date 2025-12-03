@@ -8,8 +8,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt, QTimer, QPointF, QRectF, pyqtSignal
 from PyQt6.QtGui import QPen, QBrush, QColor, QPainter, QFont
-from shared.database import get_db
-from pillars.document_manager.services.document_service import DocumentService
+from pillars.document_manager.services.document_service import document_service_context
 
 class NodeItem(QGraphicsEllipseItem):
     """Visual representation of a document node."""
@@ -118,35 +117,34 @@ class GraphWindow(QMainWindow):
         self.edges.clear()
         
         try:
-            db = next(get_db())
-            service = DocumentService(db)
-            # We need to fetch documents with their links
-            # Since outgoing_links is lazy loaded, accessing it will trigger a query
-            # But we need to be careful about session management if we pass objects around
-            # So we'll just fetch everything here
-            all_docs = service.get_all_documents()
-            
-            # Create Nodes
-            for doc in all_docs:
-                node = NodeItem(doc.id, doc.title, self)
-                # Random initial position
-                node.setPos(random.uniform(-300, 300), random.uniform(-300, 300))
-                self.scene.addItem(node)
-                self.nodes[doc.id] = node
+            with document_service_context() as service:
+                # We need to fetch documents with their links
+                # Since outgoing_links is lazy loaded, accessing it will trigger a query
+                # But we need to be careful about session management if we pass objects around
+                # So we'll just fetch everything here
+                all_docs = service.get_all_documents()
                 
-            # Create Edges
-            for doc in all_docs:
-                if doc.id not in self.nodes:
-                    continue
-                
-                source_node = self.nodes[doc.id]
-                
-                for target in doc.outgoing_links:
-                    if target.id in self.nodes:
-                        target_node = self.nodes[target.id]
-                        edge = EdgeItem(source_node, target_node)
-                        self.scene.addItem(edge)
-                        self.edges.append(edge)
+                # Create Nodes
+                for doc in all_docs:
+                    node = NodeItem(doc.id, doc.title, self)
+                    # Random initial position
+                    node.setPos(random.uniform(-300, 300), random.uniform(-300, 300))
+                    self.scene.addItem(node)
+                    self.nodes[doc.id] = node
+                    
+                # Create Edges
+                for doc in all_docs:
+                    if doc.id not in self.nodes:
+                        continue
+                    
+                    source_node = self.nodes[doc.id]
+                    
+                    for target in doc.outgoing_links:
+                        if target.id in self.nodes:
+                            target_node = self.nodes[target.id]
+                            edge = EdgeItem(source_node, target_node)
+                            self.scene.addItem(edge)
+                            self.edges.append(edge)
                         
         except Exception as e:
             print(f"Error loading graph: {e}")

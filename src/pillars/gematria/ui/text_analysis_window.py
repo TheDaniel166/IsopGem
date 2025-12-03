@@ -8,25 +8,23 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, pyqtSignal, QTimer
 from PyQt6.QtGui import QTextCursor, QTextCharFormat, QColor, QFont, QAction
 from typing import List, Dict, Optional, Tuple
-from sqlalchemy.orm import Session
 from PyQt6.QtWidgets import QSpinBox
+from pillars.document_manager.services.document_service import document_service_context
 
 from ..services.base_calculator import GematriaCalculator
 from ..services import CalculationService
-from pillars.document_manager.services.document_service import DocumentService
 from pillars.document_manager.models.document import Document
 
 
 class TextAnalysisWindow(QDialog):
     """Window for analyzing document text with Gematria."""
     
-    def __init__(self, calculators: List[GematriaCalculator], db_session: Session, parent=None):
+    def __init__(self, calculators: List[GematriaCalculator], parent=None):
         """
         Initialize the text analysis window.
         
         Args:
             calculators: List of available gematria calculators
-            db_session: Database session for accessing documents
             parent: Optional parent widget
         """
         super().__init__(parent)
@@ -35,8 +33,6 @@ class TextAnalysisWindow(QDialog):
         }
         self.current_calculator: GematriaCalculator = calculators[0]
         self.calculation_service = CalculationService()
-        self.document_service = DocumentService(db_session)
-        self.db_session = db_session
         
         # Current state
         self.current_document: Optional[Document] = None
@@ -329,7 +325,8 @@ class TextAnalysisWindow(QDialog):
     def _load_documents(self):
         """Load documents from the database into the combo box."""
         try:
-            documents = self.document_service.get_all_documents()
+            with document_service_context() as service:
+                documents = service.get_all_documents()
             
             self.document_combo.clear()
             self.document_combo.addItem("-- Select a document --", None)
@@ -354,7 +351,8 @@ class TextAnalysisWindow(QDialog):
             return
         
         try:
-            self.current_document = self.document_service.get_document(doc_id)
+            with document_service_context() as service:
+                self.current_document = service.get_document(doc_id)
             
             if self.current_document:
                 # Extract plain text from HTML content

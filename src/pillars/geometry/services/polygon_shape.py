@@ -4,6 +4,16 @@ from typing import Dict, List, Tuple
 from .base_shape import GeometricShape, ShapeProperty
 
 
+DIAGONAL_COLOR_PALETTE: List[Tuple[int, int, int, int]] = [
+    (239, 68, 68, 255),    # red
+    (16, 185, 129, 255),   # green
+    (59, 130, 246, 255),   # blue
+    (234, 179, 8, 255),    # amber
+    (139, 92, 246, 255),   # violet
+    (248, 113, 113, 255),  # light red
+]
+
+
 class RegularPolygonShape(GeometricShape):
     """Regular polygon with n equal sides and angles."""
     
@@ -15,6 +25,8 @@ class RegularPolygonShape(GeometricShape):
             num_sides: Number of sides (must be >= 3)
         """
         self.num_sides = max(3, num_sides)
+        self._diagonal_keys: Dict[int, str] = {}
+        self._diagonal_key_to_skip: Dict[str, int] = {}
         super().__init__()
     
     @property
@@ -39,6 +51,8 @@ class RegularPolygonShape(GeometricShape):
     
     def _init_properties(self):
         """Initialize regular polygon properties."""
+        self._diagonal_keys = {}
+        self._diagonal_key_to_skip = {}
         self.properties = {
             'side': ShapeProperty(
                 name='Side Length',
@@ -58,6 +72,12 @@ class RegularPolygonShape(GeometricShape):
                 unit='units²',
                 readonly=False
             ),
+            'wedge_area': ShapeProperty(
+                name='Wedge Area (sector)',
+                key='wedge_area',
+                unit='units²',
+                readonly=True,
+            ),
             'apothem': ShapeProperty(
                 name='Apothem',
                 key='apothem',
@@ -70,11 +90,17 @@ class RegularPolygonShape(GeometricShape):
                 unit='units',
                 readonly=False
             ),
-            'diagonal': ShapeProperty(
-                name='Shortest Diagonal',
-                key='diagonal',
+            'incircle_circumference': ShapeProperty(
+                name='Incircle Circumference',
+                key='incircle_circumference',
                 unit='units',
-                readonly=False
+                readonly=True,
+            ),
+            'circumcircle_circumference': ShapeProperty(
+                name='Circumcircle Circumference',
+                key='circumcircle_circumference',
+                unit='units',
+                readonly=True,
             ),
             'interior_angle': ShapeProperty(
                 name='Interior Angle',
@@ -89,6 +115,17 @@ class RegularPolygonShape(GeometricShape):
                 readonly=True
             ),
         }
+
+        for skip in self._diagonal_skip_range():
+            key = f'diagonal_skip_{skip}'
+            self.properties[key] = ShapeProperty(
+                name=f'Diagonal (skip {skip})',
+                key=key,
+                unit='units',
+                readonly=False,
+            )
+            self._diagonal_keys[skip] = key
+            self._diagonal_key_to_skip[key] = skip
     
     def calculate_from_property(self, property_key: str, value: float) -> bool:
         """Calculate all properties from any given property."""
@@ -111,11 +148,13 @@ class RegularPolygonShape(GeometricShape):
         elif property_key == 'circumradius':
             # circumradius = s / (2 * sin(π/n))
             side = 2 * value * math.sin(math.pi / n)
-        elif property_key == 'diagonal':
-            # For shortest diagonal: d = s * √(2 - 2*cos(2π/n))
-            # Solving for s: s = d / √(2 - 2*cos(2π/n))
-            diagonal_factor = math.sqrt(2 - 2 * math.cos(2 * math.pi / n))
-            side = value / diagonal_factor
+        elif property_key in self._diagonal_key_to_skip:
+            skip = self._diagonal_key_to_skip[property_key]
+            numerator = math.sin(math.pi / n)
+            denominator = math.sin(skip * math.pi / n)
+            if abs(denominator) < 1e-9:
+                return False
+            side = value * (numerator / denominator)
         else:
             return False
         
@@ -130,16 +169,17 @@ class RegularPolygonShape(GeometricShape):
         # Area
         area = (n * side * apothem) / 2
         self.properties['area'].value = area
+        self.properties['wedge_area'].value = area / n if area is not None else None
         
         # Circumradius (distance from center to vertex)
         circumradius = side / (2 * math.sin(math.pi / n))
         self.properties['circumradius'].value = circumradius
+        self.properties['incircle_circumference'].value = 2 * math.pi * apothem
+        self.properties['circumcircle_circumference'].value = 2 * math.pi * circumradius
         
-        # Shortest diagonal (connecting vertices separated by one vertex)
-        # Formula: d = s * √(2 - 2*cos(2π/n))
-        # This gives the diagonal that skips one vertex
-        diagonal = side * math.sqrt(2 - 2 * math.cos(2 * math.pi / n))
-        self.properties['diagonal'].value = diagonal
+        diagonal_lengths = self._diagonal_lengths(circumradius)
+        for skip, key in self._diagonal_keys.items():
+            self.properties[key].value = diagonal_lengths.get(skip)
         
         # Angles
         interior_angle = ((n - 2) * 180) / n
@@ -150,25 +190,13 @@ class RegularPolygonShape(GeometricShape):
     
     def get_drawing_instructions(self) -> Dict:
         """Get drawing instructions for the regular polygon."""
-        # Render a normalized, static diagram (unit circumradius)
-        # so the visual shape stays constant and only labels update.
-        circumradius = 1.0
-        
-        # Generate vertices
-        points = []
-        for i in range(self.num_sides):
-            angle = (2 * math.pi * i / self.num_sides) - (math.pi / 2)  # Start at top
-            x = circumradius * math.cos(angle)
-            y = circumradius * math.sin(angle)
-            points.append((x, y))
-        
+        points = self._unit_polygon_points()
+        diagonal_groups = self._build_diagonal_groups(points)
         return {
             'type': 'polygon',
             'points': points,
             'show_circumcircle': True,
-            'show_apothem': True,
-            'show_diagonal': True,  # Show shortest diagonal
-            'show_longest_diagonal': True,
+            'diagonal_groups': diagonal_groups,
         }
     
     def get_label_positions(self) -> List[Tuple[str, float, float]]:
@@ -184,13 +212,6 @@ class RegularPolygonShape(GeometricShape):
             labels.append((f's = {side:.4f}'.rstrip('0').rstrip('.'), 0, -cr - 0.3))
         
         # Diagonals
-        diagonal = self.get_property('diagonal')
-        if diagonal is not None:
-            labels.append((f'd_min = {diagonal:.4f}'.rstrip('0').rstrip('.'), cr * 0.8, cr * 0.2))
-        
-        longest_diagonal = self.get_property('longest_diagonal') if 'longest_diagonal' in self.properties else None
-        if longest_diagonal is not None:
-            labels.append((f'd_max = {longest_diagonal:.4f}'.rstrip('0').rstrip('.'), -cr * 0.8, cr * 0.2))
         
         # Area label (center)
         area = self.get_property('area')
@@ -201,3 +222,42 @@ class RegularPolygonShape(GeometricShape):
         labels.append((f'n = {self.num_sides}', 0, -0.2))
         
         return labels
+
+    def _unit_polygon_points(self) -> List[Tuple[float, float]]:
+        radius = 1.0
+        points: List[Tuple[float, float]] = []
+        for i in range(self.num_sides):
+            angle = (2 * math.pi * i / self.num_sides) - (math.pi / 2)
+            points.append((radius * math.cos(angle), radius * math.sin(angle)))
+        return points
+
+    def _build_diagonal_groups(self, points: List[Tuple[float, float]]) -> List[Dict]:
+        n = len(points)
+        max_skip = n // 2
+        if max_skip < 2:
+            return []
+        groups: List[Dict] = []
+        palette_len = len(DIAGONAL_COLOR_PALETTE)
+        for index, skip in enumerate(range(2, max_skip + 1)):
+            color = DIAGONAL_COLOR_PALETTE[index % palette_len]
+            segments = []
+            seen_pairs = set()
+            for i in range(n):
+                j = (i + skip) % n
+                pair = tuple(sorted((i, j)))
+                if pair in seen_pairs or i == j:
+                    continue
+                seen_pairs.add(pair)
+                segments.append({'start': points[i], 'end': points[j]})
+            if segments:
+                groups.append({'skip': skip, 'color': color, 'segments': segments})
+        return groups
+
+    def _diagonal_skip_range(self) -> range:
+        return range(2, (self.num_sides // 2) + 1)
+
+    def _diagonal_lengths(self, circumradius: float) -> Dict[int, float]:
+        lengths: Dict[int, float] = {}
+        for skip in self._diagonal_skip_range():
+            lengths[skip] = 2 * circumradius * math.sin(skip * math.pi / self.num_sides)
+        return lengths

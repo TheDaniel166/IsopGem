@@ -3,8 +3,7 @@ from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 from shared.ui import WindowManager
-from shared.database import get_db
-from pillars.document_manager.services.document_service import DocumentService
+from pillars.document_manager.services.document_service import document_service_context
 from .document_editor_window import DocumentEditorWindow
 from .document_library import DocumentLibrary
 from .document_search_window import DocumentSearchWindow
@@ -198,9 +197,8 @@ class DocumentManagerHub(QWidget):
     def _open_document_by_id(self, doc_id, search_term=None):
         """Open a document by ID in the editor."""
         try:
-            db = next(get_db())
-            service = DocumentService(db)
-            doc = service.get_document(doc_id)
+            with document_service_context() as service:
+                doc = service.get_document(doc_id)
             if doc:
                 self._open_document_from_library(doc, search_term)
         except Exception as e:

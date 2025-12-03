@@ -2,11 +2,17 @@
 from sqlalchemy.orm import Session
 from pathlib import Path
 from typing import Optional
+from contextlib import contextmanager
+import time
+import logging
 import re
+from shared.database import get_db_session
 from pillars.document_manager.repositories.document_repository import DocumentRepository
 from pillars.document_manager.repositories.search_repository import DocumentSearchRepository
 from pillars.document_manager.utils.parsers import DocumentParser
 from pillars.document_manager.models.document import Document
+
+logger = logging.getLogger(__name__)
 
 class DocumentService:
     def __init__(self, db: Session):
@@ -44,6 +50,7 @@ class DocumentService:
         Import a document from a file path.
         Parses content and saves to database.
         """
+        start = time.perf_counter()
         path = Path(file_path)
         if not path.exists():
             raise FileNotFoundError(f"File not found: {file_path}")
@@ -68,14 +75,22 @@ class DocumentService:
         # Index document
         self.search_repo.index_document(doc)
         
+        duration = (time.perf_counter() - start) * 1000
+        logger.debug("DocumentService: imported '%s' in %.1f ms", path.name, duration)
         return doc
 
     def search_documents(self, query: str, limit: Optional[int] = None):
         # Search using Whoosh
+        start = time.perf_counter()
         results = self.search_repo.search(query, limit=limit)
         ids = [r['id'] for r in results]
         
         if not ids:
+            logger.debug(
+                "DocumentService: search '%s' returned 0 results in %.1f ms",
+                query,
+                (time.perf_counter() - start) * 1000,
+            )
             return []
             
         # Fetch full objects from DB
@@ -88,6 +103,13 @@ class DocumentService:
             if doc_id in doc_map:
                 ordered_docs.append(doc_map[doc_id])
                 
+        duration = (time.perf_counter() - start) * 1000
+        logger.debug(
+            "DocumentService: search '%s' returned %s mapped docs in %.1f ms",
+            query,
+            len(ordered_docs),
+            duration,
+        )
         return ordered_docs
 
     def search_documents_with_highlights(self, query: str, limit: Optional[int] = None):
@@ -99,7 +121,14 @@ class DocumentService:
     
     def get_all_documents_metadata(self):
         """Get all documents without loading heavy content fields."""
-        return self.repo.get_all_metadata()
+        start = time.perf_counter()
+        docs = self.repo.get_all_metadata()
+        logger.debug(
+            "DocumentService: get_all_documents_metadata fetched %s docs in %.1f ms",
+            len(docs),
+            (time.perf_counter() - start) * 1000,
+        )
+        return docs
     
     def get_document(self, doc_id: int):
         return self.repo.get(doc_id)
@@ -111,12 +140,19 @@ class DocumentService:
             doc_id: Document ID
             **kwargs: Fields to update (content, raw_content, title, tags, author, collection)
         """
+        start = time.perf_counter()
         doc = self.repo.update(doc_id, **kwargs)
         if doc:
             # If content was updated, re-parse links
             if 'content' in kwargs:
                 self._update_links(doc)
             self.search_repo.index_document(doc)
+        logger.debug(
+            "DocumentService: update_document %s finished in %.1f ms (fields=%s)",
+            doc_id,
+            (time.perf_counter() - start) * 1000,
+            list(kwargs.keys()),
+        )
         return doc
 
     def update_documents(self, doc_ids: list[int], **kwargs):
@@ -126,6 +162,7 @@ class DocumentService:
             doc_ids: List of Document IDs
             **kwargs: Fields to update
         """
+        start = time.perf_counter()
         updated_docs = []
         for doc_id in doc_ids:
             doc = self.repo.update(doc_id, **kwargs)
@@ -138,21 +175,54 @@ class DocumentService:
         if updated_docs:
             self.search_repo.index_documents(updated_docs)
         
+        logger.debug(
+            "DocumentService: update_documents %s ids finished in %.1f ms",
+            len(doc_ids),
+            (time.perf_counter() - start) * 1000,
+        )
         return updated_docs
 
     def delete_document(self, doc_id: int):
+        start = time.perf_counter()
         success = self.repo.delete(doc_id)
         if success:
             self.search_repo.delete_document(doc_id)
+        logger.debug(
+            "DocumentService: delete_document %s success=%s in %.1f ms",
+            doc_id,
+            success,
+            (time.perf_counter() - start) * 1000,
+        )
         return success
     
     def delete_all_documents(self):
         """Delete all documents from database and search index."""
+        start = time.perf_counter()
         count = self.repo.delete_all()
         self.search_repo.clear_index()
+        logger.debug(
+            "DocumentService: delete_all_documents removed %s entries in %.1f ms",
+            count,
+            (time.perf_counter() - start) * 1000,
+        )
         return count
 
     def rebuild_search_index(self):
         """Rebuild the search index from the database."""
+        start = time.perf_counter()
         docs = self.repo.get_all()
         self.search_repo.rebuild_index(docs)
+        logger.debug(
+            "DocumentService: rebuild_search_index for %s docs in %.1f ms",
+            len(docs),
+            (time.perf_counter() - start) * 1000,
+        )
+
+
+@contextmanager
+def document_service_context():
+    """Yield a DocumentService backed by a managed DB session."""
+    start = time.perf_counter()
+    with get_db_session() as db:
+        logger.debug("document_service_context: session acquired in %.1f ms", (time.perf_counter() - start) * 1000)
+        yield DocumentService(db)

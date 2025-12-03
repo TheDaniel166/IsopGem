@@ -1,14 +1,84 @@
 """Quadset Analysis tool window."""
 from PyQt6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel, 
+    QDialog, QVBoxLayout, QHBoxLayout, QLabel,
     QLineEdit, QGroupBox, QTabWidget, QWidget,
-    QTextEdit, QScrollArea, QGridLayout, QFrame
+    QTextEdit, QScrollArea, QGridLayout, QFrame,
+    QSizePolicy
 )
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFont
+from PyQt6.QtCore import Qt, QPointF, QSize
+from PyQt6.QtGui import QFont, QPainter, QPen, QColor
 
 from ..services.ternary_service import TernaryService
 from ..services.number_properties import NumberPropertiesService
+
+
+class QuadsetGlyph(QWidget):
+    """Visualize ternary strings as Taoist line glyphs."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._ternary = ""
+        self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
+        self.setMinimumSize(90, 100)
+
+    def sizeHint(self):
+        return QSize(140, 160)
+
+    def minimumSizeHint(self):
+        return QSize(90, 120)
+
+    def set_ternary(self, value: str):
+        self._ternary = value or ""
+        self.update()
+
+    def _normalized_digits(self) -> list[str]:
+        digits = [d for d in self._ternary if d in {"0", "1", "2"}]
+        return digits or ["0"]
+
+    def paintEvent(self, _event):  # noqa: N802
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        painter.fillRect(self.rect(), QColor(255, 255, 255, 0))
+
+        digits = self._normalized_digits()
+
+        total = len(digits)
+        height = self.height()
+        width = self.width()
+        margin_x = width * 0.1
+        line_length = width - margin_x * 2
+        line_height = max(min(height / (total + 0.3), 28), 12)
+        base_pen = QPen(QColor("#111827"), 4, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap)
+
+        for idx, digit in enumerate(reversed(digits)):
+            y = height - ((idx + 0.5) * line_height)
+            if digit == "0":
+                painter.setPen(base_pen)
+                radius = line_height * 0.18
+                painter.drawEllipse(
+                    int(width / 2 - radius),
+                    int(y - radius),
+                    int(radius * 2),
+                    int(radius * 2),
+                )
+            elif digit == "1":
+                painter.setPen(base_pen)
+                painter.drawLine(
+                    QPointF(margin_x, y),
+                    QPointF(margin_x + line_length, y),
+                )
+            else:  # digit == "2"
+                painter.setPen(base_pen)
+                gap = line_length * 0.2
+                segment = (line_length - gap) / 2
+                painter.drawLine(
+                    QPointF(margin_x, y),
+                    QPointF(margin_x + segment, y),
+                )
+                painter.drawLine(
+                    QPointF(margin_x + segment + gap, y),
+                    QPointF(margin_x + line_length, y),
+                )
 
 
 class QuadsetAnalysisWindow(QDialog):
@@ -186,12 +256,16 @@ class QuadsetAnalysisWindow(QDialog):
         tern_label = QLabel("Ternary:")
         tern_label.setStyleSheet("color: #6b7280; font-size: 10pt;")
         layout.addWidget(tern_label)
-        
+
         t_val_label = QLabel("-")
         t_val_label.setObjectName("ternary_val")
         t_val_label.setStyleSheet("font-size: 18pt; font-family: monospace; color: #2563eb;")
-        t_val_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        t_val_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
         layout.addWidget(t_val_label)
+
+        glyph = QuadsetGlyph()
+        glyph.setObjectName("ternary_glyph")
+        layout.addWidget(glyph)
         
         group.setLayout(layout)
         return group
@@ -200,11 +274,14 @@ class QuadsetAnalysisWindow(QDialog):
         """Update the values in a panel."""
         dec_lbl = panel.findChild(QLabel, "decimal_val")
         tern_lbl = panel.findChild(QLabel, "ternary_val")
+        glyph = panel.findChild(QuadsetGlyph, "ternary_glyph")
         
         if dec_lbl:
             dec_lbl.setText(f"{decimal:,}")
         if tern_lbl:
             tern_lbl.setText(ternary)
+        if glyph:
+            glyph.set_ternary(ternary)
 
     def _create_detail_tab(self, title: str) -> QWidget:
         """Create a tab widget for number details."""
@@ -240,6 +317,10 @@ class QuadsetAnalysisWindow(QDialog):
         tern_layout.addWidget(tern_val)
         tern_layout.addStretch()
         header_layout.addLayout(tern_layout)
+
+        glyph = QuadsetGlyph()
+        glyph.setObjectName("ternary_glyph")
+        header_layout.addWidget(glyph)
         
         header_group.setLayout(header_layout)
         layout.addWidget(header_group)
@@ -271,11 +352,14 @@ class QuadsetAnalysisWindow(QDialog):
         # Update Header Values
         dec_lbl = tab.findChild(QLabel, "decimal_val")
         tern_lbl = tab.findChild(QLabel, "ternary_val")
+        glyph = tab.findChild(QuadsetGlyph, "ternary_glyph")
         
         if dec_lbl:
             dec_lbl.setText(f"{decimal:,}")
         if tern_lbl:
             tern_lbl.setText(ternary)
+        if glyph:
+            glyph.set_ternary(ternary)
             
         # Calculate Properties
         props = NumberPropertiesService.get_properties(decimal)
@@ -359,6 +443,9 @@ class QuadsetAnalysisWindow(QDialog):
             tab.findChild(QLabel, "decimal_val").setText("-")
             tab.findChild(QLabel, "ternary_val").setText("-")
             tab.findChild(QTextEdit, "properties_text").clear()
+            glyph = tab.findChild(QuadsetGlyph, "ternary_glyph")
+            if glyph:
+                glyph.set_ternary("")
 
     def _calculate_quadset(self, text: str):
         """Perform the quadset calculations and update tabs."""

@@ -29,7 +29,7 @@ class SavedCalculationsWindow(QDialog):
         self.keyboard_visible: bool = False
         
         self._setup_ui()
-        self._load_calculations()
+        self._reset_results_view()
     
     def _setup_ui(self):
         """Set up the user interface."""
@@ -173,18 +173,19 @@ class SavedCalculationsWindow(QDialog):
         main_layout.addWidget(splitter)
         
         # Status bar
-        self.status_label = QLabel("Ready")
+        self.status_label = QLabel("Ready - enter a search to load calculations")
         self.status_label.setStyleSheet("color: #666;")
         main_layout.addWidget(self.status_label)
     
-    def _load_calculations(self):
-        """Load all calculations from the database."""
-        try:
-            self.current_records = self.calculation_service.get_all_calculations()
-            self._update_table()
-            self.status_label.setText(f"Loaded {len(self.current_records)} calculations")
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to load calculations:\n{str(e)}")
+    def _reset_results_view(self):
+        """Show an empty table until the user performs a search."""
+        self.current_records = []
+        self.selected_record = None
+        self.results_table.setRowCount(0)
+        self.details_display.clear()
+        self.favorite_btn.setEnabled(False)
+        self.delete_btn.setEnabled(False)
+        self.status_label.setText("Ready - enter a search to load calculations")
     
     def _search(self):
         """Search calculations based on current filters."""
@@ -203,6 +204,11 @@ class SavedCalculationsWindow(QDialog):
             except ValueError:
                 QMessageBox.warning(self, "Invalid Value", f"'{value_text}' is not a valid number")
                 return
+
+        if not any([search_text, language, value is not None, favorites_only]):
+            self._reset_results_view()
+            self.status_label.setText("Add text, value, language, or favorites filter before searching.")
+            return
         
         try:
             self.current_records = self.calculation_service.search_calculations(
@@ -210,7 +216,9 @@ class SavedCalculationsWindow(QDialog):
                 language=language,
                 value=value,
                 favorites_only=favorites_only,
-                limit=500
+                limit=500,
+                page=1,
+                summary_only=True,
             )
             self._update_table()
             self.status_label.setText(f"Found {len(self.current_records)} calculations")
@@ -261,7 +269,19 @@ class SavedCalculationsWindow(QDialog):
         # Get the row index
         row = self.results_table.currentRow()
         if 0 <= row < len(self.current_records):
-            self.selected_record = self.current_records[row]
+            record = self.current_records[row]
+
+            # Fetch full record details on demand
+            if record and record.id:
+                try:
+                    full_record = self.calculation_service.get_calculation(record.id)
+                except Exception:
+                    full_record = None
+                if full_record:
+                    record = full_record
+                    self.current_records[row] = full_record
+
+            self.selected_record = record
             self._display_details(self.selected_record)
             self.favorite_btn.setEnabled(True)
             self.delete_btn.setEnabled(True)

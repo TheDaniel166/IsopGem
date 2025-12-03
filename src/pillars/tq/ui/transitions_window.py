@@ -248,4 +248,4 @@ class TransitionsWindow(QDialog):
         
         self.table.setItem(row, 4, QTableWidgetItem(str(dec_res)))
 
-from PyQt6.QtWidgets import QGridLayout
+

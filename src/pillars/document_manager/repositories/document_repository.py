@@ -2,6 +2,10 @@
 from sqlalchemy.orm import Session, defer
 from pillars.document_manager.models.document import Document
 from typing import List, Optional
+import time
+import logging
+
+logger = logging.getLogger(__name__)
 
 class DocumentRepository:
     def __init__(self, db: Session):
@@ -18,10 +22,20 @@ class DocumentRepository:
 
     def get_all_metadata(self) -> List[Document]:
         """Fetch all documents but defer loading of heavy content fields."""
-        return self.db.query(Document).options(
+        start = time.perf_counter()
+        logger.debug("DocumentRepository: preparing metadata query with deferred content")
+        query = self.db.query(Document).options(
             defer(Document.content), 
             defer(Document.raw_content)
-        ).all()
+        )
+        logger.debug("DocumentRepository: executing metadata query ...")
+        docs = query.all()
+        logger.debug(
+            "DocumentRepository: get_all_metadata fetched %s rows in %.1f ms",
+            len(docs),
+            (time.perf_counter() - start) * 1000,
+        )
+        return docs
 
     def search(self, query: str) -> List[Document]:
         # Basic SQL LIKE search. For advanced search, we'd use Whoosh or Full Text Search.

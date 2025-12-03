@@ -29,6 +29,9 @@ Trigrammaton QBLH integration and pattern analysis
 
 - Python 3.11+
 - PyQt6
+- OpenAstro2 stack (pyswisseph, skyfield, svgwrite, numpy, etc.) for the Astrology pillar
+
+> **Platform note:** OpenAstro2 currently ships Swiss Ephemeris binaries that are easiest to configure on modern Linux distributions. macOS and Windows support is planned, but Linux is the primary target for astrology tooling today.
 
 ## Installation
 

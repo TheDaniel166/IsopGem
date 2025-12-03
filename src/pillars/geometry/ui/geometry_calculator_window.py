@@ -1,19 +1,29 @@
 """Geometry calculator window with 3-pane layout."""
+from typing import Dict, Optional
+
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
-    QPushButton, QGroupBox, QScrollArea, QCheckBox, QSplitter, QFrame,
-    QApplication
+    QPushButton, QScrollArea, QCheckBox, QSplitter, QFrame,
+    QApplication, QComboBox, QTabWidget, QToolButton, QMenu
 )
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QDoubleValidator, QCursor
+from PyQt6.QtGui import QDoubleValidator, QCursor, QAction
 from pillars.geometry.services import GeometricShape
-from .geometry_viewport import GeometryViewport
+from shared.ui import WindowManager
+from .geometry_scene import GeometryScene
+from .geometry_view import GeometryView
+from .scene_adapter import build_scene_payload
 
 
 class GeometryCalculatorWindow(QMainWindow):
     """3-pane geometry calculator window."""
     
-    def __init__(self, shape: GeometricShape, parent=None):
+    def __init__(
+        self,
+        shape: GeometricShape,
+        window_manager: Optional[WindowManager] = None,
+        parent=None,
+    ):
         """
         Initialize the geometry calculator window.
         
@@ -23,8 +33,27 @@ class GeometryCalculatorWindow(QMainWindow):
         """
         super().__init__(parent)
         self.shape = shape
-        self.property_inputs = {}  # key -> QLineEdit
+        self.window_manager = window_manager
+        self.property_inputs: Dict[str, QLineEdit] = {}
         self.updating = False  # Flag to prevent circular updates
+        self.scene = GeometryScene()
+        self.splitter = None
+        self.calc_pane = None
+        self.viewport_pane = None
+        self.controls_pane = None
+        self.calc_collapsed = False
+        self.controls_collapsed = False
+        self._saved_splitter_sizes = [360, 600, 240]
+        self.calc_toggle_btn: Optional[QPushButton] = None
+        self.controls_toggle_btn: Optional[QPushButton] = None
+        self.show_labels_cb: Optional[QCheckBox] = None
+        self.show_grid_cb: Optional[QCheckBox] = None
+        self.show_axes_cb: Optional[QCheckBox] = None
+        self.theme_combo: Optional[QComboBox] = None
+        self.overlay_grid_btn: Optional[QToolButton] = None
+        self.overlay_axes_btn: Optional[QToolButton] = None
+        self.overlay_labels_btn: Optional[QToolButton] = None
+        self.overlay_snapshot_btn: Optional[QToolButton] = None
         
         self.setWindowTitle(f"{shape.name} Calculator")
         self.setMinimumSize(1200, 700)
@@ -32,10 +61,10 @@ class GeometryCalculatorWindow(QMainWindow):
         # Set window background
         self.setStyleSheet("background-color: #f8fafc;")
         
-        self._setup_ui()
-        
         # Star rendering toggle (for hexagram)
         self.star_toggle = None
+
+        self._setup_ui()
         
     def _setup_ui(self):
         """Set up the 3-pane interface."""
@@ -43,9 +72,12 @@ class GeometryCalculatorWindow(QMainWindow):
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         
-        layout = QHBoxLayout(central_widget)
+        layout = QVBoxLayout(central_widget)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
+
+        toolbar = self._create_layout_toolbar()
+        layout.addWidget(toolbar)
         
         # Create splitter for resizable panes
         splitter = QSplitter(Qt.Orientation.Horizontal)
@@ -55,28 +87,33 @@ class GeometryCalculatorWindow(QMainWindow):
                 background-color: #e2e8f0;
             }
         """)
+        splitter.setChildrenCollapsible(False)
         
-        # Left pane: Calculation controls
+        # Build panes (controls first so overlay can bind to toggles)
         calc_pane = self._create_calculation_pane()
-        splitter.addWidget(calc_pane)
-        
-        # Center pane: Viewport
-        viewport_pane = self._create_viewport_pane()
-        splitter.addWidget(viewport_pane)
-        
-        # Right pane: Display controls
         controls_pane = self._create_controls_pane()
+        viewport_pane = self._create_viewport_pane()
+
+        splitter.addWidget(calc_pane)
+        splitter.addWidget(viewport_pane)
         splitter.addWidget(controls_pane)
         
         # Set initial sizes (30% / 50% / 20%)
         splitter.setSizes([360, 600, 240])
-        
-        layout.addWidget(splitter)
+        layout.addWidget(splitter, 1)
+
+        self.splitter = splitter
+        self.calc_pane = calc_pane
+        self.viewport_pane = viewport_pane
+        self.controls_pane = controls_pane
+        splitter.splitterMoved.connect(self._record_splitter_sizes)
+        self._update_splitter_sizes()
     
     def _create_calculation_pane(self) -> QWidget:
         """Create the left calculation pane."""
         pane = QWidget()
         pane.setStyleSheet("background-color: #ffffff; border-right: 1px solid #e2e8f0;")
+        pane.setMinimumWidth(320)
         
         layout = QVBoxLayout(pane)
         layout.setContentsMargins(24, 24, 24, 24)
@@ -234,6 +271,7 @@ class GeometryCalculatorWindow(QMainWindow):
                 padding: 5px 7px; /* Adjust for border width */
             }
         """)
+        self._install_value_context_menu(input_field)
         
         # Only allow positive numbers
         validator = QDoubleValidator(0.0001, 999999999, 6)
@@ -285,7 +323,11 @@ class GeometryCalculatorWindow(QMainWindow):
                 background-color: #e2e8f0;
             }
         """)
-        copy_btn.clicked.connect(lambda: QApplication.clipboard().setText(input_field.text()))
+        def copy_value():
+            clipboard = QApplication.clipboard()
+            if clipboard:
+                clipboard.setText(input_field.text())
+        copy_btn.clicked.connect(copy_value)
         input_layout.addWidget(copy_btn)
         
         layout.addLayout(input_layout)
@@ -314,113 +356,330 @@ class GeometryCalculatorWindow(QMainWindow):
         header_layout.addStretch()
         
         layout.addLayout(header_layout)
+
+        overlay_row = QHBoxLayout()
+        overlay_row.setContentsMargins(0, 0, 0, 0)
+        overlay_row.addStretch()
+        overlay = self._build_viewport_overlay()
+        overlay_row.addWidget(overlay)
+        layout.addLayout(overlay_row)
         
         # Viewport container (for shadow/border)
         viewport_container = QFrame()
-        viewport_container.setStyleSheet("""
-            QFrame {
-                background-color: white;
-                border: 1px solid #e2e8f0;
-                border-radius: 8px;
-            }
-        """)
+        viewport_container.setStyleSheet(
+            "QFrame {background-color: white; border: 1px solid #e2e8f0; border-radius: 8px;}"
+        )
         viewport_layout = QVBoxLayout(viewport_container)
         viewport_layout.setContentsMargins(1, 1, 1, 1) # Thin border
         
-        self.viewport = GeometryViewport()
-        # Remove viewport's own border since container has it
-        self.viewport.setStyleSheet("background-color: white; border: none; border-radius: 7px;")
+        self.viewport = GeometryView(self.scene)
+        self.viewport.setStyleSheet("border: none; border-radius: 7px; background-color: transparent;")
+        self.scene.set_grid_visible(True)
+        self.scene.set_axes_visible(True)
+        self.scene.set_labels_visible(True)
         
         viewport_layout.addWidget(self.viewport)
         layout.addWidget(viewport_container)
+
+        self._sync_overlay_toggles()
         
         return pane
     
     def _create_controls_pane(self) -> QWidget:
-        """Create the right controls pane."""
+        """Create the right controls pane with advanced tabs."""
         pane = QWidget()
         pane.setStyleSheet("background-color: #ffffff; border-left: 1px solid #e2e8f0;")
-        
+        pane.setMinimumWidth(260)
+
         layout = QVBoxLayout(pane)
-        layout.setContentsMargins(20, 24, 20, 24)
-        layout.setSpacing(20)
-        
-        # Title
-        title_label = QLabel("Display Options")
-        title_label.setStyleSheet("""
-            font-size: 12pt;
-            font-weight: 700;
-            color: #334155;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        """)
+        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setSpacing(12)
+
+        title_label = QLabel("Visualization Console")
+        title_label.setStyleSheet(
+            "color: #0f172a; font-size: 13pt; font-weight: 700; letter-spacing: 0.5px;"
+        )
         layout.addWidget(title_label)
-        
-        # Controls Group
-        controls_group = QWidget()
-        controls_layout = QVBoxLayout(controls_group)
-        controls_layout.setSpacing(12)
-        controls_layout.setContentsMargins(0, 0, 0, 0)
-        
-        # Checkboxes
+
+        tabs = QTabWidget()
+        tabs.setDocumentMode(True)
+        tabs.setStyleSheet(
+            """
+            QTabWidget::pane { border: 1px solid #e2e8f0; border-radius: 10px; }
+            QTabBar::tab { padding: 6px 12px; }
+            QTabBar::tab:selected { background: #e0e7ff; border-radius: 6px; }
+            """
+        )
+        tabs.addTab(self._build_display_tab(), "Display")
+        tabs.addTab(self._build_camera_tab(), "Camera")
+        tabs.addTab(self._build_output_tab(), "Output")
+        layout.addWidget(tabs)
+
+        return pane
+
+    def _create_layout_toolbar(self) -> QWidget:
+        bar = QFrame()
+        bar.setStyleSheet(
+            """
+            QFrame {
+                background-color: #eef2ff;
+                border-bottom: 1px solid #e2e8f0;
+            }
+            """
+        )
+        layout = QHBoxLayout(bar)
+        layout.setContentsMargins(18, 10, 18, 10)
+        layout.setSpacing(12)
+
+        hint = QLabel("Layout Controls")
+        hint.setStyleSheet("color: #1e3a8a; font-weight: 600; letter-spacing: 0.4px;")
+        layout.addWidget(hint)
+        layout.addStretch()
+
+        self.calc_toggle_btn = QPushButton("Hide Inputs")
+        self.calc_toggle_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.calc_toggle_btn.setStyleSheet(
+            """
+            QPushButton {
+                background-color: #e0e7ff;
+                color: #312e81;
+                padding: 6px 12px;
+                border: 1px solid #c7d2fe;
+                border-radius: 999px;
+                font-weight: 600;
+            }
+            QPushButton:hover {
+                background-color: #c7d2fe;
+            }
+            """
+        )
+        self.calc_toggle_btn.clicked.connect(self._toggle_calculation_pane)
+        layout.addWidget(self.calc_toggle_btn)
+
+        self.controls_toggle_btn = QPushButton("Hide Display Options")
+        self.controls_toggle_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.controls_toggle_btn.setStyleSheet(
+            """
+            QPushButton {
+                background-color: #e0e7ff;
+                color: #312e81;
+                padding: 6px 12px;
+                border: 1px solid #c7d2fe;
+                border-radius: 999px;
+                font-weight: 600;
+            }
+            QPushButton:hover {
+                background-color: #c7d2fe;
+            }
+            """
+        )
+        self.controls_toggle_btn.clicked.connect(self._toggle_controls_pane)
+        layout.addWidget(self.controls_toggle_btn)
+
+        return bar
+
+    def _build_viewport_overlay(self) -> QWidget:
+        chip = QFrame()
+        chip.setStyleSheet(
+            """
+            QFrame {
+                background: rgba(15,23,42,0.08);
+                border: 1px solid rgba(148,163,184,0.6);
+                border-radius: 999px;
+            }
+            """
+        )
+        layout = QHBoxLayout(chip)
+        layout.setContentsMargins(12, 4, 12, 4)
+        layout.setSpacing(6)
+
+        self.overlay_grid_btn = self._create_overlay_toggle(
+            "Grid",
+            lambda state: self.show_grid_cb.setChecked(state) if self.show_grid_cb else None,
+        )
+        layout.addWidget(self.overlay_grid_btn)
+
+        self.overlay_axes_btn = self._create_overlay_toggle(
+            "Axes",
+            lambda state: self.show_axes_cb.setChecked(state) if self.show_axes_cb else None,
+        )
+        layout.addWidget(self.overlay_axes_btn)
+
+        self.overlay_labels_btn = self._create_overlay_toggle(
+            "Labels",
+            lambda state: self.show_labels_cb.setChecked(state) if self.show_labels_cb else None,
+        )
+        layout.addWidget(self.overlay_labels_btn)
+
+        self.overlay_snapshot_btn = QToolButton()
+        self.overlay_snapshot_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.overlay_snapshot_btn.setToolTip("Copy snapshot to clipboard")
+        self.overlay_snapshot_btn.setText("📸")
+        self.overlay_snapshot_btn.setStyleSheet(
+            """
+            QToolButton {
+                border: none;
+                font-size: 12pt;
+                padding: 4px;
+            }
+            QToolButton:hover {
+                color: #1d4ed8;
+            }
+            """
+        )
+        self.overlay_snapshot_btn.clicked.connect(self._capture_snapshot)
+        layout.addWidget(self.overlay_snapshot_btn)
+
+        return chip
+
+    def _create_overlay_toggle(self, label: str, callback) -> QToolButton:
+        btn = QToolButton()
+        btn.setText(label)
+        btn.setCheckable(True)
+        btn.setAutoRaise(True)
+        btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        btn.setStyleSheet(
+            """
+            QToolButton {
+                padding: 4px 10px;
+                border-radius: 999px;
+                color: #0f172a;
+            }
+            QToolButton:checked {
+                background-color: #e0e7ff;
+                color: #1d4ed8;
+            }
+            """
+        )
+        btn.toggled.connect(callback)
+        return btn
+
+    def _secondary_button_style(self) -> str:
+        return (
+            "QPushButton {background-color: #f1f5f9; color: #1f2937; border: 1px solid #cbd5e1;"
+            "border-radius: 8px; padding: 8px 12px; font-weight: 600;}"
+            "QPushButton:hover {background-color: #e2e8f0;}"
+            "QPushButton:pressed {background-color: #cbd5e1;}"
+        )
+
+    def _build_display_tab(self) -> QWidget:
+        tab = QWidget()
+        layout = QVBoxLayout(tab)
+        layout.setSpacing(12)
+        layout.setContentsMargins(12, 12, 12, 12)
+
         self.show_labels_cb = self._create_checkbox("Show Labels", True)
         self.show_labels_cb.toggled.connect(self._on_display_toggle)
-        controls_layout.addWidget(self.show_labels_cb)
-        
+        layout.addWidget(self.show_labels_cb)
+
         self.show_grid_cb = self._create_checkbox("Show Grid", True)
         self.show_grid_cb.toggled.connect(self._on_display_toggle)
-        controls_layout.addWidget(self.show_grid_cb)
-        
+        layout.addWidget(self.show_grid_cb)
+
         self.show_axes_cb = self._create_checkbox("Show Axes", True)
         self.show_axes_cb.toggled.connect(self._on_display_toggle)
-        controls_layout.addWidget(self.show_axes_cb)
+        layout.addWidget(self.show_axes_cb)
 
-        # Optional: Draw as star (hexagram)
         try:
             from pillars.geometry.services import RegularPolygonShape
-            if isinstance(self.shape, RegularPolygonShape) and self.shape.num_sides == 6:
+
+            if isinstance(self.shape, RegularPolygonShape) and getattr(self.shape, "num_sides", 0) == 6:
                 self.star_toggle = self._create_checkbox("Draw as Star (Hexagram)", False)
                 self.star_toggle.toggled.connect(self._on_display_toggle)
-                controls_layout.addWidget(self.star_toggle)
+                layout.addWidget(self.star_toggle)
         except Exception:
             pass
-        
-        layout.addWidget(controls_group)
-        
+
+        theme_label = QLabel("Scene Theme")
+        theme_label.setStyleSheet("color: #475569; font-weight: 600;")
+        layout.addWidget(theme_label)
+
+        self.theme_combo = QComboBox()
+        self.theme_combo.addItems(["Daylight", "Midnight", "Slate", "Pearl"])
+        self.theme_combo.currentTextChanged.connect(self._on_theme_changed)
+        layout.addWidget(self.theme_combo)
+        self.theme_combo.setCurrentText("Daylight")
+        self._on_theme_changed("Daylight")
+
         layout.addStretch()
-        
-        # Info section
+        return tab
+
+    def _build_camera_tab(self) -> QWidget:
+        tab = QWidget()
+        layout = QVBoxLayout(tab)
+        layout.setSpacing(12)
+        layout.setContentsMargins(12, 12, 12, 12)
+
+        zoom_row = QHBoxLayout()
+        zoom_in_btn = QPushButton("Zoom In")
+        zoom_in_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        zoom_in_btn.setStyleSheet(self._secondary_button_style())
+        zoom_in_btn.clicked.connect(self._on_zoom_in)
+        zoom_row.addWidget(zoom_in_btn)
+
+        zoom_out_btn = QPushButton("Zoom Out")
+        zoom_out_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        zoom_out_btn.setStyleSheet(self._secondary_button_style())
+        zoom_out_btn.clicked.connect(self._on_zoom_out)
+        zoom_row.addWidget(zoom_out_btn)
+        layout.addLayout(zoom_row)
+
+        view_row = QHBoxLayout()
+        fit_btn = QPushButton("Fit Shape")
+        fit_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        fit_btn.setStyleSheet(self._secondary_button_style())
+        fit_btn.clicked.connect(self._on_fit_shape)
+        view_row.addWidget(fit_btn)
+
+        reset_btn = QPushButton("Reset View")
+        reset_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        reset_btn.setStyleSheet(self._secondary_button_style())
+        reset_btn.clicked.connect(self._on_reset_view)
+        view_row.addWidget(reset_btn)
+        layout.addLayout(view_row)
+
+        layout.addStretch()
+        return tab
+
+    def _build_output_tab(self) -> QWidget:
+        tab = QWidget()
+        layout = QVBoxLayout(tab)
+        layout.setSpacing(12)
+        layout.setContentsMargins(12, 12, 12, 12)
+
+        snapshot_btn = QPushButton("Copy Snapshot")
+        snapshot_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        snapshot_btn.setStyleSheet(self._secondary_button_style())
+        snapshot_btn.clicked.connect(self._capture_snapshot)
+        layout.addWidget(snapshot_btn)
+
+        summary_btn = QPushButton("Copy Measurements")
+        summary_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        summary_btn.setStyleSheet(self._secondary_button_style())
+        summary_btn.clicked.connect(self._copy_measurement_summary)
+        layout.addWidget(summary_btn)
+
         info_frame = QFrame()
-        info_frame.setStyleSheet("""
+        info_frame.setStyleSheet(
+            """
             QFrame {
                 background-color: #eff6ff;
                 border: 1px solid #dbeafe;
                 border-radius: 8px;
             }
-        """)
+            """
+        )
         info_layout = QVBoxLayout(info_frame)
         info_layout.setContentsMargins(16, 16, 16, 16)
-        
-        info_icon = QLabel("💡")
-        info_icon.setStyleSheet("font-size: 16pt; border: none; background: transparent;")
-        info_layout.addWidget(info_icon)
-        
-        info_text = QLabel(
-            "Enter any property value to calculate all other properties automatically."
-        )
+
+        info_text = QLabel("Snapshots and summaries copy directly to your clipboard for quick sharing.")
         info_text.setWordWrap(True)
-        info_text.setStyleSheet("""
-            color: #1e40af;
-            font-size: 9pt;
-            font-weight: 500;
-            border: none;
-            background: transparent;
-        """)
+        info_text.setStyleSheet("color: #1e40af; font-size: 9pt;")
         info_layout.addWidget(info_text)
-        
         layout.addWidget(info_frame)
-        
-        return pane
+
+        layout.addStretch()
+        return tab
     
     def _create_checkbox(self, text: str, checked: bool) -> QCheckBox:
         """Create a styled checkbox."""
@@ -491,7 +750,12 @@ class GeometryCalculatorWindow(QMainWindow):
         if self.star_toggle is not None and self.star_toggle.isChecked():
             drawing_data['star'] = True
         labels = self.shape.get_label_positions()
-        self.viewport.set_drawing_data(drawing_data, labels)
+        payload = build_scene_payload(drawing_data, labels)
+        if payload.primitives:
+            self.scene.set_payload(payload)
+            self.viewport.fit_to_bounds(payload.bounds)
+        else:
+            self.scene.clear_payload()
     
     def _clear_all(self):
         """Clear all values."""
@@ -505,13 +769,232 @@ class GeometryCalculatorWindow(QMainWindow):
             input_field.clear()
         
         # Clear viewport
-        self.viewport.clear()
+        self.scene.clear_payload()
+        self.viewport.fit_to_bounds(None)
         
         self.updating = False
     
     def _on_display_toggle(self):
         """Handle display control toggles."""
-        self.viewport.show_labels = self.show_labels_cb.isChecked()
-        self.viewport.show_grid = self.show_grid_cb.isChecked()
-        self.viewport.show_axes = self.show_axes_cb.isChecked()
-        self.viewport.update()
+        if self.show_labels_cb is not None:
+            self.scene.set_labels_visible(self.show_labels_cb.isChecked())
+        if self.show_grid_cb is not None:
+            self.scene.set_grid_visible(self.show_grid_cb.isChecked())
+        if self.show_axes_cb is not None:
+            self.scene.set_axes_visible(self.show_axes_cb.isChecked())
+        if self.star_toggle is not None and self.sender() is self.star_toggle:
+            self._update_viewport()
+        self._sync_overlay_toggles()
+
+    def _sync_overlay_toggles(self):
+        pairs = (
+            (self.overlay_grid_btn, self.show_grid_cb),
+            (self.overlay_axes_btn, self.show_axes_cb),
+            (self.overlay_labels_btn, self.show_labels_cb),
+        )
+        for btn, checkbox in pairs:
+            if btn is None or checkbox is None:
+                continue
+            btn.blockSignals(True)
+            btn.setChecked(checkbox.isChecked())
+            btn.blockSignals(False)
+
+    def _on_theme_changed(self, theme: str):
+        self.scene.apply_theme(theme)
+
+    def _on_zoom_in(self):
+        if hasattr(self, "viewport") and self.viewport is not None:
+            self.viewport.zoom_in()
+
+    def _on_zoom_out(self):
+        if hasattr(self, "viewport") and self.viewport is not None:
+            self.viewport.zoom_out()
+
+    def _on_fit_shape(self):
+        if hasattr(self, "viewport") and self.viewport is not None:
+            self.viewport.fit_scene()
+
+    def _on_reset_view(self):
+        if hasattr(self, "viewport") and self.viewport is not None:
+            self.viewport.reset_view()
+
+    def _capture_snapshot(self):
+        if not hasattr(self, "viewport") or self.viewport is None:
+            return
+        pixmap = self.viewport.grab()
+        clipboard = QApplication.clipboard()
+        if clipboard:
+            clipboard.setPixmap(pixmap)
+
+    def _copy_measurement_summary(self):
+        lines = [f"{self.shape.name} Measurements"]
+        for prop in self.shape.get_all_properties():
+            if prop.value is None:
+                continue
+            formatted_value = f"{prop.value:.{prop.precision}f}".rstrip('0').rstrip('.')
+            unit = f" {prop.unit}" if prop.unit else ""
+            lines.append(f"• {prop.name}: {formatted_value}{unit}")
+        if len(lines) == 1:
+            lines.append("No values calculated yet.")
+        clipboard = QApplication.clipboard()
+        if clipboard:
+            clipboard.setText("\n".join(lines))
+
+    def _install_value_context_menu(self, input_field: QLineEdit):
+        """Attach cross-pillar context menu actions to calculator inputs."""
+        if not input_field:
+            return
+        input_field.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        input_field.customContextMenuRequested.connect(
+            lambda pos, field=input_field: self._show_value_context_menu(field, pos)
+        )
+
+    def _show_value_context_menu(self, line_edit: QLineEdit, position):
+        """Append cross-pillar actions to the standard edit menu."""
+        menu = line_edit.createStandardContextMenu()
+        if menu is None:
+            menu = QMenu(line_edit)
+        self._style_value_menu(menu)
+        numeric_value = self._parse_numeric_value(line_edit.text())
+        if numeric_value is not None:
+            menu.addSeparator()
+            send_action = QAction("Send to Quadset Analysis", menu)
+            send_action.triggered.connect(
+                lambda _, value=numeric_value: self._send_value_to_quadset(value)
+            )
+            lookup_action = QAction("Look up in Database", menu)
+            lookup_action.triggered.connect(
+                lambda _, value=numeric_value: self._lookup_value_in_database(value)
+            )
+            if not self.window_manager:
+                send_action.setEnabled(False)
+                lookup_action.setEnabled(False)
+            menu.addAction(send_action)
+            menu.addAction(lookup_action)
+        menu.exec(line_edit.mapToGlobal(position))
+
+    @staticmethod
+    def _style_value_menu(menu: QMenu):
+        """Apply a readable light theme to context menus."""
+        if not menu:
+            return
+        menu.setStyleSheet(
+            """
+            QMenu {
+                background-color: #ffffff;
+                color: #0f172a;
+                border: 1px solid #cbd5e1;
+                padding: 4px 0px;
+            }
+            QMenu::item {
+                padding: 6px 16px;
+            }
+            QMenu::item:selected {
+                background-color: #e0e7ff;
+                color: #1d4ed8;
+            }
+            QMenu::separator {
+                height: 1px;
+                margin: 4px 6px;
+                background-color: #e2e8f0;
+            }
+            """
+        )
+
+    @staticmethod
+    def _parse_numeric_value(text: str) -> Optional[float]:
+        """Safely parse text into a floating point number."""
+        if not text:
+            return None
+        try:
+            return float(text)
+        except (TypeError, ValueError):
+            return None
+
+    @staticmethod
+    def _round_cross_pillar_value(value: float) -> int:
+        """Round values before sending to other tool windows."""
+        return int(round(value))
+
+    def _send_value_to_quadset(self, value: float):
+        """Send rounded number to the Quadset Analysis tool."""
+        if not self.window_manager:
+            return
+        rounded_value = self._round_cross_pillar_value(value)
+        from pillars.tq.ui.quadset_analysis_window import QuadsetAnalysisWindow
+
+        window = self.window_manager.open_window(
+            "quadset_analysis",
+            QuadsetAnalysisWindow,
+        )
+        if not window:
+            return
+        input_widget = getattr(window, "input_field", None)
+        if input_widget is not None:
+            input_widget.setText(str(rounded_value))
+            window.raise_()
+            window.activateWindow()
+
+    def _lookup_value_in_database(self, value: float):
+        """Open Saved Calculations with the value filter pre-filled."""
+        if not self.window_manager:
+            return
+        rounded_value = self._round_cross_pillar_value(value)
+        from pillars.gematria.ui.saved_calculations_window import SavedCalculationsWindow
+
+        window = self.window_manager.open_window(
+            "saved_calculations",
+            SavedCalculationsWindow,
+            allow_multiple=False,
+        )
+        if not window:
+            return
+        value_field = getattr(window, "value_input", None)
+        if value_field is not None:
+            value_field.setText(str(rounded_value))
+        search_method = getattr(window, "_search", None)
+        if callable(search_method):
+            search_method()
+        window.raise_()
+        window.activateWindow()
+
+    def _toggle_calculation_pane(self):
+        if not self.calc_pane or not self.splitter:
+            return
+        self.calc_collapsed = not self.calc_collapsed
+        self.calc_pane.setVisible(not self.calc_collapsed)
+        if self.calc_toggle_btn:
+            label = "Show Inputs" if self.calc_collapsed else "Hide Inputs"
+            self.calc_toggle_btn.setText(label)
+        self._update_splitter_sizes()
+
+    def _toggle_controls_pane(self):
+        if not self.controls_pane or not self.splitter:
+            return
+        self.controls_collapsed = not self.controls_collapsed
+        self.controls_pane.setVisible(not self.controls_collapsed)
+        if self.controls_toggle_btn:
+            label = "Show Display Options" if self.controls_collapsed else "Hide Display Options"
+            self.controls_toggle_btn.setText(label)
+        self._update_splitter_sizes()
+
+    def _update_splitter_sizes(self):
+        if not self.splitter:
+            return
+        sizes = list(self._saved_splitter_sizes)
+        if self.calc_collapsed:
+            sizes[1] += sizes[0]
+            sizes[0] = 0
+        if self.controls_collapsed:
+            sizes[1] += sizes[2]
+            sizes[2] = 0
+        if sizes[1] <= 0:
+            sizes[1] = 1
+        self.splitter.setSizes(sizes)
+
+    def _record_splitter_sizes(self, *_):
+        if not self.splitter:
+            return
+        if self.calc_collapsed or self.controls_collapsed:
+            return
+        self._saved_splitter_sizes = self.splitter.sizes()

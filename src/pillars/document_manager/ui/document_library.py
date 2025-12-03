@@ -1,16 +1,20 @@
 """Document Library UI."""
 from pathlib import Path
+import time
+import logging
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, 
     QPushButton, QTableWidget, QTableWidgetItem, 
     QHeaderView, QFileDialog, QMessageBox, QAbstractItemView,
-    QProgressDialog, QMenu, QTreeWidget, QTreeWidgetItem, QSplitter
+    QProgressDialog, QMenu, QTreeWidget, QTreeWidgetItem, QSplitter,
+    QLabel
 )
-from PyQt6.QtCore import Qt, pyqtSignal
-from shared.database import get_db
-from pillars.document_manager.services.document_service import DocumentService
+from PyQt6.QtCore import Qt, pyqtSignal, QTimer
+from pillars.document_manager.services.document_service import document_service_context
 from .document_properties_dialog import DocumentPropertiesDialog
 from .import_options_dialog import ImportOptionsDialog
+
+logger = logging.getLogger(__name__)
 
 class DocumentLibrary(QMainWindow):
     """Window for managing and searching the document database."""
@@ -21,13 +25,17 @@ class DocumentLibrary(QMainWindow):
         super().__init__(parent)
         self.setWindowTitle("Document Library")
         self.resize(800, 600)
+        self.all_docs: list = []
+        self.is_loading = False
+        self._suppress_tree_signal = False
         
         # Central Widget
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
         
         self._setup_ui()
-        self._load_documents()
+        self.status_label.setText("Loading documents...")
+        QTimer.singleShot(0, self._load_documents)
 
     def _setup_ui(self):
         layout = QVBoxLayout(self.central_widget)
@@ -93,65 +101,99 @@ class DocumentLibrary(QMainWindow):
         
         # Set initial splitter sizes
         splitter.setSizes([200, 600])
-
-    def _get_service(self):
-        # Helper to get service with a fresh session
-        # In a real app, we might manage session lifecycle differently
-        db = next(get_db())
-        return DocumentService(db)
+        self.status_label = QLabel("Ready")
+        self.status_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        layout.addWidget(self.status_label)
 
     def _load_documents(self):
-        service = self._get_service()
-        # Use metadata-only fetch for performance
-        self.all_docs = service.get_all_documents_metadata()
+        if self.is_loading:
+            return
+        self.is_loading = True
+        self.status_label.setText("Loading documents...")
+        start = time.perf_counter()
+        with document_service_context() as service:
+            logger.debug("DocumentLibrary: fetching metadata ...")
+            # Use metadata-only fetch for performance
+            self.all_docs = service.get_all_documents_metadata()
+        logger.debug(
+            "DocumentLibrary: fetched %s docs in %.1f ms",
+            len(self.all_docs),
+            (time.perf_counter() - start) * 1000,
+        )
         self._populate_tree(self.all_docs)
-        self._populate_table(self.all_docs)
+        self.table.setRowCount(0)
+        self.status_label.setText("Select a collection to display documents.")
+        self.is_loading = False
 
     def _populate_tree(self, docs):
-        self.tree.clear()
-        
-        # All Documents item
-        all_item = QTreeWidgetItem(["All Documents"])
-        all_item.setData(0, Qt.ItemDataRole.UserRole, None) # None means all
-        self.tree.addTopLevelItem(all_item)
-        
-        # Collect unique collections
-        collections = set()
-        for doc in docs:
-            if doc.collection is not None:
-                collections.add(doc.collection)
-        
-        # Add collection items
-        for collection in sorted(collections):
-            item = QTreeWidgetItem([collection])
-            item.setData(0, Qt.ItemDataRole.UserRole, collection)
-            self.tree.addTopLevelItem(item)
+        start = time.perf_counter()
+        self._suppress_tree_signal = True
+        try:
+            self.tree.clear()
             
-        all_item.setSelected(True)
+            # All Documents item
+            all_item = QTreeWidgetItem(["All Documents"])
+            all_item.setData(0, Qt.ItemDataRole.UserRole, None) # None means all
+            self.tree.addTopLevelItem(all_item)
+            
+            # Collect unique collections
+            collections = set()
+            for doc in docs:
+                if doc.collection is not None:
+                    collections.add(doc.collection)
+            
+            # Add collection items
+            for collection in sorted(collections):
+                item = QTreeWidgetItem([collection])
+                item.setData(0, Qt.ItemDataRole.UserRole, collection)
+                self.tree.addTopLevelItem(item)
+            
+            self.tree.clearSelection()
+        finally:
+            self._suppress_tree_signal = False
+        logger.debug(
+            "DocumentLibrary: populated tree for %s docs in %.1f ms",
+            len(docs),
+            (time.perf_counter() - start) * 1000,
+        )
 
     def _on_collection_selected(self, item, column):
+        if self._suppress_tree_signal or self.is_loading:
+            return
         collection = item.data(0, Qt.ItemDataRole.UserRole)
         if collection is None:
-            self._populate_table(self.all_docs)
+            docs = self.all_docs
         else:
-            filtered = [d for d in self.all_docs if d.collection == collection]
-            self._populate_table(filtered)
+            docs = [d for d in self.all_docs if d.collection == collection]
+        self._populate_table(docs)
+        self.status_label.setText(
+            f"Showing {len(docs)} document(s)" if docs else "No documents in this collection."
+        )
 
     def _search_documents(self, text):
-        service = self._get_service()
         if text:
             # Search hits DB, so we update all_docs? 
             # Or just display results?
             # Let's just display results and clear tree selection
-            docs = service.search_documents(text, limit=50)
+            start = time.perf_counter()
+            with document_service_context() as service:
+                docs = service.search_documents(text, limit=50)
+            logger.debug(
+                "DocumentLibrary: search '%s' returned %s results in %.1f ms",
+                text,
+                len(docs),
+                (time.perf_counter() - start) * 1000,
+            )
             self._populate_table(docs)
+            self.status_label.setText(f"Search returned {len(docs)} result(s).")
             self.tree.clearSelection()
         else:
             self._load_documents()
 
     def _populate_table(self, docs):
+        start = time.perf_counter()
         self.table.setRowCount(0)
-        for doc in docs:
+        for idx, doc in enumerate(docs, start=1):
             row = self.table.rowCount()
             self.table.insertRow(row)
             
@@ -163,6 +205,17 @@ class DocumentLibrary(QMainWindow):
             self.table.setItem(row, 2, QTableWidgetItem(doc.file_type))
             self.table.setItem(row, 3, QTableWidgetItem(doc.tags or ""))
             self.table.setItem(row, 4, QTableWidgetItem(str(doc.created_at)))
+            if idx % 500 == 0:
+                logger.debug(
+                    "DocumentLibrary: inserted %s rows (%.1f ms so far)",
+                    idx,
+                    (time.perf_counter() - start) * 1000,
+                )
+        logger.debug(
+            "DocumentLibrary: populated table with %s rows in %.1f ms",
+            len(docs),
+            (time.perf_counter() - start) * 1000,
+        )
 
     def _show_context_menu(self, position):
         menu = QMenu()
@@ -219,24 +272,24 @@ class DocumentLibrary(QMainWindow):
             if not new_tags:
                 return
 
-            service = self._get_service()
-            for row_idx in selected_rows:
-                item = self.table.item(row_idx.row(), 0)
-                if item is None:
-                    continue
-                doc = item.data(Qt.ItemDataRole.UserRole)
-                
-                current_tags = set()
-                if doc.tags:
-                    current_tags = {t.strip() for t in doc.tags.split(',') if t.strip()}
-                
-                current_tags.update(new_tags)
-                updated_tags_str = ", ".join(sorted(current_tags))
-                
-                try:
-                    service.update_document(doc.id, tags=updated_tags_str)
-                except Exception as e:
-                    print(f"Error updating tags for doc {doc.id}: {e}")
+            with document_service_context() as service:
+                for row_idx in selected_rows:
+                    item = self.table.item(row_idx.row(), 0)
+                    if item is None:
+                        continue
+                    doc = item.data(Qt.ItemDataRole.UserRole)
+                    
+                    current_tags = set()
+                    if doc.tags:
+                        current_tags = {t.strip() for t in doc.tags.split(',') if t.strip()}
+                    
+                    current_tags.update(new_tags)
+                    updated_tags_str = ", ".join(sorted(current_tags))
+                    
+                    try:
+                        service.update_document(doc.id, tags=updated_tags_str)
+                    except Exception as e:
+                        print(f"Error updating tags for doc {doc.id}: {e}")
             
             self._load_documents()
 
@@ -271,8 +324,8 @@ class DocumentLibrary(QMainWindow):
                 from PyQt6.QtWidgets import QApplication
                 QApplication.processEvents()
 
-            service = self._get_service()
-            service.update_documents(doc_ids, collection=collection_name)
+            with document_service_context() as service:
+                service.update_documents(doc_ids, collection=collection_name)
             
             self._load_documents()
             
@@ -307,16 +360,15 @@ class DocumentLibrary(QMainWindow):
         if dialog.exec():
             data = dialog.get_data()
             try:
-                service = self._get_service()
-                
-                # Prepare update args (filter out None)
-                update_args = {k: v for k, v in data.items() if v is not None}
-                
-                if not update_args:
-                    return
+                with document_service_context() as service:
+                    # Prepare update args (filter out None)
+                    update_args = {k: v for k, v in data.items() if v is not None}
+                    
+                    if not update_args:
+                        return
 
-                for doc in docs:
-                    service.update_document(doc.id, **update_args)
+                    for doc in docs:
+                        service.update_document(doc.id, **update_args)
                     
                 self._load_documents() # Refresh view
             except Exception as e:
@@ -338,12 +390,12 @@ class DocumentLibrary(QMainWindow):
             if dialog.exec():
                 options = dialog.get_data()
                 try:
-                    service = self._get_service()
-                    service.import_document(
-                        file_path, 
-                        tags=options['tags'] or '', 
-                        collection=options['collection']
-                    )
+                    with document_service_context() as service:
+                        service.import_document(
+                            file_path, 
+                            tags=options['tags'] or '', 
+                            collection=options['collection']
+                        )
                     self._load_documents()
                     QMessageBox.information(self, "Success", "Document imported successfully.")
                 except Exception as e:
@@ -360,8 +412,8 @@ class DocumentLibrary(QMainWindow):
         
         if reply == QMessageBox.StandardButton.Yes:
             try:
-                service = self._get_service()
-                service.rebuild_search_index()
+                with document_service_context() as service:
+                    service.rebuild_search_index()
                 QMessageBox.information(self, "Success", "Search index rebuilt successfully.")
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Failed to rebuild index: {str(e)}")
@@ -424,28 +476,28 @@ class DocumentLibrary(QMainWindow):
         progress.setWindowModality(Qt.WindowModality.WindowModal)
         progress.setMinimumDuration(0)
         
-        service = self._get_service()
         succeeded = 0
         failed = 0
         errors = []
         
-        for i, file_path in enumerate(file_paths):
-            if progress.wasCanceled():
-                break
+        with document_service_context() as service:
+            for i, file_path in enumerate(file_paths):
+                if progress.wasCanceled():
+                    break
+                    
+                progress.setValue(i)
+                progress.setLabelText(f"Importing {Path(file_path).name}...")
                 
-            progress.setValue(i)
-            progress.setLabelText(f"Importing {Path(file_path).name}...")
-            
-            try:
-                service.import_document(
-                    file_path,
-                    tags=options['tags'] if options and options['tags'] else '',
-                    collection=options.get('collection') or '' if options else ''
-                )
-                succeeded += 1
-            except Exception as e:
-                failed += 1
-                errors.append(f"{Path(file_path).name}: {str(e)}")
+                try:
+                    service.import_document(
+                        file_path,
+                        tags=options['tags'] if options and options['tags'] else '',
+                        collection=options.get('collection') or '' if options else ''
+                    )
+                    succeeded += 1
+                except Exception as e:
+                    failed += 1
+                    errors.append(f"{Path(file_path).name}: {str(e)}")
                 
         progress.setValue(len(file_paths))
         
@@ -495,8 +547,8 @@ class DocumentLibrary(QMainWindow):
         
         if reply == QMessageBox.StandardButton.Yes:
             try:
-                service = self._get_service()
-                service.delete_document(doc_id)
+                with document_service_context() as service:
+                    service.delete_document(doc_id)
                 self._load_documents()
                 QMessageBox.information(self, "Success", "Document deleted successfully.")
             except Exception as e:
@@ -525,8 +577,8 @@ class DocumentLibrary(QMainWindow):
             
             if reply2 == QMessageBox.StandardButton.Yes:
                 try:
-                    service = self._get_service()
-                    count = service.delete_all_documents()
+                    with document_service_context() as service:
+                        count = service.delete_all_documents()
                     self._load_documents()
                     QMessageBox.information(self, "Purge Complete", f"Database purged. {count} documents deleted.")
                 except Exception as e:
@@ -539,8 +591,8 @@ class DocumentLibrary(QMainWindow):
         
         doc_id = int(item.text())
         
-        service = self._get_service()
-        doc = service.get_document(doc_id)
+        with document_service_context() as service:
+            doc = service.get_document(doc_id)
         
         if doc:
             self.document_opened.emit(doc)

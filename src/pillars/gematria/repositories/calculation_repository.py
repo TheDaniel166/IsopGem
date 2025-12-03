@@ -7,8 +7,8 @@ from pathlib import Path
 
 from whoosh import index
 from whoosh.fields import Schema, TEXT, NUMERIC, ID, DATETIME, BOOLEAN, KEYWORD
-from whoosh.qparser import MultifieldParser, QueryParser
-from whoosh.query import And, Term
+from whoosh.qparser import MultifieldParser
+from whoosh.query import And, Term, Or, Every
 
 from ..models import CalculationRecord
 
@@ -36,11 +36,11 @@ class CalculationRepository:
             id=ID(stored=True, unique=True),
             text=TEXT(stored=True),
             normalized_text=TEXT(stored=True),
-            value=NUMERIC(stored=True),
+            value=NUMERIC(stored=True, sortable=True),
             language=TEXT(stored=True),
             method=TEXT(stored=True),
-            date_created=DATETIME(stored=True),
-            date_modified=DATETIME(stored=True),
+            date_created=DATETIME(stored=True, sortable=True),
+            date_modified=DATETIME(stored=True, sortable=True),
             notes=TEXT(stored=True),
             source=TEXT(stored=True),
             tags=KEYWORD(stored=True, commas=True, scorable=True),
@@ -57,6 +57,12 @@ class CalculationRepository:
             self.ix = index.open_dir(str(self.index_dir))
         else:
             self.ix = index.create_in(str(self.index_dir), self.schema)
+
+        self._text_parser = MultifieldParser(
+            ["text", "normalized_text", "notes", "source"],
+            schema=self.schema,
+        )
+        self._match_all_query = Every()
     
     def save(self, record: CalculationRecord) -> CalculationRecord:
         """
@@ -154,7 +160,9 @@ class CalculationRepository:
         value: Optional[int] = None,
         tags: Optional[List[str]] = None,
         favorites_only: bool = False,
-        limit: int = 100
+        limit: int = 100,
+        page: int = 1,
+        summary_only: bool = True,
     ) -> List[CalculationRecord]:
         """
         Search for calculation records.
@@ -165,7 +173,9 @@ class CalculationRepository:
             value: Filter by exact value
             tags: Filter by tags (any match)
             favorites_only: Only return favorites
-            limit: Maximum results to return
+            limit: Page size to return
+            page: 1-based page number
+            summary_only: Return lightweight records if True
             
         Returns:
             List of matching calculation records
@@ -175,11 +185,7 @@ class CalculationRepository:
             
             # Text search across multiple fields
             if query_str:
-                parser = MultifieldParser(
-                    ["text", "normalized_text", "notes", "source"],
-                    schema=self.schema
-                )
-                queries.append(parser.parse(query_str))
+                queries.append(self._text_parser.parse(query_str))
             
             # Filter by language
             if language:
@@ -191,24 +197,34 @@ class CalculationRepository:
             
             # Filter by tags
             if tags:
-                for tag in tags:
-                    queries.append(Term("tags", tag))
+                tag_terms = [Term("tags", tag) for tag in tags if tag]
+                if tag_terms:
+                    queries.append(Or(tag_terms))
             
             # Filter favorites
             if favorites_only:
                 queries.append(Term("is_favorite", True))
             
             # Combine queries
-            if queries:
-                query = And(queries)
-            else:
-                # If no filters, match all
-                from whoosh.query import Every
-                query = Every()
-            
-            results = searcher.search(query, limit=limit, sortedby="date_modified", reverse=True)
-            
-            return [self._result_to_record(result) for result in results]
+            query = And(queries) if queries else self._match_all_query
+
+            pagelen = max(1, limit)
+            page = max(1, page)
+            try:
+                results = searcher.search_page(
+                    query,
+                    page,
+                    pagelen=pagelen,
+                    sortedby="date_modified",
+                    reverse=True,
+                )
+            except ValueError:
+                return []
+
+            converter = (
+                self._result_to_summary if summary_only else self._result_to_record
+            )
+            return [converter(result) for result in results]
     
     def get_all(self, limit: int = 1000) -> List[CalculationRecord]:
         """
@@ -220,7 +236,7 @@ class CalculationRepository:
         Returns:
             List of all calculation records
         """
-        return self.search(limit=limit)
+        return self.search(limit=limit, page=1, summary_only=False)
     
     def get_by_value(self, value: int, limit: int = 100) -> List[CalculationRecord]:
         """
@@ -233,7 +249,7 @@ class CalculationRepository:
         Returns:
             List of matching records
         """
-        return self.search(value=value, limit=limit)
+        return self.search(value=value, limit=limit, summary_only=False)
     
     def get_favorites(self, limit: int = 100) -> List[CalculationRecord]:
         """
@@ -245,7 +261,7 @@ class CalculationRepository:
         Returns:
             List of favorite records
         """
-        return self.search(favorites_only=True, limit=limit)
+        return self.search(favorites_only=True, limit=limit, summary_only=False)
     
     def get_by_tags(self, tags: List[str], limit: int = 100) -> List[CalculationRecord]:
         """
@@ -258,8 +274,29 @@ class CalculationRepository:
         Returns:
             List of matching records
         """
-        return self.search(tags=tags, limit=limit)
+        return self.search(tags=tags, limit=limit, summary_only=False)
     
+    def _result_to_summary(self, result) -> CalculationRecord:
+        """Convert a Whoosh result into a lightweight CalculationRecord."""
+        tags = result['tags'].split(',') if result.get('tags') else []
+        tags = [t.strip() for t in tags if t.strip()]
+
+        return CalculationRecord(
+            id=result['id'],
+            text=result['text'],
+            normalized_text=result.get('normalized_text', ''),
+            value=result['value'],
+            language=result['language'],
+            method=result['method'],
+            date_created=result['date_created'],
+            date_modified=result['date_modified'],
+            tags=tags,
+            character_count=result.get('character_count', 0),
+            user_rating=result.get('user_rating', 0),
+            is_favorite=result.get('is_favorite', False),
+            category=result.get('category', ''),
+        )
+
     def _result_to_record(self, result) -> CalculationRecord:
         """Convert Whoosh search result to CalculationRecord."""
         # Parse tags

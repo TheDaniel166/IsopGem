@@ -155,7 +155,9 @@ class CalculationService:
         value: Optional[int] = None,
         tags: Optional[List[str]] = None,
         favorites_only: bool = False,
-        limit: int = 100
+        limit: int = 100,
+        page: int = 1,
+        summary_only: bool = True,
     ) -> List[CalculationRecord]:
         """
         Search for calculations.
@@ -167,6 +169,8 @@ class CalculationService:
             tags: Filter by tags
             favorites_only: Only favorites
             limit: Max results
+            page: Page number (1-indexed)
+            summary_only: Return lightweight records if True
             
         Returns:
             List of matching records
@@ -177,7 +181,9 @@ class CalculationService:
             value=value,
             tags=tags,
             favorites_only=favorites_only,
-            limit=limit
+            limit=limit,
+            page=page,
+            summary_only=summary_only,
         )
     
     def get_all_calculations(self, limit: int = 1000) -> List[CalculationRecord]:

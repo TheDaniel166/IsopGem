@@ -5,8 +5,7 @@ from PyQt6.QtWidgets import (
     QAbstractItemView, QLabel
 )
 from PyQt6.QtCore import Qt, pyqtSignal
-from shared.database import get_db
-from pillars.document_manager.services.document_service import DocumentService
+from pillars.document_manager.services.document_service import document_service_context
 
 class DocumentSearchWindow(QMainWindow):
     """Window for advanced document search with highlighting."""
@@ -76,10 +75,6 @@ class DocumentSearchWindow(QMainWindow):
         
         layout.addWidget(self.table)
 
-    def _get_service(self):
-        db = next(get_db())
-        return DocumentService(db)
-
     def _perform_search(self):
         query = self.search_input.text().strip()
         if not query:
@@ -89,8 +84,8 @@ class DocumentSearchWindow(QMainWindow):
         self.table.setRowCount(0)
         
         try:
-            service = self._get_service()
-            results = service.search_documents_with_highlights(query)
+            with document_service_context() as service:
+                results = service.search_documents_with_highlights(query)
             
             self.lbl_status.setText(f"Found {len(results)} results.")
             

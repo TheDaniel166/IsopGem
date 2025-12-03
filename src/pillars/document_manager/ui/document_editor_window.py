@@ -9,8 +9,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QAction, QKeySequence
 from .rich_text_editor import RichTextEditor
-from shared.database import get_db
-from pillars.document_manager.services.document_service import DocumentService
+from pillars.document_manager.services.document_service import document_service_context
 
 class DocumentEditorWindow(QMainWindow):
     """Window for editing documents using the RichTextEditor."""
@@ -49,9 +48,8 @@ class DocumentEditorWindow(QMainWindow):
     def _show_wiki_link_selector(self):
         """Show a dialog to select a document to link."""
         try:
-            db = next(get_db())
-            service = DocumentService(db)
-            docs = service.get_all_documents_metadata()
+            with document_service_context() as service:
+                docs = service.get_all_documents_metadata()
         except Exception as e:
             print(f"Error fetching docs: {e}")
             return
@@ -238,20 +236,18 @@ class DocumentEditorWindow(QMainWindow):
     def save_document(self):
         if self.current_doc_model:
             try:
-                db = next(get_db())
-                service = DocumentService(db)
-                
-                # Update content
-                # Note: We are saving HTML as raw_content. 
-                # We should ideally strip tags for 'content' (searchable text)
-                html_content = self.editor.get_html()
-                plain_text = self.editor.get_text()
-                
-                service.update_document(
-                    self.current_doc_model.id,
-                    content=plain_text,
-                    raw_content=html_content
-                )
+                with document_service_context() as service:
+                    # Update content
+                    # Note: We are saving HTML as raw_content. 
+                    # We should ideally strip tags for 'content' (searchable text)
+                    html_content = self.editor.get_html()
+                    plain_text = self.editor.get_text()
+                    
+                    service.update_document(
+                        self.current_doc_model.id,
+                        content=plain_text,
+                        raw_content=html_content
+                    )
                 
                 self.is_modified = False
                 self._update_title()

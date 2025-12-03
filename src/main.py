@@ -2,6 +2,7 @@
 import sys
 import os
 import signal
+import logging
 
 # Force Qt to use X11 instead of Wayland (more stable with PyQt6)
 os.environ['QT_QPA_PLATFORM'] = 'xcb'
@@ -89,6 +90,12 @@ class IsopGemMainWindow(QMainWindow):
 
 def main():
     """Initialize and run the application."""
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+        force=True,
+    )
+
     # Initialize Database
     init_db()
 

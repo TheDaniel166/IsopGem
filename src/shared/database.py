@@ -2,6 +2,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 from pathlib import Path
+from contextlib import contextmanager
 import os
 
 # Define Base for models
@@ -29,3 +30,18 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+@contextmanager
+def get_db_session():
+    """Context manager wrapper around get_db() that always closes the session."""
+    generator = get_db()
+    db = next(generator)
+    try:
+        yield db
+    finally:
+        # Ensure generator cleanup runs even if user forgets
+        try:
+            generator.close()
+        except StopIteration:
+            pass

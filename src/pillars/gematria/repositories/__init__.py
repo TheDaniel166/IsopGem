@@ -1,4 +1,4 @@
 """Gematria data repositories."""
-from .calculation_repository import CalculationRepository
+from .sqlite_calculation_repository import SQLiteCalculationRepository as CalculationRepository
 
 __all__ = ['CalculationRepository']

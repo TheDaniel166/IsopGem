@@ -28,7 +28,7 @@ class GematriaCalculatorWindow(QDialog):
         self.calculators: Dict[str, GematriaCalculator] = {
             calc.name: calc for calc in calculators
         }
-        self.current_calculator: GematriaCalculator = calculators[0]
+        self.current_calculator: Optional[GematriaCalculator] = calculators[0]
         self.calculation_service = CalculationService()
         
         # Store current calculation
@@ -39,6 +39,7 @@ class GematriaCalculatorWindow(QDialog):
         # Virtual keyboard
         self.virtual_keyboard: Optional[VirtualKeyboard] = None
         self.keyboard_visible: bool = False
+        self._current_language: Optional[str] = None
         
         self._setup_ui()
     
@@ -127,40 +128,58 @@ class GematriaCalculatorWindow(QDialog):
         
         # Hebrew submenu
         hebrew_menu = self.system_menu.addMenu("📖 Hebrew")
+        if hebrew_menu is None:
+            raise RuntimeError("Failed to create Hebrew submenu")
         # Add "All Methods" option at the top
         all_hebrew_action = hebrew_menu.addAction("✨ All Methods")
+        if all_hebrew_action is None:
+            raise RuntimeError("Failed to create Hebrew all-methods action")
         all_hebrew_action.setData("Hebrew_ALL")
         all_hebrew_action.triggered.connect(lambda: self._select_calculator("Hebrew_ALL"))
         hebrew_menu.addSeparator()
         for name in list(self.calculators.keys()):
             if "Hebrew" in name:
                 action = hebrew_menu.addAction(name.replace("Hebrew ", ""))
+                if action is None:
+                    continue
                 action.setData(name)
                 action.triggered.connect(lambda checked, n=name: self._select_calculator(n))
         
         # Greek submenu
         greek_menu = self.system_menu.addMenu("🔤 Greek")
+        if greek_menu is None:
+            raise RuntimeError("Failed to create Greek submenu")
         # Add "All Methods" option at the top
         all_greek_action = greek_menu.addAction("✨ All Methods")
+        if all_greek_action is None:
+            raise RuntimeError("Failed to create Greek all-methods action")
         all_greek_action.setData("Greek_ALL")
         all_greek_action.triggered.connect(lambda: self._select_calculator("Greek_ALL"))
         greek_menu.addSeparator()
         for name in list(self.calculators.keys()):
             if "Greek" in name:
                 action = greek_menu.addAction(name.replace("Greek ", ""))
+                if action is None:
+                    continue
                 action.setData(name)
                 action.triggered.connect(lambda checked, n=name: self._select_calculator(n))
         
         # English submenu
         english_menu = self.system_menu.addMenu("🔡 English")
+        if english_menu is None:
+            raise RuntimeError("Failed to create English submenu")
         # Add "All Methods" option at the top
         all_english_action = english_menu.addAction("✨ All Methods")
+        if all_english_action is None:
+            raise RuntimeError("Failed to create English all-methods action")
         all_english_action.setData("English_ALL")
         all_english_action.triggered.connect(lambda: self._select_calculator("English_ALL"))
         english_menu.addSeparator()
         for name in list(self.calculators.keys()):
             if "English" in name or "TQ" in name:
                 action = english_menu.addAction(name.replace("English ", ""))
+                if action is None:
+                    continue
                 action.setData(name)
                 action.triggered.connect(lambda checked, n=name: self._select_calculator(n))
         
@@ -329,8 +348,13 @@ class GematriaCalculatorWindow(QDialog):
             return
         
         # Check if in "All Methods" mode
-        if self.current_calculator is None and hasattr(self, '_current_language'):
+        if self.current_calculator is None and self._current_language:
             self._calculate_all_methods(text, self._current_language)
+            return
+
+        if self.current_calculator is None:
+            # Should never happen, but guard for static analysis and runtime safety
+            QMessageBox.warning(self, "Gematria Calculator", "No calculator is active.")
             return
         
         # Calculate total value
@@ -419,6 +443,9 @@ class GematriaCalculatorWindow(QDialog):
     def _save_calculation(self):
         """Save the current calculation to the database."""
         if not self.current_text:
+            return
+        if self.current_calculator is None:
+            QMessageBox.warning(self, "Gematria Calculator", "Cannot save while viewing all methods.")
             return
         
         # Create a simple dialog to get notes and tags
