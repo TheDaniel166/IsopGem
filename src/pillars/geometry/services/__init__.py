@@ -38,6 +38,7 @@ from .cube_solid import CubeSolidService, CubeSolidCalculator
 from .octahedron_solid import OctahedronSolidService, OctahedronSolidCalculator
 from .dodecahedron_solid import DodecahedronSolidService, DodecahedronSolidCalculator
 from .icosahedron_solid import IcosahedronSolidService, IcosahedronSolidCalculator
+from .tesseract_solid import TesseractSolidService, TesseractSolidCalculator
 from .square_pyramid_solid import SquarePyramidSolidService, SquarePyramidSolidCalculator
 from .square_pyramid_frustum_solid import (
     SquarePyramidFrustumSolidService,
@@ -169,6 +170,8 @@ __all__ = [
     'DodecahedronSolidCalculator',
     'IcosahedronSolidService',
     'IcosahedronSolidCalculator',
+    'TesseractSolidService',
+    'TesseractSolidCalculator',
     'SquarePyramidSolidService',
     'SquarePyramidSolidCalculator',
     'SquarePyramidFrustumSolidService',

@@ -53,6 +53,8 @@ from ..services import (
     DodecahedronSolidCalculator,
     IcosahedronSolidService,
     IcosahedronSolidCalculator,
+    TesseractSolidService,
+    TesseractSolidCalculator,
     SquarePyramidSolidService,
     SquarePyramidSolidCalculator,
     SquarePyramidFrustumSolidService,
@@ -832,9 +834,9 @@ CATEGORY_DEFINITIONS: List[dict] = [
         shapes=[
             {
                 'name': 'Tesseract',
-                'summary': 'Coming soon: 4D volume, projections, nets',
-                'status': 'Coming Soon',
-                'factory': None,
+                'summary': 'Dual-cube Schlegel projection with 24 square faces.',
+                'type': 'solid_viewer',
+                'solid_id': 'tesseract',
             },
         ],
     ),
@@ -870,6 +872,12 @@ SOLID_VIEWER_CONFIG: Dict[str, dict] = {
         'summary': 'Twenty equilateral faces yielding maximal symmetry among platonic solids.',
         'builder': IcosahedronSolidService.build,
         'calculator': IcosahedronSolidCalculator,
+    },
+    'tesseract': {
+        'title': 'Tesseract (Hypercube)',
+        'summary': 'Schlegel projection of a four-dimensional cube with paired shells.',
+        'builder': TesseractSolidService.build,
+        'calculator': TesseractSolidCalculator,
     },
     'square_pyramid': {
         'title': 'Square Pyramid',

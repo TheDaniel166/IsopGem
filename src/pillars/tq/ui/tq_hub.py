@@ -7,6 +7,7 @@ from .ternary_converter_window import TernaryConverterWindow
 from .quadset_analysis_window import QuadsetAnalysisWindow
 from .transitions_window import TransitionsWindow
 from .geometric_transitions_window import GeometricTransitionsWindow
+from .geometric_transitions_3d_window import GeometricTransitions3DWindow
 from .conrune_pair_finder_window import ConrunePairFinderWindow
 
 
@@ -130,6 +131,24 @@ class TQHub(QWidget):
         geometric_btn.clicked.connect(self._open_geometric_transitions)
         tools_layout.addWidget(geometric_btn)
 
+        geometric3d_btn = QPushButton("3D Geometric Transitions")
+        geometric3d_btn.setMinimumHeight(50)
+        geometric3d_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #0f766e;
+                color: white;
+                font-size: 14pt;
+                font-weight: bold;
+                border-radius: 8px;
+                padding: 10px;
+            }
+            QPushButton:hover {
+                background-color: #115e59;
+            }
+        """)
+        geometric3d_btn.clicked.connect(self._open_geometric_transitions_3d)
+        tools_layout.addWidget(geometric3d_btn)
+
         conrune_btn = QPushButton("Conrune Pair Finder")
         conrune_btn.setMinimumHeight(50)
         conrune_btn.setStyleSheet("""
@@ -190,6 +209,14 @@ class TQHub(QWidget):
         self.window_manager.open_window(
             "geometric_transitions",
             GeometricTransitionsWindow,
+            window_manager=self.window_manager
+        )
+
+    def _open_geometric_transitions_3d(self):
+        """Open the 3D geometric transitions window."""
+        self.window_manager.open_window(
+            "geometric_transitions_3d",
+            GeometricTransitions3DWindow,
             window_manager=self.window_manager
         )
 
