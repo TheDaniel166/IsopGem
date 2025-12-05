@@ -13,9 +13,9 @@ except ImportError:
     pd = None  # type: ignore
 
 from PyQt6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QPushButton, QLabel,
+    QMainWindow, QVBoxLayout, QHBoxLayout, QPushButton, QLabel,
     QTableWidget, QTableWidgetItem, QFileDialog, QProgressBar,
-    QComboBox, QGroupBox, QTextEdit, QMessageBox, QHeaderView
+    QComboBox, QGroupBox, QTextEdit, QMessageBox, QHeaderView, QWidget
 )
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QFont, QCloseEvent
@@ -133,7 +133,7 @@ class BatchProcessThread(QThread):
         self._is_running = False
 
 
-class BatchCalculatorWindow(QDialog):
+class BatchCalculatorWindow(QMainWindow):
     """Window for batch importing and calculating words from spreadsheets."""
     
     def __init__(self, calculators: List[GematriaCalculator], parent=None):
@@ -156,7 +156,9 @@ class BatchCalculatorWindow(QDialog):
     
     def _setup_ui(self):
         """Set up the user interface."""
-        layout = QVBoxLayout(self)
+        central = QWidget()
+        self.setCentralWidget(central)
+        layout = QVBoxLayout(central)
         layout.setSpacing(16)
         layout.setContentsMargins(20, 20, 20, 20)
         

@@ -7,7 +7,7 @@ from PyQt6.QtCore import Qt, QPointF
 from PyQt6.QtGui import QAction, QFont, QPainter, QPen, QColor
 from PyQt6.QtWidgets import (
     QComboBox,
-    QDialog,
+    QMainWindow,
     QApplication,
     QFrame,
     QGridLayout,
@@ -124,8 +124,8 @@ class GeometricCanvas(QWidget):
         return QPointF(cx + x * scale, cy - y * scale)
 
 
-class GeometricTransitionsWindow(QDialog):
-    """Main dialog coordinating polygon transitions."""
+class GeometricTransitionsWindow(QMainWindow):
+    """Main window coordinating polygon transitions."""
 
     RESULT_COLUMN_INDEX = 5
 
@@ -157,7 +157,10 @@ class GeometricTransitionsWindow(QDialog):
         self.setWindowTitle("Geometric Transitions")
         self.setMinimumSize(1200, 700)
 
-        root_layout = QHBoxLayout(self)
+        central = QWidget()
+        self.setCentralWidget(central)
+
+        root_layout = QHBoxLayout(central)
         root_layout.setSpacing(16)
         root_layout.setContentsMargins(20, 20, 20, 20)
 

@@ -1,13 +1,13 @@
 """Methods Reference Window - lists all gematria calculation systems with descriptions."""
 from PyQt6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem,
+    QMainWindow, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem,
     QTextEdit, QPushButton, QWidget, QSplitter, QComboBox, QMessageBox
 )
 from PyQt6.QtCore import Qt
 from typing import List, Dict, Optional
 from ..services.base_calculator import GematriaCalculator
 
-class MethodsReferenceWindow(QDialog):
+class MethodsReferenceWindow(QMainWindow):
     """Window displaying all available gematria calculation methods with their documentation."""
 
     def __init__(self, calculators: List[GematriaCalculator], parent=None):
@@ -15,7 +15,6 @@ class MethodsReferenceWindow(QDialog):
         self.setWindowTitle("Gemetria Methods Reference")
         self.setMinimumSize(1000, 750)
         self.setAttribute(Qt.WidgetAttribute.WA_QuitOnClose, False)
-        self.setModal(False)
 
         # Build a mapping of name -> calculator instance
         self.calculators: Dict[str, GematriaCalculator] = {c.name: c for c in calculators}
@@ -25,7 +24,9 @@ class MethodsReferenceWindow(QDialog):
         self._populate_list()
 
     def _setup_ui(self):
-        layout = QVBoxLayout(self)
+        central = QWidget()
+        self.setCentralWidget(central)
+        layout = QVBoxLayout(central)
         layout.setSpacing(12)
         layout.setContentsMargins(20, 20, 20, 20)
 

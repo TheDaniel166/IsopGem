@@ -4,8 +4,12 @@ This module manages the lifecycle of tool windows across all pillars,
 including opening, closing, positioning, and tracking active windows.
 """
 from typing import Dict, Optional, Type
+import logging
 from PyQt6.QtWidgets import QWidget, QMainWindow
 from PyQt6.QtCore import Qt
+
+
+logger = logging.getLogger(__name__)
 
 
 class WindowManager:
@@ -55,9 +59,11 @@ class WindowManager:
             window_id = window_type
             if window_id in self._active_windows:
                 window = self._active_windows[window_id]
-                # Bring to front and focus
+                # Bring to front and focus; ensure it is visible
+                window.show()
                 window.raise_()
                 window.activateWindow()
+                logger.debug("Reusing existing window %s (id=%s)", window_type, window_id)
                 return window
         
         # Create new window
@@ -87,8 +93,11 @@ class WindowManager:
             original_title = window.windowTitle()
             window.setWindowTitle(f"{original_title} #{self._window_counters[window_type]}")
         
-        # Show window
+        # Show and ensure window is focused
         window.show()
+        window.raise_()
+        window.activateWindow()
+        logger.debug("Opened window %s (id=%s)", window_type, window_id)
         
         return window
     
@@ -105,6 +114,13 @@ class WindowManager:
         if window_id in self._active_windows:
             window = self._active_windows[window_id]
             window.close()
+            # If the window doesn't emit destroyed immediately (offscreen/minimal plugins),
+            # proactively remove the reference so callers observe accurate state.
+            try:
+                del self._active_windows[window_id]
+            except KeyError:
+                pass
+            logger.debug("Closed window id=%s", window_id)
             return True
         return False
     
@@ -114,6 +130,25 @@ class WindowManager:
         window_ids = list(self._active_windows.keys())
         for window_id in window_ids:
             self.close_window(window_id)
+
+    def close_windows_of_type(self, window_type: str) -> int:
+        """
+        Close all open windows matching a given window type.
+
+        Args:
+            window_type: The type of window to close (e.g., 'gematria_calculator')
+
+        Returns:
+            The number of windows closed
+        """
+        closed = 0
+        # Copy keys to avoid mutation during iteration
+        for wid, window in list(self._active_windows.items()):
+            if window.property('window_type') == window_type:
+                self.close_window(wid)
+                closed += 1
+        logger.debug("Closed %d windows of type %s", closed, window_type)
+        return closed
     
     def is_window_open(self, window_id: str) -> bool:
         """

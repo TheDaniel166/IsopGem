@@ -9,7 +9,7 @@ from PyQt6.QtGui import QAction, QColor, QFont, QMouseEvent, QPaintEvent, QPaint
 from PyQt6.QtWidgets import (
     QApplication,
     QComboBox,
-    QDialog,
+    QMainWindow,
     QGridLayout,
     QGroupBox,
     QHBoxLayout,
@@ -238,7 +238,7 @@ class SolidCanvas3D(QWidget):
         self.set_rotation(yaw=self._DEFAULT_YAW, pitch=self._DEFAULT_PITCH)
 
 
-class GeometricTransitions3DWindow(QDialog):
+class GeometricTransitions3DWindow(QMainWindow):
     """Interactive window for Platonic solid ternary transitions."""
 
     RESULT_COLUMN_INDEX = 5
@@ -276,7 +276,10 @@ class GeometricTransitions3DWindow(QDialog):
         self.setWindowTitle("3D Geometric Transitions")
         self.setMinimumSize(1400, 760)
 
-        root_layout = QHBoxLayout(self)
+        central = QWidget()
+        self.setCentralWidget(central)
+
+        root_layout = QHBoxLayout(central)
         root_layout.setSpacing(18)
         root_layout.setContentsMargins(24, 24, 24, 24)
 

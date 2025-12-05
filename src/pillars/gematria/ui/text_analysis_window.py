@@ -1,23 +1,35 @@
 """Text Analysis Window - Analyze documents with Gematria."""
 from PyQt6.QtWidgets import (
-    QDialog, QWidget, QVBoxLayout, QHBoxLayout, QSplitter,
+    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QSplitter,
     QLabel, QPushButton, QTextEdit, QComboBox, QLineEdit,
     QListWidget, QListWidgetItem, QMessageBox, QGroupBox,
-    QMenu, QInputDialog
+    QMenu, QInputDialog, QScrollArea, QCheckBox
 )
-from PyQt6.QtCore import Qt, pyqtSignal, QTimer
+from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QTextCursor, QTextCharFormat, QColor, QFont, QAction
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Optional, Tuple, Any
+from ..utils.verse_parser import parse_verses
+from ..utils.numeric_utils import sum_numeric_face_values
+import re
 from PyQt6.QtWidgets import QSpinBox
 from pillars.document_manager.services.document_service import document_service_context
+from pillars.document_manager.services.verse_teacher_service import verse_teacher_service_context
+
+from .holy_book_teacher_window import HolyBookTeacherWindow
+import logging
 
 from ..services.base_calculator import GematriaCalculator
 from ..services import CalculationService
 from pillars.document_manager.models.document import Document
 
 
-class TextAnalysisWindow(QDialog):
+logger = logging.getLogger(__name__)
+
+
+class TextAnalysisWindow(QMainWindow):
     """Window for analyzing document text with Gematria."""
+    HOLY_BOOKS_CATEGORY = "Holy Books"
+    DEFAULT_CALCULATOR_NAME = "English (TQ)"
     
     def __init__(self, calculators: List[GematriaCalculator], parent=None):
         """
@@ -28,27 +40,45 @@ class TextAnalysisWindow(QDialog):
             parent: Optional parent widget
         """
         super().__init__(parent)
+        # UI readiness flag to prevent handlers running during construction
+        self._ui_ready = False
         self.calculators: Dict[str, GematriaCalculator] = {
             calc.name: calc for calc in calculators
         }
-        self.current_calculator: GematriaCalculator = calculators[0]
+        self.current_calculator: GematriaCalculator = self._select_default_calculator(calculators)
         self.calculation_service = CalculationService()
         
         # Current state
         self.current_document: Optional[Document] = None
         self.highlighted_matches: List[Tuple[int, int]] = []  # List of (start, end) positions
+        self._current_selection: Optional[Dict[str, Any]] = None
+        self._verse_run_metadata: Optional[Dict[str, Any]] = None
         
         self.setWindowTitle("Gematria Text Analysis")
         self.setMinimumSize(1200, 800)
         self.setAttribute(Qt.WidgetAttribute.WA_QuitOnClose, False)
-        self.setModal(False)
-        
+
         self._setup_ui()
         self._load_documents()
+        # Mark UI ready after setup/load complete
+        self._ui_ready = True
+
+    def _select_default_calculator(self, calculators: List[GematriaCalculator]) -> GematriaCalculator:
+        """Return preferred calculator, falling back to the first available."""
+        if not calculators:
+            raise ValueError("At least one calculator is required")
+
+        preferred = self.DEFAULT_CALCULATOR_NAME.lower()
+        for calc in calculators:
+            if calc.name.lower() == preferred:
+                return calc
+        return calculators[0]
     
     def _setup_ui(self):
         """Set up the user interface."""
-        main_layout = QVBoxLayout(self)
+        central = QWidget()
+        self.setCentralWidget(central)
+        main_layout = QVBoxLayout(central)
         main_layout.setSpacing(12)
         main_layout.setContentsMargins(20, 20, 20, 20)
         
@@ -88,7 +118,35 @@ class TextAnalysisWindow(QDialog):
         self.calculator_combo.setMinimumWidth(250)
         self.calculator_combo.setMinimumHeight(36)
         self.calculator_combo.currentTextChanged.connect(self._on_calculator_changed)
+        default_index = self.calculator_combo.findText(self.current_calculator.name)
+        if default_index >= 0:
+            # Prevent triggering change handler while UI still building
+            self.calculator_combo.blockSignals(True)
+            self.calculator_combo.setCurrentIndex(default_index)
+            self.calculator_combo.blockSignals(False)
         toolbar_layout.addWidget(self.calculator_combo)
+        # Holy Book view toggle - when enabled, show verses parsed by verse number
+        self.holy_view_toggle = QCheckBox("Holy Book View")
+        self.holy_view_toggle.setToolTip("Parse document into verse boxes by leading verse numbers")
+        self.holy_view_toggle.toggled.connect(self._on_holy_view_toggled)
+        toolbar_layout.addWidget(self.holy_view_toggle)
+        # Strict verse parsing toggles whether inline numbers are considered.
+        self.strict_verse_toggle = QCheckBox("Strict Verse Parsing")
+        self.strict_verse_toggle.setToolTip("When enabled, only numbers at the start of a line are treated as verse markers")
+        self.strict_verse_toggle.setChecked(True)
+        # Include numeric face values for totals
+        self.include_numbers_checkbox = QCheckBox("Include numeric face values")
+        self.include_numbers_checkbox.setToolTip("Include integer numbers found in text when summing totals")
+        self.include_numbers_checkbox.setChecked(False)
+        self.include_numbers_checkbox.stateChanged.connect(self._on_include_numbers_toggled)
+        toolbar_layout.addWidget(self.include_numbers_checkbox)
+        toolbar_layout.addWidget(self.strict_verse_toggle)
+        self.teach_parser_btn = QPushButton("Teach Parser")
+        self.teach_parser_btn.setMinimumHeight(32)
+        self.teach_parser_btn.setEnabled(False)
+        self.teach_parser_btn.setToolTip("Open the Holy Book Teacher workspace")
+        self.teach_parser_btn.clicked.connect(self._open_teacher_window)
+        toolbar_layout.addWidget(self.teach_parser_btn)
         
         toolbar_layout.addStretch()
         
@@ -161,6 +219,29 @@ class TextAnalysisWindow(QDialog):
             padding: 4px;
         """)
         left_layout.addWidget(self.selection_info_label)
+        # Value display for calculated selection (stays visible for long selections)
+        self.calculated_value_label = QLabel("")
+        self.calculated_value_label.setStyleSheet("""
+            color: #2563eb;
+            font-weight: 600;
+            font-size: 10pt;
+            padding: 4px;
+        """)
+        left_layout.addWidget(self.calculated_value_label)
+        # Verses scroll area for Holy Book view (hidden by default)
+        self.verses_scroll = QScrollArea()
+        self.verses_container = QWidget()
+        self.verses_layout = QVBoxLayout(self.verses_container)
+        self.verses_layout.setContentsMargins(0, 0, 0, 0)
+        self.verses_layout.setSpacing(8)
+        self.verses_scroll.setWidget(self.verses_container)
+        self.verses_scroll.setWidgetResizable(True)
+        self.verses_scroll.hide()
+        left_layout.addWidget(self.verses_scroll)
+        self.verse_run_info_label = QLabel("")
+        self.verse_run_info_label.setStyleSheet("color: #475569; font-size: 9pt; padding: 2px 0;")
+        self.verse_run_info_label.hide()
+        left_layout.addWidget(self.verse_run_info_label)
         
         splitter.addWidget(left_widget)
         
@@ -286,16 +367,35 @@ class TextAnalysisWindow(QDialog):
             }
         """)
         action_layout.addWidget(save_matches_btn)
+        # Save verse totals button
+        self.save_verses_btn = QPushButton("💾 Save Verse Totals")
+        self.save_verses_btn.clicked.connect(self._save_verse_totals)
+        self.save_verses_btn.setMinimumHeight(32)
+        self.save_verses_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #f97316;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                font-weight: 600;
+            }
+            QPushButton:hover {
+                background-color: #ea580c;
+            }
+        """)
+        action_layout.addWidget(self.save_verses_btn)
+        self.save_verses_btn.setEnabled(False)
         
         search_layout.addLayout(action_layout)
         
         right_layout.addWidget(search_group)
         
-        # Save current selection (no breakdown display)
-        save_current_btn = QPushButton("💾 Save Current Selection")
-        save_current_btn.clicked.connect(self._save_current_calculation)
-        save_current_btn.setMinimumHeight(32)
-        save_current_btn.setStyleSheet("""
+        # Save highlighted selection (mirrors manual calculations)
+        self.save_selection_btn = QPushButton("💾 Save Highlight Calculation")
+        self.save_selection_btn.clicked.connect(self._save_current_calculation)
+        self.save_selection_btn.setMinimumHeight(32)
+        self.save_selection_btn.setEnabled(False)
+        self.save_selection_btn.setStyleSheet("""
             QPushButton {
                 background-color: #10b981;
                 color: white;
@@ -306,8 +406,12 @@ class TextAnalysisWindow(QDialog):
             QPushButton:hover {
                 background-color: #059669;
             }
+            QPushButton:disabled {
+                background-color: #cbd5e1;
+                color: #94a3b8;
+            }
         """)
-        right_layout.addWidget(save_current_btn)
+        right_layout.addWidget(self.save_selection_btn)
         right_layout.addStretch()
         
         splitter.addWidget(right_widget)
@@ -326,7 +430,10 @@ class TextAnalysisWindow(QDialog):
         """Load documents from the database into the combo box."""
         try:
             with document_service_context() as service:
-                documents = service.get_all_documents()
+                documents = [
+                    doc for doc in service.get_all_documents()
+                    if self._is_holy_books_document(doc)
+                ]
             
             self.document_combo.clear()
             self.document_combo.addItem("-- Select a document --", None)
@@ -335,10 +442,28 @@ class TextAnalysisWindow(QDialog):
                 self.document_combo.addItem(f"{doc.title} ({doc.id})", doc.id)
             
             if len(documents) == 0:
-                self.status_label.setText("No documents found in database")
+                self.status_label.setText("No Holy Books documents found")
             
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to load documents:\n{str(e)}")
+
+    def _is_holy_books_document(self, doc: Document) -> bool:
+        """Return True if a document belongs to the Holy Books category/collection."""
+        target = self.HOLY_BOOKS_CATEGORY.lower()
+        candidates = [
+            getattr(doc, "category", None),
+            getattr(doc, "collection", None),
+        ]
+
+        tags = getattr(doc, "tags", None)
+        if tags:
+            # Tags are stored as comma-separated values; include them as potential categories.
+            candidates.extend([t.strip() for t in str(tags).split(",") if t.strip()])
+
+        for candidate in candidates:
+            if candidate and str(candidate).strip().lower() == target:
+                return True
+        return False
     
     def _on_document_selected(self, index: int):
         """Handle document selection."""
@@ -347,7 +472,10 @@ class TextAnalysisWindow(QDialog):
         if doc_id is None:
             self.text_display.clear()
             self.current_document = None
+            self._verse_run_metadata = None
             self.status_label.setText("Ready - Select a document to begin")
+            if hasattr(self, 'teach_parser_btn'):
+                self.teach_parser_btn.setEnabled(False)
             return
         
         try:
@@ -366,6 +494,15 @@ class TextAnalysisWindow(QDialog):
                 self._clear_highlights()
                 self.results_list.clear()
                 self.results_info_label.setText("No search performed")
+                if hasattr(self, 'calculated_value_label'):
+                    self.calculated_value_label.setText("")
+                self._verse_run_metadata = None
+                if hasattr(self, 'teach_parser_btn'):
+                    self.teach_parser_btn.setEnabled(True)
+                # Re-parse verses if holy view active
+                if getattr(self, 'holy_view_toggle', None) and self.holy_view_toggle.isChecked():
+                    allow_inline = not getattr(self, 'strict_verse_toggle', None) or not self.strict_verse_toggle.isChecked()
+                    self._parse_and_render_verses(plain_text, allow_inline=allow_inline)
                 
                 self.status_label.setText(f"Loaded: {self.current_document.title}")
             else:
@@ -376,12 +513,23 @@ class TextAnalysisWindow(QDialog):
     
     def _on_calculator_changed(self, calc_name: str):
         """Handle calculator selection change."""
+        # Ignore early events before widgets are constructed
+        if not getattr(self, '_ui_ready', False):
+            return
         if calc_name in self.calculators:
             self.current_calculator = self.calculators[calc_name]
             # Clear highlights when changing calculator
             self._clear_highlights()
             self.results_list.clear()
             self.results_info_label.setText("Calculator changed - search again to update")
+            # Refresh verse totals if holy view is active
+            if getattr(self, 'holy_view_toggle', None) and self.holy_view_toggle.isChecked():
+            # Recompute verse totals in the rendered view
+                text = self.text_display.toPlainText()
+                allow_inline = not getattr(self, 'strict_verse_toggle', None) or not self.strict_verse_toggle.isChecked()
+                self._parse_and_render_verses(text, allow_inline=allow_inline)
+            if hasattr(self, 'calculated_value_label'):
+                self.calculated_value_label.setText("")
     
     def _on_selection_changed(self):
         """Handle text selection change."""
@@ -390,10 +538,33 @@ class TextAnalysisWindow(QDialog):
         
         if selected_text:
             self.calc_selection_btn.setEnabled(True)
+            if hasattr(self, "save_selection_btn"):
+                self.save_selection_btn.setEnabled(True)
             self.selection_info_label.setText(f"Selected: {len(selected_text)} characters")
+            # Clear any previous calculated value until user clicks Calculate
+            if hasattr(self, 'calculated_value_label'):
+                self.calculated_value_label.setText("")
+            # If holy view is on, compute the verse total for the verse the selection is in
+            if getattr(self, 'holy_view_toggle', None) and self.holy_view_toggle.isChecked():
+                # Get full plain text and compute verse selection's verse number
+                text = self.text_display.toPlainText()
+                if text:
+                    verses = self._parse_verses(text)
+                    cursor_pos = self.text_display.textCursor().selectionStart()
+                    for v in verses:
+                        if v['start'] <= cursor_pos < v['end']:
+                            # Show verse total
+                            total = self.current_calculator.calculate(v['text'])
+                            if hasattr(self, 'calculated_value_label'):
+                                self.calculated_value_label.setText(f"Verse {v['number']} Value: {total}")
+                            break
         else:
             self.calc_selection_btn.setEnabled(False)
+            if hasattr(self, "save_selection_btn"):
+                self.save_selection_btn.setEnabled(False)
             self.selection_info_label.setText("Select text to calculate its gematria value")
+            if hasattr(self, 'calculated_value_label'):
+                self.calculated_value_label.setText("")
     
     def _calculate_selection(self):
         """Calculate gematria value for selected text."""
@@ -404,8 +575,10 @@ class TextAnalysisWindow(QDialog):
             return
         
         try:
-            # Calculate value
+            # Calculate gematria value and optionally include numeric face values
             value = self.current_calculator.calculate(selected_text)
+            if getattr(self, 'include_numbers_checkbox', None) and self.include_numbers_checkbox.isChecked():
+                value += self._sum_numeric_face_values(selected_text)
             
             # Store for saving
             self._current_selection = {
@@ -414,7 +587,10 @@ class TextAnalysisWindow(QDialog):
                 'breakdown': []
             }
             
-            self.status_label.setText(f"Calculated: {selected_text} = {value}")
+            # Update both status and a dedicated value label so long phrases still show their value
+            self.status_label.setText(f"Calculated: {selected_text}")
+            if hasattr(self, 'calculated_value_label'):
+                self.calculated_value_label.setText(f"Value: {value}")
             
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to calculate:\n{str(e)}")
@@ -467,6 +643,284 @@ class TextAnalysisWindow(QDialog):
         else:
             self.results_info_label.setText(f"No matches found for value {target_value}")
             self.status_label.setText("No matches found")
+
+    def _on_holy_view_toggled(self, checked: bool):
+        """Toggle the Holy Book verse view."""
+        if checked:
+            # Hide the plain text view, show verses scroll
+            self.text_display.hide()
+            self.verses_scroll.show()
+            if hasattr(self, 'verse_run_info_label'):
+                self.verse_run_info_label.show()
+            # If there is a document loaded, parse and render verses
+            if self.current_document:
+                text = self.text_display.toPlainText()
+                self._parse_and_render_verses(text)
+        else:
+            # Restore the plain text view
+            self.verses_scroll.hide()
+            self.text_display.show()
+            if hasattr(self, 'verse_run_info_label'):
+                self.verse_run_info_label.hide()
+
+    def _open_teacher_window(self):
+        if not self.current_document:
+            QMessageBox.information(self, "No Document", "Select a document before teaching the parser.")
+            return
+        allow_inline = not getattr(self, 'strict_verse_toggle', None) or not self.strict_verse_toggle.isChecked()
+        dialog = HolyBookTeacherWindow(
+            document_id=self.current_document.id,
+            document_title=self.current_document.title,
+            allow_inline=allow_inline,
+            parent=self,
+        )
+        dialog.verses_saved.connect(self._handle_teacher_save)
+        dialog.exec()
+
+    def _handle_teacher_save(self):
+        if not self.current_document:
+            return
+        if getattr(self, 'holy_view_toggle', None) and self.holy_view_toggle.isChecked():
+            allow_inline = not getattr(self, 'strict_verse_toggle', None) or not self.strict_verse_toggle.isChecked()
+            text = self.text_display.toPlainText()
+            self._parse_and_render_verses(text, allow_inline=allow_inline)
+        self.status_label.setText("Holy Book Teacher: saved curated verses")
+
+    def _on_include_numbers_toggled(self, state: int):
+        """Handler when the include-numeric-face-values toggle changes.
+
+        Update the calculated selection and re-render verse totals if the Holy Book View is enabled.
+        """
+        # Recompute selection value if there is a selection
+        cursor = self.text_display.textCursor()
+        selected_text = cursor.selectedText()
+        if selected_text:
+            # Recalculate selection value
+            value = self.current_calculator.calculate(selected_text)
+            if getattr(self, 'include_numbers_checkbox', None) and self.include_numbers_checkbox.isChecked():
+                value += self._sum_numeric_face_values(selected_text)
+            self._current_selection = {'text': selected_text, 'value': value, 'breakdown': []}
+            if hasattr(self, 'calculated_value_label'):
+                self.calculated_value_label.setText(f"Value: {value}")
+
+        # Re-render verse view if active
+        if getattr(self, 'holy_view_toggle', None) and self.holy_view_toggle.isChecked():
+            text = self.text_display.toPlainText()
+            allow_inline = not getattr(self, 'strict_verse_toggle', None) or not self.strict_verse_toggle.isChecked()
+            self._parse_and_render_verses(text, allow_inline=allow_inline)
+        # Re-run active search to reflect changes in numeric inclusion
+        if getattr(self, 'search_value_input', None) and self.search_value_input.text().strip():
+            self._search_by_value()
+
+    def _parse_verses(self, text: str, allow_inline: bool = True) -> List[Dict[str, Any]]:
+        metadata = self._load_verses_metadata(allow_inline)
+        if metadata is not None:
+            self._verse_run_metadata = metadata
+            return metadata.get('verses', [])
+
+        fallback = parse_verses(text, allow_inline=allow_inline)
+        self._verse_run_metadata = {
+            'document_id': self.current_document.id if self.current_document else None,
+            'source': 'local-parser',
+            'verses': fallback,
+            'anomalies': {},
+            'rules_applied': [],
+        }
+        self.status_label.setText(
+            "Holy Book View: parser service unavailable, showing local parse"
+        )
+        return fallback
+
+    def _load_verses_metadata(self, allow_inline: bool) -> Optional[Dict[str, Any]]:
+        if not self.current_document:
+            return None
+        try:
+            with verse_teacher_service_context() as teacher_service:
+                return teacher_service.get_or_parse_verses(
+                    self.current_document.id,
+                    allow_inline=allow_inline,
+                    apply_rules=True,
+                )
+        except Exception as exc:
+            logger.exception("Verse teacher load failed", exc_info=exc)
+            return None
+
+    def _parse_and_render_verses(self, text: str, allow_inline: bool = True):
+        """Parse the plain text for verses and render them in the verses view."""
+        # Parse
+        verses = self._parse_verses(text, allow_inline=allow_inline)
+        self._parsed_verses = verses
+        source = 'parser'
+        if getattr(self, '_verse_run_metadata', None):
+            source = self._verse_run_metadata.get('source', source)
+        # Update status bar
+        self.status_label.setText(
+            f"Holy Book View ({source}): parsed {len(verses)} verses"
+        )
+        self._update_verse_run_info()
+        # Render
+        self._clear_verses_display()
+        if not verses:
+            notice = QLabel("No verses detected for Holy Book View.")
+            notice.setStyleSheet("color: #64748b;")
+            self.verses_layout.addWidget(notice)
+            if hasattr(self, 'save_verses_btn'):
+                self.save_verses_btn.setEnabled(False)
+            return
+
+        for v in verses:
+            widget = self._create_verse_widget(v)
+            self.verses_layout.addWidget(widget)
+        # Add stretch to keep layout tidy
+        self.verses_layout.addStretch()
+        if hasattr(self, 'save_verses_btn'):
+            self.save_verses_btn.setEnabled(True)
+
+    def _update_verse_run_info(self):
+        label = getattr(self, 'verse_run_info_label', None)
+        if label is None:
+            return
+        if not getattr(self, 'holy_view_toggle', None) or not self.holy_view_toggle.isChecked():
+            label.hide()
+            label.setText("")
+            return
+        if not getattr(self, '_verse_run_metadata', None):
+            label.hide()
+            label.setText("")
+            return
+        data = self._verse_run_metadata
+        anomalies = data.get('anomalies') or {}
+        counts = []
+        if anomalies.get('duplicates'):
+            counts.append(f"duplicates: {len(anomalies['duplicates'])}")
+        if anomalies.get('missing_numbers'):
+            counts.append(f"missing: {len(anomalies['missing_numbers'])}")
+        if anomalies.get('overlaps'):
+            counts.append(f"overlaps: {len(anomalies['overlaps'])}")
+        if data.get('rules_applied'):
+            counts.append(f"rules: {len(data['rules_applied'])}")
+        info = f"Source: {data.get('source', 'parser')}"
+        if counts:
+            info = info + " · " + ", ".join(counts)
+        label.setText(info)
+        label.show()
+
+    def _clear_verses_display(self):
+        """Clear verse widgets from the container."""
+        while self.verses_layout.count():
+            item = self.verses_layout.takeAt(0)
+            if item:
+                w = item.widget()
+                if w:
+                    w.deleteLater()
+
+    def _create_verse_widget(self, verse: Dict[str, Any]) -> QWidget:
+        """Build a small widget for a verse including text, calculated value and actions."""
+        box = QGroupBox(f"Verse {verse['number']}")
+        layout = QHBoxLayout(box)
+        # Verse text; keep it compact
+        text_label = QLabel(verse['text'])
+        text_label.setWordWrap(True)
+        text_label.setMinimumWidth(400)
+        layout.addWidget(text_label, 3)
+
+        # Value label
+        value = 0
+        try:
+            value = self.current_calculator.calculate(verse['text'])
+            # Add numeric face value if toggled
+            if getattr(self, 'include_numbers_checkbox', None) and self.include_numbers_checkbox.isChecked():
+                value += self._sum_numeric_face_values(verse['text'])
+        except Exception:
+            value = 0
+        value_label = QLabel(f"Value: {value}")
+        value_label.setStyleSheet("font-weight: 600; color: #2563eb;")
+        layout.addWidget(value_label)
+
+        action_layout = QVBoxLayout()
+        jump_btn = QPushButton("Jump")
+        jump_btn.setMaximumWidth(80)
+        jump_btn.clicked.connect(lambda _, s=verse['start'], e=verse['end']: self._jump_to_range(s, e))
+        action_layout.addWidget(jump_btn)
+
+        save_btn = QPushButton("Save")
+        save_btn.setMaximumWidth(80)
+        save_btn.clicked.connect(lambda _, v=verse: self._save_single_verse(v))
+        action_layout.addWidget(save_btn)
+
+        layout.addLayout(action_layout)
+        return box
+
+    def _jump_to_range(self, start: int, end: int):
+        """Select and focus the given character range in the main text display."""
+        try:
+            cursor = self.text_display.textCursor()
+            cursor.setPosition(start)
+            cursor.setPosition(end, QTextCursor.MoveMode.KeepAnchor)
+            self.text_display.setTextCursor(cursor)
+            self.text_display.setFocus()
+        except Exception:
+            pass
+
+    def _sum_numeric_face_values(self, text: str) -> int:
+        """Wrapper for numeric utils helper (keeps UI code simple)."""
+        return sum_numeric_face_values(text)
+
+    def _save_single_verse(self, verse: Dict[str, Any]):
+        """Save a single verse as a calculation record."""
+        try:
+            val = self.current_calculator.calculate(verse['text'])
+            if getattr(self, 'include_numbers_checkbox', None) and self.include_numbers_checkbox.isChecked():
+                val += self._sum_numeric_face_values(verse['text'])
+            notes, ok = QInputDialog.getMultiLineText(
+                self,
+                "Save Verse",
+                f"Saving Verse {verse['number']}: {verse['text']} = {val}\n\nNotes (optional):",
+                ""
+            )
+            if ok:
+                self.calculation_service.save_calculation(
+                    text=verse['text'],
+                    value=val,
+                    calculator=self.current_calculator,
+                    breakdown=[],
+                    notes=notes,
+                    source=f"Document: {self.current_document.title if self.current_document else 'Unknown'}"
+                )
+                QMessageBox.information(self, "Saved", "Verse calculation saved!")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to save verse:\n{str(e)}")
+
+    def _save_verse_totals(self):
+        """Save all verse totals for the current parsed verses."""
+        if not getattr(self, '_parsed_verses', None):
+            QMessageBox.information(self, "No Verses", "No parsed verses to save.")
+            return
+        reply = QMessageBox.question(
+            self,
+            "Save All Verse Totals",
+            f"Save all {len(self._parsed_verses)} verse totals as calculations?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+        if reply != QMessageBox.StandardButton.Yes:
+            return
+        try:
+            saved = 0
+            for verse in self._parsed_verses:
+                val = self.current_calculator.calculate(verse['text'])
+                if getattr(self, 'include_numbers_checkbox', None) and self.include_numbers_checkbox.isChecked():
+                    val += self._sum_numeric_face_values(verse['text'])
+                self.calculation_service.save_calculation(
+                    text=verse['text'],
+                    value=val,
+                    calculator=self.current_calculator,
+                    breakdown=[],
+                    source=f"Document: {self.current_document.title if self.current_document else 'Unknown'}"
+                )
+                saved += 1
+            QMessageBox.information(self, "Saved", f"Saved {saved} verse calculations!")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to save verse totals:\n{str(e)}")
     
     def _find_value_matches(self, text: str, target_value: int) -> List[Tuple[str, int, int]]:
         """
@@ -507,6 +961,8 @@ class TextAnalysisWindow(QDialog):
         for word, (start, end) in zip(words, positions):
             try:
                 value = self.current_calculator.calculate(word)
+                if getattr(self, 'include_numbers_checkbox', None) and self.include_numbers_checkbox.isChecked():
+                    value += self._sum_numeric_face_values(word)
                 if value == target_value:
                     matches.append((word, start, end))
             except:
@@ -523,6 +979,8 @@ class TextAnalysisWindow(QDialog):
                 phrase_text = text[start:end].strip()
                 try:
                     value = self.current_calculator.calculate(phrase_text)
+                    if getattr(self, 'include_numbers_checkbox', None) and self.include_numbers_checkbox.isChecked():
+                        value += self._sum_numeric_face_values(phrase_text)
                     if value == target_value:
                         if not any(s <= start and e >= end for _, s, e in matches):
                             matches.append((phrase_text, start, end))
@@ -573,6 +1031,8 @@ class TextAnalysisWindow(QDialog):
         
         self.highlighted_matches = []
         self.results_info_label.setText("Highlights cleared")
+        if hasattr(self, 'calculated_value_label'):
+            self.calculated_value_label.setText("")
     
     def _on_result_clicked(self, item: QListWidgetItem):
         """Handle clicking on a result item."""
@@ -669,6 +1129,8 @@ class TextAnalysisWindow(QDialog):
                 for start, end in self.highlighted_matches:
                     match_text = text[start:end]
                     value = self.current_calculator.calculate(match_text)
+                    if getattr(self, 'include_numbers_checkbox', None) and self.include_numbers_checkbox.isChecked():
+                        value += self._sum_numeric_face_values(match_text)
                     self.calculation_service.save_calculation(
                         text=match_text,
                         value=value,
@@ -688,37 +1150,68 @@ class TextAnalysisWindow(QDialog):
                 QMessageBox.critical(self, "Error", f"Failed to save matches:\n{str(e)}")
     
     def _save_current_calculation(self):
-        """Save the current calculation from the selection."""
-        if not hasattr(self, '_current_selection'):
-            QMessageBox.information(self, "No Calculation", "Calculate a selection first.")
+        """Save the active highlight's calculation (auto-calculates if needed)."""
+        cursor = self.text_display.textCursor()
+        selected_text = cursor.selectedText()
+        selection_data = None
+
+        if selected_text:
+            try:
+                value = self.current_calculator.calculate(selected_text)
+                if getattr(self, 'include_numbers_checkbox', None) and self.include_numbers_checkbox.isChecked():
+                    value += self._sum_numeric_face_values(selected_text)
+                selection_data = {
+                    'text': selected_text,
+                    'value': value,
+                    'breakdown': []
+                }
+                self._current_selection = selection_data
+                self.status_label.setText(f"Calculated: {selected_text} = {value}")
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Failed to calculate selection:\n{str(e)}")
+                return
+        elif self._current_selection:
+            # Recompute selection value using current setting if needed.
+            selection_data = self._current_selection
+            try:
+                if getattr(self, 'include_numbers_checkbox', None) and self.include_numbers_checkbox.isChecked():
+                    computed = self.current_calculator.calculate(selection_data['text']) + self._sum_numeric_face_values(selection_data['text'])
+                    selection_data['value'] = computed
+                else:
+                    selection_data['value'] = self.current_calculator.calculate(selection_data['text'])
+            except Exception:
+                pass
+        else:
+            QMessageBox.information(self, "No Selection", "Highlight text to save its calculation.")
             return
-        
-        sel = self._current_selection
-        
+
         try:
-            # Prompt for notes
             notes, ok = QInputDialog.getMultiLineText(
                 self,
                 "Save Calculation",
-                f"Saving: {sel['text']} = {sel['value']}\n\nNotes (optional):",
+                f"Saving: {selection_data['text']} = {selection_data['value']}\n\nNotes (optional):",
                 ""
             )
-            
+
             if ok:
-                record = self.calculation_service.save_calculation(
-                    text=sel['text'],
-                    value=sel['value'],
+                # Cast values to primitive types to satisfy repository API typing
+                text_val: str = str(selection_data['text'])
+                value_val: int = int(selection_data['value'])
+                breakdown_val: list = list(selection_data.get('breakdown', []))
+                self.calculation_service.save_calculation(
+                    text=text_val,
+                    value=value_val,
                     calculator=self.current_calculator,
-                    breakdown=[],
+                    breakdown=breakdown_val,
                     notes=notes,
                     source=f"Document: {self.current_document.title if self.current_document else 'Unknown'}"
                 )
-                
+
                 QMessageBox.information(
                     self,
                     "Saved",
-                    f"Calculation saved successfully!"
+                    "Calculation saved successfully!"
                 )
-                
+
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to save:\n{str(e)}")

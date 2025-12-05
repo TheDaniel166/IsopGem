@@ -1,9 +1,9 @@
 """Transitions tool window."""
 from PyQt6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel, 
+    QMainWindow, QVBoxLayout, QHBoxLayout, QLabel, 
     QLineEdit, QGroupBox, QPushButton, QTableWidget, 
     QTableWidgetItem, QHeaderView, QSpinBox, QMenu,
-    QGridLayout
+    QGridLayout, QWidget
 )
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont, QColor, QAction
@@ -13,7 +13,7 @@ from ..services.ternary_transition_service import TernaryTransitionService
 from .quadset_analysis_window import QuadsetAnalysisWindow
 
 
-class TransitionsWindow(QDialog):
+class TransitionsWindow(QMainWindow):
     """Window for Ternary Transition System analysis."""
     
     def __init__(self, window_manager=None, parent=None):
@@ -29,7 +29,9 @@ class TransitionsWindow(QDialog):
         self.setWindowTitle("Ternary Transitions")
         self.setMinimumSize(900, 700)
         
-        layout = QVBoxLayout(self)
+        central = QWidget()
+        self.setCentralWidget(central)
+        layout = QVBoxLayout(central)
         layout.setSpacing(20)
         layout.setContentsMargins(30, 30, 30, 30)
         

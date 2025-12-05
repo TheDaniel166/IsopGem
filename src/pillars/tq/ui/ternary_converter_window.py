@@ -1,7 +1,7 @@
 """Ternary converter tool window."""
 from PyQt6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel, 
-    QLineEdit, QGroupBox, QPushButton
+    QMainWindow, QVBoxLayout, QHBoxLayout, QLabel, 
+    QLineEdit, QGroupBox, QPushButton, QWidget
 )
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
@@ -9,7 +9,7 @@ from PyQt6.QtGui import QFont
 from ..services.ternary_service import TernaryService
 
 
-class TernaryConverterWindow(QDialog):
+class TernaryConverterWindow(QMainWindow):
     """Window for converting between decimal and ternary numbers."""
     
     def __init__(self, parent=None):
@@ -23,8 +23,10 @@ class TernaryConverterWindow(QDialog):
         self.setWindowTitle("Ternary Converter")
         self.setMinimumSize(500, 300)
         
-        # Main layout
-        layout = QVBoxLayout(self)
+        # Main layout on central widget
+        central = QWidget()
+        self.setCentralWidget(central)
+        layout = QVBoxLayout(central)
         layout.setSpacing(20)
         layout.setContentsMargins(30, 30, 30, 30)
         

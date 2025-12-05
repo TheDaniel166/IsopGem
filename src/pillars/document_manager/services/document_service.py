@@ -1,13 +1,14 @@
 """Service layer for Document Manager."""
 from sqlalchemy.orm import Session
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 from contextlib import contextmanager
 import time
 import logging
 import re
 from shared.database import get_db_session
 from pillars.document_manager.repositories.document_repository import DocumentRepository
+from pillars.document_manager.repositories.document_verse_repository import DocumentVerseRepository
 from pillars.document_manager.repositories.search_repository import DocumentSearchRepository
 from pillars.document_manager.utils.parsers import DocumentParser
 from pillars.document_manager.models.document import Document
@@ -17,6 +18,7 @@ logger = logging.getLogger(__name__)
 class DocumentService:
     def __init__(self, db: Session):
         self.repo = DocumentRepository(db)
+        self.verse_repo = DocumentVerseRepository(db)
         self.search_repo = DocumentSearchRepository()
 
     def _update_links(self, doc: Document):
@@ -217,6 +219,18 @@ class DocumentService:
             len(docs),
             (time.perf_counter() - start) * 1000,
         )
+
+    # ------------------------------------------------------------------
+    # Verse helpers (used by the Holy Book teacher backend)
+    # ------------------------------------------------------------------
+    def get_document_verses(self, doc_id: int, include_ignored: bool = True):
+        return self.verse_repo.get_by_document(doc_id, include_ignored=include_ignored)
+
+    def replace_document_verses(self, doc_id: int, verses: List[dict]):
+        return self.verse_repo.replace_document_verses(doc_id, verses)
+
+    def delete_document_verses(self, doc_id: int) -> int:
+        return self.verse_repo.delete_by_document(doc_id)
 
 
 @contextmanager

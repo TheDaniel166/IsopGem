@@ -1,6 +1,6 @@
 """Database management tools window for cleaning and maintaining calculation database."""
 from PyQt6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
+    QMainWindow, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QTableWidget, QTableWidgetItem, QMessageBox, QProgressDialog,
     QGroupBox, QTextEdit, QHeaderView, QCheckBox, QWidget, QLineEdit
 )
@@ -13,7 +13,7 @@ from ..services import CalculationService
 from ..models import CalculationRecord
 
 
-class DatabaseToolsWindow(QDialog):
+class DatabaseToolsWindow(QMainWindow):
     """Window for database maintenance and cleanup operations."""
     
     def __init__(self, parent=None):
@@ -26,13 +26,14 @@ class DatabaseToolsWindow(QDialog):
         self.setWindowTitle("Database Management Tools")
         self.setMinimumSize(1000, 700)
         self.setAttribute(Qt.WidgetAttribute.WA_QuitOnClose, False)
-        self.setModal(False)
-        
+
         self._setup_ui()
     
     def _setup_ui(self):
         """Set up the user interface."""
-        layout = QVBoxLayout(self)
+        central = QWidget()
+        self.setCentralWidget(central)
+        layout = QVBoxLayout(central)
         layout.setSpacing(16)
         layout.setContentsMargins(20, 20, 20, 20)
         

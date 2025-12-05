@@ -7,7 +7,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QAction, QFont
 from PyQt6.QtWidgets import (
     QApplication,
-    QDialog,
+    QMainWindow,
     QGridLayout,
     QGroupBox,
     QHBoxLayout,
@@ -18,6 +18,7 @@ from PyQt6.QtWidgets import (
     QTableWidget,
     QTableWidgetItem,
     QVBoxLayout,
+    QWidget,
 )
 
 from ..services.conrune_pair_finder_service import (
@@ -26,12 +27,12 @@ from ..services.conrune_pair_finder_service import (
 )
 
 
-class ConrunePairFinderWindow(QDialog):
+class ConrunePairFinderWindow(QMainWindow):
     """Find Conrune pairs that match a target difference."""
 
     DECIMAL_COLUMN = 2
 
-    def __init__(self, window_manager=None, parent: Optional[QDialog] = None):
+    def __init__(self, window_manager=None, parent: Optional[QWidget] = None):
         super().__init__(parent)
         self.window_manager = window_manager
         self.service = ConrunePairFinderService()
@@ -53,7 +54,10 @@ class ConrunePairFinderWindow(QDialog):
         self.setWindowTitle("Conrune Pair Finder")
         self.setMinimumSize(700, 500)
 
-        layout = QVBoxLayout(self)
+        central = QWidget()
+        self.setCentralWidget(central)
+
+        layout = QVBoxLayout(central)
         layout.setSpacing(18)
         layout.setContentsMargins(30, 30, 30, 30)
 

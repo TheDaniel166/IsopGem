@@ -1,6 +1,6 @@
 """Quadset Analysis tool window."""
 from PyQt6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel,
+    QMainWindow, QVBoxLayout, QHBoxLayout, QLabel,
     QLineEdit, QGroupBox, QTabWidget, QWidget,
     QTextEdit, QScrollArea, QGridLayout, QFrame,
     QSizePolicy
@@ -27,8 +27,9 @@ class QuadsetGlyph(QWidget):
     def minimumSizeHint(self):
         return QSize(90, 120)
 
-    def set_ternary(self, value: str):
-        self._ternary = value or ""
+    def set_ternary(self, ternary: str) -> None:
+        """Update the glyph with a ternary string and repaint."""
+        self._ternary = ternary or ""
         self.update()
 
     def _normalized_digits(self) -> list[str]:
@@ -81,7 +82,7 @@ class QuadsetGlyph(QWidget):
                 )
 
 
-class QuadsetAnalysisWindow(QDialog):
+class QuadsetAnalysisWindow(QMainWindow):
     """Window for Quadset Analysis with detailed property tabs."""
     
     def __init__(self, parent=None):
@@ -95,8 +96,11 @@ class QuadsetAnalysisWindow(QDialog):
         self.setWindowTitle("Quadset Analysis")
         self.setMinimumSize(900, 700)
         
+        central = QWidget()
+        self.setCentralWidget(central)
+
         # Main layout
-        layout = QVBoxLayout(self)
+        layout = QVBoxLayout(central)
         layout.setSpacing(20)
         layout.setContentsMargins(30, 30, 30, 30)
         

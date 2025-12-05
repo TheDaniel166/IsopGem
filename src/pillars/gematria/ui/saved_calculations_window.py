@@ -1,6 +1,6 @@
 """Saved calculations browser window."""
 from PyQt6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
+    QMainWindow, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
     QPushButton, QTableWidget, QTableWidgetItem, QTextEdit,
     QComboBox, QCheckBox, QSplitter, QWidget, QMessageBox,
     QHeaderView
@@ -14,7 +14,7 @@ from ..models import CalculationRecord
 from shared.ui import VirtualKeyboard
 
 
-class SavedCalculationsWindow(QDialog):
+class SavedCalculationsWindow(QMainWindow):
     """Window for browsing and managing saved calculations."""
     
     def __init__(self, parent=None):
@@ -36,9 +36,10 @@ class SavedCalculationsWindow(QDialog):
         self.setWindowTitle("Saved Calculations")
         self.setMinimumSize(1000, 700)
         self.setAttribute(Qt.WidgetAttribute.WA_QuitOnClose, False)
-        self.setModal(False)
-        
-        main_layout = QVBoxLayout(self)
+
+        central = QWidget()
+        self.setCentralWidget(central)
+        main_layout = QVBoxLayout(central)
         main_layout.setSpacing(10)
         main_layout.setContentsMargins(15, 15, 15, 15)
         

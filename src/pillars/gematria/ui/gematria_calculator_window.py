@@ -1,6 +1,6 @@
 """Gematria calculator tool window."""
 from PyQt6.QtWidgets import (
-    QDialog, QWidget, QVBoxLayout, QHBoxLayout,
+    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QLineEdit, QPushButton, QTextEdit, QComboBox,
     QMessageBox, QInputDialog, QMenu
 )
@@ -12,8 +12,8 @@ from ..services import CalculationService
 from shared.ui import VirtualKeyboard
 
 
-class GematriaCalculatorWindow(QDialog):
-    """Standalone Gematria Calculator window (using QDialog for Wayland stability)."""
+class GematriaCalculatorWindow(QMainWindow):
+    """Standalone Gematria Calculator window."""
     
     def __init__(self, calculators: List[GematriaCalculator], parent=None):
         """
@@ -23,7 +23,6 @@ class GematriaCalculatorWindow(QDialog):
             calculators: List of available gematria calculator instances
             parent: Optional parent widget
         """
-        # Initialize as QDialog for better Wayland compatibility
         super().__init__(parent)
         self.calculators: Dict[str, GematriaCalculator] = {
             calc.name: calc for calc in calculators
@@ -50,11 +49,11 @@ class GematriaCalculatorWindow(QDialog):
         
         # Prevent this window from closing the entire application
         self.setAttribute(Qt.WidgetAttribute.WA_QuitOnClose, False)
-        # Make it modeless so it doesn't block the main window
-        self.setModal(False)
-        
-        # Main layout (QDialog doesn't have setCentralWidget)
-        main_layout = QVBoxLayout(self)
+
+        # Main layout anchored to a central widget for QMainWindow
+        central = QWidget()
+        self.setCentralWidget(central)
+        main_layout = QVBoxLayout(central)
         main_layout.setSpacing(20)
         main_layout.setContentsMargins(30, 30, 30, 30)
         
