@@ -1,7 +1,8 @@
 """Virtual keyboard widget for Hebrew and Greek text input."""
+from PyQt6 import sip
 from PyQt6.QtWidgets import (
     QDialog, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, 
-    QButtonGroup, QGridLayout, QLabel, QLineEdit, QLayoutItem
+    QButtonGroup, QGridLayout, QLabel, QLineEdit, QTextEdit, QLayoutItem
 )
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QFont
@@ -22,6 +23,7 @@ class VirtualKeyboard(QDialog):
         super().__init__(parent)
         self.current_layout = "hebrew"  # hebrew, greek_lower, greek_upper
         self.target_input: Optional[QLineEdit] = None
+        self.target_editor: Optional[QTextEdit] = None
         self.shift_active: bool = False
         self.shift_locked: bool = False
         
@@ -69,7 +71,6 @@ class VirtualKeyboard(QDialog):
             }
             QPushButton.layoutToggle:checked {
                 background-color: #38bdf8;
-                box-shadow: 0 6px 18px rgba(14,165,233,0.3);
             }
             QPushButton.layoutToggle:hover {
                 background-color: #28b0f5;
@@ -96,34 +97,38 @@ class VirtualKeyboard(QDialog):
                 border-color: #1f2937;
             }
             QPushButton.backspaceButton {
-                background-color: #ef4444;
-                color: #fff;
-                border: none;
-                border-radius: 10px;
-                padding: 10px;
-                font-weight: 700;
-                min-height: 44px;
-            }
-            QPushButton.backspaceButton:hover {
-                background-color: #f87171;
-            }
-            QPushButton.backspaceButton:pressed {
-                background-color: #dc2626;
-            }
-            QPushButton.metaButton {
-                background-color: #334155;
-                color: #e5e7eb;
-                border: 1px solid #475569;
+                background-color: #111827;
+                color: #f8fafc;
+                border: 1px solid #273449;
                 border-radius: 10px;
                 padding: 10px 12px;
                 font-weight: 600;
-                min-height: 44px;
+                min-height: 46px;
+            }
+            QPushButton.backspaceButton:hover {
+                background-color: #1f2937;
+                border-color: #374151;
+            }
+            QPushButton.backspaceButton:pressed {
+                background-color: #0f172a;
+                border-color: #1f2937;
+            }
+            QPushButton.metaButton {
+                background-color: #1f2937;
+                color: #e5e7eb;
+                border: 1px solid #273449;
+                border-radius: 10px;
+                padding: 10px 12px;
+                font-weight: 600;
+                min-height: 46px;
             }
             QPushButton.metaButton:hover {
-                background-color: #3b4a65;
+                background-color: #243049;
+                border-color: #2f3f5c;
             }
             QPushButton.metaButton:pressed {
-                background-color: #1f2937;
+                background-color: #111827;
+                border-color: #1f2937;
             }
             """
         )
@@ -156,12 +161,19 @@ class VirtualKeyboard(QDialog):
         self.greek_btn.setProperty("class", "layoutToggle")
         self.greek_btn.clicked.connect(lambda: self._switch_layout("greek"))
         header_layout.addWidget(self.greek_btn)
+
+        self.special_btn = QPushButton("Special")
+        self.special_btn.setCheckable(True)
+        self.special_btn.setProperty("class", "layoutToggle")
+        self.special_btn.clicked.connect(lambda: self._switch_layout("special"))
+        header_layout.addWidget(self.special_btn)
         header_layout.addStretch()
 
         # Button group for exclusive selection
         self.layout_group = QButtonGroup(self)
         self.layout_group.addButton(self.hebrew_btn)
         self.layout_group.addButton(self.greek_btn)
+        self.layout_group.addButton(self.special_btn)
 
         main_layout.addLayout(header_layout)
 
@@ -185,6 +197,17 @@ class VirtualKeyboard(QDialog):
             input_field: The QLineEdit to send characters to
         """
         self.target_input = input_field
+        self.target_editor = None
+
+    def set_target_editor(self, editor: QTextEdit):
+        """
+        Set the target QTextEdit for this keyboard.
+
+        Args:
+            editor: The QTextEdit to send characters to
+        """
+        self.target_editor = editor
+        self.target_input = None
     
     def set_layout(self, layout: str):
         """
@@ -209,9 +232,18 @@ class VirtualKeyboard(QDialog):
             if layout == "hebrew":
                 self.hebrew_btn.setChecked(True)
                 self.greek_btn.setChecked(False)
+                if hasattr(self, "special_btn"):
+                    self.special_btn.setChecked(False)
             elif layout == "greek":
                 self.hebrew_btn.setChecked(False)
                 self.greek_btn.setChecked(True)
+                if hasattr(self, "special_btn"):
+                    self.special_btn.setChecked(False)
+            elif layout == "special":
+                self.hebrew_btn.setChecked(False)
+                self.greek_btn.setChecked(False)
+                if hasattr(self, "special_btn"):
+                    self.special_btn.setChecked(True)
         if layout != "greek":
             self.shift_active = False
             self.shift_locked = False
@@ -229,6 +261,8 @@ class VirtualKeyboard(QDialog):
             self._show_hebrew_keyboard()
         elif layout == "greek":
             self._show_greek_keyboard()
+        elif layout == "special":
+            self._show_special_keyboard()
 
     def _display_char(self, char: str) -> str:
         """Return the character as displayed based on current shift state."""
@@ -275,6 +309,14 @@ class VirtualKeyboard(QDialog):
             ['ζ', 'χ', 'ψ', 'ω', 'β', 'ν', 'μ'],
         ]
         self._render_keyboard(rows, include_shift=True)
+
+    def _show_special_keyboard(self):
+        """Display special-character keys."""
+        rows = [
+            ['Å', '<', '>', '→', '↓', '↑'],
+            ['×', '°', '∞', '≈', '±', '•']
+        ]
+        self._render_keyboard(rows, include_shift=False)
     
     def _render_keyboard(self, rows: Sequence[Sequence[str]], include_shift: bool):
         """Render a keyboard grid with optional shift controls."""
@@ -291,26 +333,26 @@ class VirtualKeyboard(QDialog):
             shift_btn = QPushButton("Shift")
             shift_btn.setProperty("class", "metaButton")
             shift_btn.clicked.connect(self._activate_shift)
-            self.keyboard_layout.addWidget(shift_btn, meta_row, 0, 1, 2)
+            self.keyboard_layout.addWidget(shift_btn, meta_row, 0)
 
             lock_btn = QPushButton("Shift Lock")
             lock_btn.setCheckable(True)
             lock_btn.setChecked(self.shift_locked)
             lock_btn.setProperty("class", "metaButton")
             lock_btn.clicked.connect(self._toggle_shift_lock)
-            self.keyboard_layout.addWidget(lock_btn, meta_row, 2, 1, 3)
+            self.keyboard_layout.addWidget(lock_btn, meta_row, 1)
 
-            backspace_btn = QPushButton("⌫ Backspace")
+            backspace_btn = QPushButton("⌫")
             backspace_btn.clicked.connect(self._on_backspace)
-            backspace_btn.setMinimumHeight(44)
             backspace_btn.setProperty("class", "backspaceButton")
-            self.keyboard_layout.addWidget(backspace_btn, meta_row, 5, 1, max_cols)
+            cols = max_cols if max_cols > 2 else 3
+            self.keyboard_layout.addWidget(backspace_btn, meta_row, cols - 2, 1, 2)
         else:
-            backspace_btn = QPushButton("⌫ Backspace")
+            backspace_btn = QPushButton("⌫")
             backspace_btn.clicked.connect(self._on_backspace)
-            backspace_btn.setMinimumHeight(44)
             backspace_btn.setProperty("class", "backspaceButton")
-            self.keyboard_layout.addWidget(backspace_btn, meta_row, 0, 1, max_cols)
+            cols = max_cols if max_cols > 2 else 3
+            self.keyboard_layout.addWidget(backspace_btn, meta_row, cols - 2, 1, 2)
     
     def _create_char_button(self, label: str, emit_char: str) -> QPushButton:
         """Create a character button."""
@@ -337,7 +379,12 @@ class VirtualKeyboard(QDialog):
         self.character_typed.emit(char)
         
         # If target input is set, insert directly
-        if self.target_input:
+        if self.target_editor:
+            cursor = self.target_editor.textCursor()
+            cursor.insertText(char)
+            self.target_editor.setTextCursor(cursor)
+            self.target_editor.setFocus()
+        elif self.target_input:
             cursor_pos = self.target_input.cursorPosition()
             current_text = self.target_input.text()
             new_text = current_text[:cursor_pos] + char + current_text[cursor_pos:]
@@ -357,7 +404,12 @@ class VirtualKeyboard(QDialog):
         self.backspace_pressed.emit()
         
         # If target input is set, delete character
-        if self.target_input:
+        if self.target_editor:
+            cursor = self.target_editor.textCursor()
+            cursor.deletePreviousChar()
+            self.target_editor.setTextCursor(cursor)
+            self.target_editor.setFocus()
+        elif self.target_input:
             cursor_pos = self.target_input.cursorPosition()
             if cursor_pos > 0:
                 current_text = self.target_input.text()
@@ -365,3 +417,19 @@ class VirtualKeyboard(QDialog):
                 self.target_input.setText(new_text)
                 self.target_input.setCursorPosition(cursor_pos - 1)
                 self.target_input.setFocus()
+
+
+_shared_virtual_keyboard: Optional[VirtualKeyboard] = None
+
+
+def get_shared_virtual_keyboard(parent: Optional[QWidget] = None) -> VirtualKeyboard:
+    """Return a singleton virtual keyboard instance, reparenting it if needed."""
+    global _shared_virtual_keyboard
+    needs_new = (
+        _shared_virtual_keyboard is None or sip.isdeleted(_shared_virtual_keyboard)
+    )
+    if needs_new:
+        _shared_virtual_keyboard = VirtualKeyboard(parent)
+    elif parent is not None and _shared_virtual_keyboard.parent() is not parent:
+        _shared_virtual_keyboard.setParent(parent)
+    return _shared_virtual_keyboard

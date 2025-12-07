@@ -236,9 +236,12 @@ class GeometryScene(QGraphicsScene):
         label_items: List[QGraphicsSimpleTextItem] = []
         for label in labels:
             item = QGraphicsSimpleTextItem(label.text)
-            item.setBrush(QColor(15, 23, 42))
+            item.setBrush(QColor(236, 242, 255))
             item.setZValue(2)
             item.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations)
+            font = item.font()
+            font.setPointSizeF(8.0)
+            item.setFont(font)
             offset_x = -item.boundingRect().width() / 2 if label.align_center else 0
             offset_y = item.boundingRect().height() / 2 if label.align_center else 0
             item.setPos(label.position[0] + offset_x, label.position[1] - offset_y)

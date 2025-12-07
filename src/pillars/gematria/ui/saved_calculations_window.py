@@ -11,7 +11,7 @@ from typing import List, Optional
 
 from ..services import CalculationService
 from ..models import CalculationRecord
-from shared.ui import VirtualKeyboard
+from shared.ui import VirtualKeyboard, get_shared_virtual_keyboard
 
 
 class SavedCalculationsWindow(QMainWindow):
@@ -104,7 +104,7 @@ class SavedCalculationsWindow(QMainWindow):
         main_layout.addLayout(filter_layout)
         
         # Virtual keyboard (popup window)
-        self.virtual_keyboard = VirtualKeyboard(self)
+        self.virtual_keyboard = get_shared_virtual_keyboard(self)
         self.virtual_keyboard.set_target_input(self.search_input)
         
         # Splitter for table and details
@@ -377,6 +377,7 @@ class SavedCalculationsWindow(QMainWindow):
             if self.virtual_keyboard.isVisible():
                 self.virtual_keyboard.hide()
             else:
+                self.virtual_keyboard.set_target_input(self.search_input)
                 self.virtual_keyboard.show()
                 self.virtual_keyboard.raise_()
                 self.virtual_keyboard.activateWindow()

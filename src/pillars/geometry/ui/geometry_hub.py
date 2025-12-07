@@ -11,7 +11,9 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 
 from shared.ui import WindowManager
+from .advanced_scientific_calculator_window import AdvancedScientificCalculatorWindow
 from .geometry_calculator_window import GeometryCalculatorWindow
+from .polygonal_number_window import PolygonalNumberWindow
 from ..services import (
     AnnulusShape,
     CircleShape,
@@ -361,6 +363,11 @@ CATEGORY_DEFINITIONS: List[dict] = [
                 'name': 'Any Regular n-gon',
                 'summary': 'Choose any number of sides ≥ 3',
                 'type': 'regular_polygon_custom',
+            },
+            {
+                'name': 'Polygonal Numbers',
+                'summary': 'Visualize polygonal and centered polygonal dot counts with numbering.',
+                'type': 'polygonal_numbers',
             },
             {
                 'name': 'Star Polygon',
@@ -1170,9 +1177,29 @@ class GeometryHub(QWidget):
         layout = QVBoxLayout(banner)
         layout.setSpacing(6)
 
+        title_row = QHBoxLayout()
+        title_row.setSpacing(10)
+
         title = QLabel("Geometry Library")
         title.setStyleSheet("color: white; font-size: 26pt; font-weight: 700; letter-spacing: -0.5px;")
-        layout.addWidget(title)
+        title_row.addWidget(title)
+        title_row.addStretch()
+
+        hero_btn = QPushButton("Advanced Scientific Calculator")
+        hero_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        hero_btn.setStyleSheet(
+            """
+            QPushButton {background-color: #0ea5e9; color: white; border: none;
+                        padding: 10px 14px; border-radius: 10px; font-weight: 700;}
+            QPushButton:hover {background-color: #0284c7;}
+            QPushButton:pressed {background-color: #0369a1;}
+            """
+        )
+        hero_btn.setToolTip("Open the advanced scientific calculator")
+        hero_btn.clicked.connect(self._open_advanced_scientific_calculator)
+        title_row.addWidget(hero_btn)
+
+        layout.addLayout(title_row)
 
         subtitle = QLabel("Explore sacred shapes, from perfect circles to multidimensional solids")
         subtitle.setStyleSheet("color: rgba(255,255,255,0.85); font-size: 12pt;")
@@ -1305,6 +1332,13 @@ class GeometryHub(QWidget):
         header_layout.addWidget(tagline)
         header_layout.addStretch()
 
+        sci_calc_btn = QPushButton("Advanced Scientific Calculator")
+        sci_calc_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        sci_calc_btn.setStyleSheet(self._primary_button_style())
+        sci_calc_btn.setToolTip("Open a full scientific calculator in its own window")
+        sci_calc_btn.clicked.connect(self._open_advanced_scientific_calculator)
+        header_layout.addWidget(sci_calc_btn)
+
         self.content_layout.addWidget(header)
 
         for shape_def in category['shapes']:
@@ -1398,6 +1432,8 @@ class GeometryHub(QWidget):
                 button.clicked.connect(lambda _, default_sides=shape_definition.get('default_sides', 6): self._open_polygon_calculator(default_sides))
             elif shape_type == 'regular_polygon_custom':
                 button.clicked.connect(self._prompt_custom_polygon)
+            elif shape_type == 'polygonal_numbers':
+                button.clicked.connect(self._open_polygonal_number_visualizer)
             elif shape_type == 'solid_viewer':
                 solid_id = shape_definition.get('solid_id')
                 if solid_id in SOLID_VIEWER_CONFIG:
@@ -1505,6 +1541,14 @@ class GeometryHub(QWidget):
             open_btn.clicked.connect(self._prompt_custom_polygon)
             layout.addWidget(open_btn)
             return frame
+        if shape_type == 'polygonal_numbers':
+            layout.addSpacing(6)
+            open_btn = QPushButton("Open Polygonal Visualizer")
+            open_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            open_btn.setStyleSheet(self._primary_button_style())
+            open_btn.clicked.connect(self._open_polygonal_number_visualizer)
+            layout.addWidget(open_btn)
+            return frame
 
         if shape_definition.get('type') == 'solid_viewer':
             solid_id = shape_definition.get('solid_id')
@@ -1605,6 +1649,24 @@ class GeometryHub(QWidget):
             window_class=GeometryCalculatorWindow,
             allow_multiple=True,
             shape=shape,
+            window_manager=self.window_manager,
+        )
+
+    def _open_advanced_scientific_calculator(self):
+        """Open the standalone scientific calculator."""
+        self.window_manager.open_window(
+            window_type="geometry_advanced_scientific_calculator",
+            window_class=AdvancedScientificCalculatorWindow,
+            allow_multiple=True,
+            window_manager=self.window_manager,
+        )
+
+    def _open_polygonal_number_visualizer(self):
+        """Open polygonal/centered polygonal number visualizer."""
+        self.window_manager.open_window(
+            window_type="geometry_polygonal_numbers",
+            window_class=PolygonalNumberWindow,
+            allow_multiple=True,
             window_manager=self.window_manager,
         )
     

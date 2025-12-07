@@ -1,12 +1,13 @@
 """Table management features for RichTextEditor."""
 from PyQt6.QtWidgets import (
-    QDialog, QVBoxLayout, QFormLayout, QSpinBox, 
-    QDoubleSpinBox, QDialogButtonBox, QToolButton, 
+    QDialog, QVBoxLayout, QHBoxLayout, QFormLayout, QSpinBox, 
+    QDoubleSpinBox, QDialogButtonBox, QToolButton, QPushButton,
     QMenu, QWidget, QTextEdit, QComboBox, QColorDialog
 )
 from PyQt6.QtGui import (
     QAction, QTextTableFormat, QTextLength, 
-    QTextCursor, QTextCharFormat, QTextTableCellFormat
+    QTextCursor, QTextCharFormat, QTextTableCellFormat,
+    QTextFrameFormat
 )
 from PyQt6.QtCore import Qt
 
@@ -40,7 +41,16 @@ class TableDialog(QDialog):
         self.border_spin = QDoubleSpinBox()
         self.border_spin.setRange(0, 10)
         self.border_spin.setValue(1)
-        form.addRow("Border:", self.border_spin)
+        form.addRow("Border Width:", self.border_spin)
+        
+        self.border_style_combo = QComboBox()
+        # QTextDocument only renders solid (or no) borders; keep UI honest.
+        self.border_style_combo.addItems([
+            "None",
+            "Solid"
+        ])
+        self.border_style_combo.setCurrentText("Solid")
+        form.addRow("Border Style:", self.border_style_combo)
         
         layout.addLayout(form)
         
@@ -57,7 +67,8 @@ class TableDialog(QDialog):
             'rows': self.rows_spin.value(),
             'cols': self.cols_spin.value(),
             'width': self.width_spin.value(),
-            'border': self.border_spin.value()
+            'border': self.border_spin.value(),
+            'border_style': self.border_style_combo.currentText()
         }
 
 class TablePropertiesDialog(QDialog):
@@ -85,7 +96,17 @@ class TablePropertiesDialog(QDialog):
         self.border_spin = QDoubleSpinBox()
         self.border_spin.setRange(0, 10)
         self.border_spin.setValue(self.fmt.border())
-        form.addRow("Border:", self.border_spin)
+        form.addRow("Border Width:", self.border_spin)
+        
+        self.border_style_combo = QComboBox()
+        self.border_style_combo.addItems([
+            "None",
+            "Solid"
+        ])
+        # Get current border style (clamped to supported values)
+        current_style = self._get_border_style_name(self.fmt.borderStyle())
+        self.border_style_combo.setCurrentText(current_style)
+        form.addRow("Border Style:", self.border_style_combo)
         
         self.cell_spacing_spin = QDoubleSpinBox()
         self.cell_spacing_spin.setRange(0, 20)
@@ -106,12 +127,176 @@ class TablePropertiesDialog(QDialog):
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
+    
+    def _get_border_style_name(self, style: QTextFrameFormat.BorderStyle) -> str:
+        """Convert border style enum to name."""
+        style_map = {
+            QTextFrameFormat.BorderStyle.BorderStyle_None: "None",
+            QTextFrameFormat.BorderStyle.BorderStyle_Solid: "Solid"
+        }
+        return style_map.get(style, "Solid")
+    
+    def _get_border_style_enum(self, name: str) -> QTextFrameFormat.BorderStyle:
+        """Convert border style name to enum."""
+        style_map = {
+            "None": QTextFrameFormat.BorderStyle.BorderStyle_None,
+            "Solid": QTextFrameFormat.BorderStyle.BorderStyle_Solid
+        }
+        return style_map.get(name, QTextFrameFormat.BorderStyle.BorderStyle_Solid)
         
     def apply_to_format(self, fmt: QTextTableFormat):
         fmt.setWidth(QTextLength(QTextLength.Type.PercentageLength, self.width_spin.value()))
         fmt.setBorder(self.border_spin.value())
+        fmt.setBorderStyle(self._get_border_style_enum(self.border_style_combo.currentText()))
         fmt.setCellSpacing(self.cell_spacing_spin.value())
         fmt.setCellPadding(self.cell_padding_spin.value())
+
+class CellBorderDialog(QDialog):
+    """Dialog for editing individual cell border styles."""
+    def __init__(self, fmt: QTextTableCellFormat, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Cell Border Styles")
+        self.fmt = fmt
+        self._setup_ui()
+    
+    def _setup_ui(self):
+        layout = QVBoxLayout(self)
+        form = QFormLayout()
+        
+        # Border styles for each side
+        border_styles = ["None", "Solid"]  # QTextDocument renders only solid/none
+        
+        # Border Color
+        from PyQt6.QtCore import Qt
+        from PyQt6.QtGui import QColor
+        self.border_color = self.fmt.topBorderBrush().color() if self.fmt.topBorderBrush().style() != Qt.BrushStyle.NoBrush else QColor(Qt.GlobalColor.black)
+        
+        self.color_button = QPushButton("Choose Border Color")
+        self.color_button.setStyleSheet(f"background-color: {self.border_color.name()}; color: {'white' if self.border_color.lightness() < 128 else 'black'};")
+        self.color_button.clicked.connect(self._pick_border_color)
+        form.addRow("Border Color:", self.color_button)
+        
+        # Top Border
+        self.top_style = QComboBox()
+        self.top_style.addItems(border_styles)
+        self.top_style.setCurrentText(self._get_border_style_name(self.fmt.topBorderStyle()))
+        
+        self.top_width = QDoubleSpinBox()
+        self.top_width.setRange(0, 10)
+        self.top_width.setValue(self.fmt.topBorder())
+        self.top_width.setSuffix(" px")
+        
+        top_layout = QHBoxLayout()
+        top_layout.addWidget(self.top_style)
+        top_layout.addWidget(self.top_width)
+        form.addRow("Top Border:", top_layout)
+        
+        # Right Border
+        self.right_style = QComboBox()
+        self.right_style.addItems(border_styles)
+        self.right_style.setCurrentText(self._get_border_style_name(self.fmt.rightBorderStyle()))
+        
+        self.right_width = QDoubleSpinBox()
+        self.right_width.setRange(0, 10)
+        self.right_width.setValue(self.fmt.rightBorder())
+        self.right_width.setSuffix(" px")
+        
+        right_layout = QHBoxLayout()
+        right_layout.addWidget(self.right_style)
+        right_layout.addWidget(self.right_width)
+        form.addRow("Right Border:", right_layout)
+        
+        # Bottom Border
+        self.bottom_style = QComboBox()
+        self.bottom_style.addItems(border_styles)
+        self.bottom_style.setCurrentText(self._get_border_style_name(self.fmt.bottomBorderStyle()))
+        
+        self.bottom_width = QDoubleSpinBox()
+        self.bottom_width.setRange(0, 10)
+        self.bottom_width.setValue(self.fmt.bottomBorder())
+        self.bottom_width.setSuffix(" px")
+        
+        bottom_layout = QHBoxLayout()
+        bottom_layout.addWidget(self.bottom_style)
+        bottom_layout.addWidget(self.bottom_width)
+        form.addRow("Bottom Border:", bottom_layout)
+        
+        # Left Border
+        self.left_style = QComboBox()
+        self.left_style.addItems(border_styles)
+        self.left_style.setCurrentText(self._get_border_style_name(self.fmt.leftBorderStyle()))
+        
+        self.left_width = QDoubleSpinBox()
+        self.left_width.setRange(0, 10)
+        self.left_width.setValue(self.fmt.leftBorder())
+        self.left_width.setSuffix(" px")
+        
+        left_layout = QHBoxLayout()
+        left_layout.addWidget(self.left_style)
+        left_layout.addWidget(self.left_width)
+        form.addRow("Left Border:", left_layout)
+        
+        layout.addLayout(form)
+        
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | 
+            QDialogButtonBox.StandardButton.Cancel
+        )
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+    
+    def _pick_border_color(self):
+        """Pick border color."""
+        from PyQt6.QtGui import QColor
+        from PyQt6.QtCore import Qt
+        color = QColorDialog.getColor(self.border_color, self, "Select Border Color")
+        if color.isValid():
+            self.border_color = color
+            self.color_button.setStyleSheet(f"background-color: {color.name()}; color: {'white' if color.lightness() < 128 else 'black'};")
+    
+    def _get_border_style_name(self, style: QTextFrameFormat.BorderStyle) -> str:
+        """Convert border style enum to name (limited to supported set)."""
+        style_map = {
+            QTextFrameFormat.BorderStyle.BorderStyle_None: "None",
+            QTextFrameFormat.BorderStyle.BorderStyle_Solid: "Solid"
+        }
+        return style_map.get(style, "Solid")
+    
+    def _get_border_style_enum(self, name: str) -> QTextFrameFormat.BorderStyle:
+        """Convert border style name to enum (supported set only)."""
+        style_map = {
+            "None": QTextFrameFormat.BorderStyle.BorderStyle_None,
+            "Solid": QTextFrameFormat.BorderStyle.BorderStyle_Solid
+        }
+        return style_map.get(name, QTextFrameFormat.BorderStyle.BorderStyle_Solid)
+    
+    def apply_to_format(self, fmt: QTextTableCellFormat):
+        """Apply the border settings to the cell format."""
+        # Top border
+        fmt.setTopBorder(self.top_width.value())
+        fmt.setTopBorderStyle(self._get_border_style_enum(self.top_style.currentText()))
+        
+        # Right border
+        fmt.setRightBorder(self.right_width.value())
+        fmt.setRightBorderStyle(self._get_border_style_enum(self.right_style.currentText()))
+        
+        # Bottom border
+        fmt.setBottomBorder(self.bottom_width.value())
+        fmt.setBottomBorderStyle(self._get_border_style_enum(self.bottom_style.currentText()))
+        
+        # Left border
+        fmt.setLeftBorder(self.left_width.value())
+        fmt.setLeftBorderStyle(self._get_border_style_enum(self.left_style.currentText()))
+        
+        # Also set brush colors for better visibility
+        from PyQt6.QtGui import QBrush
+        from PyQt6.QtCore import Qt
+        brush = QBrush(self.border_color, Qt.BrushStyle.SolidPattern)
+        fmt.setTopBorderBrush(brush)
+        fmt.setRightBorderBrush(brush)
+        fmt.setBottomBorderBrush(brush)
+        fmt.setLeftBorderBrush(brush)
 
 class CellPropertiesDialog(QDialog):
     """Dialog for editing cell properties."""
@@ -344,6 +529,10 @@ class TableFeature:
         self.actions['cell_color'] = QAction("Cell Background Color...", self.parent)
         self.actions['cell_color'].triggered.connect(self._set_cell_background)
         self.menu.addAction(self.actions['cell_color'])
+        
+        self.actions['cell_borders'] = QAction("Cell Border Styles...", self.parent)
+        self.actions['cell_borders'].triggered.connect(self._edit_cell_borders)
+        self.menu.addAction(self.actions['cell_borders'])
 
         self.actions['cell_props'] = QAction("Cell Properties...", self.parent)
         self.actions['cell_props'].triggered.connect(self._edit_cell_properties)
@@ -364,7 +553,7 @@ class TableFeature:
         
         for key in ['row_above', 'row_below', 'col_left', 'col_right', 
                    'del_row', 'del_col', 'del_table', 'props', 'cell_color', 
-                   'cell_props', 'col_width', 'distribute_cols']:
+                   'cell_borders', 'cell_props', 'col_width', 'distribute_cols']:
             self.actions[key].setEnabled(in_table)
         
         # Merge/Split logic
@@ -419,6 +608,7 @@ class TableFeature:
         
         # Properties
         table_menu.addAction(self.actions['cell_color'])
+        table_menu.addAction(self.actions['cell_borders'])
         table_menu.addAction(self.actions['cell_props'])
         table_menu.addAction(self.actions['props'])
         
@@ -435,9 +625,18 @@ class TableFeature:
             fmt.setCellPadding(5)
             fmt.setCellSpacing(0)
             fmt.setBorder(data['border'])
+            fmt.setBorderStyle(self._get_border_style_enum(data['border_style']))
             fmt.setWidth(QTextLength(QTextLength.Type.PercentageLength, data['width']))
             
             cursor.insertTable(data['rows'], data['cols'], fmt)
+    
+    def _get_border_style_enum(self, name: str) -> QTextFrameFormat.BorderStyle:
+        """Convert border style name to enum."""
+        style_map = {
+            "None": QTextFrameFormat.BorderStyle.BorderStyle_None,
+            "Solid": QTextFrameFormat.BorderStyle.BorderStyle_Solid
+        }
+        return style_map.get(name, QTextFrameFormat.BorderStyle.BorderStyle_Solid)
 
     def _insert_row_above(self):
         cursor = self.editor.textCursor()
@@ -556,6 +755,26 @@ class TableFeature:
             color = QColorDialog.getColor(fmt.background().color(), self.parent, "Select Cell Background Color")
             if color.isValid():
                 fmt.setBackground(color)
+                cell.setFormat(fmt)
+    
+    def _edit_cell_borders(self):
+        """Edit individual cell border styles."""
+        cursor = self.editor.textCursor()
+        table = cursor.currentTable()
+        if table:
+            cell = table.cellAt(cursor)
+            char_fmt = cell.format()
+            fmt = char_fmt.toTableCellFormat()
+            
+            # Ensure we have a valid table cell format
+            if not isinstance(fmt, QTextTableCellFormat):
+                new_fmt = QTextTableCellFormat()
+                new_fmt.merge(char_fmt)
+                fmt = new_fmt
+            
+            dialog = CellBorderDialog(fmt, self.parent)
+            if dialog.exec():
+                dialog.apply_to_format(fmt)
                 cell.setFormat(fmt)
 
     def _edit_cell_properties(self):

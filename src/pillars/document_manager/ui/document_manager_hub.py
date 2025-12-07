@@ -7,7 +7,7 @@ from pillars.document_manager.services.document_service import document_service_
 from .document_editor_window import DocumentEditorWindow
 from .document_library import DocumentLibrary
 from .document_search_window import DocumentSearchWindow
-from .graph_view import GraphWindow
+from .mindscape_window import MindscapeWindow
 
 
 class DocumentManagerHub(QWidget):
@@ -111,12 +111,12 @@ class DocumentManagerHub(QWidget):
         search_btn.clicked.connect(self._open_document_search)
         tools_layout.addWidget(search_btn)
 
-        # Graph View Button
-        graph_btn = QPushButton("Knowledge Graph")
-        graph_btn.setMinimumHeight(50)
-        graph_btn.setStyleSheet("""
+        # Mindscape Button
+        mind_btn = QPushButton("Mindscape")
+        mind_btn.setMinimumHeight(50)
+        mind_btn.setStyleSheet("""
             QPushButton {
-                background-color: #db2777;
+                background-color: #0ea5e9;
                 color: white;
                 font-size: 14pt;
                 font-weight: bold;
@@ -124,12 +124,12 @@ class DocumentManagerHub(QWidget):
                 padding: 10px;
             }
             QPushButton:hover {
-                background-color: #be185d;
+                background-color: #0284c7;
             }
         """)
-        graph_btn.clicked.connect(self._open_graph_view)
-        tools_layout.addWidget(graph_btn)
-        
+        mind_btn.clicked.connect(self._open_mindscape)
+        tools_layout.addWidget(mind_btn)
+
         layout.addLayout(tools_layout)
         
     def _open_document_library(self):
@@ -170,20 +170,13 @@ class DocumentManagerHub(QWidget):
                 pass
             window.document_opened.connect(self._open_document_by_id)
 
-    def _open_graph_view(self):
-        """Open the knowledge graph window."""
-        window = self.window_manager.open_window(
-            "knowledge_graph",
-            GraphWindow,
+    def _open_mindscape(self):
+        """Open the mindscape window."""
+        self.window_manager.open_window(
+            "mindscape",
+            MindscapeWindow,
             allow_multiple=False
         )
-        
-        if isinstance(window, GraphWindow):
-            try:
-                window.document_opened.disconnect(self._open_document_by_id)
-            except TypeError:
-                pass
-            window.document_opened.connect(self._open_document_by_id)
 
     def _open_document_from_library(self, doc, search_term=None):
         """Open a document from the library in the editor."""

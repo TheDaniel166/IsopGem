@@ -36,7 +36,7 @@ Integrated esoteric analysis platform combining gematria, sacred geometry, esote
 | 📖 Gematria | **Active** | Hebrew calculator with real-time totals, saved calculations, text analysis, and planned SQLite persistence via `sqlite_calculation_repository.py` |
 | 📐 Geometry | In development | Sacred geometry calculators plus a new 3D scene stack (`geometry3d/view3d.py`, `geometry_scene.py`, `primitives.py`) and extensive shape/solid services |
 | 📚 Document Manager | In development | Document ingestion pipeline (DOCX, PDF, RTF) using Whoosh + SQLite repositories, graph view visualization, and editor/search windows |
-| ⭐ Astrology | In development | Integrates OpenAstro2, Swiss Ephemeris, and Skyfield via `services/openastro_service.py`, plus UI windows for natal charts, planetary positions, and current transits |
+| ⭐ Astrology | In development | Integrates OpenAstro2, Swiss Ephemeris, Skyfield, and a new Tychos/Skyfield viewer; UI windows cover natal charts, planetary positions, current transits, and Tychos snapshots |
 | 🔺 TQ | In development | Tools for Trigrammaton QBLH research such as quadset analysis, rune pairing, and geometric transitions |
 
 ## Tech Stack
@@ -44,7 +44,7 @@ Integrated esoteric analysis platform combining gematria, sacred geometry, esote
 - **Language / Runtime**: Python 3.11+
 - **UI**: PyQt6, custom window/theme managers (`src/shared/ui`)
 - **Data / Persistence**: SQLite via SQLAlchemy, Whoosh search index, JSON assets
-- **Astrology**: OpenAstro2 (git dependency), pyswisseph, Skyfield, svgwrite, ephem
+- **Astrology**: OpenAstro2 (git dependency), pyswisseph, Skyfield, tychos_skyfield, svgwrite, ephem
 - **Numerics & Data Processing**: numpy, pandas, openpyxl, OpenCV headless
 - **Document Parsing**: python-docx, mammoth, PyMuPDF, pypdf, pdf2docx, striprtf
 - **Testing**: pytest + dedicated geometry/astrology/document suites (`test/`)
@@ -111,8 +111,8 @@ Integrated esoteric analysis platform combining gematria, sacred geometry, esote
 - UI windows (library, editor, search, graph view) provide research workflows.
 
 ### Astrology
-- Integrates OpenAstro2 via `services/openastro_service.py` and wraps chart persistence through `chart_repository.py` and `chart_storage_service.py`.
-- UIs include natal charts, planetary positions, and transit dashboards.
+- Integrates OpenAstro2 via `services/openastro_service.py`, the new Tychos/Skyfield bridge in `services/tychos_service.py`, and wraps chart persistence through `chart_repository.py` and `chart_storage_service.py`.
+- UIs include natal charts, planetary positions, transit dashboards, and the Tychos snapshot viewer for RA/Dec checks.
 - Additional helpers (`location_lookup.py`, `preferences.py`) handle geocoding and user settings.
 
 ### TQ (Trigrammaton QBLH)

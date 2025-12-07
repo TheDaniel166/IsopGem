@@ -6,6 +6,7 @@ from shared.ui import WindowManager
 from .natal_chart_window import NatalChartWindow
 from .current_transit_window import CurrentTransitWindow
 from .planetary_positions_window import PlanetaryPositionsWindow
+from .tychos_window import TychosWindow
 
 
 class AstrologyHub(QWidget):
@@ -71,6 +72,11 @@ class AstrologyHub(QWidget):
         planet_positions_btn.clicked.connect(self._open_planetary_positions)
         layout.addWidget(planet_positions_btn)
 
+        tychos_btn = QPushButton("Tychos Skyfield Viewer")
+        tychos_btn.setMinimumHeight(48)
+        tychos_btn.clicked.connect(self._open_tychos_viewer)
+        layout.addWidget(tychos_btn)
+
     def _open_natal_chart(self) -> None:
         """Launch the natal chart generator window."""
         self.window_manager.open_window(
@@ -92,5 +98,13 @@ class AstrologyHub(QWidget):
         self.window_manager.open_window(
             "astrology_planetary_positions",
             PlanetaryPositionsWindow,
+            allow_multiple=False,
+        )
+
+    def _open_tychos_viewer(self) -> None:
+        """Launch the Tychos model viewer."""
+        self.window_manager.open_window(
+            "astrology_tychos_viewer",
+            TychosWindow,
             allow_multiple=False,
         )

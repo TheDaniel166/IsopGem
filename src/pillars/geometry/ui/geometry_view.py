@@ -61,7 +61,7 @@ class GeometryView(QGraphicsView):
     def _apply_zoom(self, factor: float):
         current_scale = self.transform().m11()
         new_scale = current_scale * factor
-        if 0.1 <= new_scale <= 20:
+        if 0.3 <= new_scale <= 6:
             self.scale(factor, factor)
 
     def fit_to_bounds(self, bounds: Optional[Bounds]):

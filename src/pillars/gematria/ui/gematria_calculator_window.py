@@ -9,7 +9,7 @@ from PyQt6.QtGui import QFont, QAction
 from typing import Dict, List, Optional
 from ..services.base_calculator import GematriaCalculator
 from ..services import CalculationService
-from shared.ui import VirtualKeyboard
+from shared.ui import VirtualKeyboard, get_shared_virtual_keyboard
 
 
 class GematriaCalculatorWindow(QMainWindow):
@@ -221,7 +221,7 @@ class GematriaCalculatorWindow(QMainWindow):
         main_layout.addLayout(input_layout)
         
         # Virtual keyboard (popup window)
-        self.virtual_keyboard = VirtualKeyboard(self)
+        self.virtual_keyboard = get_shared_virtual_keyboard(self)
         self.virtual_keyboard.set_target_input(self.input_field)
         
         # Button row
@@ -333,6 +333,7 @@ class GematriaCalculatorWindow(QMainWindow):
             if self.virtual_keyboard.isVisible():
                 self.virtual_keyboard.hide()
             else:
+                self.virtual_keyboard.set_target_input(self.input_field)
                 self.virtual_keyboard.show()
                 self.virtual_keyboard.raise_()
                 self.virtual_keyboard.activateWindow()

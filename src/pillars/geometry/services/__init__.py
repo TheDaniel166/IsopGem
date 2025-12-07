@@ -33,6 +33,14 @@ from .triangle_shape import (
 )
 from .polygon_shape import RegularPolygonShape
 from .vesica_piscis_shape import VesicaPiscisShape
+from .polygonal_numbers import (
+    Point,
+    polygonal_number_value,
+    centered_polygonal_value,
+    polygonal_number_points,
+    polygonal_outline_points,
+    max_radius,
+)
 from .tetrahedron_solid import TetrahedronSolidService, TetrahedronSolidCalculator
 from .cube_solid import CubeSolidService, CubeSolidCalculator
 from .octahedron_solid import OctahedronSolidService, OctahedronSolidCalculator
@@ -158,6 +166,12 @@ __all__ = [
     'BicentricQuadrilateralShape',
     'QuadrilateralSolverShape',
     'RegularPolygonShape',
+    'Point',
+    'polygonal_number_value',
+    'centered_polygonal_value',
+    'polygonal_number_points',
+    'polygonal_outline_points',
+    'max_radius',
     'RoseCurveShape',
     'VesicaPiscisShape',
     'TetrahedronSolidService',

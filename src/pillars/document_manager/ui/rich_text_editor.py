@@ -12,6 +12,7 @@ from PyQt6.QtGui import (
 )
 from .table_features import TableFeature
 from .image_features import ImageFeature
+from shared.ui import VirtualKeyboard, get_shared_virtual_keyboard
 
 class RichTextEditor(QWidget):
     """
@@ -26,6 +27,7 @@ class RichTextEditor(QWidget):
     
     def __init__(self, parent=None, placeholder_text="Start typing..."):
         super().__init__(parent)
+        self.virtual_keyboard: VirtualKeyboard | None = None
         self._setup_ui(placeholder_text)
         
     def _setup_ui(self, placeholder_text):
@@ -179,6 +181,12 @@ class RichTextEditor(QWidget):
         btn_highlight.setToolTip("Background Color")
         btn_highlight.clicked.connect(self._pick_highlight)
         self.toolbar.addWidget(btn_highlight)
+
+        btn_keyboard = QToolButton()
+        btn_keyboard.setText("Keyboard")
+        btn_keyboard.setToolTip("Open virtual keyboard")
+        btn_keyboard.clicked.connect(self._show_virtual_keyboard)
+        self.toolbar.addWidget(btn_keyboard)
         
         self.toolbar.addSeparator()
         
@@ -295,6 +303,14 @@ class RichTextEditor(QWidget):
             cursor.createList(list_fmt)
             
         cursor.endEditBlock()
+
+    def _show_virtual_keyboard(self):
+        """Display the shared virtual keyboard."""
+        self.virtual_keyboard = get_shared_virtual_keyboard(self)
+        self.virtual_keyboard.set_target_editor(self.editor)
+        self.virtual_keyboard.show()
+        self.virtual_keyboard.raise_()
+        self.virtual_keyboard.activateWindow()
 
     def _update_format_widgets(self, fmt):
         """Update toolbar state based on current cursor format."""
