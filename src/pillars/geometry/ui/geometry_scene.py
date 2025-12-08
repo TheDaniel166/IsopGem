@@ -1,11 +1,11 @@
 """Central QGraphicsScene implementation for the geometry pillar."""
 from __future__ import annotations
 import math
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from PyQt6.QtWidgets import QGraphicsScene, QGraphicsItem, QGraphicsSimpleTextItem
 from PyQt6.QtGui import QPen, QBrush, QColor, QPolygonF, QPainter
-from PyQt6.QtCore import Qt, QPointF, QRectF
+from PyQt6.QtCore import Qt, QPointF, QRectF, pyqtSignal
 
 from .primitives import (
     Bounds,
@@ -19,8 +19,47 @@ from .primitives import (
 )
 
 
+def _segment_intersection(p1: QPointF, p2: QPointF, p3: QPointF, p4: QPointF) -> Optional[QPointF]:
+    """Calculate intersection of two line segments p1-p2 and p3-p4."""
+    d = (p2.x() - p1.x()) * (p4.y() - p3.y()) - (p2.y() - p1.y()) * (p4.x() - p3.x())
+    if d == 0:
+        return None
+    
+    u = ((p3.x() - p1.x()) * (p4.y() - p3.y()) - (p3.y() - p1.y()) * (p4.x() - p3.x())) / d
+    v = ((p3.x() - p1.x()) * (p2.y() - p1.y()) - (p3.y() - p1.y()) * (p2.x() - p1.x())) / d
+    
+    if 0 <= u <= 1 and 0 <= v <= 1:
+        x = p1.x() + u * (p2.x() - p1.x())
+        y = p1.y() + u * (p2.y() - p1.y())
+        return QPointF(x, y)
+    return None
+
+def _polygon_centroid(points: List[Tuple[float, float]]) -> QPointF:
+    """Calculate centroid of a polygon."""
+    if not points:
+        return QPointF(0, 0)
+    cx = sum(p[0] for p in points) / len(points)
+    cy = sum(p[1] for p in points) / len(points)
+    return QPointF(cx, cy)
+
+
+def _shoelace_area(points: List[QPointF]) -> float:
+    """Calculate polygon area using Shoelace formula."""
+    n = len(points)
+    if n < 3:
+        return 0.0
+    area = 0.0
+    for i in range(n):
+        j = (i + 1) % n
+        area += points[i].x() * points[j].y()
+        area -= points[j].x() * points[i].y()
+    return abs(area) / 2.0
+
+
 class GeometryScene(QGraphicsScene):
     """Shared graphics scene that can render any supported geometry shape."""
+    
+    measurementChanged = pyqtSignal(dict) # Emits {perimeter, area, points, closed}
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -28,7 +67,19 @@ class GeometryScene(QGraphicsScene):
         self._grid_spacing: float = 1.0
         self._label_items: List[QGraphicsSimpleTextItem] = []
         self._axes_items: List[QGraphicsItem] = []
+        self._vertex_highlight_items: List[QGraphicsItem] = []
         self._label_primitives: List[LabelPrimitive] = []
+        self._temp_items: List[QGraphicsItem] = []
+
+        # Measurement Customization State
+        self._meas_font_size: float = 9.0
+        self._meas_line_color: QColor = QColor(234, 88, 12) # Orange
+        self._meas_text_color: QColor = QColor(255, 255, 255) # White text usually on colored bg
+        self._meas_use_line_color_for_text: bool = False
+        self._meas_show_area: bool = True
+        
+        self._last_meas_points: List[QPointF] = []
+        self._last_meas_closed: bool = False
 
         self.grid_visible: bool = True
         self.axes_visible: bool = True
@@ -72,6 +123,14 @@ class GeometryScene(QGraphicsScene):
             self.labels_visible = visible
             self._refresh_labels()
 
+    def set_vertex_highlights_visible(self, visible: bool):
+        """Toggle visibility of vertex highlight dots."""
+        if not self._vertex_highlight_items:
+            self._create_vertex_highlights()
+            
+        for item in self._vertex_highlight_items:
+            item.setVisible(visible)
+
     def apply_theme(self, theme: str):
         palette = self._themes.get(theme, self._themes["Daylight"])
         self._theme_name = theme if theme in self._themes else "Daylight"
@@ -88,6 +147,201 @@ class GeometryScene(QGraphicsScene):
         if self._payload.primitives:
             return self._derive_bounds(self._payload.primitives)
         return None
+
+    def get_vertices(self) -> List[QPointF]:
+        """Get all significant vertices from the current payload."""
+        if not self._payload or not self._payload.primitives:
+            return []
+        
+        points: List[QPointF] = []
+        segments: List[Tuple[QPointF, QPointF]] = []
+
+        # 1. Collect explicit vertices and segments
+        for primitive in self._payload.primitives:
+            if isinstance(primitive, PolygonPrimitive):
+                poly_points = [QPointF(x, y) for x, y in primitive.points]
+                points.extend(poly_points)
+                # Add centroid
+                points.append(_polygon_centroid(primitive.points))
+                # Add segments
+                for i in range(len(poly_points)):
+                    segments.append((poly_points[i], poly_points[(i + 1) % len(poly_points)]))
+                    
+            elif isinstance(primitive, LinePrimitive):
+                p1 = QPointF(*primitive.start)
+                p2 = QPointF(*primitive.end)
+                points.append(p1)
+                points.append(p2)
+                segments.append((p1, p2))
+                
+            elif isinstance(primitive, CirclePrimitive):
+                cx, cy = primitive.center
+                r = primitive.radius
+                points.append(QPointF(cx, cy))
+                points.append(QPointF(cx + r, cy))
+                points.append(QPointF(cx - r, cy))
+                points.append(QPointF(cx, cy + r))
+                points.append(QPointF(cx, cy - r))
+
+        # 2. Find intersections
+        for i in range(len(segments)):
+            for j in range(i + 1, len(segments)):
+                s1 = segments[i]
+                s2 = segments[j]
+                intersection = _segment_intersection(s1[0], s1[1], s2[0], s2[1])
+                if intersection:
+                    points.append(intersection)
+        
+        # 3. Dedup (simple distance check or quantization)
+        # Using quantization for robustness
+        unique_points: List[QPointF] = []
+        seen = set()
+        
+        for p in points:
+            # Round to 3 decimal places for key
+            key = (round(p.x(), 3), round(p.y(), 3))
+            if key not in seen:
+                seen.add(key)
+                unique_points.append(p)
+                
+        return unique_points 
+
+    def add_temporary_line(self, start: QPointF, end: QPointF, label: Optional[str] = None):
+        """Legacy helper, redirected to new system or kept for simple 2-point compatibility."""
+        # We can implement this via update_measurement_preview or keep as is.
+        # Keeping as is for backward compat if needed, but we will likely transition to update_measurement_preview.
+        self._temp_items.clear()
+        self._add_temp_segment(start, end, label)
+
+    def update_measurement_preview(self, points: List[QPointF], closed: bool = False):
+        """Update the scene with the current multi-point measurement state."""
+        self._last_meas_points = list(points)
+        self._last_meas_closed = closed
+        self.clear_temporary_items()
+        
+        if not points:
+            return
+
+        # 1. Draw Segments
+        n = len(points)
+        limit = n if closed else n - 1
+        
+        for i in range(limit):
+            p1 = points[i]
+            p2 = points[(i + 1) % n]
+            dist = math.sqrt((p2.x() - p1.x())**2 + (p2.y() - p1.y())**2)
+            self._add_temp_segment(p1, p2, f"{dist:.2f}")
+
+        # 2. Draw Polygon Fill & Area if closed or enough points
+        if n >= 3 and self._meas_show_area:
+            # Draw semi-transparent fill
+            poly = QPolygonF(points)
+            brush = QBrush(QColor(self._meas_line_color.red(), self._meas_line_color.green(), self._meas_line_color.blue(), 40)) 
+            pen = QPen(Qt.PenStyle.NoPen)
+            
+            poly_item = self.addPolygon(poly, pen, brush)
+            poly_item.setZValue(9)
+            self._temp_items.append(poly_item)
+            
+            # Calculate and show area
+            area = _shoelace_area(points)
+            centroid = _polygon_centroid([(p.x(), p.y()) for p in points])
+            
+            # Create Area Label
+            text = f"Area: {area:.2f}"
+            text_item = QGraphicsSimpleTextItem(text)
+            
+            text_col = self._meas_line_color if self._meas_use_line_color_for_text else self._meas_text_color
+            text_item.setBrush(QBrush(text_col)) 
+            
+            # Background for label
+            font = text_item.font()
+            font.setPointSizeF(self._meas_font_size + 1.0) # Slightly larger than segments
+            font.setBold(True)
+            text_item.setFont(font)
+            
+            rect = text_item.boundingRect()
+            
+            # Positioning
+            text_item.setPos(centroid.x() - rect.width()/2, centroid.y() - rect.height()/2)
+            text_item.setZValue(13)
+            
+            self.addItem(text_item)
+            self._temp_items.append(text_item)
+
+        # 3. Emit Stats
+        perimeter = 0.0
+        for i in range(len(points)):
+            if i == len(points) - 1 and not closed:
+                continue
+            p1 = points[i]
+            p2 = points[(i + 1) % len(points)]
+            perimeter += math.sqrt((p2.x() - p1.x())**2 + (p2.y() - p1.y())**2)
+            
+        area = 0.0
+        if n >= 3:
+             area = _shoelace_area(points)
+             
+        self.measurementChanged.emit({
+            "points": points,
+            "perimeter": perimeter,
+            "area": area,
+            "closed": closed,
+            "count": n
+        })
+
+    def _add_temp_segment(self, start: QPointF, end: QPointF, label: Optional[str]):
+        """Helper to draw a single temp segment."""
+        pen = QPen(self._meas_line_color, 2)
+        pen.setStyle(Qt.PenStyle.DashLine)
+        pen.setCosmetic(True)
+        
+        line_item = self.addLine(start.x(), start.y(), end.x(), end.y(), pen)
+        line_item.setZValue(10)
+        self._temp_items.append(line_item)
+        
+        if label:
+            text_item = QGraphicsSimpleTextItem(label)
+            text_col = self._meas_line_color if self._meas_use_line_color_for_text else self._meas_text_color
+            text_item.setBrush(QBrush(text_col))
+            text_item.setZValue(11)
+            text_item.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations)
+            font = text_item.font()
+            font.setPointSizeF(self._meas_font_size)
+            font.setBold(True)
+            text_item.setFont(font)
+            
+            mid_x = (start.x() + end.x()) / 2
+            mid_y = (start.y() + end.y()) / 2
+            rect = text_item.boundingRect()
+            text_item.setPos(mid_x - rect.width() / 2, mid_y - rect.height() / 2)
+            
+            self.addItem(text_item)
+            self._temp_items.append(text_item) 
+
+    def set_measurement_font_size(self, size: float):
+        self._meas_font_size = size
+        self.update_measurement_preview(self._last_meas_points, self._last_meas_closed)
+
+    def set_measurement_line_color(self, color: QColor):
+        self._meas_line_color = color
+        self.update_measurement_preview(self._last_meas_points, self._last_meas_closed)
+        
+    def set_measurement_text_color(self, color: QColor):
+        self._meas_text_color = color
+        self.update_measurement_preview(self._last_meas_points, self._last_meas_closed)
+        
+    def set_measurement_show_area(self, enabled: bool):
+        self._meas_show_area = enabled
+        self.update_measurement_preview(self._last_meas_points, self._last_meas_closed)
+
+
+    def clear_temporary_items(self):
+        """Remove all temporary items from the scene."""
+        for item in self._temp_items:
+            if item.scene() == self:
+                self.removeItem(item)
+        self._temp_items.clear()
 
     # ------------------------------------------------------------------
     # Rendering hooks
@@ -130,7 +384,10 @@ class GeometryScene(QGraphicsScene):
         self.clear()
         self.blockSignals(False)
         self._label_items.clear()
+        self._label_items.clear()
         self._axes_items.clear()
+        self._vertex_highlight_items.clear()
+        self._temp_items.clear()  # Also clear temp items on rebuild
         self._label_primitives = []
 
         if not self._payload or not self._payload.primitives:
@@ -281,6 +538,33 @@ class GeometryScene(QGraphicsScene):
         else:
             for item in self._axes_items:
                 item.setVisible(False)
+
+    def _create_vertex_highlights(self):
+        """Create highlight dots for all vertices."""
+        self._vertex_highlight_items.clear()
+        vertices = self.get_vertices()
+        
+        pen = QPen(Qt.GlobalColor.black, 0)
+        brush = QBrush(Qt.GlobalColor.black)
+        
+        for v in vertices:
+            # Create a small circle item that ignores transformations (constant screen size)
+            # However, QGraphicsEllipseItem doesn't support ItemIgnoresTransformations nicely with centering.
+            # We'll use a small fixed radius in scene coordinates, or just standard item.
+            # Better: Use a small rect centered on point.
+            
+            # Let's try constant size using a custom drawing or just small scene-units.
+            # Issue with small scene units: Zooming in makes them huge.
+            # We will use ItemIgnoresTransformations on a small rect.
+            
+            dot_size = 6.0
+            rect = QRectF(-dot_size/2, -dot_size/2, dot_size, dot_size)
+            item = self.addEllipse(rect, pen, brush)
+            item.setPos(v)
+            item.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations)
+            item.setZValue(20) # On top of everything
+            item.setVisible(False) # Hidden by default
+            self._vertex_highlight_items.append(item)
 
     @staticmethod
     def _qt_pen(style: PenStyle) -> QPen:

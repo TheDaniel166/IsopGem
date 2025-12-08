@@ -707,7 +707,7 @@ classDiagram
 **Summary**: Service layer for Document Manager.
 
 #### Deep Analysis
-- **Key Logic**: `update_documents`: Update multiple documents efficiently.
+- **Key Logic**: `import_document`: Import file and populate metadata (Title/Author) automatically.
 - **Inputs**: Standard method arguments
 - **Outputs**: Return values
 - **Critical Relationships**:
@@ -1172,9 +1172,9 @@ classDiagram
 **Summary**: File parsing utilities for document import.
 
 #### Deep Analysis
-- **Key Logic**: `_parse_pdf`: performs core logic (Complexity: 10)
-- **Inputs**: Standard method arguments
-- **Outputs**: Return values
+- **Key Logic**: `parse_file`: Orchestrate parsing and return content + metadata.
+- **Inputs**: File path
+- **Outputs**: Tuple (text, html, ext, metadata)
 - **Critical Relationships**: None detected.
 #### Visual Model
 
@@ -2304,6 +2304,7 @@ classDiagram
 
 #### Deep Analysis
 - **Key Logic**: `calculate_from_property`: Calculate all properties from any given property.
+- **Drawing Logic**: Scales unit shape points by `circumradius` to ensure correct visual representation.
 - **Inputs**: Standard method arguments
 - **Outputs**: Return values
 - **Critical Relationships**: None detected.
@@ -2897,7 +2898,7 @@ classDiagram
 **Summary**: Square and Rectangle shape calculators.
 
 #### Deep Analysis
-- **Key Logic**: `calculate_from_property`: Calculate all properties from any given property.
+- **Key Logic**: `calculate_from_property`: Bidirectional calculation for Square and Rectangle (including solving from Area, Perimeter, Diagonal).
 - **Inputs**: Standard method arguments
 - **Outputs**: Return values
 - **Critical Relationships**: None detected.
@@ -3000,7 +3001,7 @@ classDiagram
 **Summary**: Triangle shape calculators.
 
 #### Deep Analysis
-- **Key Logic**: `_solve_general`: performs core logic (Complexity: 19)
+- **Key Logic**: `_solve_general`: general SSS solver. `RightTriangleShape`: Enhanced bidirectional solving from Hypotenuse, Area, and Perimeter.
 - **Inputs**: Standard method arguments
 - **Outputs**: Return values
 - **Critical Relationships**: None detected.

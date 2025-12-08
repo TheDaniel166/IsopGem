@@ -190,7 +190,11 @@ class RegularPolygonShape(GeometricShape):
     
     def get_drawing_instructions(self) -> Dict:
         """Get drawing instructions for the regular polygon."""
-        points = self._unit_polygon_points()
+        circumradius = self.get_property('circumradius')
+        if circumradius is None:
+             circumradius = 1.0 # Fallback for initial view or invalid state
+
+        points = self._polygon_points(circumradius)
         diagonal_groups = self._build_diagonal_groups(points)
         return {
             'type': 'polygon',
@@ -203,8 +207,8 @@ class RegularPolygonShape(GeometricShape):
         """Get label positions for the polygon (static diagram positions)."""
         labels: List[Tuple[str, float, float]] = []
         
-        # Use unit circumradius for consistent label placement
-        cr = 1.0
+        # Use actual circumradius for label placement if available, else 1.0
+        cr = self.get_property('circumradius') or 1.0
         
         # Side label (bottom)
         side = self.get_property('side')
@@ -223,8 +227,7 @@ class RegularPolygonShape(GeometricShape):
         
         return labels
 
-    def _unit_polygon_points(self) -> List[Tuple[float, float]]:
-        radius = 1.0
+    def _polygon_points(self, radius: float) -> List[Tuple[float, float]]:
         points: List[Tuple[float, float]] = []
         for i in range(self.num_sides):
             angle = (2 * math.pi * i / self.num_sides) - (math.pi / 2)

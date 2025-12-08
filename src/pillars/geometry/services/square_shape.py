@@ -143,19 +143,19 @@ class RectangleShape(GeometricShape):
                 name='Perimeter',
                 key='perimeter',
                 unit='units',
-                readonly=True  # Need both length and width
+                readonly=False
             ),
             'area': ShapeProperty(
                 name='Area',
                 key='area',
                 unit='units²',
-                readonly=True  # Need both length and width
+                readonly=False
             ),
             'diagonal': ShapeProperty(
                 name='Diagonal',
                 key='diagonal',
                 unit='units',
-                readonly=True  # Need both length and width
+                readonly=False
             ),
         }
     
@@ -164,19 +164,55 @@ class RectangleShape(GeometricShape):
         if value <= 0:
             return False
         
-        # For rectangle, we need both dimensions to calculate other properties
+        # Determine which property is being set
         if property_key == 'length':
             self.properties['length'].value = value
         elif property_key == 'width':
             self.properties['width'].value = value
+        elif property_key == 'area':
+            self.properties['area'].value = value
+        elif property_key == 'perimeter':
+            self.properties['perimeter'].value = value
+        elif property_key == 'diagonal':
+            self.properties['diagonal'].value = value
         else:
             return False
-        
-        # Calculate derived properties if both dimensions are set
+
+        # Attempt to resolve missing dimensions
         length = self.properties['length'].value
         width = self.properties['width'].value
+        area = self.properties['area'].value
+        perimeter = self.properties['perimeter'].value
+        diagonal = self.properties['diagonal'].value
         
-        if length is not None and width is not None:
+
+
+        # Try to derive width if length is known
+        if length and not width:
+            if area:
+                width = area / length
+            elif perimeter:
+                val = (perimeter / 2) - length
+                if val > 0: width = val
+            elif diagonal:
+                if diagonal > length:
+                    width = math.sqrt(diagonal**2 - length**2)
+
+        # Try to derive length if width is known
+        if width and not length:
+            if area:
+                length = area / width
+            elif perimeter:
+                val = (perimeter / 2) - width
+                if val > 0: length = val
+            elif diagonal:
+                if diagonal > width:
+                    length = math.sqrt(diagonal**2 - width**2)
+        
+        # If we have both dimensions, update them and recalculate everything
+        if length and width:
+            self.properties['length'].value = length
+            self.properties['width'].value = width
             self.properties['perimeter'].value = 2 * (length + width)
             self.properties['area'].value = length * width
             self.properties['diagonal'].value = math.sqrt(length**2 + width**2)

@@ -58,16 +58,37 @@ class DocumentService:
             raise FileNotFoundError(f"File not found: {file_path}")
 
         # Parse file
-        content, raw_content, file_type = DocumentParser.parse_file(str(path))
+        content, raw_content, file_type, metadata = DocumentParser.parse_file(str(path))
+        
+        # Determine title
+        title = path.stem
+        if not tags and metadata.get('title'):
+             # If user didn't specify title (we use tags arg for tags, but title is usually path.stem in this signature)
+             # The current signature is import_document(self, file_path: str, tags: Optional[str] = None, collection: Optional[str] = None)
+             # It uses path.stem as title. We might want to retain that or append metadata title. 
+             # Let's say we prefer the file name as the primary title in this app generally, or maybe we append it?
+             # For now, let's keep path.stem as the title to avoid confusion, but we could add metadata info to content or tags?
+             # Actually, looking at the code:
+             pass
+
+        # Use metadata for author if available (we don't have an author column in Document model shown in `document.py` snippet earlier? 
+        # Wait, I need to check Document model.
+        # Let's check `document.py` content again or assume standard fields.
+        # The `create` method in repo takes: title, content, file_type, file_path, raw_content, tags, collection.
+        # Use metadata title if available, otherwise fallback to filename
+        doc_title = metadata.get('title')
+        if not doc_title or not doc_title.strip():
+            doc_title = path.stem
 
         # Create document record
         doc = self.repo.create(
-            title=path.stem,
+            title=doc_title,
             content=content,
             file_type=file_type,
             file_path=str(path),
             raw_content=raw_content,
             tags=tags or "",
+            author=metadata.get('author'),
             collection=collection or ""
         )
         

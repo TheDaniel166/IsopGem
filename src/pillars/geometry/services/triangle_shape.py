@@ -382,19 +382,19 @@ class RightTriangleShape(GeometricShape):
                 name='Hypotenuse (c)',
                 key='hypotenuse',
                 unit='units',
-                readonly=True
+                readonly=False
             ),
             'perimeter': ShapeProperty(
                 name='Perimeter',
                 key='perimeter',
                 unit='units',
-                readonly=True
+                readonly=False
             ),
             'area': ShapeProperty(
                 name='Area',
                 key='area',
                 unit='units²',
-                readonly=True
+                readonly=False
             ),
             'inradius': ShapeProperty(
                 name='Inradius',
@@ -422,21 +422,78 @@ class RightTriangleShape(GeometricShape):
             ),
         }
     
+
     def calculate_from_property(self, property_key: str, value: float) -> bool:
         """Calculate dependent properties."""
         if value <= 0:
             return False
         
-        # Need both base and height to calculate other properties
-        if property_key == 'base':
-            self.properties['base'].value = value
-        elif property_key == 'height':
-            self.properties['height'].value = value
+        # Set the incoming value
+        if property_key in self.properties:
+            self.properties[property_key].value = value
         else:
             return False
         
+        # Retrieve all values
         base = self.properties['base'].value
         height = self.properties['height'].value
+        hyp = self.properties['hypotenuse'].value
+        area = self.properties['area'].value
+        perimeter = self.properties['perimeter'].value
+
+        # Solver loop (run twice to propagate derived values)
+        for _ in range(2):
+            # 1. Base + Height known?
+            if base and height:
+                hyp = math.sqrt(base**2 + height**2)
+                area = (base * height) / 2
+                perimeter = base + height + hyp
+
+            # 2. Base + Area -> Height
+            if base and area and not height:
+                height = (2 * area) / base
+            # 3. Height + Area -> Base
+            if height and area and not base:
+                base = (2 * area) / height
+            
+            # 4. Base + Hypotenuse -> Height
+            if base and hyp and not height:
+                if hyp > base:
+                    height = math.sqrt(hyp**2 - base**2)
+            # 5. Height + Hypotenuse -> Base
+            if height and hyp and not base:
+                if hyp > height:
+                    base = math.sqrt(hyp**2 - height**2)
+
+            # 6. Area + Hypotenuse -> Base/Height (a+b known from c and A)
+            if area and hyp and (not base or not height):
+                # (a+b)^2 = c^2 + 4A
+                sum_ab_sq = hyp**2 + 4 * area
+                diff_ab_sq = hyp**2 - 4 * area
+                if diff_ab_sq >= 0:
+                    sum_ab = math.sqrt(sum_ab_sq)
+                    diff_ab = math.sqrt(diff_ab_sq)
+                    # a = (sum + diff)/2, b = (sum - diff)/2
+                    base = (sum_ab + diff_ab) / 2
+                    height = (sum_ab - diff_ab) / 2
+
+            # 7. Perimeter + Base -> Height (P = a + b + c -> c = P - a - b -> c^2 = (P-a-b)^2 -> a^2+b^2 = ...)
+            # b = ((P-a)^2 - a^2) / (2*(P-a))
+            if perimeter and base and not height:
+                K = perimeter - base
+                if K > 0 and K**2 > base**2:
+                     height = (K**2 - base**2) / (2 * K)
+            
+            # 8. Perimeter + Height -> Base
+            if perimeter and height and not base:
+                K = perimeter - height
+                if K > 0 and K**2 > height**2:
+                     base = (K**2 - height**2) / (2 * K)
+        
+        # Update state if solved
+        if base and height:
+            self.properties['base'].value = base
+            self.properties['height'].value = height
         
         if base is not None and height is not None:
             hypotenuse = math.sqrt(base**2 + height**2)

@@ -38,33 +38,34 @@ class DocumentParser:
     """Parses various file formats to extract text and HTML."""
     
     @staticmethod
-    def parse_file(file_path: str) -> tuple[str, str, str]:
+    def parse_file(file_path: str) -> tuple[str, str, str, dict]:
         """
-        Parse a file and return (content_text, raw_html, file_type).
+        Parse a file and return (content_text, raw_html, file_type, metadata).
         
         Args:
             file_path: Path to the file.
             
         Returns:
-            Tuple of (extracted_text, raw_html, file_extension)
+            Tuple of (extracted_text, raw_html, file_extension, metadata_dict)
         """
         path = Path(file_path)
         ext = path.suffix.lower()
+        metadata = {}
         
         if ext == '.txt':
             text = DocumentParser._parse_txt(path)
-            return text, f"<pre>{text}</pre>", 'txt'
+            return text, f"<pre>{text}</pre>", 'txt', {}
         elif ext == '.html' or ext == '.htm':
             html = DocumentParser._parse_html(path)
             # TODO: Extract text from HTML properly
-            return html, html, 'html'
+            return html, html, 'html', {}
         elif ext == '.docx':
             return DocumentParser._parse_docx(path)
         elif ext == '.pdf':
             return DocumentParser._parse_pdf(path)
         elif ext == '.rtf':
             text = DocumentParser._parse_rtf(path)
-            return text, f"<pre>{text}</pre>", 'rtf'
+            return text, f"<pre>{text}</pre>", 'rtf', {}
         else:
             raise ValueError(f"Unsupported file type: {ext}")
 
@@ -79,7 +80,8 @@ class DocumentParser:
             return f.read()
 
     @staticmethod
-    def _parse_docx(path: Path) -> tuple[str, str, str]:
+    def _parse_docx(path: Path) -> tuple[str, str, str, dict]:
+        metadata = {}
         # Try mammoth first for HTML conversion
         if mammoth:
             with open(path, "rb") as docx_file:
@@ -92,10 +94,24 @@ class DocumentParser:
         else:
             html = None
 
-        # Use python-docx for text extraction (reliable)
+        # Use python-docx for text extraction (reliable) & metadata
         if docx:
-            doc = docx.Document(str(path))
-            text = "\n".join([para.text for para in doc.paragraphs])
+            try:
+                doc = docx.Document(str(path))
+                text = "\n".join([para.text for para in doc.paragraphs])
+                
+                # Extract copy props
+                core_props = doc.core_properties
+                if core_props.title:
+                    metadata['title'] = core_props.title
+                if core_props.author:
+                    metadata['author'] = core_props.author
+                if core_props.created:
+                    metadata['created'] = core_props.created
+                    
+            except Exception as e:
+                print(f"Error parsing DOCX with python-docx: {e}")
+                text = ""
         else:
             if not mammoth:
                  raise ImportError("python-docx or mammoth is required for .docx files")
@@ -104,12 +120,13 @@ class DocumentParser:
         if not html:
             html = f"<pre>{text}</pre>"
 
-        return text, html, 'docx'
+        return text, html, 'docx', metadata
 
     @staticmethod
-    def _parse_pdf(path: Path) -> tuple[str, str, str]:
+    def _parse_pdf(path: Path) -> tuple[str, str, str, dict]:
         text = ""
         html = ""
+        metadata = {}
         
         # Try pdf2docx -> mammoth pipeline for better table/layout preservation
         if Converter and mammoth and docx:
@@ -127,11 +144,16 @@ class DocumentParser:
                 
                 # Parse the generated DOCX using our existing method
                 # This gives us clean HTML with tables from mammoth
-                text, html, _ = DocumentParser._parse_docx(Path(docx_path))
+                # NOTE: We ignore the metadata from the temp docx as it wont be the original PDF metadata
+                text, html, _, _ = DocumentParser._parse_docx(Path(docx_path))
                 
                 # Clean up
                 os.unlink(docx_path)
-                return text, html, 'pdf'
+                
+                # Now extract real PDF metadata using pypdf or fitz
+                metadata = DocumentParser._extract_pdf_metadata(path)
+                
+                return text, html, 'pdf', metadata
                 
             except Exception as e:
                 print(f"pdf2docx conversion failed, falling back to fitz: {e}")
@@ -141,25 +163,78 @@ class DocumentParser:
 
         # Use PyMuPDF (fitz) for HTML with images
         if fitz:
-            doc = fitz.open(path)
-            for page in doc:
-                # Get text
-                text += str(page.get_text("text"))
-                # Get HTML
-                html += str(page.get_text("html"))
+            try:
+                doc = fitz.open(path)
                 
-            doc.close()
+                # Metadata
+                meta = doc.metadata
+                if meta:
+                    if meta.get('title'): metadata['title'] = meta['title']
+                    if meta.get('author'): metadata['author'] = meta['author']
+                
+                for page in doc:
+                    # Get text
+                    text += str(page.get_text("text"))
+                    # Get HTML
+                    html += str(page.get_text("html"))
+                    
+                doc.close()
+            except Exception as e:
+                # Handle encrypted pdfs etc
+                print(f"PyMuPDF failed: {e}")
+                raise ValueError(f"Failed to parse PDF: {e}")
+                
         elif pypdf:
             # Fallback to text only
-            with open(path, 'rb') as f:
-                reader = pypdf.PdfReader(f)
-                for page in reader.pages:
-                    text += page.extract_text() + "\n"
+            try:
+                with open(path, 'rb') as f:
+                    reader = pypdf.PdfReader(f)
+                    
+                    if reader.is_encrypted:
+                        try:
+                            reader.decrypt('')
+                        except:
+                            raise ValueError("PDF is encrypted and cannot be read.")
+
+                    # Metadata
+                    if reader.metadata:
+                        if reader.metadata.title: metadata['title'] = reader.metadata.title
+                        if reader.metadata.author: metadata['author'] = reader.metadata.author
+
+                    for page in reader.pages:
+                        text += page.extract_text() + "\n"
+            except Exception as e:
+                 raise ValueError(f"pypdf failed: {e}")
+                 
             html = f"<pre>{text}</pre>"
         else:
              raise ImportError("PyMuPDF or pypdf is required for .pdf files")
 
-        return text, html, 'pdf'
+        return text, html, 'pdf', metadata
+
+    @staticmethod
+    def _extract_pdf_metadata(path: Path) -> dict:
+        metadata = {}
+        if fitz:
+            try:
+                doc = fitz.open(path)
+                meta = doc.metadata
+                if meta:
+                    if meta.get('title'): metadata['title'] = meta['title']
+                    if meta.get('author'): metadata['author'] = meta['author']
+                doc.close()
+            except:
+                pass
+        elif pypdf:
+             try:
+                with open(path, 'rb') as f:
+                    reader = pypdf.PdfReader(f)
+                    if reader.metadata:
+                        if reader.metadata.title: metadata['title'] = reader.metadata.title
+                        if reader.metadata.author: metadata['author'] = reader.metadata.author
+             except:
+                 pass
+        return metadata
 
     @staticmethod
     def _parse_rtf(path: Path) -> str:

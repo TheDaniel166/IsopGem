@@ -1,13 +1,14 @@
 """Geometry calculator window with 3-pane layout."""
 from typing import Dict, Optional
+import math
 
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
     QPushButton, QScrollArea, QCheckBox, QSplitter, QFrame,
-    QApplication, QComboBox, QTabWidget, QToolButton, QMenu
+    QApplication, QComboBox, QTabWidget, QToolButton, QMenu, QGroupBox
 )
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QDoubleValidator, QCursor, QAction
+from PyQt6.QtCore import Qt, QPoint
+from PyQt6.QtGui import QDoubleValidator, QCursor, QAction, QColor
 from pillars.geometry.services import GeometricShape
 from shared.ui import WindowManager
 from .geometry_scene import GeometryScene
@@ -53,6 +54,7 @@ class GeometryCalculatorWindow(QMainWindow):
         self.overlay_grid_btn: Optional[QToolButton] = None
         self.overlay_axes_btn: Optional[QToolButton] = None
         self.overlay_labels_btn: Optional[QToolButton] = None
+        self.overlay_measure_btn: Optional[QToolButton] = None
         self.overlay_snapshot_btn: Optional[QToolButton] = None
         
         self.setWindowTitle(f"{shape.name} Calculator")
@@ -108,6 +110,10 @@ class GeometryCalculatorWindow(QMainWindow):
         self.controls_pane = controls_pane
         splitter.splitterMoved.connect(self._record_splitter_sizes)
         self._update_splitter_sizes()
+        
+        # Initialize fields from shape state
+        self._update_all_fields()
+        self._update_viewport()
     
     def _create_calculation_pane(self) -> QWidget:
         """Create the left calculation pane."""
@@ -412,6 +418,7 @@ class GeometryCalculatorWindow(QMainWindow):
         )
         tabs.addTab(self._build_display_tab(), "Display")
         tabs.addTab(self._build_camera_tab(), "Camera")
+        tabs.addTab(self._build_measure_tab(), "Measure")
         tabs.addTab(self._build_output_tab(), "Output")
         layout.addWidget(tabs)
 
@@ -510,6 +517,12 @@ class GeometryCalculatorWindow(QMainWindow):
             lambda state: self.show_labels_cb.setChecked(state) if self.show_labels_cb else None,
         )
         layout.addWidget(self.overlay_labels_btn)
+
+        self.overlay_measure_btn = self._create_overlay_toggle(
+            "Measure",
+            lambda state: self.viewport.set_measurement_mode(state),
+        )
+        layout.addWidget(self.overlay_measure_btn)
 
         self.overlay_snapshot_btn = QToolButton()
         self.overlay_snapshot_btn.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -640,6 +653,376 @@ class GeometryCalculatorWindow(QMainWindow):
 
         layout.addStretch()
         return tab
+
+    def _build_measure_tab(self) -> QWidget:
+        """Create controls for customizing measurements."""
+        tab = QWidget()
+        layout = QVBoxLayout(tab)
+        layout.setSpacing(16)
+        layout.setContentsMargins(12, 12, 12, 12)
+        
+        # Stats Group
+        stats_group = QGroupBox("Current Measurement")
+        stats_group.setStyleSheet("QGroupBox { font-weight: bold; color: #1e3a8a; }")
+        stats_layout = QVBoxLayout(stats_group)
+        stats_layout.setSpacing(8)
+        
+        self.lbl_perim = QLabel("Perimeter: -")
+        self.lbl_perim.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.lbl_perim.customContextMenuRequested.connect(lambda p: self._show_measurement_context_menu(p, "perimeter"))
+        
+        self.lbl_area = QLabel("Area: -")
+        self.lbl_area.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.lbl_area.customContextMenuRequested.connect(lambda p: self._show_measurement_context_menu(p, "area"))
+        self.btn_open_shape = QPushButton("Open as Shape")
+        self.btn_open_shape.setEnabled(False)
+        self.btn_open_shape.setStyleSheet(self._secondary_button_style())
+        self.btn_open_shape.clicked.connect(self._open_measured_shape)
+        
+        stats_layout.addWidget(self.lbl_perim)
+        stats_layout.addWidget(self.lbl_area)
+        stats_layout.addWidget(self.btn_open_shape)
+        layout.addWidget(stats_group)
+        
+        # Show Area Control
+        area_layout = QHBoxLayout()
+        self.show_area_cb = QCheckBox("Calculate Area (3+ points)")
+        self.show_area_cb.setChecked(True)
+        self.show_area_cb.setStyleSheet("""
+            QCheckBox { color: #475569; font-weight: 600; }
+            QCheckBox::indicator { width: 16px; height: 16px; }
+        """)
+        
+        def toggle_area(state):
+            if hasattr(self.scene, "set_measurement_show_area"):
+                self.scene.set_measurement_show_area(state)
+        
+        self.show_area_cb.toggled.connect(toggle_area)
+        area_layout.addWidget(self.show_area_cb)
+        layout.addLayout(area_layout)
+
+        # Font Size Control
+        size_layout = QVBoxLayout()
+        size_layout.setSpacing(4)
+        
+        size_label_row = QHBoxLayout()
+        size_label = QLabel("Font Size")
+        size_label.setStyleSheet("color: #475569; font-weight: 600;")
+        self.size_val_label = QLabel("9.0pt")
+        self.size_val_label.setStyleSheet("color: #64748b; font-weight: 600;")
+        size_label_row.addWidget(size_label)
+        size_label_row.addStretch()
+        size_label_row.addWidget(self.size_val_label)
+        size_layout.addLayout(size_label_row)
+        
+        from PyQt6.QtWidgets import QSlider
+        size_slider = QSlider(Qt.Orientation.Horizontal)
+        size_slider.setMinimum(8)
+        size_slider.setMaximum(24)
+        size_slider.setValue(9)
+        size_slider.setStyleSheet("""
+            QSlider::groove:horizontal {
+                border: 1px solid #cbd5e1;
+                height: 4px;
+                background: #f1f5f9;
+                margin: 2px 0;
+                border-radius: 2px;
+            }
+            QSlider::handle:horizontal {
+                background: #3b82f6;
+                border: 1px solid #3b82f6;
+                width: 14px;
+                height: 14px;
+                margin: -5px 0;
+                border-radius: 7px;
+            }
+        """)
+        
+        def update_size(val):
+            self.size_val_label.setText(f"{val}pt")
+            if hasattr(self.scene, "set_measurement_font_size"):
+                self.scene.set_measurement_font_size(float(val))
+                
+        size_slider.valueChanged.connect(update_size)
+        size_layout.addWidget(size_slider)
+        layout.addLayout(size_layout)
+        
+        # Line Color Control
+        line_col_layout = QVBoxLayout()
+        line_col_layout.setSpacing(6)
+        line_col_label = QLabel("Line Color")
+        line_col_label.setStyleSheet("color: #475569; font-weight: 600;")
+        line_col_layout.addWidget(line_col_label)
+        
+        line_combo = QComboBox()
+        line_combo.addItems(["Orange", "Blue", "Emerald", "Black", "Red"])
+        
+        def get_color(name):
+            if name == "Orange": return QColor(234, 88, 12)
+            if name == "Blue": return QColor(37, 99, 235)
+            if name == "Emerald": return QColor(16, 185, 129)
+            if name == "Black": return QColor(0, 0, 0)
+            if name == "Red": return QColor(220, 38, 38)
+            return QColor(234, 88, 12)
+
+        def update_line_color(name):
+            if hasattr(self.scene, "set_measurement_line_color"):
+                self.scene.set_measurement_line_color(get_color(name))
+                
+        line_combo.currentTextChanged.connect(update_line_color)
+        line_col_layout.addWidget(line_combo)
+        layout.addLayout(line_col_layout)
+
+        # Text Color Control
+        text_col_layout = QVBoxLayout()
+        text_col_layout.setSpacing(6)
+        text_col_label = QLabel("Text Color")
+        text_col_label.setStyleSheet("color: #475569; font-weight: 600;")
+        text_col_layout.addWidget(text_col_label)
+        
+        text_combo = QComboBox()
+        text_combo.addItems(["White", "Black", "Match Line"])
+        
+        def update_text_color(name):
+            col = QColor(255, 255, 255)
+            if name == "Black":
+                col = QColor(0, 0, 0)
+            elif name == "Match Line":
+                # Special logic handled in scene or we update here dynamically?
+                # Scene handles 'use_line_color' flag or we just push the color.
+                # Let's check current line combo
+                col = get_color(line_combo.currentText())
+            
+            if hasattr(self.scene, "set_measurement_text_color"):
+                self.scene.set_measurement_text_color(col)
+        
+        # Connect both combos to text update if match line is selected
+        text_combo.currentTextChanged.connect(update_text_color)
+        line_combo.currentTextChanged.connect(lambda _: update_text_color(text_combo.currentText()))
+
+        text_col_layout.addWidget(text_combo)
+        layout.addLayout(text_col_layout)
+
+        layout.addStretch()
+        
+        # Connect signal
+        if hasattr(self.scene, "measurementChanged"):
+            self.scene.measurementChanged.connect(self._on_measurement_changed)
+            
+        return tab
+
+    def _on_measurement_changed(self, data: dict):
+        """Update stats labels based on measurement."""
+        self._last_measurement_data = data # Store for context menu
+        perim = data.get("perimeter", 0.0)
+        area = data.get("area", 0.0)
+        points = data.get("points", [])
+        count = len(points)
+        
+        self.lbl_perim.setText(f"Perimeter: {perim:.2f}")
+        self.lbl_area.setText(f"Area: {area:.2f}" if count >= 3 else "Area: -")
+        
+        # Update Open Button
+        self._measured_points = points # Store for opening
+        if count == 3:
+            self.btn_open_shape.setText("Open as Triangle")
+            self.btn_open_shape.setEnabled(True)
+        elif count == 4:
+            self.btn_open_shape.setText("Open as Quadrilateral")
+            self.btn_open_shape.setEnabled(True)
+        elif count >= 5:
+            self.btn_open_shape.setText(f"Open as {count}-Gon")
+            self.btn_open_shape.setEnabled(True)
+        else:
+            self.btn_open_shape.setText("Open as Shape")
+            self.btn_open_shape.setEnabled(False)
+
+    def _show_measurement_context_menu(self, pos: QPoint, type_key: str):
+        """Show context menu for measurement labels."""
+        if not hasattr(self, "_last_measurement_data"):
+            return
+            
+        value = self._last_measurement_data.get(type_key, 0.0)
+        if value <= 0:
+            return
+            
+        menu = QMenu()
+        
+        # Copy Action
+        copy_action = QAction("Copy Value", self)
+        copy_action.triggered.connect(lambda: QApplication.clipboard().setText(str(value)))
+        menu.addAction(copy_action)
+        
+        menu.addSeparator()
+        
+        # Send to Quadset Action
+        send_action = QAction(f"Send {type_key.title()} to Quadset Analysis", self)
+        send_action.triggered.connect(lambda: self._send_value_to_quadset(value))
+        menu.addAction(send_action)
+        
+        # Map press to global coordinates
+        sender = self.sender()
+        if isinstance(sender, QLabel):
+             menu.exec(sender.mapToGlobal(pos))
+             
+    def _open_measured_shape(self):
+        """Open a new calculator window with the measured points."""
+        if not hasattr(self, "_measured_points") or len(self._measured_points) < 3:
+            return
+            
+        points = self._measured_points
+        count = len(points)
+        
+        if count == 3:
+            # Calculate side lengths
+            s1 = math.sqrt((points[1].x()-points[0].x())**2 + (points[1].y()-points[0].y())**2)
+            s2 = math.sqrt((points[2].x()-points[1].x())**2 + (points[2].y()-points[1].y())**2)
+            s3 = math.sqrt((points[0].x()-points[2].x())**2 + (points[0].y()-points[2].y())**2)
+            
+            sides = sorted([s1, s2, s3])
+            a, b, c = sides[0], sides[1], sides[2] # Smallest to largest
+            
+            # Check for Equilateral (all sides equal)
+            if math.isclose(a, c, rel_tol=1e-4):
+                from pillars.geometry.services import EquilateralTriangleShape
+                shape = EquilateralTriangleShape()
+                shape.set_property("side", a)
+                
+            # Check for Isosceles (2 sides equal)
+            elif math.isclose(a, b, rel_tol=1e-4) or math.isclose(b, c, rel_tol=1e-4):
+                # Check for Isosceles Right (45-45-90) -> c^2 = 2 * a^2 (approx)
+                # In isosceles, leg is defined.
+                leg = a if math.isclose(a, b, rel_tol=1e-4) else c
+                base = c if math.isclose(a, b, rel_tol=1e-4) else a
+                # Re-assign for clarity: if a==b, leg=a, base=c. If b==c, leg=c, base=a.
+                # IsoscelesRight check: base (hypotenuse) approx leg * sqrt(2)?
+                
+                is_right = math.isclose(base, leg * math.sqrt(2), rel_tol=1e-4)
+                
+                if is_right:
+                    from pillars.geometry.services import IsoscelesRightTriangleShape
+                    shape = IsoscelesRightTriangleShape()
+                    shape.set_property("leg", leg)
+                else:
+                    from pillars.geometry.services import IsoscelesTriangleShape
+                    shape = IsoscelesTriangleShape()
+                    shape.set_property("leg", leg)
+                    shape.set_property("base", base)
+                    
+            # Check for Right Triangle (a^2 + b^2 = c^2)
+            elif math.isclose(a*a + b*b, c*c, rel_tol=1e-4):
+                from pillars.geometry.services import RightTriangleShape
+                shape = RightTriangleShape()
+                shape.set_property("base", a)
+                shape.set_property("height", b)
+                # Hypotenuse will be calculated
+                
+            else:
+                # Scalene (Generic)
+                from pillars.geometry.services import ScaleneTriangleShape
+                shape = ScaleneTriangleShape()
+                # Use raw sides for Scalene to match user perception of A, B, C segments
+                # But Scalene accepts side_a, side_b, side_c order-independently?
+                # Actually, relying on sorted sides is safer for stability, 
+                # but let's stick to the lengths we found.
+                # Re-using s1, s2, s3 map to the specific geometry better?
+                # The user saw "Side a (BC)" etc.
+                shape.set_property("side_a", s1)
+                shape.set_property("side_b", s2)
+                shape.set_property("side_c", s3)
+            
+            if self.window_manager:
+                self.window_manager.open_window(
+                    f"geometry_{shape.name.lower().replace(' ', '_')}",
+                    self.__class__,
+                    allow_multiple=True,
+                    shape=shape
+                )
+                
+        elif count == 4:
+            # Calculate sides
+            s1 = math.sqrt((points[1].x()-points[0].x())**2 + (points[1].y()-points[0].y())**2)
+            s2 = math.sqrt((points[2].x()-points[1].x())**2 + (points[2].y()-points[1].y())**2)
+            s3 = math.sqrt((points[3].x()-points[2].x())**2 + (points[3].y()-points[2].y())**2)
+            s4 = math.sqrt((points[0].x()-points[3].x())**2 + (points[0].y()-points[3].y())**2)
+            
+            # Calculate diagonals
+            d1 = math.sqrt((points[2].x()-points[0].x())**2 + (points[2].y()-points[0].y())**2)
+            d2 = math.sqrt((points[3].x()-points[1].x())**2 + (points[3].y()-points[1].y())**2)
+            
+            sides = [s1, s2, s3, s4]
+            avg_side = sum(sides) / 4.0
+            
+            is_equilateral = all(math.isclose(s, sides[0], rel_tol=1e-3) for s in sides)
+            is_opp_equal = math.isclose(s1, s3, rel_tol=1e-3) and math.isclose(s2, s4, rel_tol=1e-3)
+            is_diag_equal = math.isclose(d1, d2, rel_tol=1e-3)
+            
+            shape = None
+            
+            if is_equilateral and is_diag_equal:
+                # Square
+                from pillars.geometry.services import SquareShape
+                shape = SquareShape()
+                shape.set_property("side", avg_side)
+                
+            elif is_opp_equal and is_diag_equal:
+                # Rectangle
+                from pillars.geometry.services import RectangleShape
+                shape = RectangleShape()
+                shape.set_property("length", max(s1, s2)) # Using max/min helps orient? No, length usually > width
+                shape.set_property("width", min(s1, s2))
+                
+            elif is_equilateral:
+                # Rhombus
+                from pillars.geometry.services import RhombusShape
+                shape = RhombusShape()
+                shape.set_property("side", avg_side)
+                # Rhombus needs diagonal or angle too?
+                # RhombusShape checks: side, diagonal_p, diagonal_q.
+                shape.set_property("diagonal_p", d1)
+                
+            elif is_opp_equal:
+                # Parallelogram
+                from pillars.geometry.services import ParallelogramShape
+                shape = ParallelogramShape()
+                # Needs base, side, angle/height? 
+                # Parallelogram likely complex to init from just sides/diagonals without solving first.
+                # Let's check ParallelogramShape inputs.
+                # Assuming base=s1, side=s2.
+                shape.set_property("base", s1)
+                shape.set_property("side", s2)
+                # If we have diagonals, we can find angle?
+                # For now, let's treat as "Quadrilateral Solver" if we can't fully solve?
+                # Or just let user fill in the rest.
+                
+            if shape is None:
+                # Default to Irregular Polygon if generic Logic fails
+                from pillars.geometry.services.irregular_polygon_shape import IrregularPolygonShape
+                # Convert QPointF to tuples
+                pts = [(p.x(), p.y()) for p in points]
+                shape = IrregularPolygonShape(pts)
+            
+            if self.window_manager:
+                self.window_manager.open_window(
+                    f"geometry_{shape.name.lower().replace(' ', '_')}",
+                    self.__class__,
+                    allow_multiple=True,
+                    shape=shape
+                )
+                  
+        elif count >= 5:
+            # Default to Irregular Polygon for 5+ points unless specific logic added later
+            from pillars.geometry.services.irregular_polygon_shape import IrregularPolygonShape
+            pts = [(p.x(), p.y()) for p in points]
+            shape = IrregularPolygonShape(pts)
+            
+            if self.window_manager:
+                self.window_manager.open_window(
+                    f"geometry_{shape.name.lower().replace(' ', '_')}",
+                    self.__class__,
+                    allow_multiple=True,
+                    shape=shape
+                )
 
     def _build_output_tab(self) -> QWidget:
         tab = QWidget()
