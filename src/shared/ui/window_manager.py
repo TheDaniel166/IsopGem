@@ -82,6 +82,10 @@ class WindowManager:
         # Prevent tool windows from closing the entire application
         window.setAttribute(Qt.WidgetAttribute.WA_QuitOnClose, False)
         
+        # Keep window as a separate window but owned by parent
+        # Dialog flag ensures it stays on top of parent (transient) but is movable
+        window.setWindowFlags(Qt.WindowType.Dialog)
+        
         # Track window closure
         window.destroyed.connect(lambda: self._on_window_closed(window_id))
         
@@ -200,4 +204,11 @@ class WindowManager:
         Returns:
             Number of active windows
         """
-        return len(self._active_windows)
+    def raise_all_windows(self):
+        """
+        Bring all active windows to the front.
+        """
+        for window in self._active_windows.values():
+            if window.isVisible():
+                window.raise_()
+        logger.debug("Raised all active windows")

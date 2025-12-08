@@ -11,8 +11,8 @@ os.environ['QT_QPA_PLATFORM'] = 'xcb'
 # os.environ['QT_LOGGING_RULES'] = '*.debug=false;qt.qpa.*=false'
 
 from PyQt6.QtWidgets import QApplication, QMainWindow, QTabWidget
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QCloseEvent
+from PyQt6.QtCore import Qt, QEvent
+from PyQt6.QtGui import QCloseEvent, QIcon
 from shared.ui import WindowManager, get_app_stylesheet
 from shared.database import init_db
 from pillars.gematria.ui import GematriaHub
@@ -30,6 +30,11 @@ class IsopGemMainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("IsopGem - Integrated Esoteric Analysis Platform")
         self.setMinimumSize(1100, 750)
+        
+        # Set app icon
+        icon_path = os.path.join(os.path.dirname(__file__), "assets", "icons", "app_icon.png")
+        if os.path.exists(icon_path):
+            self.setWindowIcon(QIcon(icon_path))
         
         # Set window style
         self.setStyleSheet("""
@@ -54,7 +59,17 @@ class IsopGemMainWindow(QMainWindow):
         self._init_document_manager_pillar()
         self._init_astrology_pillar()
         self._init_tq_pillar()
+        
+        # Connect tab change to raise all tool windows
+        self.tabs.currentChanged.connect(self.window_manager.raise_all_windows)
     
+    def changeEvent(self, event):
+        """Handle window state changes."""
+        if event.type() == QEvent.Type.ActivationChange:
+            if self.isActiveWindow():
+                self.window_manager.raise_all_windows()
+        super().changeEvent(event)
+
     def _init_gematria_pillar(self):
         """Initialize the Gematria pillar."""
         gematria_hub = GematriaHub(self.window_manager)
@@ -102,6 +117,11 @@ def main():
     # Create application instance
     app = QApplication(sys.argv)
     
+    # Set application-wide icon
+    icon_path = os.path.join(os.path.dirname(__file__), "assets", "icons", "app_icon.png")
+    if os.path.exists(icon_path):
+        app.setWindowIcon(QIcon(icon_path))
+    
     # Apply modern theme
     app.setStyleSheet(get_app_stylesheet())
     
@@ -118,7 +138,7 @@ def main():
     
     # Create and show main window
     window = IsopGemMainWindow()
-    window.show()
+    window.showMaximized()
     
     # Run application event loop
     sys.exit(app.exec())

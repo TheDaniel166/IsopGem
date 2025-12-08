@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QAction, QKeySequence
+from PyQt6.QtPrintSupport import QPrinter
 from .rich_text_editor import RichTextEditor
 from pillars.document_manager.services.document_service import document_service_context
 
@@ -129,11 +130,17 @@ class DocumentEditorWindow(QMainWindow):
         save_action.triggered.connect(self.save_document)
         file_menu.addAction(save_action)
         
-        # Save As
         save_as_action = QAction("Save As...", self)
         save_as_action.setShortcut(QKeySequence.StandardKey.SaveAs)
         save_as_action.triggered.connect(self.save_as_document)
         file_menu.addAction(save_as_action)
+
+        file_menu.addSeparator()
+
+        # Export PDF
+        export_pdf_action = QAction("Export PDF...", self)
+        export_pdf_action.triggered.connect(self.export_pdf)
+        file_menu.addAction(export_pdf_action)
 
     def _on_text_changed(self):
         if not self.is_modified:
@@ -288,6 +295,31 @@ class DocumentEditorWindow(QMainWindow):
             self.current_file = Path(file_path)
             return self.save_document()
         return False
+
+    def export_pdf(self):
+        """Export the current document to PDF."""
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Export PDF",
+            str(self.save_dir),
+            "PDF Files (*.pdf)"
+        )
+
+        if file_path:
+            if not file_path.endswith('.pdf'):
+                file_path += '.pdf'
+
+            try:
+                printer = QPrinter(QPrinter.PrinterMode.HighResolution)
+                printer.setOutputFormat(QPrinter.OutputFormat.PdfFormat)
+                printer.setOutputFileName(file_path)
+                
+                # Print the content of the editor to the printer (PDF)
+                self.editor.editor.print(printer)
+                
+                QMessageBox.information(self, "Success", f"Document exported successfully to:\n{file_path}")
+            except Exception as e:
+                QMessageBox.critical(self, "Export Error", f"Failed to export PDF: {str(e)}")
 
     def closeEvent(self, event):
         if not self._check_unsaved_changes():

@@ -167,6 +167,13 @@ class VirtualKeyboard(QDialog):
         self.special_btn.setProperty("class", "layoutToggle")
         self.special_btn.clicked.connect(lambda: self._switch_layout("special"))
         header_layout.addWidget(self.special_btn)
+
+        self.esoteric_btn = QPushButton("Esoteric")
+        self.esoteric_btn.setCheckable(True)
+        self.esoteric_btn.setProperty("class", "layoutToggle")
+        self.esoteric_btn.clicked.connect(lambda: self._switch_layout("esoteric"))
+        header_layout.addWidget(self.esoteric_btn)
+
         header_layout.addStretch()
 
         # Button group for exclusive selection
@@ -174,6 +181,7 @@ class VirtualKeyboard(QDialog):
         self.layout_group.addButton(self.hebrew_btn)
         self.layout_group.addButton(self.greek_btn)
         self.layout_group.addButton(self.special_btn)
+        self.layout_group.addButton(self.esoteric_btn)
 
         main_layout.addLayout(header_layout)
 
@@ -244,6 +252,15 @@ class VirtualKeyboard(QDialog):
                 self.greek_btn.setChecked(False)
                 if hasattr(self, "special_btn"):
                     self.special_btn.setChecked(True)
+                if hasattr(self, "esoteric_btn"):
+                    self.esoteric_btn.setChecked(False)
+            elif layout == "esoteric":
+                self.hebrew_btn.setChecked(False)
+                self.greek_btn.setChecked(False)
+                if hasattr(self, "special_btn"):
+                    self.special_btn.setChecked(False)
+                if hasattr(self, "esoteric_btn"):
+                    self.esoteric_btn.setChecked(True)
         if layout != "greek":
             self.shift_active = False
             self.shift_locked = False
@@ -263,6 +280,8 @@ class VirtualKeyboard(QDialog):
             self._show_greek_keyboard()
         elif layout == "special":
             self._show_special_keyboard()
+        elif layout == "esoteric":
+            self._show_esoteric_keyboard()
 
     def _display_char(self, char: str) -> str:
         """Return the character as displayed based on current shift state."""
@@ -315,6 +334,18 @@ class VirtualKeyboard(QDialog):
         rows = [
             ['Å', '<', '>', '→', '↓', '↑'],
             ['×', '°', '∞', '≈', '±', '•']
+        ]
+        self._render_keyboard(rows, include_shift=False)
+
+    def _show_esoteric_keyboard(self):
+        """Display Esoteric symbols (Zodiac, Planets, Elements)."""
+        rows = [
+            # Zodiac
+            ['♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓'],
+            # Planets (+ Chiron)
+            ['☉', '☾', '☿', '♀', '♂', '♃', '♄', '♅', '♆', '♇', '⚷'],
+            # Elements / Alchemy / Misc
+            ['🜂', '🜄', '🜁', '🜃', '∞', '∆', '∇', '★', '☆']
         ]
         self._render_keyboard(rows, include_shift=False)
     

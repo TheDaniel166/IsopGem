@@ -1,0 +1,85 @@
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QTextEdit
+from PyQt6.QtCore import pyqtSignal, Qt
+from PyQt6.QtGui import QTextCursor, QTextCharFormat, QColor, QFont
+
+class DocumentViewer(QWidget):
+    """
+    Widget for displaying read-only text with highlighting capabilities.
+    """
+    text_selected = pyqtSignal()  # Emitted when user selects text
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._setup_ui()
+        
+    def _setup_ui(self):
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        
+        self.text_edit = QTextEdit()
+        self.text_edit.setReadOnly(True)
+        # Styling extracted from original
+        self.text_edit.setStyleSheet("""
+            QTextEdit {
+                font-family: 'Georgia', 'Times New Roman', serif;
+                font-size: 13pt;
+                background-color: #ffffff;
+                border: 2px solid #cbd5e1;
+                border-radius: 8px;
+                padding: 16px;
+                line-height: 1.6;
+            }
+        """)
+        self.text_edit.selectionChanged.connect(self.text_selected.emit)
+        layout.addWidget(self.text_edit)
+        
+    def set_text(self, text: str):
+        self.text_edit.setPlainText(text)
+        
+    def get_text(self) -> str:
+        return self.text_edit.toPlainText()
+        
+    def get_selected_text(self) -> str:
+        return self.text_edit.textCursor().selectedText()
+        
+    def select_range(self, start: int, end: int):
+        cursor = self.text_edit.textCursor()
+        cursor.setPosition(start)
+        cursor.setPosition(end, QTextCursor.MoveMode.KeepAnchor)
+        self.text_edit.setTextCursor(cursor)
+        self.text_edit.setFocus()
+        
+    def highlight_ranges(self, ranges: list):
+        """
+        Highlight list of (start, end) ranges.
+        """
+        # Create highlight format
+        fmt = QTextCharFormat()
+        fmt.setBackground(QColor("#fef3c7"))  # Yellow
+        fmt.setForeground(QColor("#000000"))
+        
+        # Save cursor
+        original_cursor = self.text_edit.textCursor()
+        original_pos = original_cursor.position()
+        
+        cursor = self.text_edit.textCursor()
+        for start, end in ranges:
+            cursor.setPosition(start)
+            cursor.setPosition(end, QTextCursor.MoveMode.KeepAnchor)
+            cursor.mergeCharFormat(fmt)
+            
+        # Restore cursor
+        original_cursor.setPosition(original_pos)
+        self.text_edit.setTextCursor(original_cursor)
+        
+    def clear_highlights(self):
+        cursor = self.text_edit.textCursor()
+        cursor.select(QTextCursor.SelectionType.Document)
+        
+        fmt = QTextCharFormat()
+        fmt.setBackground(QColor("#ffffff"))
+        fmt.setForeground(QColor("#000000"))
+        cursor.setCharFormat(fmt)
+        
+        cursor.setPosition(0)
+        self.text_edit.setTextCursor(cursor)
