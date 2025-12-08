@@ -3,8 +3,8 @@ import math
 from typing import Optional, List
 
 
-from PyQt6.QtWidgets import QGraphicsView
-from PyQt6.QtCore import QPoint, Qt, QRectF
+from PyQt6.QtWidgets import QGraphicsView, QRubberBand
+from PyQt6.QtCore import QPoint, Qt, QRectF, QSize, pyqtSignal, QRect
 from PyQt6.QtGui import QPainter, QMouseEvent, QWheelEvent
 
 from .geometry_scene import GeometryScene
@@ -13,6 +13,9 @@ from .primitives import Bounds
 
 class GeometryView(QGraphicsView):
     """Shared graphics view for rendering geometry scenes."""
+    
+    # Signal emitted with list of selected dot indices
+    dots_selected = pyqtSignal(list)
 
     def __init__(self, scene: GeometryScene, parent=None):
         super().__init__(scene, parent)
@@ -24,6 +27,11 @@ class GeometryView(QGraphicsView):
         self._measure_points: List[QPointF] = []
         self._snap_threshold = 15.0  # pixels
         self._temp_line_preview = None
+        
+        # Selection state
+        self._selection_mode = False
+        self._rubber_band: Optional[QRubberBand] = None
+        self._selection_origin = QPoint()
 
         self.setRenderHints(
             QPainter.RenderHint.Antialiasing
@@ -54,6 +62,9 @@ class GeometryView(QGraphicsView):
     def zoom_out(self):
         self._apply_zoom(1 / 1.15)
 
+    def zoom(self, factor: float):
+        self._apply_zoom(factor)
+
     def reset_view(self):
         self.resetTransform()
 
@@ -68,7 +79,7 @@ class GeometryView(QGraphicsView):
     def _apply_zoom(self, factor: float):
         current_scale = self.transform().m11()
         new_scale = current_scale * factor
-        if 0.3 <= new_scale <= 6:
+        if 0.01 <= new_scale <= 100.0:
             self.scale(factor, factor)
 
     def fit_to_bounds(self, bounds: Optional[Bounds]):
@@ -131,10 +142,22 @@ class GeometryView(QGraphicsView):
     def mousePressEvent(self, event: Optional[QMouseEvent]):
         if event is None:
             return
+        
+        # Selection mode: Start rubber band
+        if self._selection_mode and event.button() == Qt.MouseButton.LeftButton:
+            self._selection_origin = event.pos()
+            if not self._rubber_band:
+                self._rubber_band = QRubberBand(QRubberBand.Shape.Rectangle, self)
+            self._rubber_band.setGeometry(QRect(self._selection_origin, QSize()))
+            self._rubber_band.show()
+            event.accept()
+            return
             
-        # Pan handling (Middle button OR Left button if not measuring)
+        # Pan handling: Only pan when DragMode allows it (NOT NoDrag)
+        # NoDrag mode is used for drawing, so we let clicks pass through to scene.
+        is_pan_mode = self.dragMode() == QGraphicsView.DragMode.ScrollHandDrag
         should_pan = (event.button() == Qt.MouseButton.MiddleButton) or \
-                     (event.button() == Qt.MouseButton.LeftButton and not self._measuring_active)
+                     (event.button() == Qt.MouseButton.LeftButton and not self._measuring_active and is_pan_mode)
 
         if should_pan:
             self._pan_active = True
@@ -186,6 +209,12 @@ class GeometryView(QGraphicsView):
         if event is None:
             return
 
+        # Selection mode: Resize rubber band
+        if self._selection_mode and self._rubber_band and self._rubber_band.isVisible():
+            self._rubber_band.setGeometry(QRect(self._selection_origin, event.pos()).normalized())
+            event.accept()
+            return
+
         # Pan move
         if self._pan_active:
             delta = event.pos() - self._pan_start
@@ -210,6 +239,25 @@ class GeometryView(QGraphicsView):
     def mouseReleaseEvent(self, event: Optional[QMouseEvent]):  # pragma: no cover - GUI interaction
         if event is None:
             return
+        
+        # Selection mode: Complete selection
+        if self._selection_mode and self._rubber_band and self._rubber_band.isVisible():
+            self._rubber_band.hide()
+            
+            # Get selection rectangle in scene coordinates
+            rect = self._rubber_band.geometry()
+            scene_rect = QRectF(self.mapToScene(rect.topLeft()), self.mapToScene(rect.bottomRight()))
+            
+            # Query scene for dots in rect
+            scene = self.scene()
+            if hasattr(scene, 'get_dots_in_rect'):
+                indices = scene.get_dots_in_rect(scene_rect)
+                if indices:
+                    self.dots_selected.emit(indices)
+            
+            event.accept()
+            return
+            
         is_pan_button = event.button() == Qt.MouseButton.MiddleButton or \
                         (event.button() == Qt.MouseButton.LeftButton and self._pan_active)
                         
@@ -219,6 +267,14 @@ class GeometryView(QGraphicsView):
             event.accept()
         else:
             super().mouseReleaseEvent(event)
+
+    def set_selection_mode(self, enabled: bool):
+        """Enable or disable rubber-band selection mode."""
+        self._selection_mode = enabled
+        if enabled:
+            self.setCursor(Qt.CursorShape.CrossCursor)
+        else:
+            self.setCursor(Qt.CursorShape.ArrowCursor)
 
 
 __all__ = ["GeometryView"]

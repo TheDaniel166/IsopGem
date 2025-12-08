@@ -2320,14 +2320,16 @@ classDiagram
 ---
 
 ### polygonal_numbers.py
-**Path**: `src/pillars/geometry/services/polygonal_numbers.py`
+**Path**:##### `isopgem.src.pillars.geometry.services.polygonal_numbers.py` (Complexity: 12)
+**Architectural Purpose:** Numerological core for calculating and plotting figurate numbers, including star figures.
 
-**Architectural Purpose**: Business Logic Layer (Service)
+**Key Logic:**
+- **Generalized Star Numbers:** Implements logic for "P-grams" (generalized star polygons) using vector based ray-casting from a central polygon.
+- **Polygonal Numbers:** Implements corner-growth (gnomon) logic for standard polygonal numbers.
+- **Centered Polygonal Numbers:** Implements concentric ring growth logic.
 
-**Summary**: Helpers for generating polygonal and centered polygonal number layouts.
-
-#### Deep Analysis
-- **Key Logic**: `_corner_polygonal_points`: performs core logic (Complexity: 5)
+**Signal Flow:**
+- Called by `PolygonalNumberWindow` and `ExperimentalStarWindow` during render cycles.
 - **Inputs**: Standard method arguments
 - **Outputs**: Return values
 - **Critical Relationships**: None detected.
@@ -3246,20 +3248,26 @@ classDiagram
 **Summary**: Geometry pillar hub - launcher interface for geometry tools.
 
 #### Deep Analysis
-- **Key Logic**: `_add_menu_entries`: performs core logic (Complexity: 10)
+- **Key Logic**: `_open_shape_calculator`: Launch calculator for a specific shape type.
 - **Inputs**: Standard method arguments
 - **Outputs**: Return values
 - **Critical Relationships**:
   - shared.ui.WindowManager
-#### Visual Model
 
-```mermaid
-classDiagram
-    class GeometryHub {
-        +Logic()
-    }
-    GeometryHub ..> WindowManager : depends
-```
+##### `isopgem.src.pillars.geometry.ui.geometry_interaction.py` (Complexity: 10)
+**Architectural Purpose**: "The Handmaiden" handling interactive state independent of specific windows.
+
+**Key Logic**:
+- **GeometryInteractionManager:** Manages `DotGroup`s and `Connection`s.
+- `_handle_dot_click(index, modifiers, button)`: Delegates click events to the manager.
+- `_update_view_mode(mode)`: Switches between panning (`ScrollHandDrag`) and drawing.
+
+**Integration**:
+- `GroupManagementPanel`: Added as a **right sidebar** pane in `PolygonalNumberWindow` and `ExperimentalStarWindow`.
+- `ConnectionToolBar`: Added to the top of the viewport area.
+
+**Signal Flow**:
+- `GeometryScene.dot_clicked` -> `GeometryInteractionManager` -> UI Updates.
 
 ---
 
@@ -3268,13 +3276,14 @@ classDiagram
 
 **Architectural Purpose**: Presentation Layer (View)
 
-**Summary**: Central QGraphicsScene implementation for the geometry pillar.
+**Summary**: Central QGraphicsScene implementation for the geometry pillar (Interactive).
 
 #### Deep Analysis
-- **Key Logic**: `_derive_bounds`: performs core logic (Complexity: 7)
+- **Key Logic**: `mousePressEvent`: Detect clicks on dots (Complexity: 8)
 - **Inputs**: Standard method arguments
-- **Outputs**: Return values
-- **Critical Relationships**: None detected.
+- **Outputs**: Signals: dot_clicked
+- **Critical Relationships**:
+  - pillars.geometry.ui.primitives.Primitive
 #### Visual Model
 
 ```mermaid
@@ -3301,9 +3310,18 @@ classDiagram
 
 ---
 
-### polygonal_number_window.py
-**Path**: `src/pillars/geometry/ui/polygonal_number_window.py`
+##### `isopgem.src.pillars.geometry.ui.experimental_star_window.py` (Complexity: 5)
+**Architectural Purpose:** Dedicated laboratory for "Experimental Star Numbers" (generalized P-grams).
 
+**Key Logic:**
+- **Dynamic P-gram Generation:** Allows user to select any point count ($P \ge 3$) unlike the fixed hexagram of the standard view.
+- **Interactive Controls:** Spinboxes for Points ($P$), Index ($N$), and Spacing.
+
+**Signal Flow:**
+- Launched via `GeometryHub` -> "Experimental Stars".
+- Calls `generalized_star_number_points` service.
+
+##### `isopgem.src.pillars.geometry.ui.polygonal_number_window.py` (Complexity: 8)
 **Architectural Purpose**: Presentation Layer (View)
 
 **Summary**: Visualizer for polygonal and centered polygonal numbers.

@@ -39,6 +39,10 @@ from .polygonal_numbers import (
     centered_polygonal_value,
     polygonal_number_points,
     polygonal_outline_points,
+    star_number_value,
+    generalized_star_number_value,
+    generalized_star_number_points,
+    star_number_points,
     max_radius,
 )
 from .tetrahedron_solid import TetrahedronSolidService, TetrahedronSolidCalculator
@@ -171,7 +175,11 @@ __all__ = [
     'centered_polygonal_value',
     'polygonal_number_points',
     'polygonal_outline_points',
-    'max_radius',
+    "star_number_value",
+    "generalized_star_number_value",
+    "generalized_star_number_points",
+    "star_number_points",
+    "max_radius",
     'RoseCurveShape',
     'VesicaPiscisShape',
     'TetrahedronSolidService',

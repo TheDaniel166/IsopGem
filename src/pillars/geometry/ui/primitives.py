@@ -57,6 +57,7 @@ class CirclePrimitive:
     radius: float
     pen: PenStyle = field(default_factory=PenStyle)
     brush: BrushStyle = field(default_factory=BrushStyle)
+    metadata: Optional[dict] = field(default=None)
 
 
 @dataclass
@@ -79,6 +80,7 @@ class LabelPrimitive:
     text: str
     position: Tuple[float, float]
     align_center: bool = True
+    metadata: Optional[dict] = field(default=None)
 
 
 Primitive = Union[CirclePrimitive, PolygonPrimitive, LinePrimitive]

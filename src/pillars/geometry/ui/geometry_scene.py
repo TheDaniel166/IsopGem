@@ -3,8 +3,8 @@ from __future__ import annotations
 import math
 from typing import List, Optional, Tuple
 
-from PyQt6.QtWidgets import QGraphicsScene, QGraphicsItem, QGraphicsSimpleTextItem
-from PyQt6.QtGui import QPen, QBrush, QColor, QPolygonF, QPainter
+from PyQt6.QtWidgets import QGraphicsScene, QGraphicsItem, QGraphicsSimpleTextItem, QGraphicsSceneMouseEvent, QGraphicsEllipseItem
+from PyQt6.QtGui import QPen, QBrush, QColor, QPolygonF, QPainter, QTransform, QRadialGradient
 from PyQt6.QtCore import Qt, QPointF, QRectF, pyqtSignal
 
 from .primitives import (
@@ -59,7 +59,9 @@ def _shoelace_area(points: List[QPointF]) -> float:
 class GeometryScene(QGraphicsScene):
     """Shared graphics scene that can render any supported geometry shape."""
     
-    measurementChanged = pyqtSignal(dict) # Emits {perimeter, area, points, closed}
+    measurementChanged = pyqtSignal(dict)
+    measurementChanged = pyqtSignal(dict)
+    dot_clicked = pyqtSignal(int, Qt.KeyboardModifier, Qt.MouseButton) # index, modifiers, button
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -338,10 +340,99 @@ class GeometryScene(QGraphicsScene):
 
     def clear_temporary_items(self):
         """Remove all temporary items from the scene."""
-        for item in self._temp_items:
-            if item.scene() == self:
-                self.removeItem(item)
-        self._temp_items.clear()
+        # This implementation removes everything for now, can be optimized
+        # But wait, connection lines should persist across temporary measurements?
+        # Typically temporary items are just for the ruler.
+        # Connection lines are semi-permanent overlay.
+        # We need a dedicated list for connection lines if we want to clear them separately.
+        # For now, let's keep interactions separate from "temporary items" (measurements).
+        # We just need to ensure `_rebuild_scene` doesn't kill connections unless we want it to.
+        # `_rebuild_scene` clears everything.
+        # So we likely need to re-add connections after a rebuild or store them as primitives.
+        # But connections are dynamic.
+        pass
+
+    def mousePressEvent(self, event: QGraphicsSceneMouseEvent):
+        # Process our custom click logic BEFORE calling super(), otherwise 
+        # items with ItemIsSelectable will accept Left Clicks and prevent our logic.
+        pos = event.scenePos()
+        print(f"[DEBUG] Scene: Click at {pos}")
+        
+        # We must pass the view transform to itemAt for ItemIgnoresTransformations to work correctly!
+        view_transform = QTransform()
+        if self.views():
+            view_transform = self.views()[0].transform()
+            
+        item = self.itemAt(pos, view_transform)
+        if item:
+            # Check for dot index in data(0)
+            dot_index = item.data(0)
+            print(f"[DEBUG] Scene: Item found. Data(0)={dot_index}, Type={type(item)}")
+            if dot_index is not None:
+                modifiers = event.modifiers()
+                button = event.button()
+                print(f"[DEBUG] Scene: Emitting dot_clicked(index={dot_index}, modifiers={modifiers}, button={button})")
+                self.dot_clicked.emit(dot_index, modifiers, button)
+        else:
+            print("[DEBUG] Scene: No item found at click position.")
+        
+        # Call super() after our logic so default Qt behavior still works (e.g., item selection)
+        super().mousePressEvent(event)
+
+    def add_connection_line(self, start_pos: Tuple[float, float], end_pos: Tuple[float, float], pen: QPen):
+        """Add a persistent connection line to the scene."""
+        print(f"[DEBUG] Scene: Adding connection line from {start_pos} to {end_pos}")
+        line_item = self.addLine(start_pos[0], start_pos[1], end_pos[0], end_pos[1], pen)
+        line_item.setZValue(0.5) # Below dots (dots are at Z=2)
+        # Dots are Z? CirclePrimitive doesn't set Z? Default is 0. labels are Z=2.
+        # We should set dots to Z=1.
+        
+    def set_dot_z_index(self, z: float):
+        # Helper to set z value for all dots?
+        # Better: Set Z in _create_circle_items.
+        pass
+
+    def highlight_dots(self, indices: List[int], color: QColor):
+        """Highlight specific dots by index."""
+        # This requires iterating items and checking data(0).
+        # Performance might be okay for < 1000 dots.
+        brush = QBrush(color)
+        pen = QPen(color.darker(150), 0) # Cosmetic pen (1px) to avoid scaling artifacts
+        
+        for item in self.items():
+            idx = item.data(0)
+            if idx in indices:
+                if hasattr(item, 'setBrush'):
+                    item.setBrush(brush)
+                    item.setPen(pen)
+
+    def set_dot_color(self, color: QColor):
+        """Set the fill color for all dot items (EllipseItems)."""
+        brush = QBrush(color)
+        pen = QPen(color.darker(120), 0)
+        for item in self.items():
+            if isinstance(item, QGraphicsEllipseItem):
+                item.setBrush(brush)
+                item.setPen(pen)
+
+    def set_text_color(self, color: QColor):
+        """Set the color for all text labels."""
+        for item in self.items():
+            if isinstance(item, QGraphicsSimpleTextItem):
+                item.setBrush(color)
+
+    def get_dots_in_rect(self, rect: QRectF) -> List[int]:
+        """Return list of dot indices whose centers fall within the given rectangle."""
+        indices = []
+        for item in self.items():
+            if isinstance(item, QGraphicsEllipseItem):
+                idx = item.data(0)
+                if idx is not None:
+                    # Check if the CENTER of the dot is within the rect, not just bounding box overlap
+                    center = item.sceneBoundingRect().center()
+                    if rect.contains(center):
+                        indices.append(idx)
+        return indices
 
     # ------------------------------------------------------------------
     # Rendering hooks
@@ -460,16 +551,31 @@ class GeometryScene(QGraphicsScene):
         cx, cy = primitive.center
         radius = primitive.radius
         diameter = radius * 2
+        
+        # Determined brush style
+        brush = self._qt_brush(primitive.brush)
+        if primitive.metadata and primitive.metadata.get('style') == 'sphere' and primitive.brush.enabled:
+            # Create a radial gradient for 3D sphere effect
+            base_color = QColor(*primitive.brush.color)
+            gradient = QRadialGradient(cx - radius * 0.3, cy - radius * 0.3, radius * 1.5)
+            gradient.setColorAt(0.0, QColor(255, 255, 255, 180))  # Specular highlight
+            gradient.setColorAt(0.3, base_color)
+            gradient.setColorAt(1.0, base_color.darker(150))      # Shadow
+            brush = QBrush(gradient)
+
         ellipse = self.addEllipse(
             cx - radius,
             cy - radius,
             diameter,
             diameter,
             self._qt_pen(primitive.pen),
-            self._qt_brush(primitive.brush),
+            brush,
         )
         if ellipse is not None:
-            ellipse.setZValue(0)
+            ellipse.setZValue(2.0) # Dots above lines (Z=1.5)
+            if primitive.metadata and 'index' in primitive.metadata:
+                ellipse.setData(0, primitive.metadata['index'])
+            ellipse.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable)
 
     def _add_polygon(self, primitive: PolygonPrimitive):
         points = [QPointF(x, y) for x, y in primitive.points]
@@ -493,15 +599,38 @@ class GeometryScene(QGraphicsScene):
         label_items: List[QGraphicsSimpleTextItem] = []
         for label in labels:
             item = QGraphicsSimpleTextItem(label.text)
-            item.setBrush(QColor(236, 242, 255))
+            item.setBrush(QColor(30, 41, 59))
             item.setZValue(2)
             item.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations)
             font = item.font()
             font.setPointSizeF(8.0)
             item.setFont(font)
             offset_x = -item.boundingRect().width() / 2 if label.align_center else 0
-            offset_y = item.boundingRect().height() / 2 if label.align_center else 0
-            item.setPos(label.position[0] + offset_x, label.position[1] - offset_y)
+            offset_y = -item.boundingRect().height() / 2 if label.align_center else 0
+            
+            # Since ItemIgnoresTransformations is set, item coordinates are in pixels (screen space).
+            # To position correctly:
+            # 1. Set anchor in scene coordinates.
+            # 2. Translate locally by pixel offset to center the text.
+            item.setPos(label.position[0], label.position[1])
+            if label.align_center:
+                item.setTransform(QTransform().translate(offset_x, offset_y))
+            # Store index in data(0) if this primitive roughly maps to a dot visualizer index
+            # For simplicity, we assume the order of primitives matches standard indexing if not explicit
+            # But wait, primitives list might include non-dots.
+            # Ideally, Primitive dataclass should hold 'index'.
+            # For now, we will rely on the caller sending index-aware info or handle in payload.
+            # Actually, let's just make the item selectable/hoverable.
+            item.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable) 
+            # We need a way to know WHICH dot this is.
+            # HACK: The payload builder appends circles in order 1..N.
+            # We can assign an index based on call order if careful, BUT
+            # geometry_scene doesn't know the index.
+            # Solution: Let's assume the caller will handle mapping OR we add 'index' to Primitive.
+            # Let's add 'item.setData(0, primitive.metadata.get('index'))'
+            if label.metadata and 'index' in label.metadata:
+                item.setData(0, label.metadata['index'])
+            
             self.addItem(item)
             label_items.append(item)
         return label_items

@@ -14,6 +14,8 @@ from shared.ui import WindowManager
 from .advanced_scientific_calculator_window import AdvancedScientificCalculatorWindow
 from .geometry_calculator_window import GeometryCalculatorWindow
 from .polygonal_number_window import PolygonalNumberWindow
+from .experimental_star_window import ExperimentalStarWindow
+from .figurate_3d_window import Figurate3DWindow
 from ..services import (
     AnnulusShape,
     CircleShape,
@@ -363,17 +365,6 @@ CATEGORY_DEFINITIONS: List[dict] = [
                 'name': 'Any Regular n-gon',
                 'summary': 'Choose any number of sides ≥ 3',
                 'type': 'regular_polygon_custom',
-            },
-            {
-                'name': 'Polygonal Numbers',
-                'summary': 'Visualize polygonal and centered polygonal dot counts with numbering.',
-                'type': 'polygonal_numbers',
-            },
-            {
-                'name': 'Star Polygon',
-                'summary': 'Coming soon: pentagrams, hexagrams, and sacred stars',
-                'status': 'Coming Soon',
-                'factory': None,
             },
         ],
     ),
@@ -1199,6 +1190,53 @@ class GeometryHub(QWidget):
         hero_btn.clicked.connect(self._open_advanced_scientific_calculator)
         title_row.addWidget(hero_btn)
 
+
+
+        # Polygonal Numbers Button
+        poly_btn = QPushButton("Polygonal Numbers")
+        poly_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        poly_btn.setStyleSheet(
+            """
+            QPushButton {background-color: #f59e0b; color: white; border: none;
+                        padding: 10px 14px; border-radius: 10px; font-weight: 700;}
+            QPushButton:hover {background-color: #d97706;}
+            QPushButton:pressed {background-color: #b45309;}
+            """
+        )
+        poly_btn.setToolTip("Visualize polygonal and centered polygonal numbers")
+        poly_btn.clicked.connect(self._open_polygonal_number_visualizer)
+        title_row.addWidget(poly_btn)
+
+        # Experimental Star Numbers Button
+        exp_btn = QPushButton("Experimental Stars")
+        exp_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        exp_btn.setStyleSheet(
+            """
+            QPushButton {background-color: #9333ea; color: white; border: none;
+                        padding: 10px 14px; border-radius: 10px; font-weight: 700;}
+            QPushButton:hover {background-color: #7e22ce;}
+            QPushButton:pressed {background-color: #6b21a8;}
+            """
+        )
+        exp_btn.setToolTip("Explore generalized star numbers (P-grams)")
+        exp_btn.clicked.connect(self._open_experimental_star_visualizer)
+        title_row.addWidget(exp_btn)
+
+        # 3D Figurate Numbers Button
+        figurate_3d_btn = QPushButton("3D Figurate")
+        figurate_3d_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        figurate_3d_btn.setStyleSheet(
+            """
+            QPushButton {background-color: #06b6d4; color: white; border: none;
+                        padding: 10px 14px; border-radius: 10px; font-weight: 700;}
+            QPushButton:hover {background-color: #0891b2;}
+            QPushButton:pressed {background-color: #0e7490;}
+            """
+        )
+        figurate_3d_btn.setToolTip("Visualize 3D figurate numbers (tetrahedral, pyramidal, cubic)")
+        figurate_3d_btn.clicked.connect(self._open_figurate_3d_visualizer)
+        title_row.addWidget(figurate_3d_btn)
+
         layout.addLayout(title_row)
 
         subtitle = QLabel("Explore sacred shapes, from perfect circles to multidimensional solids")
@@ -1434,6 +1472,8 @@ class GeometryHub(QWidget):
                 button.clicked.connect(self._prompt_custom_polygon)
             elif shape_type == 'polygonal_numbers':
                 button.clicked.connect(self._open_polygonal_number_visualizer)
+            elif shape_type == 'star_numbers':
+                button.clicked.connect(self._open_star_number_visualizer)
             elif shape_type == 'solid_viewer':
                 solid_id = shape_definition.get('solid_id')
                 if solid_id in SOLID_VIEWER_CONFIG:
@@ -1550,6 +1590,15 @@ class GeometryHub(QWidget):
             layout.addWidget(open_btn)
             return frame
 
+        if shape_type == 'star_numbers':
+            layout.addSpacing(6)
+            open_btn = QPushButton("Open Star Visualizer")
+            open_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            open_btn.setStyleSheet(self._primary_button_style())
+            open_btn.clicked.connect(self._open_star_number_visualizer)
+            layout.addWidget(open_btn)
+            return frame
+
         if shape_definition.get('type') == 'solid_viewer':
             solid_id = shape_definition.get('solid_id')
             open_btn = QPushButton("Open 3D Viewer")
@@ -1663,14 +1712,35 @@ class GeometryHub(QWidget):
 
     def _open_polygonal_number_visualizer(self):
         """Open polygonal/centered polygonal number visualizer."""
-        self.window_manager.open_window(
+        window = self.window_manager.open_window(
             window_type="geometry_polygonal_numbers",
             window_class=PolygonalNumberWindow,
             allow_multiple=True,
             window_manager=self.window_manager,
         )
+        # Default is polygonal, which is index 0.
+
+
     
     def _open_polygon_calculator(self, sides: int):
         """Open geometry calculator for regular polygon."""
         shape = RegularPolygonShape(num_sides=sides)
         self._open_shape_calculator(shape)
+
+    def _open_experimental_star_visualizer(self):
+        """Open generalized experimental star visualizer."""
+        self.window_manager.open_window(
+            window_type="geometry_experimental_star",
+            window_class=ExperimentalStarWindow,
+            allow_multiple=True,
+            window_manager=self.window_manager,
+        )
+
+    def _open_figurate_3d_visualizer(self):
+        """Open 3D figurate numbers visualizer."""
+        self.window_manager.open_window(
+            window_type="geometry_figurate_3d",
+            window_class=Figurate3DWindow,
+            allow_multiple=True,
+            window_manager=self.window_manager,
+        )

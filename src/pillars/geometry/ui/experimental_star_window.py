@@ -1,47 +1,31 @@
-"""Visualizer for polygonal and centered polygonal numbers."""
+"""Visualizer for Generalized (Experimental) Star Numbers."""
 from __future__ import annotations
 
 import math
 from typing import List, Optional, Tuple
 
 from PyQt6.QtWidgets import (
-    QCheckBox,
-    QComboBox,
-    QDoubleSpinBox,
-    QFrame,
-    QHBoxLayout,
-    QLabel,
-    QMainWindow,
-    QPushButton,
-    QSpinBox,
-    QVBoxLayout,
-    QWidget,
-    QSizePolicy,
-    QGraphicsView,
+    QWidget, QVBoxLayout, QHBoxLayout, QFrame, QLabel, QPushButton,
+    QSpinBox, QDoubleSpinBox, QCheckBox, QMainWindow, QSizePolicy, QGraphicsView
 )
-from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPen, QColor
 from shared.ui import WindowManager
 from ..services import (
-    centered_polygonal_value,
-    max_radius,
-    polygonal_number_points,
-    polygonal_number_value,
-    polygonal_outline_points,
-    star_number_points,
-    star_number_value,
+    generalized_star_number_value,
+    generalized_star_number_points,
 )
 from .geometry_scene import GeometryScene
 from .geometry_view import GeometryView
 from .geometry_interaction import GeometryInteractionManager, GroupManagementPanel, ConnectionToolBar
-from .primitives import Bounds, CirclePrimitive, GeometryScenePayload, LabelPrimitive, PenStyle, BrushStyle, PolygonPrimitive
+from .primitives import Bounds, CirclePrimitive, GeometryScenePayload, LabelPrimitive, PenStyle, BrushStyle
 
 
-Color = Tuple[int, int, int, int]
-
-
-class PolygonalNumberWindow(QMainWindow):
-    """Interactive viewer for figurate numbers built from dots."""
+class ExperimentalStarWindow(QMainWindow):
+    """Interactive viewer for Generalized Star Numbers (P-grams).
+    
+    Allows creating stars with any number of points (P >= 3).
+    """
 
     def __init__(self, window_manager: Optional[WindowManager] = None, parent=None):
         super().__init__(parent)
@@ -50,15 +34,16 @@ class PolygonalNumberWindow(QMainWindow):
         self.scene = GeometryScene()
         self.view = GeometryView(self.scene)
 
-        self.setWindowTitle("Polygonal Number Visualizer")
+        self.setWindowTitle("Experimental Star Number Visualizer")
         self.setMinimumSize(1100, 720)
         self.setStyleSheet("background-color: #f8fafc;")
 
-        self.sides_spin: Optional[QSpinBox] = None
+        self.points_spin: Optional[QSpinBox] = None
         self.index_spin: Optional[QSpinBox] = None
         self.spacing_spin: Optional[QDoubleSpinBox] = None
-        self.mode_combo: Optional[QComboBox] = None
         self.labels_toggle: Optional[QCheckBox] = None
+        self.grid_toggle: Optional[QCheckBox] = None
+        self.axes_toggle: Optional[QCheckBox] = None
         self.count_label: Optional[QLabel] = None
         self.value_label: Optional[QLabel] = None
 
@@ -71,6 +56,8 @@ class PolygonalNumberWindow(QMainWindow):
         self.interaction_manager.draw_start_changed.connect(self._refresh_highlights)
         self.scene.dot_clicked.connect(self._handle_dot_click)
 
+        self._current_points = [] # Store for connection line lookups
+
         self._setup_ui()
         self._render()
         
@@ -79,92 +66,53 @@ class PolygonalNumberWindow(QMainWindow):
 
     def _update_view_mode(self, mode: str):
         if mode == "draw":
-            print(f"[DEBUG] Window: Switching View to NoDrag (Draw Mode)")
             self.view.setDragMode(QGraphicsView.DragMode.NoDrag)
             self.view.setCursor(Qt.CursorShape.CrossCursor)
             self.view.set_selection_mode(False)
         elif mode == "select":
-            print(f"[DEBUG] Window: Switching View to Selection Mode")
             self.view.setDragMode(QGraphicsView.DragMode.NoDrag)
             self.view.set_selection_mode(True)
         else:
-            print(f"[DEBUG] Window: Switching View to ScrollHandDrag (View Mode)")
             self.view.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
             self.view.setCursor(Qt.CursorShape.ArrowCursor)
             self.view.set_selection_mode(False)
     
     def _on_dots_selected(self, indices: list):
         """Handle rubber-band selection of dots."""
-        print(f"[DEBUG] Window: Rectangle selected dots: {indices}")
         for idx in indices:
             self.interaction_manager.toggle_dot_in_group(idx)
 
     def _refresh_highlights(self, _=None):
-        # Clear existing highlights first? No, scene.highlight_dots overwrites brush.
-        # But we need to reset all dots to default first ideally, OR just update the ones in groups.
-        # Actually, render loop resets generic brush.
-        # But if we just update groups, we might need to "un-highlight" removed ones.
-        # Easiest: Re-render connections and highlights on top of existing payload without full re-calc?
-        # Or just iterate all dots and reset brush if not in group?
-        # For MVP: Iterate groups and apply highlight. Dots not in groups stay default (blue-ish).
-        # To handle removal properly, we should probably reset brushes.
-        # Let's rely on _render_interactions() helper maybe?
         self._render_interactions()
 
     def _refresh_connections(self):
-        # scene.clear_temporary_items() # Does not clear lines
-        # We need to clear lines added by add_connection_line.
-        # Since we don't track them easily in scene, we might need to re-render the whole scene
-        # which clears everything, then re-apply interactions.
         self._render()
 
     def _on_connection_added(self, conn):
-        points = self._current_points # Need to store points from last render
+        points = self._current_points
         if not points or conn.start_index > len(points) or conn.end_index > len(points):
-            print(f"[DEBUG] Window: Connection indices out of bounds: {conn.start_index}->{conn.end_index} vs {len(points) if points else 0}")
             return
         
-        # indices are 1-based in manager logic (from render loop)
         p1 = points[conn.start_index - 1]
         p2 = points[conn.end_index - 1]
-        
         qt_pen = QPen(conn.color, conn.width)
         qt_pen.setCapStyle(Qt.PenCapStyle.RoundCap)
-        print(f"[DEBUG] Window: Adding connection line graphic.")
         self.scene.add_connection_line(p1, p2, qt_pen)
 
     def _handle_dot_click(self, index: int, modifiers: Qt.KeyboardModifier, button: Qt.MouseButton):
-        is_drawing = self.interaction_manager.drawing_active
-        print(f"[DEBUG] Window: Dot clicked: {index}, Modifiers: {modifiers}, Button: {button}, DrawMode: {is_drawing}")
-        
-        if is_drawing and button == Qt.MouseButton.LeftButton:
-            # Drawing logic (Left Click only)
+        if self.interaction_manager.drawing_active and button == Qt.MouseButton.LeftButton:
             self.interaction_manager.process_draw_click(index)
-        
-        # Grouping: Relaxed to allow ANY Right Click for better usability/testing
         elif button == Qt.MouseButton.RightButton:
-             # Grouping logic
-            print(f"[DEBUG] Window: Toggling group membership for {index} (Right Click detected)")
             self.interaction_manager.toggle_dot_in_group(index)
 
     def _render_interactions(self):
-        # Re-apply group highlights
         for name, group in self.interaction_manager.groups.items():
             self.scene.highlight_dots(list(group.indices), group.color)
-            
-        # Highlight current drawing start dot
+        
         start = self.interaction_manager.current_draw_start
         if start is not None:
-             # Use a distinct color for the active start dot (e.g., Red or complementary to pen)
-             # Pen color is manager.pen_color. Let's match it or make it distinct.
-             # Actually, let's use the pen color but lighter/darker?
-             # manager.pen_color is default Red.
-             active_color = self.interaction_manager.pen_color
-             self.scene.highlight_dots([start], active_color)
+             self.scene.highlight_dots([start], self.interaction_manager.pen_color)
 
-    # ------------------------------------------------------------------
-    # UI construction
-    # ------------------------------------------------------------------
     def _setup_ui(self):
         central = QWidget()
         self.setCentralWidget(central)
@@ -182,7 +130,7 @@ class PolygonalNumberWindow(QMainWindow):
         viewport_layout.setContentsMargins(0, 0, 0, 0)
         viewport_layout.setSpacing(0)
 
-        # Connection Toolbar
+        # Interaction Toolbar
         conn_bar = ConnectionToolBar(self.interaction_manager)
         conn_bar.dot_color_changed.connect(self.scene.set_dot_color)
         conn_bar.text_color_changed.connect(self.scene.set_text_color)
@@ -199,8 +147,6 @@ class PolygonalNumberWindow(QMainWindow):
         group_panel.setFixedWidth(260)
         layout.addWidget(group_panel)
 
-
-
     def _build_controls(self) -> QWidget:
         frame = QFrame()
         frame.setFixedWidth(320)
@@ -210,53 +156,40 @@ class PolygonalNumberWindow(QMainWindow):
         layout.setContentsMargins(18, 18, 18, 18)
         layout.setSpacing(12)
 
-        title = QLabel("Polygonal / Centered Visualizer")
+        title = QLabel("Experimental Star Numbers")
         title.setStyleSheet("color: #0f172a; font-size: 16pt; font-weight: 800;")
         layout.addWidget(title)
 
-        subtitle = QLabel("Pick a polygon, choose the index, and see the dot construction with numbers.")
+        subtitle = QLabel("Create star figures with any number of points (P-grams).")
         subtitle.setWordWrap(True)
         subtitle.setStyleSheet("color: #475569; font-size: 10.5pt;")
         layout.addWidget(subtitle)
 
         layout.addSpacing(4)
 
-        # Polygon sides
-        sides_label = QLabel("Polygon sides (n)")
-        sides_label.setStyleSheet("color: #475569; font-weight: 600;")
-        layout.addWidget(sides_label)
+        # Star Points (P)
+        p_label = QLabel("Star Points (P)")
+        p_label.setStyleSheet("color: #475569; font-weight: 600;")
+        layout.addWidget(p_label)
 
-        self.sides_spin = QSpinBox()
-        self.sides_spin.setRange(3, 20)
-        self.sides_spin.setValue(5)
-        self.sides_spin.setStyleSheet(self._spin_style())
-        self.sides_spin.valueChanged.connect(self._render)
-        layout.addWidget(self.sides_spin)
+        self.points_spin = QSpinBox()
+        self.points_spin.setRange(3, 30)
+        self.points_spin.setValue(5) # Default to Pentagram
+        self.points_spin.setStyleSheet(self._spin_style())
+        self.points_spin.valueChanged.connect(self._render)
+        layout.addWidget(self.points_spin)
 
-        # Index
-        index_label = QLabel("Index k")
-        index_label.setStyleSheet("color: #475569; font-weight: 600;")
-        layout.addWidget(index_label)
+        # Index (N)
+        n_label = QLabel("Index (N)")
+        n_label.setStyleSheet("color: #475569; font-weight: 600;")
+        layout.addWidget(n_label)
 
         self.index_spin = QSpinBox()
         self.index_spin.setRange(1, 30)
-        self.index_spin.setValue(5)
+        self.index_spin.setValue(3)
         self.index_spin.setStyleSheet(self._spin_style())
         self.index_spin.valueChanged.connect(self._render)
         layout.addWidget(self.index_spin)
-
-        # Mode
-        mode_label = QLabel("Number family")
-        mode_label.setStyleSheet("color: #475569; font-weight: 600;")
-        layout.addWidget(mode_label)
-
-        self.mode_combo = QComboBox()
-        self.mode_combo.addItem("Polygonal (gnomon growth)", userData="polygonal")
-        self.mode_combo.addItem("Centered polygonal", userData="centered")
-        self.mode_combo.addItem("Star number (hexagram)", userData="star")
-        self.mode_combo.setStyleSheet(self._combo_style())
-        self.mode_combo.currentIndexChanged.connect(self._render)
-        layout.addWidget(self.mode_combo)
 
         # Spacing
         spacing_label = QLabel("Dot spacing")
@@ -280,7 +213,6 @@ class PolygonalNumberWindow(QMainWindow):
         self.labels_toggle.stateChanged.connect(self._toggle_labels)
         layout.addWidget(self.labels_toggle)
 
-        # Summary labels
         layout.addSpacing(10)
         self.count_label = QLabel("")
         self.count_label.setStyleSheet("color: #0f172a; font-weight: 700; font-size: 12pt;")
@@ -292,7 +224,7 @@ class PolygonalNumberWindow(QMainWindow):
         layout.addWidget(self.value_label)
 
         # Action button
-        render_btn = QPushButton("Render pattern")
+        render_btn = QPushButton("Render Star")
         render_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         render_btn.setStyleSheet(self._primary_button_style())
         render_btn.clicked.connect(self._render)
@@ -341,50 +273,29 @@ class PolygonalNumberWindow(QMainWindow):
 
         return bar
 
-    # ------------------------------------------------------------------
-    # Rendering
-    # ------------------------------------------------------------------
     def _render(self):
-        sides = self.sides_spin.value() if self.sides_spin else 3
+        points_count = self.points_spin.value() if self.points_spin else 5
         index = self.index_spin.value() if self.index_spin else 1
         spacing = self.spacing_spin.value() if self.spacing_spin else 1.0
-        
-        mode = self.mode_combo.currentData() if self.mode_combo else "polygonal"
-        centered = (mode == "centered")
-        is_star = (mode == "star")
 
-        # Disable/Enable sides spin for star mode (fixed to 6/hexagram)
-        if self.sides_spin:
-            self.sides_spin.setEnabled(not is_star)
+        value = generalized_star_number_value(points_count, index)
+        points = generalized_star_number_points(points_count, index, spacing=spacing)
 
-        if is_star:
-            value = star_number_value(index)
-            points = star_number_points(index, spacing=spacing)
-        else:
-            value = centered_polygonal_value(sides, index) if centered else polygonal_number_value(sides, index)
-            points = polygonal_number_points(sides, index, spacing=spacing, centered=centered)
-
-        self._update_summary(value, mode)
-        payload = self._build_payload(points, sides, spacing, index, centered or is_star)
+        self._update_summary(value, points_count)
+        payload = self._build_payload(points, points_count, spacing, index)
         self.scene.set_payload(payload)
         self.view.fit_scene()
 
-    def _build_payload(self, points: List[Tuple[float, float]], sides: int, spacing: float, index: int, centered: bool) -> GeometryScenePayload:
+    def _build_payload(self, points: List[Tuple[float, float]], sides: int, spacing: float, index: int) -> GeometryScenePayload:
         dot_radius = max(0.06, spacing * 0.18)
-        pen = PenStyle(color=(37, 99, 235, 255), width=1.2)
-        brush = BrushStyle(color=(191, 219, 254, 220), enabled=True)
+        pen = PenStyle(color=(147, 51, 234, 255), width=1.2) # Purple for Experimental
+        brush = BrushStyle(color=(216, 180, 254, 220), enabled=True)
 
         primitives: List = []
         labels: List[LabelPrimitive] = []
 
-        if points:
-            max_r = max(math.hypot(x, y) for x, y in points)
-        else:
-            max_r = spacing
-
-        # Outline removed as per user request
-
-        self._current_points = points # Store for interaction lookups
+        # Store points for interaction
+        self._current_points = points
 
         for idx, (x, y) in enumerate(points, start=1):
             primitives.append(CirclePrimitive(
@@ -398,52 +309,36 @@ class PolygonalNumberWindow(QMainWindow):
             labels.append(LabelPrimitive(text=str(idx), position=(x, y), align_center=True, metadata={"index": idx}))
 
         bounds = _bounds_from_points(points, margin=dot_radius * 3)
-        payload = GeometryScenePayload(
+        return GeometryScenePayload(
             primitives=primitives,
             labels=labels,
             bounds=bounds,
         )
-        payload.suggest_grid_span = max(bounds.width, bounds.height) * 1.2 if bounds else None
-        return payload
 
-    def _update_summary(self, value: int, mode: str):
+    def _update_summary(self, value: int, points_count: int):
         if self.count_label:
             self.count_label.setText(f"{value} dots")
         if self.value_label:
-            family_map = {
-                "polygonal": "Polygonal",
-                "centered": "Centered",
-                "star": "Star Number"
-            }
-            family = family_map.get(mode, "Polygonal")
-            self.value_label.setText(f"Family: {family}  •  Total: {value}")
-
+            name_map = {3: "Triangle", 4: "Square", 5: "Pentagram", 6: "Hexagram", 7: "Heptagram", 8: "Octagram"}
+            shape_name = name_map.get(points_count, f"{points_count}-gram")
+            self.value_label.setText(f"Shape: {shape_name} Star  •  Total: {value}")
         if self.labels_toggle:
             self.scene.set_labels_visible(self.labels_toggle.isChecked())
 
     def _toggle_labels(self, state: int):
         self.scene.set_labels_visible(state == 2)
 
-    # ------------------------------------------------------------------
-    # Styles
-    # ------------------------------------------------------------------
     def _spin_style(self) -> str:
         return (
             "QSpinBox, QDoubleSpinBox {padding: 8px 10px; font-size: 11pt; border: 1px solid #cbd5e1; border-radius: 8px;}"
-            "QSpinBox:focus, QDoubleSpinBox:focus {border-color: #3b82f6;}"
-        )
-
-    def _combo_style(self) -> str:
-        return (
-            "QComboBox {padding: 8px 10px; font-size: 11pt; border: 1px solid #cbd5e1; border-radius: 8px;}"
-            "QComboBox:focus {border-color: #3b82f6;}"
+            "QSpinBox:focus, QDoubleSpinBox:focus {border-color: #9333ea;}"
         )
 
     def _primary_button_style(self) -> str:
         return (
-            "QPushButton {background-color: #2563eb; color: white; border: none; padding: 10px 14px; border-radius: 10px; font-weight: 700;}"
-            "QPushButton:hover {background-color: #1d4ed8;}"
-            "QPushButton:pressed {background-color: #1e3a8a;}"
+            "QPushButton {background-color: #9333ea; color: white; border: none; padding: 10px 14px; border-radius: 10px; font-weight: 700;}"
+            "QPushButton:hover {background-color: #7e22ce;}"
+            "QPushButton:pressed {background-color: #6b21a8;}"
         )
 
     def _ghost_button_style(self) -> str:
@@ -451,20 +346,6 @@ class PolygonalNumberWindow(QMainWindow):
             "QPushButton {background-color: #e2e8f0; color: #0f172a; border: none; padding: 8px 12px; border-radius: 8px; font-weight: 600;}"
             "QPushButton:hover {background-color: #cbd5e1;}"
         )
-
-
-# ----------------------------------------------------------------------
-# Helpers
-# ----------------------------------------------------------------------
-
-def _regular_polygon_points(sides: int, radius: float, rotation: float = -math.pi / 2) -> List[Tuple[float, float]]:
-    sides = max(3, int(sides))
-    radius = max(0.1, float(radius))
-    angle_step = (2 * math.pi) / sides
-    return [
-        (radius * math.cos(rotation + i * angle_step), radius * math.sin(rotation + i * angle_step))
-        for i in range(sides)
-    ]
 
 
 def _bounds_from_points(points: List[Tuple[float, float]], margin: float) -> Optional[Bounds]:
@@ -475,4 +356,4 @@ def _bounds_from_points(points: List[Tuple[float, float]], margin: float) -> Opt
     return Bounds(min(xs) - margin, max(xs) + margin, min(ys) - margin, max(ys) + margin)
 
 
-__all__ = ["PolygonalNumberWindow"]
+__all__ = ["ExperimentalStarWindow"]
