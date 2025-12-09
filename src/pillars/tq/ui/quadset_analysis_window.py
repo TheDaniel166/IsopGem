@@ -1,18 +1,38 @@
 """Quadset Analysis tool window."""
-import math
-
 from PyQt6.QtWidgets import (
     QMainWindow, QVBoxLayout, QHBoxLayout, QLabel,
     QLineEdit, QGroupBox, QTabWidget, QWidget,
     QTextEdit, QScrollArea, QGridLayout, QFrame,
-    QSizePolicy
+    QSizePolicy, QMenu, QTableWidget, QTableWidgetItem, QHeaderView
 )
 from PyQt6.QtCore import Qt, QPointF, QSize
-from PyQt6.QtGui import QFont, QPainter, QPen, QColor
+from PyQt6.QtGui import QFont, QPainter, QPen, QColor, QAction, QTextCursor
 
-from ..services.ternary_service import TernaryService
-from ..services.ternary_transition_service import TernaryTransitionService
-from ..services.number_properties import NumberPropertiesService
+from ..services.quadset_engine import QuadsetEngine
+from ..models import QuadsetResult, QuadsetMember
+from shared.ui import WindowManager
+from shared.database import get_db_session
+from pillars.gematria.models.calculation_entity import CalculationEntity
+
+
+def get_super(x):
+    normal = "0123456789"
+    super_s = "⁰¹²³⁴⁵⁶⁷⁸⁹"
+    res = x.maketrans(''.join(normal), ''.join(super_s))
+    return x.translate(res)
+
+
+class CardTextEdit(QTextEdit):
+    """QTextEdit that delegates context menu events."""
+    def __init__(self, text, parent=None, context_menu_handler=None):
+        super().__init__(text, parent)
+        self.context_menu_handler = context_menu_handler
+
+    def contextMenuEvent(self, event):
+        if self.context_menu_handler:
+            self.context_menu_handler(event, self)
+        else:
+            super().contextMenuEvent(event)
 
 
 class QuadsetGlyph(QWidget):
@@ -21,14 +41,11 @@ class QuadsetGlyph(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._ternary = ""
-        self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
-        self.setMinimumSize(90, 100)
-
     def sizeHint(self):
-        return QSize(140, 160)
+        return QSize(80, 100)
 
     def minimumSizeHint(self):
-        return QSize(90, 120)
+        return QSize(60, 80)
 
     def set_ternary(self, ternary: str) -> None:
         """Update the glyph with a ternary string and repaint."""
@@ -49,10 +66,15 @@ class QuadsetGlyph(QWidget):
         total = len(digits)
         height = self.height()
         width = self.width()
-        margin_x = width * 0.1
-        line_length = width * 0.5
+        width = self.width()
+        MAX_LINE_WIDTH = 120
+        line_length = min(width * 0.8, MAX_LINE_WIDTH) 
         margin_x = (width - line_length) / 2
-        line_height = max(min(height / (total + 0.3), 24), 10)
+        
+        # Tighter vertical spacing
+        # Reduce max line height to 12, min to 4
+        # Denominator adjust for tighter packing
+        line_height = max(min(height / (total + 0.5), 18), 6)
         base_pen = QPen(QColor("#111827"), 2, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap)
 
         for idx, digit in enumerate(reversed(digits)):
@@ -87,14 +109,81 @@ class QuadsetGlyph(QWidget):
                 )
 
 
+class PropertyCard(QFrame):
+    """A card entry for displaying a specific property."""
+    
+    def __init__(self, title: str, content: str = "", parent=None, context_menu_handler=None):
+        super().__init__(parent)
+        self.setObjectName("propertyCard")
+        self.setStyleSheet("""
+            QFrame#propertyCard {
+                background-color: white;
+                border: 1px solid #e2e8f0;
+                border-radius: 8px;
+            }
+        """)
+        
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setSpacing(8)
+        
+        self.title_label = QLabel(title)
+        self.title_label.setStyleSheet("color: #64748b; font-size: 10pt; font-weight: 600; text-transform: uppercase;")
+        layout.addWidget(self.title_label)
+        
+        self.content_edit = CardTextEdit("", context_menu_handler=context_menu_handler)
+        self.content_edit.setPlainText(content)
+        self.content_edit.setReadOnly(True)
+        self.content_edit.setStyleSheet("""
+            QTextEdit {
+                color: #0f172a; 
+                font-size: 11pt; 
+                font-family: 'Segoe UI', sans-serif;
+                background-color: transparent;
+                border: none;
+            }
+        """)
+        # Adjust height based on content approx (optional, but helpful to not be too huge default)
+        # For now let layout handle it, but maybe minimum height
+        self.content_edit.setFrameStyle(QFrame.Shape.NoFrame)
+        self.content_edit.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        # Fit height logic or simpler:
+        # Just use it. The card will expand in the VBox of the scrollarea.
+        # But QTextEdit might be greedy. We want it to adapt.
+        # A simple fix is to use QLabel for short text, but user complained about "all factors".
+        # Let's use a dynamic approach or just a read-only text edit with a reasonable max/min height.
+        # Actually, standard Label with WordWrap should grow. 
+        # IF the text is super long, it might be pushing off screen?
+        # The user said "not showing ALL", implying cut off. 
+        # If I use TextEdit, it needs to be careful not to trap scroll if nested.
+        
+        # New approach for this component:
+        self.content_edit.setFixedHeight(int(min(self.content_edit.document().size().height() + 10, 200)) if len(content) > 100 else 40)
+        self.content_edit.textChanged.connect(self._adjust_height)
+
+        layout.addWidget(self.content_edit)
+
+    def _adjust_height(self):
+        doc_height = self.content_edit.document().size().height()
+        self.content_edit.setFixedHeight(int(min(max(doc_height + 10, 40), 250)))
+
+    def set_content(self, text: str):
+        self.content_edit.setPlainText(text)
+        self._adjust_height()
+
+
 class QuadsetAnalysisWindow(QMainWindow):
     """Window for Quadset Analysis with detailed property tabs."""
     
-    def __init__(self, parent=None):
-        """Initialize the window."""
+    def __init__(self, window_manager: WindowManager = None, parent=None):
         super().__init__(parent)
-        self.ternary_service = TernaryService()
-        self.transition_service = TernaryTransitionService()
+        self.window_manager = window_manager
+        self.setWindowTitle("Quadset Analysis")
+        self.resize(1000, 800)
+        
+        # Engine for calculations
+        self.engine = QuadsetEngine()
+        
         self._setup_ui()
         
     def _setup_ui(self):
@@ -127,7 +216,7 @@ class QuadsetAnalysisWindow(QMainWindow):
         self.input_field = QLineEdit()
         self.input_field.setPlaceholderText("Enter a number...")
         self.input_field.setStyleSheet("font-size: 14pt; padding: 8px;")
-        self.input_field.textChanged.connect(self._calculate_quadset)
+        self.input_field.textChanged.connect(self._on_input_changed)
         
         input_layout.addWidget(input_label)
         input_layout.addWidget(self.input_field)
@@ -167,6 +256,7 @@ class QuadsetAnalysisWindow(QMainWindow):
         self.tab_upper_diff = self._create_detail_tab("Upper Difference")
         self.tab_lower_diff = self._create_detail_tab("Lower Difference")
         self.tab_advanced = self._create_advanced_tab()
+        self.tab_gematria = self._create_gematria_tab()
         
         self.tabs.addTab(self.tab_overview, "Quadset Overview")
         self.tabs.addTab(self.tab_original, "Original")
@@ -176,6 +266,7 @@ class QuadsetAnalysisWindow(QMainWindow):
         self.tabs.addTab(self.tab_upper_diff, "Upper Diff")
         self.tabs.addTab(self.tab_lower_diff, "Lower Diff")
         self.tabs.addTab(self.tab_advanced, "Advanced")
+        self.tabs.addTab(self.tab_gematria, "Gematria") # Add Gematria tab
         
         layout.addWidget(self.tabs)
         
@@ -282,18 +373,18 @@ class QuadsetAnalysisWindow(QMainWindow):
         group.setLayout(layout)
         return group
 
-    def _update_panel(self, panel: QGroupBox, decimal: int, ternary: str):
+    def _update_panel(self, panel: QGroupBox, member: QuadsetMember):
         """Update the values in a panel."""
         dec_lbl = panel.findChild(QLabel, "decimal_val")
         tern_lbl = panel.findChild(QLabel, "ternary_val")
         glyph = panel.findChild(QuadsetGlyph, "ternary_glyph")
         
         if dec_lbl:
-            dec_lbl.setText(f"{decimal:,}")
+            dec_lbl.setText(f"{member.decimal:,}")
         if tern_lbl:
-            tern_lbl.setText(ternary)
+            tern_lbl.setText(member.ternary)
         if glyph:
-            glyph.set_ternary(ternary)
+            glyph.set_ternary(member.ternary)
 
     def _create_detail_tab(self, title: str) -> QWidget:
         """Create a tab widget for number details."""
@@ -342,26 +433,36 @@ class QuadsetAnalysisWindow(QMainWindow):
         props_label.setStyleSheet("font-size: 12pt; font-weight: bold; margin-top: 10px;")
         layout.addWidget(props_label)
         
-        props_text = QTextEdit()
-        props_text.setObjectName("properties_text")
-        props_text.setReadOnly(True)
-        props_text.setStyleSheet("""
-            QTextEdit {
-                font-family: 'Courier New', monospace;
-                font-size: 11pt;
-                background-color: #f9fafb;
-                border: 1px solid #e5e7eb;
-                border-radius: 6px;
-                padding: 12px;
-            }
-        """)
-        layout.addWidget(props_text)
+        # Scroll Area for Cards
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setStyleSheet("background-color: transparent;")
+        
+        cards_container = QWidget()
+        cards_container.setObjectName("cardsContainer")
+        # Store for retrieval
+        cards_layout = QVBoxLayout(cards_container)
+        cards_layout.setSpacing(12)
+        cards_layout.setContentsMargins(0, 0, 0, 0)
+        cards_layout.addStretch() # Push up
+        
+        scroll.setWidget(cards_container)
+        layout.addWidget(scroll)
+        
         return tab
 
     def _create_advanced_tab(self) -> QWidget:
         """Create the advanced tab with quadset summary info."""
-        tab = QWidget()
-        layout = QVBoxLayout(tab)
+        # Main Tab Wrapper (Scroll Area)
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setStyleSheet("background-color: transparent;")
+
+        # Content Widget
+        content = QWidget()
+        layout = QVBoxLayout(content)
         layout.setSpacing(15)
         layout.setContentsMargins(20, 20, 20, 20)
 
@@ -391,50 +492,83 @@ class QuadsetAnalysisWindow(QMainWindow):
         septad_box.setLayout(septad_layout)
         layout.addWidget(septad_box)
 
-        trans_box = QGroupBox("Differential Transgram")
-        trans_layout = QVBoxLayout()
-        diff_layout = QGridLayout()
-        diff_layout.setHorizontalSpacing(20)
-        diff_layout.setVerticalSpacing(8)
+        # Transgram Section (Manual Frame instead of GroupBox to fix layout)
+        trans_header = QLabel("Differential Transgram")
+        trans_header.setStyleSheet("font-size: 12pt; font-weight: bold; margin-top: 10px; color: #111827;")
+        layout.addWidget(trans_header)
 
-        upper_diff_label = QLabel("Upper Differential (Decimal):")
-        upper_diff_label.setStyleSheet("font-size: 11pt; color: #6b7280;")
-        upper_diff_value = QLabel("-")
-        upper_diff_value.setObjectName("advanced_upper_diff")
-        upper_diff_value.setStyleSheet("font-size: 14pt; font-weight: bold;")
+        trans_frame = QFrame()
+        trans_frame.setStyleSheet("""
+            QFrame {
+                background-color: #f9fafb;
+                border: 1px solid #e5e7eb;
+                border-radius: 6px;
+            }
+        """)
+        trans_layout = QVBoxLayout(trans_frame)
+        trans_layout.setSpacing(12) 
+        trans_layout.setContentsMargins(16, 16, 16, 16)
+        
+        # Row 1: Differentials
+        diff_row = QHBoxLayout()
+        
+        # Upper
+        upper_frame = QFrame()
+        upper_frame.setStyleSheet("border: none; background: transparent;")
+        upper_layout = QVBoxLayout(upper_frame)
+        upper_layout.setContentsMargins(0,0,0,0)
+        upper_layout.addWidget(QLabel("Upper Differential:"))
+        uv = QLabel("-")
+        uv.setObjectName("advanced_upper_diff")
+        uv.setStyleSheet("font-size: 14pt; font-weight: bold; border: none;")
+        upper_layout.addWidget(uv)
+        
+        # Lower
+        lower_frame = QFrame()
+        lower_frame.setStyleSheet("border: none; background: transparent;")
+        lower_layout = QVBoxLayout(lower_frame)
+        lower_layout.setContentsMargins(0,0,0,0)
+        lower_layout.addWidget(QLabel("Lower Differential:"))
+        lv = QLabel("-")
+        lv.setObjectName("advanced_lower_diff")
+        lv.setStyleSheet("font-size: 14pt; font-weight: bold; border: none;")
+        lower_layout.addWidget(lv)
+        
+        diff_row.addWidget(upper_frame)
+        diff_row.addSpacing(40)
+        diff_row.addWidget(lower_frame)
+        diff_row.addStretch()
+        
+        trans_layout.addLayout(diff_row)
+        
+        # Separator
+        line = QFrame()
+        line.setFrameShape(QFrame.Shape.HLine)
+        line.setFrameShadow(QFrame.Shadow.Sunken)
+        line.setStyleSheet("border: none; background: #e5e7eb; max-height: 1px;")
+        trans_layout.addWidget(line)
 
-        lower_diff_label = QLabel("Lower Differential (Decimal):")
-        lower_diff_label.setStyleSheet("font-size: 11pt; color: #6b7280;")
-        lower_diff_value = QLabel("-")
-        lower_diff_value.setObjectName("advanced_lower_diff")
-        lower_diff_value.setStyleSheet("font-size: 14pt; font-weight: bold;")
+        # Row 2: Transgram Ternary
+        t_label = QLabel("Transgram (Ternary):")
+        t_label.setStyleSheet("font-size: 11pt; color: #6b7280; border: none;")
+        t_val = QLabel("-")
+        t_val.setObjectName("advanced_transgram")
+        t_val.setStyleSheet("font-size: 16pt; font-family: monospace; color: #2563eb; border: none;")
+        
+        trans_layout.addWidget(t_label)
+        trans_layout.addWidget(t_val)
 
-        diff_layout.addWidget(upper_diff_label, 0, 0)
-        diff_layout.addWidget(upper_diff_value, 0, 1)
-        diff_layout.addWidget(lower_diff_label, 1, 0)
-        diff_layout.addWidget(lower_diff_value, 1, 1)
+        # Row 3: Transgram Decimal
+        d_label = QLabel("Transgram (Decimal):")
+        d_label.setStyleSheet("font-size: 11pt; color: #6b7280; border: none;")
+        d_val = QLabel("-")
+        d_val.setObjectName("advanced_transgram_dec")
+        d_val.setStyleSheet("font-size: 14pt; font-weight: bold; color: #111827; border: none;")
 
-        trans_layout.addLayout(diff_layout)
+        trans_layout.addWidget(d_label)
+        trans_layout.addWidget(d_val)
 
-        transgram_label = QLabel("Transgram (Ternary):")
-        transgram_label.setStyleSheet("font-size: 11pt; color: #6b7280; margin-top: 12px;")
-        transgram_value = QLabel("-")
-        transgram_value.setObjectName("advanced_transgram")
-        transgram_value.setStyleSheet("font-size: 16pt; font-family: monospace; color: #2563eb;")
-
-        transgram_dec_label = QLabel("Transgram (Decimal):")
-        transgram_dec_label.setStyleSheet("font-size: 11pt; color: #6b7280;")
-        transgram_dec_value = QLabel("-")
-        transgram_dec_value.setObjectName("advanced_transgram_dec")
-        transgram_dec_value.setStyleSheet("font-size: 14pt; font-weight: bold; color: #111827;")
-
-        trans_layout.addWidget(transgram_label)
-        trans_layout.addWidget(transgram_value)
-        trans_layout.addWidget(transgram_dec_label)
-        trans_layout.addWidget(transgram_dec_value)
-
-        trans_box.setLayout(trans_layout)
-        layout.addWidget(trans_box)
+        layout.addWidget(trans_frame)
 
         patterns_box = QGroupBox("Pattern Summary")
         patterns_layout = QVBoxLayout()
@@ -456,353 +590,396 @@ class QuadsetAnalysisWindow(QMainWindow):
         layout.addWidget(patterns_box)
 
         layout.addStretch()
+        
+        scroll.setWidget(content)
+        return scroll
 
-        return tab
-        return tab
+    def _handle_geometry_menu(self, event, text_edit):
+        """Handle context menu for geometry properties."""
+        cursor = text_edit.cursorForPosition(event.pos())
+        text_edit.setTextCursor(cursor) # Move cursor to click
+        line_text = cursor.block().text().strip()
+        
+        # Parse: "• {Type} (Index: {N})"
+        if not line_text.startswith("• "):
+            return
+            
+        import re
+        match = re.search(r"• (.*?) \(Index: (\d+)\)", line_text)
+        if not match:
+            return
+            
+        full_name = match.group(1)
+        index_str = match.group(2)
+        try:
+            index = int(index_str)
+        except ValueError:
+            return
 
-    def _update_tab(self, tab: QWidget, decimal: int, ternary: str):
-        """Update a tab with new values and properties."""
+        # Determine mode and sides
+        mode = "polygonal"
+        sides = 3
+        
+        if "Star Number" in full_name:
+            mode = "star"
+            sides = 12 # Not strictly used by visualizer for Star but good default
+        elif "Centered" in full_name:
+            mode = "centered"
+            # Map name to sides
+            name_lower = full_name.lower()
+            if "triangle" in name_lower: sides = 3
+            elif "square" in name_lower: sides = 4
+            elif "pentagonal" in name_lower: sides = 5
+            elif "hexagonal" in name_lower: sides = 6
+            elif "heptagonal" in name_lower: sides = 7
+            elif "octagonal" in name_lower: sides = 8
+            elif "nonagonal" in name_lower: sides = 9
+            elif "decagonal" in name_lower: sides = 10
+            elif "hendecagonal" in name_lower: sides = 11
+            elif "dodecagonal" in name_lower: sides = 12
+        else:
+            mode = "polygonal"
+            name_lower = full_name.lower()
+            if "triangle" in name_lower: sides = 3
+            elif "square" in name_lower: sides = 4
+            elif "pentagonal" in name_lower: sides = 5
+            elif "hexagonal" in name_lower: sides = 6
+            elif "heptagonal" in name_lower: sides = 7
+            elif "octagonal" in name_lower: sides = 8
+            elif "nonagonal" in name_lower: sides = 9
+            elif "decagonal" in name_lower: sides = 10
+            elif "hendecagonal" in name_lower: sides = 11
+            elif "dodecagonal" in name_lower: sides = 12
+
+        menu = QMenu(self)
+        action = QAction(f"Visualize {full_name}...", self)
+        action.triggered.connect(lambda: self._open_geometry_window(sides, index, mode))
+        menu.addAction(action)
+        menu.exec(event.globalPos())
+
+    def _open_geometry_window(self, sides: int, index: int, mode: str):
+        """Open the geometry visualizer with pre-filled values."""
+        from pillars.geometry.ui.polygonal_number_window import PolygonalNumberWindow
+        
+        if not self.window_manager:
+            print("No window manager found, cannot open visualizer")
+            return
+
+        win_id = "geometry_window_shared"
+        # Open logic: If already open, it returns the instance.
+        win = self.window_manager.open_window(win_id, PolygonalNumberWindow, window_manager=self.window_manager)
+        
+        if win:
+            # Set values programmatically
+            # Block signals to prevent redundant renders if desired, or let it render
+            if win.mode_combo:
+                idx = win.mode_combo.findData(mode)
+                if idx >= 0: win.mode_combo.setCurrentIndex(idx)
+            
+            if win.sides_spin: win.sides_spin.setValue(sides)
+            if win.index_spin: win.index_spin.setValue(index)
+            
+            # Force a re-render/update if needed by calling private method (hacky but effective)
+            # Or rely on valueChanged signals which should have fired
+            
+            win.raise_()
+            win.activateWindow()
+
+
+    def _update_tab(self, tab: QWidget, member: QuadsetMember):
+        """Update a tab with a member's values and properties."""
         # Update Header Values
         dec_lbl = tab.findChild(QLabel, "decimal_val")
         tern_lbl = tab.findChild(QLabel, "ternary_val")
         glyph = tab.findChild(QuadsetGlyph, "ternary_glyph")
         
         if dec_lbl:
-            dec_lbl.setText(f"{decimal:,}")
+            dec_lbl.setText(f"{member.decimal:,}")
         if tern_lbl:
-            tern_lbl.setText(ternary)
+            tern_lbl.setText(member.ternary)
         if glyph:
-            glyph.set_ternary(ternary)
+            glyph.set_ternary(member.ternary)
             
-        # Calculate Properties
-        props = NumberPropertiesService.get_properties(decimal)
+        # Get Properties from model
+        props = member.properties
+        if not props:
+            return  # Should not happen for calculated members
         
-        # Format Properties Text
-        lines = []
+        # Rebuild Cards
+        container = tab.findChild(QWidget, "cardsContainer")
+        if not container:
+            return
+            
+        layout = container.layout()
+        # Clear existing
+        while layout.count():
+            child = layout.takeAt(0)
+            if child.widget():
+                child.widget().deleteLater()
         
-        # Basic Checks
+        # 1. Type Card
         checks = []
-        if props['is_prime']: 
-            checks.append(f"PRIME (Ordinal: {props['prime_ordinal']})")
-        if props['is_square']: checks.append("PERFECT SQUARE")
-        if props['is_cube']: checks.append("PERFECT CUBE")
-        if props['is_fibonacci']: checks.append("FIBONACCI")
+        if props.get('is_prime'): 
+            checks.append(f"PRIME (Ordinal: {props.get('prime_ordinal')})")
+        if props.get('is_square'): checks.append("PERFECT SQUARE")
+        if props.get('is_cube'): checks.append("PERFECT CUBE")
+        if props.get('is_fibonacci'): checks.append("FIBONACCI")
         
-        if checks:
-            lines.append(f"Type: {', '.join(checks)}")
-        else:
-            lines.append("Type: Composite / Regular")
+        type_str = ", ".join(checks) if checks else "Composite / Regular"
+        layout.addWidget(PropertyCard("Number Type", type_str))
+        
+        # 2. Factorization Card
+        pf = props.get('prime_factors', [])
+        if pf:
+            pf_str = " × ".join([f"{p}{get_super(str(e))}" if e > 1 else str(p) for p, e in pf])
+            layout.addWidget(PropertyCard("Prime Factorization", pf_str))
+        
+        # 3. Factors Detail Card
+        factors = props.get('factors', [])
+        count = len(factors)
+        f_sum = props.get('sum_factors', 0)
+        ali_sum = props.get('aliquot_sum', 0)
+        
+        detail_lines = [
+            f"Count: {count}",
+            f"Sum: {f_sum:,}",
+            f"Aliquot Sum: {ali_sum:,}"
+        ]
+        
+        abundance = props.get('abundance_status', '')
+        if abundance:
+            diff = props.get('abundance_diff', 0)
+            status_line = f"Status: {abundance}"
+            if diff: status_line += f" (by {diff:,})"
+            detail_lines.append(status_line)
             
-        lines.append("-" * 40)
-        
-        # Polygonal Info
-        if props['polygonal_info']:
-            lines.append("Polygonal Numbers:")
-            for info in props['polygonal_info']:
-                lines.append(f"  • {info}")
-        
-        if props['centered_polygonal_info']:
-            lines.append("Centered Polygonal Numbers:")
-            for info in props['centered_polygonal_info']:
-                lines.append(f"  • {info}")
-                
-        if props['polygonal_info'] or props['centered_polygonal_info']:
-            lines.append("-" * 40)
-        
-        # Digits
-        lines.append(f"Digit Sum: {props['digit_sum']}")
-        lines.append("-" * 40)
-        
-        # Factors & Abundance
-        factors = props['factors']
-        if len(factors) > 20:
-            lines.append(f"Factors ({len(factors)}): {str(factors[:20])[:-1]}...]")
-        else:
-            lines.append(f"Factors ({len(factors)}): {factors}")
-            
-        lines.append(f"Sum of Factors: {props['sum_factors']}")
-        lines.append(f"Aliquot Sum:    {props['aliquot_sum']}")
-        
-        abundance_msg = props['abundance_status']
-        if props['abundance_status'] != "Perfect":
-            abundance_msg += f" (by {props['abundance_diff']})"
-        lines.append(f"Status:         {abundance_msg}")
-        
-        lines.append("-" * 40)
-            
-        # Prime Factorization
-        pf = props['prime_factors']
-        pf_str = " * ".join([f"{p}^{e}" if e > 1 else str(p) for p, e in pf])
-        lines.append(f"Prime Factorization: {pf_str}")
-        
-        # Update Text Area
-        text_area = tab.findChild(QTextEdit, "properties_text")
-        if text_area:
-            text_area.setPlainText("\n".join(lines))
+        layout.addWidget(PropertyCard("Factors Analysis", "\n".join(detail_lines)))
+        layout.addWidget(PropertyCard("All Factors", str(factors)))
 
-    def _update_advanced_tab(
-        self,
-        sum_value: int,
-        septad_value: int,
-        upper_diff: int,
-        lower_diff: int,
-        transgram: str,
-        transgram_decimal: int,
-        patterns: str,
-    ):
-        """Update the advanced tab values."""
+        # 4. Geometry Card
+        polys = props.get('polygonal_info', [])
+        centered = props.get('centered_polygonal_info', [])
+        if polys or centered:
+            poly_text = ""
+            if polys:
+                poly_text += "Polygonal:\n" + "\n".join([f"• {p}" for p in polys])
+            if centered:
+                if poly_text: poly_text += "\n\n"
+                poly_text += "Centered:\n" + "\n".join([f"• {c}" for c in centered])
+            layout.addWidget(PropertyCard("Geometric Properties", poly_text, context_menu_handler=self._handle_geometry_menu))
+            
+        # 5. Digits Card
+        d_sum = props.get('digit_sum', 0)
+        layout.addWidget(PropertyCard("Digit Sum", str(d_sum)))
+        
+        layout.addStretch()
+        
+    def _create_gematria_tab(self) -> QWidget:
+        """Create the Gematria Database tab with sub-tabs for each number."""
+        tab = QWidget()
+        layout = QVBoxLayout(tab)
+        layout.setContentsMargins(10, 10, 10, 10)
+        
+        # Sub-tabs for each number type
+        self.gem_tabs = QTabWidget()
+        
+        # We need keys: 'original', 'conrune', 'reverse', 'reciprocal', 'upper_diff', 'lower_diff'
+        # Let's verify standard keys. QuadsetResult has members.
+        # We will create tabs dynamically or statically?
+        # Ideally statically so we can access them.
+        
+        self.gem_tables = {} # Map 'key' -> QTableWidget
+        
+        keys = [
+            ("Original", "original"),
+            ("Conrune", "conrune"),
+            ("Reverse", "reverse"),
+            ("Reciprocal", "reciprocal"),
+            ("Upper Diff", "upper_diff"),
+            ("Lower Diff", "lower_diff")
+        ]
+        
+        for label, key in keys:
+             sub_tab = QWidget()
+             sub_layout = QVBoxLayout(sub_tab)
+             sub_layout.setContentsMargins(0, 0, 0, 0)
+             
+             table = QTableWidget()
+             table.setColumnCount(4)
+             table.setHorizontalHeaderLabels(["Word", "Method", "Tags", "Notes"])
+             table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+             table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
+             table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
+             table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)
+             table.setAlternatingRowColors(True)
+             table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+             table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+             table.setWordWrap(True)
+             
+             sub_layout.addWidget(table)
+             self.gem_tabs.addTab(sub_tab, label)
+             self.gem_tables[key] = table
+             
+        layout.addWidget(self.gem_tabs)
+        return tab
+
+    def _update_gematria_tab(self, result: QuadsetResult):
+        """Query database and update tables for each number."""
+        # Map result members to keys
+        # original, conrune, reverse, reciprocal are in result.members
+        # upper/lower diff are separate attributes
+        
+        tasks = []
+        
+        # Members (first 4)
+        if len(result.members) >= 4:
+            tasks.append(("original", result.members[0].decimal))
+            tasks.append(("conrune", result.members[1].decimal))
+            tasks.append(("reverse", result.members[2].decimal))
+            tasks.append(("reciprocal", result.members[3].decimal))
+            
+        # Diffs
+        tasks.append(("upper_diff", result.upper_diff.decimal))
+        tasks.append(("lower_diff", result.lower_diff.decimal))
+        
+        for key, value in tasks:
+            table = self.gem_tables.get(key)
+            if table:
+                self._populate_gematria_table(table, value)
+
+    def _populate_gematria_table(self, table: QTableWidget, value: int):
+        """Fetch rows from DB where value matches and populate table."""
+        table.setRowCount(0)
+        
+        try:
+            with get_db_session() as db:
+                # Query CalculationEntity
+                # We want entries where value == value
+                entries = db.query(CalculationEntity).filter(CalculationEntity.value == value).limit(100).all()
+                
+                table.setRowCount(len(entries))
+                for row, entry in enumerate(entries):
+                    # Word
+                    table.setItem(row, 0, QTableWidgetItem(entry.text))
+                    # Method
+                    table.setItem(row, 1, QTableWidgetItem(entry.method))
+                    # Tags
+                    tags_str = entry.tags
+                    # Clean up json string display if needed, or just show raw string if user wants quick view
+                    # Usually tags is '["tag1", "tag2"]'
+                    try:
+                        import json
+                        tags_list = json.loads(tags_str)
+                        if isinstance(tags_list, list):
+                            tags_display = ", ".join(tags_list)
+                        else:
+                            tags_display = str(tags_str)
+                    except:
+                        tags_display = str(tags_str)
+
+                    table.setItem(row, 2, QTableWidgetItem(tags_display))
+                    # Notes
+                    table.setItem(row, 3, QTableWidgetItem(entry.notes))
+                
+                table.resizeRowsToContents()
+                    
+        except Exception as e:
+            print(f"Error fetching gematria for {value}: {e}")
+            pass # Fail gracefully
+
+    def _update_advanced_tab(self, result: QuadsetResult):
+        """Update the advanced tab values from the result object."""
         def _set_label(name: str, value: str):
             label = self.tab_advanced.findChild(QLabel, name)
             if label:
                 label.setText(value)
 
-        _set_label("advanced_sum", f"{sum_value:,}")
-        _set_label("advanced_septad", f"{septad_value:,}")
-        _set_label("advanced_upper_diff", f"{upper_diff:,}")
-        _set_label("advanced_lower_diff", f"{lower_diff:,}")
-        _set_label("advanced_transgram", transgram)
-        _set_label("advanced_transgram_dec", f"{transgram_decimal:,}")
+        _set_label("advanced_sum", f"{result.quadset_sum:,}")
+        _set_label("advanced_septad", f"{result.septad_total:,}")
+        _set_label("advanced_upper_diff", f"{result.upper_diff.decimal:,}")
+        _set_label("advanced_lower_diff", f"{result.lower_diff.decimal:,}")
+        _set_label("advanced_transgram", result.transgram.ternary)
+        _set_label("advanced_transgram_dec", f"{result.transgram.decimal:,}")
 
         patterns_area = self.tab_advanced.findChild(QTextEdit, "advanced_patterns")
         if patterns_area:
-            patterns_area.setPlainText(patterns)
-
-    def _build_pattern_summary(self, decimals: list[int], ternaries: list[str]) -> str:
-        """Generate summary of mathematical patterns across the quadset."""
-        names = [
-            "Original", "Conrune", "Reversal", "Conrune Reversal"
-        ]
-        lines: list[str] = []
-
-        non_zero = [n for n in decimals if n != 0]
-        if non_zero:
-            lcm_value = math.lcm(*non_zero)
-        else:
-            lcm_value = 0
-        lines.append(f"LCM of quadset decimals: {lcm_value:,}")
-
-        gcd_value = 0
-        for value in decimals:
-            gcd_value = math.gcd(gcd_value, abs(value))
-        lines.append(
-            f"GCD of quadset decimals: {gcd_value:,}" if gcd_value > 0 else "GCD of quadset decimals: 0"
-        )
-
-        even_count = sum(1 for value in decimals if value % 2 == 0)
-        odd_count = len(decimals) - even_count
-        lines.append(f"Parity: {even_count} even, {odd_count} odd")
-
-        if gcd_value > 1:
-            lines.append(f"Shared divisor (>1): {gcd_value}")
-        else:
-            lines.append("Shared divisor (>1): None")
-
-        primes = [
-            f"{name} ({value:,})"
-            for name, value in zip(names, decimals)
-            if NumberPropertiesService.is_prime(value)
-        ]
-        if primes:
-            lines.append(f"Primes: {', '.join(primes)}")
-            lines.append(f"Prime density: {len(primes)}/{len(decimals)}")
-        else:
-            lines.append("Primes: None in the quadset")
-            lines.append("Prime density: 0/4")
-
-        factor_counts = [
-            f"{name}({len(NumberPropertiesService.get_factors(abs(value)))} factors)"
-            if value != 0 else f"{name}(undefined factors)"
-            for name, value in zip(names, decimals)
-        ]
-        lines.append(f"Factor counts: {', '.join(factor_counts)}")
-
-        abundance_parts = []
-        for name, value in zip(names, decimals):
-            props = NumberPropertiesService.get_properties(value)
-            abundance_parts.append(f"{name} is {props['abundance_status']}")
-        lines.append(f"Abundance: {', '.join(abundance_parts)}")
-
-        digit_sums = [
-            f"{name}({NumberPropertiesService.digit_sum(value)})"
-            for name, value in zip(names, decimals)
-        ]
-        lines.append(f"Digit sums: {', '.join(digit_sums)}")
-        digit_roots = [
-            f"{name}({(abs(value) - 1) % 9 + 1 if value != 0 else 0})"
-            for name, value in zip(names, decimals)
-        ]
-        lines.append(f"Digital roots: {', '.join(digit_roots)}")
-
-        reversed_palindromes = [
-            f"{name} ({value:,})"
-            for name, value in zip(names, decimals)
-            if str(abs(value)) == str(abs(value))[::-1]
-        ]
-        if reversed_palindromes:
-            lines.append(f"Decimal palindromes: {', '.join(reversed_palindromes)}")
-        else:
-            lines.append("Decimal palindromes: None")
-
-        sorted_decimals = sorted(decimals)
-        diffs = [sorted_decimals[i + 1] - sorted_decimals[i] for i in range(3)]
-        if len(set(diffs)) == 1:
-            lines.append(f"Arithmetic progression: common difference {diffs[0]:,}")
-        else:
-            lines.append("Arithmetic progression: No")
-
-        geo_progression = "No"
-        ratios = []
-        for i in range(3):
-            if sorted_decimals[i] == 0:
-                ratios = []
-                break
-            ratios.append(sorted_decimals[i + 1] / sorted_decimals[i])
-        if ratios and len(set(ratios)) == 1:
-            geo_progression = f"Yes (ratio {ratios[0]:.2f})"
-        lines.append(f"Geometric progression: {geo_progression}")
-
-        congruent_mod3 = {value % 3 for value in decimals}
-        congruent_mod5 = {value % 5 for value in decimals}
-        if len(congruent_mod3) == 1:
-            lines.append(f"Congruent mod 3: {congruent_mod3.pop()} for all")
-        if len(congruent_mod5) == 1:
-            lines.append(f"Congruent mod 5: {congruent_mod5.pop()} for all")
-
-        palindromes = [
-            f"{name} ({ternary})"
-            for name, ternary in zip(names, ternaries)
-            if ternary == ternary[::-1]
-        ]
-        if palindromes:
-            lines.append(f"Ternary palindromes: {', '.join(palindromes)}")
-        else:
-            lines.append("Ternary palindromes: None")
-
-        only_01 = [
-            name
-            for name, ternary in zip(names, ternaries)
-            if set(ternary).issubset({"0", "1"})
-        ]
-        if only_01:
-            lines.append(f"Digits limited to 0/1: {', '.join(only_01)}")
-        else:
-            lines.append("Digits limited to 0/1: None")
-
-        digit_frequency = [
-            f"{name}(0:{ternary.count('0')} 1:{ternary.count('1')} 2:{ternary.count('2')})"
-            for name, ternary in zip(names, ternaries)
-        ]
-        lines.append(f"Digit frequencies: {', '.join(digit_frequency)}")
-
-        return "\n".join(lines)
+            patterns_area.setPlainText(result.pattern_summary)
 
     def _clear_tabs(self):
         """Clear all tabs."""
-        # Clear overview panels
+        # This implementation remains largely same but could be simplified if we created an "EmptyQuadsetResult"
+        # For now, manual clearing is fine.
         for panel in [self.panel_original, self.panel_conrune, 
                      self.panel_reversal, self.panel_conrune_rev,
                      self.panel_upper_diff, self.panel_lower_diff]:
-            self._update_panel(panel, 0, "-")
-            panel.findChild(QLabel, "decimal_val").setText("-")
+             panel.findChild(QLabel, "decimal_val").setText("-")
+             panel.findChild(QLabel, "ternary_val").setText("-")
+             glyph = panel.findChild(QuadsetGlyph, "ternary_glyph")
+             if glyph: glyph.set_ternary("")
 
-        # Clear detail tabs
         for tab in [self.tab_original, self.tab_conrune, 
                    self.tab_reversal, self.tab_conrune_rev,
                    self.tab_upper_diff, self.tab_lower_diff]:
             tab.findChild(QLabel, "decimal_val").setText("-")
             tab.findChild(QLabel, "ternary_val").setText("-")
-            tab.findChild(QTextEdit, "properties_text").clear()
+            container = tab.findChild(QWidget, "cardsContainer")
+            if container:
+                l = container.layout()
+                while l.count():
+                    c = l.takeAt(0)
+                    if c.widget(): c.widget().deleteLater()
+            
             glyph = tab.findChild(QuadsetGlyph, "ternary_glyph")
-            if glyph:
-                glyph.set_ternary("")
-        if hasattr(self, "tab_advanced"):
-            for name in [
-                "advanced_sum",
-                "advanced_septad",
-                "advanced_upper_diff",
-                "advanced_lower_diff",
-                "advanced_transgram",
-                "advanced_transgram_dec",
-            ]:
-                label = self.tab_advanced.findChild(QLabel, name)
-                if label:
-                    label.setText("-")
-            patterns_area = self.tab_advanced.findChild(QTextEdit, "advanced_patterns")
-            if patterns_area:
-                patterns_area.clear()
+            if glyph: glyph.set_ternary("")
 
-    def _calculate_quadset(self, text: str):
-        """Perform the quadset calculations and update tabs."""
+        if hasattr(self, "tab_advanced"):
+            for name in ["advanced_sum", "advanced_septad", "advanced_upper_diff", 
+                         "advanced_lower_diff", "advanced_transgram", "advanced_transgram_dec"]:
+                label = self.tab_advanced.findChild(QLabel, name)
+                if label: label.setText("-")
+            patterns_area = self.tab_advanced.findChild(QTextEdit, "advanced_patterns")
+            if patterns_area: patterns_area.clear()
+
+        # Clear Gematria tables
+        if hasattr(self, "gem_tables"):
+            for key in self.gem_tables:
+                self.gem_tables[key].setRowCount(0)
+
+    def _on_input_changed(self, text: str):
+        """Handle input change, delegate calculation to engine."""
         if not text:
             self._clear_tabs()
             return
             
         try:
-            # 1. Original
-            decimal_orig = int(text)
-            ternary_orig = self.ternary_service.decimal_to_ternary(decimal_orig)
-            self._update_tab(self.tab_original, decimal_orig, ternary_orig)
-            self._update_panel(self.panel_original, decimal_orig, ternary_orig)
-            
-            # 2. Conrune
-            ternary_conrune = self.ternary_service.conrune_transform(ternary_orig)
-            decimal_conrune = self.ternary_service.ternary_to_decimal(ternary_conrune)
-            self._update_tab(self.tab_conrune, decimal_conrune, ternary_conrune)
-            self._update_panel(self.panel_conrune, decimal_conrune, ternary_conrune)
-            
-            # 3. Reversal
-            ternary_rev = self.ternary_service.reverse_ternary(ternary_orig)
-            decimal_rev = self.ternary_service.ternary_to_decimal(ternary_rev)
-            self._update_tab(self.tab_reversal, decimal_rev, ternary_rev)
-            self._update_panel(self.panel_reversal, decimal_rev, ternary_rev)
-            
-            # 4. Conrune of Reversal
-            ternary_conrune_rev = self.ternary_service.conrune_transform(ternary_rev)
-            decimal_conrune_rev = self.ternary_service.ternary_to_decimal(ternary_conrune_rev)
-            self._update_tab(self.tab_conrune_rev, decimal_conrune_rev, ternary_conrune_rev)
-            self._update_panel(self.panel_conrune_rev, decimal_conrune_rev, ternary_conrune_rev)
-            
-            # 5. Differences
-            diff_upper = abs(decimal_orig - decimal_conrune)
-            ternary_upper_diff = self.ternary_service.decimal_to_ternary(diff_upper)
-            self._update_tab(self.tab_upper_diff, diff_upper, ternary_upper_diff)
-            self._update_panel(self.panel_upper_diff, diff_upper, ternary_upper_diff)
-            
-            diff_lower = abs(decimal_rev - decimal_conrune_rev)
-            ternary_lower_diff = self.ternary_service.decimal_to_ternary(diff_lower)
-            self._update_tab(self.tab_lower_diff, diff_lower, ternary_lower_diff)
-            self._update_panel(self.panel_lower_diff, diff_lower, ternary_lower_diff)
-
-            quadset_sum = decimal_orig + decimal_conrune + decimal_rev + decimal_conrune_rev
-            transgram = self.transition_service.transition(
-                ternary_upper_diff, ternary_lower_diff
-            )
-            transgram_decimal = self.ternary_service.ternary_to_decimal(transgram)
-            septad_total = (
-                quadset_sum + diff_upper + diff_lower + transgram_decimal
-            )
-            decimals = [
-                decimal_orig,
-                decimal_conrune,
-                decimal_rev,
-                decimal_conrune_rev,
-            ]
-            ternaries = [
-                ternary_orig,
-                ternary_conrune,
-                ternary_rev,
-                ternary_conrune_rev,
-            ]
-            patterns = self._build_pattern_summary(decimals, ternaries)
-            self._update_advanced_tab(
-                quadset_sum,
-                septad_total,
-                diff_upper,
-                diff_lower,
-                transgram,
-                transgram_decimal,
-                patterns,
-            )
-            
+            decimal_val = int(text)
+            result = self.engine.calculate(decimal_val)
+            self._display_results(result)
         except ValueError:
-            self._clear_tabs()
+            # Optionally clear or indicate error, for now just ignore incomplete input
+            pass
+
+    def _display_results(self, result: QuadsetResult):
+        """Distribute the QuadsetResult to the UI components."""
+        # 1. Update Grid Panels
+        self._update_panel(self.panel_original, result.original)
+        self._update_panel(self.panel_conrune, result.conrune)
+        self._update_panel(self.panel_reversal, result.reversal)
+        self._update_panel(self.panel_conrune_rev, result.conrune_reversal)
+        self._update_panel(self.panel_upper_diff, result.upper_diff)
+        self._update_panel(self.panel_lower_diff, result.lower_diff)
+        
+        # 2. Update Detail Tabs
+        self._update_tab(self.tab_original, result.original)
+        self._update_tab(self.tab_conrune, result.conrune)
+        self._update_tab(self.tab_reversal, result.reversal)
+        self._update_tab(self.tab_conrune_rev, result.conrune_reversal)
+        self._update_tab(self.tab_upper_diff, result.upper_diff)
+        self._update_tab(self.tab_lower_diff, result.lower_diff)
+        
+        # 3. Update Advanced Tab
+        self._update_advanced_tab(result)
+
+        # 4. Update Gematria Tab
+        self._update_gematria_tab(result)
+

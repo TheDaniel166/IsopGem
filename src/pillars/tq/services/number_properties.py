@@ -171,7 +171,8 @@ class NumberPropertiesService:
         polygons = {
             3: "Centered Triangle", 4: "Centered Square", 5: "Centered Pentagonal", 
             6: "Centered Hexagonal", 7: "Centered Heptagonal", 8: "Centered Octagonal", 
-            9: "Centered Nonagonal", 10: "Centered Decagonal"
+            9: "Centered Nonagonal", 10: "Centered Decagonal",
+            11: "Centered Hendecagonal", 12: "Star Number (Centered Dodecagonal)"
         }
         
         for k, name in polygons.items():

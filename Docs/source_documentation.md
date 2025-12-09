@@ -622,21 +622,25 @@ classDiagram
 
 ---
 
-### mindmap.py
-**Path**: `src/pillars/document_manager/models/mindmap.py`
+### mindscape.py
+**Path**: `src/pillars/document_manager/models/mindscape.py`
 
-**Architectural Purpose**: Business Logic Layer (Service)
+**Architectural Purpose**: Domain Model
 
-**Summary**: Mindmap models for multi-map 3D mindscape.
+**Summary**: The Living Graph data models.
 
 #### Deep Analysis
-- **Key Logic**: Standard boilerplate.
+- **Key Logic**:
+    -   **MindNode**: Represents a concept/thought. Stores `appearance` (JSON) for shapes/colors.
+    -   **MindEdge**: Represents a relationship. Stores `appearance` (JSON) for line styles.
 - **Inputs**: Standard method arguments
 - **Outputs**: Return values
 - **Critical Relationships**:
   - shared.database.Base
 
 ---
+
+
 
 ## pillars/document_manager/repositories
 
@@ -773,24 +777,7 @@ classDiagram
 
 ---
 
-### mindmap_service.py
-**Path**: `src/pillars/document_manager/services/mindmap_service.py`
 
-**Architectural Purpose**: Business Logic Layer (Service)
-
-**Summary**: Service layer for mindmaps (nodes/edges, multi-map support).
-
-#### Deep Analysis
-- **Key Logic**: `rename_map`: performs core logic (Complexity: 3)
-- **Inputs**: Standard method arguments
-- **Outputs**: Return values
-- **Critical Relationships**:
-  - pillars.document_manager.models.mindmap.Mindmap
-  - pillars.document_manager.models.mindmap.MindmapEdge
-  - pillars.document_manager.models.mindmap.MindmapNode
-  - shared.database.get_db_session
-
----
 
 ### verse_teacher_service.py
 **Path**: `src/pillars/document_manager/services/verse_teacher_service.py`
@@ -831,6 +818,25 @@ classDiagram
 
 ---
 
+### mindscape_service.py
+**Path**: `src/pillars/document_manager/services/mindscape_service.py`
+
+**Architectural Purpose**: Business Logic Layer (Service)
+
+**Summary**: Orchestrates Node and Edge operations (CRUD).
+
+#### Deep Analysis
+- **Key Logic**: 
+    -   `create_node`/`update_node`: Manages Node lifecycle.
+    -   `link_nodes`: Creates Edges between nodes.
+    -   `update_edge`: Updates edge appearance.
+- **Inputs**: Standard method arguments
+- **Outputs**: Return values
+- **Critical Relationships**:
+  - pillars.document_manager.repositories.mindscape_repository
+
+---
+
 ## pillars/document_manager/ui
 
 ### __init__.py
@@ -845,6 +851,84 @@ classDiagram
 - **Inputs**: Standard method arguments
 - **Outputs**: Return values
 - **Critical Relationships**: None detected.
+
+---
+
+### mindscape_window.py
+**Path**: `src/pillars/document_manager/ui/mindscape_window.py`
+
+**Architectural Purpose**: Presentation Layer (View/Controller)
+
+**Summary**: Main Window for the Mindscape ("Living Graph").
+
+#### Deep Analysis
+- **Key Logic**: 
+    -   `_load_graph`: Orchestrates graph initialization.
+    -   `_show_context_menu`: Context-sensitive actions for Nodes (Inspector) and Edges.
+    -   `_save_node_changes`: Bridges Inspector changes to Service layer.
+- **Inputs**: User Interaction
+- **Outputs**: Visual Graph State
+- **Critical Relationships**:
+  - mindscape_view.MindscapeView
+  - mindscape_inspector.NodeInspectorWidget
+  - mindscape_service.MindscapeService
+
+---
+
+### mindscape_view.py
+**Path**: `src/pillars/document_manager/ui/mindscape_view.py`
+
+**Architectural Purpose**: Presentation Layer (View)
+
+**Summary**: Interactive QGraphicsView for the Mindscape.
+
+#### Deep Analysis
+- **Key Logic**: 
+    -   `load_graph`: Syncs scene with list of Node/Edge DTOs.
+    -   `edge_selected`: Custom signal for edge click detection.
+    -   `mousePressEvent`: Handles precise selection logic for shapes and thin edges.
+- **Inputs**: DTO Lists
+- **Outputs**: QGraphicsScene
+- **Critical Relationships**:
+  - mindscape_items.MindscapeNodeItem
+  - mindscape_items.MindscapeEdgeItem
+
+---
+
+### mindscape_items.py
+**Path**: `src/pillars/document_manager/ui/mindscape_items.py`
+
+**Architectural Purpose**: Presentation Layer (Visuals)
+
+**Summary**: Custom QGraphicsItems for Nodes and Edges.
+
+#### Deep Analysis
+- **Key Logic**: 
+    -   `MindscapeNodeItem.paint`: Renders Shapes (Orb, Diamond, etc.), Custom Borders, and Gradients.
+    -   `MindscapeNodeItem.shape`: Returns precise collision path to prevent bounding-box overlap.
+    -   `MindscapeEdgeItem.paint`: Renders Styled Lines (Solid, Dashed, Dotted).
+    -   `MindscapeEdgeItem.shape`: Returns widened path for easier hit-testing.
+- **Inputs**: Appearance Data (JSON)
+- **Outputs**: QPainter Commands
+- **Critical Relationships**: None
+
+---
+
+### mindscape_inspector.py
+**Path**: `src/pillars/document_manager/ui/mindscape_inspector.py`
+
+**Architectural Purpose**: Presentation Layer (View)
+
+**Summary**: Side panel for editing Node/Edge properties.
+
+#### Deep Analysis
+- **Key Logic**: 
+    -   `set_data`: Switches between Node and Edge modes (`QStackedWidget`).
+    -   `_save_node`/`_save_edge`: Collects UI state into DTO/JSON.
+    -   **Controls**: Shapes, Fonts, Borders (Width/Style/Color), Edge Styles.
+- **Inputs**: Node/Edge DTOs
+- **Outputs**: Updated Data Signals
+- **Critical Relationships**: None
 
 ---
 
@@ -1024,83 +1108,9 @@ classDiagram
 
 ---
 
-### mindscape_view.py
-**Path**: `src/pillars/document_manager/ui/mindscape_view.py`
 
-**Architectural Purpose**: Presentation Layer (View)
 
-**Summary**: CPU-rendered 3D-ish mindmap view (no GPU).
 
-#### Deep Analysis
-- **Key Logic**: `mousePressEvent`: performs core logic (Complexity: 16)
-- **Inputs**: Standard method arguments
-- **Outputs**: Return values
-- **Critical Relationships**: None detected.
-
-> [!NOTE] Complexity Alert
-> - High Cyclomatic Complexity (16)
-> - Custom Painting (paintEvent)
-
-#### Visual Model
-
-```mermaid
-classDiagram
-    class MindNode {
-        +Logic()
-    }
-    class MindEdge {
-        +Logic()
-    }
-    class CameraState {
-        +Logic()
-    }
-    class MindscapeView {
-        +Logic()
-    }
-```
-
----
-
-### mindscape_window.py
-**Path**: `src/pillars/document_manager/ui/mindscape_window.py`
-
-**Architectural Purpose**: Presentation Layer (View)
-
-**Summary**: Mindscape window for multi-map 3D mind mapping (CPU-rendered).
-
-#### Deep Analysis
-- **Key Logic**: `_delete_edge`: performs core logic (Complexity: 10)
-- **Inputs**: Standard method arguments
-- **Outputs**: Return values
-- **Critical Relationships**:
-  - pillars.document_manager.models.mindmap.MindmapEdge
-  - pillars.document_manager.models.mindmap.MindmapNode
-  - pillars.document_manager.services.mindmap_service.mindmap_service_context
-  - pillars.document_manager.ui.mindscape_view.MindEdge
-  - pillars.document_manager.ui.mindscape_view.MindNode
-  - pillars.document_manager.ui.mindscape_view.MindscapeView
-  - pillars.document_manager.ui.rich_text_editor.RichTextEditor
-  - pillars.document_manager.utils.mindscape_layout.force_refine
-  - pillars.document_manager.utils.mindscape_layout.radial_seed
-#### Visual Model
-
-```mermaid
-classDiagram
-    class MindscapeWindow {
-        +Logic()
-    }
-    MindscapeWindow ..> MindmapEdge : depends
-    MindscapeWindow ..> MindmapNode : depends
-    MindscapeWindow ..> mindmap_service_context : depends
-    MindscapeWindow ..> MindEdge : depends
-    MindscapeWindow ..> MindNode : depends
-    MindscapeWindow ..> MindscapeView : depends
-    MindscapeWindow ..> RichTextEditor : depends
-    MindscapeWindow ..> force_refine : depends
-    MindscapeWindow ..> radial_seed : depends
-```
-
----
 
 ### ribbon_widget.py
 **Path**: `src/pillars/document_manager/ui/ribbon_widget.py`
@@ -1202,20 +1212,7 @@ classDiagram
 
 ---
 
-### mindscape_layout.py
-**Path**: `src/pillars/document_manager/utils/mindscape_layout.py`
 
-**Architectural Purpose**: Business Logic Layer (Service)
-
-**Summary**: Hybrid radial + force layout for mindmaps (CPU-friendly).
-
-#### Deep Analysis
-- **Key Logic**: `force_refine`: Simple force-directed refinement in-place (3D with z fixed).
-- **Inputs**: Standard method arguments
-- **Outputs**: Return values
-- **Critical Relationships**: None detected.
-
----
 
 ### parsers.py
 **Path**: `src/pillars/document_manager/utils/parsers.py`
@@ -1225,7 +1222,9 @@ classDiagram
 **Summary**: File parsing utilities for document import.
 
 #### Deep Analysis
-- **Key Logic**: `parse_file`: Orchestrate parsing and return content + metadata.
+- **Key Logic**:
+  - `HTMLTextExtractor`: Custom HTML parser that preserves basic structure (paragraphs, headers) as newlines.
+  - `parse_file`: Orchestrate parsing and return content + metadata. Route HTML through the extractor.
 - **Inputs**: File path
 - **Outputs**: Tuple (text, html, ext, metadata)
 - **Critical Relationships**: None detected.
@@ -1410,7 +1409,9 @@ classDiagram
 **Summary**: Service layer for managing gematria calculations.
 
 #### Deep Analysis
-- **Key Logic**: `update_calculation`: Update an existing calculation's metadata.
+- **Key Logic**:
+  - `save_calculation`: Persists calculation record, correctly storing `calculator.name` as the method (Fixed hardcoded "Standard Value" bug).
+  - `update_calculation`: Update an existing calculation's metadata.
 - **Inputs**: Standard method arguments
 - **Outputs**: Return values
 - **Critical Relationships**: None detected.

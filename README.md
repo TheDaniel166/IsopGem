@@ -47,7 +47,7 @@ IsopGem is designed for power users and researchers:
 | 📖 Gematria | **Active** | Hebrew/Greek/English calculator with real-time totals, stats, saved calculations, and text analysis tools. |
 | 📐 Geometry | In development | Sacred geometry calculators (2D/3D), 3D visualization stack (`geometry3d`), and extensive solid/polyhedra database. |
 | 📚 Document Manager | In development | Ingestion pipeline (DOCX, PDF, RTF), full-text search (Whoosh), and metadata graph visualization. |
-| ⭐ Astrology | In development | Native Swiss Ephemeris integration. Natal charts, planetary positions, transit dashboards, and Tychos universe model viewer. |
+| ⭐ Astrology | In development | Native Swiss Ephemeris integration. Natal charts, planetary positions, transit dashboards. |
 | 🔺 TQ | In development | Trigrammaton QBLH research tools: quadset analysis, rune pairing, and geometric transition logic. |
 
 ## Tech Stack

@@ -9,6 +9,7 @@ from .transitions_window import TransitionsWindow
 from .geometric_transitions_window import GeometricTransitionsWindow
 from .geometric_transitions_3d_window import GeometricTransitions3DWindow
 from .conrune_pair_finder_window import ConrunePairFinderWindow
+from .ternary_sound_widget import TernarySoundWidget
 
 
 class TQHub(QWidget):
@@ -166,6 +167,25 @@ class TQHub(QWidget):
         """)
         conrune_btn.clicked.connect(self._open_conrune_pair_finder)
         tools_layout.addWidget(conrune_btn)
+
+        # Amun Sound Button
+        amun_btn = QPushButton("Amun Sound Calculator")
+        amun_btn.setMinimumHeight(50)
+        amun_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #8b5cf6;
+                color: white;
+                font-size: 14pt;
+                font-weight: bold;
+                border-radius: 8px;
+                padding: 10px;
+            }
+            QPushButton:hover {
+                background-color: #7c3aed;
+            }
+        """)
+        amun_btn.clicked.connect(self._open_amun_sound)
+        tools_layout.addWidget(amun_btn)
         
         layout.addLayout(tools_layout)
         
@@ -193,7 +213,8 @@ class TQHub(QWidget):
         """Open the quadset analysis window."""
         self.window_manager.open_window(
             "quadset_analysis",
-            QuadsetAnalysisWindow
+            QuadsetAnalysisWindow,
+            window_manager=self.window_manager
         )
 
     def _open_transitions(self):
@@ -226,4 +247,11 @@ class TQHub(QWidget):
             "conrune_pair_finder",
             ConrunePairFinderWindow,
             window_manager=self.window_manager
+        )
+
+    def _open_amun_sound(self):
+        """Open the Amun Sound Calculator window."""
+        self.window_manager.open_window(
+            "amun_sound_calculator",
+            TernarySoundWidget
         )

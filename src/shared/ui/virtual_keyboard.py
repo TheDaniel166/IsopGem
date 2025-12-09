@@ -2,26 +2,26 @@
 from PyQt6 import sip
 from PyQt6.QtWidgets import (
     QDialog, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, 
-    QButtonGroup, QGridLayout, QLabel, QLineEdit, QTextEdit, QLayoutItem
+    QButtonGroup, QGridLayout, QLabel, QLineEdit, QTextEdit, QLayoutItem,
+    QFrame
 )
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QFont
-from typing import Optional, Sequence
+from PyQt6.QtCore import Qt, pyqtSignal, QSize
+from PyQt6.QtGui import QFont, QColor, QPalette
+from typing import Optional, List
+
+from .keyboard_layouts import LAYOUTS, KeyboardLayout
 
 
 class VirtualKeyboard(QDialog):
     """Virtual keyboard window for Hebrew and Greek character input."""
     
-    # Signal emitted when a character is typed
     character_typed = pyqtSignal(str)
-    
-    # Signal emitted when backspace is pressed
     backspace_pressed = pyqtSignal()
     
     def __init__(self, parent=None):
         """Initialize the virtual keyboard."""
         super().__init__(parent)
-        self.current_layout = "hebrew"  # hebrew, greek_lower, greek_upper
+        self.current_layout_name = "hebrew"
         self.target_input: Optional[QLineEdit] = None
         self.target_editor: Optional[QTextEdit] = None
         self.shift_active: bool = False
@@ -44,414 +44,326 @@ class VirtualKeyboard(QDialog):
     def _setup_ui(self):
         """Set up the keyboard interface."""
         self.setObjectName("keyboardRoot")
+        
+        # Modern Dark Theme (Slate/Zinc Palette)
         self.setStyleSheet(
             """
             #keyboardRoot {
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #111827, stop:1 #0b1222);
-                border: 1px solid #1f2937;
-                border-radius: 12px;
+                background-color: #0f172a; /* Slate 900 */
+                border: 1px solid #334155; /* Slate 700 */
+                border-radius: 16px;
             }
             QLabel#titleLabel {
-                color: #e5e7eb;
-                font-size: 15pt;
+                color: #f1f5f9; /* Slate 100 */
+                font-family: 'Segoe UI', system-ui, sans-serif;
+                font-size: 16pt;
                 font-weight: 700;
             }
             QLabel#subtitleLabel {
-                color: #9ca3af;
-                font-size: 9.5pt;
+                color: #94a3b8; /* Slate 400 */
+                font-size: 10pt;
+                font-family: 'Segoe UI', system-ui, sans-serif;
+            }
+            
+            /* Layout Toggle Group */
+            QFrame#toggleContainer {
+                background-color: #1e293b; /* Slate 800 */
+                border-radius: 8px;
+                padding: 4px;
             }
             QPushButton.layoutToggle {
-                background-color: #0ea5e9;
-                color: #f8fafc;
+                background-color: transparent;
+                color: #94a3b8;
                 border: none;
-                border-radius: 8px;
-                padding: 10px 14px;
+                border-radius: 6px;
+                padding: 8px 16px;
                 font-weight: 600;
+                font-size: 10pt;
             }
             QPushButton.layoutToggle:checked {
-                background-color: #38bdf8;
+                background-color: #38bdf8; /* Sky 400 */
+                color: #0f172a;
             }
-            QPushButton.layoutToggle:hover {
-                background-color: #28b0f5;
+            QPushButton.layoutToggle:hover:!checked {
+                background-color: #334155; /* Slate 700 */
+                color: #e2e8f0;
             }
-            QPushButton.layoutToggle:pressed {
-                background-color: #0ea5e9;
-            }
+            
+            /* Keys */
             QPushButton.keyButton {
-                background-color: #1f2937;
-                color: #e5e7eb;
-                border: 1px solid #273449;
-                border-radius: 10px;
-                padding: 8px;
-                font-weight: 600;
-                min-width: 46px;
-                min-height: 46px;
+                background-color: #1e293b; /* Slate 800 */
+                color: #e2e8f0; /* Slate 200 */
+                border: 1px solid #334155; /* Slate 700 */
+                border-bottom: 3px solid #0f172a; /* Tactile depth */
+                border-radius: 8px;
+                font-weight: 500;
+                font-family: 'Segoe UI', 'David', 'SBL Greek', sans-serif;
             }
             QPushButton.keyButton:hover {
-                background-color: #243049;
-                border-color: #2f3f5c;
+                background-color: #334155; /* Slate 700 */
+                border-color: #475569;
+                margin-top: -1px; /* Lift effect */
+                border-bottom-width: 4px;
             }
             QPushButton.keyButton:pressed {
-                background-color: #111827;
-                border-color: #1f2937;
+                background-color: #0f172a;
+                border: 1px solid #334155;
+                margin-top: 2px;
+                border-bottom-width: 1px;
+            }
+            
+            /* Control Keys */
+            QPushButton.controlButton {
+                background-color: #334155; /* Slate 700 */
+                color: #f8fafc;
+                border: 1px solid #475569;
+                border-bottom: 3px solid #1e293b;
+                border-radius: 8px;
+                font-weight: 600;
+            }
+            QPushButton.controlButton:checked {
+                background-color: #f59e0b; /* Amber 500 for Lock */
+                color: #000;
+                border-color: #d97706;
+            }
+            QPushButton.controlButton:pressed {
+                margin-top: 2px;
+                border-bottom-width: 1px;
             }
             QPushButton.backspaceButton {
-                background-color: #111827;
-                color: #f8fafc;
-                border: 1px solid #273449;
-                border-radius: 10px;
-                padding: 10px 12px;
-                font-weight: 600;
-                min-height: 46px;
-            }
-            QPushButton.backspaceButton:hover {
-                background-color: #1f2937;
-                border-color: #374151;
+                background-color: #ef4444; /* Red 500 */
+                color: white;
+                border: 1px solid #dc2626;
+                border-bottom: 3px solid #991b1b;
+                border-radius: 8px;
+                font-weight: 900;
             }
             QPushButton.backspaceButton:pressed {
-                background-color: #0f172a;
-                border-color: #1f2937;
-            }
-            QPushButton.metaButton {
-                background-color: #1f2937;
-                color: #e5e7eb;
-                border: 1px solid #273449;
-                border-radius: 10px;
-                padding: 10px 12px;
-                font-weight: 600;
-                min-height: 46px;
-            }
-            QPushButton.metaButton:hover {
-                background-color: #243049;
-                border-color: #2f3f5c;
-            }
-            QPushButton.metaButton:pressed {
-                background-color: #111827;
-                border-color: #1f2937;
+                margin-top: 2px;
+                border-bottom-width: 1px;
             }
             """
         )
 
         main_layout = QVBoxLayout(self)
-        main_layout.setSpacing(10)
-        main_layout.setContentsMargins(16, 14, 16, 16)
+        main_layout.setSpacing(16)
+        main_layout.setContentsMargins(20, 20, 20, 20)
 
-        # Title
-        title_row = QVBoxLayout()
+        # Header Section
+        header = QHBoxLayout()
+        titles = QVBoxLayout()
         title = QLabel("Virtual Keyboard")
         title.setObjectName("titleLabel")
-        subtitle = QLabel("Hebrew • Greek (lower/upper)")
+        subtitle = QLabel("Select a layout to begin")
         subtitle.setObjectName("subtitleLabel")
-        title_row.addWidget(title)
-        title_row.addWidget(subtitle)
-        main_layout.addLayout(title_row)
+        titles.addWidget(title)
+        titles.addWidget(subtitle)
+        header.addLayout(titles)
+        header.addStretch()
+        main_layout.addLayout(header)
 
-        # Layout selector
-        header_layout = QHBoxLayout()
-        self.hebrew_btn = QPushButton("Hebrew")
-        self.hebrew_btn.setCheckable(True)
-        self.hebrew_btn.setChecked(True)
-        self.hebrew_btn.setProperty("class", "layoutToggle")
-        self.hebrew_btn.clicked.connect(lambda: self._switch_layout("hebrew"))
-        header_layout.addWidget(self.hebrew_btn)
-
-        self.greek_btn = QPushButton("Greek")
-        self.greek_btn.setCheckable(True)
-        self.greek_btn.setProperty("class", "layoutToggle")
-        self.greek_btn.clicked.connect(lambda: self._switch_layout("greek"))
-        header_layout.addWidget(self.greek_btn)
-
-        self.special_btn = QPushButton("Special")
-        self.special_btn.setCheckable(True)
-        self.special_btn.setProperty("class", "layoutToggle")
-        self.special_btn.clicked.connect(lambda: self._switch_layout("special"))
-        header_layout.addWidget(self.special_btn)
-
-        self.esoteric_btn = QPushButton("Esoteric")
-        self.esoteric_btn.setCheckable(True)
-        self.esoteric_btn.setProperty("class", "layoutToggle")
-        self.esoteric_btn.clicked.connect(lambda: self._switch_layout("esoteric"))
-        header_layout.addWidget(self.esoteric_btn)
-
-        header_layout.addStretch()
-
-        # Button group for exclusive selection
+        # Layout Switcher (Segmented Control style)
+        self.toggle_container = QFrame()
+        self.toggle_container.setObjectName("toggleContainer")
+        toggle_layout = QHBoxLayout(self.toggle_container)
+        toggle_layout.setContentsMargins(4, 4, 4, 4)
+        toggle_layout.setSpacing(4)
+        
         self.layout_group = QButtonGroup(self)
-        self.layout_group.addButton(self.hebrew_btn)
-        self.layout_group.addButton(self.greek_btn)
-        self.layout_group.addButton(self.special_btn)
-        self.layout_group.addButton(self.esoteric_btn)
+        self.layout_buttons = {}
+        
+        # Create buttons dynamically from generic definitions + Esoteric
+        # We manually order them for UX consistency: Hebrew, Greek, Special, Esoteric
+        layout_order = ["hebrew", "greek", "special", "esoteric"]
+        
+        for layout_id in layout_order:
+            if layout_id not in LAYOUTS: continue
+            
+            layout_def = LAYOUTS[layout_id]
+            btn = QPushButton(layout_def.display_name)
+            btn.setCheckable(True)
+            btn.setProperty("class", "layoutToggle")
+            btn.clicked.connect(lambda checked, lid=layout_id: self._switch_layout(lid))
+            
+            self.layout_group.addButton(btn)
+            self.layout_buttons[layout_id] = btn
+            toggle_layout.addWidget(btn)
+            
+        main_layout.addWidget(self.toggle_container)
 
-        main_layout.addLayout(header_layout)
-
-        # Keyboard grid container
+        # Keyboard Grid
         self.keyboard_container = QWidget()
         self.keyboard_layout = QGridLayout(self.keyboard_container)
-        self.keyboard_layout.setSpacing(6)
+        self.keyboard_layout.setSpacing(8)
+        self.keyboard_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.addWidget(self.keyboard_container)
 
-        # Initially show Hebrew keyboard
-        self._show_hebrew_keyboard()
-
-        # Set compact size
-        self.setFixedSize(720, 340)
-    
-    def set_target_input(self, input_field: QLineEdit):
-        """
-        Set the target input field for this keyboard.
+        # Initial State
+        self._switch_layout("hebrew")
+        self.layout_buttons["hebrew"].setChecked(True)
         
-        Args:
-            input_field: The QLineEdit to send characters to
-        """
+        # Resize logic
+        self.setFixedSize(760, 400)
+
+    def set_target_input(self, input_field: QLineEdit):
         self.target_input = input_field
         self.target_editor = None
 
     def set_target_editor(self, editor: QTextEdit):
-        """
-        Set the target QTextEdit for this keyboard.
-
-        Args:
-            editor: The QTextEdit to send characters to
-        """
         self.target_editor = editor
         self.target_input = None
-    
-    def set_layout(self, layout: str):
-        """
-        Public method to switch keyboard layout.
         
-        Args:
-            layout: Layout name ('hebrew', 'greek_lower', 'greek_upper')
-        """
+    def set_layout(self, layout: str):
+        """Public method to force switch layout (e.g. from external menu)."""
         normalized = layout
-        # Backward compatibility for old callers
-        if layout in ("greek_lower", "greek_upper"):
+        # Validation and mapping
+        if layout == "greek_lower": normalized = "greek"
+        if layout == "greek_upper": 
             normalized = "greek"
-            self.shift_locked = layout == "greek_upper"
-            self.shift_active = False
-        self._switch_layout(normalized)
-    
-    def _switch_layout(self, layout: str):
-        """Switch keyboard layout."""
-        self.current_layout = layout
-        # Reflect toggle state in header buttons
-        if hasattr(self, "hebrew_btn") and hasattr(self, "greek_btn"):
-            if layout == "hebrew":
-                self.hebrew_btn.setChecked(True)
-                self.greek_btn.setChecked(False)
-                if hasattr(self, "special_btn"):
-                    self.special_btn.setChecked(False)
-            elif layout == "greek":
-                self.hebrew_btn.setChecked(False)
-                self.greek_btn.setChecked(True)
-                if hasattr(self, "special_btn"):
-                    self.special_btn.setChecked(False)
-            elif layout == "special":
-                self.hebrew_btn.setChecked(False)
-                self.greek_btn.setChecked(False)
-                if hasattr(self, "special_btn"):
-                    self.special_btn.setChecked(True)
-                if hasattr(self, "esoteric_btn"):
-                    self.esoteric_btn.setChecked(False)
-            elif layout == "esoteric":
-                self.hebrew_btn.setChecked(False)
-                self.greek_btn.setChecked(False)
-                if hasattr(self, "special_btn"):
-                    self.special_btn.setChecked(False)
-                if hasattr(self, "esoteric_btn"):
-                    self.esoteric_btn.setChecked(True)
-        if layout != "greek":
+            self.shift_locked = True
+        
+        if normalized in LAYOUTS:
+            self._switch_layout(normalized)
+            if normalized in self.layout_buttons:
+                self.layout_buttons[normalized].setChecked(True)
+
+    def _switch_layout(self, layout_name: str):
+        """Switch the current keyboard layout."""
+        if layout_name not in LAYOUTS:
+            return
+            
+        self.current_layout_name = layout_name
+        layout_def = LAYOUTS[layout_name]
+        
+        # Reset shift states if switching away from a layout that needs them
+        if not layout_def.has_shift:
             self.shift_active = False
             self.shift_locked = False
+            
+        self._render_keyboard(layout_def)
         
-        # Clear existing keyboard
-        while self.keyboard_layout.count():
-            item: QLayoutItem | None = self.keyboard_layout.takeAt(0)
-            if item and item.widget():
-                widget = item.widget()
-                if widget:
-                    widget.deleteLater()
-        
-        # Show appropriate keyboard
-        if layout == "hebrew":
-            self._show_hebrew_keyboard()
-        elif layout == "greek":
-            self._show_greek_keyboard()
-        elif layout == "special":
-            self._show_special_keyboard()
-        elif layout == "esoteric":
-            self._show_esoteric_keyboard()
+        # Update subtitle
+        sub = self.findChild(QLabel, "subtitleLabel")
+        if sub:
+            sub.setText(f"Active Layout: {layout_def.display_name}")
 
-    def _display_char(self, char: str) -> str:
-        """Return the character as displayed based on current shift state."""
-        if self.current_layout == "greek" and (self.shift_active or self.shift_locked):
+    def _render_keyboard(self, layout: KeyboardLayout):
+        """Render the keys for the given layout definition."""
+        # Clear existing
+        while self.keyboard_layout.count():
+            item = self.keyboard_layout.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+                
+        # Calculate grid size (optional optimization, QGrid does it automatically)
+        max_cols = max(len(r) for r in layout.rows) if layout.rows else 10
+        
+        # Render Rows
+        for r_idx, row in enumerate(layout.rows):
+            for c_idx, char in enumerate(row):
+                display_char = self._get_display_char(char, layout)
+                btn = self._create_key_button(display_char, display_char)
+                self.keyboard_layout.addWidget(btn, r_idx, c_idx)
+                
+        # Render Control Row (Shift, Space, Backspace)
+        control_row = len(layout.rows)
+        
+        if layout.has_shift:
+            shift_btn = QPushButton("⇧ Shift")
+            shift_btn.setProperty("class", "controlButton")
+            shift_btn.clicked.connect(self._activate_shift)
+            if self.shift_active:
+                shift_btn.setDown(True)
+            self.keyboard_layout.addWidget(shift_btn, control_row, 0, 1, 2)
+            
+            lock_btn = QPushButton("⇪ Lock")
+            lock_btn.setCheckable(True)
+            lock_btn.setChecked(self.shift_locked)
+            lock_btn.setProperty("class", "controlButton")
+            lock_btn.clicked.connect(self._toggle_shift_lock)
+            self.keyboard_layout.addWidget(lock_btn, control_row, 2, 1, 2)
+            
+            # Spacer
+            
+            backspace_btn = QPushButton("⌫ Backspace")
+            backspace_btn.setProperty("class", "backspaceButton")
+            backspace_btn.clicked.connect(self._on_backspace)
+            self.keyboard_layout.addWidget(backspace_btn, control_row, max_cols-3, 1, 3)
+            
+        else:
+            # Simple control row for non-shift layouts
+            
+            # Maybe add a Space button? (Optional, not previously present but useful)
+            space_btn = QPushButton("Space")
+            space_btn.setProperty("class", "controlButton")
+            space_btn.clicked.connect(lambda: self._on_char_clicked(" "))
+            self.keyboard_layout.addWidget(space_btn, control_row, 0, 1, 2)
+            
+            backspace_btn = QPushButton("⌫ Backspace")
+            backspace_btn.setProperty("class", "backspaceButton")
+            backspace_btn.clicked.connect(self._on_backspace)
+            self.keyboard_layout.addWidget(backspace_btn, control_row, max_cols-3, 1, 3)
+
+    def _get_display_char(self, char: str, layout: KeyboardLayout) -> str:
+        if layout.has_shift and (self.shift_active or self.shift_locked):
             return char.upper()
         return char
 
-    def _activate_shift(self):
-        """Momentarily enable shift for the next Greek character."""
-        if self.current_layout != "greek":
-            return
-        self.shift_active = True
-        self._switch_layout("greek")
-
-    def _toggle_shift_lock(self):
-        """Toggle persistent shift for Greek layout."""
-        if self.current_layout != "greek":
-            return
-        self.shift_locked = not self.shift_locked
-        # Turning on lock clears momentary shift; turning off clears both
-        self.shift_active = False
-        sender = self.sender()
-        if sender is not None and isinstance(sender, QPushButton):
-            try:
-                sender.setChecked(self.shift_locked)
-            except Exception:
-                pass
-        self._switch_layout("greek")
-    
-    def _show_hebrew_keyboard(self):
-        """Display Hebrew keyboard in physical layout order."""
-        rows = [
-            ['ק', 'ר', 'א', 'ט', 'ו', 'ן', 'ם', 'פ'],
-            ['ש', 'ד', 'ג', 'כ', 'ע', 'י', 'ח', 'ל', 'ך', 'ף'],
-            ['ז', 'ס', 'ב', 'ה', 'נ', 'מ', 'צ', 'ת', 'ץ'],
-        ]
-        self._render_keyboard(rows, include_shift=False)
-    
-    def _show_greek_keyboard(self):
-        """Display Greek keyboard with shift/lock support for uppercase."""
-        rows = [
-            ['ς', 'ε', 'ρ', 'τ', 'υ', 'θ', 'ι', 'ο', 'π'],
-            ['α', 'σ', 'δ', 'φ', 'γ', 'η', 'ξ', 'κ', 'λ'],
-            ['ζ', 'χ', 'ψ', 'ω', 'β', 'ν', 'μ'],
-        ]
-        self._render_keyboard(rows, include_shift=True)
-
-    def _show_special_keyboard(self):
-        """Display special-character keys."""
-        rows = [
-            ['Å', '<', '>', '→', '↓', '↑'],
-            ['×', '°', '∞', '≈', '±', '•']
-        ]
-        self._render_keyboard(rows, include_shift=False)
-
-    def _show_esoteric_keyboard(self):
-        """Display Esoteric symbols (Zodiac, Planets, Elements)."""
-        rows = [
-            # Zodiac
-            ['♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓'],
-            # Planets (+ Chiron)
-            ['☉', '☾', '☿', '♀', '♂', '♃', '♄', '♅', '♆', '♇', '⚷'],
-            # Elements / Alchemy / Misc
-            ['🜂', '🜄', '🜁', '🜃', '∞', '∆', '∇', '★', '☆']
-        ]
-        self._render_keyboard(rows, include_shift=False)
-    
-    def _render_keyboard(self, rows: Sequence[Sequence[str]], include_shift: bool):
-        """Render a keyboard grid with optional shift controls."""
-        max_cols = max(len(r) for r in rows) if rows else 0
-
-        for row_idx, row in enumerate(rows):
-            for col_idx, char in enumerate(row):
-                display = self._display_char(char)
-                btn = self._create_char_button(display, display)
-                self.keyboard_layout.addWidget(btn, row_idx, col_idx)
-
-        meta_row = len(rows)
-        if include_shift:
-            shift_btn = QPushButton("Shift")
-            shift_btn.setProperty("class", "metaButton")
-            shift_btn.clicked.connect(self._activate_shift)
-            self.keyboard_layout.addWidget(shift_btn, meta_row, 0)
-
-            lock_btn = QPushButton("Shift Lock")
-            lock_btn.setCheckable(True)
-            lock_btn.setChecked(self.shift_locked)
-            lock_btn.setProperty("class", "metaButton")
-            lock_btn.clicked.connect(self._toggle_shift_lock)
-            self.keyboard_layout.addWidget(lock_btn, meta_row, 1)
-
-            backspace_btn = QPushButton("⌫")
-            backspace_btn.clicked.connect(self._on_backspace)
-            backspace_btn.setProperty("class", "backspaceButton")
-            cols = max_cols if max_cols > 2 else 3
-            self.keyboard_layout.addWidget(backspace_btn, meta_row, cols - 2, 1, 2)
-        else:
-            backspace_btn = QPushButton("⌫")
-            backspace_btn.clicked.connect(self._on_backspace)
-            backspace_btn.setProperty("class", "backspaceButton")
-            cols = max_cols if max_cols > 2 else 3
-            self.keyboard_layout.addWidget(backspace_btn, meta_row, cols - 2, 1, 2)
-    
-    def _create_char_button(self, label: str, emit_char: str) -> QPushButton:
-        """Create a character button."""
+    def _create_key_button(self, label: str, value: str) -> QPushButton:
         btn = QPushButton(label)
-        btn.setMinimumSize(48, 48)
-        btn.setMaximumSize(68, 52)
+        btn.setMinimumSize(52, 52) # Bigger targets
+        btn.setSizePolicy(
+            btn.sizePolicy().horizontalPolicy(), 
+            btn.sizePolicy().verticalPolicy()
+        )
         
-        # Set font size for better visibility
-        font = QFont()
-        font.setPointSize(16)
+        # Dynamic font sizing
+        font = QFont("Segoe UI", 14)
+        if len(label) > 1: # Icons or special chars
+            font.setPointSize(12)
         btn.setFont(font)
         
-        # Connect click to insert character
-        btn.clicked.connect(lambda checked, c=emit_char: self._on_char_clicked(c))
-        
-        # Style
         btn.setProperty("class", "keyButton")
-        
+        btn.clicked.connect(lambda checked, v=value: self._on_char_clicked(v))
         return btn
-    
+
+    def _activate_shift(self):
+        self.shift_active = True
+        # Re-render to show uppercase keys
+        self._switch_layout(self.current_layout_name)
+
+    def _toggle_shift_lock(self):
+        self.shift_locked = not self.shift_locked
+        self.shift_active = False # Lock overrides momentary
+        self._switch_layout(self.current_layout_name)
+
     def _on_char_clicked(self, char: str):
-        """Handle character button click."""
-        # Emit signal
         self.character_typed.emit(char)
         
-        # If target input is set, insert directly
         if self.target_editor:
-            cursor = self.target_editor.textCursor()
-            cursor.insertText(char)
-            self.target_editor.setTextCursor(cursor)
+            self.target_editor.insertPlainText(char)
+            self.target_editor.ensureCursorVisible()
             self.target_editor.setFocus()
         elif self.target_input:
-            cursor_pos = self.target_input.cursorPosition()
-            current_text = self.target_input.text()
-            new_text = current_text[:cursor_pos] + char + current_text[cursor_pos:]
-            self.target_input.setText(new_text)
-            self.target_input.setCursorPosition(cursor_pos + 1)
+            self.target_input.insert(char)
             self.target_input.setFocus()
-
-        # If shift was momentary, reset after a single key
+            
+        # Handle momentary shift interaction
         if self.shift_active and not self.shift_locked:
             self.shift_active = False
-            if self.current_layout == "greek":
-                self._switch_layout("greek")
-    
+            self._switch_layout(self.current_layout_name)
+
     def _on_backspace(self):
-        """Handle backspace button click."""
-        # Emit signal
         self.backspace_pressed.emit()
         
-        # If target input is set, delete character
         if self.target_editor:
-            cursor = self.target_editor.textCursor()
-            cursor.deletePreviousChar()
-            self.target_editor.setTextCursor(cursor)
+            self.target_editor.textCursor().deletePreviousChar()
             self.target_editor.setFocus()
         elif self.target_input:
-            cursor_pos = self.target_input.cursorPosition()
-            if cursor_pos > 0:
-                current_text = self.target_input.text()
-                new_text = current_text[:cursor_pos-1] + current_text[cursor_pos:]
-                self.target_input.setText(new_text)
-                self.target_input.setCursorPosition(cursor_pos - 1)
-                self.target_input.setFocus()
-
+            self.target_input.backspace()
+            self.target_input.setFocus()
 
 _shared_virtual_keyboard: Optional[VirtualKeyboard] = None
-
 
 def get_shared_virtual_keyboard(parent: Optional[QWidget] = None) -> VirtualKeyboard:
     """Return a singleton virtual keyboard instance, reparenting it if needed."""

@@ -10,6 +10,7 @@ from .document_search_window import DocumentSearchWindow
 from .mindscape_window import MindscapeWindow
 
 
+
 class DocumentManagerHub(QWidget):
     """Hub widget for Document Manager pillar - displays available tools."""
     
@@ -112,7 +113,7 @@ class DocumentManagerHub(QWidget):
         tools_layout.addWidget(search_btn)
 
         # Mindscape Button
-        mind_btn = QPushButton("Mindscape")
+        mind_btn = QPushButton("Mindscape (The Living Graph)")
         mind_btn.setMinimumHeight(50)
         mind_btn.setStyleSheet("""
             QPushButton {
@@ -129,6 +130,8 @@ class DocumentManagerHub(QWidget):
         """)
         mind_btn.clicked.connect(self._open_mindscape)
         tools_layout.addWidget(mind_btn)
+
+
 
         layout.addLayout(tools_layout)
         
@@ -177,6 +180,8 @@ class DocumentManagerHub(QWidget):
             MindscapeWindow,
             allow_multiple=False
         )
+
+
 
     def _open_document_from_library(self, doc, search_term=None):
         """Open a document from the library in the editor."""

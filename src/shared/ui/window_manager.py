@@ -209,6 +209,7 @@ class WindowManager:
         Returns:
             Number of active windows
         """
+        return len(self._active_windows)
     def raise_all_windows(self):
         """
         Bring all active windows to the front.

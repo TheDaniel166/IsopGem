@@ -1,13 +1,12 @@
 from .document import Document
 from .document_verse import DocumentVerse, VerseRule, VerseEditLog
-from .mindmap import Mindmap, MindmapNode, MindmapEdge
+from .mindscape import MindNode, MindEdge
 
 __all__ = [
 	"Document",
 	"DocumentVerse",
-	"VerseRule",
+    "VerseRule",
 	"VerseEditLog",
-    "Mindmap",
-    "MindmapNode",
-    "MindmapEdge",
+    "MindNode",
+    "MindEdge"
 ]

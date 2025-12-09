@@ -64,7 +64,7 @@ class CalculationService:
             normalized_text=normalized_text,
             value=value,
             language=calculator.name,
-            method="Standard Value",  # TODO: Support multiple methods
+            method=calculator.name,
             notes=notes,
             source=source,
             tags=tags or [],

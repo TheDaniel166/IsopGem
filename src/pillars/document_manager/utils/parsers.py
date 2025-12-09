@@ -2,6 +2,8 @@
 import os
 from pathlib import Path
 import base64
+from html.parser import HTMLParser
+import io
 
 # Optional imports for file support
 try:
@@ -34,6 +36,27 @@ try:
 except ImportError:
     Converter = None
 
+
+class HTMLTextExtractor(HTMLParser):
+    """Simple HTML parser to extract text with basic layout preservation."""
+    def __init__(self):
+        super().__init__()
+        self.text_parts = []
+        
+    def handle_data(self, data):
+        self.text_parts.append(data)
+        
+    def handle_starttag(self, tag, attrs):
+        if tag == 'br':
+            self.text_parts.append('\n')
+            
+    def handle_endtag(self, tag):
+        if tag in ('p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'tr', 'article', 'section'):
+            self.text_parts.append('\n')
+            
+    def get_text(self):
+        return "".join(self.text_parts).strip()
+
 class DocumentParser:
     """Parses various file formats to extract text and HTML."""
     
@@ -57,8 +80,13 @@ class DocumentParser:
             return text, f"<pre>{text}</pre>", 'txt', {}
         elif ext == '.html' or ext == '.htm':
             html = DocumentParser._parse_html(path)
-            # TODO: Extract text from HTML properly
-            return html, html, 'html', {}
+            
+            # Extract text properly
+            extractor = HTMLTextExtractor()
+            extractor.feed(html)
+            text = extractor.get_text()
+            
+            return text, html, 'html', {}
         elif ext == '.docx':
             return DocumentParser._parse_docx(path)
         elif ext == '.pdf':

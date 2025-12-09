@@ -7,20 +7,20 @@ from pathlib import Path
 # Add project root to path
 sys.path.append(str(Path(__file__).parent.parent))
 
-# Mock modules before importing parsers
-sys.modules['docx'] = MagicMock()
-sys.modules['mammoth'] = MagicMock()
-sys.modules['pypdf'] = MagicMock()
-sys.modules['fitz'] = MagicMock()
-
 from pillars.document_manager.utils.parsers import DocumentParser
 
 class TestParsers(unittest.TestCase):
     
+    @patch('pillars.document_manager.utils.parsers.mammoth')
     @patch('pillars.document_manager.utils.parsers.docx')
     @patch('builtins.open', new_callable=unittest.mock.mock_open, read_data=b"data")
-    def test_parse_docx_metadata(self, mock_file, mock_docx):
+    def test_parse_docx_metadata(self, mock_file, mock_docx, mock_mammoth):
         # Setup mock document
+        mock_file.return_value.tell.return_value = 100
+        
+        # Setup mammoth
+        mock_mammoth.convert_to_html.return_value.value = "<html>Mock HTML</html>"
+        
         mock_doc = MagicMock()
         mock_doc.core_properties.title = "Mock Title"
         mock_doc.core_properties.author = "Mock Author"
