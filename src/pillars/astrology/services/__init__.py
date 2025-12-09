@@ -11,12 +11,6 @@ from .chart_storage_service import (
     LoadedChart,
     SavedChartSummary,
 )
-from .tychos_service import (
-	TychosSkyfieldService,
-	TychosSkyfieldNotAvailableError,
-	TychosSkyfieldComputationError,
-)
-
 __all__ = [
 	"OpenAstroService",
 	"OpenAstroNotAvailableError",
@@ -27,7 +21,4 @@ __all__ = [
     "ChartStorageService",
     "SavedChartSummary",
     "LoadedChart",
-	"TychosSkyfieldService",
-	"TychosSkyfieldNotAvailableError",
-	"TychosSkyfieldComputationError",
 ]

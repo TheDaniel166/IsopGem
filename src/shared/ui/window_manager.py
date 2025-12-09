@@ -83,8 +83,13 @@ class WindowManager:
         window.setAttribute(Qt.WidgetAttribute.WA_QuitOnClose, False)
         
         # Keep window as a separate window but owned by parent
-        # Dialog flag ensures it stays on top of parent (transient) but is movable
-        window.setWindowFlags(Qt.WindowType.Dialog)
+        # Changed to WindowType.Window to guarantee minimize/maximize buttons are respected by the WM
+        # NOTE: This may allow windows to be obscured by the main window (no longer transient-on-top)
+        window.setWindowFlags(
+            Qt.WindowType.Window | 
+            Qt.WindowType.WindowMinMaxButtonsHint | 
+            Qt.WindowType.WindowCloseButtonHint
+        )
         
         # Track window closure
         window.destroyed.connect(lambda: self._on_window_closed(window_id))

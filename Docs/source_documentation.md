@@ -146,6 +146,9 @@ Architectural Analysis of `src` directory.
 
 **Summary**: Astrology pillar - Cosmic calendar and zodiacal mappings.
 
+> [!IMPORTANT]
+> **Degree Notation Standard**: All UI components in the Astrology Pillar must display degrees in **Zodiacal Notation** (e.g., `12° Aries 30'`) unless specialized raw data display is explicitly requested. Use `utils.conversions.to_zodiacal_string` for this purpose.
+
 #### Deep Analysis
 - **Key Logic**: Standard boilerplate.
 - **Inputs**: Standard method arguments
@@ -331,20 +334,6 @@ classDiagram
     }
 ```
 
----
-
-### tychos_service.py
-**Path**: `src/pillars/astrology/services/tychos_service.py`
-
-**Architectural Purpose**: Business Logic Layer (Service)
-
-**Summary**: Tychos/Skyfield integration helpers for the astrology pillar.
-
-#### Deep Analysis
-- **Key Logic**: `__init__`: performs core logic (Complexity: 4)
-- **Inputs**: Standard method arguments
-- **Outputs**: Return values
-- **Critical Relationships**: None detected.
 
 ---
 
@@ -405,6 +394,7 @@ classDiagram
 
 #### Deep Analysis
 - **Key Logic**: `_load_chart`: performs core logic (Complexity: 6)
+- **UI Structure**: Uses `QTabWidget` to separate "Configuration" (inputs) from "Report & Visualization" (results).
 - **Inputs**: Standard method arguments
 - **Outputs**: Return values
 - **Critical Relationships**: None detected.
@@ -448,23 +438,71 @@ classDiagram
 
 ---
 
-### tychos_window.py
-**Path**: `src/pillars/astrology/ui/tychos_window.py`
+
+
+### neo_aubrey_window.py
+**Path**: `src/pillars/astrology/ui/neo_aubrey_window.py`
 
 **Architectural Purpose**: Presentation Layer (View)
 
-**Summary**: Tychos/Skyfield planetary snapshot viewer.
+**Summary**: A "Neolithic Computer" simulation for eclipse prediction.
 
 #### Deep Analysis
-- **Key Logic**: `_generate`: performs core logic (Complexity: 6)
-- **Inputs**: Standard method arguments
-- **Outputs**: Return values
-- **Critical Relationships**: None detected.
+- **Key Logic**:
+    -   **Saros Ring**: 223 items, tracks the 18-year Saros cycle.
+    -   **Aubrey Ring**: 56 items, tracks Lunar Nodes (Hawkins/Hoyle method).
+    -   **J2000 Calibration**: Markers calibrated to J2000.0 mean longitudes.
+-   **Inputs**: User interaction (Zoom/Pan/Time Control)
+-   **Outputs**: Visual state
+-   **Critical Relationships**: None detected.
+
 #### Visual Model
 
 ```mermaid
 classDiagram
-    class TychosWindow {
+    class NeoAubreyWindow {
+        +Logic()
+    }
+    class EclipseClockScene {
+        +Logic()
+    }
+    class StoneItem {
+        +Logic()
+    }
+```
+
+---
+
+### venus_rose_window.py
+**Path**: `src/pillars/astrology/ui/venus_rose_window.py`
+
+**Architectural Purpose**: Presentation Layer (View)
+
+**Summary**: Generative art visualization of the Venus Pentagram.
+
+#### Deep Analysis
+- **Key Logic**:
+    -   **Orbital Simulation**: Earth (T=1.0) and Venus (T=0.615) revolve around Sun.
+    -   **Calibration**: J2000 Initial Epoch (Earth: 100.46°, Venus: 181.98°).
+    -   **The Trace**: A line is drawn between Earth and Venus at every tick.
+    -   **Resonance**: The strict 13:8 orbital ratio causes the lines to form a 5-pointed star/rose over 8 years.
+    -   **Drift**: "Real Physics" mode (1.5°/8y).
+    -   **Prediction**: Calculates future Inferior/Superior conjunctions using Synodic Period (583.92 days).
+-   **Inputs**: Physics Toggle, Turbo Mode.
+-   **Outputs**:
+    -   Animated geometric pattern.
+    -   Data Pane listing future conjunction dates.
+    -   Visual "Glowing Point" effects at conjunction moments.
+-   **Critical Relationships**: None detected.
+
+#### Visual Model
+
+```mermaid
+classDiagram
+    class VenusRoseWindow {
+        +Logic()
+    }
+    class RoseScene {
         +Logic()
     }
 ```
@@ -484,6 +522,21 @@ classDiagram
 - **Key Logic**: Standard boilerplate.
 - **Inputs**: Standard method arguments
 - **Outputs**: Return values
+- **Critical Relationships**: None detected.
+
+---
+
+### conversions.py
+**Path**: `src/pillars/astrology/utils/conversions.py`
+
+**Architectural Purpose**: Infrastructure / Utility
+
+**Summary**: Conversion helpers for astrology values (e.g. degrees to zodiac sign).
+
+#### Deep Analysis
+- **Key Logic**: `to_zodiacal_string`: Converts absolute degree (0-360) to `Deg Sign Min` format (Complexity: 1).
+- **Inputs**: float (degree)
+- **Outputs**: str (formatted string)
 - **Critical Relationships**: None detected.
 
 ---
@@ -3922,7 +3975,7 @@ classDiagram
 **Summary**: Centralized window manager for IsopGem application.
 
 #### Deep Analysis
-- **Key Logic**: `open_window`: Open a tool window, allowing multiple instances if specified.
+- **Key Logic**: `open_window`: Open a tool window, with `MinMaxButtonsHint` and `CloseButtonHint` explicitly set to ensure window controls are visible.
 - **Inputs**: Standard method arguments
 - **Outputs**: Return values
 - **Critical Relationships**: None detected.

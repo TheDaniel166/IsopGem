@@ -35,6 +35,7 @@ from PyQt6.QtWidgets import (
 from ..models import AstrologyEvent, ChartRequest, GeoLocation
 from ..services import OpenAstroNotAvailableError, OpenAstroService
 from ..utils import AstrologyPreferences, DefaultLocation
+from ..utils.conversions import to_zodiacal_string
 
 
 PLANET_CHOICES: Sequence[str] = (
@@ -445,7 +446,7 @@ class PlanetaryPositionsWindow(QMainWindow):
     def _format_cell(self, row: Optional[EphemerisRow]) -> str:
         if row is None:
             return "--"
-        text = f"{row.degree:.2f}° {row.sign_label}"
+        text = to_zodiacal_string(row.degree)
         if row.retrograde:
             text += " (R)"
         if row.speed is not None:

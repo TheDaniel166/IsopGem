@@ -6,7 +6,8 @@ from shared.ui import WindowManager
 from .natal_chart_window import NatalChartWindow
 from .current_transit_window import CurrentTransitWindow
 from .planetary_positions_window import PlanetaryPositionsWindow
-from .tychos_window import TychosWindow
+from .neo_aubrey_window import NeoAubreyWindow
+from .venus_rose_window import VenusRoseWindow
 
 
 class AstrologyHub(QWidget):
@@ -72,10 +73,16 @@ class AstrologyHub(QWidget):
         planet_positions_btn.clicked.connect(self._open_planetary_positions)
         layout.addWidget(planet_positions_btn)
 
-        tychos_btn = QPushButton("Tychos Skyfield Viewer")
-        tychos_btn.setMinimumHeight(48)
-        tychos_btn.clicked.connect(self._open_tychos_viewer)
-        layout.addWidget(tychos_btn)
+        neo_aubrey_btn = QPushButton("Neo-Aubrey Eclipse Clock")
+        neo_aubrey_btn.setMinimumHeight(48)
+        neo_aubrey_btn.clicked.connect(self._open_neo_aubrey)
+        layout.addWidget(neo_aubrey_btn)
+
+        rose_btn = QPushButton("The Cytherean Rose")
+        rose_btn.setMinimumHeight(48)
+        rose_btn.clicked.connect(self._open_venus_rose)
+        layout.addWidget(rose_btn)
+
 
     def _open_natal_chart(self) -> None:
         """Launch the natal chart generator window."""
@@ -101,10 +108,18 @@ class AstrologyHub(QWidget):
             allow_multiple=False,
         )
 
-    def _open_tychos_viewer(self) -> None:
-        """Launch the Tychos model viewer."""
+    def _open_neo_aubrey(self) -> None:
+        """Launch the Neo-Aubrey Eclipse Clock."""
         self.window_manager.open_window(
-            "astrology_tychos_viewer",
-            TychosWindow,
+            "astrology_neo_aubrey",
+            NeoAubreyWindow,
+            allow_multiple=False,
+        )
+
+    def _open_venus_rose(self) -> None:
+        """Launch the Cytherean Rose window."""
+        self.window_manager.open_window(
+            "astrology_venus_rose",
+            VenusRoseWindow,
             allow_multiple=False,
         )

@@ -33,6 +33,7 @@ from PyQt6.QtWidgets import (
     QPlainTextEdit,
     QSpinBox,
     QSplitter,
+    QTabWidget,
     QTableWidget,
     QTableWidgetItem,
     QVBoxLayout,
@@ -51,6 +52,7 @@ from ..services import (
     SavedChartSummary,
 )
 from ..utils import AstrologyPreferences, DefaultLocation
+from ..utils.conversions import to_zodiacal_string
 
 
 class NatalChartWindow(QMainWindow):
@@ -103,6 +105,7 @@ class NatalChartWindow(QMainWindow):
         layout.setContentsMargins(16, 16, 16, 16)
         layout.setSpacing(12)
 
+        # Header Title
         title = QLabel("Generate Natal Charts with OpenAstro2")
         title_font = QFont()
         title_font.setPointSize(18)
@@ -110,9 +113,27 @@ class NatalChartWindow(QMainWindow):
         title.setFont(title_font)
         layout.addWidget(title)
 
-        layout.addWidget(self._build_input_group())
+        # Tab Widget
+        self.tabs = QTabWidget()
+        layout.addWidget(self.tabs)
+
+        # Tab 1: Configuration
+        self.config_tab = QWidget()
+        config_layout = QVBoxLayout(self.config_tab)
+        config_layout.setContentsMargins(8, 8, 8, 8)
+        config_layout.addWidget(self._build_input_group())
+        config_layout.addStretch()  # Push inputs to top
+        self.tabs.addTab(self.config_tab, "Configuration")
+
+        # Tab 2: Report & Visualization
+        self.results_tab = QWidget()
+        results_layout = QVBoxLayout(self.results_tab)
+        results_layout.setContentsMargins(8, 8, 8, 8)
+        results_layout.addWidget(self._build_results_splitter())
+        self.tabs.addTab(self.results_tab, "Report & Visualization")
+
+        # Persistent Action Row (Bottom)
         layout.addLayout(self._build_action_row())
-        layout.addWidget(self._build_results_splitter(), stretch=1)
 
         self.status_label = QLabel("Ready")
         self.status_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
@@ -197,7 +218,7 @@ class NatalChartWindow(QMainWindow):
         form.addRow("House System", self.house_system_combo)
 
         self.include_svg_checkbox = QCheckBox("Include SVG diagram")
-        self.include_svg_checkbox.setChecked(False)
+        self.include_svg_checkbox.setChecked(True)
         form.addRow("SVG Output", self.include_svg_checkbox)
 
         self.notes_input = QPlainTextEdit()
@@ -246,12 +267,16 @@ class NatalChartWindow(QMainWindow):
         splitter.setSizes([650, 450])
         return splitter
 
+    # ------------------------------------------------------------------
+    # UI assembly
+    # ------------------------------------------------------------------
     def _build_planet_group(self) -> QGroupBox:
         group = QGroupBox("Planetary Positions")
         layout = QVBoxLayout(group)
 
-        self.planets_table = QTableWidget(0, 3)
-        self.planets_table.setHorizontalHeaderLabels(["Body", "Degree", "Sign"])
+        # Changed to 2 columns: Body, Position
+        self.planets_table = QTableWidget(0, 2)
+        self.planets_table.setHorizontalHeaderLabels(["Body", "Position"])
         header = self.planets_table.horizontalHeader()
         if header:
             header.setStretchLastSection(True)
@@ -261,39 +286,27 @@ class NatalChartWindow(QMainWindow):
     def _build_misc_group(self) -> QWidget:
         container = QWidget()
         layout = QVBoxLayout(container)
-        layout.setSpacing(10)
-
-        houses_group = QGroupBox("House Cusps")
-        houses_layout = QVBoxLayout(houses_group)
+        
+        # Houses
+        dup_grp = QGroupBox("House Cusps")
+        dup_layout = QVBoxLayout(dup_grp)
         self.houses_table = QTableWidget(0, 2)
-        self.houses_table.setHorizontalHeaderLabels(["House", "Degree"])
-        houses_header = self.houses_table.horizontalHeader()
-        if houses_header:
-            houses_header.setStretchLastSection(True)
-        houses_layout.addWidget(self.houses_table)
-        layout.addWidget(houses_group)
+        self.houses_table.setHorizontalHeaderLabels(["House", "Position"])
+        dup_layout.addWidget(self.houses_table)
+        layout.addWidget(dup_grp)
 
-        aspects_group = QGroupBox("Aspect / Raw Data")
-        aspects_layout = QVBoxLayout(aspects_group)
+        # Aspects
+        asp_grp = QGroupBox("Aspects / Data")
+        asp_layout = QVBoxLayout(asp_grp)
         self.aspects_text = QPlainTextEdit()
         self.aspects_text.setReadOnly(True)
-        aspects_layout.addWidget(self.aspects_text)
-        layout.addWidget(aspects_group, stretch=1)
-
-        svg_group = QGroupBox("SVG Output")
-        svg_layout = QVBoxLayout(svg_group)
-        self.svg_label = QLabel("No SVG rendered.")
-        svg_layout.addWidget(self.svg_label)
-        self.save_svg_button = QPushButton("Export SVG...")
-        self.save_svg_button.clicked.connect(self._export_svg)
-        self.save_svg_button.setEnabled(False)
-        svg_layout.addWidget(self.save_svg_button, alignment=Qt.AlignmentFlag.AlignLeft)
-
-        self.open_chrome_button = QPushButton("Open in Browser")
-        self.open_chrome_button.clicked.connect(self._open_in_browser)
-        self.open_chrome_button.setEnabled(False)
-        svg_layout.addWidget(self.open_chrome_button, alignment=Qt.AlignmentFlag.AlignLeft)
-        layout.addWidget(svg_group)
+        asp_layout.addWidget(self.aspects_text)
+        layout.addWidget(asp_grp)
+        
+        self.view_svg_button = QPushButton("View SVG in Browser")
+        self.view_svg_button.clicked.connect(self._open_in_browser)
+        self.view_svg_button.setEnabled(False)
+        layout.addWidget(self.view_svg_button)
 
         return container
 
@@ -309,91 +322,86 @@ class NatalChartWindow(QMainWindow):
             self._service = None
             self._house_labels = {}
 
-    # ------------------------------------------------------------------
-    # Actions
-    # ------------------------------------------------------------------
     def _generate_chart(self) -> None:
         if self._service is None:
-            QMessageBox.warning(self, "Unavailable", "OpenAstro2 is not available in this environment.")
+            QMessageBox.warning(self, "Unavailable", "OpenAstro2 is not available.")
             return
 
-        request = self._build_request()
+        try:
+            request = self._build_request()
+        except ValueError as exc:
+            QMessageBox.warning(self, "Invalid Input", str(exc))
+            return
+
         QApplication.setOverrideCursor(Qt.CursorShape.BusyCursor)
         try:
             result = self._service.generate_chart(request)
         except ChartComputationError as exc:
-            self._set_status(str(exc))
             QMessageBox.critical(self, "Calculation Error", str(exc))
-        except Exception as exc:  # pragma: no cover - defensive UI handling
-            self._set_status("Unexpected failure while computing chart")
+            self._set_status(str(exc))
+        except Exception as exc: 
             QMessageBox.critical(self, "Unexpected Error", str(exc))
+            self._set_status(f"Error: {exc}")
         else:
-            self._render_result(result)
-            self._set_status("Chart generated successfully.")
             self._last_request = request
             self._last_result = result
             self.save_chart_button.setEnabled(True)
+            self._render_result(result)
+            self.tabs.setCurrentWidget(self.results_tab)
+            self._set_status("Chart generated successfully.")
         finally:
             QApplication.restoreOverrideCursor()
+
+    def _build_request(self) -> ChartRequest:
+        dt = self.datetime_input.dateTime().toPyDateTime()
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+            
+        loc = GeoLocation(
+            name=self.location_name_input.text().strip() or "Unknown",
+            latitude=self.latitude_input.value(),
+            longitude=self.longitude_input.value(),
+            elevation=float(self.elevation_input.value())
+        )
+        
+        event = AstrologyEvent(
+            name=self.name_input.text().strip() or "Natal Chart",
+            timestamp=dt,
+            location=loc,
+            timezone_offset=self.timezone_input.value()
+        )
+        
+        selected_house = self.house_system_combo.currentData()
+        settings = {"astrocfg": {"houses_system": selected_house}} if selected_house else {}
+        
+        request = ChartRequest(
+            primary_event=event,
+            include_svg=self.include_svg_checkbox.isChecked(),
+            settings=settings
+        )
+        return request
 
     def _clear_results(self) -> None:
         self.planets_table.setRowCount(0)
         self.houses_table.setRowCount(0)
         self.aspects_text.clear()
-        self.svg_label.setText("No SVG rendered.")
-        self.save_svg_button.setEnabled(False)
-        self.open_chrome_button.setEnabled(False)
-        self._last_svg = None
         self._last_result = None
+        self._last_svg = None
         self.save_chart_button.setEnabled(False)
+        if hasattr(self, 'view_svg_button'):
+            self.view_svg_button.setEnabled(False)
         self._set_status("Results cleared.")
 
-    def _export_svg(self) -> None:
-        if not self._last_svg:
-            return
-        file_path, _ = QFileDialog.getSaveFileName(self, "Save SVG", "chart.svg", "SVG Files (*.svg)")
-        if not file_path:
-            return
-        try:
-            with open(file_path, "w", encoding="utf-8") as handle:
-                handle.write(self._last_svg)
-        except OSError as exc:
-            QMessageBox.critical(self, "Save Failed", str(exc))
-        else:
-            self._set_status(f"SVG saved to {file_path}")
+    def _render_aspects(self, result: ChartResult) -> None:
+        if hasattr(self, 'aspects_text'):
+             data = result.aspect_summary or result.raw_payload
+             text = json.dumps(data, indent=2, default=str)
+             self.aspects_text.setPlainText(text)
 
-    # ------------------------------------------------------------------
-    # Helpers
-    # ------------------------------------------------------------------
-    def _build_request(self) -> ChartRequest:
-        qdatetime = self.datetime_input.dateTime()
-        py_dt: datetime = qdatetime.toPyDateTime()
-        if py_dt.tzinfo is None:
-            py_dt = py_dt.replace(tzinfo=timezone.utc)
-
-        location = GeoLocation(
-            name=self.location_name_input.text().strip() or "Unknown",
-            latitude=self.latitude_input.value(),
-            longitude=self.longitude_input.value(),
-            elevation=float(self.elevation_input.value()),
-        )
-
-        primary_event = AstrologyEvent(
-            name=self.name_input.text().strip() or "Primary Event",
-            timestamp=py_dt,
-            location=location,
-            timezone_offset=self.timezone_input.value(),
-        )
-
-        settings = self._service.default_settings() if self._service else {}
-        cfg = settings.setdefault("astrocfg", {})
-        cfg["houses_system"] = self.house_system_combo.currentData() or "P"
-
-        return ChartRequest(
-            primary_event=primary_event,
-            include_svg=self.include_svg_checkbox.isChecked(),
-            settings=settings,
-        )
+    def _handle_svg(self, result: ChartResult) -> None:
+        self._last_svg = result.svg_document
+        if hasattr(self, 'view_svg_button'):
+            self.view_svg_button.setEnabled(bool(result.svg_document))
 
     def _render_result(self, result) -> None:
         self._render_planets(result)
@@ -407,8 +415,10 @@ class NatalChartWindow(QMainWindow):
             row = self.planets_table.rowCount()
             self.planets_table.insertRow(row)
             self.planets_table.setItem(row, 0, QTableWidgetItem(position.name))
-            self.planets_table.setItem(row, 1, QTableWidgetItem(f"{position.degree:.2f}°"))
-            self.planets_table.setItem(row, 2, QTableWidgetItem(self._sign_label(position.sign_index)))
+            
+            # Format: DD° Sign MM'
+            formatted_pos = to_zodiacal_string(position.degree)
+            self.planets_table.setItem(row, 1, QTableWidgetItem(formatted_pos))
 
     def _render_houses(self, result) -> None:
         self.houses_table.setRowCount(0)
@@ -416,27 +426,10 @@ class NatalChartWindow(QMainWindow):
             row = self.houses_table.rowCount()
             self.houses_table.insertRow(row)
             self.houses_table.setItem(row, 0, QTableWidgetItem(str(house.number)))
-            self.houses_table.setItem(row, 1, QTableWidgetItem(f"{house.degree:.2f}°"))
+            
+            formatted_pos = to_zodiacal_string(house.degree)
+            self.houses_table.setItem(row, 1, QTableWidgetItem(formatted_pos))
 
-    def _render_aspects(self, result) -> None:
-        pretty = json.dumps(result.aspect_summary or result.raw_payload, indent=2)
-        self.aspects_text.setPlainText(pretty)
-
-    def _handle_svg(self, result) -> None:
-        self._last_svg = result.svg_document
-        if result.svg_document:
-            self.svg_label.setText(f"SVG generated ({len(result.svg_document)} chars)")
-            self.save_svg_button.setEnabled(True)
-            self.open_chrome_button.setEnabled(True)
-        else:
-            self.svg_label.setText("SVG generation disabled for this chart.")
-            self.save_svg_button.setEnabled(False)
-            self.open_chrome_button.setEnabled(False)
-
-    def _sign_label(self, index: Optional[int]) -> str:
-        if index is None or index < 0 or index >= len(self.ZODIAC_SIGNS):
-            return "Unknown"
-        return self.ZODIAC_SIGNS[index]
 
     def _set_status(self, message: str) -> None:
         if hasattr(self, "status_label"):

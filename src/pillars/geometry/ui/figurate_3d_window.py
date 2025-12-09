@@ -19,6 +19,10 @@ from ..services.figurate_3d import (
     square_pyramidal_number, square_pyramidal_points,
     octahedral_number, octahedral_points,
     cubic_number, cubic_points,
+    centered_cubic_number, centered_cubic_points,
+    stellated_octahedron_number, stellated_octahedron_points,
+    icosahedral_number, icosahedral_points,
+    dodecahedral_number, dodecahedral_points,
     project_points_isometric, get_layer_for_point, project_dynamic
 )
 from .geometry_scene import GeometryScene, GeometryScenePayload
@@ -61,6 +65,10 @@ class Figurate3DWindow(QWidget):
         ("Square Pyramidal", "pyramidal"),
         ("Octahedral", "octahedral"),
         ("Cubic", "cubic"),
+        ("Centered Cubic", "centered_cubic"),
+        ("Stellated Octahedron", "stellated_octahedron"),
+        ("Centered Icosahedral", "icosahedral"),
+        ("Centered Dodecahedral", "dodecahedral"),
     ]
 
     def __init__(self, window_manager=None, parent=None):
@@ -377,6 +385,18 @@ class Figurate3DWindow(QWidget):
         elif shape_type == "cubic":
             self._current_points_3d = cubic_points(n, spacing)
             value = cubic_number(n)
+        elif shape_type == "centered_cubic":
+            self._current_points_3d = centered_cubic_points(n, spacing)
+            value = centered_cubic_number(n)
+        elif shape_type == "stellated_octahedron":
+            self._current_points_3d = stellated_octahedron_points(n, spacing)
+            value = stellated_octahedron_number(n)
+        elif shape_type == "icosahedral":
+            self._current_points_3d = icosahedral_points(n, spacing)
+            value = icosahedral_number(n)
+        elif shape_type == "dodecahedral":
+            self._current_points_3d = dodecahedral_points(n, spacing)
+            value = dodecahedral_number(n)
         else:
             self._current_points_3d = []
             value = 0
@@ -457,7 +477,11 @@ class Figurate3DWindow(QWidget):
                 "tetrahedral": "Tetrahedral",
                 "pyramidal": "Square Pyramidal",
                 "octahedral": "Octahedral",
-                "cubic": "Cubic"
+                "cubic": "Cubic",
+                "centered_cubic": "Centered Cubic",
+                "stellated_octahedron": "Stellated Octahedron",
+                "icosahedral": "Centered Icosahedral",
+                "dodecahedral": "Centered Dodecahedral"
             }
             self.value_label.setText(f"{names.get(shape_type, 'Figurate')} Number: {value}")
 
