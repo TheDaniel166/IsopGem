@@ -11,13 +11,16 @@ class MindscapeNodeItem(QGraphicsObject):
     clicked = pyqtSignal(int)  # Emits node_id on click
     position_changed = pyqtSignal()  # Emits when pos changes (for edges)
 
-    def __init__(self, node_id, title, node_type="concept", icon=None, theme=None):
+    def __init__(self, node_id, title, node_type="concept", icon=None, content=None, theme=None):
         super().__init__()
         self.node_id = node_id
         self.title_text = title
         self.node_type = node_type
         self.icon = icon
         self.theme = theme # GraphTheme instance
+        
+        if content:
+             self.setToolTip(content)
         
         self.width = 160
         self.height = 80

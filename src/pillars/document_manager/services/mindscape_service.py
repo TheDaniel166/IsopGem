@@ -105,7 +105,28 @@ class MindscapeService:
         if node:
             node.appearance = json.dumps(appearance)
             self.db.commit()
+
+    def update_node_position(self, node_id: int, x: float, y: float):
+        """Update just the position in the appearance blob."""
+        node = self.db.query(MindNode).get(node_id)
+        if node:
+            try:
+                data = json.loads(node.appearance) if node.appearance else {}
+            except:
+                data = {}
             
+            data["pos"] = [round(x, 1), round(y, 1)]
+            node.appearance = json.dumps(data)
+            self.db.commit()
+            
+    def wipe_database(self):
+        """NUCLEAR OPTION: Delete ALL mindscape data."""
+        # 1. Delete all edges first (foreign keys)
+        self.db.query(MindEdge).delete()
+        # 2. Delete all nodes
+        self.db.query(MindNode).delete()
+        self.db.commit()
+
     def update_edge_style(self, edge_id: int, appearance: dict):
         edge = self.db.query(MindEdge).get(edge_id)
         if edge:
@@ -116,6 +137,23 @@ class MindscapeService:
         """Fetch a single edge."""
         edge = self.db.query(MindEdge).get(edge_id)
         return MindEdgeDTO.from_orm(edge) if edge else None
+
+    def get_edge(self, edge_id: int) -> MindEdgeDTO:
+        """Fetch a single edge."""
+        edge = self.db.query(MindEdge).get(edge_id)
+        return MindEdgeDTO.from_orm(edge) if edge else None
+
+    def find_node_by_document_id(self, doc_id: int) -> Optional[MindNodeDTO]:
+        """Find a node linked to a specific document."""
+        # SQLite JSON search (Basic string match is safer across versions than json_extract)
+        # Search for '"document_id": <ID>' or '"document_id":<ID>'
+        # Given we dump with default separators, it's usually "document_id": 123
+        pattern = f'%"document_id": {doc_id}%' 
+        node = self.db.query(MindNode).filter(
+            MindNode.type == "document",
+            MindNode.metadata_payload.like(pattern)
+        ).first()
+        return MindNodeDTO.from_orm(node) if node else None
 
     def update_edge(self, edge_id: int, data: dict) -> MindEdgeDTO:
         """Update edge details."""

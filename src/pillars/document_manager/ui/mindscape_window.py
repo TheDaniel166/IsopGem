@@ -1,9 +1,9 @@
 
 from PyQt6.QtWidgets import (
     QMainWindow, QGraphicsView, QDockWidget, QMenu, QMessageBox, 
-    QInputDialog, QFileDialog, QWidget, QVBoxLayout
+    QInputDialog, QFileDialog, QWidget, QVBoxLayout, QStackedWidget
 )
-from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtCore import Qt, QTimer, pyqtSlot
 from .mindscape_view import MindscapeView
 from .mindscape_inspector import NodeInspectorWidget
 from ..services.mindscape_service import mindscape_service_context
@@ -11,12 +11,12 @@ from ..services.document_service import document_service_context
 from .document_editor_window import DocumentEditorWindow
 import json
 
+from .search_results_panel import SearchResultsPanel
+
 class MindscapeWindow(QMainWindow):
-    """
-    Mindscape 3.0: The Living Graph
-    """
     def __init__(self, parent=None):
         super().__init__(parent)
+        # ... (Central Widget Init) ...
         self.setWindowTitle("Mindscape: The Living Graph")
         self.resize(1400, 800) # Slightly wider for dock
         
@@ -27,23 +27,300 @@ class MindscapeWindow(QMainWindow):
         
         self.view = MindscapeView()
         self.layout.addWidget(self.view)
-        
-        # Inspector Dock
-        self.inspector = NodeInspectorWidget()
-        self.dock = QDockWidget("Inspector", self)
-        self.dock.setWidget(self.inspector)
+
+        # Docks (Tabbed: Inspector | Search Results)
+        self.dock = QDockWidget("Mindscape Tools", self)
         self.dock.setAllowedAreas(Qt.DockWidgetArea.RightDockWidgetArea | Qt.DockWidgetArea.LeftDockWidgetArea)
+        
+        # Stacked Container
+        self.stack = QStackedWidget()
+        
+        self.inspector = NodeInspectorWidget()
+        self.search_panel = SearchResultsPanel()
+        
+        self.stack.addWidget(self.inspector)
+        self.stack.addWidget(self.search_panel)
+        
+        self.dock.setWidget(self.stack) # Set stack directly as dock widget
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.dock)
-        self.dock.hide() # Hidden by default
+        self.dock.hide() 
         
         # Signals
-        # self.view.node_selected.connect(self._on_node_selected) # Disconnected per user request
-        # self.view.edge_selected.connect(self._on_edge_selected) # Disconnected per user request (Context only)
         self.inspector.node_updated.connect(self._save_node_changes)
         self.inspector.edge_updated.connect(self._save_edge_changes)
         
+        # Search Panel Signals
+        self.search_panel.add_to_graph_requested.connect(self._add_search_result_to_graph)
+        self.search_panel.open_document_requested.connect(self._open_document_by_id)
+        
+        # View Signals
+        self.view.node_selected.connect(self._on_node_selected)
+        
+        self._setup_toolbar()
         self._init_graph()
         self._setup_interactions()
+
+    @pyqtSlot(int)
+    def _on_node_selected(self, node_id):
+        """Handle selection to toggle between Inspector and Search Panel."""
+        try:
+            with mindscape_service_context() as svc:
+                focus, _, _, _ = svc.get_local_graph(node_id)
+                if not focus: return
+                
+                self.dock.setVisible(True)
+                self.dock.raise_()
+                
+                if focus.type == "search_query":
+                    # Show Search Panel
+                    self.stack.setCurrentWidget(self.search_panel)
+                    self.dock.setWindowTitle("Search Results")
+                    
+                    # Parse results from metadata
+                    results = []
+                    term = None
+                    if focus.metadata_payload:
+                        try:
+                            data = json.loads(focus.metadata_payload)
+                            if isinstance(data, list): results = data
+                            elif "results" in data: 
+                                results = data["results"]
+                                term = data.get("term") # Extract term
+                        except: pass
+                    
+                    self.search_panel.load_results(results, term=term)
+                    
+                else:
+                    # Show Inspector
+                    self.stack.setCurrentWidget(self.inspector)
+                    self.dock.setWindowTitle("Inspector")
+                    self.inspector.set_data(focus, "node")
+                
+        except Exception as e:
+            print(f"Error selecting node: {e}")
+
+    # ... (Keep existing methods: _open_edge_inspector, _save_*, _setup_toolbar, etc.)
+
+    def _create_search_node(self):
+        """Create a central node with results stored in metadata."""
+        term, ok = QInputDialog.getText(self, "Create Search Node", "Enter search term:")
+        if not ok or not term.strip():
+            return
+            
+        with document_service_context() as doc_service:
+            results = doc_service.search_documents_with_highlights(term, limit=50) # Increased limit
+            
+            if not results:
+                QMessageBox.information(self, "No Results", f"No documents found for '{term}'")
+                return
+                
+            with mindscape_service_context() as mind_service:
+                # 1. Create Central Search Node
+                # Store FULL results list in metadata
+                # FIX: JSON cannot serialize datetime objects. Convert them to strings.
+                sanitized_results = []
+                for r in results:
+                    clean_r = r.copy()
+                    if 'created_at' in clean_r and hasattr(clean_r['created_at'], 'isoformat'):
+                        clean_r['created_at'] = clean_r['created_at'].isoformat()
+                    sanitized_results.append(clean_r)
+                    
+                meta = {"results": sanitized_results, "term": term}
+                
+                search_node = mind_service.create_node(
+                    title=f"Concept: {term}",
+                    type="search_query",
+                    content=f"Search Query: '{term}'\nClick to see {len(results)} results.",
+                    metadata_payload=meta,
+                    appearance={"shape": "hexagon", "color_override": "#8b5cf6", "textColor": "#ffffff", "borderWidth": 2}
+                )
+                
+                # 2. Contextual Linking (Accessibility)
+                # Link to the current focus node so it's not an orphan (and thus lost on restart).
+                parent_id = self.view.current_focus_id
+                if not parent_id:
+                    # If empty canvas, this becomes the new root automatically if it's the first node.
+                    # If existing disjoint graph, try to find home.
+                    home = mind_service.get_home_node()
+                    if home and home.id != search_node.id:
+                        parent_id = home.id
+                
+                if parent_id:
+                     mind_service.link_nodes(parent_id, search_node.id, "parent")
+                
+                search_node_id = search_node.id # "I prefer that the search be a child of all the documents it appears in" -> This implies linking.
+                # BUT "it produces a lot of snippets".
+                # Compromise: Link to existing nodes. Don't spawn new ones onto the graph automatically.
+                # Let the panel spawn them.
+                
+                # 2. Additive Load (No auto-linking)
+                self.view.load_graph(search_node.id, keep_existing=True)
+                
+                # Select it to open panel (REMOVED: User requested on-demand only)
+                # self._on_node_selected(search_node.id)
+                
+                msg = f"Created Concept '{term}'.\n{len(results)} results initialized."
+                QMessageBox.information(self, "Search Complete", msg)
+
+    def _add_search_result_to_graph(self, result_data):
+        """Called from Panel to materialize a document node."""
+        doc_id = result_data['id']
+        snippet = result_data.get('highlights', '')
+        
+        with mindscape_service_context() as svc:
+            # 1. Check if exists
+            existing = svc.find_node_by_document_id(doc_id)
+            node_id = None
+            
+            if existing:
+                node_id = existing.id
+                QMessageBox.information(self, "Exists", f"'{result_data['title']}' is already in the Mindscape.")
+            else:
+                # 2. Create
+                new_node = svc.create_node(
+                    title=result_data['title'],
+                    type="document",
+                    content=snippet,
+                    metadata_payload={"document_id": doc_id},
+                    appearance={"shape": "document", "color_override": "#e0f2fe", "textColor": "#0f172a", "borderColor": "#0284c7"}
+                )
+                node_id = new_node.id
+                
+                # Link to current Focus if it is a search query?
+                if self.view.current_focus_id:
+                     svc.link_nodes(node_id, self.view.current_focus_id, "parent") # Doc -> Concept
+            
+            # 3. Load/Center
+            if node_id:
+                self.view.load_graph(node_id, keep_existing=True)
+                
+            # 4. Open and Highlight (User Request)
+            highlight = result_data.get('search_term')
+            self._open_document_by_id(doc_id, highlight_text=highlight)
+
+    def _open_document_by_id(self, doc_id, highlight_text=None):
+         # Just a wrapper around existing logic if possible or direct
+         # We need to find if there is a node, if not, open directly?
+         # _open_document_node requires a node_id.
+         # Let's bypass and open directly using DocService
+         with document_service_context() as doc_service:
+            doc = doc_service.get_document(doc_id)
+            if doc:
+                self.doc_editor_Direct = DocumentEditorWindow(self) # Keep reference
+                self.doc_editor_Direct.load_document_model(doc, search_term=highlight_text)
+                self.doc_editor_Direct.show()
+        
+    def _setup_toolbar(self):
+        """Build the modern toolbar."""
+        from PyQt6.QtWidgets import QToolBar, QLabel
+        from PyQt6.QtGui import QAction, QIcon
+        
+        toolbar = QToolBar("Mindscape Actions", self)
+        toolbar.setMovable(False)
+        self.addToolBar(Qt.ToolBarArea.TopToolBarArea, toolbar)
+        
+        # Style
+        # Modern Flat look
+        self.setStyleSheet("""
+        QToolBar {
+            background-color: #1e1e1e;
+            border-bottom: 2px solid #333;
+            spacing: 12px;
+            padding: 8px;
+        }
+        QToolButton {
+            background-color: transparent;
+            border: 1px solid #444;
+            border-radius: 6px;
+            padding: 6px 12px;
+            color: #ddd;
+            font-weight: bold;
+        }
+        QToolButton:hover {
+            background-color: #333;
+            border-color: #666;
+            color: white;
+        }
+        QToolButton:pressed {
+            background-color: #000;
+        }
+        """)
+        
+        # 1. New Thought
+        new_act = QAction("New Thought", self)
+        new_act.setStatusTip("Create a new root thought")
+        new_act.triggered.connect(self._create_root_node)
+        toolbar.addAction(new_act)
+        
+        # 2. Import Docs
+        import_act = QAction("Import Document", self)
+        import_act.setStatusTip("Import a file as a node")
+        import_act.triggered.connect(lambda: self._import_documents(None))
+        toolbar.addAction(import_act)
+        
+        # 3. Search
+        search_act = QAction("Search Knowledge", self)
+        search_act.setStatusTip("Search documents and create a graph")
+        search_act.triggered.connect(self._create_search_node)
+        toolbar.addAction(search_act)
+        
+        # Spacer
+        empty = QWidget()
+        empty.setFixedWidth(20)
+        toolbar.addWidget(empty)
+        
+        # 4. Cleanse (Danger)
+        cleanse_act = QAction("Cleanse Mindmap", self)
+        cleanse_act.setStatusTip("Delete all nodes and edges (Irreversible)")
+        cleanse_act.triggered.connect(self._cleanse_mindmap)
+        
+        # Find the button widget to style it specifically red
+        # We add the action, then find the widget related to it? 
+        # Easier: Create a specialized button widget or just rely on CSS class if accessible.
+        # But QToolBar wraps actions. Let's just add it and maybe style it differently via object name?
+        toolbar.addAction(cleanse_act)
+        
+        # Hack to style the last button red?
+        # Accessing widgetForAction works if toolbar has it.
+        w = toolbar.widgetForAction(cleanse_act)
+        if w:
+            w.setStyleSheet("""
+            QToolButton {
+                border: 1px solid #7f1d1d;
+                color: #fca5a5;
+            }
+            QToolButton:hover {
+                background-color: #991b1b;
+                color: white;
+            }
+            """)
+
+    def _cleanse_mindmap(self):
+        """Wipe the database after strong confirmation."""
+        reply = QMessageBox.question(
+            self, "Cleanse Mindmap?",
+            "WARNING: This will delete ALL nodes and edges in the Mindscape.\n\n"
+            "This action cannot be undone.\n\n"
+            "Are you absolutely sure?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+        
+        if reply == QMessageBox.StandardButton.Yes:
+            try:
+                with mindscape_service_context() as svc:
+                    svc.wipe_database()
+                    
+                self.view.scene.clear()
+                self.view._items.clear()
+                self.view._edges.clear()
+                self.view.current_focus_id = None
+                self.view.physics.clear() # IMPORTANT: Clear physics engine too
+                self.view.update()
+                
+                QMessageBox.information(self, "Cleansed", "The Mindscape has been wiped clean.")
+                
+            except Exception as e:
+                QMessageBox.critical(self, "Error", str(e))
 
     def _open_inspector(self, node_id):
         """Manually open inspector for a specific node."""
@@ -55,14 +332,6 @@ class MindscapeWindow(QMainWindow):
         self.dock.show()
         self._on_edge_selected(edge_id)
 
-    def _on_node_selected(self, node_id):
-        """Fetch full details for the inspector."""
-        try:
-            with mindscape_service_context() as svc:
-                focus, _, _, _ = svc.get_local_graph(node_id)
-                self.inspector.set_data(focus, "node")
-        except Exception as e:
-            print(f"Error fetching node details: {e}")
 
     def _on_edge_selected(self, edge_id):
         """Fetch edge details."""
@@ -180,11 +449,27 @@ class MindscapeWindow(QMainWindow):
             target_id = item.node_id
             target_name = item.title_text
             
+        # Check node type for Context Actions
+        is_search_node = False
+        if target_id:
+             try:
+                 with mindscape_service_context() as svc:
+                     node_dto, _, _, _ = svc.get_local_graph(target_id)
+                     if node_dto and node_dto.type == "search_query":
+                         is_search_node = True
+             except: pass
+            
         menu = QMenu(self)
         
         # Header
         menu.addAction(f"Actions for: {target_name}").setEnabled(False)
         menu.addSeparator()
+        
+        # Search Specific
+        show_search = None
+        if is_search_node:
+            show_search = menu.addAction("Show Search Results")
+            menu.addSeparator()
         
         # Actions
         # inspect_action = menu.addAction("Inspect Properties") # Removed duplicate
@@ -218,7 +503,9 @@ class MindscapeWindow(QMainWindow):
         
         action = menu.exec(self.view.mapToGlobal(pos))
         
-        if action == add_child:
+        if action == show_search:
+             self._on_node_selected(int(target_id))
+        elif action == add_child:
             self._add_node(target_id, "child")
         elif action == add_parent:
             self._add_node(target_id, "parent")
@@ -419,53 +706,4 @@ class MindscapeWindow(QMainWindow):
             self.doc_editor.load_document_model(doc)
             self.doc_editor.show()
 
-    def _create_search_node(self):
-        """Create a node based on search results."""
-        term, ok = QInputDialog.getText(self, "Create Search Node", "Enter search term:")
-        if not ok or not term.strip():
-            return
-            
-        with document_service_context() as doc_service:
-            # Search
-            results = doc_service.search_documents_with_highlights(term, limit=20)
-            
-            if not results:
-                QMessageBox.information(self, "No Results", f"No documents found for '{term}'")
-                return
-                
-            with mindscape_service_context() as mind_service:
-                # 1. Create Central Search Node
-                # Hexagon shape, distinctive color
-                search_node = mind_service.create_node(
-                    title=f"Search: {term}",
-                    type="search_query",
-                    content=f"Search Query for: '{term}'\nResults: {len(results)}",
-                    appearance={"shape": "hexagon", "color_override": "#8b5cf6", "textColor": "#ffffff", "borderWidth": 2}
-                )
-                
-                # 2. Create Child Nodes for Results
-                for res in results:
-                    # Parse snippet
-                    snippet = res.get('highlights', 'No preview available.')
-                    # Convert HTML snippet to text if needed, or keep as is? 
-                    # MindscapeNode currently displays raw text usually, but RichTextEditor can handle HTML.
-                    # For Node Content popup (if we had one), HTML is good.
-                    # For now, let's store it as content.
-                    
-                    doc_id = res['id']
-                    
-                    # Create Node
-                    res_node = mind_service.create_node(
-                        title=res['title'],
-                        type="document",
-                        content=snippet,
-                        metadata_payload={"document_id": doc_id},
-                        appearance={"shape": "document", "color_override": "#e0f2fe", "textColor": "#0f172a", "borderColor": "#0284c7"}
-                    )
-                    
-                    # Link to Search Node
-                    mind_service.link_nodes(search_node.id, res_node.id, "parent") # Search Node is Parent
-                    
-                # 3. Load Graph centered on Search Node
-                self.view.load_graph(search_node.id)
-                QMessageBox.information(self, "Search Complete", f"Created search node with {len(results)} results.")
+
