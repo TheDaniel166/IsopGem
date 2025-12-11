@@ -436,7 +436,51 @@ classDiagram
     }
 ```
 
+
 ---
+
+### mindscape_window.py
+**Path**: `src/pillars/document_manager/ui/mindscape_window.py`
+
+**Architectural Purpose**: Presentation Layer (View)
+
+**Summary**: The Sovereign Window for the Mindscape Interface.
+
+#### Deep Analysis
+- **Key Logic**:
+    -   **Graph Interaction**: Handles selection, creation (Root/Linked), and inspection.
+    -   **Tool Docks**: Manages the `NodeInspectorWidget` and `SearchResultsPanel` stacks.
+    -   **Service Integration**: Acts as the bridge between User Input and `MindscapeService`.
+-   **Inputs**: User Events (Clicks, Context Menus).
+-   **Outputs**: Visual updates to `MindscapeView`.
+-   **Critical Relationships**:
+    -   `pillars.document_manager.ui.mindscape_view.MindscapeView`
+    -   `pillars.document_manager.services.mindscape_service.MindscapeService`
+
+#### Visual Model
+
+```mermaid
+classDiagram
+    class MindscapeWindow {
+        +Logic()
+    }
+```
+
+---
+
+### mindscape_theme.py
+**Path**: `src/pillars/document_manager/ui/mindscape_theme.py`
+
+**Architectural Purpose**: Presentation Layer (View) / Utility
+
+**Summary**: Definitions for Mindscape visual themes (Palettes).
+
+#### Deep Analysis
+- **Key Logic**: `get_color`: Resolve semantic color key to Hex/QColor based on active mode (Dark/Light/Egyptian).
+- **Inputs**: Color Key (str)
+-   **Outputs**: `QColor`
+-   **Critical Relationships**: None detected.
+
 
 
 
@@ -1083,7 +1127,14 @@ classDiagram
 
 **Architectural Purpose**: Presentation Layer (View)
 
-**Summary**: No module docstring.
+**Summary**: Dialog for managing document import options (Collection, Tags).
+
+#### Deep Analysis
+- **Key Logic**: `get_data`: Returns dictionary of user-entered import settings.
+- **Inputs**: User input.
+- **Outputs**: Dictionary.
+- **Critical Relationships**: None detected.
+
 
 #### Deep Analysis
 - **Key Logic**: `_setup_ui`: performs core logic (Complexity: 2)
@@ -1098,7 +1149,16 @@ classDiagram
 
 **Architectural Purpose**: Presentation Layer (View)
 
-**Summary**: No module docstring.
+**Summary**: Helper class for managing rich text lists and indentation.
+
+#### Deep Analysis
+- **Key Logic**: 
+  - `toggle_list`: Converts block to list or back to standard paragraph.
+  - `indent`/`outdent`: Manages list nesting levels using `QTextListFormat`.
+- **Inputs**: `QTextEditor` cursor.
+- **Outputs**: Document structure changes.
+- **Critical Relationships**: None detected.
+
 
 #### Deep Analysis
 - **Key Logic**: `outdent`: Decrease indentation or list level.
@@ -1117,7 +1177,16 @@ classDiagram
 
 **Architectural Purpose**: Presentation Layer (View)
 
-**Summary**: No module docstring.
+**Summary**: Custom "Ribbon" style navigation widget with Tabs and Groups.
+
+#### Deep Analysis
+- **Key Logic**: 
+  - `add_ribbon_tab`: Creates a horizontal container page.
+  - `add_group`: Creates a labeled group container within a tab.
+- **Inputs**: Widget hierarchy construction.
+- **Outputs**: Layout structure.
+- **Critical Relationships**: None detected.
+
 
 #### Deep Analysis
 - **Key Logic**: `__init__`: performs core logic (Complexity: 1)
@@ -1166,6 +1235,37 @@ classDiagram
 - **Inputs**: Standard method arguments
 - **Outputs**: Signals: find_next_requested, find_all_requested, replace_requested, replace_all_requested, navigate_requested
 - **Critical Relationships**: None detected.
+
+---
+
+### graph_physics.py
+**Path**: `src/pillars/document_manager/ui/graph_physics.py`
+
+**Architectural Purpose**: Business Logic Layer (Presentation Utility)
+
+**Summary**: Force-Directed Graph physics engine for Mindscape.
+
+#### Deep Analysis
+- **Key Logic**: `tick`: Applies Repulsion (node-node), Springs (edge-node), and Damping forces to simulate organic layout.
+- **Inputs**: Node positions, Edge connections.
+- **Outputs**: Updated positions (`x`, `y`).
+- **Critical Relationships**: None detected.
+
+---
+
+### search_results_panel.py
+**Path**: `src/pillars/document_manager/ui/search_results_panel.py`
+
+**Architectural Purpose**: Presentation Layer (View)
+
+**Summary**: Mindscape side panel for displaying and interacting with search results.
+
+#### Deep Analysis
+- **Key Logic**: `load_results`: Renders search hits with cleansed HTML snippets.
+- **Inputs**: List of search result dictionaries.
+- **Outputs**: Signals (`add_to_graph_requested`, `open_document_requested`).
+- **Critical Relationships**: None detected.
+
 #### Visual Model
 
 ```mermaid
@@ -1463,10 +1563,6 @@ classDiagram
 
 **Summary**: No module docstring.
 
-#### Deep Analysis
-- **Key Logic**: `find_value_matches`: Find all text segments that match the target gematria value.
-- **Inputs**: Standard method arguments
-- **Outputs**: Return values
 - **Critical Relationships**:
   - pillars.document_manager.services.verse_teacher_service.verse_teacher_service_context
 
@@ -1482,6 +1578,24 @@ classDiagram
     }
     TextAnalysisService ..> verse_teacher_service_context : depends
 ```
+
+---
+
+### smart_filter_service.py
+**Path**: `src/pillars/gematria/services/smart_filter_service.py`
+
+**Architectural Purpose**: Business Logic Layer (Service)
+
+**Summary**: Intelligent NLP filter for Gematria results using Spacy heuristics.
+
+#### Deep Analysis
+- **Key Logic**: 
+  - `_is_valid_phrase`: Checks POS tags to filter out "nonsense" phrases (e.g., must contain a Noun/Verb, no dangling prepositions like "The of").
+  - `filter_phrases`: Batch processes matches through Spacy NLP pipeline.
+- **Inputs**: List of raw match tuples.
+- **Outputs**: List of valid match tuples.
+- **Critical Relationships**: None detected.
+
 
 ---
 
@@ -1722,6 +1836,26 @@ classDiagram
 
 ---
 
+### document_tab.py
+**Path**: `src/pillars/gematria/ui/text_analysis/document_tab.py`
+
+**Architectural Purpose**: Presentation Layer (View)
+
+**Summary**: Single Tab container hosting DocumentViewer and VerseList for one document.
+
+#### Deep Analysis
+- **Key Logic**: 
+  - `set_view_mode`: Switches `QStackedWidget` between Text View and Verse View.
+  - `_on_calculate_selection`: Calculates value of currently selected text range.
+- **Inputs**: User interactions.
+- **Outputs**: Signals (`text_selected`, `save_verse_requested`).
+- **Critical Relationships**:
+  - pillars.gematria.ui.text_analysis.document_viewer.DocumentViewer
+  - pillars.gematria.ui.text_analysis.verse_list.VerseList
+
+
+---
+
 ### document_viewer.py
 **Path**: `src/pillars/gematria/ui/text_analysis/document_viewer.py`
 
@@ -1730,10 +1864,11 @@ classDiagram
 **Summary**: No module docstring.
 
 #### Deep Analysis
-- **Key Logic**: `highlight_ranges`: Highlight list of (start, end) ranges.
-- **Inputs**: Standard method arguments
-- **Outputs**: Signals: text_selected
+- **Key Logic**: `highlight_ranges`: Applies background color to list of (start, end) ranges.
+- **Inputs**: List of tuples.
+- **Outputs**: Signals (`text_selected`).
 - **Critical Relationships**: None detected.
+
 
 ---
 
@@ -1762,6 +1897,21 @@ classDiagram
     TextAnalysisWindow ..> document_service_context : depends
 ```
 
+**Summary**: Main MDI Window for Text Analysis, managing tabs, search capabilities, and tools.
+
+#### Deep Analysis
+- **Key Logic**: 
+  - `_on_search`: Orchestrates global or local search across Document Tabs.
+  - `_on_open_document`: Loads document from DB and creates new `DocumentTab`.
+  - `_on_save_verse`: Coordinates saving curated verses to the database.
+- **Inputs**: User commands.
+- **Outputs**: UI updates, Database writes.
+- **Critical Relationships**:
+  - pillars.gematria.ui.text_analysis.document_tab.DocumentTab
+  - pillars.gematria.ui.text_analysis.search_panel.SearchPanel
+  - pillars.gematria.services.calculation_service.CalculationService
+
+
 ---
 
 ### search_panel.py
@@ -1772,12 +1922,15 @@ classDiagram
 **Summary**: No module docstring.
 
 #### Deep Analysis
-- **Key Logic**: `set_results`: Populate results list.
-- **Inputs**: Standard method arguments
-- **Outputs**: Signals: search_requested, result_selected, save_matches_requested, clear_requested
+- **Key Logic**: 
+  - `_on_search`: Emits search parameters signal.
+  - `set_results`: Populates QListWidget with match items (filtered by active tab).
+  - `_on_smart_filter`: Invokes Smart Filter dialog on current result set.
+- **Inputs**: Value, Max Words, Scope (Global/Local).
+- **Outputs**: Signals (`search_requested`, `result_selected`, `smart_filter_requested`).
 - **Critical Relationships**: None detected.
-#### Visual Model
 
+#### Visual Model
 ```mermaid
 classDiagram
     class SearchPanel {
@@ -1795,12 +1948,12 @@ classDiagram
 **Summary**: No module docstring.
 
 #### Deep Analysis
-- **Key Logic**: `render_verses`: Render verses into the list.
-- **Inputs**: Standard method arguments
-- **Outputs**: Signals: verse_jump_requested, verse_save_requested, save_all_requested
+- **Key Logic**: `render_verses`: Dynamically builds `QGroupBox` items for each verse.
+- **Inputs**: List of verse dictionaries.
+- **Outputs**: Signals (`verse_save_requested`, `verse_jump_requested`).
 - **Critical Relationships**: None detected.
-#### Visual Model
 
+#### Visual Model
 ```mermaid
 classDiagram
     class VerseList {
@@ -1981,6 +2134,24 @@ classDiagram
 - **Inputs**: Standard method arguments
 - **Outputs**: Return values
 - **Critical Relationships**: None detected.
+
+---
+
+### figurate_3d.py
+**Path**: `src/pillars/geometry/services/figurate_3d.py`
+
+**Architectural Purpose**: Business Logic Layer (Service)
+
+**Summary**: 3D Figurate Number calculations (Tetrahedral, Pyramidal, Cubic, etc.) and isometric projection logic.
+
+#### Deep Analysis
+- **Key Logic**: 
+  - `tetrahedral_points`, `stellated_octahedron_points`: Generate 3D point coordinates centered at origin.
+  - `project_dynamic`: Project 3D points to 2D isometric view with Yaw/Pitch rotation.
+- **Inputs**: `n` (index), `spacing`.
+- **Outputs**: List of `(x, y, z)` tuples.
+- **Critical Relationships**: None detected.
+
 
 ---
 
@@ -2269,7 +2440,27 @@ classDiagram
     }
     GoldenPyramidMetrics ..> SolidLabel : depends
     GoldenPyramidMetrics ..> SolidPayload : depends
+    GoldenPyramidMetrics ..> SolidPayload : depends
 ```
+
+---
+
+### irregular_polygon_shape.py
+**Path**: `src/pillars/geometry/services/irregular_polygon_shape.py`
+
+**Architectural Purpose**: Business Logic Layer (Service)
+
+**Summary**: Irregular Polygon shape calculator providing Area, Perimeter, and Centroid logic for arbitrary vertices.
+
+#### Deep Analysis
+- **Key Logic**: 
+  - `_recalculate`: Calls `_shoelace_area` and `_polygon_centroid`.
+  - `_sync_coord_properties`: Dynamically creates `vN_x`/`vN_y` properties for vertex editing.
+- **Inputs**: List of `(x, y)` points.
+- **Outputs**: Derived metrics (Area, Perimeter, Centroid).
+- **Critical Relationships**:
+  - pillars.geometry.services.GeometricShape
+
 
 ---
 
@@ -2373,19 +2564,22 @@ classDiagram
 
 ---
 
+---
+
 ### polygonal_numbers.py
-**Path**:##### `isopgem.src.pillars.geometry.services.polygonal_numbers.py` (Complexity: 12)
-**Architectural Purpose:** Numerological core for calculating and plotting figurate numbers, including star figures.
+**Path**: `src/pillars/geometry/services/polygonal_numbers.py`
 
-**Key Logic:**
-- **Generalized Star Numbers:** Implements logic for "P-grams" (generalized star polygons) using vector based ray-casting from a central polygon.
-- **Polygonal Numbers:** Implements corner-growth (gnomon) logic for standard polygonal numbers.
-- **Centered Polygonal Numbers:** Implements concentric ring growth logic.
+**Architectural Purpose**: Business Logic Layer (Service)
 
-**Signal Flow:**
-- Called by `PolygonalNumberWindow` and `ExperimentalStarWindow` during render cycles.
-- **Inputs**: Standard method arguments
-- **Outputs**: Return values
+**Summary**: Numerological core for calculating and plotting figurate numbers, including star figures.
+
+#### Deep Analysis
+- **Key Logic**:
+  - `polygonal_number_points`: Implements corner-growth (gnomon) logic.
+  - `centered_polygonal_points`: Implements concentric ring growth logic.
+  - `generalized_star_number_points`: Implements "P-gram" logic using vector-based ray-casting from a central polygon.
+- **Inputs**: `sides`, `index`, `spacing`.
+- **Outputs**: List of `(x, y)` points.
 - **Critical Relationships**: None detected.
 
 ---
@@ -3184,6 +3378,44 @@ classDiagram
 
 ---
 
+### experimental_star_window.py
+**Path**: `src/pillars/geometry/ui/experimental_star_window.py`
+
+**Architectural Purpose**: Presentation Layer (View)
+
+**Summary**: Visualizer for Generalized Star Numbers (P-grams).
+
+#### Deep Analysis
+- **Key Logic**: `_render`: Generates star points and builds `GeometryScenePayload` for visualization.
+- **Inputs**: User controls (P, N, Spacing).
+- **Outputs**: Rendered Scene.
+- **Critical Relationships**:
+  - pillars.geometry.ui.geometry_scene.GeometryScene
+  - pillars.geometry.ui.geometry_interaction.GeometryInteractionManager
+  - pillars.geometry.services.polygonal_numbers
+
+---
+
+### figurate_3d_window.py
+**Path**: `src/pillars/geometry/ui/figurate_3d_window.py`
+
+**Architectural Purpose**: Presentation Layer (View)
+
+**Summary**: 3D Figurate Numbers Visualization Window with isometric projection control.
+
+#### Deep Analysis
+- **Key Logic**: 
+  - `_render`: Generates 3D points, projects them using `project_dynamic`, and layers them by Z-depth.
+  - `eventFilter`: Handles mouse-drag rotation for 3D camera.
+- **Inputs**: Shape type, Index (n).
+- **Outputs**: Projected Scene.
+- **Critical Relationships**:
+  - pillars.geometry.ui.geometry_scene.GeometryScene
+  - pillars.geometry.services.figurate_3d
+
+
+---
+
 ## pillars/geometry/ui/geometry3d
 
 ### solid_payload.py
@@ -3252,8 +3484,28 @@ classDiagram
     Geometry3DWindow ..> SavedCalculationsWindow : depends
     Geometry3DWindow ..> QuadsetAnalysisWindow : depends
     Geometry3DWindow ..> SolidPayload : depends
+    Geometry3DWindow ..> SolidPayload : depends
     Geometry3DWindow ..> WindowManager : depends
 ```
+
+---
+
+### polygonal_number_window.py
+**Path**: `src/pillars/geometry/ui/polygonal_number_window.py`
+
+**Architectural Purpose**: Presentation Layer (View)
+
+**Summary**: Interactive viewer for polygonal and centered polygonal numbers.
+
+#### Deep Analysis
+- **Key Logic**: `_render`: Switches between Polygonal, Centered, and Star modes to generate points. Integrates interaction panels.
+- **Inputs**: User controls (Sides, Index, Mode).
+- **Outputs**: Scene display.
+- **Critical Relationships**:
+  - pillars.geometry.ui.geometry_scene.GeometryScene
+  - pillars.geometry.services.polygonal_numbers
+  - pillars.geometry.ui.geometry_interaction.GeometryInteractionManager
+
 
 ---
 
@@ -3308,20 +3560,27 @@ classDiagram
 - **Critical Relationships**:
   - shared.ui.WindowManager
 
-##### `isopgem.src.pillars.geometry.ui.geometry_interaction.py` (Complexity: 10)
-**Architectural Purpose**: "The Handmaiden" handling interactive state independent of specific windows.
+- **Critical Relationships**:
+  - shared.ui.WindowManager
 
-**Key Logic**:
-- **GeometryInteractionManager:** Manages `DotGroup`s and `Connection`s.
-- `_handle_dot_click(index, modifiers, button)`: Delegates click events to the manager.
-- `_update_view_mode(mode)`: Switches between panning (`ScrollHandDrag`) and drawing.
+---
 
-**Integration**:
-- `GroupManagementPanel`: Added as a **right sidebar** pane in `PolygonalNumberWindow` and `ExperimentalStarWindow`.
-- `ConnectionToolBar`: Added to the top of the viewport area.
+### geometry_interaction.py
+**Path**: `src/pillars/geometry/ui/geometry_interaction.py`
 
-**Signal Flow**:
-- `GeometryScene.dot_clicked` -> `GeometryInteractionManager` -> UI Updates.
+**Architectural Purpose**: Presentation Layer (Controller/Utility)
+
+**Summary**: Manager for interactive geometry state (grouping, connecting dots), independent of specific windows.
+
+#### Deep Analysis
+- **Key Logic**:
+  - `GeometryInteractionManager`: Manages `DotGroup`s and `Connection`s.
+  - `process_draw_click`: Handles polyline drawing logic ("Connect the Dots").
+  - `toggle_dot_in_group`: Manages set membership for dots.
+- **Inputs**: Dot indices, Mouse events.
+- **Outputs**: Signals (`groups_changed`, `connection_added`).
+- **Critical Relationships**:
+  - Used by `PolygonalNumberWindow`, `ExperimentalStarWindow`, `Figurate3DWindow`.
 
 ---
 
@@ -3474,6 +3733,41 @@ classDiagram
 
 ---
 
+### amun_sound.py
+**Path**: `src/pillars/tq/models/amun_sound.py`
+
+**Architectural Purpose**: Domain Model / Calculator
+
+**Summary**: Calculates the Amun Sound Signature from a Ditrune (0-728), mapping bigrams to an 8-note scale and 9-octave ladder.
+
+#### Deep Analysis
+- **Key Logic**: 
+  - `calculate_signature`: Maps the 6-digit ternary string to 3 channels: Container, Pitch, Rhythm.
+  - **9-Octave Ladder**: Maps Channel 1 Bigram (0-8) to octaves (Sub-Bass to Radiance).
+  - **Ratio Mapping**: Maps Bigram value to musical ratios (1.0 to 2.0).
+- **Inputs**: Decimal Ditrune (0-728).
+- **Outputs**: Dictionary with structure, channel details, and summary.
+- **Critical Relationships**:
+  - pillars.tq.services.ternary_service.TernaryService
+
+---
+
+### quadset_models.py
+**Path**: `src/pillars/tq/models/quadset_models.py`
+
+**Architectural Purpose**: Domain Model
+
+**Summary**: Dataclasses for Quadset Analysis transport.
+
+#### Deep Analysis
+- **Key Logic**: Standard boilerplate.
+- **Inputs**: Standard method arguments
+- **Outputs**: Return values
+- **Critical Relationships**: None detected.
+
+
+---
+
 ## pillars/tq/repositories
 
 ### __init__.py
@@ -3505,6 +3799,59 @@ classDiagram
 - **Inputs**: Standard method arguments
 - **Outputs**: Return values
 - **Critical Relationships**: None detected.
+
+---
+
+### amun_audio_service.py
+**Path**: `src/pillars/tq/services/amun_audio_service.py`
+
+**Architectural Purpose**: Business Logic Layer (Service)
+
+**Summary**: Generates WAV files using AM synthesis for Amun Sound Signatures.
+
+#### Deep Analysis
+- **Key Logic**: 
+  - `_synthesize_data`: Generates PCM data using Amplitude Modulation (Carrier * Modulator).
+  - `generate_sequence`: Concatenates multiple signatures into a single WAV sequence.
+- **Inputs**: Frequency (Hz), Mod Rate (Hz), Amplitude.
+- **Outputs**: Path to temporary WAV file.
+- **Critical Relationships**: None detected.
+
+---
+
+### pattern_analyzer.py
+**Path**: `src/pillars/tq/services/pattern_analyzer.py`
+
+**Architectural Purpose**: Business Logic Layer (Service)
+
+**Summary**: Analyzes mathematical patterns in Quadset members (GCD, LCM, Primes, Palindromes, etc.).
+
+#### Deep Analysis
+- **Key Logic**: `analyze`: Runs a battery of 15 mathematical tests on the 4 Quadset members and returns a text report.
+- **Inputs**: List of `QuadsetMember` objects.
+- **Outputs**: Formatted string report.
+- **Critical Relationships**:
+  - pillars.tq.services.number_properties.NumberPropertiesService
+
+---
+
+### quadset_engine.py
+**Path**: `src/pillars/tq/services/quadset_engine.py`
+
+**Architectural Purpose**: Business Logic Layer (Service)
+
+**Summary**: Orchestrates the Transformation Pipeline for Quadset Analysis.
+
+#### Deep Analysis
+- **Key Logic**: `calculate`: Derives Original, Conrune, Reversal, Conrune Reversal, Differentials, Transgram, and Septad Total.
+- **Inputs**: Decimal input.
+- **Outputs**: `QuadsetResult` object.
+- **Critical Relationships**:
+  - pillars.tq.services.ternary_service.TernaryService
+  - pillars.tq.services.ternary_transition_service.TernaryTransitionService
+  - pillars.tq.services.pattern_analyzer.PatternAnalyzer
+  - pillars.tq.models.quadset_models.QuadsetResult
+
 
 ---
 
@@ -3672,6 +4019,44 @@ classDiagram
 - **Inputs**: Standard method arguments
 - **Outputs**: Return values
 - **Critical Relationships**: None detected.
+
+---
+
+### amun_visualizer.py
+**Path**: `src/pillars/tq/ui/amun_visualizer.py`
+
+**Architectural Purpose**: Presentation Layer (View)
+
+**Summary**: Real-time "Sacred Geometry" Mandala visualizer for Amun Sound System.
+
+#### Deep Analysis
+- **Key Logic**: 
+  - `paintEvent`: Renders nested polygons/stars based on Bigram value. 
+  - `update_animation`: Handles pulse (Rhythm) and rotation (Pitch) animation loops.
+- **Inputs**: Frequency, Amplitude, Bigram, Mod Rate.
+- **Outputs**: Visual Animation.
+- **Critical Relationships**: None detected.
+
+---
+
+### ternary_sound_widget.py
+**Path**: `src/pillars/tq/ui/ternary_sound_widget.py`
+
+**Architectural Purpose**: Presentation Layer (View)
+
+**Summary**: Main UI for Amun Sound System, hosting Calculator and Composer tabs.
+
+#### Deep Analysis
+- **Key Logic**: 
+  - `CalculatorTab.play_sound`: Triggers audio synthesis and plays result.
+  - `ComposerTab.play_sequence`: Parses list of Ditrunes and plays them in sequence.
+- **Inputs**: User input (Ditrune or Sequence).
+- **Outputs**: Audio playback and Visualization updates.
+- **Critical Relationships**:
+  - pillars.tq.models.amun_sound.AmunSoundCalculator
+  - pillars.tq.services.amun_audio_service.AmunAudioService
+  - pillars.tq.ui.amun_visualizer.AmunVisualizer
+
 
 ---
 
@@ -3926,6 +4311,25 @@ classDiagram
 
 ---
 
+- **Critical Relationships**: None detected.
+
+---
+
+### keyboard_layouts.py
+**Path**: `src/shared/ui/keyboard_layouts.py`
+
+**Architectural Purpose**: Infrastructure / Data
+
+**Summary**: Dataclasses and definitions for Virtual Keyboard layouts (Hebrew, Greek, Esoteric).
+
+#### Deep Analysis
+- **Key Logic**: Defines character maps for various esoteric languages.
+- **Inputs**: None.
+- **Outputs**: `KeyboardLayout` objects.
+- **Critical Relationships**: None detected.
+
+---
+
 ### theme.py
 **Path**: `src/shared/ui/theme.py`
 
@@ -4032,3 +4436,23 @@ classDiagram
 
 ---
 
+
+---
+
+## scripts
+
+### verification_seal.py
+**Path**: `scripts/verification_seal.py`
+
+**Architectural Purpose**: Quality Assurance (Verification)
+
+**Summary**: The Seal of Verification - a ritual script to verify logic pillars in isolation.
+
+#### Deep Analysis
+- **Key Logic**: 
+  - `Rite`: Base class for verification tests (Setup -> Perform -> Teardown).
+  - `Scribe`: standardized logging.
+  - `execute`: Runs the test and catches AssertionErrors.
+- **Inputs**: None (standalone script).
+- **Outputs**: Console output (Success/Failure logs).
+- **Critical Relationships**: None detected.

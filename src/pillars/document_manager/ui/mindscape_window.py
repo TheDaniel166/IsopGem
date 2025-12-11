@@ -612,8 +612,7 @@ class MindscapeWindow(QMainWindow):
             
         except Exception as e:
             print(f"Error initializing Mindscape: {e}")
-        except Exception as e:
-            print(f"Error initializing Mindscape: {e}")
+
 
     def _import_documents(self, parent_id=None):
         """Batch import documents and create nodes."""
