@@ -1,0 +1,28 @@
+Decimal,Trigram,Category,Symbol,Letter
+0,000,,,I
+1,001,Plus / Cross,+,L
+2,002,Dash / Minus,—,C
+3,010,Fire,△,H
+4,011,Sagittarius,♐︎,P
+5,012,Virgo,♍︎,A
+6,020,Water,▽,X
+7,021,Gemini,♊︎,J
+8,022,Pisces,♓︎,W
+9,100,Air,🜁,T
+10,101,Aries,♈︎,O
+11,102,Libra,♎︎,G
+12,110,Leo,♌︎,F
+13,111,Sun,☉,E
+14,112,Saturn,♄,R
+15,120,Taurus,♉︎,S
+16,121,Mercury,☿,Q
+17,122,Venus,♀,K
+18,200,Earth (Element),🜃,Y
+19,201,Capricorn,♑︎,Z
+20,202,Cancer,♋︎,B
+21,210,Aquarius,♒︎,M
+22,211,Jupiter,♃,V
+23,212,Earth (Planet),⊕,D
+24,220,Scorpio,♏︎,N
+25,221,Mars,♂,U
+26,222,Moon,☽,

@@ -14,7 +14,11 @@ class RoseCurveShape(GeometricShape):
 
     @property
     def description(self) -> str:
-        return "Rhodonea petals defined by amplitude a and harmonic k"
+        return "Sinusoid characterized by polar equation r = cos(kθ)"
+
+    @property
+    def calculation_hint(self) -> str:
+        return "Enter Numerator (n) and Denominator (d) and harmonic k"
 
     def _init_properties(self):
         self.properties = {

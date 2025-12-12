@@ -14,7 +14,11 @@ class CrescentShape(GeometricShape):
 
     @property
     def description(self) -> str:
-        return "Lune carved by two intersecting circles with offset and overlap metrics"
+        return "Lune/Crescent formed by two intersecting circles"
+
+    @property
+    def calculation_hint(self) -> str:
+        return "Enter 2 Radii + Shift Distance"
 
     def _init_properties(self):
         self.properties = {
@@ -135,18 +139,21 @@ class CrescentShape(GeometricShape):
 
     @staticmethod
     def _is_valid_offset(outer: float, inner: float, offset: float) -> bool:
-        # Require partial overlap but no containment to preserve a crescent shape
-        return abs(outer - inner) < offset < (outer + inner)
+        # Allow any non-negative offset provided circles are valid
+        return offset >= 0
 
     @staticmethod
     def _circle_overlap_area(r1: float, r2: float, d: float) -> float:
-        if d <= 0:
-            return 0.0
+        # Case 1: Disjoint (d >= r1 + r2) -> No overlap
         if d >= r1 + r2:
             return 0.0
+        
+        # Case 2: One inside other (d <= |r1 - r2|) -> Overlap is area of smaller circle
+        # Note: We enforce r1 > r2 in _has_valid_geometry, so r2 is smaller.
         if d <= abs(r1 - r2):
             return math.pi * min(r1, r2) ** 2
 
+        # Case 3: Intersection
         alpha = math.acos((d * d + r1 * r1 - r2 * r2) / (2 * d * r1)) * 2
         beta = math.acos((d * d + r2 * r2 - r1 * r1) / (2 * d * r2)) * 2
         area1 = 0.5 * r1 * r1 * (alpha - math.sin(alpha))
@@ -155,8 +162,18 @@ class CrescentShape(GeometricShape):
 
     @staticmethod
     def _crescent_perimeter(r1: float, r2: float, d: float) -> float:
-        if d <= 0:
-            return 0.0
+        # Case 1: Disjoint (d >= r1 + r2) -> Inner circle is completely outside Outer
+        # Result is just the Outer circle (minus nothing).
+        if d >= r1 + r2:
+            return 2 * math.pi * r1
+            
+        # Case 2: One inside other (d <= |r1 - r2|) -> Hole inside Outer
+        # Result is Outer + Inner perimeters (Annulus-like)
+        if d <= abs(r1 - r2):
+            return 2 * math.pi * r1 + 2 * math.pi * r2
+            
+        # Case 3: Intersection
+        # Arc of Outer (major) + Arc of Inner (minor)
         alpha = math.acos((d * d + r1 * r1 - r2 * r2) / (2 * d * r1)) * 2
         beta = math.acos((d * d + r2 * r2 - r1 * r1) / (2 * d * r2)) * 2
         outer_arc = (2 * math.pi - alpha) * r1
@@ -170,33 +187,61 @@ class CrescentShape(GeometricShape):
         if outer is None:
             return {"type": "empty"}
 
-        primitives = [
-            {
-                "shape": "circle",
-                "center": (0.0, 0.0),
-                "radius": outer,
-                "pen": {"color": (59, 130, 246, 255), "width": 2.4},
-                "brush": {"color": (147, 197, 253, 90)},
+        if inner is None or offset is None:
+             # Just draw outer circle
+            return {
+                "type": "composite",
+                "primitives": [
+                    {
+                        "shape": "circle",
+                        "center": (0.0, 0.0),
+                        "radius": outer,
+                        "pen": {"color": (59, 130, 246, 255), "width": 2.4},
+                        "brush": {"color": (147, 197, 253, 90)},
+                    }
+                ]
             }
-        ]
-        if inner is not None and offset is not None:
-            primitives.append(
-                {
-                    "shape": "circle",
-                    "center": (offset, 0.0),
-                    "radius": inner,
-                    "pen": {"color": (248, 113, 113, 255), "width": 2.0},
-                    "brush": {"color": (254, 205, 211, 90)},
-                }
-            )
-            primitives.append(
-                {
-                    "shape": "line",
-                    "start": (0.0, 0.0),
-                    "end": (offset, 0.0),
-                    "pen": {"color": (15, 23, 42, 200), "width": 1.2, "dashed": True},
-                }
-            )
+
+        # Define Outer Circle
+        outer_circle = {
+            "shape": "circle",
+            "center": (0.0, 0.0),
+            "radius": outer,
+            "pen": {"color": (59, 130, 246, 255), "width": 0.0}, # Pen handled by boolean container
+            "brush": {"color": (0, 0, 0, 255), "enabled": True}, # Fill required for path op
+        }
+        
+        # Define Inner Circle (The Cutter)
+        inner_circle = {
+            "shape": "circle",
+            "center": (offset, 0.0),
+            "radius": inner,
+            "pen": {"color": (0, 0, 0, 255), "width": 0.0},
+            "brush": {"color": (0, 0, 0, 255), "enabled": True},
+        }
+
+        # The result (Crescent)
+        crescent = {
+            "type": "boolean",
+            "operation": "difference",
+            "shape_a": outer_circle,
+            "shape_b": inner_circle,
+            "pen": {"color": (59, 130, 246, 255), "width": 2.4}, # Blue Border
+            "brush": {"color": (59, 130, 246, 120), "enabled": True}, # Blue Fill
+        }
+
+        primitives = [crescent]
+        
+        # Optional: Dashed outline of the cutter for reference?
+        # User requested "The Crescent", implies just the result mostly.
+        # But seeing the invisible inner circle boundary is helpful.
+        primitives.append({
+             "shape": "circle",
+             "center": (offset, 0.0),
+             "radius": inner,
+             "pen": {"color": (15, 23, 42, 100), "width": 1.0, "dashed": True},
+             "brush": {"enabled": False}
+        })
 
         return {
             "type": "composite",

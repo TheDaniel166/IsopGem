@@ -39,6 +39,14 @@ class GeometricShape(ABC):
     def description(self) -> str:
         """Return a brief description of this shape."""
         pass
+        
+    @property
+    def calculation_hint(self) -> str:
+        """
+        Return a hint about required fields for calculation.
+        Defaults to 'Calculate from any field' for 1-DoF shapes.
+        """
+        return "Calculate from any field"
     
     @abstractmethod
     def calculate_from_property(self, property_key: str, value: float) -> bool:

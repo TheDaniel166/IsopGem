@@ -3733,6 +3733,41 @@ classDiagram
 
 ---
 
+### cipher_token.py
+**Path**: `src/pillars/tq/models/cipher_token.py`
+
+**Architectural Purpose**: Domain Model
+
+**Summary**: Data class representing a single row in the Cipher Correspondence Table (0-26).
+
+#### Deep Analysis
+- **Key Logic**:
+    - **Properties**: `decimal_value`, `category`, `symbol`, `letter`.
+    - **Logic**: `label`: Returns Symbol > Letter > Decimal for display.
+- **Inputs**: Data Arguments.
+- **Outputs**: Token.
+- **Critical Relationships**: None detected.
+
+---
+
+### kamea_cell.py
+**Path**: `src/pillars/tq/models/kamea_cell.py`
+
+**Architectural Purpose**: Domain Model
+
+**Summary**: Represents a single cell in the Kamea Grid.
+
+#### Deep Analysis
+- **Key Logic**:
+    - **Properties**: `ternary_value`, `decimal_value`, `bigrams` (Core, Body, Skin).
+    - **Logic**: `conrune_vector`: Calculates the unique vector magnitude between Self and Anti-Self.
+    - **Locator**: `0-4-0` format (Region-Area-Cell).
+- **Inputs**: Ternary String.
+- **Outputs**: Cell Object.
+- **Critical Relationships**: None detected.
+
+---
+
 ### amun_sound.py
 **Path**: `src/pillars/tq/models/amun_sound.py`
 
@@ -3782,6 +3817,44 @@ classDiagram
 - **Inputs**: Standard method arguments
 - **Outputs**: Return values
 - **Critical Relationships**: None detected.
+
+---
+
+### cipher_repository.py
+**Path**: `src/pillars/tq/repositories/cipher_repository.py`
+
+**Architectural Purpose**: Infrastructure / Persistence Layer
+
+**Summary**: Loads and provides access to the 0-26 Cipher Correspondence Table.
+
+#### Deep Analysis
+- **Key Logic**:
+  - `_load_data`: Parses `data/cipher_correspondence.csv`.
+  - `get_by_decimal`: Lookup by 0-26 index.
+  - `get_by_letter`: Lookup by Letter.
+- **Inputs**: Decimal or Letter.
+- **Outputs**: `CipherToken`.
+- **Critical Relationships**:
+  - pillars.tq.models.cipher_token.CipherToken
+
+---
+
+### cipher_repository.py
+**Path**: `src/pillars/tq/repositories/cipher_repository.py`
+
+**Architectural Purpose**: Infrastructure / Persistence Layer
+
+**Summary**: Loads and provides access to the 0-26 Cipher Correspondence Table.
+
+#### Deep Analysis
+- **Key Logic**:
+  - `_load_data`: Parses `data/cipher_correspondence.csv`.
+  - `get_by_decimal`: Lookup by 0-26 index.
+  - `get_by_letter`: Lookup by Letter.
+- **Inputs**: Decimal or Letter.
+- **Outputs**: `CipherToken`.
+- **Critical Relationships**:
+  - pillars.tq.models.cipher_token.CipherToken
 
 ---
 
@@ -3900,6 +3973,43 @@ classDiagram
         +Logic()
     }
 ```
+
+---
+
+### ditrunal_service.py
+**Path**: `src/pillars/tq/services/ditrunal_service.py`
+
+**Architectural Purpose**: Business Logic Layer (Service)
+
+**Summary**: Core engine for Nuclear Mutation and Ditrunal Family logic.
+
+#### Deep Analysis
+- **Key Logic**:
+  - `nuclear_mutation`: Recursively strips outer bigrams to find the Core.
+  - `find_prime`: Identifies the Prime Family (0-8) for any Ditrune.
+  - `get_conrune_value`: Calculates the polarity swap (1 <-> 2) for a ternary string.
+- **Inputs**: 6-digit Ternary String.
+- **Outputs**: Prime String, Family ID, Conrune String.
+- **Critical Relationships**: None detected.
+
+---
+
+### kamea_grid_service.py
+**Path**: `src/pillars/tq/services/kamea_grid_service.py`
+
+**Architectural Purpose**: Business Logic Layer (Service)
+
+**Summary**: Manages the loading and state of the 27x27 Kamea Grid.
+
+#### Deep Analysis
+- **Key Logic**:
+  - `load_csv`: Parses the master CSV data into `KameaCell` objects.
+  - `cells`: Exposes the grid as a list for iteration.
+- **Inputs**: CSV paths (Decimal/Ternary).
+- **Outputs**: Dictionary of `{(x,y): KameaCell}`.
+- **Critical Relationships**:
+  - pillars.tq.models.kamea_cell.KameaCell
+
 
 ---
 
@@ -4105,6 +4215,100 @@ classDiagram
     }
     SolidCanvas3D ..> SavedCalculationsWindow : depends
 ```
+
+---
+
+### fractal_network_dialog.py
+**Path**: `src/pillars/tq/ui/fractal_network_dialog.py`
+
+**Architectural Purpose**: Presentation Layer (View)
+
+**Summary**: Non-modal popup detailing the hierarchical network of a Ditrune.
+
+#### Deep Analysis
+- **Key Logic**:
+  - `update_network`: Renders specific 6D-4D-2D-0D path.
+  - **Reference IDs**: Displays Region/Area IDs derived from Bigrams.
+- **Inputs**: Ternary Key.
+- **Outputs**: Visual Flowchart.
+- **Critical Relationships**: None detected.
+
+---
+
+### kamea_fractal_view.py
+**Path**: `src/pillars/tq/ui/kamea_fractal_view.py`
+
+**Architectural Purpose**: Presentation Layer (View)
+
+**Summary**: Native Software 3D Engine for rendering the 27x27x27 Cube.
+
+#### Deep Analysis
+- **Key Logic**:
+  - `_project_point`: Isometric/Perspective projection (Matrix multiplication).
+  - `set_focused_ditrune`: Recursive Focus logic (highlight descendant tree, ghost others).
+  - `tree_paths`: Dictionary of hierarchical line nodes.
+- **Inputs**: Mouse Events (Rotate/Zoom).
+- **Outputs**: `QGraphicsScene` updates.
+- **Critical Relationships**:
+  - pillars.tq.ui.fractal_network_dialog.FractalNetworkDialog
+
+---
+
+### kamea_grid_view.py
+**Path**: `src/pillars/tq/ui/kamea_grid_view.py`
+
+**Architectural Purpose**: Presentation Layer (View)
+
+**Summary**: 2D Interactive Grid View.
+
+#### Deep Analysis
+- **Key Logic**:
+  - `set_dimension_filter`: Dims cells based on Pyx Count (Dimensional Density).
+  - `_highlight_entangled`: Visualizes Quadset physics on hover (Gold vs Cyan).
+- **Inputs**: `KameaGridService`.
+- **Outputs**: Visual Grid.
+- **Critical Relationships**: None detected.
+
+---
+
+### kamea_window.py
+**Path**: `src/pillars/tq/ui/kamea_window.py`
+
+**Architectural Purpose**: Presentation Layer (View)
+
+**Summary**: The Sovereign Window for the Kamea System.
+
+#### Deep Analysis
+- **Key Logic**:
+  - **View Stack**: Toggles between `KameaGridView` (2D) and `KameaFractalView` (3D).
+  - **Toolbars**: Manages View Mode (Decimal/Ternary) and Hypercube Filters.
+  - **Signal Routing**: Connects Cell Selection -> `NuclearMutationPanel`.
+- **Inputs**: User Interaction.
+- **Outputs**: Application State.
+- **Critical Relationships**:
+  - pillars.tq.ui.kamea_grid_view.KameaGridView
+  - pillars.tq.ui.kamea_fractal_view.KameaFractalView
+  - pillars.tq.ui.nuclear_mutation_panel.NuclearMutationPanel
+
+---
+
+### nuclear_mutation_panel.py
+**Path**: `src/pillars/tq/ui/nuclear_mutation_panel.py`
+
+**Architectural Purpose**: Presentation Layer (View)
+
+**Summary**: The "Reactor" panel for detailed cell analysis.
+
+#### Deep Analysis
+- **Key Logic**:
+  - `analyze_cell`: Computes Mutation Path (Skin -> Body -> Core).
+  - **State Detection**: Identifies Prime/Acolyte/Temple roles.
+  - **Vector Analysis**: Displays Conrune Vector Magnitude.
+- **Inputs**: `KameaCell`.
+- **Outputs**: Visual Report.
+- **Critical Relationships**:
+  - pillars.tq.services.ditrunal_service.DitrunalService
+
 
 ---
 
@@ -4456,3 +4660,6 @@ classDiagram
 - **Inputs**: None (standalone script).
 - **Outputs**: Console output (Success/Failure logs).
 - **Critical Relationships**: None detected.
+
+### src/pillars/tq/ui/kamea_fractal_view.py
+**Purpose**: Renders the 3D Point Cloud and Fractal Tree of the Kamea.

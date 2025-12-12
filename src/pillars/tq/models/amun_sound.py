@@ -1,5 +1,6 @@
 from typing import Dict, Any, Tuple
 from ..services.ternary_service import TernaryService
+from ..services.baphomet_color_service import BaphometColorService
 
 class AmunSoundCalculator:
     """
@@ -18,54 +19,31 @@ class AmunSoundCalculator:
     
     BASE_FREQUENCY = 97.0
     
-    # Mapping Bigram Value (0-8) to (Ratio, Description)
-    # 0 (0-0): Ratio 1.0 ("Base Void") - Modified from 0.0 to ensure audibility
-    # 1 (0-1): Ratio 1.0 ("Unison")
-    # 2 (0-2): Ratio 1.125 ("Major 2nd")
-    RATIO_MAP = {
-        0: (1.0, "Base Void"),
-        1: (1.0, "Unison"),
-        2: (1.125, "Major 2nd"),
-        3: (1.25, "Major 3rd"),
-        4: (1.333, "Perfect 4th"),
-        5: (1.5, "Perfect 5th"),
-        6: (1.666, "Major 6th"),
-        7: (1.875, "Minor 7th"),
-        8: (2.0, "Octave")
-    }
-
-    # Custom Mapping from (Lower, Upper) pair to Bigram Value
-    # As per user specification:
-    # (0,0)->0, (0,1)->1, (0,2)->2
-    # (1,0)->3, (1,1)->5, (1,2)->6  <-- Deviation from base-3 math
-    # (2,0)->4, (2,1)->7, (2,2)->8  <-- Deviation from base-3 math
-    BIGRAM_LOOKUP = {
-        (0, 0): 0, (0, 1): 1, (0, 2): 2,
-        (1, 0): 3, (1, 1): 5, (1, 2): 6,
-        (2, 0): 4, (2, 1): 7, (2, 2): 8
-    }
-
-    # Octave Multipliers based on Ch1 Bigram (The 9-Octave Ladder)
-    # 0: Sub-Bass (Earth Core) - 24.25Hz
-    # 1: Bass - 48.5Hz
-    # 2: Root - 97Hz
-    # 3: Tenor - 194Hz
-    # 4: Alto - 388Hz
-    # 5: Soprano - 776Hz
-    # 6: Presence - 1552Hz
-    # 7: Brilliance - 3104Hz
-    # 8: Radiance - 6208Hz
-    OCTAVE_MAP = {
-        0: (0.25, "Sub-Bass"),
-        1: (0.5, "Bass"),
-        2: (1.0, "Root"),
-        3: (2.0, "Tenor"),
-        4: (4.0, "Alto"),
-        5: (8.0, "Soprano"),
-        6: (16.0, "Presence"),
-        7: (32.0, "Brilliance"),
-        8: (64.0, "Radiance")
-    }
+    
+    # Base Frequency for C2 (Low Bass)
+    BASE_FREQ_C2 = 65.41
+    
+    # 9-State Timbre Values (Blue Channel)
+    # Val 0   (00): Void -> sine
+    # Val 37  (01): Deep -> sine_sub
+    # Val 60  (02): Soft -> triangle
+    # Val 97  (10): Float -> chorus
+    # Val 134 (11): Balance -> square
+    # Val 157 (12): Singing -> vibrato
+    # Val 194 (20): Assert -> sawtooth
+    # Val 231 (21): Tension -> dissonant
+    # Val 254 (22): Fire -> noise
+    TIMBRE_THRESHOLDS = [
+        (0, 'sine'),
+        (37, 'sine_sub'),
+        (60, 'triangle'),
+        (97, 'chorus'),
+        (134, 'square'),
+        (157, 'vibrato'),
+        (194, 'sawtooth'),
+        (231, 'dissonant'),
+        (254, 'noise')
+    ]
 
     def calculate_signature(self, decimal_value: int) -> Dict[str, Any]:
         """
@@ -86,87 +64,84 @@ class AmunSoundCalculator:
         # We want Line 1 (Index 0) to be the Bottom/Foundation (LSD).
         # So we reverse the string.
         base_ternary = TernaryService.decimal_to_ternary(decimal_value).zfill(6)
-        ternary_string = base_ternary[::-1]
+        ternary_string = base_ternary
+        # Removed reversal [::-1] to align with MSB-first (Top-Down) logic 
+        # where index 0 is Line 6 and index 5 is Line 1.
+        # This matches the User's example: 210120 -> L6=2, L1=0.
+        # Pair R (L1 & L6) logic below uses [0] + [5], so it effectively creates "TopBottom" pair?
+        # User said "Red (Lines 1 & 6): 2 and 0 -> Bigram 20".
+        # If [0]='2' and [5]='0', then [0]+[5] = "20". Correct.
         
-        # Step B & C: Channel Mapping and Bigram Calculation
-        # The ternary string indices: 0 (Line 1/Bottom) to 5 (Line 6/Top)
-        # Ch1 (Container): Line 1 & Line 6 -> indices 0 and 5
-        # Ch2 (Pitch): Line 2 & Line 5 -> indices 1 and 4
-        # Ch3 (Rhythm): Line 3 & Line 4 -> indices 2 and 3
+        # Step B: Get Bigram Strings (Red, Green, Blue) from pairs
+        # Red (Outer): Line 1 (0) & Line 6 (5)
+        # Green (Inner): Line 2 (1) & Line 5 (4)
+        # Blue (Core): Line 3 (2) & Line 4 (3)
         
-        # Note: Spec says "LowerLine * 3 + UpperLine"
-        # For Ch1: Lower is Line 1 (idx 0), Upper is Line 6 (idx 5)
-        ch1_pair = (int(ternary_string[0]), int(ternary_string[5]))
-        ch2_pair = (int(ternary_string[1]), int(ternary_string[4]))
-        ch3_pair = (int(ternary_string[2]), int(ternary_string[3]))
+        red_pair = ternary_string[0] + ternary_string[5]
+        green_pair = ternary_string[1] + ternary_string[4]
+        blue_pair = ternary_string[2] + ternary_string[3]
         
-        ch1_val = self._calculate_bigram_value(ch1_pair[0], ch1_pair[1])
-        ch2_val = self._calculate_bigram_value(ch2_pair[0], ch2_pair[1])
-        ch3_val = self._calculate_bigram_value(ch3_pair[0], ch3_pair[1])
+        # Step C: Get "Step Values" (0-254) from Baphomet Map
+        red_val = BaphometColorService.STEP_MAP.get(red_pair, 0)
+        green_val = BaphometColorService.STEP_MAP.get(green_pair, 0)
+        blue_val = BaphometColorService.STEP_MAP.get(blue_pair, 0)
         
-        # Step D & E: Audio Parameter Lookup and Output Generation
-        ch1_ratio, ch1_desc = self.RATIO_MAP[ch1_val]
-        ch2_ratio, ch2_desc = self.RATIO_MAP[ch2_val]
-        ch3_ratio, ch3_desc = self.RATIO_MAP[ch3_val]
+        # 1. Red -> PITCH (C2 to C6)
+        # Range 0-254 maps to 4 octaves (2^0 to 2^4)
+        # C2 = 65.41 Hz
+        # Freq = Base * 2^( (val/254) * 4 )
+        pitch_exponent = (red_val / 254.0) * 4.0
+        pitch_freq = self.BASE_FREQ_C2 * (2.0 ** pitch_exponent)
         
-        # Ch1 Output: Interval Name + "Width" (container metaphor)
-        # Using the description as the base, e.g., "Major 2nd Width"
-        ch1_output = f"{ch1_desc} Width"
+        # 2. Green -> DYNAMICS (Amplitude)
+        # Range 0-254 maps to 0.1 to 1.0 (Constraint applied)
+        dynamics_amp = 0.1 + (green_val / 254.0) * 0.9
         
-        # Map Ch1 Ratio to Amplitude Factor (0.2 to 1.0)
-        # This allows the "Container" to shape the volume.
-        # ensure it's never fully silent if Ch2 is active, unless ratio is 0?
-        # Let's map 0-2 ratio to 0.4-1.0 range for better audibility.
-        ch1_amp = 0.4 + (ch1_ratio * 0.3)
+        # 3. Blue -> TIMBRE (Waveform) - 9 State Palette
+        # We find the closest defined timbre state or use ranges.
+        # User defined specific Step Values. We can use a closest-match or threshold approach.
+        # Let's uses ranges based on midpoints between the values.
+        # 0..18 -> sine
+        # 19..48 -> sine_sub
+        # 49..78 -> triangle
+        # 79..115 -> chorus
+        # 116..145 -> square
+        # 146..175 -> vibrato
+        # 176..212 -> sawtooth
+        # 213..242 -> dissonant
+        # 243..254 -> noise
         
-        # Calculate Octave Plane based on Ch1 Bigram (The 9-Octave Ladder)
-        octave_mult, plane_name = self.OCTAVE_MAP.get(ch1_val, (1.0, "Root"))
-        
-        # Ch2 Output: Calculated Frequency (Base * Ratio * Octave)
-        ch2_freq = (self.BASE_FREQUENCY * ch2_ratio) * octave_mult
-        
-        # Ch3 Output: Calculated Modulation Rate
-        ch3_rate = ch2_ratio * 1.0 # Wait, spec says "Ratio * 1.0" for Ch3. 
-                                   # "Ch3 Output: Calculated Modulation Rate in Hz (Ratio * 1.0)."
-                                   # It refers to the ratio of Ch3? Or Ch2? 
-                                   # Logic implies it's the ratio derived from Ch3's bigram.
-        ch3_rate = ch3_ratio * 1.0
+        waveform = 'sine' # Default
+        if blue_val < 19: waveform = 'sine'
+        elif blue_val < 49: waveform = 'sine_sub'
+        elif blue_val < 79: waveform = 'triangle'
+        elif blue_val < 116: waveform = 'chorus'
+        elif blue_val < 146: waveform = 'square'
+        elif blue_val < 176: waveform = 'vibrato'
+        elif blue_val < 213: waveform = 'sawtooth'
+        elif blue_val < 243: waveform = 'dissonant'
+        else: waveform = 'noise'
 
+        # Structure return data
         return {
             "meta": {
                 "decimal": decimal_value,
                 "ternary": ternary_string
             },
+            "parameters": {
+                "red_value": red_val,
+                "green_value": green_val,
+                "blue_value": blue_val,
+                "pitch_freq": pitch_freq,
+                "dynamics_amp": dynamics_amp,
+                "waveform": waveform
+            },
+            # Keeping legacy struct key for compatibility, but flattened
             "channels": {
-                1: {
-                    "role": "Container",
-                    "pair": ch1_pair, # (Bottom, Top)
-                    "bigram_value": ch1_val,
-                    "ratio": ch1_ratio,
-                    "interval": ch1_desc,
-                    "output": ch1_output,
-                    "output_amp": ch1_amp,
-                    "octave_plane": plane_name
-                },
-                2: {
-                    "role": "Pitch",
-                    "pair": ch2_pair,
-                    "bigram_value": ch2_val,
-                    "ratio": ch2_ratio,
-                    "interval": ch2_desc,
-                    "output_freq": ch2_freq
-                },
-                3: {
-                    "role": "Rhythm",
-                    "pair": ch3_pair,
-                    "bigram_value": ch3_val,
-                    "ratio": ch3_ratio,
-                    "interval": ch3_desc,
-                    "output_rate": ch3_rate
-                }
+                1: {"role": "Pitch (Red)", "value": red_val, "output": f"{pitch_freq:.2f} Hz"},
+                2: {"role": "Dynamics (Green)", "value": green_val, "output": f"{dynamics_amp:.2f}"},
+                3: {"role": "Timbre (Blue)", "value": blue_val, "output": waveform}
             }
         }
 
-    def _calculate_bigram_value(self, lower: int, upper: int) -> int:
-        """Calculate Bigram Value using custom lookup."""
-        return self.BIGRAM_LOOKUP.get((lower, upper), 0)
+

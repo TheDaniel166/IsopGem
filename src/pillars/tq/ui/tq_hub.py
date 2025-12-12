@@ -10,6 +10,8 @@ from .geometric_transitions_window import GeometricTransitionsWindow
 from .geometric_transitions_3d_window import GeometricTransitions3DWindow
 from .conrune_pair_finder_window import ConrunePairFinderWindow
 from .ternary_sound_widget import TernarySoundWidget
+from .kamea_window import KameaWindow
+from ..services.kamea_grid_service import KameaGridService
 
 
 class TQHub(QWidget):
@@ -186,6 +188,50 @@ class TQHub(QWidget):
         """)
         amun_btn.clicked.connect(self._open_amun_sound)
         tools_layout.addWidget(amun_btn)
+
+        # Kamea Grid Button
+        kamea_btn = QPushButton("Kamea of Maut")
+        kamea_btn.setMinimumHeight(50)
+        kamea_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #050510;
+                color: #4dff4d;
+                font-size: 14pt;
+                font-weight: bold;
+                border: 2px solid #4dff4d;
+                border-radius: 8px;
+                padding: 10px;
+            }
+            QPushButton:hover {
+                background-color: #1a1a2e;
+                color: #ffffff;
+                border-color: #ffffff;
+            }
+        """)
+        kamea_btn.clicked.connect(self._open_kamea_grid)
+        tools_layout.addWidget(kamea_btn)
+
+        # Kamea Baphomet Button
+        baphomet_btn = QPushButton("Kamea of Baphomet")
+        baphomet_btn.setMinimumHeight(50)
+        baphomet_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #2e0000;
+                color: #ff3333;
+                font-size: 14pt;
+                font-weight: bold;
+                border: 2px solid #ff3333;
+                border-radius: 8px;
+                padding: 10px;
+            }
+            QPushButton:hover {
+                background-color: #4d0000;
+                color: #ffffff;
+                border-color: #ff6666;
+            }
+        """)
+        baphomet_btn.clicked.connect(self._open_baphomet_grid)
+        tools_layout.addWidget(baphomet_btn)
         
         layout.addLayout(tools_layout)
         
@@ -254,4 +300,26 @@ class TQHub(QWidget):
         self.window_manager.open_window(
             "amun_sound_calculator",
             TernarySoundWidget
+        )
+
+    def _open_kamea_grid(self):
+        """Open the Kamea Grid Visualizer."""
+        # Create Service Instance
+        # Ideally this should be dependency injected, but for now we create it here.
+        service = KameaGridService()
+        
+        self.window_manager.open_window(
+            "kamea_grid",
+            KameaWindow,
+            service=service
+        )
+
+    def _open_baphomet_grid(self):
+        """Open the Kamea of Baphomet Visualizer."""
+        service = KameaGridService(variant="Baphomet")
+        
+        self.window_manager.open_window(
+            "kamea_baphomet",
+            KameaWindow,
+            service=service
         )

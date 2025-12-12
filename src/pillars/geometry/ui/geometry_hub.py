@@ -1186,7 +1186,7 @@ class GeometryHub(QWidget):
             QPushButton:pressed {background-color: #0369a1;}
             """
         )
-        hero_btn.setToolTip("Open the advanced scientific calculator")
+        # hero_btn.setToolTip("Open the advanced scientific calculator")
         hero_btn.clicked.connect(self._open_advanced_scientific_calculator)
         title_row.addWidget(hero_btn)
 
@@ -1203,7 +1203,7 @@ class GeometryHub(QWidget):
             QPushButton:pressed {background-color: #b45309;}
             """
         )
-        poly_btn.setToolTip("Visualize polygonal and centered polygonal numbers")
+        # poly_btn.setToolTip("Visualize polygonal and centered polygonal numbers")
         poly_btn.clicked.connect(self._open_polygonal_number_visualizer)
         title_row.addWidget(poly_btn)
 
@@ -1218,7 +1218,7 @@ class GeometryHub(QWidget):
             QPushButton:pressed {background-color: #6b21a8;}
             """
         )
-        exp_btn.setToolTip("Explore generalized star numbers (P-grams)")
+        # exp_btn.setToolTip("Explore generalized star numbers (P-grams)")
         exp_btn.clicked.connect(self._open_experimental_star_visualizer)
         title_row.addWidget(exp_btn)
 
@@ -1233,7 +1233,7 @@ class GeometryHub(QWidget):
             QPushButton:pressed {background-color: #0e7490;}
             """
         )
-        figurate_3d_btn.setToolTip("Visualize 3D figurate numbers (tetrahedral, pyramidal, cubic)")
+        # figurate_3d_btn.setToolTip("Visualize 3D figurate numbers (tetrahedral, pyramidal, cubic)")
         figurate_3d_btn.clicked.connect(self._open_figurate_3d_visualizer)
         title_row.addWidget(figurate_3d_btn)
 
@@ -1373,7 +1373,7 @@ class GeometryHub(QWidget):
         sci_calc_btn = QPushButton("Advanced Scientific Calculator")
         sci_calc_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         sci_calc_btn.setStyleSheet(self._primary_button_style())
-        sci_calc_btn.setToolTip("Open a full scientific calculator in its own window")
+        # sci_calc_btn.setToolTip("Open a full scientific calculator in its own window")
         sci_calc_btn.clicked.connect(self._open_advanced_scientific_calculator)
         header_layout.addWidget(sci_calc_btn)
 
@@ -1442,7 +1442,10 @@ class GeometryHub(QWidget):
         container_layout.setSpacing(0)
 
         button = QPushButton(shape_definition['name'])
-        button.setToolTip(shape_definition.get('summary', ''))
+        # Tooltips removed per user request
+        # summary = shape_definition.get('summary')
+        # if summary and isinstance(summary, str) and summary.strip():
+        #     button.setToolTip(summary)
         button.setCursor(Qt.CursorShape.PointingHandCursor)
         button.setStyleSheet(
             "QPushButton {background-color: #f8fafc; border: 1px solid #e2e8f0;"

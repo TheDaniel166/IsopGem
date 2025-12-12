@@ -14,7 +14,11 @@ class EllipseShape(GeometricShape):
 
     @property
     def description(self) -> str:
-        return "Smooth conic with semi-major/minor axes, eccentricity, and foci"
+        return "A regular oval shape traced by a point moving in a plane"
+
+    @property
+    def calculation_hint(self) -> str:
+        return "Enter Semi-Major (a) + Semi-Minor (b) axes"
 
     def _init_properties(self):
         self.properties = {

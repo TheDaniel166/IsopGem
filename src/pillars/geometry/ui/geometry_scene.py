@@ -4,7 +4,7 @@ import math
 from typing import List, Optional, Tuple
 
 from PyQt6.QtWidgets import QGraphicsScene, QGraphicsItem, QGraphicsSimpleTextItem, QGraphicsSceneMouseEvent, QGraphicsEllipseItem
-from PyQt6.QtGui import QPen, QBrush, QColor, QPolygonF, QPainter, QTransform, QRadialGradient
+from PyQt6.QtGui import QPen, QBrush, QColor, QPolygonF, QPainter, QTransform, QRadialGradient, QPainterPath
 from PyQt6.QtCore import Qt, QPointF, QRectF, pyqtSignal
 
 from .primitives import (
@@ -16,7 +16,10 @@ from .primitives import (
     PenStyle,
     PolygonPrimitive,
     Primitive,
+    BooleanPrimitive
 )
+
+
 
 
 def _segment_intersection(p1: QPointF, p2: QPointF, p3: QPointF, p4: QPointF) -> Optional[QPointF]:
@@ -245,31 +248,32 @@ class GeometryScene(QGraphicsScene):
             poly_item.setZValue(9)
             self._temp_items.append(poly_item)
             
-            # Calculate and show area
-            area = _shoelace_area(points)
-            centroid = _polygon_centroid([(p.x(), p.y()) for p in points])
-            
-            # Create Area Label
-            text = f"Area: {area:.2f}"
-            text_item = QGraphicsSimpleTextItem(text)
-            
-            text_col = self._meas_line_color if self._meas_use_line_color_for_text else self._meas_text_color
-            text_item.setBrush(QBrush(text_col)) 
-            
-            # Background for label
-            font = text_item.font()
-            font.setPointSizeF(self._meas_font_size + 1.0) # Slightly larger than segments
-            font.setBold(True)
-            text_item.setFont(font)
-            
-            rect = text_item.boundingRect()
-            
-            # Positioning
-            text_item.setPos(centroid.x() - rect.width()/2, centroid.y() - rect.height()/2)
-            text_item.setZValue(13)
-            
-            self.addItem(text_item)
-            self._temp_items.append(text_item)
+            # Calculate and show area ONLY if closed
+            if closed:
+                area = _shoelace_area(points)
+                centroid = _polygon_centroid([(p.x(), p.y()) for p in points])
+                
+                # Create Area Label
+                text = f"Area: {area:.2f}"
+                text_item = QGraphicsSimpleTextItem(text)
+                
+                text_col = self._meas_line_color if self._meas_use_line_color_for_text else self._meas_text_color
+                text_item.setBrush(QBrush(text_col)) 
+                
+                # Background for label
+                font = text_item.font()
+                font.setPointSizeF(self._meas_font_size + 1.0) # Slightly larger than segments
+                font.setBold(True)
+                text_item.setFont(font)
+                
+                rect = text_item.boundingRect()
+                
+                # Positioning
+                text_item.setPos(centroid.x() - rect.width()/2, centroid.y() - rect.height()/2)
+                text_item.setZValue(13)
+                
+                self.addItem(text_item)
+                self._temp_items.append(text_item)
 
         # 3. Emit Stats
         perimeter = 0.0
@@ -340,17 +344,11 @@ class GeometryScene(QGraphicsScene):
 
     def clear_temporary_items(self):
         """Remove all temporary items from the scene."""
-        # This implementation removes everything for now, can be optimized
-        # But wait, connection lines should persist across temporary measurements?
-        # Typically temporary items are just for the ruler.
-        # Connection lines are semi-permanent overlay.
-        # We need a dedicated list for connection lines if we want to clear them separately.
-        # For now, let's keep interactions separate from "temporary items" (measurements).
-        # We just need to ensure `_rebuild_scene` doesn't kill connections unless we want it to.
-        # `_rebuild_scene` clears everything.
-        # So we likely need to re-add connections after a rebuild or store them as primitives.
-        # But connections are dynamic.
-        pass
+        for item in self._temp_items:
+            scene = item.scene()
+            if scene == self:
+                self.removeItem(item)
+        self._temp_items.clear()
 
     def mousePressEvent(self, event: QGraphicsSceneMouseEvent):
         # Process our custom click logic BEFORE calling super(), otherwise 
@@ -546,6 +544,42 @@ class GeometryScene(QGraphicsScene):
             self._add_polygon(primitive)
         elif isinstance(primitive, LinePrimitive):
             self._add_line(primitive)
+        elif isinstance(primitive, BooleanPrimitive):
+            self._add_boolean_primitive(primitive)
+
+    def _add_boolean_primitive(self, primitive: BooleanPrimitive):
+        path_a = self._primitive_to_path(primitive.shape_a)
+        path_b = self._primitive_to_path(primitive.shape_b)
+        
+        if path_a.isEmpty() or path_b.isEmpty():
+            return
+            
+        result_path = QPainterPath()
+        if primitive.operation == "difference":
+            result_path = path_a.subtracted(path_b)
+        elif primitive.operation == "union":
+            result_path = path_a.united(path_b)
+        elif primitive.operation == "intersection":
+            result_path = path_a.intersected(path_b)
+            
+        path_item = self.addPath(
+            result_path,
+            self._qt_pen(primitive.pen),
+            self._qt_brush(primitive.brush)
+        )
+        path_item.setZValue(1)
+
+    def _primitive_to_path(self, primitive: Primitive) -> QPainterPath:
+        path = QPainterPath()
+        if isinstance(primitive, CirclePrimitive):
+            cx, cy = primitive.center
+            r = primitive.radius
+            # QPainterPath.addEllipse takes rect or center+radii
+            path.addEllipse(QPointF(cx, cy), r, r)
+        elif isinstance(primitive, PolygonPrimitive):
+            points = [QPointF(x, y) for x, y in primitive.points]
+            path.addPolygon(QPolygonF(points))
+        return path
 
     def _add_circle(self, primitive: CirclePrimitive):
         cx, cy = primitive.center

@@ -83,7 +83,17 @@ class LabelPrimitive:
     metadata: Optional[dict] = field(default=None)
 
 
-Primitive = Union[CirclePrimitive, PolygonPrimitive, LinePrimitive]
+@dataclass
+class BooleanPrimitive:
+    """A shape resulting from a boolean operation between two primitives."""
+    operation: str # "difference", "union", "intersection"
+    shape_a: Primitive
+    shape_b: Primitive
+    pen: PenStyle = field(default_factory=PenStyle)
+    brush: BrushStyle = field(default_factory=BrushStyle)
+
+
+Primitive = Union[CirclePrimitive, PolygonPrimitive, LinePrimitive, BooleanPrimitive]
 
 
 @dataclass

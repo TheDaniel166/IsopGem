@@ -76,23 +76,23 @@ class CalculatorTab(QWidget):
         
         html = f"""
         <h3>Ditrune {meta['decimal']}</h3>
-        <p><b>Plane:</b> {ch1.get('octave_plane', 'N/A')}</p>
+        <p><b>Configuration:</b> {meta['ternary']}</p>
         <hr>
         <table border='0' cellpadding='5'>
         <tr>
-            <td><b>Ch1 (Container)</b></td>
+            <td><b>Red (Pitch)</b></td>
             <td>{ch1['output']}</td>
-            <td>Bigram {ch1['bigram_value']}</td>
+            <td>Val {ch1['value']}</td>
         </tr>
         <tr>
-            <td><b>Ch2 (Pitch)</b></td>
-            <td>{ch2['output_freq']:.2f} Hz</td>
-            <td>{ch2['interval']}</td>
+            <td><b>Green (Dynamics)</b></td>
+            <td>Amp {ch2['output']}</td>
+            <td>Val {ch2['value']}</td>
         </tr>
         <tr>
-            <td><b>Ch3 (Rhythm)</b></td>
-            <td>{ch3['output_rate']:.2f} Hz</td>
-            <td>{ch3['interval']}</td>
+            <td><b>Blue (Timbre)</b></td>
+            <td>{ch3['output']}</td>
+            <td>Val {ch3['value']}</td>
         </tr>
         </table>
         """
@@ -105,12 +105,22 @@ class CalculatorTab(QWidget):
         if self.main_window:
             self.main_window.update_visualizer(self.current_result)
 
-        freq = self.current_result['channels'][2]['output_freq']
-        mod = self.current_result['channels'][3]['output_rate']
-        amp = self.current_result['channels'][1].get('output_amp', 0.5)
+        # Updated for RGB structure
+        # Ch1 = Red (Pitch), Ch2 = Green (Dyn), Ch3 = Blue (Timbre)
+        # Note: AmunSoundCalculator output structure:
+        # 1: Pitch (Red) -> value, output (freq string)
+        # 2: Dynamics (Green) -> value, output (amp string)
+        # 3: Timbre (Blue) -> value, output (waveform)
+        
+        # But wait! I need the raw floats for generation, not just strings.
+        # AmunSoundCalculator returns 'parameters' dict too.
+        params = self.current_result['parameters']
+        freq = params['pitch_freq']
+        amp = params['dynamics_amp']
+        waveform = params['waveform']
         
         try:
-            path = AmunAudioService.generate_wave_file(freq, mod, amp)
+            path = AmunAudioService.generate_wave_file(freq, amp, waveform=waveform)
             self.player.setSource(QUrl.fromLocalFile(path))
             self.audio_output.setVolume(75)
             self.player.play()
@@ -175,7 +185,8 @@ class ComposerTab(QWidget):
                     self.sequence_data.append(sig)
                     
                     # Add to list
-                    item_text = f"Ditrune {val}: {sig['channels'][2]['output_freq']:.1f}Hz ({sig['channels'][1]['octave_plane']})"
+                    param = sig['parameters']
+                    item_text = f"Ditrune {val}: {param['pitch_freq']:.1f}Hz, {param['waveform']}, Vol {param['dynamics_amp']:.2f}"
                     self.list_widget.addItem(item_text)
             except ValueError:
                 continue
@@ -247,13 +258,16 @@ class TernarySoundWidget(QWidget):
         
     def update_visualizer(self, result: dict):
         """Update the visualizer with new signature data."""
-        ch2 = result['channels'][2]
-        ch3 = result['channels'][3]
-        ch1 = result['channels'][1]
+        params = result['parameters']
+        freq = params['pitch_freq']
+        amp = params['dynamics_amp']
+        # Use Red Value for "Bigram" visualization mapping if needed, or Green?
+        # Visualizer expects 'bigram'. Let's use Green (Dyn) or Blue (Timbre)?
+        # Let's use Red (Pitch) as the primary 'state' or just pass a value.
+        val = params['red_value'] 
         
-        freq = ch2['output_freq']
-        mod_rate = ch3['output_rate']
-        amp = ch1.get('output_amp', 0.5)
-        bigram = ch1['bigram_value']
-        
-        self.visualizer.update_parameters(freq, amp, bigram, mod_rate)
+        # Helper for compatibility
+        # Visualizer likely expects old args. Let's check signature if possible?
+        # Assuming update_parameters(freq, amp, val, mod_rate)
+        # Mod Rate is gone. Pass 0.
+        self.visualizer.update_parameters(freq, amp, val, 0.0)

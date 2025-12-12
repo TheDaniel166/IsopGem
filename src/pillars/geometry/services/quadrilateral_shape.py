@@ -101,6 +101,10 @@ class ParallelogramShape(GeometricShape):
 	def description(self) -> str:
 		return "Opposite sides parallel with optional angle/height breakdown"
 
+	@property
+	def calculation_hint(self) -> str:
+		return "Enter Base + Height, or Base + Side + Angle"
+
 	def _init_properties(self):
 		self.properties = {
 			'base': ShapeProperty(name='Base', key='base', unit='units'),
@@ -232,6 +236,10 @@ class RhombusShape(GeometricShape):
 	def description(self) -> str:
 		return "All sides equal with diagonal and height relationships"
 
+	@property
+	def calculation_hint(self) -> str:
+		return "Enter Side + Angle, or Diagonals"
+
 	def _init_properties(self):
 		self.properties = {
 			'side': ShapeProperty(name='Side Length', key='side', unit='units'),
@@ -263,9 +271,8 @@ class RhombusShape(GeometricShape):
 		d_long = self.properties['diagonal_long'].value
 		d_short = self.properties['diagonal_short'].value
 		if d_long and d_short and d_long < d_short:
+			self.properties['diagonal_long'].value, self.properties['diagonal_short'].value = d_short, d_long
 			d_long, d_short = d_short, d_long
-			self.properties['diagonal_long'].value = d_long
-			self.properties['diagonal_short'].value = d_short
 
 		side = self.properties['side'].value
 		height = self.properties['height'].value
@@ -353,6 +360,10 @@ class TrapezoidShape(GeometricShape):
 	@property
 	def description(self) -> str:
 		return "Single pair of parallel bases with leg + altitude metrics"
+
+	@property
+	def calculation_hint(self) -> str:
+		return "Enter Bases + Height + Legs"
 
 	def _init_properties(self):
 		self.properties = {
@@ -501,6 +512,10 @@ class IsoscelesTrapezoidShape(GeometricShape):
 	@property
 	def description(self) -> str:
 		return "Congruent legs with equal base angles and diagonal data"
+
+	@property
+	def calculation_hint(self) -> str:
+		return "Enter Bases + Height (or Leg)"
 
 	def _init_properties(self):
 		self.properties = {
@@ -711,6 +726,10 @@ class KiteShape(_BaseAdjacentEqualShape):
 	def description(self) -> str:
 		return "Two equal adjacent sides mirrored across a diagonal"
 
+	@property
+	def calculation_hint(self) -> str:
+		return "Enter 2 unequal sides + Angle"
+
 
 class DeltoidShape(_BaseAdjacentEqualShape):
 	"""Concave dart/deltoid configuration."""
@@ -740,6 +759,10 @@ class CyclicQuadrilateralShape(GeometricShape):
 	@property
 	def description(self) -> str:
 		return "Vertices on a circle with Brahmagupta area"
+
+	@property
+	def calculation_hint(self) -> str:
+		return "Enter 4 sides"
 
 	def _init_properties(self):
 		self.properties = {
@@ -839,7 +862,11 @@ class TangentialQuadrilateralShape(GeometricShape):
 
 	@property
 	def description(self) -> str:
-		return "Incircle touches all sides with Pitot validation"
+		return "Tangential quadrilateral with incircle"
+
+	@property
+	def calculation_hint(self) -> str:
+		return "Enter 3 sides (Pitot's Theorem)"
 
 	def _init_properties(self):
 		self.properties = {
@@ -941,7 +968,11 @@ class BicentricQuadrilateralShape(GeometricShape):
 
 	@property
 	def description(self) -> str:
-		return "Simultaneously cyclic and tangential (incircle + circumcircle)"
+		return "Both Cyclic and Tangential (Fuss' Theorem)"
+
+	@property
+	def calculation_hint(self) -> str:
+		return "Enter 2 distinct sides (a, b)"
 
 	def _init_properties(self):
 		self.properties = {

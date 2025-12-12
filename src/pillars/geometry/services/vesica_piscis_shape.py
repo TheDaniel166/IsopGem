@@ -14,7 +14,11 @@ class VesicaPiscisShape(GeometricShape):
 
     @property
     def description(self) -> str:
-        return "Lens of two equal circles with sacred ratios and overlap metrics"
+        return "Lens shape formed by the intersection of two congruent disks"
+
+    @property
+    def calculation_hint(self) -> str:
+        return "Calculate from any field (1-DoF)"
 
     def _init_properties(self):
         self.properties = {

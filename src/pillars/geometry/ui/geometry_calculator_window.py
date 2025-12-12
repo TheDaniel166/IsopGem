@@ -65,6 +65,9 @@ class GeometryCalculatorWindow(QMainWindow):
         
         # Star rendering toggle (for hexagram)
         self.star_toggle = None
+        
+        # Track widget containers for styling
+        self.property_cards = {}
 
         self._setup_ui()
         
@@ -138,8 +141,21 @@ class GeometryCalculatorWindow(QMainWindow):
         # Description
         desc_label = QLabel(self.shape.description)
         desc_label.setWordWrap(True)
-        desc_label.setStyleSheet("color: #64748b; font-size: 10pt; line-height: 1.4;")
+        desc_label.setStyleSheet("color: #64748b; font-size: 11pt;")
         layout.addWidget(desc_label)
+        
+        # Calculation Hint
+        hint_label = QLabel(self.shape.calculation_hint)
+        hint_label.setStyleSheet("color: #0f172a; font-size: 10pt; font-style: italic; background-color: #f1f5f9; padding: 6px; border-radius: 4px;")
+        hint_label.setWordWrap(True)
+        layout.addWidget(hint_label)
+        
+        # Separator
+        line = QFrame()
+        line.setFrameShape(QFrame.Shape.HLine)
+        line.setFrameShadow(QFrame.Shadow.Sunken)
+        line.setStyleSheet("color: #e2e8f0;")
+        layout.addWidget(line)
         
         layout.addSpacing(8)
         
@@ -286,6 +302,22 @@ class GeometryCalculatorWindow(QMainWindow):
         
         # Store reference
         self.property_inputs[prop.key] = input_field
+        self.property_cards[prop.key] = container
+        
+        # Apply initial style (Amber for editable, Slate for readonly)
+        if not prop.readonly:
+            container.setStyleSheet("""
+                QFrame {
+                    background-color: #fffbeb; 
+                    border: 1px solid #fcd34d;
+                    border-radius: 8px;
+                }
+                QFrame:hover {
+                    border-color: #fbbf24;
+                }
+            """)
+        
+        # Connect signal
         
         # Connect signal
         if not prop.readonly:
@@ -870,158 +902,20 @@ class GeometryCalculatorWindow(QMainWindow):
         if not hasattr(self, "_measured_points") or len(self._measured_points) < 3:
             return
             
-        points = self._measured_points
-        count = len(points)
+        # Convert QPoints to tuples for the service
+        points = [(p.x(), p.y()) for p in self._measured_points]
         
-        if count == 3:
-            # Calculate side lengths
-            s1 = math.sqrt((points[1].x()-points[0].x())**2 + (points[1].y()-points[0].y())**2)
-            s2 = math.sqrt((points[2].x()-points[1].x())**2 + (points[2].y()-points[1].y())**2)
-            s3 = math.sqrt((points[0].x()-points[2].x())**2 + (points[0].y()-points[2].y())**2)
-            
-            sides = sorted([s1, s2, s3])
-            a, b, c = sides[0], sides[1], sides[2] # Smallest to largest
-            
-            # Check for Equilateral (all sides equal)
-            if math.isclose(a, c, rel_tol=1e-4):
-                from pillars.geometry.services import EquilateralTriangleShape
-                shape = EquilateralTriangleShape()
-                shape.set_property("side", a)
-                
-            # Check for Isosceles (2 sides equal)
-            elif math.isclose(a, b, rel_tol=1e-4) or math.isclose(b, c, rel_tol=1e-4):
-                # Check for Isosceles Right (45-45-90) -> c^2 = 2 * a^2 (approx)
-                # In isosceles, leg is defined.
-                leg = a if math.isclose(a, b, rel_tol=1e-4) else c
-                base = c if math.isclose(a, b, rel_tol=1e-4) else a
-                # Re-assign for clarity: if a==b, leg=a, base=c. If b==c, leg=c, base=a.
-                # IsoscelesRight check: base (hypotenuse) approx leg * sqrt(2)?
-                
-                is_right = math.isclose(base, leg * math.sqrt(2), rel_tol=1e-4)
-                
-                if is_right:
-                    from pillars.geometry.services import IsoscelesRightTriangleShape
-                    shape = IsoscelesRightTriangleShape()
-                    shape.set_property("leg", leg)
-                else:
-                    from pillars.geometry.services import IsoscelesTriangleShape
-                    shape = IsoscelesTriangleShape()
-                    shape.set_property("leg", leg)
-                    shape.set_property("base", base)
-                    
-            # Check for Right Triangle (a^2 + b^2 = c^2)
-            elif math.isclose(a*a + b*b, c*c, rel_tol=1e-4):
-                from pillars.geometry.services import RightTriangleShape
-                shape = RightTriangleShape()
-                shape.set_property("base", a)
-                shape.set_property("height", b)
-                # Hypotenuse will be calculated
-                
-            else:
-                # Scalene (Generic)
-                from pillars.geometry.services import ScaleneTriangleShape
-                shape = ScaleneTriangleShape()
-                # Use raw sides for Scalene to match user perception of A, B, C segments
-                # But Scalene accepts side_a, side_b, side_c order-independently?
-                # Actually, relying on sorted sides is safer for stability, 
-                # but let's stick to the lengths we found.
-                # Re-using s1, s2, s3 map to the specific geometry better?
-                # The user saw "Side a (BC)" etc.
-                shape.set_property("side_a", s1)
-                shape.set_property("side_b", s2)
-                shape.set_property("side_c", s3)
-            
+        from pillars.geometry.services.shape_detection_service import ShapeDetectionService
+        shape = ShapeDetectionService.detect_from_points(points)
+        
+        if shape:
             if self.window_manager:
                 self.window_manager.open_window(
                     f"geometry_{shape.name.lower().replace(' ', '_')}",
                     self.__class__,
                     allow_multiple=True,
-                    shape=shape
-                )
-                
-        elif count == 4:
-            # Calculate sides
-            s1 = math.sqrt((points[1].x()-points[0].x())**2 + (points[1].y()-points[0].y())**2)
-            s2 = math.sqrt((points[2].x()-points[1].x())**2 + (points[2].y()-points[1].y())**2)
-            s3 = math.sqrt((points[3].x()-points[2].x())**2 + (points[3].y()-points[2].y())**2)
-            s4 = math.sqrt((points[0].x()-points[3].x())**2 + (points[0].y()-points[3].y())**2)
-            
-            # Calculate diagonals
-            d1 = math.sqrt((points[2].x()-points[0].x())**2 + (points[2].y()-points[0].y())**2)
-            d2 = math.sqrt((points[3].x()-points[1].x())**2 + (points[3].y()-points[1].y())**2)
-            
-            sides = [s1, s2, s3, s4]
-            avg_side = sum(sides) / 4.0
-            
-            is_equilateral = all(math.isclose(s, sides[0], rel_tol=1e-3) for s in sides)
-            is_opp_equal = math.isclose(s1, s3, rel_tol=1e-3) and math.isclose(s2, s4, rel_tol=1e-3)
-            is_diag_equal = math.isclose(d1, d2, rel_tol=1e-3)
-            
-            shape = None
-            
-            if is_equilateral and is_diag_equal:
-                # Square
-                from pillars.geometry.services import SquareShape
-                shape = SquareShape()
-                shape.set_property("side", avg_side)
-                
-            elif is_opp_equal and is_diag_equal:
-                # Rectangle
-                from pillars.geometry.services import RectangleShape
-                shape = RectangleShape()
-                shape.set_property("length", max(s1, s2)) # Using max/min helps orient? No, length usually > width
-                shape.set_property("width", min(s1, s2))
-                
-            elif is_equilateral:
-                # Rhombus
-                from pillars.geometry.services import RhombusShape
-                shape = RhombusShape()
-                shape.set_property("side", avg_side)
-                # Rhombus needs diagonal or angle too?
-                # RhombusShape checks: side, diagonal_p, diagonal_q.
-                shape.set_property("diagonal_p", d1)
-                
-            elif is_opp_equal:
-                # Parallelogram
-                from pillars.geometry.services import ParallelogramShape
-                shape = ParallelogramShape()
-                # Needs base, side, angle/height? 
-                # Parallelogram likely complex to init from just sides/diagonals without solving first.
-                # Let's check ParallelogramShape inputs.
-                # Assuming base=s1, side=s2.
-                shape.set_property("base", s1)
-                shape.set_property("side", s2)
-                # If we have diagonals, we can find angle?
-                # For now, let's treat as "Quadrilateral Solver" if we can't fully solve?
-                # Or just let user fill in the rest.
-                
-            if shape is None:
-                # Default to Irregular Polygon if generic Logic fails
-                from pillars.geometry.services.irregular_polygon_shape import IrregularPolygonShape
-                # Convert QPointF to tuples
-                pts = [(p.x(), p.y()) for p in points]
-                shape = IrregularPolygonShape(pts)
-            
-            if self.window_manager:
-                self.window_manager.open_window(
-                    f"geometry_{shape.name.lower().replace(' ', '_')}",
-                    self.__class__,
-                    allow_multiple=True,
-                    shape=shape
-                )
-                  
-        elif count >= 5:
-            # Default to Irregular Polygon for 5+ points unless specific logic added later
-            from pillars.geometry.services.irregular_polygon_shape import IrregularPolygonShape
-            pts = [(p.x(), p.y()) for p in points]
-            shape = IrregularPolygonShape(pts)
-            
-            if self.window_manager:
-                self.window_manager.open_window(
-                    f"geometry_{shape.name.lower().replace(' ', '_')}",
-                    self.__class__,
-                    allow_multiple=True,
-                    shape=shape
+                    shape=shape,
+                    window_manager=self.window_manager
                 )
 
     def _build_output_tab(self) -> QWidget:
@@ -1118,11 +1012,46 @@ class GeometryCalculatorWindow(QMainWindow):
         self.updating = True
         
         for prop in self.shape.get_all_properties():
+            input_field = self.property_inputs[prop.key]
             if prop.value is not None:
-                input_field = self.property_inputs[prop.key]
                 # Format without scientific notation
                 formatted_value = f"{prop.value:.{prop.precision}f}".rstrip('0').rstrip('.')
                 input_field.setText(formatted_value)
+                
+                # Solved State: Green
+                if prop.key in self.property_cards:
+                    self.property_cards[prop.key].setStyleSheet("""
+                        QFrame {
+                            background-color: #f0fdf4;
+                            border: 1px solid #86efac;
+                            border-radius: 8px;
+                        }
+                    """)
+            else:
+                input_field.clear()
+                # Unsolved State: Revert to default
+                if prop.key in self.property_cards:
+                    if not prop.readonly:
+                        # Required: Amber
+                        self.property_cards[prop.key].setStyleSheet("""
+                            QFrame {
+                                background-color: #fffbeb; 
+                                border: 1px solid #fcd34d;
+                                border-radius: 8px;
+                            }
+                            QFrame:hover {
+                                border-color: #fbbf24;
+                            }
+                        """)
+                    else:
+                        # Output: Default Slate
+                        self.property_cards[prop.key].setStyleSheet("""
+                            QFrame {
+                                background-color: #f8fafc;
+                                border: 1px solid #e2e8f0;
+                                border-radius: 8px;
+                            }
+                        """)
         
         self.updating = False
     
@@ -1309,6 +1238,7 @@ class GeometryCalculatorWindow(QMainWindow):
         window = self.window_manager.open_window(
             "quadset_analysis",
             QuadsetAnalysisWindow,
+            window_manager=self.window_manager
         )
         if not window:
             return

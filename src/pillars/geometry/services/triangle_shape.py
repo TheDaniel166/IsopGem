@@ -362,6 +362,10 @@ class RightTriangleShape(GeometricShape):
     @property
     def description(self) -> str:
         return "A triangle with one 90° angle"
+
+    @property
+    def calculation_hint(self) -> str:
+        return "Enter 2 sides, or 1 side + area"
     
     def _init_properties(self):
         """Initialize right triangle properties."""
@@ -570,6 +574,10 @@ class IsoscelesTriangleShape(GeometricShape):
     def description(self) -> str:
         return "Two equal legs with base/apex metrics and sacred height"
 
+    @property
+    def calculation_hint(self) -> str:
+        return "Enter Base + Leg, or Base/Leg + Height"
+
     def _init_properties(self):
         self.properties = {
             'base': ShapeProperty(name='Base (b)', key='base', unit='units'),
@@ -706,6 +714,10 @@ class ScaleneTriangleShape(_BaseSSSTriangleShape):
     def description(self) -> str:
         return "Three unequal sides with full SSS breakdown"
 
+    @property
+    def calculation_hint(self) -> str:
+        return "Enter 3 sides (SSS)"
+
     def _validate_solution(self, solution: TriangleSolution) -> bool:
         sides = (solution.side_a, solution.side_b, solution.side_c)
         return min(abs(sides[i] - sides[j]) for i in range(3) for j in range(i + 1, 3)) > 1e-4
@@ -778,6 +790,10 @@ class IsoscelesRightTriangleShape(GeometricShape):
     @property
     def description(self) -> str:
         return "Special right triangle with √2 proportions"
+
+    @property
+    def calculation_hint(self) -> str:
+        return "Calculate from any field (1-DoF)"
 
     def _init_properties(self):
         self.properties = {
@@ -860,6 +876,10 @@ class ThirtySixtyNinetyTriangleShape(GeometricShape):
     @property
     def description(self) -> str:
         return "Special right triangle with short:long:hyp = 1:√3:2"
+
+    @property
+    def calculation_hint(self) -> str:
+        return "Calculate from any field (1-DoF)"
 
     def _init_properties(self):
         self.properties = {
@@ -951,7 +971,11 @@ class GoldenTriangleShape(GeometricShape):
 
     @property
     def description(self) -> str:
-        return "Isosceles triangle with equal side to base ratio = φ"
+        return "Isosceles triangle with golden ratio sides (72-72-36)"
+
+    @property
+    def calculation_hint(self) -> str:
+        return "Calculate from any field (1-DoF)"
 
     def _init_properties(self):
         self.properties = {

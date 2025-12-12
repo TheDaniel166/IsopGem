@@ -28,7 +28,11 @@ class IrregularPolygonShape(GeometricShape):
 
     @property
     def description(self) -> str:
-        return "A polygon defined by specific vertex coordinates."
+        return "Custom polygon defined by 3+ vertices"
+
+    @property
+    def calculation_hint(self) -> str:
+        return "Edit vertices in points table (Read-only properties)"
 
     def _init_properties(self):
         """Initialize base properties."""

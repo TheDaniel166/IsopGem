@@ -14,7 +14,11 @@ class AnnulusShape(GeometricShape):
 
     @property
     def description(self) -> str:
-        return "Ring formed by two concentric circles with thickness and gap metrics"
+        return "Ring-shaped object, a region bounded by two concentric circles"
+
+    @property
+    def calculation_hint(self) -> str:
+        return "Enter Outer Radius (R) + Inner Radius (r)"
 
     def _init_properties(self):
         self.properties = {
