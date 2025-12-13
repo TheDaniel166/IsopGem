@@ -16,10 +16,14 @@ class AmunVisualizer(QWidget):
         
         # State
         self.active = False
-        self.freq = 0.0
-        self.amp = 0.5
-        self.mod_rate = 0.0
-        self.bigram = 0
+        self.active = False
+        self.params = {}
+        
+        # Default State
+        self.family_color = QColor("#2a2a2a")
+        self.layers = 1
+        self.sides = 3 # Triangle default
+        self.attack = 0.5
         
         # Animation State
         self.base_rotation = 0.0
@@ -31,13 +35,32 @@ class AmunVisualizer(QWidget):
         self.timer.timeout.connect(self.update_animation)
         self.timer.start(16) # ~60 FPS
         
-    def update_parameters(self, freq: float, amp: float, bigram_val: int, mod_rate: float = 0.0):
-        """Update visualization target parameters."""
+    def update_parameters(self, params: dict):
+        """Update visualization target parameters from Symphony data."""
         self.active = True
-        self.freq = freq
-        self.amp = max(0.2, min(1.0, amp))
-        self.bigram = bigram_val
-        self.mod_rate = mod_rate
+        self.params = params
+        
+        # Color (Soul)
+        hex_color = params.get('color_hex', '#2a2a2a')
+        self.family_color = QColor(hex_color)
+        
+        # Geometry (Body - Red Channel)
+        # Map Red Key '00'-'22' to Sides 3-11
+        # '00' -> 0, '22' -> 8. +3 = 3..11
+        # Need to parse bigram key from params if available, or infer
+        red_key = params.get('red_val', '00') 
+        # Convert base-3 string to int? '00'=0, '01'=1... '22'=8
+        try:
+             val = int(red_key, 3)
+        except:
+             val = 0
+        self.sides = val + 3
+        
+        # Layers (Density - Blue Channel)
+        self.layers = params.get('layers', 1)
+        
+        # Dynamics (Breath - Green Channel)
+        self.attack = params.get('attack', 0.5)
         
     def stop(self):
         self.active = False
@@ -49,20 +72,17 @@ class AmunVisualizer(QWidget):
             self.pulse_phase += 0.05
             self.base_rotation += 0.2
         else:
-            # Rotation speed based on Freq
-            # Higher freq = faster spin
-            speed = min(5.0, self.freq / 80.0)
+            # Rotation speed based on Attack (Breath)
+            # Short attack = Fast spin
+            speed = 2.0 * (1.1 - min(1.0, self.attack))
             self.base_rotation += speed
             self.star_rotation -= (speed * 1.5) # Counter-rotate faster
             
             # Pulse logic: 
-            # If mod_rate > 0, pulse at that HZ rate.
-            # Else pulse slowly
-            rate = self.mod_rate if self.mod_rate > 0 else 0.5
-            # Convert Hz to Phase Increment (assuming 60fps)
-            # Phase = 2*pi * rate * t
-            # Phase step = (2*pi * rate) / 60
-            self.pulse_phase += (2 * math.pi * rate) / 60.0
+            # Breathe based on attack/release rhythm
+            # Use fixed rate for now to show life
+            rate = 1.0 / (self.attack + 0.1)
+            self.pulse_phase += (2 * math.pi * rate * 0.1)
             
         self.update()
 
@@ -75,56 +95,54 @@ class AmunVisualizer(QWidget):
         center = QPointF(w/2, h/2)
         radius_max = min(w, h) * 0.45
         
-        # 1. Background Gradient (Octave Atmosphere)
-        # Hue based on Freq (Logarithmic mapping ideally, but linear for now)
-        hue = int((self.freq / 1000.0) * 360) % 360
+        # 1. Background Gradient (Soul / Family Color)
+        # Use Family Color
+        c = self.family_color
         grad = QRadialGradient(center, radius_max * 1.5)
-        grad.setColorAt(0.0, QColor.fromHsv(hue, 100, 40, 255))   # Center glow
-        grad.setColorAt(0.8, QColor.fromHsv(hue, 150, 20, 100))  # Mid fade
-        grad.setColorAt(1.0, QColor.fromHsv(hue, 0, 0, 255))     # Black edge
+        grad.setColorAt(0.0, c.lighter(150))   # Center glow
+        grad.setColorAt(0.6, c)                # Mid
+        grad.setColorAt(1.0, QColor("#000000")) # Black edge
         painter.fillRect(self.rect(), QBrush(grad))
         
-        # 2. Pulse Calculation
-        # Pulse affects Scale
-        pulse_val = (math.sin(self.pulse_phase) + 1.0) / 2.0 # 0.0 to 1.0
-        # Intensity of pulse depends on Amp
-        current_scale = self.amp * (0.8 + (pulse_val * 0.2)) 
-        
-        current_radius = radius_max * current_scale
+        # 2. Variable Radius (Breath)
+        pulse = (math.sin(self.pulse_phase) + 1.0) / 2.0
+        base_scale = 0.6 + (pulse * 0.1) # Breathe +/- 10%
         
         painter.translate(center)
         
-        # 3. Draw Geometry
-        sides = self.bigram + 3 # Map Bigram 0->Triangle (3), 1->Square (4)...
-        if self.bigram == 0: sides = 0 # Bigram 0 = Circle
+        # 3. Draw Concentric Rings (Layers / Density)
+        # Each layer is a polygon with 'sides' (Red Channel)
         
-        # Color Palettes
-        base_color = QColor.fromHsv(hue, 200, 255, 200)
-        star_color = QColor.fromHsv((hue + 180) % 360, 255, 255, 180) # Compl
+        # Loop backwards so outer rings don't cover inner ones?
+        # Actually draw outlines.
         
-        if sides == 0:
-            # Draw Spheres (Bigram 0 / Void)
-            self._draw_void_spheres(painter, base_color, current_radius)
-        else:
-            # Layer 1: Base Polygon (Rotating CW)
-            painter.save()
-            painter.rotate(self.base_rotation)
-            self._draw_polygon(painter, sides, current_radius, base_color, 3)
-            painter.restore()
+        layer_step = radius_max * base_scale / (self.layers + 1)
+        
+        for i in range(self.layers, 0, -1):
+            r = i * layer_step
             
-            # Layer 2: Star / Stellation (Rotating CCW)
-            # Only stellate if sides >= 5
-            if sides >= 5:
-                painter.save()
-                painter.rotate(self.star_rotation)
-                self._draw_star(painter, sides, current_radius * 0.7, star_color, 2)
-                painter.restore()
+            # Alternating Rotation
+            rot = self.base_rotation if i % 2 == 0 else -self.base_rotation
+            rot += (i * 15) # Offset
+            
+            painter.save()
+            painter.rotate(rot)
+            
+            # Opacity based on layer depth
+            alpha = 255 - (i * 10)
+            color = QColor(c)
+            color.setAlpha(max(50, alpha))
+            
+            # Line width
+            width = max(1, 4 - (i // 3))
+            
+            if self.sides < 3:
+                # Circle/Void (fallback) -> Draw as Polygon with many sides or Ellipse
+                self._draw_void_spheres(painter, color, r)
             else:
-                # For Triangle/Square, draw inner inverted polygon
-                painter.save()
-                painter.rotate(self.star_rotation)
-                self._draw_polygon(painter, sides, current_radius * 0.5, star_color, 2)
-                painter.restore()
+                self._draw_polygon(painter, self.sides, r, color, width)
+                
+            painter.restore()
 
     def _draw_void_spheres(self, painter, color, radius):
         """Draw concentric circles for the Void state."""

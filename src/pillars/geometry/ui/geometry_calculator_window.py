@@ -41,6 +41,7 @@ class GeometryCalculatorWindow(QMainWindow):
         self.splitter = None
         self.calc_pane = None
         self.viewport_pane = None
+        self.viewport = None
         self.controls_pane = None
         self.calc_collapsed = False
         self.controls_collapsed = False
@@ -48,10 +49,8 @@ class GeometryCalculatorWindow(QMainWindow):
         self.calc_toggle_btn: Optional[QPushButton] = None
         self.controls_toggle_btn: Optional[QPushButton] = None
         self.show_labels_cb: Optional[QCheckBox] = None
-        self.show_grid_cb: Optional[QCheckBox] = None
         self.show_axes_cb: Optional[QCheckBox] = None
         self.theme_combo: Optional[QComboBox] = None
-        self.overlay_grid_btn: Optional[QToolButton] = None
         self.overlay_axes_btn: Optional[QToolButton] = None
         self.overlay_labels_btn: Optional[QToolButton] = None
         self.overlay_measure_btn: Optional[QToolButton] = None
@@ -412,7 +411,7 @@ class GeometryCalculatorWindow(QMainWindow):
         
         self.viewport = GeometryView(self.scene)
         self.viewport.setStyleSheet("border: none; border-radius: 7px; background-color: transparent;")
-        self.scene.set_grid_visible(True)
+
         self.scene.set_axes_visible(True)
         self.scene.set_labels_visible(True)
         
@@ -532,11 +531,7 @@ class GeometryCalculatorWindow(QMainWindow):
         layout.setContentsMargins(12, 4, 12, 4)
         layout.setSpacing(6)
 
-        self.overlay_grid_btn = self._create_overlay_toggle(
-            "Grid",
-            lambda state: self.show_grid_cb.setChecked(state) if self.show_grid_cb else None,
-        )
-        layout.addWidget(self.overlay_grid_btn)
+
 
         self.overlay_axes_btn = self._create_overlay_toggle(
             "Axes",
@@ -617,9 +612,7 @@ class GeometryCalculatorWindow(QMainWindow):
         self.show_labels_cb.toggled.connect(self._on_display_toggle)
         layout.addWidget(self.show_labels_cb)
 
-        self.show_grid_cb = self._create_checkbox("Show Grid", True)
-        self.show_grid_cb.toggled.connect(self._on_display_toggle)
-        layout.addWidget(self.show_grid_cb)
+
 
         self.show_axes_cb = self._create_checkbox("Show Axes", True)
         self.show_axes_cb.toggled.connect(self._on_display_toggle)
@@ -1090,8 +1083,7 @@ class GeometryCalculatorWindow(QMainWindow):
         """Handle display control toggles."""
         if self.show_labels_cb is not None:
             self.scene.set_labels_visible(self.show_labels_cb.isChecked())
-        if self.show_grid_cb is not None:
-            self.scene.set_grid_visible(self.show_grid_cb.isChecked())
+
         if self.show_axes_cb is not None:
             self.scene.set_axes_visible(self.show_axes_cb.isChecked())
         if self.star_toggle is not None and self.sender() is self.star_toggle:
@@ -1100,7 +1092,7 @@ class GeometryCalculatorWindow(QMainWindow):
 
     def _sync_overlay_toggles(self):
         pairs = (
-            (self.overlay_grid_btn, self.show_grid_cb),
+
             (self.overlay_axes_btn, self.show_axes_cb),
             (self.overlay_labels_btn, self.show_labels_cb),
         )
@@ -1113,6 +1105,8 @@ class GeometryCalculatorWindow(QMainWindow):
 
     def _on_theme_changed(self, theme: str):
         self.scene.apply_theme(theme)
+        if self.viewport:
+            self.viewport.setBackgroundBrush(self.scene.backgroundBrush())
 
     def _on_zoom_in(self):
         if hasattr(self, "viewport") and self.viewport is not None:

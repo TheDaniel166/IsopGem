@@ -16,6 +16,7 @@ class KameaGridService:
 
     def __init__(self, variant: str = "Maut"):
         self._grid: Dict[Tuple[int, int], KameaCell] = {}
+        self._decimal_map: Dict[int, Tuple[int, int]] = {} # Reverse Lookup
         self._initialized = False
         self.variant = variant
         
@@ -99,6 +100,23 @@ class KameaGridService:
                 quadset.append(cell)
         return quadset
 
+    def get_chord_values(self, decimal_value: int) -> List[int]:
+        """
+        Returns the list of decimal values forming the Geometric Chord (Quadset)
+        for the given input number.
+        """
+        if not self._initialized:
+            self.initialize()
+            
+        coords = self._decimal_map.get(decimal_value)
+        if not coords:
+            return [decimal_value] # Return self if not found (or should we return empty?)
+            
+        quadset_cells = self.get_quadset(coords[0], coords[1])
+        # Return unique values sorted (to match user expectation of a set)
+        values = sorted(list(set(c.decimal_value for c in quadset_cells)))
+        return values
+
     def _load_grid(self):
         """
         Parses the CSV files and builds the cell objects.
@@ -156,6 +174,7 @@ class KameaGridService:
                         family_id=family_id
                     )
                     self._grid[(x, y)] = cell
+                    self._decimal_map[dec_val] = (x, y)
 
                 except KeyError:
                     # Handle cases where CSV might be missing cells (shouldn't happen in full grid)

@@ -69,7 +69,6 @@ class GeometryScene(QGraphicsScene):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._payload: Optional[GeometryScenePayload] = None
-        self._grid_spacing: float = 1.0
         self._label_items: List[QGraphicsSimpleTextItem] = []
         self._axes_items: List[QGraphicsItem] = []
         self._vertex_highlight_items: List[QGraphicsItem] = []
@@ -86,13 +85,11 @@ class GeometryScene(QGraphicsScene):
         self._last_meas_points: List[QPointF] = []
         self._last_meas_closed: bool = False
 
-        self.grid_visible: bool = True
         self.axes_visible: bool = True
         self.labels_visible: bool = True
 
-        self._grid_color = QColor(226, 232, 240)
         self._themes = {
-            "Daylight": ((248, 250, 252), (226, 232, 240)),
+            "Daylight": ((248, 250, 252), (203, 213, 225)),
             "Midnight": ((15, 23, 42), (51, 65, 85)),
             "Slate": ((30, 41, 59), (71, 85, 105)),
             "Pearl": ((255, 255, 255), (209, 213, 219)),
@@ -113,10 +110,7 @@ class GeometryScene(QGraphicsScene):
         self._payload = None
         self._rebuild_scene()
 
-    def set_grid_visible(self, visible: bool):
-        if self.grid_visible != visible:
-            self.grid_visible = visible
-            self.update()
+
 
     def set_axes_visible(self, visible: bool):
         if self.axes_visible != visible:
@@ -139,9 +133,8 @@ class GeometryScene(QGraphicsScene):
     def apply_theme(self, theme: str):
         palette = self._themes.get(theme, self._themes["Daylight"])
         self._theme_name = theme if theme in self._themes else "Daylight"
-        bg_rgb, grid_rgb = palette
+        bg_rgb, _ = palette
         self.setBackgroundBrush(QColor(*bg_rgb))
-        self._grid_color = QColor(*grid_rgb)
         self.update()
 
     def get_current_bounds(self) -> Optional[Bounds]:
@@ -441,30 +434,6 @@ class GeometryScene(QGraphicsScene):
 
         super().drawBackground(painter, rect)
 
-        if not self.grid_visible:
-            return
-
-        painter.save()
-        painter.setPen(QPen(self._grid_color, 0))
-
-        spacing = max(self._grid_spacing, 0.1)
-        left = math.floor(rect.left() / spacing) * spacing
-        right = math.ceil(rect.right() / spacing) * spacing
-        top = math.floor(rect.top() / spacing) * spacing
-        bottom = math.ceil(rect.bottom() / spacing) * spacing
-
-        x = left
-        while x <= right:
-            painter.drawLine(QPointF(x, top), QPointF(x, bottom))
-            x += spacing
-
-        y = top
-        while y <= bottom:
-            painter.drawLine(QPointF(left, y), QPointF(right, y))
-            y += spacing
-
-        painter.restore()
-
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
@@ -492,7 +461,7 @@ class GeometryScene(QGraphicsScene):
             padded_bounds.height,
         )
 
-        self._grid_spacing = self._compute_grid_spacing(bounds)
+
 
         for primitive in self._payload.primitives:
             self._add_primitive(primitive)
@@ -504,15 +473,7 @@ class GeometryScene(QGraphicsScene):
         if self.axes_visible:
             self._axes_items = self._create_axes(bounds)
 
-    def _compute_grid_spacing(self, bounds: Bounds) -> float:
-        span = max(bounds.width, bounds.height)
-        if span <= 1:
-            return 0.1
-        if span <= 10:
-            return 0.5
-        if span <= 50:
-            return 1.0
-        return span / 50
+
 
     def _derive_bounds(self, primitives: List[Primitive]) -> Bounds:
         xs: List[float] = []
