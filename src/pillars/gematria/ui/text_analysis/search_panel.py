@@ -184,8 +184,61 @@ class SearchPanel(QWidget):
         self.results_list.clear()
         self.info_label.setText("")
         
+    send_to_tablet_requested = pyqtSignal(list)
+
     def _on_item_clicked(self, item):
         data = item.data(Qt.ItemDataRole.UserRole)
         if data:
             start, end, tab_index = data
             self.result_selected.emit(start, end, tab_index)
+
+    def contextMenuEvent(self, event):
+        """Context menu for results."""
+        if not self.results_list.itemAt(event.pos()):
+            return
+            
+        menu = QMenu(self)
+        send_action = QAction("Send Results to Emerald Tablet", self)
+        send_action.triggered.connect(self._on_send_results)
+        menu.addAction(send_action)
+        menu.exec(event.globalPos())
+        
+    def _on_send_results(self):
+        """Emit signal to send current filtered results to Tablet."""
+        # Filter matches by current tab if needed, similar to display
+        if self.current_tab_index == -1:
+             # If no tab active, maybe send nothing or all? Logic in refresh uses all if -1?
+             # refresh_results logic: if -1, filtered = [].
+             # Let's use visible items from list widget to be true to WYSIWYG
+             pass
+        
+        # Actually easier to just send self.all_matches filtered by current_tab_index
+        filtered = []
+        if self.current_tab_index != -1:
+            filtered = [m for m in self.all_matches if m[4] == self.current_tab_index]
+            
+        if filtered:
+            self.send_to_tablet_requested.emit(filtered)
+            
+    def contextMenuEvent(self, event):
+        """Context menu for results."""
+        if not self.results_list.itemAt(event.pos()):
+            return
+            
+        menu = QMenu(self)
+        send_action = QAction("Send Results to Emerald Tablet", self)
+        send_action.triggered.connect(self._on_send_results)
+        menu.addAction(send_action)
+        menu.exec(event.globalPos())
+        
+    def _on_send_results(self):
+        """Emit signal to send current filtered results to Tablet."""
+        # We need to construct the data here or let main window do it?
+        # Main window has the window manager, but we have the data.
+        # Let's emit a signal.
+        self.export_requested.emit() # This is for file export.
+        # Let's add a new signal or piggyback? New signal is cleaner.
+        # But we need to add it to class definition.
+        pass # To be handled by main window via a new signal if added, 
+             # OR we can just add a specific signal "send_to_tablet_requested"
+

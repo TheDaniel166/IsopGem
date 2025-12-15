@@ -10,12 +10,15 @@ from typing import Dict, List, Optional
 from ..services.base_calculator import GematriaCalculator
 from ..services import CalculationService
 from shared.ui import VirtualKeyboard, get_shared_virtual_keyboard
+from shared.ui.window_manager import WindowManager # Should be available via parent typically, but importing for type hint if needed
+# We need to import CorrespondenceHub to check type or use it
+from pillars.correspondences.ui.correspondence_hub import CorrespondenceHub
 
 
 class GematriaCalculatorWindow(QMainWindow):
     """Standalone Gematria Calculator window."""
     
-    def __init__(self, calculators: List[GematriaCalculator], parent=None):
+    def __init__(self, calculators: List[GematriaCalculator], window_manager: Optional[WindowManager] = None, parent=None):
         """
         Initialize the calculator window.
         
@@ -24,6 +27,7 @@ class GematriaCalculatorWindow(QMainWindow):
             parent: Optional parent widget
         """
         super().__init__(parent)
+        self.window_manager = window_manager
         self.calculators: Dict[str, GematriaCalculator] = {
             calc.name: calc for calc in calculators
         }
@@ -39,6 +43,9 @@ class GematriaCalculatorWindow(QMainWindow):
         self.virtual_keyboard: Optional[VirtualKeyboard] = None
         self.keyboard_visible: bool = False
         self._current_language: Optional[str] = None
+        
+        # Stored data for export
+        self.last_export_data: Optional[dict] = None
         
         self._setup_ui()
     
@@ -265,6 +272,23 @@ class GematriaCalculatorWindow(QMainWindow):
         """)
         button_layout.addWidget(self.save_button)
         
+        # Send to Emerald Tablet Button
+        self.send_button = QPushButton("📗 Send to Tablet")
+        self.send_button.clicked.connect(self._send_to_tablet)
+        self.send_button.setMinimumHeight(44)
+        self.send_button.setEnabled(False) # Enabled when we have results
+        self.send_button.setStyleSheet("""
+            QPushButton {
+                 background-color: #059669;
+                 color: white;
+                 font-size: 11pt;
+                 font-weight: 600;
+            }
+            QPushButton:hover { background-color: #047857; }
+            QPushButton:disabled { background-color: #e5e7eb; color: #9ca3af; }
+        """)
+        button_layout.addWidget(self.send_button)
+        
         main_layout.addLayout(button_layout)
         
         # Results section
@@ -371,6 +395,26 @@ class GematriaCalculatorWindow(QMainWindow):
         # Enable save button
         self.save_button.setEnabled(True)
         
+        # Prepare Export Data (Breakdown)
+        rows = []
+        if breakdown:
+            for i, (char, val) in enumerate(breakdown):
+                rows.append([char, str(val)])
+            # Add Total Row
+            rows.append(["TOTAL", str(total)])
+            
+        # Only enable Send if we have data
+        self.send_button.setEnabled(bool(rows))
+        
+        self.last_export_data = {
+            "name": f"Gematria_{text}_{self.current_calculator.name}",
+            "data": {
+                "columns": ["Character", "Value"],
+                "rows": rows,
+                "styles": {} # could add styles later
+            }
+        }
+        
         # Format results
         results = []
         results.append(f"System: {self.current_calculator.name}")
@@ -415,6 +459,10 @@ class GematriaCalculatorWindow(QMainWindow):
         results.append("-"*60)
         
         # Create table header
+        # Prepare Export Data (Comparison)
+        columns = ["Method", "Value"]
+        rows = []
+        
         results.append(f"{'Method':<35} {'Value':>20}")
         results.append("-"*60)
         
@@ -423,6 +471,7 @@ class GematriaCalculatorWindow(QMainWindow):
                 value = calc.calculate(text)
                 method_name = name.replace(f"{language} ", "")
                 results.append(f"{method_name:<35} {value:>20,}")
+                rows.append([method_name, str(value)])
             except Exception as e:
                 method_name = name.replace(f"{language} ", "")
                 results.append(f"{method_name:<35} {'Error':>20}")
@@ -439,6 +488,16 @@ class GematriaCalculatorWindow(QMainWindow):
         
         # Disable save button in all methods mode
         self.save_button.setEnabled(False)
+        self.send_button.setEnabled(True)
+        
+        self.last_export_data = {
+            "name": f"Gematria_All_{text}",
+            "data": {
+                "columns": columns,
+                "data": rows,
+                "styles": {}
+            }
+        } 
     
     def _save_calculation(self):
         """Save the current calculation to the database."""
@@ -497,3 +556,26 @@ class GematriaCalculatorWindow(QMainWindow):
                 "Error",
                 f"Failed to save calculation:\n{str(e)}"
             )
+
+    def _send_to_tablet(self):
+        """Send current results to Emerald Tablet."""
+        if not self.last_export_data:
+            return
+            
+        if not self.window_manager:
+            QMessageBox.warning(self, "Integration Error", "Window Manager not linked.")
+            return
+
+        # Open Hub
+        hub = self.window_manager.open_window(
+            "emerald_tablet", 
+            CorrespondenceHub, 
+            allow_multiple=False,
+            window_manager=self.window_manager
+        )
+        
+        # Send
+        if hasattr(hub, "receive_import"):
+            name = self.last_export_data["name"]
+            data = self.last_export_data["data"]
+            hub.receive_import(name, data)

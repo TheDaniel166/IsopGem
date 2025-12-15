@@ -16,9 +16,10 @@ from ..models import CalculationRecord
 class DatabaseToolsWindow(QMainWindow):
     """Window for database maintenance and cleanup operations."""
     
-    def __init__(self, parent=None):
+    def __init__(self, window_manager=None, parent=None):
         """Initialize the database tools window."""
         super().__init__(parent)
+        self.window_manager = window_manager
         self.calculation_service = CalculationService()
         self.duplicate_groups: List[List[CalculationRecord]] = []
         self.selected_for_deletion: Set[str] = set()

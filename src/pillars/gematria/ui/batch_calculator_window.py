@@ -128,15 +128,17 @@ class BatchProcessThread(QThread):
 class BatchCalculatorWindow(QMainWindow):
     """Window for batch importing and calculating words from spreadsheets."""
     
-    def __init__(self, calculators: List[GematriaCalculator], parent=None):
+    def __init__(self, calculators: List[GematriaCalculator], window_manager=None, parent=None):
         """
         Initialize the batch calculator window.
         
         Args:
             calculators: List of available calculators
+            window_manager: Window Manager
             parent: Parent widget
         """
         super().__init__(parent)
+        self.window_manager = window_manager
         self.calculators = {calc.name: calc for calc in calculators}
         self.calculation_service = CalculationService()  # Use Service, not Repository
         self.imported_data: List[Dict] = []
@@ -313,6 +315,14 @@ class BatchCalculatorWindow(QMainWindow):
         self.process_button.setStyleSheet(self._get_button_style("#16a34a", "#15803d", "#166534"))
         self.process_button.clicked.connect(self._process_batch)
         button_layout.addWidget(self.process_button)
+
+        self.send_button = QPushButton("Send to Tablet")
+        self.send_button.setMinimumHeight(40)
+        self.send_button.setMinimumWidth(120)
+        self.send_button.setEnabled(False)
+        self.send_button.setStyleSheet(self._get_button_style("#7c3aed", "#6d28d9", "#5b21b6"))
+        self.send_button.clicked.connect(self._send_to_emerald)
+        button_layout.addWidget(self.send_button)
         
         self.cancel_button = QPushButton("Close")
         self.cancel_button.setMinimumHeight(40)
@@ -462,6 +472,8 @@ class BatchCalculatorWindow(QMainWindow):
             self.file_label.setStyleSheet("color: #16a34a; font-weight: bold;")
             self._update_preview()
             self.process_button.setEnabled(True)
+            if hasattr(self, "send_button"):
+                self.send_button.setEnabled(True)
             self.status_label.setText(f"Ready to process {len(self.imported_data)} words")
                 
         except Exception as e:
@@ -608,3 +620,38 @@ class BatchCalculatorWindow(QMainWindow):
                 a0.ignore()
         else:
             a0.accept()
+
+    def _send_to_emerald(self):
+        """Send import preview data to Emerald Tablet."""
+        if not self.window_manager or not self.imported_data:
+            return
+
+        from pillars.correspondences.ui.correspondence_hub import CorrespondenceHub
+
+        # Prepare Data
+        columns = ["Word", "Tags", "Notes"]
+        rows = []
+        for row in self.imported_data:
+             word = str(row.get('word', row.get('text', '')))
+             tags = str(row.get('tags', row.get('tag', '')))
+             notes = str(row.get('notes', row.get('note', '')))
+             rows.append([word, tags, notes])
+             
+        data = {
+            "columns": columns,
+            "data": rows,
+            "styles": {}
+        }
+        
+        # Open Hub
+        hub = self.window_manager.open_window(
+            "emerald_tablet",
+            CorrespondenceHub,
+            allow_multiple=False,
+            window_manager=self.window_manager
+        )
+        
+        if hasattr(hub, "receive_import"):
+            name = f"Batch_Import_{datetime.now().strftime('%Y%m%d_%H%M')}"
+            hub.receive_import(name, data)
+            QMessageBox.information(self, "Sent", f"Sent {len(rows)} rows to Emerald Tablet.")

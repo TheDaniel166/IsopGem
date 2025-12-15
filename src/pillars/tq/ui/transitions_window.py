@@ -11,6 +11,7 @@ from PyQt6.QtGui import QFont, QColor, QAction
 from ..services.ternary_service import TernaryService
 from ..services.ternary_transition_service import TernaryTransitionService
 from .quadset_analysis_window import QuadsetAnalysisWindow
+from pillars.correspondences.ui.correspondence_hub import CorrespondenceHub
 
 
 class TransitionsWindow(QMainWindow):
@@ -148,7 +149,48 @@ class TransitionsWindow(QMainWindow):
             send_action = QAction("Send to Quadset Analysis", self)
             send_action.triggered.connect(lambda: self._send_to_quadset(item.text()))
             menu.addAction(send_action)
+            
+            menu.addSeparator()
+            
+            emerald_action = QAction("Send Sequence to Emerald Tablet", self)
+            emerald_action.triggered.connect(self._send_to_emerald)
+            menu.addAction(emerald_action)
+            
             menu.exec(viewport.mapToGlobal(position))
+            
+    def _send_to_emerald(self):
+        """Package current sequence and send to Emerald Hub."""
+        if not self.window_manager: return
+        
+        # 1. Harvest Data
+        rows = []
+        for r in range(self.table.rowCount()):
+            row_vals = []
+            for c in range(self.table.columnCount()):
+                it = self.table.item(r, c)
+                row_vals.append(it.text() if it else "")
+            rows.append(row_vals)
+        
+        if not rows: return
+        
+        data = {
+            "columns": ["Step", "Current (A)", "Modifier (B)", "Result (Ternary)", "Result (Decimal)"],
+            "data": rows,
+            "styles": {}
+        }
+        
+        # 2. Open Hub
+        hub = self.window_manager.open_window(
+            "emerald_tablet", 
+            CorrespondenceHub, 
+            allow_multiple=False,
+            window_manager=self.window_manager
+        )
+        
+        # 3. Send
+        if hasattr(hub, "receive_import"):
+            name = f"Transformation_{self.input_a_tern.text()}_by_{self.input_b_tern.text()}"
+            hub.receive_import(name, data)
             
     def _send_to_quadset(self, decimal_value: str):
         """Send decimal value to Quadset Analysis window."""

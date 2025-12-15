@@ -1,12 +1,14 @@
 
 from PyQt6.QtWidgets import (
-    QMainWindow, QToolBar, QWidget, QVBoxLayout, QHBoxLayout, QMessageBox, QComboBox, QFontComboBox, QSpinBox, QLabel, QColorDialog, QToolButton, QMenu, QLineEdit, QStyle
+    QMainWindow, QToolBar, QWidget, QVBoxLayout, QHBoxLayout, QMessageBox, QComboBox, QFontComboBox, QSpinBox, QLabel, QColorDialog, QToolButton, QMenu, QLineEdit, QStyle, QFileDialog, QInputDialog
 )
+import csv
 from PyQt6.QtGui import QAction, QIcon, QFont, QColor
 from PyQt6.QtCore import Qt, QSize, QEvent
 import re
 
 from .spreadsheet_view import SpreadsheetView, SpreadsheetModel
+from pillars.correspondences.services.conditional_formatting import ConditionalRule
 from shared.ui.virtual_keyboard import get_shared_virtual_keyboard
 
 class SpreadsheetWindow(QMainWindow):
@@ -87,7 +89,15 @@ class SpreadsheetWindow(QMainWindow):
         # 3. Toolbar
         self._setup_toolbar()
         
-        # 4. Unify Workflow: Listen for inline editor
+        # 4. Keyboard Dock (Hidden by default)
+        from PyQt6.QtWidgets import QDockWidget
+        self._kb_dock = QDockWidget("Virtual Keyboard", self)
+        self._kb_dock.setAllowedAreas(Qt.DockWidgetArea.BottomDockWidgetArea)
+        self._kb_dock.setWidget(get_shared_virtual_keyboard(self))
+        self._kb_dock.hide()
+        self.addDockWidget(Qt.DockWidgetArea.BottomDockWidgetArea, self._kb_dock)
+        
+        # 5. Unify Workflow: Listen for inline editor
         self.view.editor_text_changed.connect(self._on_inline_text_edited)
         self.view.viewport().installEventFilter(self)
 
@@ -356,6 +366,19 @@ class SpreadsheetWindow(QMainWindow):
         toolbar.addAction(act_redo)
         
         toolbar.addSeparator()
+        
+        # --- File I/O ---
+        act_import = QAction(QIcon.fromTheme("document-open"), "Import CSV", self)
+        act_import.setToolTip("Import CSV")
+        act_import.triggered.connect(self._import_csv)
+        toolbar.addAction(act_import)
+        
+        act_export = QAction(QIcon.fromTheme("document-save"), "Export CSV", self)
+        act_export.setToolTip("Export CSV")
+        act_export.triggered.connect(self._export_csv)
+        toolbar.addAction(act_export)
+        
+        toolbar.addSeparator()
 
         # --- Font Face & Size ---
         self.font_combo = QFontComboBox()
@@ -384,12 +407,27 @@ class SpreadsheetWindow(QMainWindow):
         toolbar.addAction(self.act_italic)
 
         self.act_underline = QAction("U̲", self)
-        self.act_underline.setCheckable(True)
-        self.act_underline.triggered.connect(lambda c: self._apply_style("underline", c))
+        self.act_underline.setShortcut("Ctrl+U")
+        self.act_underline.triggered.connect(lambda checked: self._apply_format("underline", checked))
         toolbar.addAction(self.act_underline)
         
         toolbar.addSeparator()
 
+        # --- Layout Tools (Autofit & Wrap) ---
+        act_autofit = QAction("↔ Fit", self)
+        act_autofit.setToolTip("Autofit Columns & Rows")
+        act_autofit.triggered.connect(self.view.autofit)
+        toolbar.addAction(act_autofit)
+        
+        self.act_wrap = QAction("ABC", self)
+        self.act_wrap.setToolTip("Toggle Word Wrap")
+        self.act_wrap.setCheckable(True)
+        self.act_wrap.setChecked(False) # Default off like Excel? Or on? Default off usually.
+        self.act_wrap.toggled.connect(self.view.setWordWrap) # QTableView slot
+        toolbar.addAction(self.act_wrap)
+        
+        toolbar.addSeparator()
+        
         # --- Colors ---
         act_text_color = QAction("A", self)
         act_text_color.setToolTip("Text Color")
@@ -416,10 +454,51 @@ class SpreadsheetWindow(QMainWindow):
         act_right.triggered.connect(lambda: self._apply_align("right"))
         toolbar.addAction(act_right)
         
-        act_right = QAction("Right", self)
-        act_right.triggered.connect(lambda: self._apply_align("right"))
-        toolbar.addAction(act_right)
+        toolbar.addSeparator()
+
+        # --- Sort ---
+        act_sort_asc = QAction("↓A-Z", self)
+        act_sort_asc.setToolTip("Sort Ascending")
+        act_sort_asc.triggered.connect(lambda: self._sort_selection(True))
+        toolbar.addAction(act_sort_asc)
+
+        act_sort_desc = QAction("↓Z-A", self)
+        act_sort_desc.setToolTip("Sort Descending")
+        act_sort_desc.triggered.connect(lambda: self._sort_selection(False))
+        toolbar.addAction(act_sort_desc)
         
+        toolbar.addSeparator()
+        
+        toolbar.addSeparator()
+
+        # --- Conditional Formatting ---
+        btn_cond = QToolButton()
+        btn_cond.setText("Cond")
+        btn_cond.setToolTip("Conditional Formatting")
+        btn_cond.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+        menu_cond = QMenu(btn_cond)
+        
+        act_gt = QAction("Greater Than...", self)
+        act_gt.triggered.connect(lambda: self._add_conditional_rule("GT"))
+        menu_cond.addAction(act_gt)
+        
+        act_lt = QAction("Less Than...", self)
+        act_lt.triggered.connect(lambda: self._add_conditional_rule("LT"))
+        menu_cond.addAction(act_lt)
+        
+        act_contains = QAction("Text Contains...", self)
+        act_contains.triggered.connect(lambda: self._add_conditional_rule("CONTAINS"))
+        menu_cond.addAction(act_contains)
+        
+        menu_cond.addSeparator()
+        
+        act_clear_rules = QAction("Clear All Rules", self)
+        act_clear_rules.triggered.connect(self._clear_conditional_rules)
+        menu_cond.addAction(act_clear_rules)
+        
+        btn_cond.setMenu(menu_cond)
+        toolbar.addWidget(btn_cond)
+
         toolbar.addSeparator()
 
         # --- Virtual Keyboard ---
@@ -539,8 +618,8 @@ class SpreadsheetWindow(QMainWindow):
     def _save_table(self):
         """Persist to Database."""
         try:
-            content = self.model.to_json()
             # Fix for 'TableRepository' object has no attribute 'update_content'
+            content = self.model.to_json()
             self.repo.update_content(self.table_id, content)
             self.statusBar().showMessage(f"Saved update at {content.get('updated_at', 'now')}", 3000)
         except Exception as e:
@@ -814,17 +893,155 @@ class SpreadsheetWindow(QMainWindow):
             self._border_settings["color"] = c.name()
             self.statusBar().showMessage(f"Border Color set to {c.name()}", 3000)
             self._update_selected_borders()
-        
-
-
     def _toggle_keyboard(self):
-        """Toggle the virtual keyboard linked to the formula bar."""
-        kb = get_shared_virtual_keyboard()
-        kb.set_target_input(self.formula_bar)
-        
-        if kb.isVisible():
-            kb.hide()
+        """Toggle Virtual Keyboard in/out."""
+        if self._kb_dock.isVisible():
+            self._kb_dock.hide()
         else:
-            kb.show()
-            kb.raise_()
-            kb.activateWindow()
+            self._kb_dock.show()
+
+    def _sort_selection(self, ascending=True):
+        """
+        Sorts the current selection based on the active cell's column.
+        """
+        selection = self.view.selectionModel()
+        if not selection.hasSelection():
+            # If nothing selected, maybe select used range?
+            # Or assume user wants to sort used range?
+            # For safety, require selection or single cell expands to used range?
+            # Let's require selection for now to be safe.
+            return
+            
+        indexes = selection.selectedIndexes()
+        if not indexes: return
+        
+        # Calculate Bounding Rect
+        rows = [i.row() for i in indexes]
+        cols = [i.column() for i in indexes]
+        
+        top, bottom = min(rows), max(rows)
+        left, right = min(cols), max(cols)
+        
+        # Sort Key: Active Cell Column
+        # If active cell is outside range (possible with Ctrl+Click), default to Left column.
+        current = self.view.currentIndex()
+        key_col = current.column()
+        
+        if key_col < left or key_col > right:
+            key_col = left
+            
+        self.model.sort_range(top, left, bottom, right, key_col, ascending)
+        
+    def _add_conditional_rule(self, rule_type):
+        """Adds a conditional rule to the selected range."""
+        selection = self.view.selectionModel()
+        if not selection.hasSelection(): return
+
+        # 1. Ask for Value
+        label = "Value:"
+        if rule_type == "GT": label = "Greater Than:"
+        if rule_type == "LT": label = "Less Than:"
+        if rule_type == "CONTAINS": label = "Text Contains:"
+        
+        val_str, ok = QInputDialog.getText(self, "Conditional Rule", label)
+        if not ok or not val_str: return
+        
+        # 2. Ask for Color (Simple for now: Default Red, or ask?)
+        # Let's default to Light Red Fill + Dark Red Text (Excel style)
+        # bg: #FFC7CE, fg: #9C0006
+        style = {"bg": "#FFC7CE", "fg": "#9C0006"}
+        
+        # 3. Calculate Ranges
+        indexes = selection.selectedIndexes()
+        rows = [i.row() for i in indexes]
+        cols = [i.column() for i in indexes]
+        # Bounding box is safest for rule storage, though irregular selection possible.
+        # We store bounding box for now.
+        t, b = min(rows), max(rows)
+        l, r = min(cols), max(cols)
+        
+        rule = ConditionalRule(
+            rule_type=rule_type,
+            value=val_str,
+            format_style=style,
+            ranges=[(t, l, b, r)]
+        )
+        
+        # 4. Add to Manager
+        if hasattr(self.model, "conditional_manager"):
+            self.model.conditional_manager.add_rule(rule)
+            # Repaint
+            self.view.viewport().update()
+            
+            # Repaint
+            self.view.viewport().update()
+            
+    def _clear_conditional_rules(self):
+        """Removes all conditional formatting rules."""
+        if hasattr(self.model, "conditional_manager"):
+            self.model.conditional_manager.clear_all_rules()
+            self.view.viewport().update()
+            self.statusBar().showMessage("Cleared all Conditional Formatting rules.", 3000)
+
+    def _export_csv(self):
+        """Export grid to CSV (Values or Formulas)."""
+        path, _ = QFileDialog.getSaveFileName(self, "Export CSV", "", "CSV Files (*.csv)")
+        if not path: return
+        
+        try:
+            with open(path, 'w', newline='', encoding='utf-8') as f:
+                writer = csv.writer(f)
+                
+                rows = self.model.rowCount()
+                cols = self.model.columnCount()
+                
+                for r in range(rows):
+                    row_data = []
+                    for c in range(cols):
+                        idx = self.model.index(r, c)
+                        val = self.model.data(idx, Qt.ItemDataRole.EditRole)
+                        row_data.append(val if val is not None else "")
+                    writer.writerow(row_data)
+                    
+            QMessageBox.information(self, "Export Successful", f"Saved to {path}")
+            
+        except Exception as e:
+            QMessageBox.critical(self, "Export Failed", str(e))
+
+    def _import_csv(self):
+        """Import CSV to grid (Resizes grid to fit)."""
+        path, _ = QFileDialog.getOpenFileName(self, "Import CSV", "", "CSV Files (*.csv)")
+        if not path: return
+        
+        try:
+            with open(path, 'r', newline='', encoding='utf-8') as f:
+                reader = csv.reader(f)
+                rows = list(reader)
+                
+            if not rows: return
+            
+            # 1. Resize Grid
+            r_count = len(rows)
+            c_count = max(len(r) for r in rows) if rows else 0
+            
+            current_rows = self.model.rowCount()
+            current_cols = self.model.columnCount()
+            
+            # Add Rows
+            if r_count > current_rows:
+                self.model.insertRows(current_rows, r_count - current_rows)
+                
+            # Add Cols
+            if c_count > current_cols:
+                self.model.insertColumns(current_cols, c_count - current_cols)
+            
+            # 2. Populate
+            for r, row_list in enumerate(rows):
+                for c, val in enumerate(row_list):
+                    idx = self.model.index(r, c)
+                    self.model.setData(idx, val, Qt.ItemDataRole.EditRole)
+                    
+            QMessageBox.information(self, "Import Successful", f"Loaded {r_count}x{c_count} grid.")
+            
+        except Exception as e:
+            QMessageBox.critical(self, "Import Failed", str(e))

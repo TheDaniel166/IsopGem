@@ -26,8 +26,9 @@ class TextAnalysisWindow(QMainWindow):
     MDI Text Analysis Window using Tabs.
     """
     
-    def __init__(self, calculators: List[GematriaCalculator], parent=None):
+    def __init__(self, calculators: List[GematriaCalculator], window_manager=None, parent=None):
         super().__init__(parent)
+        self.window_manager = window_manager
         self.calculators = {c.name: c for c in calculators}
         self.current_calculator = calculators[0]
         # Default to English TQ if available
@@ -127,6 +128,7 @@ class TextAnalysisWindow(QMainWindow):
         self.search_panel.save_matches_requested.connect(self._on_save_matches)
         self.search_panel.export_requested.connect(self._on_export_results)
         self.search_panel.smart_filter_requested.connect(self._on_smart_filter)
+        self.search_panel.send_to_tablet_requested.connect(self._on_send_search_to_emerald)
         self.tools_tabs.addTab(self.search_panel, "Search")
         
         # Stats Tab
@@ -462,3 +464,42 @@ class TextAnalysisWindow(QMainWindow):
         except Exception as e:
             if not silent:
                 QMessageBox.critical(self, "Error", str(e))
+
+    def _on_send_search_to_emerald(self, matches):
+        """Send search results to Emerald Tablet."""
+        if not self.window_manager or not matches:
+             return
+             
+        from pillars.correspondences.ui.correspondence_hub import CorrespondenceHub
+        
+        # Prepare Data
+        # Format: (text, start, end, doc_title, tab_index)
+        # We want: Text, Document, Value??
+        # Value is search target?
+        
+        target_val = self.search_panel.value_input.text()
+        
+        columns = ["Text", "Document", "Start", "End", "Target Value"]
+        rows = []
+        for m in matches:
+            # m: (text, start, end, doc_title, tab_index)
+            rows.append([m[0], m[3], str(m[1]), str(m[2]), target_val])
+            
+        data = {
+            "columns": columns,
+            "data": rows,
+            "styles": {}
+        }
+        
+        # Open Hub
+        hub = self.window_manager.open_window(
+            "emerald_tablet",
+            CorrespondenceHub,
+            allow_multiple=False,
+            window_manager=self.window_manager
+        )
+        
+        if hasattr(hub, "receive_import"):
+            name = f"Search_Results_{target_val}"
+            hub.receive_import(name, data)
+            QMessageBox.information(self, "Sent", f"Sent {len(rows)} matches to Emerald Tablet.")

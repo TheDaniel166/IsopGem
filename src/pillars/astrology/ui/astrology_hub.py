@@ -106,6 +106,7 @@ class AstrologyHub(QWidget):
             "astrology_planetary_positions",
             PlanetaryPositionsWindow,
             allow_multiple=False,
+            window_manager=self.window_manager,
         )
 
     def _open_neo_aubrey(self) -> None:

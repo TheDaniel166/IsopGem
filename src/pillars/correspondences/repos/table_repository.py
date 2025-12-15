@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from pillars.correspondences.models.correspondence_models import CorrespondenceTable
 from typing import List, Optional
+from datetime import datetime
 
 class TableRepository:
     """
@@ -28,9 +29,10 @@ class TableRepository:
 
     def update(self, table: CorrespondenceTable) -> CorrespondenceTable:
         """Save changes to a table."""
-        table.updated_at = table.updated_at # Force update timestamp logic if needed
+        table.updated_at = datetime.utcnow()
         self.session.merge(table)
         self.session.commit()
+        self.session.refresh(table)
         return table
 
     def delete(self, table_id: str):
@@ -45,6 +47,18 @@ class TableRepository:
         table = self.get_by_id(table_id)
         if table:
             table.content = content
+            table.updated_at = datetime.utcnow()
+            self.session.commit()
+            self.session.refresh(table)
+            return table
+        return None
+
+    def update_name(self, table_id: str, new_name: str):
+        """Rename a table."""
+        table = self.get_by_id(table_id)
+        if table:
+            table.name = new_name
+            table.updated_at = datetime.utcnow()
             self.session.commit()
             self.session.refresh(table)
             return table

@@ -182,7 +182,8 @@ class GematriaHub(QWidget):
             window_type="gematria_calculator",
             window_class=GematriaCalculatorWindow,
             allow_multiple=True,  # Allow multiple calculator windows
-            calculators=calculators
+            calculators=calculators,
+            window_manager=self.window_manager
         )
     
     def _open_saved_calculations(self):
@@ -192,6 +193,7 @@ class GematriaHub(QWidget):
             window_type="saved_calculations",
             window_class=SavedCalculationsWindow,
             allow_multiple=False,  # Only one browser window at a time
+            window_manager=self.window_manager
         )
     
     def _open_batch_calculator(self):
@@ -241,7 +243,8 @@ class GematriaHub(QWidget):
             window_type="batch_calculator",
             window_class=BatchCalculatorWindow,
             allow_multiple=False,  # Only one batch calculator at a time
-            calculators=calculators
+            calculators=calculators,
+            window_manager=self.window_manager
         )
     
     def _open_database_tools(self):
@@ -251,6 +254,7 @@ class GematriaHub(QWidget):
             window_type="database_tools",
             window_class=DatabaseToolsWindow,
             allow_multiple=False,  # Only one database tools window at a time
+            window_manager=self.window_manager
         )
     
     def _open_text_analysis(self):
@@ -300,7 +304,8 @@ class GematriaHub(QWidget):
             window_type="text_analysis",
             window_class=TextAnalysisWindow,
             allow_multiple=False,  # Only one text analysis window at a time
-            calculators=calculators
+            calculators=calculators,
+            window_manager=self.window_manager
         )
 
     def _open_methods_reference(self):

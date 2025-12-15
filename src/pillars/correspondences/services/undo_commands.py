@@ -93,6 +93,8 @@ class SetCellDataCommand(QUndoCommand):
         else:
             self.model._data[self.row][self.col] = self.new_value
             
+        if hasattr(self.model, "clear_eval_cache"):
+            self.model.clear_eval_cache()
         self.model.dataChanged.emit(idx, idx, [self.role])
 
     def undo(self):
@@ -121,6 +123,8 @@ class SetCellDataCommand(QUndoCommand):
         else:
             self.model._data[self.row][self.col] = self.old_value
             
+        if hasattr(self.model, "clear_eval_cache"):
+            self.model.clear_eval_cache()
         self.model.dataChanged.emit(idx, idx, [self.role])
 
 
@@ -138,12 +142,16 @@ class InsertRowsCommand(QUndoCommand):
         for _ in range(self.rows):
             self.model._data.insert(self.position, [""] * col_count)
         self.model.endInsertRows()
+        if hasattr(self.model, "clear_eval_cache"):
+            self.model.clear_eval_cache()
 
     def undo(self):
         self.model.beginRemoveRows(QModelIndex(), self.position, self.position + self.rows - 1)
         for _ in range(self.rows):
             del self.model._data[self.position]
         self.model.endRemoveRows()
+        if hasattr(self.model, "clear_eval_cache"):
+            self.model.clear_eval_cache()
 
 
 class RemoveRowsCommand(QUndoCommand):
@@ -164,12 +172,16 @@ class RemoveRowsCommand(QUndoCommand):
         for _ in range(self.rows):
             del self.model._data[self.position]
         self.model.endRemoveRows()
+        if hasattr(self.model, "clear_eval_cache"):
+            self.model.clear_eval_cache()
 
     def undo(self):
         self.model.beginInsertRows(QModelIndex(), self.position, self.position + self.rows - 1)
         for i, row_data in enumerate(self.deleted_data):
             self.model._data.insert(self.position + i, row_data)
         self.model.endInsertRows()
+        if hasattr(self.model, "clear_eval_cache"):
+            self.model.clear_eval_cache()
 
 
 class InsertColumnsCommand(QUndoCommand):
@@ -191,6 +203,8 @@ class InsertColumnsCommand(QUndoCommand):
             for _ in range(self.columns):
                 row.insert(self.position, "")
         self.model.endInsertColumns()
+        if hasattr(self.model, "clear_eval_cache"):
+            self.model.clear_eval_cache()
 
     def undo(self):
         self.model.beginRemoveColumns(QModelIndex(), self.position, self.position + self.columns - 1)
@@ -203,6 +217,8 @@ class InsertColumnsCommand(QUndoCommand):
             for _ in range(self.columns):
                 del row[self.position]
         self.model.endRemoveColumns()
+        if hasattr(self.model, "clear_eval_cache"):
+            self.model.clear_eval_cache()
 
 
 class RemoveColumnsCommand(QUndoCommand):
@@ -235,6 +251,8 @@ class RemoveColumnsCommand(QUndoCommand):
             for _ in range(self.columns):
                 del row[self.position]
         self.model.endRemoveColumns()
+        if hasattr(self.model, "clear_eval_cache"):
+            self.model.clear_eval_cache()
 
     def undo(self):
         self.model.beginInsertColumns(QModelIndex(), self.position, self.position + self.columns - 1)
@@ -248,3 +266,47 @@ class RemoveColumnsCommand(QUndoCommand):
             for c_idx, val in enumerate(saved_cols):
                 row.insert(self.position + c_idx, val)
         self.model.endInsertColumns()
+        if hasattr(self.model, "clear_eval_cache"):
+            self.model.clear_eval_cache()
+
+class SortRangeCommand(QUndoCommand):
+    """
+    Command to sort a range of cells.
+    Holds the old and new state of the data block (including styles).
+    """
+    def __init__(self, model, range_rect, old_block, new_block):
+        super().__init__()
+        self.model = model
+        self.top, self.left, self.bottom, self.right = range_rect
+        self.old_block = old_block
+        self.new_block = new_block
+        self.setText("Sort Range")
+
+    def _apply_block(self, block):
+        # block is list of rows, where each item is (value, style_dict)
+        for r_offset, row_data in enumerate(block):
+            r = self.top + r_offset
+            for c_offset, (val, style) in enumerate(row_data):
+                c = self.left + c_offset
+                
+                # Update Data
+                self.model._data[r][c] = val
+                
+                # Update Styles
+                # Remove all styles for this cell first?
+                self.model._styles.pop((r, c), None)
+                if style:
+                    self.model._styles[(r, c)] = style.copy()
+                    
+        # Emit generic data changed for the whole rect
+        tl = self.model.index(self.top, self.left)
+        br = self.model.index(self.bottom, self.right)
+        self.model.dataChanged.emit(tl, br, [Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.EditRole])
+        if hasattr(self.model, "clear_eval_cache"):
+            self.model.clear_eval_cache()
+
+    def redo(self):
+        self._apply_block(self.new_block)
+
+    def undo(self):
+        self._apply_block(self.old_block)

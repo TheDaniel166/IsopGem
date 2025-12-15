@@ -17,9 +17,10 @@ from shared.ui import VirtualKeyboard, get_shared_virtual_keyboard
 class SavedCalculationsWindow(QMainWindow):
     """Window for browsing and managing saved calculations."""
     
-    def __init__(self, parent=None):
+    def __init__(self, window_manager=None, parent=None):
         """Initialize the saved calculations browser."""
         super().__init__(parent)
+        self.window_manager = window_manager
         self.calculation_service = CalculationService()
         self.current_records: List[CalculationRecord] = []
         self.selected_record: Optional[CalculationRecord] = None

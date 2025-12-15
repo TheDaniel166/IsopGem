@@ -36,6 +36,8 @@ from ..models import AstrologyEvent, ChartRequest, GeoLocation
 from ..services import OpenAstroNotAvailableError, OpenAstroService
 from ..utils import AstrologyPreferences, DefaultLocation
 from ..utils.conversions import to_zodiacal_string
+from shared.ui.window_manager import WindowManager
+from pillars.correspondences.ui.correspondence_hub import CorrespondenceHub
 
 
 PLANET_CHOICES: Sequence[str] = (
@@ -117,8 +119,9 @@ class EphemerisResultsDialog(QDialog):
 class PlanetaryPositionsWindow(QMainWindow):
     """Displays planetary positions over a configurable time range."""
 
-    def __init__(self, *_, parent: Optional[QWidget] = None):
+    def __init__(self, *_, window_manager: Optional[WindowManager] = None, parent: Optional[QWidget] = None):
         super().__init__(parent)
+        self.window_manager = window_manager
         self.setWindowTitle("Planetary Positions")
         self.resize(1100, 720)
 
@@ -257,6 +260,11 @@ class PlanetaryPositionsWindow(QMainWindow):
         self.export_button.setEnabled(False)
         self.export_button.clicked.connect(self._export_csv)
         row.addWidget(self.export_button)
+
+        self.send_button = QPushButton("Send to Emerald Tablet")
+        self.send_button.setEnabled(False)
+        self.send_button.clicked.connect(self._send_to_tablet)
+        row.addWidget(self.send_button)
         return row
 
     # ------------------------------------------------------------------
@@ -346,6 +354,8 @@ class PlanetaryPositionsWindow(QMainWindow):
         self._latest_planet_keys = planet_keys
         self._latest_timestamps = timestamps
         self.export_button.setEnabled(bool(flattened))
+        if hasattr(self, "send_button"):
+            self.send_button.setEnabled(bool(flattened))
         self._set_status(f"Generated {len(flattened)} entries across {len(timestamps)} timestamps.")
         if flattened:
             self._show_results_dialog()
@@ -452,6 +462,48 @@ class PlanetaryPositionsWindow(QMainWindow):
         if row.speed is not None:
             text += f"\n{row.speed:.3f}°/day"
         return text
+
+    def _send_to_tablet(self) -> None:
+        """Send current ephemeris data to Emerald Tablet."""
+        if not self._latest_matrix:
+            return
+            
+        if not self.window_manager:
+            QMessageBox.warning(self, "Integration Error", "Window Manager not linked.")
+            return
+
+        # Format data for Hub
+        columns = ["Timestamp"] + self._latest_planet_labels
+        rows = []
+        
+        for ts in self._latest_timestamps:
+            row_map = self._latest_matrix.get(ts, {})
+            row_data = [ts.isoformat()]
+            for key in self._latest_planet_keys:
+                cell_text = self._format_cell(row_map.get(key))
+                row_data.append(cell_text)
+            rows.append(row_data)
+
+        export_data = {
+            "name": "Planetary Positions Ephemeris",
+            "data": {
+                "columns": columns,
+                "data": rows,
+                "styles": {}
+            }
+        }
+
+        # Open Hub and Send
+        hub = self.window_manager.open_window(
+            "emerald_tablet", 
+            CorrespondenceHub, 
+            allow_multiple=False,
+            window_manager=self.window_manager
+        )
+        
+        if hasattr(hub, "receive_import"):
+            hub.receive_import(export_data["name"], export_data["data"])
+            self._set_status("Sent data to Emerald Tablet.")
 
     def _canonical_name(self, name: str) -> str:
         normalized = "".join(ch for ch in name.lower() if ch.isalnum())

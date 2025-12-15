@@ -1,6 +1,6 @@
 import re
 import math
-from typing import Any, Dict, Callable, NamedTuple, List, Optional
+from typing import Any, Dict, Callable, NamedTuple, List, Optional, Set, Tuple
 from enum import Enum, auto
 from pillars.gematria.services.calculation_service import CalculationService
 from pillars.gematria.services.base_calculator import GematriaCalculator
@@ -123,7 +123,7 @@ class Tokenizer:
         ('NUMBER',   r'\d+(\.\d*)?|\.\d+'),
         ('STRING',   r'"[^"]*"|\'[^\']*\''),
         ('ID',       r'[A-Za-z_][A-Za-z0-9_]*'),
-        ('OP',       r'[+\-*/:^=<>!]+'), # Broad match for ops
+        ('OP',       r'[+\-*/:^=<>!&]+'), # Added &
         ('LPAREN',   r'\('),
         ('RPAREN',   r'\)'),
         ('COMMA',    r','),
@@ -193,12 +193,12 @@ class Parser:
 
     def expr(self):
         """Parse comparison operations (lowest precedence)."""
-        node = self.additive()
+        node = self.concatenation()
         
         while self.current_token.type == TokenType.OP and self.current_token.value in ('=', '>', '<', '>=', '<=', '<>'):
             op = self.current_token.value
             self.eat(TokenType.OP)
-            right = self.additive()
+            right = self.concatenation()
             
             # Simple eval
             if op == '=': node = (node == right)
@@ -209,6 +209,14 @@ class Parser:
             
         return node
         
+    def concatenation(self):
+        node = self.additive()
+        while self.current_token.type == TokenType.OP and self.current_token.value == '&':
+            self.eat(TokenType.OP)
+            right = self.additive()
+            node = str(node) + str(right)
+        return node
+
     def additive(self):
         node = self.multiplicative()
         while self.current_token.type == TokenType.OP and self.current_token.value in ('+', '-'):
@@ -259,10 +267,21 @@ class Parser:
                 self.eat(TokenType.LPAREN)
                 args = []
                 if self.current_token.type != TokenType.RPAREN:
-                    args.append(self.expr())
+                    # Handle first arg being empty? e.g. FUNC(, b)
+                    if self.current_token.type == TokenType.COMMA:
+                        args.append(None)
+                    else:
+                        args.append(self.expr())
+
                     while self.current_token.type == TokenType.COMMA:
                         self.eat(TokenType.COMMA)
-                        args.append(self.expr())
+                        if self.current_token.type == TokenType.RPAREN:
+                             args.append(None) # Trailing comma
+                             break
+                        elif self.current_token.type == TokenType.COMMA:
+                             args.append(None) # Double comma
+                        else:
+                             args.append(self.expr())
                 self.eat(TokenType.RPAREN)
                 
                 # Execute Function
@@ -288,7 +307,10 @@ class Parser:
                  return self.engine._resolve_range_values(start_cell, end_cell)
             
             else:
-                 # Single Cell Ref
+                 # Single Cell Ref OR Boolean Constant
+                 if name.upper() == "TRUE": return True
+                 if name.upper() == "FALSE": return False
+                 
                  return self.engine._resolve_cell_value(name)
 
         elif token.type == TokenType.LPAREN:
@@ -327,12 +349,17 @@ class FormulaEngine:
         self.context = data_context
         self.calc_service = CalculationService()
 
-    def evaluate(self, content: str) -> Any:
+    def evaluate(self, content: str, visited: Optional[Set[Tuple[int, int]]] = None) -> Any:
+        """Evaluate a formula string, tracking the current dependency stack to avoid cycles."""
         if not isinstance(content, str) or not content.startswith('='):
             return content
         
         formula = content[1:].strip()
-        if not formula: return ""
+        if not formula:
+            return ""
+
+        previous_stack = getattr(self, "_eval_stack", None)
+        self._eval_stack = visited or set()
         
         try:
             tokens = Tokenizer.tokenize(formula)
@@ -341,6 +368,9 @@ class FormulaEngine:
             return result
         except Exception as e:
             return f"#ERROR: {str(e)}"
+        finally:
+            # Restore prior stack to avoid leaking state between calls
+            self._eval_stack = previous_stack
 
     def _resolve_cell_value(self, ref: str):
         # A1 -> Val
@@ -349,7 +379,11 @@ class FormulaEngine:
         
         c_str, r_str = match.groups()
         row, col = self._to_rc(r_str, c_str)
-        
+
+        stack = getattr(self, "_eval_stack", None)
+
+        if hasattr(self.context, 'evaluate_cell'):
+            return self.context.evaluate_cell(row, col, stack)
         if hasattr(self.context, 'get_cell_value'):
             return self.context.get_cell_value(row, col)
         return 0
@@ -369,7 +403,13 @@ class FormulaEngine:
         c_start, c_end = min(c1, c2), max(c1, c2)
         
         values = []
-        if hasattr(self.context, 'get_cell_value'):
+        if hasattr(self.context, 'evaluate_cell'):
+            stack = getattr(self, "_eval_stack", None)
+            for r in range(r_start, r_end + 1):
+                for c in range(c_start, c_end + 1):
+                    val = self.context.evaluate_cell(r, c, stack)
+                    values.append(val)
+        elif hasattr(self.context, 'get_cell_value'):
             for r in range(r_start, r_end + 1):
                 for c in range(c_start, c_end + 1):
                     val = self.context.get_cell_value(r, c)
@@ -377,11 +417,12 @@ class FormulaEngine:
         return values
 
     def _to_rc(self, r_str, c_str):
+        """Convert spreadsheet refs (A1, AA10) to zero-based row/col."""
         c_idx = 0
         for char in c_str.upper():
-            c_idx = c_idx * 26 + (ord(char) - ord('A'))
+            c_idx = c_idx * 26 + (ord(char) - ord('A') + 1)
         r_idx = int(r_str) - 1
-        return r_idx, c_idx
+        return r_idx, c_idx - 1
 
 # --- Standard Functions ---
 
@@ -596,3 +637,156 @@ def func_ln(engine: FormulaEngine, val):
 def func_log10(engine: FormulaEngine, val):
     try: return math.log10(float(val))
     except: return "#VALUE!"
+
+# --- String Functions ---
+
+@FormulaRegistry.register("LEN", "Length of text.", "LEN(text)", "Text", [ArgumentMetadata("text", "Text", "str")])
+def func_len(engine: FormulaEngine, text):
+    return len(str(text)) if text is not None else 0
+
+@FormulaRegistry.register("UPPER", "Uppercase.", "UPPER(text)", "Text", [ArgumentMetadata("text", "Text", "str")])
+def func_upper(engine: FormulaEngine, text):
+    return str(text).upper() if text is not None else ""
+
+@FormulaRegistry.register("LOWER", "Lowercase.", "LOWER(text)", "Text", [ArgumentMetadata("text", "Text", "str")])
+def func_lower(engine: FormulaEngine, text):
+    return str(text).lower() if text is not None else ""
+
+@FormulaRegistry.register("PROPER", "Title Case.", "PROPER(text)", "Text", [ArgumentMetadata("text", "Text", "str")])
+def func_proper(engine: FormulaEngine, text):
+    return str(text).title() if text is not None else ""
+
+@FormulaRegistry.register("LEFT", "Left chars.", "LEFT(text, [n])", "Text", [
+    ArgumentMetadata("text", "Text", "str"),
+    ArgumentMetadata("num_chars", "Count (def 1)", "number", True)
+])
+def func_left(engine: FormulaEngine, text, n=1):
+    try:
+        s = str(text) if text is not None else ""
+        count = int(float(n))
+        return s[:count]
+    except: return "#VALUE!"
+
+@FormulaRegistry.register("RIGHT", "Right chars.", "RIGHT(text, [n])", "Text", [
+    ArgumentMetadata("text", "Text", "str"),
+    ArgumentMetadata("num_chars", "Count (def 1)", "number", True)
+])
+def func_right(engine: FormulaEngine, text, n=1):
+    try:
+        s = str(text) if text is not None else ""
+        count = int(float(n))
+        # slice from end
+        return s[-count:] if count > 0 else ""
+    except: return "#VALUE!"
+
+@FormulaRegistry.register("MID", "Middle chars.", "MID(text, start, n)", "Text", [
+    ArgumentMetadata("text", "Text", "str"),
+    ArgumentMetadata("start_num", "Start (1-based)", "number"),
+    ArgumentMetadata("num_chars", "Count", "number")
+])
+def func_mid(engine: FormulaEngine, text, start, n):
+    try:
+        s = str(text) if text is not None else ""
+        st = int(float(start)) - 1 # 1-based to 0-based
+        count = int(float(n))
+        if st < 0: return "#VALUE!"
+        return s[st:st+count]
+    except: return "#VALUE!"
+
+@FormulaRegistry.register("TRIM", "Trim spaces.", "TRIM(text)", "Text", [ArgumentMetadata("text", "Text", "str")])
+def func_trim(engine: FormulaEngine, text):
+    if text is None: return ""
+    # Excel TRIM removes leading/trailing spaces AND reduces multiple internal spaces to one.
+    # Standard .strip() only handles ends.
+    s = str(text).strip()
+    import re
+    return re.sub(r'\s+', ' ', s)
+
+@FormulaRegistry.register("REPLACE", "Replace text.", "REPLACE(text, start, n, new_text)", "Text", [
+    ArgumentMetadata("old_text", "Text", "str"),
+    ArgumentMetadata("start_num", "Start (1-based)", "number"),
+    ArgumentMetadata("num_chars", "Count", "number"),
+    ArgumentMetadata("new_text", "New Text", "str")
+])
+def func_replace(engine: FormulaEngine, old_text, start, n, new_text):
+    try:
+        s = str(old_text) if old_text is not None else ""
+        st = int(float(start)) - 1
+        count = int(float(n))
+        repl = str(new_text) if new_text is not None else ""
+        
+        if st < 0: return "#VALUE!"
+        # Python replacement by slicing
+        return s[:st] + repl + s[st+count:]
+    except: return "#VALUE!"
+
+@FormulaRegistry.register("SUBSTITUTE", "Substitute text.", "SUBSTITUTE(text, old, new, [n])", "Text", [
+    ArgumentMetadata("text", "Text", "str"),
+    ArgumentMetadata("old_text", "Old", "str"),
+    ArgumentMetadata("new_text", "New", "str"),
+    ArgumentMetadata("instance_num", "Instance (opt)", "number", True)
+])
+def func_substitute(engine: FormulaEngine, text, old_text, new_text, instance=None):
+    try:
+        s = str(text) if text is not None else ""
+        old = str(old_text)
+        new_ = str(new_text)
+        if instance is None:
+            return s.replace(old, new_)
+        else:
+            n = int(float(instance))
+            # Python replace doesn't support specific instance index directly efficiently
+            # We can split and join
+            parts = s.split(old)
+            if n > len(parts) - 1: return s # Instance out of range
+            
+            # Reconstruct: parts[0] + old + ... + parts[n-1] + NEW + parts[n] + ...
+            # Actually easier: replace first n occurrences, then replace n-1 occurrences back? No.
+            # Manual rebuild
+            res = ""
+            current = 0
+            for i, part in enumerate(parts[:-1]):
+                res += part
+                current += 1
+                if current == n:
+                    res += new_
+                else:
+                    res += old
+            res += parts[-1]
+            return res
+    except: return "#VALUE!"
+
+@FormulaRegistry.register("TEXTJOIN", "Join with delimiter.", "TEXTJOIN(delim, skip_empty, text1, ...)", "Text", [
+    ArgumentMetadata("delimiter", "Delimiter", "str"),
+    ArgumentMetadata("ignore_empty", "Ignore Empty", "bool"),
+    ArgumentMetadata("text1", "Text", "str")
+], is_variadic=True)
+def func_textjoin(engine: FormulaEngine, delim, ignore_empty, *args):
+    d = str(delim) if delim is not None else ""
+    # ignore_empty logic: check if bool or int string
+    skip = False
+    try:
+        if ignore_empty is None:
+            # Default behavior for missing arg? Excel usually mandates it.
+            # But here we treat empty as False or True?
+            # User example: TEXTJOIN(,,...) impliesthey want default behavior.
+            # Let's default to TRUE (convenience) or FALSE?
+            # If d is "" (default), skip usually doesn't matter much unless we have gaps.
+            # Let's default skip to TRUE to keep it clean.
+            skip = True
+        elif isinstance(ignore_empty, bool): skip = ignore_empty
+        elif str(ignore_empty).lower() in ('true', '1'): skip = True
+    except: pass
+    
+    parts = []
+    def collect(item):
+        if isinstance(item, list):
+            for i in item: collect(i)
+        else:
+            s_val = str(item) if item is not None else ""
+            if skip and s_val == "":
+                return
+            parts.append(s_val)
+            
+    for a in args: collect(a)
+    return d.join(parts)

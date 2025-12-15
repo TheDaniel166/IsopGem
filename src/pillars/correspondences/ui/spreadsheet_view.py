@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import (
     QTableView, QStyledItemDelegate, QDialog, QVBoxLayout, 
-    QDialogButtonBox, QWidget, QStyle, QMenu, QLineEdit, QApplication
+    QDialogButtonBox, QWidget, QStyle, QMenu, QLineEdit, QApplication, QHeaderView, QStyleOptionViewItem
 )
 from PyQt6.QtCore import Qt, QAbstractTableModel, QModelIndex, pyqtSignal, QEvent
 from PyQt6.QtGui import QTextDocument, QAbstractTextDocumentLayout, QPalette, QColor, QAction, QUndoStack, QPen, QFont, QKeyEvent, QKeySequence
@@ -12,8 +12,10 @@ from pillars.correspondences.services.formula_engine import FormulaEngine
 
 from pillars.correspondences.services.undo_commands import (
     SetCellDataCommand, InsertRowsCommand, RemoveRowsCommand, 
-    InsertColumnsCommand, RemoveColumnsCommand
+    InsertColumnsCommand, RemoveColumnsCommand, SortRangeCommand
 )
+
+from pillars.correspondences.services.conditional_formatting import ConditionalManager, ConditionalRule
 
 # Custom Roles
 BorderRole = Qt.ItemDataRole.UserRole + 1
@@ -26,7 +28,8 @@ class SpreadsheetModel(QAbstractTableModel):
     def __init__(self, data_json: dict, parent=None):
         super().__init__(parent)
         self._columns = data_json.get("columns", [])
-        self._data = data_json.get("data", [])
+        # Support both "data" and "rows" keys
+        self._data = data_json.get("data") or data_json.get("rows", [])
         # Styles: {(row, col): {"bg": "#hex", "fg": "#hex", "borders": {"top": bool, ...}}}
         # We need to load this from JSON if available, or init empty
         self._styles = {}
@@ -42,8 +45,48 @@ class SpreadsheetModel(QAbstractTableModel):
         # Run Sanitization to migrate old HTML content to Plain Text
         self._sanitize_data()
         
+        # Run Sanitization to migrate old HTML content to Plain Text
+        self._sanitize_data()
+        
         self.formula_engine = FormulaEngine(self)
         self.undo_stack = QUndoStack(self)
+        self.conditional_manager = ConditionalManager()
+        self._eval_cache = {}
+
+    def clear_eval_cache(self):
+        """Reset cached formula evaluations after mutations."""
+        self._eval_cache.clear()
+
+    def get_cell_raw(self, row, col):
+        if row < 0 or row >= len(self._data):
+            return ""
+        if col < 0 or col >= len(self._columns):
+            return ""
+        return self._data[row][col]
+
+    def evaluate_cell(self, row, col, visited=None):
+        """Return the evaluated value for a cell with cycle protection and caching."""
+        key = (row, col)
+        if visited is None:
+            visited = set()
+        if key in visited:
+            return "#CYCLE!"
+        if key in self._eval_cache:
+            return self._eval_cache[key]
+
+        visited.add(key)
+        try:
+            raw = self.get_cell_raw(row, col)
+
+            if isinstance(raw, str) and raw.startswith("="):
+                result = self.formula_engine.evaluate(raw, visited)
+            else:
+                result = raw
+
+            self._eval_cache[key] = result
+            return result
+        finally:
+            visited.discard(key)
         
     def _sanitize_data(self):
         """
@@ -95,13 +138,22 @@ class SpreadsheetModel(QAbstractTableModel):
         if role == Qt.ItemDataRole.BackgroundRole:
             style = self._styles.get((row, col), {})
             bg = style.get("bg")
-            if bg: return QColor(bg)
+            cond = None
+            if hasattr(self, "conditional_manager"):
+                cond = self.conditional_manager.get_style(row, col, self.evaluate_cell(row, col))
+            color_hex = cond.get("bg") if cond and cond.get("bg") else bg
+            if color_hex:
+                return QColor(color_hex)
             return None
             
         if role == Qt.ItemDataRole.ForegroundRole:
             style = self._styles.get((row, col), {})
-            fg = style.get("fg")
-            if fg: return QColor(fg)
+            cond = None
+            if hasattr(self, "conditional_manager"):
+                cond = self.conditional_manager.get_style(row, col, self.evaluate_cell(row, col))
+            fg = cond.get("fg") if cond and cond.get("fg") else style.get("fg")
+            if fg:
+                return QColor(fg)
             return None
             
         if role == Qt.ItemDataRole.FontRole:
@@ -134,8 +186,7 @@ class SpreadsheetModel(QAbstractTableModel):
         raw_value = self._data[row][col]
         
         if role == Qt.ItemDataRole.DisplayRole:
-            # Evaluate formulas for display
-            return self.formula_engine.evaluate(str(raw_value))
+            return self.evaluate_cell(row, col)
             
         if role == Qt.ItemDataRole.EditRole:
             # Return raw formula for editing
@@ -212,6 +263,45 @@ class SpreadsheetModel(QAbstractTableModel):
             "styles": styles_str
         }
 
+    def sort_range(self, top, left, bottom, right, key_col, ascending=True):
+        """
+        Sorts the data in the given range based on key_col.
+        key_col is absolute column index.
+        """
+        # 1. Capture Old Block
+        old_block = []
+        for r in range(top, bottom + 1):
+            row_data = []
+            for c in range(left, right + 1):
+                val = self._data[r][c]
+                style = self._styles.get((r, c))
+                row_data.append((val, style))
+            old_block.append(row_data)
+            
+        # 2. Sort Logic
+        col_offset = key_col - left
+        
+        def sort_key(row_tuple):
+            val, _ = row_tuple[col_offset]
+            try:
+                if val is None: return float('-inf') if ascending else float('-inf')
+                s_val = str(val)
+                f_val = float(s_val)
+                return (0, f_val)
+            except:
+                return (1, str(val).lower())
+
+        new_block = sorted(old_block, key=sort_key, reverse=not ascending)
+        
+        # 3. Push Command
+        if hasattr(self, "undo_stack"):
+            cmd = SortRangeCommand(self, (top, left, bottom, right), old_block, new_block)
+            self.undo_stack.push(cmd)
+        else:
+            # Fallback
+            cmd = SortRangeCommand(self, (top, left, bottom, right), old_block, new_block)
+            cmd.redo()
+
 class RichTextDelegate(QStyledItemDelegate):
     """
     The Scribe.
@@ -224,170 +314,123 @@ class RichTextDelegate(QStyledItemDelegate):
     ]
 
     def paint(self, painter, option, index):
-
-        options = option
-        self.initStyleOption(options, index)
-        
-        style = options.widget.style() if options.widget else None
-        doc = QTextDocument()
-        
-        # Apply Alignment from Model
-        from PyQt6.QtGui import QTextOption
-        text_option = QTextOption()
-        text_option.setAlignment(options.displayAlignment)
-        doc.setDefaultTextOption(text_option)
-        
-        # Apply Font (Bold, Italic, Family, Size)
-        doc.setDefaultFont(options.font)
-        
-        doc.setHtml(options.text)
-        
-        # Setup painting context
-        painter.save()
-        painter.setClipRect(options.rect)
-        
-        # 1. Draw Background (from Role or Selection)
-        bg_color = index.data(Qt.ItemDataRole.BackgroundRole)
-        
-        if options.state & QStyle.StateFlag.State_Selected:
-            # We handle selection fill at the end (layering 3) to be on top of content?
-            # Actually standard practice is Background -> Content -> Selection Overlay.
-            # So we SKIP filling here, and do it at step 3.
-            pass
-        elif bg_color and isinstance(bg_color, QColor) and bg_color.isValid():
-            painter.fillRect(options.rect, bg_color)
+        try:
+            options = option
+            self.initStyleOption(options, index)
+            style = options.widget.style() if options.widget else None
             
-        # 2. Draw Borders and Grid
-        # "Excel Style": Default Grid is Light Gray Right/Bottom.
-        # Custom Borders override this.
-        
-        borders = index.data(BorderRole) or {}
-        if not isinstance(borders, dict): borders = {}
-        
-        rect = options.rect
-        # Helper vars
-        pen_default = QPen(QColor("#d9d9d9"), 1) # Standard Excel Gray
-        
-        def get_pen(side_config):
-            """Parse config dict or bool legacy."""
-            if side_config is True: # Legacy
-                return QPen(Qt.GlobalColor.black, 1)
-                
-            if isinstance(side_config, dict):
-                color = QColor(side_config.get("color", "#000000"))
-                width = int(side_config.get("width", 1))
-                style_str = side_config.get("style", "solid")
-                
-                # Debug rendering
-                # print(f"[DEBUG] Painting Border: {style_str} w={width} c={color.name()}")
-                
-                style_map = {
-                    "solid": Qt.PenStyle.SolidLine,
-                    "dash": Qt.PenStyle.DashLine,
-                    "dot": Qt.PenStyle.DotLine
-                }
-                style = style_map.get(style_str, Qt.PenStyle.SolidLine)
-                return QPen(color, width, style)
-                
-            return None
-
-        # --- Top ---
-        pen = get_pen(borders.get("top"))
-        if pen:
-            painter.setPen(pen)
-            painter.drawLine(rect.topLeft(), rect.topRight())
-            
-        # --- Left ---
-        pen = get_pen(borders.get("left"))
-        if pen:
-            painter.setPen(pen)
-            painter.drawLine(rect.topLeft(), rect.bottomLeft())
-            
-        # --- Bottom ---
-        pen = get_pen(borders.get("bottom"))
-        if pen:
-            painter.setPen(pen)
-            painter.drawLine(rect.bottomLeft(), rect.bottomRight())
-        else:
-            # Default Grid (Bottom)
-            painter.setPen(pen_default)
-            painter.drawLine(rect.bottomLeft(), rect.bottomRight())
-
-        # --- Right ---
-        pen = get_pen(borders.get("right"))
-        if pen:
-            painter.setPen(pen)
-            painter.drawLine(rect.topRight(), rect.bottomRight())
-        else:
-            # Default Grid (Right)
-            painter.setPen(pen_default)
-            painter.drawLine(rect.topRight(), rect.bottomRight())
-        
-        # Translate to cell area
-        painter.translate(options.rect.left(), options.rect.top())
-        
-        # Clip to cell limits
-        # clip = options.rect.translated(-options.rect.left(), -options.rect.top())
-        doc.setTextWidth(options.rect.width())
-        
-        # Draw text
-        ctx = QAbstractTextDocumentLayout.PaintContext()
-        
-        # Apply Palette (Foreground Color matches Role because initStyleOption sets options.palette.text)
-        ctx.palette = options.palette
-        
-        if options.state & QStyle.StateFlag.State_Selected:
-            # Keep original text color (don't invert to white)
-            # ctx.palette.setColor(QPalette.ColorRole.Text, options.palette.highlightedText().color())
-            pass
-            
-        doc.documentLayout().draw(painter, ctx)
-        
-        # 3. Draw Selection / Highlights
-        # Resolve Window State
-        view = self.parent()
-        top_window = view.window()
-        is_editing = getattr(top_window, "_is_editing_formula", False)
-        source_index = getattr(top_window, "_edit_source_index", None)
-        
-        # A. Draw Source Cell Highlight (The one being edited)
-        # Even if not selected in view (because we clicked elsewhere)
-        if is_editing and source_index and source_index == index:
-            # Special Style for Source: Blue Dashed Outline
+            # Setup painting context
             painter.save()
-            pen = QPen(QColor("#0078D7"), 2, Qt.PenStyle.DashLine)
-            painter.setPen(pen)
-            # No fill, just outline to show "This is where the result goes"
-            painter.drawRect(options.rect.adjusted(1, 1, -2, -2))
+            painter.setClipRect(options.rect)
+            
+            # --- 1. Background ---
+            # Default Widget Background (handle selection later)
+            style.drawPrimitive(QStyle.PrimitiveElement.PE_PanelItemViewItem, options, painter, options.widget)
+            
+            # Manual Background (from Role) if any
+            bg_color = index.data(Qt.ItemDataRole.BackgroundRole)
+            if bg_color and isinstance(bg_color, QColor) and bg_color.isValid():
+                # If selected, we might want to blend or skip? 
+                # Excel shows selection OVER background.
+                painter.fillRect(options.rect, bg_color)
+
+            # --- 2. Text ---
+            doc = QTextDocument()
+            from PyQt6.QtGui import QTextOption
+            text_option = QTextOption()
+            text_option.setAlignment(options.displayAlignment)
+            doc.setDefaultTextOption(text_option)
+            doc.setDefaultFont(options.font)
+            
+            # Safe String Conversion
+            val = index.data(Qt.ItemDataRole.DisplayRole)
+            text_val = str(val) if val is not None else ""
+            doc.setHtml(text_val)
+            
+            # Color Management
+            ctx = QAbstractTextDocumentLayout.PaintContext()
+            ctx.palette = options.palette
+            if options.state & QStyle.StateFlag.State_Selected:
+                 # Keep text color readable on selection
+                 # ctx.palette.setColor(QPalette.ColorRole.Text, options.palette.highlightedText().color())
+                 pass
+            
+            # Calculate Text Area
+            text_rect = style.subElementRect(QStyle.SubElement.SE_ItemViewItemText, options)
+            painter.translate(text_rect.topLeft())
+            
+            # Respect Word Wrap
+            if options.features & QStyleOptionViewItem.ViewItemFeature.WrapText:
+                doc.setTextWidth(text_rect.width())
+            else:
+                 # No fixed width = No wrap (unless explicit <br>)
+                doc.setTextWidth(-1)
+                
+            doc.documentLayout().draw(painter, ctx)
+            
+            # Reset Transform for Borders
+            painter.translate(-text_rect.topLeft().x(), -text_rect.topLeft().y())
+
+            # --- 3. Borders ---
+            borders = index.data(BorderRole) or {}
+            if isinstance(borders, dict):
+                rect = options.rect
+                pen_default = QPen(QColor("#d9d9d9"), 1) # Standard Excel Gray
+                
+                def get_pen(side_config):
+                    if side_config is True: return QPen(Qt.GlobalColor.black, 1)
+                    if isinstance(side_config, dict):
+                        color = QColor(side_config.get("color", "#000000"))
+                        width = int(side_config.get("width", 1))
+                        style_map = {"solid": Qt.PenStyle.SolidLine, "dash": Qt.PenStyle.DashLine, "dot": Qt.PenStyle.DotLine}
+                        return QPen(color, width, style_map.get(side_config.get("style", "solid"), Qt.PenStyle.SolidLine))
+                    return None
+
+                # Borders Helpers
+                def draw_line(p, p1, p2):
+                    if p: 
+                        painter.setPen(p)
+                        painter.drawLine(p1, p2)
+
+                # Grid/Border Logic
+                # Bottom
+                p_bot = get_pen(borders.get("bottom"))
+                if p_bot: draw_line(p_bot, rect.bottomLeft(), rect.bottomRight())
+                else: draw_line(pen_default, rect.bottomLeft(), rect.bottomRight()) # Default Grid
+                
+                # Right
+                p_right = get_pen(borders.get("right"))
+                if p_right: draw_line(p_right, rect.topRight(), rect.bottomRight())
+                else: draw_line(pen_default, rect.topRight(), rect.bottomRight()) # Default Grid
+                
+                # Top/Left (only if explicit)
+                p_top = get_pen(borders.get("top"))
+                draw_line(p_top, rect.topLeft(), rect.topRight())
+                p_left = get_pen(borders.get("left"))
+                draw_line(p_left, rect.topLeft(), rect.bottomLeft())
+
+            # --- 4. Selection Highlight ---
+            if options.state & QStyle.StateFlag.State_Selected:
+                # Default: Standard Blue
+                base_color = QColor("#0078D7")
+                fill_color = QColor("#0078D7")
+                fill_color.setAlpha(30)
+                
+                # Draw Fill
+                painter.fillRect(options.rect, fill_color)
+                
+                # Draw Outline
+                pen = QPen(base_color, 2)
+                painter.setPen(pen)
+                painter.drawRect(options.rect.adjusted(1, 1, -2, -2))
+
             painter.restore()
-
-        # B. Draw Selection (Fill + Outline)
-        if options.state & QStyle.StateFlag.State_Selected:
             
-            # Default: Standard Blue
-            base_color = QColor("#0078D7")
-            fill_color = QColor("#0078D7")
-            fill_color.setAlpha(30) # Default Tint
-
-            # Formula Coloring
-            if is_editing:
-                 # Outline = Dynamic Color
-                 h = (index.row() * 13 + index.column() * 7) % len(self.SELECTION_COLORS)
-                 base_color = QColor(self.SELECTION_COLORS[h])
-                 
-                 # Fill = Light Grey (Fixed, as requested)
-                 fill_color = QColor("#E0E0E0")
-                 fill_color.setAlpha(150) # More visible grey
-            
-            # Fill
-            painter.fillRect(options.rect, fill_color)
-            
-            # Outline (Solid)
-            pen = QPen(base_color, 2)
-            painter.setPen(pen)
-            painter.drawRect(options.rect.adjusted(1, 1, -2, -2))
-        
-        painter.restore()
+        except Exception as e:
+            print(f"Paint Error at {index.row()},{index.column()}: {e}")
+            painter.save()
+            painter.drawText(option.rect, Qt.AlignmentFlag.AlignCenter, "ERR")
+            painter.restore()
 
     def createEditor(self, parent, option, index):
         """Custom Editor to fix clipping and style issues."""
@@ -469,11 +512,13 @@ class SpreadsheetView(QTableView):
         v_header = self.verticalHeader()
         v_header.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         v_header.customContextMenuRequested.connect(self._show_row_menu)
+        v_header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
         
         # 3. Column Header Menu
         h_header = self.horizontalHeader()
         h_header.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         h_header.customContextMenuRequested.connect(self._show_col_menu)
+        h_header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
         
         # Border UI refs
         self._border_actions = []
@@ -487,6 +532,11 @@ class SpreadsheetView(QTableView):
         self._border_settings_actions = settings
         self._border_style_menu = style_menu
         self._border_width_menu = width_menu
+        
+    def autofit(self):
+        """Resize all columns and rows to fit content."""
+        self.resizeColumnsToContents()
+        self.resizeRowsToContents()
 
     def _on_double_click(self, index):
         if not index.isValid():
@@ -636,6 +686,10 @@ class SpreadsheetView(QTableView):
             pos = col_idx if left else col_idx + 1
             model.insertColumns(pos, 1)
 
+    def _remove_col(self, col_idx):
+        if col_idx != -1:
+            self.model().removeColumns(col_idx, 1)
+
 
     def keyPressEvent(self, event: QKeyEvent):
         """Intercept Copy/Paste Shortcuts."""
@@ -651,7 +705,33 @@ class SpreadsheetView(QTableView):
             event.accept()
             return
 
+            event.accept()
+            return
+
+        # Check for Delete/Backspace
+        if event.key() in (Qt.Key.Key_Delete, Qt.Key.Key_Backspace):
+            self._clear_selection()
+            event.accept()
+            return
+
         super().keyPressEvent(event)
+
+    def _clear_selection(self):
+        """Clear content of selected cells (Undoable)."""
+        selection = self.selectionModel()
+        indexes = selection.selectedIndexes()
+        if not indexes: return
+        
+        model = self.model()
+        if hasattr(model, "undo_stack"):
+            model.undo_stack.beginMacro("Clear Cells")
+            
+        try:
+            for idx in indexes:
+                model.setData(idx, "", Qt.ItemDataRole.EditRole)
+        finally:
+            if hasattr(model, "undo_stack"):
+                model.undo_stack.endMacro()
 
     def _copy_selection(self):
         """Copy selected cells to clipboard as TSV."""
