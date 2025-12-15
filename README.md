@@ -91,6 +91,26 @@ cd src
 python main.py
 ```
 
+## Running Tests
+
+```bash
+./test.sh
+```
+
+Target specific tests:
+
+```bash
+./test.sh -q tests/test_time_units.py tests/test_egyptian_measures.py
+```
+
+Direct (same interpreter `run.sh` uses):
+
+```bash
+./.venv/bin/python -m pytest -q
+```
+
+If `source .venv/bin/activate` causes your terminal to misbehave, skip it and use `./test.sh`.
+
 ## Pillar Deep Dive
 
 ### Gematria

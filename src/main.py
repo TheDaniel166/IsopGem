@@ -21,6 +21,7 @@ from pillars.document_manager.ui import DocumentManagerHub
 from pillars.astrology.ui import AstrologyHub
 from pillars.tq.ui import TQHub
 from pillars.adyton.ui import AdytonHub
+from pillars.correspondences.ui import CorrespondenceHub
 
 
 class IsopGemMainWindow(QMainWindow):
@@ -61,6 +62,7 @@ class IsopGemMainWindow(QMainWindow):
         self._init_astrology_pillar()
         self._init_tq_pillar()
         self._init_adyton_pillar()
+        self._init_correspondences_pillar()
         
         # Connect tab change to raise all tool windows
         self.tabs.currentChanged.connect(self.window_manager.raise_all_windows)
@@ -101,6 +103,11 @@ class IsopGemMainWindow(QMainWindow):
         """Initialize the Adyton pillar."""
         adyton_hub = AdytonHub(self.window_manager)
         self.tabs.addTab(adyton_hub, "🏛️ Adyton")
+
+    def _init_correspondences_pillar(self):
+        """Initialize the Emerald Tablet pillar."""
+        correspondence_hub = CorrespondenceHub(self.window_manager)
+        self.tabs.addTab(correspondence_hub, "🟢 Emerald Tablet")
     
     def closeEvent(self, a0: QCloseEvent | None):
         """Handle main window close event."""

@@ -3,9 +3,9 @@ from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QTextEdit, 
     QComboBox, QFontComboBox, QSpinBox,
     QColorDialog, QMenu, QToolButton, QDialog,
-    QLabel, QDialogButtonBox, QFormLayout, QDoubleSpinBox
+    QLabel, QDialogButtonBox, QFormLayout, QDoubleSpinBox, QMessageBox
 )
-from PyQt6.QtCore import Qt, pyqtSignal, QSize
+from PyQt6.QtCore import Qt, pyqtSignal, QSize, QMimeData
 from PyQt6.QtGui import (
     QFont, QAction, QIcon, QColor, QTextCharFormat,
     QTextCursor, QTextListFormat, QTextBlockFormat,
@@ -17,6 +17,35 @@ from .list_features import ListFeature
 from .search_features import SearchReplaceFeature
 from .ribbon_widget import RibbonWidget
 from shared.ui import VirtualKeyboard, get_shared_virtual_keyboard
+
+class SafeTextEdit(QTextEdit):
+    """
+    A hardened QTextEdit that protects against 'Paste Attacks' (Mars Seal).
+    """
+    def insertFromMimeData(self, source: QMimeData):
+        """
+        Override paste behavior to protect against freezing.
+        """
+        # Threshold: 100,000 chars (approx 20-30 pages of text)
+        WARN_THRESHOLD = 100000
+        
+        if source.hasText():
+            text = source.text()
+            if len(text) > WARN_THRESHOLD:
+                # Mars Warning: Chaos detected
+                reply = QMessageBox.warning(
+                    self, 
+                    "Large Paste Detected",
+                    f"You are attempting to paste {len(text):,} characters.\n"
+                    "This may temporarily freeze the application.\n\n"
+                    "Do you wish to proceed?",
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                    QMessageBox.StandardButton.No
+                )
+                if reply == QMessageBox.StandardButton.No:
+                    return
+        
+        super().insertFromMimeData(source)
 
 class RichTextEditor(QWidget):
     """
@@ -59,7 +88,7 @@ class RichTextEditor(QWidget):
         layout.addWidget(self.ribbon)
         
         # --- Editor ---
-        self.editor = QTextEdit()
+        self.editor = SafeTextEdit()
         self.editor.setPlaceholderText(placeholder_text)
         self.editor.setStyleSheet("""
             QTextEdit {
@@ -91,6 +120,33 @@ class RichTextEditor(QWidget):
         
         # Initialize Ribbon Content
         self._init_ribbon()
+
+    def insertFromMimeData(self, source):
+        """
+        Override paste behavior to protect against 'Paste Attacks' (Mars Seal).
+        Warns user if pasting massive content that could freeze the UI.
+        """
+        # Threshold: 100,000 chars (approx 20-30 pages of text)
+        WARN_THRESHOLD = 100000
+        
+        if source.hasText():
+            text = source.text()
+            if len(text) > WARN_THRESHOLD:
+                # Mars Warning: Chaos detected
+                reply = QMessageBox.warning(
+                    self, 
+                    "Large Paste Detected",
+                    f"You are attempting to paste {len(text):,} characters.\n"
+                    "This may temporarily freeze the application.\n\n"
+                    "Do you wish to proceed?",
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                    QMessageBox.StandardButton.No
+                )
+                if reply == QMessageBox.StandardButton.No:
+                    return
+        
+        # Standard Qt behavior if safe or approved
+        super().insertFromMimeData(source) # type: ignore
 
     def _check_wiki_link_trigger(self):
         """Check if the user just typed '[['."""
@@ -410,9 +466,36 @@ class RichTextEditor(QWidget):
 
 
     def _pick_color(self):
-        color = QColorDialog.getColor(self.editor.textColor(), self)
-        if color.isValid():
-            self.editor.setTextColor(color)
+        """
+        Open a color picker to set the text color.
+        Uses non-native dialog to avoid linux platform integration issues.
+        """
+        cursor = self.editor.textCursor()
+        # Get current color
+        fmt = cursor.charFormat()
+        current_color = fmt.foreground().color()
+        if not current_color.isValid():
+            current_color = Qt.GlobalColor.black
+        
+        # UX Improvement: If color is Black (Value 0), the picker opens in "The Abyss" (Slider at bottom).
+        # We default to Red to force the Value Slider to Max, allowing immediate color selection.
+        initial_color = current_color
+        if current_color.lightness() == 0:
+            initial_color = Qt.GlobalColor.red
+            
+        dialog = QColorDialog(initial_color, self)
+        dialog.setWindowTitle("Select Text Color")
+        dialog.setOptions(QColorDialog.ColorDialogOption.ShowAlphaChannel | 
+                          QColorDialog.ColorDialogOption.DontUseNativeDialog)
+        
+        if dialog.exec():
+            color = dialog.currentColor()
+            if color.isValid():
+                # Apply using mergeCharFormat for robustness
+                new_fmt = QTextCharFormat()
+                new_fmt.setForeground(color)
+                self.editor.mergeCurrentCharFormat(new_fmt)
+                self.editor.setFocus()
 
     def _apply_style(self, style_name):
         """Apply a semantic style to the current selection/block."""
@@ -464,9 +547,24 @@ class RichTextEditor(QWidget):
         self.font_combo.setCurrentFont(QFont(style["family"]))
 
     def _pick_highlight(self):
-        color = QColorDialog.getColor(self.editor.textBackgroundColor(), self)
-        if color.isValid():
-            self.editor.setTextBackgroundColor(color)
+        cursor = self.editor.textCursor()
+        fmt = cursor.charFormat()
+        current_bg = fmt.background().color()
+        if not current_bg.isValid():
+            current_bg = Qt.GlobalColor.white
+
+        dialog = QColorDialog(current_bg, self)
+        dialog.setWindowTitle("Select Highlight Color")
+        dialog.setOptions(QColorDialog.ColorDialogOption.ShowAlphaChannel | 
+                          QColorDialog.ColorDialogOption.DontUseNativeDialog)
+                          
+        if dialog.exec():
+            color = dialog.currentColor()
+            if color.isValid():
+                new_fmt = QTextCharFormat()
+                new_fmt.setBackground(color)
+                self.editor.mergeCurrentCharFormat(new_fmt)
+                self.editor.setFocus()
 
     def _clear_highlight(self):
         """Clear the background highlight."""

@@ -9,6 +9,9 @@ import math
 from typing import List
 from datetime import datetime, timedelta, timezone
 
+from pillars.astrology.utils.conversions import to_zodiacal_string
+from pillars.astrology.repositories.ephemeris_provider import EphemerisProvider, EphemerisNotLoadedError
+
 from PyQt6.QtCore import Qt, QTimer, QRectF, QPointF
 from PyQt6.QtGui import (
     QBrush, 
@@ -35,6 +38,8 @@ from PyQt6.QtWidgets import (
     QTableWidget,
     QTableWidgetItem,
     QHeaderView,
+    QMenu,
+    QApplication,
 )
 
 # Constants
@@ -273,9 +278,11 @@ class VenusRoseWindow(QMainWindow):
         
         # Right: Data Pane
         self.table = QTableWidget()
-        self.table.setColumnCount(3)
-        self.table.setHorizontalHeaderLabels(["Date", "Type", "Sign"])
+        self.table.setColumnCount(7)
+        self.table.setHorizontalHeaderLabels(["Date", "Type", "Helio Sign", "Lat", "Speed", "Elong.", "Motion"])
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.table.customContextMenuRequested.connect(self._show_context_menu)
         main_layout.addWidget(self.table, stretch=1)
         
         self.events = []
@@ -291,10 +298,17 @@ class VenusRoseWindow(QMainWindow):
         # Approximate next events
         start_date = self.current_date
         deg_per_day_e = 360.0 / P_EARTH
-        deg_per_day_v = 360.0 / P_VENUS
+        
+        # Determine Venus speed based on current physics mode
+        if self.is_real_physics:
+            deg_per_day_v = 360.0 / P_VENUS
+        else:
+            deg_per_day_v = (13.0 * 360.0) / (8.0 * P_EARTH)
+            
         rel_v = deg_per_day_v - deg_per_day_e # deg/day gain
         
         # Current Longitudes
+        # Note: We calculate current positions based on the SAME speed to ensure consistency
         delta = start_date - J2000
         days = delta.total_seconds() / 86400.0
         curr_e = (L_EARTH_J2000 + days * deg_per_day_e) % 360
@@ -311,16 +325,19 @@ class VenusRoseWindow(QMainWindow):
         
         # Generate list
         # We start with the closest ones and step by Synodic Period
+        # Calculate Synodic Period dynamically based on rates
+        synodic_period = 360.0 / rel_v
+        
         t_inf = start_date + timedelta(days=days_to_inf)
         t_sup = start_date + timedelta(days=days_to_sup)
         
         raw_events = []
         for i in range(20): # Next 20 events
             # Inferior
-            d_inf = t_inf + timedelta(days=i * SYNODIC_PERIOD)
+            d_inf = t_inf + timedelta(days=i * synodic_period)
             raw_events.append((d_inf, "Petal Point (Inf)"))
             # Superior
-            d_sup = t_sup + timedelta(days=i * SYNODIC_PERIOD)
+            d_sup = t_sup + timedelta(days=i * synodic_period)
             raw_events.append((d_sup, "Outer Point (Sup)"))
             
         raw_events.sort(key=lambda x: x[0])
@@ -328,11 +345,222 @@ class VenusRoseWindow(QMainWindow):
         self.events = raw_events
         self.table.setRowCount(len(raw_events))
         for i, (dt, evt_type) in enumerate(raw_events):
-            self.table.setItem(i, 0, QTableWidgetItem(dt.strftime("%Y-%m-%d")))
+            
+            # Real Physics: Refine Date to True Conjunction
+            if self.is_real_physics:
+                # Determine if superior or inferior based on type string or loop index logic
+                # 'Petal Point (Inf)' vs 'Outer Point (Sup)'
+                is_sup = "Sup" in evt_type
+                try:
+                    dt = self._refine_conjunction_date(dt, is_superior=is_sup)
+                    self.events[i] = (dt, evt_type) 
+                except EphemerisNotLoadedError:
+                    # Retry in 1 second
+                    QTimer.singleShot(1000, self._calculate_future_events)
+                    # Mark all as loading and break
+                    for r in range(self.table.rowCount()):
+                        self.table.setItem(r, 2, QTableWidgetItem("Loading..."))
+                    return
+                except Exception as e:
+                    print(f"Date refinement failed: {e}")
+
+            self.table.setItem(i, 0, QTableWidgetItem(dt.strftime("%Y-%m-%d %H:%M")))
             self.table.setItem(i, 1, QTableWidgetItem(evt_type))
-            # Sign approx
-            # Improve sign calc later
-            self.table.setItem(i, 2, QTableWidgetItem("--"))
+            
+            # Calculate Venus Sign at this event
+            sign_str = "--"
+            lat_str = "--"
+            speed_str = "--"
+            elong_str = "--"
+            motion_str = "--"
+
+            if self.is_real_physics:
+                try:
+                    provider = EphemerisProvider.get_instance()
+                    if dt.tzinfo is None:
+                        dt = dt.replace(tzinfo=timezone.utc)
+                    
+                    # HELIOCENTRIC + Extended
+                    data = provider.get_extended_data('venus', dt)
+                    
+                    sign_str = to_zodiacal_string(data['helio_lon'])
+                    lat_str = f"{data['helio_lat']:.2f}°"
+                    speed_str = f"{data['helio_speed']:.3f}°/d"
+                    elong_str = f"{data['elongation']:.1f}°"
+                    motion_str = "Rx" if data['is_retrograde'] else "D"
+                    
+                except EphemerisNotLoadedError:
+                     sign_str = "Loading..."
+                     # Logic above (in Refine) handles the retry loop, 
+                     # but if refinement is skipped (Ideal mode?) we might need it here?
+                     # Actually Physics toggle handles mode. 
+                     # Refine block returns early if loading.
+                     # So logic here is only reached if Refine block succeeded OR skipped.
+                     # Wait, Refine block is inside `if self.is_real_physics`.
+                     # So if Refine block returns, we exit function.
+                     pass 
+                except Exception as e:
+                    print(f"Error calculating skyfield position: {e}")
+                    sign_str = "Error"
+            else:
+                # Ideal Math (Heliocentric - Simple Circular)
+                # This is just the raw angle of Venus around the Sun
+                d_delta = dt - J2000
+                d_days = d_delta.total_seconds() / 86400.0
+                
+                mean_long_v = (L_VENUS_J2000 + d_days * deg_per_day_v) % 360.0
+                sign_str = to_zodiacal_string(mean_long_v)
+                
+                # Ideal Speed is constant 360/224.7 = ~1.602
+                speed_str = f"{deg_per_day_v:.3f}°/d"
+                # Ideal Lat is 0
+                lat_str = "0.00°"
+                # Ideal Elongation requires Earth calculation... maybe skip for Ideal?
+                # Or implement simple ideal math. 
+                # Let's leave Elongation blank for Ideal to emphasize it's a simplification.
+                motion_str = "D" # Mean motion is always direct
+            
+            self.table.setItem(i, 2, QTableWidgetItem(sign_str))
+            self.table.setItem(i, 3, QTableWidgetItem(lat_str))
+            self.table.setItem(i, 4, QTableWidgetItem(speed_str))
+            self.table.setItem(i, 5, QTableWidgetItem(elong_str))
+            self.table.setItem(i, 6, QTableWidgetItem(motion_str))
+
+    def _show_context_menu(self, pos: QPointF):
+        index = self.table.indexAt(pos)
+        if not index.isValid():
+            return
+            
+        menu = QMenu(self)
+        
+        # Action: Copy Line
+        action_copy = menu.addAction("Copy Line")
+        action_copy.triggered.connect(lambda: self._copy_line(index.row()))
+        
+        # Action: Cast Chart
+        action_cast = menu.addAction("Cast Chart")
+        action_cast.triggered.connect(lambda: self._cast_chart(index.row()))
+        
+        menu.exec(self.table.viewport().mapToGlobal(pos))
+        
+    def _copy_line(self, row_idx: int):
+        cols = self.table.columnCount()
+        data = []
+        for c in range(cols):
+            item = self.table.item(row_idx, c)
+            text = item.text() if item else ""
+            data.append(text)
+        
+        line_str = " | ".join(data)
+        QApplication.clipboard().setText(line_str)
+        
+    def _cast_chart(self, row_idx: int):
+        # Format: YYYY-MM-DD
+        date_item = self.table.item(row_idx, 0)
+        if not date_item:
+            return
+            
+        date_str = date_item.text()
+        try:
+            # Parse date. Defaulting to 12:00 UTC roughly, though we tracked exact times internally
+            # Better to retrieve from self.events list if possible
+            # self.events stores [(datetime, type), ...]
+            
+            # Find the event matching this row
+            if row_idx < len(self.events):
+                evt_dt, _ = self.events[row_idx]
+                
+                # Import here to avoid circular dependency at top level
+                from pillars.astrology.ui.natal_chart_window import NatalChartWindow
+                
+                # We need to instantiate and show the window
+                # Assuming simple instantiation works
+                self._chart_window = NatalChartWindow()
+                
+                # Set the date
+                # NatalChartWindow -> self.datetime_input (QDateTimeEdit)
+                from PyQt6.QtCore import QDateTime, Qt, QTimeZone
+                qdt = QDateTime(evt_dt)
+                if evt_dt.tzinfo:
+                    qdt.setTimeZone(QTimeZone.utc())
+                
+                self._chart_window.datetime_input.setDateTime(qdt)
+                self._chart_window.name_input.setText(f"Venus Trans: {date_str}")
+                
+                self._chart_window.show()
+                
+        except Exception as e:
+            print(f"Error casting chart: {e}")
+
+    def _refine_conjunction_date(self, approx_dt: datetime, is_superior: bool = False) -> datetime:
+        """
+        Refine the date to find the exact moment of Heliocentric Conjunction.
+        Objective: Minimize abs(Ven_Lon - Earth_Lon) for Inferior, 
+                   or abs(abs(Ven_Lon - Earth_Lon) - 180) for Superior.
+        Range: +/- 5 days from approx_dt.
+        """
+        if approx_dt.tzinfo is None:
+            approx_dt = approx_dt.replace(tzinfo=timezone.utc)
+            
+        provider = EphemerisProvider.get_instance()
+        
+        def get_diff(t):
+            d = provider.get_extended_data('venus', t)
+            # We need Earth's longitude too. 
+            # Ideally extended_data would return it, but we can fetch separately for now
+            # or optimize provider. simpler to fetch separately or just assume alignment logic
+            # Let's trust provider's get_heliocentric_ecliptic_position for earth?
+            # actually provider only takes body_name.
+            # Let's peek provider again? 
+            # Actually get_heliocentric_ecliptic_position works for 'earth' too if we pass it?
+            # Wait, EphemerisProvider code:
+            # sun.at(t).observe(planets[body_name])
+            # So yes, we can pass 'earth'.
+            
+            v_lon = d['helio_lon']
+            e_lon = provider.get_heliocentric_ecliptic_position('earth', t)
+            
+            diff = abs(v_lon - e_lon)
+            if diff > 180: diff = 360 - diff
+            
+            if is_superior:
+                # Target is 180 diff
+                return abs(diff - 180)
+            else:
+                # Target is 0 diff
+                return diff
+
+        # Coarse Search: +/- 5 days, 4 hour steps
+        best_dt = approx_dt
+        min_err = 999.0
+        
+        start_t = approx_dt - timedelta(days=5)
+        for i in range(60): # 10 days * 6 steps/day = 60
+            t = start_t + timedelta(hours=i*4)
+            err = get_diff(t)
+            if err < min_err:
+                min_err = err
+                best_dt = t
+                
+        # Fine Search: +/- 6 hours, 10 min steps
+        start_t = best_dt - timedelta(hours=6)
+        for i in range(72): # 12 hours * 6 steps/hour = 72
+            t = start_t + timedelta(minutes=i*10)
+            err = get_diff(t)
+            if err < min_err:
+                min_err = err
+                best_dt = t
+                
+        # Ultra-Fine Search: +/- 20 mins, 1 min steps
+        start_t = best_dt - timedelta(minutes=20)
+        for i in range(40):
+            t = start_t + timedelta(minutes=i)
+            err = get_diff(t)
+            if err < min_err:
+                min_err = err
+                best_dt = t
+                
+        return best_dt
 
     def _toggle_physics(self):
         self.is_real_physics = self.btn_physics.isChecked()

@@ -26,6 +26,7 @@ def init_db():
     """Initialize the database tables."""
     # Import models lazily so SQLAlchemy registers all mappings before creating tables.
     import pillars.document_manager.models  # noqa: F401
+    import pillars.correspondences.models.correspondence_models  # noqa: F401
     Base.metadata.create_all(bind=engine)
 
 def get_db():

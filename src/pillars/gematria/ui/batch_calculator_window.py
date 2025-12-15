@@ -20,8 +20,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QFont, QCloseEvent
 
-from ..models import CalculationRecord
-from ..repositories import CalculationRepository
+from ..services import CalculationService
 from ..services.base_calculator import GematriaCalculator
 
 
@@ -32,19 +31,19 @@ class BatchProcessThread(QThread):
     calculation_completed = pyqtSignal(str, str)  # text, status
     processing_finished = pyqtSignal(int, int)  # success_count, error_count
     
-    def __init__(self, data: List[Dict], calculators: List[GematriaCalculator], repository: CalculationRepository):
+    def __init__(self, data: List[Dict], calculators: List[GematriaCalculator], service: CalculationService):
         """
         Initialize batch process thread.
         
         Args:
             data: List of dictionaries containing word data
             calculators: List of calculators to use for calculations
-            repository: Repository for storing results
+            service: Service for storing results
         """
         super().__init__()
         self.data = data
         self.calculators = calculators
-        self.repository = repository
+        self.service = service
         self._is_running = True
     
     def run(self):
@@ -90,22 +89,15 @@ class BatchProcessThread(QThread):
                         normalized = calculator.normalize_text(text)
                         
                         # Create calculation record
-                        record = CalculationRecord(
+                        # Save via Service (handles breakdown and normalization internally)
+                        self.service.save_calculation(
                             text=text,
                             value=value,
-                            language=calculator.name,
-                            method=calculator.name,
+                            calculator=calculator,
+                            breakdown=breakdown,
                             notes=notes,
-                            tags=tags,
-                            breakdown=json.dumps(breakdown),
-                            character_count=len(breakdown),
-                            normalized_text=normalized,
-                            date_created=datetime.now(),
-                            date_modified=datetime.now()
+                            tags=tags
                         )
-                        
-                        # Save to repository
-                        self.repository.save(record)
                     except Exception as calc_error:
                         word_success = False
                         continue
@@ -146,7 +138,7 @@ class BatchCalculatorWindow(QMainWindow):
         """
         super().__init__(parent)
         self.calculators = {calc.name: calc for calc in calculators}
-        self.repository = CalculationRepository()
+        self.calculation_service = CalculationService()  # Use Service, not Repository
         self.imported_data: List[Dict] = []
         self.process_thread: Optional[BatchProcessThread] = None
         
@@ -544,7 +536,7 @@ class BatchCalculatorWindow(QMainWindow):
         self.progress_bar.setMaximum(len(self.imported_data))
         
         # Create and start processing thread
-        self.process_thread = BatchProcessThread(self.imported_data, selected_calcs, self.repository)
+        self.process_thread = BatchProcessThread(self.imported_data, selected_calcs, self.calculation_service)
         self.process_thread.progress_updated.connect(self._on_progress_updated)
         self.process_thread.calculation_completed.connect(self._on_calculation_completed)
         self.process_thread.processing_finished.connect(self._on_processing_finished)

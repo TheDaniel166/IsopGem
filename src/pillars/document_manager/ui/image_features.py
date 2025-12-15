@@ -10,7 +10,7 @@ from PyQt6.QtGui import (
     QTextCursor, QTextImageFormat, QIcon, QAction,
     QPixmap, QImage, QTextDocument
 )
-from PyQt6.QtCore import Qt, QBuffer, QByteArray, QIODevice, QUrl, QRect, QPoint, pyqtSignal, QSize
+from PyQt6.QtCore import Qt, QBuffer, QByteArray, QIODevice, QUrl, QRect, QPoint, pyqtSignal, QSize, QObject, QThread
 import os
 import uuid
 
@@ -88,6 +88,24 @@ class ImagePropertiesDialog(QDialog):
         fmt.setHeight(self.height_spin.value())
 
 
+class ImageLoaderWorker(QObject):
+    """Worker to load images off the main thread."""
+    finished = pyqtSignal(object)  # Emits (Pillow Image, Error String)
+
+    def __init__(self, path):
+        super().__init__()
+        self.path = path
+
+    def run(self):
+        try:
+            from PIL import Image
+            img = Image.open(self.path).convert("RGBA")
+            # Force load data while in thread
+            img.load() 
+            self.finished.emit((img, None))
+        except Exception as e:
+            self.finished.emit((None, str(e)))
+
 class ImageEditorDialog(QDialog):
     """Modal image editor using Pillow before insertion."""
 
@@ -98,6 +116,7 @@ class ImageEditorDialog(QDialog):
         self.base_image = None  # Geometry-applied image
         self.current_image = None  # With brightness/contrast
         self.aspect_locked = True
+        self.loader_thread = None
         self._setup_ui()
 
     def _setup_ui(self):
@@ -112,6 +131,12 @@ class ImageEditorDialog(QDialog):
         file_row.addWidget(self.btn_choose)
         file_row.addWidget(self.lbl_file)
         layout.addLayout(file_row)
+        
+        # Loading indicator
+        self.lbl_loading = QLabel("Loading...")
+        self.lbl_loading.setVisible(False)
+        self.lbl_loading.setStyleSheet("color: #2563eb; font-weight: bold;")
+        layout.addWidget(self.lbl_loading)
 
         # Preview inside scroll area to avoid huge images overflowing
         self.preview_label = CropPreviewLabel()
@@ -125,6 +150,10 @@ class ImageEditorDialog(QDialog):
         layout.addWidget(scroll)
 
         controls_box = QGroupBox("Adjustments")
+        # Disable controls initially
+        self.controls_box = controls_box 
+        self.controls_box.setEnabled(False)
+        
         controls_layout = QVBoxLayout()
 
         size_row = QHBoxLayout()
@@ -262,18 +291,41 @@ class ImageEditorDialog(QDialog):
             QMessageBox.critical(self, "Missing dependency", "Pillow is required for image editing. Please install pillow.")
             return
 
-        try:
-            img = Image.open(file_path).convert("RGBA")
-        except Exception as exc:  # pragma: no cover - UI path
-            QMessageBox.critical(self, "Load failed", f"Could not open image:\n{exc}")
-            return
-
-        self.orig_image = img
-        self.base_image = img.copy()
-        self._sync_size_spins()
+        # Start loading in background
+        self.btn_choose.setEnabled(False)
+        self.lbl_loading.setVisible(True)
+        self.lbl_loading.setText(f"Loading {os.path.basename(file_path)}...")
+        
+        self.worker = ImageLoaderWorker(file_path)
+        self.thread = QThread()
+        self.worker.moveToThread(self.thread)
+        self.thread.started.connect(self.worker.run)
+        self.worker.finished.connect(self._on_image_loaded)
+        self.worker.finished.connect(self.thread.quit)
+        self.worker.finished.connect(self.worker.deleteLater)
+        self.thread.finished.connect(self.thread.deleteLater)
+        self.thread.start()
+        
+        # Save reference to keep alive
+        self.loader_thread = self.thread
         self.lbl_file.setText(os.path.basename(file_path))
-        self.btn_ok.setEnabled(True)
-        self._update_preview()
+
+    def _on_image_loaded(self, result):
+        img, error = result
+        self.btn_choose.setEnabled(True)
+        self.lbl_loading.setVisible(False)
+        
+        if error:
+            QMessageBox.critical(self, "Load failed", f"Could not open image:\n{error}")
+            return
+            
+        if img:
+            self.orig_image = img
+            self.base_image = img.copy()
+            self._sync_size_spins()
+            self.btn_ok.setEnabled(True)
+            self.controls_box.setEnabled(True)
+            self._update_preview()
 
     def _on_width_changed(self, value: int):
         if not self.base_image:
