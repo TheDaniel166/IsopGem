@@ -8,8 +8,8 @@ The Temple of IsopGem is constructed upon the **Doctrine of the Spheres**. Each 
 ### The Pantheon of Pillars
 The following Grimoires detail the inner workings of each Sphere:
 
-*   **The Adyton Sanctuary** (`pillars/adyton`): The Inner Sanctum (3D/4D Visualization).
-*   **The Emerald Tablet** (`pillars/correspondences`): The Grid of Equivalences (Spreadsheet/Database).
+*   **[The Adyton Sanctuary](pillars/Adyton_Sanctuary.md)**: The Inner Sanctum (3D/4D Visualization).
+*   **[The Emerald Tablet](pillars/Emerald_Tablet.md)**: The Grid of Equivalences (Spreadsheet/Database).
 *   **[The Astrology Engine](pillars/Astrology_Engine.md)**: The Keeper of Time. Calculates planetary positions, ephemerides, and the movements of the Heavens.
 *   **[The Document Manager](pillars/Document_Manager.md)**: The Scribe. Manages the "Akaschic Record" of user documents, parsing texts, and weaving the **Mindscape**.
 *   **[The Gematria Protocol](pillars/Gematria_Protocol.md)**: The Tongue of God. Transforms text into number using sacred ciphers (Hebrew, English, Greek, Runes).

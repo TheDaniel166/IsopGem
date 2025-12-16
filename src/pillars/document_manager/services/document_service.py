@@ -81,7 +81,7 @@ class DocumentService:
             file_path=str(path),
             raw_content=raw_content,
             tags=tags or "",
-            author=metadata.get('author'),
+            author=metadata.get('author') or "",
             collection=collection or ""
         )
         

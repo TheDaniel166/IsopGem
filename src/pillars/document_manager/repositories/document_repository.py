@@ -1,7 +1,7 @@
 """Repository for Document model."""
 from sqlalchemy.orm import Session, defer
 from pillars.document_manager.models.document import Document
-from typing import List, Optional
+from typing import Any, List, Optional, cast
 import time
 import logging
 
@@ -25,8 +25,8 @@ class DocumentRepository:
         start = time.perf_counter()
         logger.debug("DocumentRepository: preparing metadata query with deferred content")
         query = self.db.query(Document).options(
-            defer(Document.content), 
-            defer(Document.raw_content)
+            defer(cast(Any, Document.content)),
+            defer(cast(Any, Document.raw_content)),
         )
         logger.debug("DocumentRepository: executing metadata query ...")
         docs = query.all()
@@ -44,8 +44,17 @@ class DocumentRepository:
             (Document.content.ilike(f"%{query}%"))
         ).all()
 
-    def create(self, title: str, content: str, file_type: str, file_path: str = None, raw_content: str = None, 
-               tags: str = None, author: str = None, collection: str = None) -> Document:
+    def create(
+        self,
+        title: str,
+        content: str,
+        file_type: str,
+        file_path: Optional[str] = None,
+        raw_content: Optional[str] = None,
+        tags: Optional[str] = None,
+        author: Optional[str] = None,
+        collection: Optional[str] = None,
+    ) -> Document:
         db_doc = Document(
             title=title,
             content=content,

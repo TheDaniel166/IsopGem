@@ -44,5 +44,18 @@ htmlcov/
 # Misc
 *.swp
 
+# Large/aux files
+*.bsp
+*.bin
+*.dat
+*.zip
+*.tar
+*.tar.gz
+*.7z
+*.mp4
+*.mov
+*.iso
+
 # Local config
 config/app_config.py
+de441.bsp

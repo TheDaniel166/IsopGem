@@ -7,9 +7,9 @@ import json
 import logging
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, cast
 
-from sqlalchemy import or_
+from sqlalchemy import or_, func
 from sqlalchemy.orm import Session
 
 from shared.database import get_db_session
@@ -30,17 +30,15 @@ class MindNodeDTO:
     
     @classmethod
     def from_orm(cls, node: MindNode):
-        if not node:
-            return None
         return cls(
-            id=node.id,
-            title=node.title,
-            type=node.type,
-            content=node.content,
-            tags=node.tags,
-            appearance=node.appearance,
-            metadata_payload=node.metadata_payload,
-            icon=node.icon
+            id=cast(int, node.id),
+            title=cast(str, node.title),
+            type=cast(str, node.type),
+            content=cast(Optional[str], node.content),
+            tags=cast(Optional[str], node.tags),
+            appearance=cast(Optional[str], node.appearance),
+            metadata_payload=cast(Optional[str], node.metadata_payload),
+            icon=cast(Optional[str], node.icon),
         )
 
 @dataclass
@@ -53,14 +51,12 @@ class MindEdgeDTO:
 
     @classmethod
     def from_orm(cls, edge: MindEdge):
-        if not edge:
-            return None
         return cls(
-            id=edge.id,
-            source_id=edge.source_id,
-            target_id=edge.target_id,
-            relation_type=edge.relation_type,
-            appearance=edge.appearance
+            id=cast(int, edge.id),
+            source_id=cast(int, edge.source_id),
+            target_id=cast(int, edge.target_id),
+            relation_type=cast(str, edge.relation_type),
+            appearance=cast(Optional[str], edge.appearance),
         )
 
 class MindscapeService:
@@ -80,7 +76,17 @@ class MindscapeService:
         self.db.refresh(root)
         return MindNodeDTO.from_orm(root)
 
-    def create_node(self, title: str, type: str = "concept", content: str = None, tags: list = None, appearance: dict = None, metadata_payload: dict = None, icon: str = None, document_id: Optional[int] = None) -> MindNodeDTO:
+    def create_node(
+        self,
+        title: str,
+        type: str = "concept",
+        content: Optional[str] = None,
+        tags: Optional[List[Any]] = None,
+        appearance: Optional[Dict[str, Any]] = None,
+        metadata_payload: Optional[Dict[str, Any]] = None,
+        icon: Optional[str] = None,
+        document_id: Optional[int] = None,
+    ) -> MindNodeDTO:
         """Create a new thought atom."""
         if appearance is not None and not isinstance(appearance, dict):
             logger.warning("create_node: appearance must be dict; received %s", type(appearance))
@@ -109,7 +115,7 @@ class MindscapeService:
         logger.info("Created MindNode id=%s title=%s", node.id, node.title)
         return MindNodeDTO.from_orm(node)
         
-    def update_node(self, node_id: int, data: dict) -> MindNodeDTO:
+    def update_node(self, node_id: int, data: dict) -> Optional[MindNodeDTO]:
         """Update node details."""
         node = self.db.get(MindNode, node_id)
         if not node:
@@ -121,24 +127,24 @@ class MindscapeService:
         if "content" in data:
             node.content = data["content"]
         if "tags" in data:
-            node.tags = json.dumps(data["tags"])
+            cast(Any, node).tags = json.dumps(data["tags"])
         if "appearance" in data:
             appearance = data["appearance"]
             if isinstance(appearance, dict):
-                node.appearance = json.dumps(appearance)
+                cast(Any, node).appearance = json.dumps(appearance)
             else:
                 logger.warning("update_node: appearance rejected for node %s (not dict)", node_id)
         if "metadata_payload" in data:
              meta = data["metadata_payload"]
              if isinstance(meta, dict):
-                 node.metadata_payload = json.dumps(meta)
+                 cast(Any, node).metadata_payload = json.dumps(meta)
                  if "document_id" in meta:
-                     node.document_id = meta.get("document_id")
+                     cast(Any, node).document_id = meta.get("document_id")
              else:
                  logger.warning("update_node: metadata_payload rejected for node %s (not dict)", node_id)
 
         if "document_id" in data:
-            node.document_id = data["document_id"]
+            cast(Any, node).document_id = data["document_id"]
              
              
         self.db.commit()
@@ -150,7 +156,7 @@ class MindscapeService:
         node = self.db.get(MindNode, node_id)
         if node:
             if isinstance(appearance, dict):
-                node.appearance = json.dumps(appearance)
+                cast(Any, node).appearance = json.dumps(appearance)
                 self.db.commit()
                 logger.info("Updated MindNode style id=%s", node.id)
             else:
@@ -163,13 +169,14 @@ class MindscapeService:
         node = self.db.get(MindNode, node_id)
         if node:
             try:
-                data = json.loads(node.appearance) if node.appearance else {}
+                appearance_raw = cast(Optional[str], node.appearance)
+                data = json.loads(appearance_raw) if appearance_raw else {}
             except Exception as exc:
                 logger.warning("update_node_position: invalid appearance JSON for node %s: %s", node_id, exc)
                 data = {}
             
             data["pos"] = [round(x, 1), round(y, 1)]
-            node.appearance = json.dumps(data)
+            cast(Any, node).appearance = json.dumps(data)
             self.db.commit()
             logger.info("Persisted MindNode position id=%s pos=%s", node_id, data["pos"])
         else:
@@ -190,15 +197,18 @@ class MindscapeService:
         nodes: List[Dict[str, Any]] = []
         for n in self.db.query(MindNode).all():
             try:
-                appearance = json.loads(n.appearance) if n.appearance else None
+                appearance_raw = cast(Optional[str], n.appearance)
+                appearance = json.loads(appearance_raw) if appearance_raw else None
             except Exception:
                 appearance = None
             try:
-                metadata = json.loads(n.metadata_payload) if n.metadata_payload else None
+                metadata_raw = cast(Optional[str], n.metadata_payload)
+                metadata = json.loads(metadata_raw) if metadata_raw else None
             except Exception:
                 metadata = None
             try:
-                tags = json.loads(n.tags) if n.tags else []
+                tags_raw = cast(Optional[str], n.tags)
+                tags = json.loads(tags_raw) if tags_raw else []
             except Exception:
                 tags = []
 
@@ -217,7 +227,8 @@ class MindscapeService:
         edges: List[Dict[str, Any]] = []
         for e in self.db.query(MindEdge).all():
             try:
-                appearance = json.loads(e.appearance) if e.appearance else None
+                appearance_raw = cast(Optional[str], e.appearance)
+                appearance = json.loads(appearance_raw) if appearance_raw else None
             except Exception:
                 appearance = None
             edges.append({
@@ -253,7 +264,7 @@ class MindscapeService:
             )
             self.db.add(new_node)
             self.db.flush()  # get id without full commit yet
-            node_id_map[n.get("id", new_node.id)] = new_node.id
+            node_id_map[int(n.get("id", new_node.id))] = int(cast(int, new_node.id))
 
         self.db.commit()
 
@@ -280,7 +291,7 @@ class MindscapeService:
         edge = self.db.get(MindEdge, edge_id)
         if edge:
             if isinstance(appearance, dict):
-                edge.appearance = json.dumps(appearance)
+                cast(Any, edge).appearance = json.dumps(appearance)
                 self.db.commit()
                 logger.info("Updated MindEdge style id=%s", edge.id)
             else:
@@ -288,7 +299,7 @@ class MindscapeService:
         else:
             logger.warning("update_edge_style: edge %s not found", edge_id)
             
-    def get_edge(self, edge_id: int) -> MindEdgeDTO:
+    def get_edge(self, edge_id: int) -> Optional[MindEdgeDTO]:
         """Fetch a single edge."""
         edge = self.db.get(MindEdge, edge_id)
         return MindEdgeDTO.from_orm(edge) if edge else None
@@ -324,10 +335,11 @@ class MindscapeService:
         # Fallback scan
         candidates = self.db.query(MindNode).filter(MindNode.type == "document").all()
         for node in candidates:
-            if not node.metadata_payload:
+            metadata_raw = cast(Optional[str], node.metadata_payload)
+            if not metadata_raw:
                 continue
             try:
-                meta = json.loads(node.metadata_payload)
+                meta = json.loads(metadata_raw)
             except json.JSONDecodeError:
                 logger.warning("find_node_by_document_id: invalid metadata JSON on node %s", node.id)
                 continue
@@ -335,7 +347,7 @@ class MindscapeService:
                 return MindNodeDTO.from_orm(node)
         return None
 
-    def update_edge(self, edge_id: int, data: dict) -> MindEdgeDTO:
+    def update_edge(self, edge_id: int, data: dict) -> Optional[MindEdgeDTO]:
         """Update edge details."""
         edge = self.db.get(MindEdge, edge_id)
         if not edge:
@@ -345,7 +357,7 @@ class MindscapeService:
         if "relation_type" in data:
             edge.relation_type = data["relation_type"]
         if "appearance" in data:
-            edge.appearance = json.dumps(data["appearance"])
+            cast(Any, edge).appearance = json.dumps(data["appearance"])
             
         self.db.commit()
         self.db.refresh(edge)
@@ -413,7 +425,9 @@ class MindscapeService:
         
         jumps = []
         for e in jump_edges:
-            other_id = e.target_id if e.source_id == focus_id else e.source_id
+            src_id = int(cast(int, e.source_id))
+            tgt_id = int(cast(int, e.target_id))
+            other_id = tgt_id if src_id == focus_id else src_id
             other_node = self.db.get(MindNode, other_id)
             if other_node:
                 jumps.append((MindNodeDTO.from_orm(other_node), MindEdgeDTO.from_orm(e)))
@@ -474,7 +488,9 @@ class MindscapeService:
                     MindEdge.relation_type == MindEdgeType.JUMP.value
                 ).first()
                 if jump_edge:
-                    fallback_id = jump_edge.source_id if jump_edge.target_id == node_id else jump_edge.target_id
+                    src_id = int(cast(int, jump_edge.source_id))
+                    tgt_id = int(cast(int, jump_edge.target_id))
+                    fallback_id = src_id if tgt_id == node_id else tgt_id
 
         # Delete Associated Edges
         self.db.query(MindEdge).filter(
@@ -486,9 +502,9 @@ class MindscapeService:
         self.db.commit()
         
         # Fetch Fallback
-        if fallback_id:
+        if fallback_id is not None:
             fallback = self.db.get(MindNode, fallback_id)
-            return MindNodeDTO.from_orm(fallback)
+            return MindNodeDTO.from_orm(fallback) if fallback else None
         
         # 4. Any other node (Root)
         return self.get_home_node()
