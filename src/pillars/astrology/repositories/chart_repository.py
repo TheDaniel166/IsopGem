@@ -126,7 +126,7 @@ class ChartRepository:
         )
         existing_map = {item.name.lower(): item for item in existing}
 
-        resolved: List[model] = []
+        resolved: List = []
         for name in normalized:
             key = name.lower()
             if key in existing_map:
