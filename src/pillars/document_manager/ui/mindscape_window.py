@@ -465,7 +465,7 @@ class MindscapeWindow(QMainWindow):
         if target_id:
              try:
                  with mindscape_service_context() as svc:
-                    node_dto, _, _, _, _ = svc.get_local_graph(target_id)
+                     node_dto, _, _, _, _ = svc.get_local_graph(target_id)
                      if node_dto and node_dto.type == "search_query":
                          is_search_node = True
              except: pass

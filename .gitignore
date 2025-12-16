@@ -39,6 +39,8 @@ src/saved_documents/
 # Coverage and test artifacts
 .coverage
 htmlcov/
+.coverage.*
+coverage_html/
 .pytest_cache/
 
 # Misc
