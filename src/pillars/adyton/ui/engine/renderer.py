@@ -10,7 +10,8 @@ from dataclasses import dataclass
 from typing import List, Tuple
 from PyQt6.QtCore import QPointF, QRect
 from PyQt6.QtGui import QPainter, QPolygonF, QColor, QMatrix4x4, QVector3D, QVector4D, QBrush, QPen
-from .scene import AdytonScene, Face3D
+from .scene import AdytonScene
+from pillars.adyton.models.geometry_types import Face3D
 from .camera import AdytonCamera
 
 @dataclass
@@ -48,21 +49,15 @@ class AdytonRenderer:
         faces = scene.get_all_faces()
         projected_faces: List[ProjectedFace] = []
 
-        camera_pos = camera.position()
-
         for face in faces:
-            # Simple Backface Culling (Optional, but good for optimization)
-            # Check normal dot view_dir? 
-            # For now, we skip culling to support translucent objects later or open shapes.
-            
-            # Distance from camera to centroid (for sorting)
-            # We use the Z value in View Space for more accurate sorting usually,
-            # but distance to camera is a decent approximation for non-intersecting convex objects.
-            dist = camera_pos.distanceToPoint(face.centroid)
+            # Depth from view-space Z (negative is farther in OpenGL-style view)
+            centroid4 = QVector4D(face.centroid.x(), face.centroid.y(), face.centroid.z(), 1.0)
+            centroid_view = view_matrix * centroid4
+            view_z = centroid_view.z()
             
             poly = QPolygonF()
             all_valid = True
-            
+
             for v in face.vertices:
                 # MVP Transform
                 vec4 = QVector4D(v.x(), v.y(), v.z(), 1.0)
@@ -85,10 +80,10 @@ class AdytonRenderer:
                 poly.append(QPointF(screen_x, screen_y))
             
             if all_valid:
-                projected_faces.append(ProjectedFace(poly, dist, face.color, face.outline_color))
+                projected_faces.append(ProjectedFace(poly, view_z + 0.01, face.color, face.outline_color))
 
-        # 3. Sort by Depth (Painter's Algorithm: Furthest first)
-        projected_faces.sort(key=lambda f: f.depth, reverse=True)
+        # 3. Sort by Depth (Painter's Algorithm: Furthest first) using view-space Z
+        projected_faces.sort(key=lambda f: f.depth)  # more negative (farther) first
 
         # 4. Draw
         if scene.background_color:

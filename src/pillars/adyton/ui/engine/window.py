@@ -6,10 +6,10 @@ THE PORTAL OF THE ADYTON (View Window)
 This widget hosts the Adyton Engine and handles user interaction.
 """
 from PyQt6.QtWidgets import QWidget
-from PyQt6.QtCore import Qt, QPoint, QTimer
-from PyQt6.QtGui import QPaintEvent, QPainter, QMouseEvent, QWheelEvent, QVector3D, QColor
+from PyQt6.QtCore import Qt, QPoint
+from PyQt6.QtGui import QPaintEvent, QPainter, QMouseEvent, QWheelEvent, QVector3D
 
-from .scene import AdytonScene, Object3D, Face3D
+from .scene import AdytonScene
 from .camera import AdytonCamera
 from .renderer import AdytonRenderer
 from pillars.adyton.models.prism import SevenSidedPrism

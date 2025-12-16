@@ -1,0 +1,8 @@
+row_start,row_end,planet_source,description
+0,0,left_neighbor_far,Top row uses the planet three steps to the left (wrap) in order Saturn->Sun->Mercury->Moon->Venus->Jupiter->Mars.
+1,1,left_neighbor_mid,Second row uses the planet two steps to the left (wrap) in the same order.
+2,2,left_neighbor_near,Third row uses the planet one step to the left (wrap).
+3,4,ruling_wall,Rows 3-4 use the planet that rules the current wall.
+5,5,right_neighbor_near,Row 5 uses the planet one step to the right (wrap).
+6,6,right_neighbor_mid,Row 6 uses the planet two steps to the right (wrap).
+7,7,right_neighbor_far,Row 7 uses the planet three steps to the right (wrap).

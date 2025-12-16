@@ -43,19 +43,19 @@ class AshlarGeometry:
         c7 = QVector3D( half_size,  half_size,  half_size)
         c8 = QVector3D(-half_size,  half_size,  half_size)
         
-        # --- 2. Frustum Base Vertices (On Z+ Face) ---
+        # --- 2. Frustum Base Vertices (Recessed into Z-) ---
         half_base = FRUSTUM_BASE / 2.0
-        z_face = half_size
-        
+        z_face = -half_size  # sink into the stone rather than protrude
+
         b1 = QVector3D(-half_base, -half_base, z_face)
         b2 = QVector3D( half_base, -half_base, z_face)
         b3 = QVector3D( half_base,  half_base, z_face)
         b4 = QVector3D(-half_base,  half_base, z_face)
-        
-        # --- 3. Frustum Cap Vertices ---
+
+        # --- 3. Frustum Cap Vertices (Deeper recess) ---
         half_top = FRUSTUM_TOP / 2.0
-        z_top = half_size + FRUSTUM_HEIGHT
-        
+        z_top = z_face - FRUSTUM_HEIGHT
+
         f1 = QVector3D(-half_top, -half_top, z_top)
         f2 = QVector3D( half_top, -half_top, z_top)
         f3 = QVector3D( half_top,  half_top, z_top)
@@ -72,7 +72,7 @@ class AshlarGeometry:
         faces.append(Face3D([c4, c3, c7, c8], color))       # Top
         faces.append(Face3D([c1, c5, c6, c2], color))       # Bottom
         
-        # Front Frame (The margin between Cube Edge and Pyramid Base)
+        # Front Frame (The margin around the recessed pyramid)
         # We can implement this as 4 quads
         frame_color = color.lighter(105)
         # Bottom Frame

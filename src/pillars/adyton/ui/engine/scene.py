@@ -13,10 +13,6 @@ from pillars.adyton.models.geometry_types import Face3D, Object3D
 @dataclass
 class AdytonScene:
     """The Container of the Sanctuary."""
-
-@dataclass
-class AdytonScene:
-    """The Container of the Sanctuary."""
     objects: List[Object3D] = field(default_factory=list)
     background_color: QColor = field(default_factory=lambda: QColor(10, 10, 15))
 

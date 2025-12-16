@@ -39,9 +39,20 @@ class Object3D:
     
     # Cache for transformed faces
     _world_faces: List[Face3D] = field(default_factory=list, repr=False)
+    _last_position: QVector3D = field(default_factory=lambda: QVector3D(0, 0, 0), repr=False)
+    _last_rotation: QVector3D = field(default_factory=lambda: QVector3D(0, 0, 0), repr=False)
+    _last_scale: QVector3D = field(default_factory=lambda: QVector3D(1, 1, 1), repr=False)
 
     def update_world_transform(self):
-        """Applies basic TRS matrix to faces."""
+        """Applies basic TRS matrix to faces, skipping work if nothing moved."""
+        if (
+            self._world_faces
+            and self.position == self._last_position
+            and self.rotation == self._last_rotation
+            and self.scale == self._last_scale
+        ):
+            return
+
         matrix = QMatrix4x4()
         matrix.translate(self.position)
         matrix.rotate(self.rotation.x(), 1, 0, 0)
@@ -54,3 +65,7 @@ class Object3D:
             transformed_verts = [matrix * v for v in face.vertices]
             new_face = Face3D(vertices=transformed_verts, color=face.color, outline_color=face.outline_color)
             self._world_faces.append(new_face)
+
+        self._last_position = QVector3D(self.position)
+        self._last_rotation = QVector3D(self.rotation)
+        self._last_scale = QVector3D(self.scale)
