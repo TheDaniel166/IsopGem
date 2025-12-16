@@ -36,6 +36,7 @@ def migrate_mindscape():
     add_column("mind_nodes", "tags", "TEXT")
     add_column("mind_nodes", "appearance", "TEXT")
     add_column("mind_nodes", "metadata_payload", "TEXT")
+    add_column("mind_nodes", "document_id", "INTEGER")
 
     # MindEdges Migration
     add_column("mind_edges", "appearance", "TEXT")

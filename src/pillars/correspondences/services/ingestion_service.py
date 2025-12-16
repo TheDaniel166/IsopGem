@@ -65,9 +65,20 @@ class IngestionService:
             raise ValueError(f"Transmutation failed: {str(e)}")
 
     @staticmethod
-    def create_empty(rows=10, cols=5) -> Dict[str, Any]:
-        """Create a blank grid."""
-        columns = [chr(65+i) for i in range(cols)] # A, B, C...
+    def create_empty(rows: int = 100, cols: int = 50) -> Dict[str, Any]:
+        """Create a blank grid (larger default for immediate usability)."""
+        # Build column headers A, B, ... AA, AB as needed
+        def col_label(idx: int) -> str:
+            label = ""
+            while True:
+                idx, rem = divmod(idx, 26)
+                label = chr(65 + rem) + label
+                if idx == 0:
+                    break
+                idx -= 1
+            return label
+
+        columns = [col_label(i) for i in range(cols)]
         data = [['' for _ in range(cols)] for _ in range(rows)]
         return {
             "columns": columns,

@@ -26,6 +26,7 @@ class MindNode(Base):
     tags = Column(Text, nullable=True)            # JSON list of strings
     appearance = Column(Text, nullable=True)      # JSON dict for visual styling
     metadata_payload = Column(Text, nullable=True)  # JSON dict for esoteric data
+    document_id = Column(Integer, nullable=True, index=True)  # Structured link to Document pillar
     
     # Icon resource name or emoji (Legacy, but useful top-level)
     icon = Column(String, nullable=True)

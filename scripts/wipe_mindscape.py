@@ -1,13 +1,19 @@
-import sys
+import argparse
 import os
-sys.path.append(os.path.join(os.getcwd(), "src"))
-from shared.database import get_db_session
-from pillars.document_manager.models.mindscape import MindNode, MindEdge
+import sys
 
-def wipe():
+sys.path.append(os.path.join(os.getcwd(), "src"))
+from shared.database import get_db_session  # noqa: E402
+from pillars.document_manager.models.mindscape import MindNode, MindEdge  # noqa: E402
+
+
+def wipe(force: bool = False):
+    if not force:
+        print("Refusing to wipe Mindscape without --force. Aborting.")
+        return
+
     print("Wiping Mindscape data...")
     with get_db_session() as db:
-        # Delete all edges first due to FK
         try:
             db.query(MindEdge).delete()
             db.query(MindNode).delete()
@@ -17,5 +23,9 @@ def wipe():
             print(f"Error: {e}")
             db.rollback()
 
+
 if __name__ == "__main__":
-    wipe()
+    parser = argparse.ArgumentParser(description="Wipe all Mindscape data.")
+    parser.add_argument("--force", action="store_true", help="Confirm irreversible deletion.")
+    args = parser.parse_args()
+    wipe(force=args.force)

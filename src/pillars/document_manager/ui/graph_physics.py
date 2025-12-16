@@ -30,11 +30,13 @@ class GraphPhysics:
         self.nodes: Dict[int, PhysicsNode] = {}
         self.edges: List[PhysicsEdge] = []
         
-        # Constants
-        self.REPULSION = 400000.0 # Reduced from 800k to calm explosive starts
-        self.DAMPING = 0.65      # Heavy friction (0.85 -> 0.65) to stop sliding
-        self.MAX_SPEED = 12.0     # Cap speed (50 -> 12) for gentle movement
-        self.center_force = 0.01 # Weaker gravity to center
+        # Constants (tuned for calmer motion)
+        self.REPULSION = 90000.0   # Lower push to reduce drift-inducing jitter
+        self.DAMPING = 0.62       # Stronger friction to settle faster
+        self.MAX_SPEED = 6.5       # Cap velocity for smoother glide
+        self.center_force = 0.0   # Disable directional center bias
+        self.RECENTER_GAIN = 0.0   # Disable recentering to remove bias
+        self.bounds = 5000.0       # Soft clamp boundary radius
         
     def add_node(self, node_id: int, x: float, y: float, mass: float = 1.0):
         if node_id not in self.nodes:
@@ -76,15 +78,20 @@ class GraphPhysics:
     def tick(self, dt: float = 0.016):
         """Step the simulation."""
         
-        # 1. Apply Repulsion (Node vs Node)
+        # Adaptive repulsion scaling by graph size
         node_ids = list(self.nodes.keys())
+        scale = max(1.0, len(node_ids) / 50.0)
+        repulsion = self.REPULSION / scale
+
+        # 1. Apply Repulsion (Node vs Node)
         for i in range(len(node_ids)):
             n1 = self.nodes[node_ids[i]]
             
-            # Center Gravity (Pull to 0,0)
-            dist_center = math.sqrt(n1.x*n1.x + n1.y*n1.y) or 1.0
-            n1.vx -= (n1.x / dist_center) * self.center_force * dist_center
-            n1.vy -= (n1.y / dist_center) * self.center_force * dist_center
+            # Optional center gravity (currently disabled)
+            if self.center_force:
+                dist_center = math.sqrt(n1.x*n1.x + n1.y*n1.y) or 1.0
+                n1.vx -= (n1.x / dist_center) * self.center_force * dist_center
+                n1.vy -= (n1.y / dist_center) * self.center_force * dist_center
             
             for j in range(i + 1, len(node_ids)):
                 n2 = self.nodes[node_ids[j]]
@@ -98,7 +105,7 @@ class GraphPhysics:
                 dist = math.sqrt(dist_sq)
                 
                 # F = k / dist^2
-                force = self.REPULSION / dist_sq
+                force = repulsion / dist_sq
                 
                 fx = (dx / dist) * force
                 fy = (dy / dist) * force
@@ -151,9 +158,29 @@ class GraphPhysics:
                 scale = self.MAX_SPEED / speed
                 node.vx *= scale
                 node.vy *= scale
+            elif speed < 0.05:
+                node.vx = 0.0
+                node.vy = 0.0
                 
             node.x += node.vx
             node.y += node.vy
+
+            # Soft bounds clamp to avoid runaway coordinates
+            if node.x > self.bounds:
+                node.x = self.bounds
+                node.vx *= -0.2
+            if node.x < -self.bounds:
+                node.x = -self.bounds
+                node.vx *= -0.2
+            if node.y > self.bounds:
+                node.y = self.bounds
+                node.vy *= -0.2
+            if node.y < -self.bounds:
+                node.y = -self.bounds
+                node.vy *= -0.2
+
+        # 4. Recentering to prevent global drift (light touch)
+        # Recenter disabled; keep pure physics to avoid bias
             
     def get_position(self, node_id: int) -> QPointF:
         if node_id in self.nodes:

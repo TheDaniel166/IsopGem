@@ -3,13 +3,16 @@ from PyQt6.QtWidgets import (
     QMainWindow, QGraphicsView, QDockWidget, QMenu, QMessageBox, 
     QInputDialog, QFileDialog, QWidget, QVBoxLayout, QStackedWidget
 )
-from PyQt6.QtCore import Qt, QTimer, pyqtSlot
+from PyQt6.QtCore import Qt, QTimer, pyqtSlot, QRunnable, QThreadPool, QObject, pyqtSignal
+from typing import Optional, Any
 from .mindscape_view import MindscapeView
+from .mindscape_items import MindscapeNodeItem, MindscapeEdgeItem
 from .mindscape_inspector import NodeInspectorWidget
 from ..services.mindscape_service import mindscape_service_context
 from ..services.document_service import document_service_context
 from .document_editor_window import DocumentEditorWindow
 import json
+import os
 
 from .search_results_panel import SearchResultsPanel
 
@@ -22,11 +25,12 @@ class MindscapeWindow(QMainWindow):
         
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
-        self.layout = QVBoxLayout(self.central_widget)
-        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.main_layout = QVBoxLayout(self.central_widget)
+        self.main_layout.setContentsMargins(0, 0, 0, 0)
         
         self.view = MindscapeView()
-        self.layout.addWidget(self.view)
+        self.main_layout.addWidget(self.view)
+        self.thread_pool: QThreadPool = QThreadPool.globalInstance() or QThreadPool()
 
         # Docks (Tabbed: Inspector | Search Results)
         self.dock = QDockWidget("Mindscape Tools", self)
@@ -65,7 +69,7 @@ class MindscapeWindow(QMainWindow):
         """Handle selection to toggle between Inspector and Search Panel."""
         try:
             with mindscape_service_context() as svc:
-                focus, _, _, _ = svc.get_local_graph(node_id)
+                focus, _, _, _, _ = svc.get_local_graph(node_id)
                 if not focus: return
                 
                 self.dock.setVisible(True)
@@ -88,7 +92,7 @@ class MindscapeWindow(QMainWindow):
                                 term = data.get("term") # Extract term
                         except: pass
                     
-                    self.search_panel.load_results(results, term=term)
+                    self.search_panel.load_results(results, term=term or "")
                     
                 else:
                     # Show Inspector
@@ -106,61 +110,57 @@ class MindscapeWindow(QMainWindow):
         term, ok = QInputDialog.getText(self, "Create Search Node", "Enter search term:")
         if not ok or not term.strip():
             return
-            
-        with document_service_context() as doc_service:
-            results = doc_service.search_documents_with_highlights(term, limit=50) # Increased limit
-            
-            if not results:
-                QMessageBox.information(self, "No Results", f"No documents found for '{term}'")
-                return
-                
-            with mindscape_service_context() as mind_service:
-                # 1. Create Central Search Node
-                # Store FULL results list in metadata
-                # FIX: JSON cannot serialize datetime objects. Convert them to strings.
+        
+        class SearchSignals(QObject):
+            finished = pyqtSignal(object, list)
+
+        class SearchTask(QRunnable):
+            def __init__(self, term, signals):
+                super().__init__()
+                self.term = term
+                self.signals = signals
+
+            def run(self):
                 sanitized_results = []
+                with document_service_context() as doc_service:
+                    results = doc_service.search_documents_with_highlights(self.term, limit=50)
                 for r in results:
                     clean_r = r.copy()
                     if 'created_at' in clean_r and hasattr(clean_r['created_at'], 'isoformat'):
                         clean_r['created_at'] = clean_r['created_at'].isoformat()
                     sanitized_results.append(clean_r)
-                    
-                meta = {"results": sanitized_results, "term": term}
-                
+                self.signals.finished.emit(self.term, sanitized_results)
+
+        sig = SearchSignals()
+
+        def _on_finished(term_value, sanitized_results):
+            if not sanitized_results:
+                QMessageBox.information(self, "No Results", f"No documents found for '{term_value}'")
+                return
+            with mindscape_service_context() as mind_service:
+                meta = {"results": sanitized_results, "term": term_value}
                 search_node = mind_service.create_node(
-                    title=f"Concept: {term}",
+                    title=f"Concept: {term_value}",
                     type="search_query",
-                    content=f"Search Query: '{term}'\nClick to see {len(results)} results.",
+                    content=f"Search Query: '{term_value}'\nClick to see {len(sanitized_results)} results.",
                     metadata_payload=meta,
                     appearance={"shape": "hexagon", "color_override": "#8b5cf6", "textColor": "#ffffff", "borderWidth": 2}
                 )
-                
-                # 2. Contextual Linking (Accessibility)
-                # Link to the current focus node so it's not an orphan (and thus lost on restart).
+
                 parent_id = self.view.current_focus_id
                 if not parent_id:
-                    # If empty canvas, this becomes the new root automatically if it's the first node.
-                    # If existing disjoint graph, try to find home.
                     home = mind_service.get_home_node()
                     if home and home.id != search_node.id:
                         parent_id = home.id
-                
+
                 if parent_id:
-                     mind_service.link_nodes(parent_id, search_node.id, "parent")
-                
-                search_node_id = search_node.id # "I prefer that the search be a child of all the documents it appears in" -> This implies linking.
-                # BUT "it produces a lot of snippets".
-                # Compromise: Link to existing nodes. Don't spawn new ones onto the graph automatically.
-                # Let the panel spawn them.
-                
-                # 2. Additive Load (No auto-linking)
+                    mind_service.link_nodes(parent_id, search_node.id, "parent")
+
                 self.view.load_graph(search_node.id, keep_existing=True)
-                
-                # Select it to open panel (REMOVED: User requested on-demand only)
-                # self._on_node_selected(search_node.id)
-                
-                msg = f"Created Concept '{term}'.\n{len(results)} results initialized."
-                QMessageBox.information(self, "Search Complete", msg)
+                QMessageBox.information(self, "Search Complete", f"Created Concept '{term_value}'.\n{len(sanitized_results)} results initialized.")
+
+        sig.finished.connect(_on_finished)
+        self.thread_pool.start(SearchTask(term, sig))
 
     def _add_search_result_to_graph(self, result_data):
         """Called from Panel to materialize a document node."""
@@ -263,6 +263,18 @@ class MindscapeWindow(QMainWindow):
         search_act.setStatusTip("Search documents and create a graph")
         search_act.triggered.connect(self._create_search_node)
         toolbar.addAction(search_act)
+
+        # 4. Save Mindscape
+        save_act = QAction("Save Mindscape", self)
+        save_act.setStatusTip("Export the entire mindscape to a JSON file")
+        save_act.triggered.connect(self._export_mindscape)
+        toolbar.addAction(save_act)
+
+        # 5. Load Mindscape
+        load_act = QAction("Load Mindscape", self)
+        load_act.setStatusTip("Import a mindscape snapshot (replaces current graph)")
+        load_act.triggered.connect(self._import_mindscape)
+        toolbar.addAction(load_act)
         
         # Spacer
         empty = QWidget()
@@ -310,7 +322,9 @@ class MindscapeWindow(QMainWindow):
                 with mindscape_service_context() as svc:
                     svc.wipe_database()
                     
-                self.view.scene.clear()
+                scene_obj = self.view.scene()
+                if scene_obj:
+                    scene_obj.clear()
                 self.view._items.clear()
                 self.view._edges.clear()
                 self.view.current_focus_id = None
@@ -400,9 +414,11 @@ class MindscapeWindow(QMainWindow):
         item = self.view.item_at(pos)
         
         # Edge Context Menu
-        if hasattr(item, "edge_id"):
+        if isinstance(item, MindscapeEdgeItem):
             menu = QMenu(self)
-            menu.addAction(f"Connection #{item.edge_id}").setEnabled(False)
+            edge_header = menu.addAction(f"Connection #{item.edge_id}")
+            if edge_header:
+                edge_header.setEnabled(False)
             menu.addSeparator()
             inspect_action = menu.addAction("Inspect Connection")
             
@@ -411,11 +427,6 @@ class MindscapeWindow(QMainWindow):
                 self._open_edge_inspector(item.edge_id)
             return
 
-        # If no focus (Empty Graph) and no item clicked, allow creating Root
-            if action == create_root:
-                self._create_root_node()
-            return
-            
         # Background Context Menu
         if not self.view.current_focus_id and not item:
             menu = QMenu(self)
@@ -442,10 +453,10 @@ class MindscapeWindow(QMainWindow):
             return
 
         # Normal Context Menu (Linked creation)
-        target_id = self.view.current_focus_id
+        target_id: Optional[int] = self.view.current_focus_id
         target_name = "Focus"
         
-        if hasattr(item, "node_id"):
+        if isinstance(item, MindscapeNodeItem):
             target_id = item.node_id
             target_name = item.title_text
             
@@ -454,7 +465,7 @@ class MindscapeWindow(QMainWindow):
         if target_id:
              try:
                  with mindscape_service_context() as svc:
-                     node_dto, _, _, _ = svc.get_local_graph(target_id)
+                    node_dto, _, _, _, _ = svc.get_local_graph(target_id)
                      if node_dto and node_dto.type == "search_query":
                          is_search_node = True
              except: pass
@@ -462,7 +473,9 @@ class MindscapeWindow(QMainWindow):
         menu = QMenu(self)
         
         # Header
-        menu.addAction(f"Actions for: {target_name}").setEnabled(False)
+        header_action = menu.addAction(f"Actions for: {target_name}")
+        if header_action:
+            header_action.setEnabled(False)
         menu.addSeparator()
         
         # Search Specific
@@ -481,13 +494,7 @@ class MindscapeWindow(QMainWindow):
         
         # Document Actions
         open_doc = None
-        if hasattr(item, "node_id"):
-             # Check if it's a document node
-             # We need to peek at the node data or use the item properties if we stored type on item
-             # The item doesn't currently store DTO, but we can check if it has 'document' type logic
-             # For now, let's just checking item.node_type if we added that, or fetch.
-             # Easier: Always check service or rely on item having type. 
-             # Item has `node_type`!
+        if isinstance(item, MindscapeNodeItem):
              if item.node_type == "document":
                  menu.addSeparator()
                  open_doc = menu.addAction("Open Document")
@@ -503,8 +510,8 @@ class MindscapeWindow(QMainWindow):
         
         action = menu.exec(self.view.mapToGlobal(pos))
         
-        if action == show_search:
-             self._on_node_selected(int(target_id))
+        if action == show_search and target_id is not None:
+            self._on_node_selected(int(target_id))
         elif action == add_child:
             self._add_node(target_id, "child")
         elif action == add_parent:
@@ -512,11 +519,10 @@ class MindscapeWindow(QMainWindow):
         elif action == add_jump:
             self._add_node(target_id, "jump")
         elif action == inspect_action:
-            if hasattr(item, "node_id"):
-                 self._open_inspector(item.node_id)
-            else:
-                 # If clicked focus via background menu or similar logic
-                 self._open_inspector(target_id)
+            if isinstance(item, MindscapeNodeItem):
+                self._open_inspector(item.node_id)
+            elif target_id is not None:
+                self._open_inspector(target_id)
         elif action == delete_action:
             self._delete_node(target_id)
         elif open_doc and action == open_doc:
@@ -525,6 +531,10 @@ class MindscapeWindow(QMainWindow):
             self._import_documents(target_id)
         elif action == create_search_node:
             self._create_search_node()
+        elif action and action.text() == "Save Mindscape":
+            self._export_mindscape()
+        elif action and action.text() == "Load Mindscape":
+            self._import_mindscape()
 
     def _create_root_node(self):
         """Create the first node in an empty graph."""
@@ -590,7 +600,9 @@ class MindscapeWindow(QMainWindow):
                     self.view.load_graph(fallback.id)
                 else:
                     # Clear view (Blank Canvas)
-                    self.view.scene.clear()
+                    scene_obj = self.view.scene()
+                    if scene_obj:
+                        scene_obj.clear()
                     self.view._items.clear()
                     self.view._edges.clear()
                     self.view.current_focus_id = None
@@ -614,6 +626,46 @@ class MindscapeWindow(QMainWindow):
             print(f"Error initializing Mindscape: {e}")
 
 
+    def _export_mindscape(self):
+        """Persist the entire graph to a JSON snapshot."""
+        path, _ = QFileDialog.getSaveFileName(self, "Save Mindscape", os.path.expanduser("~"), "Mindscape (*.json)")
+        if not path:
+            return
+        try:
+            with mindscape_service_context() as svc:
+                snapshot = svc.export_snapshot()
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(snapshot, f, ensure_ascii=False, indent=2)
+            QMessageBox.information(self, "Saved", f"Mindscape exported to {path}")
+        except Exception as exc:
+            QMessageBox.critical(self, "Save Failed", str(exc))
+
+    def _import_mindscape(self):
+        """Load a snapshot, replacing the current graph."""
+        path, _ = QFileDialog.getOpenFileName(self, "Load Mindscape", os.path.expanduser("~"), "Mindscape (*.json)")
+        if not path:
+            return
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                snapshot = json.load(f)
+            with mindscape_service_context() as svc:
+                svc.import_snapshot(snapshot, reset=True)
+                home = svc.get_home_node()
+            if home:
+                self.view.load_graph(home.id)
+            else:
+                scene_obj = self.view.scene()
+                if scene_obj:
+                    scene_obj.clear()
+                self.view._items.clear()
+                self.view._edges.clear()
+                self.view.current_focus_id = None
+                self.view.update()
+            QMessageBox.information(self, "Loaded", f"Mindscape imported from {path}")
+        except Exception as exc:
+            QMessageBox.critical(self, "Load Failed", str(exc))
+
+
     def _import_documents(self, parent_id=None):
         """Batch import documents and create nodes."""
         # Consolidate parent resolution
@@ -630,45 +682,59 @@ class MindscapeWindow(QMainWindow):
         if not files:
             return
             
-        imported_count = 0
-        
-        with document_service_context() as doc_service:
-            with mindscape_service_context() as mind_service:
-                for f in files:
-                    try:
-                        # 1. Import to Document Pillar
-                        doc = doc_service.import_document(f)
-                        
-                        # 2. Create MindNode
-                        metadata = {"document_id": doc.id}
-                        
-                        # Use file name as title
-                        mind_node = mind_service.create_node(
-                            title=doc.title,
-                            type="document",
-                            content=f"Linked Document: {doc.title}",
-                            metadata_payload=metadata,
-                            appearance={"shape": "document", "color_override": "#e0f2fe", "textColor": "#0f172a", "borderColor": "#0284c7", "borderWidth": 1} 
-                        )
-                        
-                        # 3. Link if valid parent
-                        if parent_id:
-                            # If we are focused on a node, link these as Jumps (Associations) or Children?
-                            # Let's link as Jumps for now as Documents are usually reference material.
-                            mind_service.link_nodes(parent_id, mind_node.id, "jump")
-                            
-                        imported_count += 1
-                    except Exception as e:
-                        print(f"Failed to import {f}: {e}")
-                        
-        if imported_count > 0:
-            # Reload graph
-            if self.view.current_focus_id:
-                self.view.load_graph(self.view.current_focus_id)
-            elif mind_node:
-                self.view.load_graph(mind_node.id)
-                
-            QMessageBox.information(self, "Import Complete", f"Imported {imported_count} documents.")
+        class ImportSignals(QObject):
+            finished = pyqtSignal(int, object, list)  # imported_count, last_node_id, errors
+
+        class ImportTask(QRunnable):
+            def __init__(self, parent_id, files, signals):
+                super().__init__()
+                self.parent_id = parent_id
+                self.files = files
+                self.signals = signals
+
+            def run(self):
+                imported = 0
+                last_node_id = None
+                errors = []
+                with document_service_context() as doc_service:
+                    with mindscape_service_context() as mind_service:
+                        for f in self.files:
+                            try:
+                                doc = doc_service.import_document(f)
+                                doc_id = int(getattr(doc, "id", 0))
+                                doc_title = str(getattr(doc, "title", ""))
+                                metadata = {"document_id": doc_id}
+                                mind_node = mind_service.create_node(
+                                    title=doc_title,
+                                    type="document",
+                                    content=f"Linked Document: {doc_title}",
+                                    metadata_payload=metadata,
+                                    document_id=doc_id,
+                                    appearance={"shape": "document", "color_override": "#e0f2fe", "textColor": "#0f172a", "borderColor": "#0284c7", "borderWidth": 1}
+                                )
+                                if self.parent_id:
+                                    mind_service.link_nodes(self.parent_id, mind_node.id, "jump")
+                                imported += 1
+                                last_node_id = mind_node.id
+                            except Exception as e:
+                                errors.append((f, str(e)))
+                self.signals.finished.emit(imported, last_node_id, errors)
+
+        sig = ImportSignals()
+
+        def _on_finished(imported_count, last_node_id, errors):
+            if imported_count > 0:
+                if self.view.current_focus_id:
+                    self.view.load_graph(self.view.current_focus_id)
+                elif last_node_id:
+                    self.view.load_graph(last_node_id)
+                QMessageBox.information(self, "Import Complete", f"Imported {imported_count} documents.")
+            if errors:
+                msg = "\n".join([f"{f}: {err}" for f, err in errors])
+                QMessageBox.warning(self, "Import Errors", msg)
+
+        sig.finished.connect(_on_finished)
+        self.thread_pool.start(ImportTask(parent_id, files, sig))
 
     def _open_document_node(self, node_id):
         """Open the linked document in editor."""
@@ -676,7 +742,7 @@ class MindscapeWindow(QMainWindow):
         # 1. Get Node to find document_id
         doc_id = None
         with mindscape_service_context() as service:
-            focus_dto, _, _, _ = service.get_local_graph(node_id)
+            focus_dto, _, _, _, _ = service.get_local_graph(node_id)
             if focus_dto:
                 print(f"[Window] Found node {node_id}, metadata: {focus_dto.metadata_payload}")
                 if focus_dto.metadata_payload:

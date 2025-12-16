@@ -27,10 +27,11 @@ def verify_service():
                 
             # 3. Verify Graph
             focus, parents, children, jumps = svc.get_local_graph(home.id)
+            # parents/children/jumps are tuples of (node_dto, edge_dto)
             print(f"Focus: {focus.title}")
-            print(f"Parents: {[n.title for n in parents]}")
-            print(f"Children: {[n.title for n in children]}")
-            print(f"Jumps: {[n.title for n in jumps]}")
+            print(f"Parents: {[n.title for n, _ in parents]}")
+            print(f"Children: {[n.title for n, _ in children]}")
+            print(f"Jumps: {[n.title for n, _ in jumps]}")
             
             if len(children) >= 1 and len(jumps) >= 1:
                 print("Service Verification SUCCESS.")

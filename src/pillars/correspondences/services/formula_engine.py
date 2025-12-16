@@ -431,6 +431,7 @@ class FormulaEngine:
     ArgumentMetadata("cipher", "Cipher Name", "gematria_cipher", True)
 ])
 def func_gematria(engine: FormulaEngine, text: Any, cipher: str = "English (TQ)"):
+    # TODO: Align GEMATRIA(ABC) with SUM expectation (currently returns 27, Seal expects 6)
     if not text: return 0
     text_str = str(text)
     cipher_key = str(cipher).upper()

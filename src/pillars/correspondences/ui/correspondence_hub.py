@@ -1,5 +1,6 @@
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QListWidget, QListWidgetItem, QToolBar, QFileDialog, QMessageBox, QInputDialog, QMenu
+    QWidget, QVBoxLayout, QListWidget, QListWidgetItem, QToolBar, QFileDialog, QMessageBox, QInputDialog, QMenu,
+    QDialog, QDialogButtonBox, QFormLayout, QLineEdit, QSpinBox
 )
 from PyQt6.QtCore import Qt, QPoint, QThread, QObject, pyqtSignal
 from PyQt6.QtGui import QAction
@@ -26,6 +27,39 @@ class _ImportWorker(QObject):
             self.finished.emit(name, data)
         except Exception as exc:
             self.failed.emit(str(exc))
+
+
+class _NewTableDialog(QDialog):
+    """Collect name and grid size for a new table."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("New Tablet")
+
+        layout = QFormLayout(self)
+        self.name_input = QLineEdit()
+        self.name_input.setPlaceholderText("Name of the new work")
+        layout.addRow("Name", self.name_input)
+
+        self.rows_input = QSpinBox()
+        self.rows_input.setRange(1, 1000)
+        self.rows_input.setSingleStep(10)
+        self.rows_input.setValue(100)
+        layout.addRow("Rows", self.rows_input)
+
+        self.cols_input = QSpinBox()
+        self.cols_input.setRange(1, 1000)
+        self.cols_input.setSingleStep(10)
+        self.cols_input.setValue(50)
+        layout.addRow("Columns", self.cols_input)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+
+    def get_values(self):
+        return self.name_input.text().strip(), self.rows_input.value(), self.cols_input.value()
 
 class CorrespondenceHub(QWidget):
     """
@@ -85,9 +119,13 @@ class CorrespondenceHub(QWidget):
                 self.table_list.addItem(item)
 
     def _new_table(self):
-        name, ok = QInputDialog.getText(self, "New Tablet", "Name of the new work:")
-        if ok and name:
-            empty_data = IngestionService.create_empty()
+        dlg = _NewTableDialog(self)
+        if dlg.exec() == QDialog.DialogCode.Accepted:
+            name, rows, cols = dlg.get_values()
+            if not name:
+                QMessageBox.warning(self, "Name required", "Please enter a name for the new table.")
+                return
+            empty_data = IngestionService.create_empty(rows=rows, cols=cols)
             self.receive_import(name, empty_data)
 
     def _import_table(self):
