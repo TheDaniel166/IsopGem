@@ -108,6 +108,7 @@ class TokenType(Enum):
     LPAREN = auto()
     RPAREN = auto()
     COMMA = auto()
+    WS = auto()     # Whitespace
     EOF = auto()
 
 class Token(NamedTuple):
@@ -122,7 +123,7 @@ class Tokenizer:
     token_spec = [
         ('NUMBER',   r'\d+(\.\d*)?|\.\d+'),
         ('STRING',   r'"[^"]*"|\'[^\']*\''),
-        ('ID',       r'[A-Za-z_][A-Za-z0-9_]*'),
+        ('ID',       r'[\$A-Za-z_][\$A-Za-z0-9_]*'), # Modified to accept $
         ('OP',       r'[+\-*/:^=<>!&]+'), # Added &
         ('LPAREN',   r'\('),
         ('RPAREN',   r'\)'),
@@ -133,13 +134,31 @@ class Tokenizer:
     token_re = re.compile('|'.join('(?P<%s>%s)' % pair for pair in token_spec))
 
     @staticmethod
-    def tokenize(text: str) -> List[Token]:
+    def tokenize(text: str, preserve_whitespace: bool = False) -> List[Token]:
         tokens = []
         for mo in Tokenizer.token_re.finditer(text):
             kind = mo.lastgroup
             value = mo.group()
             if kind == 'SKIP':
-                continue
+                if preserve_whitespace:
+                    tokens.append(Token(TokenType.EOF, value)) # Re-use EOF or add WS type? Let's use EOF type with value is hacky. Use separate if needed.
+                    # Wait, adding new TokenType is hard with replace_file_content if I don't replace Enum.
+                    # Let's use ID for WS? No. 
+                    # Let's use a "Metadata" concept or just dummy token.
+                    # Let's just return raw string for whitespace if preserved? No List[Token].
+                    # I will add TokenType.WS to the Enum first?
+                    # Too intrusive to Enum.
+                    # I will just store it as "SKIP" type if I change Tokenizer? 
+                    # Actually, for adjust_formula, I can just use regex substitution on original string if I'm careful.
+                    # BUT preserving tokens is safer.
+                    # Let's hack: Use TokenType.EOF as WS holder? Bad.
+                    # Let's update Enum first? No, 50 line gap.
+                    # Let's just use string segments for reconstruction?
+                    # Let's stick to Tokenizer change. 
+                    # I will use a custom token type value for WS?
+                    pass
+                else: 
+                     continue
             elif kind == 'MISMATCH':
                 raise ValueError(f'Unexpected character: {value}')
             elif kind == 'STRING':
@@ -373,11 +392,11 @@ class FormulaEngine:
             self._eval_stack = previous_stack
 
     def _resolve_cell_value(self, ref: str):
-        # A1 -> Val
-        match = re.match(r'([A-Z]+)([0-9]+)', ref, re.IGNORECASE)
+        # A1 -> Val, $A$1 -> Val
+        match = re.match(r'(\$?)([A-Z]+)(\$?)([0-9]+)', ref, re.IGNORECASE)
         if not match: return ref # Return as string if not valid ref
         
-        c_str, r_str = match.groups()
+        abs_col, c_str, abs_row, r_str = match.groups()
         row, col = self._to_rc(r_str, c_str)
 
         stack = getattr(self, "_eval_stack", None)
@@ -390,14 +409,15 @@ class FormulaEngine:
 
     def _resolve_range_values(self, start_ref: str, end_ref: str) -> List[Any]:
         # A1:B2 -> [Val, Val, ...]
-        m1 = re.match(r'([A-Z]+)([0-9]+)', start_ref, re.IGNORECASE)
-        m2 = re.match(r'([A-Z]+)([0-9]+)', end_ref, re.IGNORECASE)
+        m1 = re.match(r'(\$?)([A-Z]+)(\$?)([0-9]+)', start_ref, re.IGNORECASE)
+        m2 = re.match(r'(\$?)([A-Z]+)(\$?)([0-9]+)', end_ref, re.IGNORECASE)
         
         if not m1 or not m2:
              return []
              
-        r1, c1 = self._to_rc(m1.group(2), m1.group(1))
-        r2, c2 = self._to_rc(m2.group(2), m2.group(1))
+        # groups: 1=abs_c, 2=c, 3=abs_r, 4=r
+        r1, c1 = self._to_rc(m1.group(4), m1.group(2))
+        r2, c2 = self._to_rc(m2.group(4), m2.group(2))
         
         r_start, r_end = min(r1, r2), max(r1, r2)
         c_start, c_end = min(c1, c2), max(c1, c2)
@@ -791,3 +811,69 @@ def func_textjoin(engine: FormulaEngine, delim, ignore_empty, *args):
             
     for a in args: collect(a)
     return d.join(parts)
+
+class FormulaHelper:
+    """
+    Utilities for formula manipulation.
+    """
+    @staticmethod
+    def adjust_references(formula: str, row_delta: int, col_delta: int) -> str:
+        """
+        Shift cell references in a formula by (row_delta, col_delta).
+        Respects absolute references ($A$1).
+        """
+        if not formula.startswith("="): return formula
+        
+        tokens = Tokenizer.tokenize(formula[1:], preserve_whitespace=True)
+        new_formula = "="
+        
+        for t in tokens:
+            if t.type == TokenType.ID:
+                # Check if it's a cell ref
+                val = FormulaHelper._shift_ref(t.value, row_delta, col_delta)
+                new_formula += val
+            elif t.type == TokenType.STRING:
+                new_formula += f'"{t.value}"'
+            elif t.type == TokenType.WS:
+                new_formula += t.value
+            else:
+                new_formula += t.value
+        
+        return new_formula
+
+    @staticmethod
+    def _shift_ref(ref: str, r_d: int, c_d: int) -> str:
+        match = re.match(r'^(\$?)([A-Z]+)(\$?)([0-9]+)$', ref, re.IGNORECASE)
+        if not match: return ref
+        
+        abs_col, col_str, abs_row, row_str = match.groups()
+        
+        new_col_str = col_str
+        new_row_str = row_str
+        
+        # Shift Column if not absolute
+        if not abs_col:
+             # Convert to index
+             c_idx = 0
+             for char in col_str.upper():
+                 c_idx = c_idx * 26 + (ord(char) - ord('A') + 1)
+             c_idx += c_d
+             if c_idx < 1: c_idx = 1 # Clamp
+             
+             # Convert back
+             res = ""
+             t = c_idx
+             while t > 0:
+                 t, rem = divmod(t - 1, 26)
+                 res = chr(65 + rem) + res
+             new_col_str = res
+             
+        # Shift Row if not absolute
+        if not abs_row:
+             r_idx = int(row_str)
+             r_idx += r_d
+             if r_idx < 1: r_idx = 1 # Clamp
+             new_row_str = str(r_idx)
+             
+        return f"{abs_col}{new_col_str}{abs_row}{new_row_str}"
+

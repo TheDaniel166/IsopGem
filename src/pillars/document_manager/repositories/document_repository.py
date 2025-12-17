@@ -1,5 +1,5 @@
 """Repository for Document model."""
-from sqlalchemy.orm import Session, defer
+from sqlalchemy.orm import Session, defer, load_only
 from pillars.document_manager.models.document import Document
 from typing import Any, List, Optional, cast
 import time
@@ -21,12 +21,22 @@ class DocumentRepository:
         return self.db.query(Document).all()
 
     def get_all_metadata(self) -> List[Document]:
-        """Fetch all documents but defer loading of heavy content fields."""
+        """Fetch all documents but only load lightweight metadata fields."""
         start = time.perf_counter()
-        logger.debug("DocumentRepository: preparing metadata query with deferred content")
+        logger.debug("DocumentRepository: preparing metadata query with load_only")
+        # Explicitly load ONLY these columns - much faster than defer for large blobs
         query = self.db.query(Document).options(
-            defer(cast(Any, Document.content)),
-            defer(cast(Any, Document.raw_content)),
+            load_only(
+                Document.id,
+                Document.title,
+                Document.file_path,
+                Document.file_type,
+                Document.tags,
+                Document.author,
+                Document.collection,
+                Document.created_at,
+                Document.updated_at,
+            )
         )
         logger.debug("DocumentRepository: executing metadata query ...")
         docs = query.all()

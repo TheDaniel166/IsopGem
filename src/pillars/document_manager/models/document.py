@@ -1,8 +1,29 @@
 """Document database model."""
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, LargeBinary
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from shared.database import Base
+
+
+class DocumentImage(Base):
+    """Separate storage for document images to avoid bloating raw_content."""
+    __tablename__ = "document_images"
+
+    id = Column(Integer, primary_key=True, index=True)
+    document_id = Column(Integer, ForeignKey("documents.id", ondelete="CASCADE"), index=True)
+    hash = Column(String(64), index=True)  # SHA256 for deduplication
+    data = Column(LargeBinary)  # Compressed image binary
+    mime_type = Column(String(50))  # image/png, image/jpeg, etc.
+    original_filename = Column(String, nullable=True)  # Original filename if available
+    width = Column(Integer, nullable=True)  # Image dimensions for layout
+    height = Column(Integer, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    # Relationship back to document
+    document = relationship("Document", back_populates="images")
+
+    def __repr__(self):
+        return f"<DocumentImage(id={self.id}, doc={self.document_id}, mime={self.mime_type})>"
 
 class DocumentLink(Base):
     """Association table for linking documents (Zettelkasten/Wiki-links)."""
@@ -41,6 +62,9 @@ class Document(Base):
         backref="incoming_links",
         viewonly=True # We'll manage the links manually to avoid complexity for now
     )
+    
+    # Images stored separately
+    images = relationship("DocumentImage", back_populates="document", cascade="all, delete-orphan")
     
     def __repr__(self):
         return f"<Document(id={self.id}, title='{self.title}')>"

@@ -18,7 +18,7 @@ import uuid
 class CropPreviewLabel(QLabel):
     """Preview label that supports drag-to-crop selection."""
 
-    selection_made = pyqtSignal(QRect)
+    selection_changed = pyqtSignal(QRect)  # Emits normalized rect relative to display_rect
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -26,9 +26,25 @@ class CropPreviewLabel(QLabel):
         self.rubber_band = QRubberBand(QRubberBand.Shape.Rectangle, self)
         self.display_rect = QRect()
         self.origin = QPoint()
+        self.pending_selection = QRect()  # Store the pending crop selection
 
     def set_display_rect(self, rect: QRect):
         self.display_rect = rect
+        # Clear selection when display rect changes (e.g., after other edits)
+        self.clear_selection()
+
+    def clear_selection(self):
+        """Clear the current crop selection."""
+        self.pending_selection = QRect()
+        self.rubber_band.hide()
+
+    def has_selection(self) -> bool:
+        """Check if there's a valid pending selection."""
+        return self.pending_selection.isValid() and self.pending_selection.width() > 1 and self.pending_selection.height() > 1
+
+    def get_selection(self) -> QRect:
+        """Get the pending selection rect (normalized to display_rect origin)."""
+        return self.pending_selection
 
     def mousePressEvent(self, event):  # type: ignore[override]
         if not self.display_rect.contains(event.pos()):
@@ -45,12 +61,19 @@ class CropPreviewLabel(QLabel):
     def mouseReleaseEvent(self, event):  # type: ignore[override]
         if self.rubber_band.isVisible():
             rect = self.rubber_band.geometry().normalized()
-            self.rubber_band.hide()
             selection = rect.intersected(self.display_rect)
             if selection.isValid() and selection.width() > 1 and selection.height() > 1:
-                # Normalize to display rect origin
-                selection.translate(-self.display_rect.left(), -self.display_rect.top())
-                self.selection_made.emit(selection)
+                # Keep rubber band visible to show the selection
+                self.rubber_band.setGeometry(selection)
+                # Normalize to display rect origin for the pending selection
+                normalized = QRect(selection)
+                normalized.translate(-self.display_rect.left(), -self.display_rect.top())
+                self.pending_selection = normalized
+                self.selection_changed.emit(normalized)
+            else:
+                self.rubber_band.hide()
+                self.pending_selection = QRect()
+                self.selection_changed.emit(QRect())
 class ImagePropertiesDialog(QDialog):
     """Dialog for quick width/height edits after insertion."""
     def __init__(self, fmt: QTextImageFormat, parent=None):
@@ -143,11 +166,31 @@ class ImageEditorDialog(QDialog):
         self.preview_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.preview_label.setMinimumSize(320, 240)
         self.preview_label.setStyleSheet("border: 1px solid #ddd; background: #fafafa;")
-        self.preview_label.selection_made.connect(self._on_crop_selection)
+        self.preview_label.selection_changed.connect(self._on_crop_selection_changed)
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setWidget(self.preview_label)
         layout.addWidget(scroll)
+
+        # Crop confirmation row (hidden initially)
+        self.crop_row = QHBoxLayout()
+        self.lbl_crop_info = QLabel("")
+        self.lbl_crop_info.setStyleSheet("color: #2563eb; font-weight: bold;")
+        self.btn_apply_crop = QPushButton("Apply Crop")
+        self.btn_apply_crop.setStyleSheet("background-color: #22c55e; color: white; font-weight: bold; padding: 5px 15px;")
+        self.btn_apply_crop.clicked.connect(self._apply_pending_crop)
+        self.btn_cancel_crop = QPushButton("Cancel Selection")
+        self.btn_cancel_crop.clicked.connect(self._cancel_crop_selection)
+        self.crop_row.addWidget(self.lbl_crop_info)
+        self.crop_row.addStretch()
+        self.crop_row.addWidget(self.btn_apply_crop)
+        self.crop_row.addWidget(self.btn_cancel_crop)
+        
+        # Create a widget to hold the crop row so we can show/hide it
+        self.crop_widget = QWidget()
+        self.crop_widget.setLayout(self.crop_row)
+        self.crop_widget.setVisible(False)
+        layout.addWidget(self.crop_widget)
 
         controls_box = QGroupBox("Adjustments")
         # Disable controls initially
@@ -205,6 +248,66 @@ class ImageEditorDialog(QDialog):
         self.slider_contrast.valueChanged.connect(self._update_preview)
         contrast_row.addWidget(self.slider_contrast)
         controls_layout.addLayout(contrast_row)
+
+        # Saturation slider
+        saturation_row = QHBoxLayout()
+        saturation_row.addWidget(QLabel("Saturation"))
+        self.slider_saturation = QSlider(Qt.Orientation.Horizontal)
+        self.slider_saturation.setRange(0, 300)
+        self.slider_saturation.setValue(100)
+        self.slider_saturation.valueChanged.connect(self._update_preview)
+        saturation_row.addWidget(self.slider_saturation)
+        controls_layout.addLayout(saturation_row)
+
+        # Sharpness slider
+        sharpness_row = QHBoxLayout()
+        sharpness_row.addWidget(QLabel("Sharpness"))
+        self.slider_sharpness = QSlider(Qt.Orientation.Horizontal)
+        self.slider_sharpness.setRange(0, 300)
+        self.slider_sharpness.setValue(100)
+        self.slider_sharpness.valueChanged.connect(self._update_preview)
+        sharpness_row.addWidget(self.slider_sharpness)
+        controls_layout.addLayout(sharpness_row)
+
+        # Filter dropdown
+        filter_row = QHBoxLayout()
+        filter_row.addWidget(QLabel("Filter"))
+        self.filter_combo = QComboBox()
+        self.filter_combo.addItems([
+            "None",
+            "--- Color Effects ---",
+            "Grayscale",
+            "Sepia",
+            "Warm",
+            "Cool",
+            "Vintage",
+            "Invert",
+            "Posterize",
+            "Solarize",
+            "--- Blur & Smooth ---",
+            "Blur",
+            "Gaussian Blur",
+            "Box Blur",
+            "Smooth",
+            "Smooth More",
+            "--- Sharpen & Detail ---",
+            "Sharpen",
+            "Detail",
+            "Edge Enhance",
+            "Edge Enhance More",
+            "Unsharp Mask",
+            "--- Artistic ---",
+            "Emboss",
+            "Contour",
+            "Find Edges",
+            "--- Auto Adjustments ---",
+            "Auto Contrast",
+            "Equalize",
+        ])
+        self.filter_combo.currentTextChanged.connect(self._update_preview)
+        filter_row.addWidget(self.filter_combo)
+        filter_row.addStretch()
+        controls_layout.addLayout(filter_row)
 
         reset_row = QHBoxLayout()
         self.btn_reset = QPushButton("Reset")
@@ -364,19 +467,58 @@ class ImageEditorDialog(QDialog):
         self.base_image = self.base_image.resize((new_w, new_h), Image.Resampling.LANCZOS)
         self._update_preview()
 
-    def _on_crop_selection(self, rect: QRect):
-        if not self.base_image or rect.width() <= 1 or rect.height() <= 1:
+    def _on_crop_selection_changed(self, rect: QRect):
+        """Called when user draws/changes a crop selection."""
+        if not self.base_image:
+            self.crop_widget.setVisible(False)
             return
+        
+        if not rect.isValid() or rect.width() <= 1 or rect.height() <= 1:
+            # Selection was cleared or invalid
+            self.crop_widget.setVisible(False)
+            return
+        
         disp_rect = getattr(self, "_last_display_rect", None)
         if not disp_rect or disp_rect.width() == 0 or disp_rect.height() == 0:
+            self.crop_widget.setVisible(False)
             return
+        
+        # Calculate actual pixel dimensions of the crop
+        scale_x = self.base_image.width / disp_rect.width()
+        scale_y = self.base_image.height / disp_rect.height()
+        crop_w = max(1, int(rect.width() * scale_x))
+        crop_h = max(1, int(rect.height() * scale_y))
+        
+        # Show crop confirmation UI
+        self.lbl_crop_info.setText(f"Crop to {crop_w} x {crop_h} px")
+        self.crop_widget.setVisible(True)
+
+    def _apply_pending_crop(self):
+        """Apply the pending crop selection."""
+        if not self.base_image or not self.preview_label.has_selection():
+            self.crop_widget.setVisible(False)
+            return
+        
+        rect = self.preview_label.get_selection()
+        disp_rect = getattr(self, "_last_display_rect", None)
+        if not disp_rect or disp_rect.width() == 0 or disp_rect.height() == 0:
+            self.crop_widget.setVisible(False)
+            return
+        
         scale_x = self.base_image.width / disp_rect.width()
         scale_y = self.base_image.height / disp_rect.height()
         x = max(0, int(rect.left() * scale_x))
         y = max(0, int(rect.top() * scale_y))
         w = max(1, int(rect.width() * scale_x))
         h = max(1, int(rect.height() * scale_y))
+        
         self._apply_crop_rect(x, y, w, h)
+        self.crop_widget.setVisible(False)
+
+    def _cancel_crop_selection(self):
+        """Cancel the pending crop selection."""
+        self.preview_label.clear_selection()
+        self.crop_widget.setVisible(False)
 
     def _apply_crop_rect(self, x: int, y: int, w: int, h: int):
         if not self.base_image:
@@ -419,6 +561,9 @@ class ImageEditorDialog(QDialog):
         self.base_image = self.orig_image.copy()
         self.slider_brightness.setValue(100)
         self.slider_contrast.setValue(100)
+        self.slider_saturation.setValue(100)
+        self.slider_sharpness.setValue(100)
+        self.filter_combo.setCurrentIndex(0)
         self._sync_size_spins()
         self._update_preview()
 
@@ -427,18 +572,215 @@ class ImageEditorDialog(QDialog):
         if not self.base_image:
             return
         try:
-            from PIL import ImageEnhance
+            from PIL import ImageEnhance, ImageFilter, ImageOps
         except ImportError:
             return
-        img = self.base_image
+        img = self.base_image.copy()
+        
+        # Apply brightness
         b_factor = self.slider_brightness.value() / 100.0
-        c_factor = self.slider_contrast.value() / 100.0
         if b_factor != 1.0:
             img = ImageEnhance.Brightness(img).enhance(b_factor)
+        
+        # Apply contrast
+        c_factor = self.slider_contrast.value() / 100.0
         if c_factor != 1.0:
             img = ImageEnhance.Contrast(img).enhance(c_factor)
+        
+        # Apply saturation
+        s_factor = self.slider_saturation.value() / 100.0
+        if s_factor != 1.0:
+            img = ImageEnhance.Color(img).enhance(s_factor)
+        
+        # Apply sharpness slider
+        sh_factor = self.slider_sharpness.value() / 100.0
+        if sh_factor != 1.0:
+            img = ImageEnhance.Sharpness(img).enhance(sh_factor)
+        
+        # Apply selected filter
+        img = self._apply_filter(img)
+        
         self.current_image = img
         self._set_preview_pixmap(img)
+
+    def _apply_filter(self, img):
+        """Apply the selected filter to the image."""
+        try:
+            from PIL import ImageFilter, ImageOps, Image
+        except ImportError:
+            return img
+        
+        filter_name = self.filter_combo.currentText()
+        
+        # Skip separator items
+        if filter_name.startswith("---") or filter_name == "None":
+            return img
+        
+        # Ensure we have RGBA for consistent processing
+        if img.mode != "RGBA":
+            img = img.convert("RGBA")
+        
+        # Color Effects
+        if filter_name == "Grayscale":
+            # Convert to grayscale while preserving alpha
+            r, g, b, a = img.split()
+            gray = img.convert("L")
+            img = Image.merge("RGBA", (gray, gray, gray, a))
+        
+        elif filter_name == "Sepia":
+            img = self._apply_sepia(img)
+        
+        elif filter_name == "Warm":
+            img = self._apply_color_shift(img, r_shift=20, b_shift=-20)
+        
+        elif filter_name == "Cool":
+            img = self._apply_color_shift(img, r_shift=-20, b_shift=20)
+        
+        elif filter_name == "Vintage":
+            img = self._apply_vintage(img)
+        
+        elif filter_name == "Invert":
+            r, g, b, a = img.split()
+            rgb = Image.merge("RGB", (r, g, b))
+            rgb = ImageOps.invert(rgb)
+            r, g, b = rgb.split()
+            img = Image.merge("RGBA", (r, g, b, a))
+        
+        elif filter_name == "Posterize":
+            r, g, b, a = img.split()
+            rgb = Image.merge("RGB", (r, g, b))
+            rgb = ImageOps.posterize(rgb, 4)
+            r, g, b = rgb.split()
+            img = Image.merge("RGBA", (r, g, b, a))
+        
+        elif filter_name == "Solarize":
+            r, g, b, a = img.split()
+            rgb = Image.merge("RGB", (r, g, b))
+            rgb = ImageOps.solarize(rgb, threshold=128)
+            r, g, b = rgb.split()
+            img = Image.merge("RGBA", (r, g, b, a))
+        
+        # Blur & Smooth
+        elif filter_name == "Blur":
+            img = img.filter(ImageFilter.BLUR)
+        
+        elif filter_name == "Gaussian Blur":
+            img = img.filter(ImageFilter.GaussianBlur(radius=2))
+        
+        elif filter_name == "Box Blur":
+            img = img.filter(ImageFilter.BoxBlur(radius=2))
+        
+        elif filter_name == "Smooth":
+            img = img.filter(ImageFilter.SMOOTH)
+        
+        elif filter_name == "Smooth More":
+            img = img.filter(ImageFilter.SMOOTH_MORE)
+        
+        # Sharpen & Detail
+        elif filter_name == "Sharpen":
+            img = img.filter(ImageFilter.SHARPEN)
+        
+        elif filter_name == "Detail":
+            img = img.filter(ImageFilter.DETAIL)
+        
+        elif filter_name == "Edge Enhance":
+            img = img.filter(ImageFilter.EDGE_ENHANCE)
+        
+        elif filter_name == "Edge Enhance More":
+            img = img.filter(ImageFilter.EDGE_ENHANCE_MORE)
+        
+        elif filter_name == "Unsharp Mask":
+            img = img.filter(ImageFilter.UnsharpMask(radius=2, percent=150, threshold=3))
+        
+        # Artistic
+        elif filter_name == "Emboss":
+            img = img.filter(ImageFilter.EMBOSS)
+        
+        elif filter_name == "Contour":
+            img = img.filter(ImageFilter.CONTOUR)
+        
+        elif filter_name == "Find Edges":
+            img = img.filter(ImageFilter.FIND_EDGES)
+        
+        # Auto Adjustments
+        elif filter_name == "Auto Contrast":
+            r, g, b, a = img.split()
+            rgb = Image.merge("RGB", (r, g, b))
+            rgb = ImageOps.autocontrast(rgb)
+            r, g, b = rgb.split()
+            img = Image.merge("RGBA", (r, g, b, a))
+        
+        elif filter_name == "Equalize":
+            r, g, b, a = img.split()
+            rgb = Image.merge("RGB", (r, g, b))
+            rgb = ImageOps.equalize(rgb)
+            r, g, b = rgb.split()
+            img = Image.merge("RGBA", (r, g, b, a))
+        
+        return img
+
+    def _apply_sepia(self, img):
+        """Apply sepia tone effect."""
+        from PIL import Image
+        r, g, b, a = img.split()
+        
+        # Sepia matrix transformation
+        def sepia_pixel(r, g, b):
+            tr = int(0.393 * r + 0.769 * g + 0.189 * b)
+            tg = int(0.349 * r + 0.686 * g + 0.168 * b)
+            tb = int(0.272 * r + 0.534 * g + 0.131 * b)
+            return min(255, tr), min(255, tg), min(255, tb)
+        
+        pixels = list(zip(r.getdata(), g.getdata(), b.getdata()))
+        new_r, new_g, new_b = [], [], []
+        for pr, pg, pb in pixels:
+            sr, sg, sb = sepia_pixel(pr, pg, pb)
+            new_r.append(sr)
+            new_g.append(sg)
+            new_b.append(sb)
+        
+        r.putdata(new_r)
+        g.putdata(new_g)
+        b.putdata(new_b)
+        return Image.merge("RGBA", (r, g, b, a))
+
+    def _apply_color_shift(self, img, r_shift=0, g_shift=0, b_shift=0):
+        """Shift color channels by specified amounts."""
+        from PIL import Image
+        r, g, b, a = img.split()
+        
+        def shift_channel(channel, shift):
+            return channel.point(lambda x: max(0, min(255, x + shift)))
+        
+        if r_shift:
+            r = shift_channel(r, r_shift)
+        if g_shift:
+            g = shift_channel(g, g_shift)
+        if b_shift:
+            b = shift_channel(b, b_shift)
+        
+        return Image.merge("RGBA", (r, g, b, a))
+
+    def _apply_vintage(self, img):
+        """Apply vintage/retro effect."""
+        from PIL import ImageEnhance, Image
+        
+        # Reduce saturation
+        img = ImageEnhance.Color(img).enhance(0.7)
+        # Add warm tint
+        img = self._apply_color_shift(img, r_shift=15, g_shift=5, b_shift=-10)
+        # Slight contrast boost
+        img = ImageEnhance.Contrast(img).enhance(1.1)
+        # Add slight fade (reduce overall contrast toward center gray)
+        r, g, b, a = img.split()
+        
+        def fade(x):
+            return int(x * 0.9 + 25)
+        
+        r = r.point(fade)
+        g = g.point(fade)
+        b = b.point(fade)
+        return Image.merge("RGBA", (r, g, b, a))
 
     def _set_preview_pixmap(self, pil_img):
         data = pil_img.tobytes("raw", "RGBA")

@@ -8,6 +8,9 @@ from PyQt6.QtCore import Qt, QSize, QEvent
 import re
 
 from .spreadsheet_view import SpreadsheetView, SpreadsheetModel
+from .scroll_tab_bar import ScrollTabBar
+from .find_replace_dialog import FindReplaceDialog
+from pillars.correspondences.services.table_service import TableService
 from pillars.correspondences.services.conditional_formatting import ConditionalRule
 from shared.ui.virtual_keyboard import get_shared_virtual_keyboard
 
@@ -16,18 +19,56 @@ class SpreadsheetWindow(QMainWindow):
     The Sovereign Window.
     Hosts the Grid and the Toolbar (commands).
     """
-    def __init__(self, table_id, name, content, repo, parent=None):
+    def __init__(self, table_id, name, content, service: TableService, parent=None):
         super().__init__(parent)
         self.table_id = table_id
-        self.repo = repo
+        self.service = service
         self.setWindowTitle(f"Emerald Tablet: {name}")
         self.resize(1200, 800)
 
-        # 1. Setup Model & View
-        self.model = SpreadsheetModel(content)
+        # 1. Data Migration & Model Setup
+        self.models = []
+        scrolls_data = []
+        active_index = 0
+
+        # Detect Format
+        if "scrolls" in content:
+            # New Format
+            scrolls_data = content.get("scrolls", [])
+            active_index = content.get("active_scroll_index", 0)
+        else:
+            # Legacy Format - Wrap in Single Scroll
+            scrolls_data = [{
+                "name": "Sheet1",
+                "columns": content.get("columns", []),
+                "data": content.get("data", []) or content.get("rows", []),
+                "styles": content.get("styles", {})
+            }]
+            active_index = 0
+            
+        # Hydrate Models
+        for scroll in scrolls_data:
+            m = SpreadsheetModel(scroll)
+            # Store name on the model for convenience? Or separate metadata?
+            # Model doesn't natively store name, let's attach it.
+            m.scroll_name = scroll.get("name", "Sheet") 
+            self.models.append(m)
+            
+        if not self.models:
+            # Fallback for empty
+            m = SpreadsheetModel({"columns": [], "data": []})
+            m.scroll_name = "Sheet1"
+            self.models.append(m)
+
+        # Ensure index range
+        if active_index >= len(self.models): active_index = 0
+        self.current_model_index = active_index
+        self.model = self.models[active_index]
+
+        # 2. View Setup
         self.view = SpreadsheetView(self)
         self.view.setModel(self.model)
-        self.view.setShowGrid(False) # Set showGrid to False
+        self.view.setShowGrid(False)
 
         # 2. Central Widget Layout
         # We need a container to hold the Formula Bar AND the View (Grid)
@@ -70,11 +111,32 @@ class SpreadsheetWindow(QMainWindow):
         self.central_layout.addWidget(self.formula_bar_container)
         self.central_layout.addWidget(self.view)
         
+        # 2b. Scroll Tab Bar
+        self.tab_bar = ScrollTabBar()
+        self.central_layout.addWidget(self.tab_bar)
+        
+        # Populate Tabs
+        for m in self.models:
+            self.tab_bar.add_tab(m.scroll_name)
+        self.tab_bar.set_current_index(self.current_model_index)
+        
+        # Connect Signals
+        self.tab_bar.tab_added.connect(self._on_scroll_added)
+        self.tab_bar.tab_changed.connect(self._on_scroll_changed)
+        
+        # Menu (Show all sheets)
+        def _show_all_sheets_menu():
+             names = [m.scroll_name for m in self.models]
+             self.tab_bar.update_menu(names)
+             self.tab_bar.btn_menu.showMenu()
+        self.tab_bar.btn_menu.clicked.connect(_show_all_sheets_menu)
+
         self.setCentralWidget(self.container)
         
         # Connect Selection Sync
         self.view.selectionModel().currentChanged.connect(self._on_selection_changed)
         self.view.selectionModel().selectionChanged.connect(self._on_range_selection_changed)
+        # Connect ONLY current model initialy
         self.model.dataChanged.connect(self._on_data_changed)
         
         # State for point-and-click references
@@ -468,6 +530,19 @@ class SpreadsheetWindow(QMainWindow):
         toolbar.addAction(act_sort_desc)
         
         toolbar.addSeparator()
+
+        # --- Find & Replace ---
+        act_find = QAction("🔍", self)
+        act_find.setToolTip("Find (Ctrl+F)")
+        act_find.setShortcut("Ctrl+F")
+        act_find.triggered.connect(lambda: self._launch_find_replace("find"))
+        toolbar.addAction(act_find)
+        
+        act_replace = QAction("✎", self)
+        act_replace.setToolTip("Replace (Ctrl+H)")
+        act_replace.setShortcut("Ctrl+H")
+        act_replace.triggered.connect(lambda: self._launch_find_replace("replace"))
+        toolbar.addAction(act_replace)
         
         toolbar.addSeparator()
 
@@ -616,14 +691,28 @@ class SpreadsheetWindow(QMainWindow):
              self.act_underline.setChecked(False)
 
     def _save_table(self):
-        """Persist to Database."""
+        """Persist to Database (Multi-Scroll)."""
         try:
-            # Fix for 'TableRepository' object has no attribute 'update_content'
-            content = self.model.to_json()
-            self.repo.update_content(self.table_id, content)
-            self.statusBar().showMessage(f"Saved update at {content.get('updated_at', 'now')}", 3000)
+            # Serialize all scrolls
+            scrolls_list = []
+            for m in self.models:
+                # model.to_json() returns {columns, data, styles}. We need to add name.
+                json_data = m.to_json()
+                json_data["name"] = getattr(m, "scroll_name", "Sheet")
+                scrolls_list.append(json_data)
+                
+            final_content = {
+                "format_version": "2.0",
+                "active_scroll_index": self.current_model_index,
+                "scrolls": scrolls_list
+            }
+            
+            self.service.save_content(self.table_id, final_content)
+            self.statusBar().showMessage("Tablet saved successfully.", 3000)
         except Exception as e:
             QMessageBox.critical(self, "Save Failed", str(e))
+            # import traceback
+            # traceback.print_exc()
             
     # --- Formatting Helpers ---
     def _apply_borders(self, border_type):
@@ -856,6 +945,56 @@ class SpreadsheetWindow(QMainWindow):
             self.view.setCurrentIndex(target)
             self.view.setFocus()
 
+    def _on_scroll_added(self):
+        """Create a new scroll."""
+        new_name, ok = QInputDialog.getText(self, "New Scroll", "Scroll Name:", text="Sheet")
+        if not ok or not new_name: return
+        
+        content = self._create_default_content()
+        m = SpreadsheetModel(content)
+        m.scroll_name = new_name
+        
+        self.models.append(m)
+        self.tab_bar.add_tab(new_name)
+        
+        # Switch to it
+        self.tab_bar.set_current_index(len(self.models) - 1)
+        
+    def _on_scroll_changed(self, index):
+        """Switch the active view model."""
+        if index < 0 or index >= len(self.models): return
+        
+        # 1. Disconnect old
+        try: self.model.dataChanged.disconnect(self._on_data_changed)
+        except: pass
+        
+        # 2. Switch
+        self.current_model_index = index
+        self.model = self.models[index]
+        self.view.setModel(self.model)
+        
+        # 3. Connect new
+        self.model.dataChanged.connect(self._on_data_changed)
+        
+        # 4. Refresh UI State
+        # Ensure we don't have invalid selection
+        self.view.clearSelection()
+        self._update_toolbar_state(self.view.currentIndex())
+        self.name_box.setText("")
+        self.formula_bar.setText("")
+        
+    def _create_default_content(self):
+        # 26 Columns (A-Z)
+        cols = [chr(65 + i) for i in range(26)]
+        # 100 empty rows of similar width
+        # Data format is list of lists
+        data = [["" for _ in cols] for _ in range(100)]
+        return {
+            "columns": cols,
+            "data": data,
+            "styles": {}
+        }
+
     def _on_data_changed(self, top_left, bottom_right, roles=None):
         """
         If the data in the currently selected cell changes (e.g. via inline edit), 
@@ -1045,3 +1184,202 @@ class SpreadsheetWindow(QMainWindow):
             
         except Exception as e:
             QMessageBox.critical(self, "Import Failed", str(e))
+
+    # --- Find & Replace ---
+
+    def _launch_find_replace(self, mode="find"):
+        if not hasattr(self, '_find_dialog'):
+            self._find_dialog = FindReplaceDialog(self)
+            self._find_dialog.find_next_requested.connect(self._on_find_next)
+            self._find_dialog.find_all_requested.connect(self._on_find_all)
+            self._find_dialog.replace_requested.connect(self._on_replace)
+            self._find_dialog.replace_all_requested.connect(self._on_replace_all)
+            self._find_dialog.navigation_requested.connect(self._on_navigate_to_result)
+            
+        if mode == "replace":
+            self._find_dialog.show_replace_mode()
+        else:
+            self._find_dialog.show_find_mode()
+
+    def _on_navigate_to_result(self, index):
+        """Called when user clicks a result in the Find Dialog."""
+        if index.isValid():
+            self.view.setCurrentIndex(index)
+            self.view.scrollTo(index)
+            self.view.setFocus()
+
+    def _find_matching_indexes(self, text, options, start_from=None, reverse=False):
+        """Helper to iterate grid and yield matches."""
+        case_sensitive = options.get("case_sensitive", False)
+        match_entire = options.get("match_entire", False)
+        target = text if case_sensitive else text.lower()
+        
+        rows = self.model.rowCount()
+        cols = self.model.columnCount()
+        
+        # Order: Row-Major (A1, B1, C1...)
+        # We need to construct a list of ALL indexes, then cycle/slice based on start_from
+        all_indexes = []
+        for r in range(rows):
+            for c in range(cols):
+                all_indexes.append(self.model.index(r, c))
+                
+        # If start_from is provided, rotate list so start_from is last (finding next starts at index+1)
+        if start_from and start_from.isValid():
+             # Find index in list
+             # This is slow O(N) but grid is small enough? 100x26 = 2600. Fast.
+             try:
+                 # Comparison of QModelIndex might need row/col check
+                 start_idx = (start_from.row() * cols) + start_from.column()
+                 # Rotate: start checking from start_idx + 1
+                 all_indexes = all_indexes[start_idx+1:] + all_indexes[:start_idx+1]
+             except:
+                 pass
+                 
+        for idx in all_indexes:
+            val = self.model.data(idx, Qt.ItemDataRole.DisplayRole)
+            if val is None: val = ""
+            val_str = str(val)
+            check_val = val_str if case_sensitive else val_str.lower()
+            
+            match = False
+            if match_entire:
+                match = (check_val == target)
+            else:
+                match = (target in check_val)
+                
+            if match:
+                yield idx
+
+    def _on_find_next(self, text, options):
+        current = self.view.currentIndex()
+        # Generator
+        gen = self._find_matching_indexes(text, options, start_from=current)
+        try:
+            next_idx = next(gen)
+            self.view.setCurrentIndex(next_idx)
+            self.view.scrollTo(next_idx)
+        except StopIteration:
+            QMessageBox.information(self, "Find", f"Cannot find '{text}'.")
+
+    def _on_find_all(self, text, options):
+        gen = self._find_matching_indexes(text, options, start_from=None)
+        
+        # Collect all
+        matches = list(gen)
+        
+        # Prepare for Dialog List
+        results_data = []
+        
+        def col_to_letter(col_idx):
+             res = ""
+             while col_idx >= 0:
+                 res = chr((col_idx % 26) + 65) + res
+                 col_idx = (col_idx // 26) - 1
+             return res
+             
+        for idx in matches:
+            addr = f"{col_to_letter(idx.column())}{idx.row() + 1}"
+            val = str(self.model.data(idx, Qt.ItemDataRole.DisplayRole) or "")
+            # Truncate content for display
+            display = f"{addr}: {val}"
+            results_data.append((display, idx))
+            
+        # Send to Dialog
+        if hasattr(self, '_find_dialog'):
+            self._find_dialog.show_results(results_data)
+
+        if not matches:
+             QMessageBox.information(self, "Find", f"Cannot find '{text}'.")
+             return
+             
+        # Select all in Grid
+        selection = self.view.selectionModel()
+        selection.clearSelection()
+        
+        from PyQt6.QtCore import QItemSelection, QItemSelectionRange
+        qt_selection = QItemSelection()
+        for idx in matches:
+            qt_selection.select(idx, idx)
+            
+        selection.select(qt_selection, selection.SelectionFlag.Select)
+        
+        self.statusBar().showMessage(f"Found {len(matches)} occurrences.", 5000)
+
+    def _on_replace(self, text, replacement, options):
+        """Replace current selection if matches, then find next."""
+        current = self.view.currentIndex()
+        
+        # Check if current matches
+        matches_current = False
+        if current.isValid():
+             # Re-verify match
+             case_sensitive = options.get("case_sensitive", False)
+             match_entire = options.get("match_entire", False)
+             val = str(self.model.data(current, Qt.ItemDataRole.DisplayRole) or "")
+             target = text if case_sensitive else text.lower()
+             check = val if case_sensitive else val.lower()
+             
+             if match_entire: matches_current = (check == target)
+             else: matches_current = (target in check)
+        
+        if matches_current:
+            # Perform replacement
+            # If partial match, replace substring. If full match/entire, replace whole.
+            val = str(self.model.data(current, Qt.ItemDataRole.DisplayRole) or "")
+            
+            if match_entire:
+                new_val = replacement
+            else:
+                # String replace
+                if not options.get("case_sensitive"):
+                    # Case insensitive replace is tricky in Python str.replace
+                    # Simple approach: re or simple replace (user expects partial case match?)
+                    # Let's stick to simple literal replace if insensitive?
+                    # text="abc", val="AbcDef", replace="aaa" -> "aaaDef"?
+                    # Python .replace() is case sensitive.
+                    
+                    # Regex replace for case insensitive
+                    import re
+                    pattern = re.compile(re.escape(text), re.IGNORECASE)
+                    new_val = pattern.sub(replacement, val)
+                else:
+                    new_val = val.replace(text, replacement)
+            
+            self.model.setData(current, new_val, Qt.ItemDataRole.EditRole)
+            
+        # Move to next
+        self._on_find_next(text, options)
+
+    def _on_replace_all(self, text, replacement, options):
+        gen = self._find_matching_indexes(text, options, start_from=None)
+        matches = list(gen)
+        
+        if not matches:
+            QMessageBox.information(self, "Replace", f"Cannot find '{text}'.")
+            return
+            
+        self.model.undo_stack.beginMacro("Replace All")
+        count = 0
+        try:
+            import re
+            pattern = re.compile(re.escape(text), re.IGNORECASE) if not options.get("case_sensitive") else None
+            
+            for idx in matches:
+                val = str(self.model.data(idx, Qt.ItemDataRole.DisplayRole) or "")
+                
+                if options.get("match_entire"):
+                    new_val = replacement
+                else:
+                    if pattern:
+                        new_val = pattern.sub(replacement, val)
+                    else:
+                        new_val = val.replace(text, replacement)
+                        
+                if val != new_val:
+                    self.model.setData(idx, new_val, Qt.ItemDataRole.EditRole)
+                    count += 1
+        finally:
+            self.model.undo_stack.endMacro()
+            
+        self.statusBar().showMessage(f"Replaced {count} occurrences.", 5000)

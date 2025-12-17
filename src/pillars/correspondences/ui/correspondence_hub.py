@@ -1,13 +1,15 @@
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QListWidget, QListWidgetItem, QToolBar, QFileDialog, QMessageBox, QInputDialog, QMenu,
-    QDialog, QDialogButtonBox, QFormLayout, QLineEdit, QSpinBox
+    QWidget, QVBoxLayout, QHBoxLayout, QListWidget, QListWidgetItem, QFileDialog, 
+    QMessageBox, QInputDialog, QMenu, QDialog, QDialogButtonBox, QFormLayout, 
+    QLineEdit, QSpinBox, QLabel, QFrame, QPushButton, QGraphicsDropShadowEffect
 )
 from PyQt6.QtCore import Qt, QPoint, QThread, QObject, pyqtSignal
-from PyQt6.QtGui import QAction
+from PyQt6.QtGui import QAction, QColor
 from pillars.correspondences.ui.spreadsheet_window import SpreadsheetWindow
 from pillars.correspondences.services.ingestion_service import IngestionService
-from pillars.correspondences.repos.table_repository import TableRepository
+from pillars.correspondences.services.table_service import TableService
 from shared.database import get_db_session, SessionLocal
+
 
 class _ImportWorker(QObject):
     """Background file ingestion to keep the UI responsive."""
@@ -35,31 +37,100 @@ class _NewTableDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("New Tablet")
+        self.setMinimumWidth(400)
+        self.setStyleSheet("""
+            QDialog {
+                background: #f8fafc;
+            }
+            QLabel {
+                color: #1e293b;
+                font-size: 10pt;
+            }
+            QLineEdit, QSpinBox {
+                padding: 8px 12px;
+                border: 1px solid #e2e8f0;
+                border-radius: 6px;
+                background: white;
+                font-size: 10pt;
+            }
+            QLineEdit:focus, QSpinBox:focus {
+                border-color: #3b82f6;
+            }
+            QPushButton {
+                padding: 8px 16px;
+                border-radius: 6px;
+                font-size: 10pt;
+                font-weight: 600;
+            }
+        """)
 
-        layout = QFormLayout(self)
+        layout = QVBoxLayout(self)
+        layout.setSpacing(16)
+        layout.setContentsMargins(24, 24, 24, 24)
+
+        # Title
+        title = QLabel("✨ Create New Tablet")
+        title.setStyleSheet("font-size: 16pt; font-weight: 700; color: #1e293b;")
+        layout.addWidget(title)
+
+        form = QFormLayout()
+        form.setSpacing(12)
+        
         self.name_input = QLineEdit()
         self.name_input.setPlaceholderText("Name of the new work")
-        layout.addRow("Name", self.name_input)
+        form.addRow("Name", self.name_input)
 
         self.rows_input = QSpinBox()
         self.rows_input.setRange(1, 1000)
         self.rows_input.setSingleStep(10)
         self.rows_input.setValue(100)
-        layout.addRow("Rows", self.rows_input)
+        form.addRow("Rows", self.rows_input)
 
         self.cols_input = QSpinBox()
         self.cols_input.setRange(1, 1000)
         self.cols_input.setSingleStep(10)
         self.cols_input.setValue(50)
-        layout.addRow("Columns", self.cols_input)
+        form.addRow("Columns", self.cols_input)
 
-        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
-        buttons.accepted.connect(self.accept)
-        buttons.rejected.connect(self.reject)
-        layout.addWidget(buttons)
+        layout.addLayout(form)
+
+        # Buttons
+        button_layout = QHBoxLayout()
+        button_layout.addStretch()
+        
+        cancel_btn = QPushButton("Cancel")
+        cancel_btn.setStyleSheet("""
+            QPushButton {
+                background: #f1f5f9;
+                color: #64748b;
+                border: 1px solid #e2e8f0;
+            }
+            QPushButton:hover {
+                background: #e2e8f0;
+            }
+        """)
+        cancel_btn.clicked.connect(self.reject)
+        button_layout.addWidget(cancel_btn)
+        
+        create_btn = QPushButton("Create Tablet")
+        create_btn.setStyleSheet("""
+            QPushButton {
+                background: #3b82f6;
+                color: white;
+                border: none;
+            }
+            QPushButton:hover {
+                background: #2563eb;
+            }
+        """)
+        create_btn.clicked.connect(self.accept)
+        button_layout.addWidget(create_btn)
+        
+        layout.addLayout(button_layout)
 
     def get_values(self):
         return self.name_input.text().strip(), self.rows_input.value(), self.cols_input.value()
+
 
 class CorrespondenceHub(QWidget):
     """
@@ -69,42 +140,174 @@ class CorrespondenceHub(QWidget):
     def __init__(self, window_manager, parent=None):
         super().__init__(parent)
         self.window_manager = window_manager
-        self.open_windows = [] # Keep references to prevent GC
+        self.open_windows = []
         self._setup_ui()
         self._load_tables()
 
     def _setup_ui(self):
         layout = QVBoxLayout(self)
+        layout.setSpacing(20)
+        layout.setContentsMargins(40, 32, 40, 40)
         
-        # Toolbar
-        self.toolbar = QToolBar()
-        layout.addWidget(self.toolbar)
+        # Header
+        header = QWidget()
+        header_layout = QVBoxLayout(header)
+        header_layout.setSpacing(8)
+        header_layout.setContentsMargins(0, 0, 0, 0)
         
-        act_new = QAction("New Scroll", self)
-        act_new.triggered.connect(self._new_table)
-        self.toolbar.addAction(act_new)
+        title_label = QLabel("Emerald Tablet")
+        title_label.setStyleSheet("""
+            QLabel {
+                color: #1e293b;
+                font-size: 32pt;
+                font-weight: 700;
+                letter-spacing: -1px;
+            }
+        """)
+        header_layout.addWidget(title_label)
+
+        desc_label = QLabel("Library of Correspondences - Scrolls and Tablets")
+        desc_label.setStyleSheet("""
+            QLabel {
+                color: #64748b;
+                font-size: 12pt;
+            }
+        """)
+        header_layout.addWidget(desc_label)
         
-        act_import = QAction("Import (Excel/CSV)", self)
-        act_import.triggered.connect(self._import_table)
-        self.toolbar.addAction(act_import)
+        layout.addWidget(header)
         
-        act_refresh = QAction("Refresh Library", self)
-        act_refresh.triggered.connect(self._load_tables)
-        self.toolbar.addAction(act_refresh)
+        # Action cards
+        actions_layout = QHBoxLayout()
+        actions_layout.setSpacing(16)
         
-        # Library List
+        new_card = self._create_action_card(
+            "📜", "New Scroll", "Create a blank tablet", "#3b82f6", self._new_table
+        )
+        actions_layout.addWidget(new_card)
+        
+        import_card = self._create_action_card(
+            "📥", "Import", "Import Excel/CSV file", "#10b981", self._import_table
+        )
+        actions_layout.addWidget(import_card)
+        
+        refresh_card = self._create_action_card(
+            "🔄", "Refresh", "Reload library", "#8b5cf6", self._load_tables
+        )
+        actions_layout.addWidget(refresh_card)
+        
+        actions_layout.addStretch()
+        layout.addLayout(actions_layout)
+        
+        # Library section
+        library_header = QLabel("Your Tablets")
+        library_header.setStyleSheet("""
+            QLabel {
+                color: #475569;
+                font-size: 14pt;
+                font-weight: 600;
+                margin-top: 8px;
+            }
+        """)
+        layout.addWidget(library_header)
+        
+        # Library List with modern styling
         self.table_list = QListWidget()
+        self.table_list.setStyleSheet("""
+            QListWidget {
+                background: white;
+                border: 1px solid #e2e8f0;
+                border-radius: 12px;
+                padding: 8px;
+                font-size: 11pt;
+            }
+            QListWidget::item {
+                padding: 12px 16px;
+                border-radius: 8px;
+                margin: 2px 0;
+            }
+            QListWidget::item:hover {
+                background: #f1f5f9;
+            }
+            QListWidget::item:selected {
+                background: #dbeafe;
+                color: #1d4ed8;
+            }
+        """)
         self.table_list.itemDoubleClicked.connect(self._on_table_double_click)
         self.table_list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.table_list.customContextMenuRequested.connect(self._show_context_menu)
+        
+        # Add shadow to list
+        shadow = QGraphicsDropShadowEffect()
+        shadow.setBlurRadius(12)
+        shadow.setOffset(0, 2)
+        shadow.setColor(QColor(0, 0, 0, 25))
+        self.table_list.setGraphicsEffect(shadow)
+        
         layout.addWidget(self.table_list)
+    
+    def _create_action_card(self, icon: str, title: str, desc: str, color: str, callback) -> QFrame:
+        """Create a compact action card."""
+        card = QFrame()
+        card.setCursor(Qt.CursorShape.PointingHandCursor)
+        card.setStyleSheet(f"""
+            QFrame {{
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #ffffff, stop:1 #f8fafc);
+                border: 1px solid #e2e8f0;
+                border-radius: 10px;
+            }}
+            QFrame:hover {{
+                border-color: {color};
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #ffffff, stop:1 #f1f5f9);
+            }}
+        """)
+        card.setFixedSize(140, 100)
+        
+        shadow = QGraphicsDropShadowEffect()
+        shadow.setBlurRadius(8)
+        shadow.setOffset(0, 1)
+        shadow.setColor(QColor(0, 0, 0, 20))
+        card.setGraphicsEffect(shadow)
+        
+        card_layout = QVBoxLayout(card)
+        card_layout.setContentsMargins(12, 12, 12, 12)
+        card_layout.setSpacing(4)
+        
+        icon_label = QLabel(icon)
+        icon_label.setStyleSheet(f"""
+            QLabel {{
+                font-size: 20pt;
+                background: transparent;
+            }}
+        """)
+        card_layout.addWidget(icon_label)
+        
+        title_label = QLabel(title)
+        title_label.setStyleSheet("""
+            QLabel {
+                color: #1e293b;
+                font-size: 10pt;
+                font-weight: 600;
+                background: transparent;
+            }
+        """)
+        card_layout.addWidget(title_label)
+        
+        card_layout.addStretch()
+        
+        card.mousePressEvent = lambda e: callback()
+        
+        return card
 
     def _load_tables(self):
         """Load existing tables from DB."""
         self.table_list.clear()
         with get_db_session() as session:
-            repo = TableRepository(session)
-            tables = repo.get_all()
+            service = TableService(session)
+            tables = service.list_tables()
             for table in tables:
                 # Clean Display
                 item = QListWidgetItem(table.name)
@@ -156,8 +359,8 @@ class CorrespondenceHub(QWidget):
         Creates a new table and launches it.
         """
         with get_db_session() as session:
-            repo = TableRepository(session)
-            table = repo.create(name, data)
+            service = TableService(session)
+            table = service.create_table(name, data)
             # We must refresh the list to see it
             self._load_tables()
             # Launch it
@@ -206,8 +409,8 @@ class CorrespondenceHub(QWidget):
         new_name, ok = QInputDialog.getText(self, "Rename Scroll", "New Name:", text=current_text)
         if ok and new_name:
             with get_db_session() as session:
-                repo = TableRepository(session)
-                repo.update_name(table_id, new_name)
+                service = TableService(session)
+                service.rename_table(table_id, new_name)
             self._load_tables()
             
     def _delete_table(self, item):
@@ -222,8 +425,8 @@ class CorrespondenceHub(QWidget):
         
         if reply == QMessageBox.StandardButton.Yes:
             with get_db_session() as session:
-                repo = TableRepository(session)
-                repo.delete(table_id)
+                service = TableService(session)
+                service.destoy_table(table_id)
             self._load_tables()
 
     def _on_table_double_click(self, item):
@@ -231,8 +434,8 @@ class CorrespondenceHub(QWidget):
         
         # Fetch fresh data
         with get_db_session() as session:
-            repo = TableRepository(session)
-            table = repo.get_by_id(table_id)
+            service = TableService(session)
+            table = service.get_table(table_id)
             if table:
                 self._launch_window(table.id, table.name, table.content)
 
@@ -242,9 +445,9 @@ class CorrespondenceHub(QWidget):
         # We create a raw session using the factory.
         
         session = SessionLocal()
-        repo = TableRepository(session)
+        service = TableService(session)
         
-        win = SpreadsheetWindow(table_id, name, content, repo)
+        win = SpreadsheetWindow(table_id, name, content, service)
         win._db_session = session # Keep alive reference
         
         # Clean up on close - session objects have a .close() method

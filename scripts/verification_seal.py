@@ -172,14 +172,22 @@ class RiteOfEmeraldTablet(Rite):
         Scribe.info("Summoning the Emerald Tablet...")
         
         try:
-            from src.pillars.correspondences.ui.spreadsheet_view import SpreadsheetModel
-            from src.pillars.correspondences.services.formula_engine import FormulaEngine
+            from pillars.correspondences.ui.spreadsheet_view import SpreadsheetModel
+            from pillars.correspondences.services.formula_engine import FormulaEngine
             from PyQt6.QtCore import Qt
         except ImportError as e:
             raise AssertionError(f"Missing Components: {e}")
             
         # 1. Test Model Instantiation
-        content = {"cells": {}, "row_limit": 10, "col_limit": 10}
+        # Build valid structure: {"columns": [...], "data": [[...]]}
+        cols = ["A", "B", "C"]
+        data = [
+            ["1", "2", "3"],
+            ["4", "5", "6"],
+            ["=SUM(A1,B1,C1)", "", ""]
+        ]
+        content = {"columns": cols, "data": data}
+        
         model = SpreadsheetModel(content)
         Scribe.success("SpreadsheetModel instantiated.")
         
@@ -188,22 +196,36 @@ class RiteOfEmeraldTablet(Rite):
         engine = FormulaEngine(model)
         
         # Test Simple Math
+        # Note: FormulaEngine usually expects references relative to the model
         res_sum = engine.evaluate("=SUM(1, 2, 3)")
         if float(res_sum) != 6.0:
             raise AssertionError(f"Formula Engine failed SUM: Expected 6.0, got {res_sum}")
         Scribe.success("Formula Engine: SUM verified.")
         
-        # Test Gematria (Simple)
+        # Test Internal Reference
+        # Cell A1 is "1", B1 is "2", C1 is "3". SUM should be 6.
+        # But the FormulaEngine.evaluate is context-free unless we pass a cell context for relative refs?
+        # Creating a formula engine with model allows it to resolve references like "A1".
+        res_ref = engine.evaluate("=SUM(A1, B1, C1)")
+        # Should be 6
+        if float(res_ref) != 6.0:
+             raise AssertionError(f"Formula Engine failed Reference SUM: Expected 6.0, got {res_ref}")
+        Scribe.success("Formula Engine: Reference SUM verified.")
+
+        # Test Gematria (Simple) - using TQ Cipher (Default)
         res_gem = engine.evaluate("=GEMATRIA(ABC)")
-        # A=1, B=2, C=3 => 6
-        if int(res_gem) != 6:
-            raise AssertionError(f"Formula Engine failed GEMATRIA: Expected 6, got {res_gem}")
+        # A=5, B=20, C=2 => 27 (TQ Cipher)
+        if int(res_gem) != 27:
+            raise AssertionError(f"Formula Engine failed GEMATRIA: Expected 27 (TQ), got {res_gem}")
         Scribe.success("Formula Engine: GEMATRIA verified.")
         
         # 3. Test Metadata Storage (Saturn Test)
         # Verify that setting data for a Role actually stores it
         files_idx = model.index(0, 0)
-        model.setData(files_idx, "bold", Qt.ItemDataRole.UserRole + 100) # Formatting is complex, just ensure no crash
+        if not files_idx.isValid():
+            raise AssertionError("Invalid Index (0,0) - Model failed to initialize dimensions.")
+            
+        model.setData(files_idx, "bold", Qt.ItemDataRole.UserRole + 100) 
         Scribe.success("Model accepted Data Mutation.")
 
 class RiteOfFormulaHelper(Rite):
@@ -214,8 +236,7 @@ class RiteOfFormulaHelper(Rite):
         Scribe.info("Consulting the Wizard's Apprentice...")
         
         try:
-            from src.pillars.correspondences.services.formula_helper import FormulaHelperService
-            from src.pillars.correspondences.services.formula_engine import FormulaRegistry
+            from pillars.correspondences.services.formula_helper import FormulaHelperService
         except ImportError as e:
             raise AssertionError(f"Missing Components: {e}")
             
@@ -267,13 +288,12 @@ if __name__ == "__main__":
             # RiteOfGematria("Gematria Core"),
             # RiteOfGeometry("Geometry Core"),
             # RiteOfAdytonEngine("Adyton Engine"),
-            # RiteOfEmeraldTablet("Spreadsheet Pillar"),
+            RiteOfEmeraldTablet("Spreadsheet Pillar"),
             RiteOfFormulaHelper("Formula Helper Service"),
         ]
 
         for rite in rites:
             rite.execute()
-        
-        print("\nSophia: Protocols Complete.")
-
+    
     execute()
+    print("\nSophia: Protocols Complete.")

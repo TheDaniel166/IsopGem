@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import math
 import os
 import shutil
 import subprocess
@@ -18,6 +19,7 @@ from PyQt6.QtWidgets import (
     QApplication,
     QCheckBox,
     QComboBox,
+    QDialog,
     QDateTimeEdit,
     QDoubleSpinBox,
     QFileDialog,
@@ -36,11 +38,13 @@ from PyQt6.QtWidgets import (
     QTabWidget,
     QTableWidget,
     QTableWidgetItem,
+    QHeaderView,
     QVBoxLayout,
     QWidget,
 )
 
 from ..models import AstrologyEvent, ChartRequest, ChartResult, GeoLocation
+from ..models.chart_models import PlanetPosition, HousePosition
 from ..services import (
     ChartComputationError,
     ChartStorageService,
@@ -53,6 +57,106 @@ from ..services import (
 )
 from ..utils import AstrologyPreferences, DefaultLocation
 from ..utils.conversions import to_zodiacal_string
+from .chart_canvas import ChartCanvas
+
+
+class ChartPickerDialog(QDialog):
+    """Modal selector for saved charts with text, category, and tag filters."""
+
+    def __init__(self, storage: ChartStorageService, parent: Optional[QWidget] = None):
+        super().__init__(parent)
+        self.storage = storage
+        self.selected: Optional[SavedChartSummary] = None
+        self._matches: List[SavedChartSummary] = []
+        self.setWindowTitle("Select Saved Chart")
+        self.resize(720, 540)
+        self._build_ui()
+        self._refresh_results()
+
+    def _build_ui(self) -> None:
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(12, 12, 12, 12)
+        layout.setSpacing(8)
+
+        # Filters
+        filter_row = QHBoxLayout()
+        self.search_input = QLineEdit()
+        self.search_input.setPlaceholderText("Search text (name or location)")
+        self.categories_input = QLineEdit()
+        self.categories_input.setPlaceholderText("Categories (comma separated)")
+        self.tags_input = QLineEdit()
+        self.tags_input.setPlaceholderText("Tags (comma separated)")
+        self.refresh_button = QPushButton("Refresh")
+        self.refresh_button.clicked.connect(self._refresh_results)
+
+        filter_row.addWidget(self.search_input, 2)
+        filter_row.addWidget(self.categories_input, 2)
+        filter_row.addWidget(self.tags_input, 2)
+        filter_row.addWidget(self.refresh_button, 0)
+        layout.addLayout(filter_row)
+
+        # Results table
+        self.table = QTableWidget(0, 6)
+        headers = ["Name", "Date/Time", "Location", "Categories", "Tags", "Type"]
+        self.table.setHorizontalHeaderLabels(headers)
+        self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        self.table.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
+        self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        self.table.doubleClicked.connect(self._accept_selection)
+        header = self.table.horizontalHeader()
+        if header is not None:
+            header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+            for idx in range(1, 6):
+                header.setSectionResizeMode(idx, QHeaderView.ResizeMode.ResizeToContents)
+        layout.addWidget(self.table, stretch=1)
+
+        # Action buttons
+        button_row = QHBoxLayout()
+        button_row.addStretch()
+        ok_btn = QPushButton("Load")
+        ok_btn.clicked.connect(self._accept_selection)
+        cancel_btn = QPushButton("Cancel")
+        cancel_btn.clicked.connect(self.reject)
+        button_row.addWidget(ok_btn)
+        button_row.addWidget(cancel_btn)
+        layout.addLayout(button_row)
+
+    def _accept_selection(self) -> None:
+        row = self.table.currentRow()
+        if row < 0 or row >= len(self._matches):
+            return
+        self.selected = self._matches[row]
+        self.accept()
+
+    def _refresh_results(self) -> None:
+        text = self.search_input.text().strip()
+        categories = self._split_terms(self.categories_input.text())
+        tags = self._split_terms(self.tags_input.text())
+
+        if not text and not categories and not tags:
+            self._matches = self.storage.list_recent(limit=50)
+        else:
+            self._matches = self.storage.search(text=text or None, categories=categories or None, tags=tags or None)
+
+        self._populate_table()
+
+    def _populate_table(self) -> None:
+        self.table.setRowCount(len(self._matches))
+        for row, item in enumerate(self._matches):
+            self.table.setItem(row, 0, QTableWidgetItem(item.name))
+            self.table.setItem(row, 1, QTableWidgetItem(item.event_timestamp.strftime("%Y-%m-%d %H:%M")))
+            self.table.setItem(row, 2, QTableWidgetItem(item.location_label))
+            self.table.setItem(row, 3, QTableWidgetItem(", ".join(item.categories)))
+            self.table.setItem(row, 4, QTableWidgetItem(", ".join(item.tags)))
+            self.table.setItem(row, 5, QTableWidgetItem(item.chart_type))
+        self.table.resizeRowsToContents()
+        if self._matches:
+            self.table.selectRow(0)
+
+    @staticmethod
+    def _split_terms(text: str) -> List[str]:
+        return [part.strip() for part in text.split(",") if part.strip()]
+
 
 
 class NatalChartWindow(QMainWindow):
@@ -131,6 +235,14 @@ class NatalChartWindow(QMainWindow):
         results_layout.setContentsMargins(8, 8, 8, 8)
         results_layout.addWidget(self._build_results_splitter())
         self.tabs.addTab(self.results_tab, "Report & Visualization")
+
+        # Tab 3: Chart Canvas (custom in-app rendering)
+        self.canvas_tab = QWidget()
+        canvas_layout = QVBoxLayout(self.canvas_tab)
+        canvas_layout.setContentsMargins(8, 8, 8, 8)
+        self.chart_canvas = ChartCanvas()
+        canvas_layout.addWidget(self.chart_canvas)
+        self.tabs.addTab(self.canvas_tab, "Chart Canvas")
 
         # Persistent Action Row (Bottom)
         layout.addLayout(self._build_action_row())
@@ -302,11 +414,6 @@ class NatalChartWindow(QMainWindow):
         self.aspects_text.setReadOnly(True)
         asp_layout.addWidget(self.aspects_text)
         layout.addWidget(asp_grp)
-        
-        self.view_svg_button = QPushButton("View SVG in Browser")
-        self.view_svg_button.clicked.connect(self._open_in_browser)
-        self.view_svg_button.setEnabled(False)
-        layout.addWidget(self.view_svg_button)
 
         return container
 
@@ -388,8 +495,8 @@ class NatalChartWindow(QMainWindow):
         self._last_result = None
         self._last_svg = None
         self.save_chart_button.setEnabled(False)
-        if hasattr(self, 'view_svg_button'):
-            self.view_svg_button.setEnabled(False)
+        if hasattr(self, 'chart_canvas'):
+            self.chart_canvas.set_data([], [])
         self._set_status("Results cleared.")
 
     def _render_aspects(self, result: ChartResult) -> None:
@@ -400,14 +507,15 @@ class NatalChartWindow(QMainWindow):
 
     def _handle_svg(self, result: ChartResult) -> None:
         self._last_svg = result.svg_document
-        if hasattr(self, 'view_svg_button'):
-            self.view_svg_button.setEnabled(bool(result.svg_document))
+        # SVG viewing now in-app; no external browser dependency
 
     def _render_result(self, result) -> None:
         self._render_planets(result)
         self._render_houses(result)
         self._render_aspects(result)
         self._handle_svg(result)
+        if hasattr(self, 'chart_canvas'):
+            self.chart_canvas.set_data(result.planet_positions, result.house_positions)
 
     def _render_planets(self, result) -> None:
         self.planets_table.setRowCount(0)
@@ -640,18 +748,11 @@ class NatalChartWindow(QMainWindow):
             QMessageBox.warning(self, "Unavailable", "Chart storage is not available.")
             return
 
-        query, accepted = QInputDialog.getText(self, "Find Chart", "Enter search text (or leave blank for recent):")
-        if not accepted:
+        picker = ChartPickerDialog(self._storage_service, self)
+        if picker.exec() != QDialog.DialogCode.Accepted or picker.selected is None:
             return
 
-        matches = self._storage_service.search(text=query.strip()) if query.strip() else self._storage_service.list_recent()
-        if not matches:
-            QMessageBox.information(self, "No Results", "No charts matched your search.")
-            return
-
-        chosen = self._prompt_for_chart_choice(matches)
-        if chosen is None:
-            return
+        chosen = picker.selected
 
         loaded = self._storage_service.load_chart(chosen.chart_id)
         if loaded is None:
@@ -666,26 +767,6 @@ class NatalChartWindow(QMainWindow):
         self._last_result = None
         self.save_chart_button.setEnabled(False)
         self._set_status("Chart loaded. Generate to view results.")
-
-    def _prompt_for_chart_choice(self, matches: List[SavedChartSummary]) -> Optional[SavedChartSummary]:
-        if len(matches) == 1:
-            return matches[0]
-
-        options = [
-            f"{item.name} – {item.location_label} ({item.event_timestamp:%Y-%m-%d %H:%M})"
-            for item in matches
-        ]
-        choice, accepted = QInputDialog.getItem(
-            self,
-            "Select Chart",
-            "Multiple charts found. Choose one:",
-            options,
-            0,
-            False,
-        )
-        if not accepted or not choice:
-            return None
-        return matches[options.index(choice)]
 
     def _apply_timezone_offset(self, result: LocationResult) -> None:
         if not result.timezone_id:

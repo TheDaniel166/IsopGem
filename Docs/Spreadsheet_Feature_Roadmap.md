@@ -8,10 +8,11 @@ This document outlines potential features for the `IsopGem` spreadsheet module, 
 | :--- | :---: | :---: | :---: | :--- |
 | **Delete/Clear Key** | 1 | **MVP** | Done | Delete/Backspace clears selection (undo-supported). |
 | **Resize Rows/Cols** | 2 | **MVP** | Done | Qt interactive header resizing enabled. |
-| **Search (Ctrl+F)** | 2 | High | Todo | Find dialog to jump to matches. |
+| **Search (Ctrl+F)** | 2 | High | Done | Find dialog to jump to matches. |
 | **Format Painter** | 3 | Med | Todo | Copy styling (bg, border, font) from one cell to another. |
 | **Drag-to-Fill** | 5 | High | Todo | Drag handle to auto-fill series or copy formulas. |
 | **Multi-Level Undo** | 6 | **MVP** | Partial | Undo stack exists; needs batching for large pastes/fills. |
+| **Multi-Sheet UI** | 3 | High | Done | Tab bar, Add/Rename sheets, Multi-Model architecture. |
 
 ## 2. Formatting & Visuals
 | Feature | Difficulty | Priority | Status | Description |
@@ -29,7 +30,7 @@ This document outlines potential features for the `IsopGem` spreadsheet module, 
 | **Range Support** | 4 | **MVP** | Done | Parser handles ranges; SUM/others consume lists. |
 | **New Functions** | 2 | High | Done | Core math/text/logic set registered (SUM, AVERAGE, MIN/MAX, IF, LEN, etc.). |
 | **Named Ranges** | 5 | Med | Todo | Map names to ranges and resolve in parser. |
-| **Cross-Sheet Refs** | 6 | Low | Todo | `Sheet2!A1` with multi-model support. |
+| **Cross-Sheet Refs** | 6 | Low | Todo | `Sheet2!A1` logic (Architecture ready). |
 | **Array Formulas** | 8 | Low | Todo | Matrix-returning formulas (SPILL). |
 | **Dependency Graph** | 9 | High | Todo | Topological recalc for large sheets. |
 

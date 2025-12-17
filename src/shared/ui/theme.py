@@ -203,35 +203,55 @@ def get_app_stylesheet() -> str:
         background-color: {COLORS['background_alt']};
     }}
     
-    /* Tab widget */
+    /* Tab widget - Main Navigation */
     QTabWidget::pane {{
-        border: 1px solid {COLORS['border']};
-        border-radius: 6px;
+        border: none;
         background-color: {COLORS['surface']};
-        top: -1px;
+    }}
+    
+    QTabWidget::tab-bar {{
+        alignment: left;
+    }}
+    
+    QTabBar {{
+        background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+            stop:0 #1e293b, stop:1 #334155);
     }}
     
     QTabBar::tab {{
-        background-color: {COLORS['background_alt']};
-        border: 1px solid {COLORS['border']};
-        border-bottom: none;
-        border-top-left-radius: 6px;
-        border-top-right-radius: 6px;
-        padding: 10px 20px;
-        margin-right: 2px;
-        color: {COLORS['text_secondary']};
+        background: transparent;
+        color: #94a3b8;
+        border: none;
+        border-left: 3px solid transparent;
+        padding: 14px 24px;
+        margin: 0;
+        font-size: 11pt;
         font-weight: 500;
+        min-width: 120px;
+        text-align: left;
     }}
     
     QTabBar::tab:selected {{
-        background-color: {COLORS['surface']};
-        color: {COLORS['primary']};
-        border-bottom: 2px solid {COLORS['primary']};
+        background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+            stop:0 rgba(59, 130, 246, 0.2), stop:1 transparent);
+        color: #ffffff;
+        border-left: 3px solid #3b82f6;
+        font-weight: 600;
     }}
     
     QTabBar::tab:hover:!selected {{
-        background-color: {COLORS['surface_hover']};
-        color: {COLORS['text_primary']};
+        background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+            stop:0 rgba(148, 163, 184, 0.15), stop:1 transparent);
+        color: #e2e8f0;
+        border-left: 3px solid #64748b;
+    }}
+    
+    QTabBar::tab:first {{
+        border-top-left-radius: 0;
+    }}
+    
+    QTabBar::tab:last {{
+        border-bottom-left-radius: 0;
     }}
     
     /* Scroll bars */

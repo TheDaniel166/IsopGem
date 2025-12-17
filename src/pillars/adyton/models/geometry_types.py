@@ -4,7 +4,7 @@ CORE GEOMETRY TYPES
 Shared data structures for 3D objects to avoid circular imports between UI and Models.
 """
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, Optional
 from PyQt6.QtGui import QVector3D, QColor, QMatrix4x4
 
 @dataclass
@@ -36,6 +36,9 @@ class Object3D:
     position: QVector3D = field(default_factory=lambda: QVector3D(0, 0, 0))
     rotation: QVector3D = field(default_factory=lambda: QVector3D(0, 0, 0)) # Euler angles
     scale: QVector3D = field(default_factory=lambda: QVector3D(1, 1, 1))
+    label_positions: Optional[List[QVector3D]] = None
+    label_colors: Optional[List[QColor]] = None
+    label_planets: Optional[List[str]] = None
     
     # Cache for transformed faces
     _world_faces: List[Face3D] = field(default_factory=list, repr=False)

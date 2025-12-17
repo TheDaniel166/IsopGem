@@ -1,7 +1,10 @@
 """Astrology pillar hub - launcher interface for astrology tools."""
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QLabel, QFrame, 
+    QGridLayout, QGraphicsDropShadowEffect, QScrollArea
+)
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFont
+from PyQt6.QtGui import QColor
 from shared.ui import WindowManager
 from .natal_chart_window import NatalChartWindow
 from .current_transit_window import CurrentTransitWindow
@@ -14,75 +17,145 @@ class AstrologyHub(QWidget):
     """Hub widget for Astrology pillar - displays available tools."""
     
     def __init__(self, window_manager: WindowManager):
-        """
-        Initialize the Astrology hub.
-        
-        Args:
-            window_manager: Shared window manager instance
-        """
         super().__init__()
         self.window_manager = window_manager
         self._setup_ui()
     
     def _setup_ui(self):
         """Set up the hub interface."""
-        layout = QVBoxLayout(self)
-        layout.setSpacing(20)
-        layout.setContentsMargins(30, 30, 30, 30)
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setStyleSheet("QScrollArea { border: none; background: transparent; }")
         
-        # Title
-        title_label = QLabel("Astrology Pillar")
-        title_font = QFont()
-        title_font.setPointSize(24)
-        title_font.setBold(True)
-        title_label.setFont(title_font)
-        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(title_label)
-        
-        # Description
-        desc_label = QLabel(
-            "Cosmic calendar and zodiacal mappings\n\n"
-            "New dependency stack: OpenAstro2 + Swiss Ephemeris\n"
-            "(currently validated on Linux builds)."
-        )
-        desc_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        desc_font = QFont()
-        desc_font.setPointSize(12)
-        desc_label.setFont(desc_font)
-        desc_label.setStyleSheet("color: #666; margin-top: 20px;")
-        layout.addWidget(desc_label)
+        container = QWidget()
+        layout = QVBoxLayout(container)
+        layout.setSpacing(24)
+        layout.setContentsMargins(40, 32, 40, 40)
 
-        self._create_action_buttons(layout)
+        # Header section
+        header = QWidget()
+        header_layout = QVBoxLayout(header)
+        header_layout.setSpacing(8)
+        header_layout.setContentsMargins(0, 0, 0, 0)
+        
+        title_label = QLabel("Astrology")
+        title_label.setStyleSheet("""
+            QLabel {
+                color: #1e293b;
+                font-size: 32pt;
+                font-weight: 700;
+                letter-spacing: -1px;
+            }
+        """)
+        header_layout.addWidget(title_label)
+
+        desc_label = QLabel("Cosmic calendar and zodiacal mappings powered by Swiss Ephemeris")
+        desc_label.setStyleSheet("""
+            QLabel {
+                color: #64748b;
+                font-size: 12pt;
+            }
+        """)
+        header_layout.addWidget(desc_label)
+        
+        layout.addWidget(header)
+
+        # Tools grid
+        tools = [
+            ("☉", "Natal Chart", "Generate birth charts with planetary placements", "#8b5cf6", self._open_natal_chart),
+            ("↻", "Transits", "View current planetary transits in real-time", "#3b82f6", self._open_transit_viewer),
+            ("♈", "Positions", "Ephemeris table of planetary positions", "#10b981", self._open_planetary_positions),
+            ("◐", "Eclipse Clock", "Neo-Aubrey eclipse timing calculator", "#f97316", self._open_neo_aubrey),
+            ("♀", "Venus Rose", "The Cytherean Rose - Venus cycles", "#ec4899", self._open_venus_rose),
+        ]
+
+        grid = QGridLayout()
+        grid.setSpacing(16)
+        
+        for i, (icon, title, desc, color, callback) in enumerate(tools):
+            card = self._create_tool_card(icon, title, desc, color, callback)
+            grid.addWidget(card, i // 3, i % 3)
+        
+        layout.addLayout(grid)
         
         layout.addStretch()
-
-    def _create_action_buttons(self, layout: QVBoxLayout) -> None:
-        """Add placeholder feature launchers for upcoming tools."""
-        natal_chart_btn = QPushButton("Natal Chart Generator")
-        natal_chart_btn.setMinimumHeight(48)
-        natal_chart_btn.clicked.connect(self._open_natal_chart)
-        layout.addWidget(natal_chart_btn)
-
-        transit_btn = QPushButton("Current Transit Viewer")
-        transit_btn.setMinimumHeight(48)
-        transit_btn.clicked.connect(self._open_transit_viewer)
-        layout.addWidget(transit_btn)
-
-        planet_positions_btn = QPushButton("Planetary Positions Table")
-        planet_positions_btn.setMinimumHeight(48)
-        planet_positions_btn.clicked.connect(self._open_planetary_positions)
-        layout.addWidget(planet_positions_btn)
-
-        neo_aubrey_btn = QPushButton("Neo-Aubrey Eclipse Clock")
-        neo_aubrey_btn.setMinimumHeight(48)
-        neo_aubrey_btn.clicked.connect(self._open_neo_aubrey)
-        layout.addWidget(neo_aubrey_btn)
-
-        rose_btn = QPushButton("The Cytherean Rose")
-        rose_btn.setMinimumHeight(48)
-        rose_btn.clicked.connect(self._open_venus_rose)
-        layout.addWidget(rose_btn)
-
+        
+        scroll.setWidget(container)
+        
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.addWidget(scroll)
+    
+    def _create_tool_card(self, icon: str, title: str, description: str, accent_color: str, callback) -> QFrame:
+        """Create a modern tool card."""
+        card = QFrame()
+        card.setCursor(Qt.CursorShape.PointingHandCursor)
+        card.setStyleSheet(f"""
+            QFrame {{
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #ffffff, stop:1 #f8fafc);
+                border: 1px solid #e2e8f0;
+                border-radius: 12px;
+                padding: 0;
+            }}
+            QFrame:hover {{
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #ffffff, stop:1 #f1f5f9);
+                border-color: {accent_color};
+            }}
+        """)
+        card.setMinimumSize(200, 140)
+        card.setMaximumHeight(160)
+        
+        shadow = QGraphicsDropShadowEffect()
+        shadow.setBlurRadius(12)
+        shadow.setOffset(0, 2)
+        shadow.setColor(QColor(0, 0, 0, 25))
+        card.setGraphicsEffect(shadow)
+        
+        card_layout = QVBoxLayout(card)
+        card_layout.setContentsMargins(20, 20, 20, 20)
+        card_layout.setSpacing(8)
+        
+        icon_container = QLabel(icon)
+        icon_container.setFixedSize(48, 48)
+        icon_container.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        icon_container.setStyleSheet(f"""
+            QLabel {{
+                background: {accent_color}20;
+                border-radius: 10px;
+                font-size: 22pt;
+            }}
+        """)
+        card_layout.addWidget(icon_container)
+        
+        title_label = QLabel(title)
+        title_label.setStyleSheet("""
+            QLabel {
+                color: #1e293b;
+                font-size: 13pt;
+                font-weight: 600;
+                background: transparent;
+            }
+        """)
+        card_layout.addWidget(title_label)
+        
+        desc_label = QLabel(description)
+        desc_label.setStyleSheet("""
+            QLabel {
+                color: #64748b;
+                font-size: 9pt;
+                background: transparent;
+            }
+        """)
+        desc_label.setWordWrap(True)
+        card_layout.addWidget(desc_label)
+        
+        card_layout.addStretch()
+        
+        card.mousePressEvent = lambda e: callback()
+        
+        return card
 
     def _open_natal_chart(self) -> None:
         """Launch the natal chart generator window."""

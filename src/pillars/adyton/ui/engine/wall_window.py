@@ -1,5 +1,5 @@
 """Dedicated viewer for a single Adyton wall with data grid and CSV export."""
-from pathlib import Path
+from typing import List, Optional
 
 from PyQt6.QtWidgets import (
     QWidget,
@@ -36,10 +36,11 @@ PLANET_NAMES = [
 class AdytonWallWindow(QWidget):
     """Displays one wall in isolation with data grid and 3D viewport."""
 
-    def __init__(self, wall_index: int, parent=None):
+    def __init__(self, wall_index: int, parent: Optional[QWidget] = None):
         super().__init__(parent)
         self.wall_index = wall_index
-        self.frustum_service = FrustumColorService()
+        self.frustum_service: FrustumColorService = FrustumColorService()
+        self.table: QTableWidget
         self._setup_ui()
 
     def _setup_ui(self) -> None:
@@ -86,10 +87,14 @@ class AdytonWallWindow(QWidget):
         # Row headers (Row 1-8, bottom to top for visual match)
         self.table.setVerticalHeaderLabels([f"Row {8 - i}" for i in range(8)])
 
-        # Style the table
-        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
-        self.table.verticalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Fixed)
-        self.table.verticalHeader().setDefaultSectionSize(28)
+        # Style the table with header guards for type checkers
+        h_header = self.table.horizontalHeader()
+        v_header = self.table.verticalHeader()
+        if h_header is not None:
+            h_header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        if v_header is not None:
+            v_header.setSectionResizeMode(QHeaderView.ResizeMode.Fixed)
+            v_header.setDefaultSectionSize(28)
         self.table.setAlternatingRowColors(True)
         self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.table.setSelectionMode(QTableWidget.SelectionMode.ContiguousSelection)
@@ -117,7 +122,7 @@ class AdytonWallWindow(QWidget):
 
     def _load_data(self) -> None:
         """Load decimal values from the frustum service into the table."""
-        decimals = self.frustum_service.get_wall_decimals(self.wall_index)
+        decimals: Optional[List[List[int]]] = self.frustum_service.get_wall_decimals(self.wall_index)
 
         if not decimals:
             return

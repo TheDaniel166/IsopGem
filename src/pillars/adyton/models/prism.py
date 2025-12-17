@@ -158,33 +158,6 @@ class SevenSidedPrism:
         return [wall_obj]
 
     @staticmethod
-    def build_wall_flat(wall_index: int) -> List[Object3D]:
-        """Constructs a single wall at the origin, front-facing (no rotation).
-        
-        Ideal for isolated wall viewers where the wall should be displayed
-        flat and centered, with the interior frustums facing the camera.
-        """
-        from .wall import WallGeometry
-        from pillars.adyton.services.frustum_color_service import FrustumColorService
-        from ..constants import WALL_COLORS
-
-        wall_color = WALL_COLORS[wall_index % 7]
-        frustum_color_service = FrustumColorService()
-
-        wall_obj = WallGeometry.build(
-            wall_color,
-            wall_index=wall_index,
-            center_color_fn=frustum_color_service.get_center_color,
-            side_color_fn=frustum_color_service.get_side_color,
-        )
-        # No position offset, no rotation - wall is centered at origin
-        # Interior faces point toward -Z (camera should be at -Z looking at +Z)
-        wall_obj.position = QVector3D(0, 0, 0)
-        wall_obj.rotation = QVector3D(0, 0, 0)
-
-        return [wall_obj]
-
-    @staticmethod
     def _solve_corner_wall_angles(c: float, w: float) -> Tuple[float, float, float]:
         """Solve alpha (corner) and beta (wall) exactly from chord constraints.
 

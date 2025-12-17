@@ -5,10 +5,11 @@ from typing import Callable, List, Optional, Dict, Any, cast
 
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QFrame, QSpinBox, QScrollArea, QLayout, QInputDialog
+    QFrame, QSpinBox, QScrollArea, QLayout, QInputDialog,
+    QGridLayout, QGraphicsDropShadowEffect
 )
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFont
+from PyQt6.QtGui import QFont, QColor
 
 from shared.ui import WindowManager
 from .advanced_scientific_calculator_window import AdvancedScientificCalculatorWindow
@@ -1130,14 +1131,46 @@ class GeometryHub(QWidget):
     
     def _setup_ui(self):
         """Set up the hub interface."""
-        self.setStyleSheet("background-color: #f8fafc;")
-
-        root_layout = QVBoxLayout(self)
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setStyleSheet("QScrollArea { border: none; background: transparent; }")
+        
+        container = QWidget()
+        root_layout = QVBoxLayout(container)
         root_layout.setSpacing(24)
-        root_layout.setContentsMargins(32, 32, 32, 32)
+        root_layout.setContentsMargins(40, 32, 40, 40)
 
-        hero = self._build_hero_banner()
-        root_layout.addWidget(hero)
+        # Header section matching other hubs
+        header = QWidget()
+        header_layout = QVBoxLayout(header)
+        header_layout.setSpacing(8)
+        header_layout.setContentsMargins(0, 0, 0, 0)
+        
+        title_label = QLabel("Geometry")
+        title_label.setStyleSheet("""
+            QLabel {
+                color: #1e293b;
+                font-size: 32pt;
+                font-weight: 700;
+                letter-spacing: -1px;
+            }
+        """)
+        header_layout.addWidget(title_label)
+
+        desc_label = QLabel("Sacred shapes, from perfect circles to multidimensional solids")
+        desc_label.setStyleSheet("""
+            QLabel {
+                color: #64748b;
+                font-size: 12pt;
+            }
+        """)
+        header_layout.addWidget(desc_label)
+        
+        root_layout.addWidget(header)
+
+        # Quick tools grid
+        quick_tools = self._build_quick_tools()
+        root_layout.addLayout(quick_tools)
 
         body_layout = QHBoxLayout()
         body_layout.setSpacing(18)
@@ -1149,113 +1182,117 @@ class GeometryHub(QWidget):
         content_frame = self._build_content_area()
         body_layout.addWidget(content_frame, 1)
 
-        footer = QLabel("Ready • Bidirectional calculations • Interactive viewport ✦ Future 3D support")
-        footer.setStyleSheet("color: #475569; font-size: 10pt; font-style: italic; background: transparent;")
-        root_layout.addWidget(footer)
+        scroll.setWidget(container)
+        
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.addWidget(scroll)
 
-    def _build_hero_banner(self) -> QWidget:
-        banner = QFrame()
-        banner.setStyleSheet(
-            """
-            QFrame {
-                background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-                                                  stop:0 #1d4ed8, stop:1 #9333ea);
-                border-radius: 20px;
-                padding: 24px;
+    def _build_quick_tools(self) -> QGridLayout:
+        """Build quick tool cards matching other hub styles."""
+        tools = [
+            ("\u2211", "Scientific Calc", "Advanced calculator", "#3b82f6", self._open_advanced_scientific_calculator),
+            ("\u25b2", "Polygonal", "Polygonal numbers", "#f59e0b", self._open_polygonal_number_visualizer),
+            ("\u2606", "Star Numbers", "Experimental stars", "#8b5cf6", self._open_experimental_star_visualizer),
+            ("\u2b22", "3D Figurate", "3D figurate numbers", "#06b6d4", self._open_figurate_3d_visualizer),
+        ]
+
+        grid = QGridLayout()
+        grid.setSpacing(16)
+        
+        for i, (icon, title, desc, color, callback) in enumerate(tools):
+            card = self._create_quick_card(icon, title, desc, color, callback)
+            grid.addWidget(card, 0, i)
+        
+        return grid
+    
+    def _create_quick_card(self, icon: str, title: str, description: str, accent_color: str, callback) -> QFrame:
+        """Create a quick tool card."""
+        card = QFrame()
+        card.setCursor(Qt.CursorShape.PointingHandCursor)
+        card.setStyleSheet(f"""
+            QFrame {{
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #ffffff, stop:1 #f8fafc);
+                border: 1px solid #e2e8f0;
+                border-radius: 12px;
+            }}
+            QFrame:hover {{
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #ffffff, stop:1 #f1f5f9);
+                border-color: {accent_color};
+            }}
+        """)
+        card.setMinimumSize(160, 100)
+        card.setMaximumHeight(120)
+        
+        shadow = QGraphicsDropShadowEffect()
+        shadow.setBlurRadius(12)
+        shadow.setOffset(0, 2)
+        shadow.setColor(QColor(0, 0, 0, 25))
+        card.setGraphicsEffect(shadow)
+        
+        card_layout = QVBoxLayout(card)
+        card_layout.setContentsMargins(16, 14, 16, 14)
+        card_layout.setSpacing(6)
+        
+        icon_container = QLabel(icon)
+        icon_container.setFixedSize(36, 36)
+        icon_container.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        icon_container.setStyleSheet(f"""
+            QLabel {{
+                background: {accent_color}20;
+                border-radius: 8px;
+                font-size: 16pt;
+            }}
+        """)
+        card_layout.addWidget(icon_container)
+        
+        title_label = QLabel(title)
+        title_label.setStyleSheet("""
+            QLabel {
+                color: #1e293b;
+                font-size: 11pt;
+                font-weight: 600;
+                background: transparent;
             }
-            """
-        )
-        layout = QVBoxLayout(banner)
-        layout.setSpacing(6)
-
-        title_row = QHBoxLayout()
-        title_row.setSpacing(10)
-
-        title = QLabel("Geometry Library")
-        title.setStyleSheet("color: white; font-size: 26pt; font-weight: 700; letter-spacing: -0.5px;")
-        title_row.addWidget(title)
-        title_row.addStretch()
-
-        hero_btn = QPushButton("Advanced Scientific Calculator")
-        hero_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        hero_btn.setStyleSheet(
-            """
-            QPushButton {background-color: #0ea5e9; color: white; border: none;
-                        padding: 10px 14px; border-radius: 10px; font-weight: 700;}
-            QPushButton:hover {background-color: #0284c7;}
-            QPushButton:pressed {background-color: #0369a1;}
-            """
-        )
-        # hero_btn.setToolTip("Open the advanced scientific calculator")
-        hero_btn.clicked.connect(self._open_advanced_scientific_calculator)
-        title_row.addWidget(hero_btn)
-
-
-
-        # Polygonal Numbers Button
-        poly_btn = QPushButton("Polygonal Numbers")
-        poly_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        poly_btn.setStyleSheet(
-            """
-            QPushButton {background-color: #f59e0b; color: white; border: none;
-                        padding: 10px 14px; border-radius: 10px; font-weight: 700;}
-            QPushButton:hover {background-color: #d97706;}
-            QPushButton:pressed {background-color: #b45309;}
-            """
-        )
-        # poly_btn.setToolTip("Visualize polygonal and centered polygonal numbers")
-        poly_btn.clicked.connect(self._open_polygonal_number_visualizer)
-        title_row.addWidget(poly_btn)
-
-        # Experimental Star Numbers Button
-        exp_btn = QPushButton("Experimental Stars")
-        exp_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        exp_btn.setStyleSheet(
-            """
-            QPushButton {background-color: #9333ea; color: white; border: none;
-                        padding: 10px 14px; border-radius: 10px; font-weight: 700;}
-            QPushButton:hover {background-color: #7e22ce;}
-            QPushButton:pressed {background-color: #6b21a8;}
-            """
-        )
-        # exp_btn.setToolTip("Explore generalized star numbers (P-grams)")
-        exp_btn.clicked.connect(self._open_experimental_star_visualizer)
-        title_row.addWidget(exp_btn)
-
-        # 3D Figurate Numbers Button
-        figurate_3d_btn = QPushButton("3D Figurate")
-        figurate_3d_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        figurate_3d_btn.setStyleSheet(
-            """
-            QPushButton {background-color: #06b6d4; color: white; border: none;
-                        padding: 10px 14px; border-radius: 10px; font-weight: 700;}
-            QPushButton:hover {background-color: #0891b2;}
-            QPushButton:pressed {background-color: #0e7490;}
-            """
-        )
-        # figurate_3d_btn.setToolTip("Visualize 3D figurate numbers (tetrahedral, pyramidal, cubic)")
-        figurate_3d_btn.clicked.connect(self._open_figurate_3d_visualizer)
-        title_row.addWidget(figurate_3d_btn)
-
-        layout.addLayout(title_row)
-
-        subtitle = QLabel("Explore sacred shapes, from perfect circles to multidimensional solids")
-        subtitle.setStyleSheet("color: rgba(255,255,255,0.85); font-size: 12pt;")
-        layout.addWidget(subtitle)
-
-        return banner
+        """)
+        card_layout.addWidget(title_label)
+        
+        desc_label = QLabel(description)
+        desc_label.setStyleSheet("""
+            QLabel {
+                color: #64748b;
+                font-size: 8pt;
+                background: transparent;
+            }
+        """)
+        card_layout.addWidget(desc_label)
+        
+        card_layout.addStretch()
+        
+        card.mousePressEvent = lambda e: callback()
+        
+        return card
 
     def _build_category_nav(self) -> QWidget:
         frame = QFrame()
         frame.setStyleSheet(
             """
             QFrame {
-                background-color: white;
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #ffffff, stop:1 #f8fafc);
                 border: 1px solid #e2e8f0;
-                border-radius: 18px;
+                border-radius: 12px;
             }
             """
         )
+        
+        shadow = QGraphicsDropShadowEffect()
+        shadow.setBlurRadius(12)
+        shadow.setOffset(0, 2)
+        shadow.setColor(QColor(0, 0, 0, 25))
+        frame.setGraphicsEffect(shadow)
 
         layout = QHBoxLayout(frame)
         layout.setSpacing(12)
@@ -1269,7 +1306,7 @@ class GeometryHub(QWidget):
         categories_layout.setContentsMargins(0, 0, 0, 0)
 
         label = QLabel("Categories")
-        label.setStyleSheet("color: #0f172a; font-weight: 700; font-size: 12pt;")
+        label.setStyleSheet("color: #1e293b; font-weight: 700; font-size: 12pt; background: transparent;")
         categories_layout.addWidget(label)
 
         for idx, category in enumerate(self.categories):
@@ -1285,13 +1322,13 @@ class GeometryHub(QWidget):
 
         menu_panel = QFrame()
         menu_panel.setMinimumWidth(220)
-        menu_panel.setStyleSheet("background-color: #f8fafc; border-radius: 14px;")
+        menu_panel.setStyleSheet("background-color: #f1f5f9; border-radius: 10px;")
         menu_panel_layout = QVBoxLayout(menu_panel)
         menu_panel_layout.setSpacing(8)
         menu_panel_layout.setContentsMargins(14, 14, 14, 14)
 
-        menu_label = QLabel("Shapes in family")
-        menu_label.setStyleSheet("color: #475569; font-weight: 600; font-size: 10pt;")
+        menu_label = QLabel("Shapes")
+        menu_label.setStyleSheet("color: #475569; font-weight: 600; font-size: 10pt; background: transparent;")
         menu_panel_layout.addWidget(menu_label)
 
         menu_scroll = QScrollArea()
@@ -1357,25 +1394,19 @@ class GeometryHub(QWidget):
         self._clear_layout(self.content_layout)
 
         header = QFrame()
+        header.setStyleSheet("background: transparent;")
         header_layout = QHBoxLayout(header)
         header_layout.setContentsMargins(0, 0, 0, 0)
         header_layout.setSpacing(12)
 
         title = QLabel(f"{category['icon']}  {category['name']}")
-        title.setStyleSheet("color: #0f172a; font-size: 22pt; font-weight: 700;")
+        title.setStyleSheet("color: #1e293b; font-size: 18pt; font-weight: 700; background: transparent;")
         header_layout.addWidget(title)
 
         tagline = QLabel(category['tagline'])
-        tagline.setStyleSheet("color: #475569; font-size: 11pt;")
+        tagline.setStyleSheet("color: #64748b; font-size: 10pt; background: transparent;")
         header_layout.addWidget(tagline)
         header_layout.addStretch()
-
-        sci_calc_btn = QPushButton("Advanced Scientific Calculator")
-        sci_calc_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        sci_calc_btn.setStyleSheet(self._primary_button_style())
-        # sci_calc_btn.setToolTip("Open a full scientific calculator in its own window")
-        sci_calc_btn.clicked.connect(self._open_advanced_scientific_calculator)
-        header_layout.addWidget(sci_calc_btn)
 
         self.content_layout.addWidget(header)
 
@@ -1501,33 +1532,33 @@ class GeometryHub(QWidget):
         frame.setStyleSheet(
             """
             QFrame {
-                background-color: white;
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #ffffff, stop:1 #f8fafc);
                 border: 1px solid #e2e8f0;
-                border-radius: 18px;
-                padding: 20px;
+                border-radius: 12px;
+                padding: 16px;
             }
             QFrame:hover {
-                border-color: #cbd5e1;
-                box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+                border-color: #3b82f6;
             }
             """
         )
 
         layout = QVBoxLayout(frame)
-        layout.setSpacing(10)
+        layout.setSpacing(8)
         layout.setContentsMargins(0, 0, 0, 0)
 
         title_row = QHBoxLayout()
         name_label = QLabel(shape_definition['name'])
-        name_label.setStyleSheet("color: #0f172a; font-size: 14pt; font-weight: 700;")
+        name_label.setStyleSheet("color: #1e293b; font-size: 12pt; font-weight: 600; background: transparent;")
         title_row.addWidget(name_label)
 
         status = shape_definition.get('status')
         if status:
             badge = QLabel(status)
             badge.setStyleSheet(
-                "color: #7c3aed; background-color: rgba(124,58,237,0.12);"
-                "padding: 4px 10px; border-radius: 999px; font-size: 9pt;"
+                "color: #8b5cf6; background-color: #8b5cf620;"
+                "padding: 3px 8px; border-radius: 6px; font-size: 8pt;"
             )
             title_row.addWidget(badge)
         title_row.addStretch()
@@ -1535,7 +1566,7 @@ class GeometryHub(QWidget):
 
         summary = QLabel(shape_definition.get('summary', ''))
         summary.setWordWrap(True)
-        summary.setStyleSheet("color: #475569; font-size: 10.5pt;")
+        summary.setStyleSheet("color: #64748b; font-size: 9pt; background: transparent;")
         layout.addWidget(summary)
 
         polygon_sides = shape_definition.get('polygon_sides')

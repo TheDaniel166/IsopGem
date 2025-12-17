@@ -1,7 +1,10 @@
 """TQ pillar hub - launcher interface for TQ tools."""
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QLabel, QFrame, 
+    QGridLayout, QGraphicsDropShadowEffect, QScrollArea
+)
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFont
+from PyQt6.QtGui import QColor
 from shared.ui import WindowManager
 from .ternary_converter_window import TernaryConverterWindow
 from .quadset_analysis_window import QuadsetAnalysisWindow
@@ -18,235 +21,186 @@ class TQHub(QWidget):
     """Hub widget for TQ pillar - displays available tools."""
     
     def __init__(self, window_manager: WindowManager):
-        """
-        Initialize the TQ hub.
-        
-        Args:
-            window_manager: Shared window manager instance
-        """
         super().__init__()
         self.window_manager = window_manager
         self._setup_ui()
     
     def _setup_ui(self):
         """Set up the hub interface."""
-        layout = QVBoxLayout(self)
-        layout.setSpacing(20)
-        layout.setContentsMargins(30, 30, 30, 30)
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setStyleSheet("QScrollArea { border: none; background: transparent; }")
         
-        # Title
-        title_label = QLabel("TQ Pillar")
-        title_font = QFont()
-        title_font.setPointSize(24)
-        title_font.setBold(True)
-        title_label.setFont(title_font)
-        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(title_label)
+        container = QWidget()
+        layout = QVBoxLayout(container)
+        layout.setSpacing(24)
+        layout.setContentsMargins(40, 32, 40, 40)
+
+        # Header section
+        header = QWidget()
+        header_layout = QVBoxLayout(header)
+        header_layout.setSpacing(8)
+        header_layout.setContentsMargins(0, 0, 0, 0)
         
-        # Description
-        desc_label = QLabel(
-            "Trigrammaton QBLH integration and pattern analysis"
-        )
-        desc_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        desc_font = QFont()
-        desc_font.setPointSize(12)
-        desc_label.setFont(desc_font)
-        desc_label.setStyleSheet("color: #666; margin-bottom: 20px;")
-        layout.addWidget(desc_label)
+        title_label = QLabel("Trigrammaton Qabalah")
+        title_label.setStyleSheet("""
+            QLabel {
+                color: #1e293b;
+                font-size: 32pt;
+                font-weight: 700;
+                letter-spacing: -1px;
+            }
+        """)
+        header_layout.addWidget(title_label)
+
+        desc_label = QLabel("Ternary systems, transitions, and pattern analysis")
+        desc_label.setStyleSheet("""
+            QLabel {
+                color: #64748b;
+                font-size: 12pt;
+            }
+        """)
+        header_layout.addWidget(desc_label)
         
-        # Tools Section
-        tools_layout = QVBoxLayout()
-        tools_layout.setSpacing(15)
+        layout.addWidget(header)
+
+        # Primary tools grid
+        tools = [
+            ("≣", "Ternary Converter", "Convert between ternary and decimal", "#3b82f6", self._open_ternary_converter),
+            ("▦", "Quadset Analysis", "Analyze quadset relationships", "#8b5cf6", self._open_quadset_analysis),
+            ("⇄", "Transitions", "Explore ternary state transitions", "#10b981", self._open_transitions),
+            ("△", "Geo Transitions", "2D geometric transition mapping", "#dc2626", self._open_geometric_transitions),
+            ("⬡", "3D Transitions", "3D geometric transition space", "#0f766e", self._open_geometric_transitions_3d),
+            ("⊜", "Conrune Finder", "Find conrune pairs and matches", "#f97316", self._open_conrune_pair_finder),
+            ("♫", "Amun Sound", "Ternary sound calculator", "#8b5cf6", self._open_amun_sound),
+        ]
+
+        grid = QGridLayout()
+        grid.setSpacing(16)
         
-        # Ternary Converter Button
-        converter_btn = QPushButton("Ternary Converter")
-        converter_btn.setMinimumHeight(50)
-        converter_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #2563eb;
-                color: white;
-                font-size: 14pt;
-                font-weight: bold;
-                border-radius: 8px;
-                padding: 10px;
-            }
-            QPushButton:hover {
-                background-color: #1d4ed8;
-            }
-        """)
-        converter_btn.clicked.connect(self._open_ternary_converter)
-        tools_layout.addWidget(converter_btn)
-
-        # Quadset Analysis Button
-        quadset_btn = QPushButton("Quadset Analysis")
-        quadset_btn.setMinimumHeight(50)
-        quadset_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #7c3aed;
-                color: white;
-                font-size: 14pt;
-                font-weight: bold;
-                border-radius: 8px;
-                padding: 10px;
-            }
-            QPushButton:hover {
-                background-color: #6d28d9;
-            }
-        """)
-        quadset_btn.clicked.connect(self._open_quadset_analysis)
-        tools_layout.addWidget(quadset_btn)
-
-        # Transitions Button
-        transitions_btn = QPushButton("Ternary Transitions")
-        transitions_btn.setMinimumHeight(50)
-        transitions_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #059669;
-                color: white;
-                font-size: 14pt;
-                font-weight: bold;
-                border-radius: 8px;
-                padding: 10px;
-            }
-            QPushButton:hover {
-                background-color: #047857;
-            }
-        """)
-        transitions_btn.clicked.connect(self._open_transitions)
-        tools_layout.addWidget(transitions_btn)
-
-        # Geometric Transitions Button
-        geometric_btn = QPushButton("Geometric Transitions")
-        geometric_btn.setMinimumHeight(50)
-        geometric_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #dc2626;
-                color: white;
-                font-size: 14pt;
-                font-weight: bold;
-                border-radius: 8px;
-                padding: 10px;
-            }
-            QPushButton:hover {
-                background-color: #b91c1c;
-            }
-        """)
-        geometric_btn.clicked.connect(self._open_geometric_transitions)
-        tools_layout.addWidget(geometric_btn)
-
-        geometric3d_btn = QPushButton("3D Geometric Transitions")
-        geometric3d_btn.setMinimumHeight(50)
-        geometric3d_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #0f766e;
-                color: white;
-                font-size: 14pt;
-                font-weight: bold;
-                border-radius: 8px;
-                padding: 10px;
-            }
-            QPushButton:hover {
-                background-color: #115e59;
-            }
-        """)
-        geometric3d_btn.clicked.connect(self._open_geometric_transitions_3d)
-        tools_layout.addWidget(geometric3d_btn)
-
-        conrune_btn = QPushButton("Conrune Pair Finder")
-        conrune_btn.setMinimumHeight(50)
-        conrune_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #f97316;
-                color: white;
-                font-size: 14pt;
-                font-weight: bold;
-                border-radius: 8px;
-                padding: 10px;
-            }
-            QPushButton:hover {
-                background-color: #ea580c;
-            }
-        """)
-        conrune_btn.clicked.connect(self._open_conrune_pair_finder)
-        tools_layout.addWidget(conrune_btn)
-
-        # Amun Sound Button
-        amun_btn = QPushButton("Amun Sound Calculator")
-        amun_btn.setMinimumHeight(50)
-        amun_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #8b5cf6;
-                color: white;
-                font-size: 14pt;
-                font-weight: bold;
-                border-radius: 8px;
-                padding: 10px;
-            }
-            QPushButton:hover {
-                background-color: #7c3aed;
-            }
-        """)
-        amun_btn.clicked.connect(self._open_amun_sound)
-        tools_layout.addWidget(amun_btn)
-
-        # Kamea Grid Button
-        kamea_btn = QPushButton("Kamea of Maut")
-        kamea_btn.setMinimumHeight(50)
-        kamea_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #050510;
-                color: #4dff4d;
-                font-size: 14pt;
-                font-weight: bold;
-                border: 2px solid #4dff4d;
-                border-radius: 8px;
-                padding: 10px;
-            }
-            QPushButton:hover {
-                background-color: #1a1a2e;
-                color: #ffffff;
-                border-color: #ffffff;
-            }
-        """)
-        kamea_btn.clicked.connect(self._open_kamea_grid)
-        tools_layout.addWidget(kamea_btn)
-
-        # Kamea Baphomet Button
-        baphomet_btn = QPushButton("Kamea of Baphomet")
-        baphomet_btn.setMinimumHeight(50)
-        baphomet_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #2e0000;
-                color: #ff3333;
-                font-size: 14pt;
-                font-weight: bold;
-                border: 2px solid #ff3333;
-                border-radius: 8px;
-                padding: 10px;
-            }
-            QPushButton:hover {
-                background-color: #4d0000;
-                color: #ffffff;
-                border-color: #ff6666;
-            }
-        """)
-        baphomet_btn.clicked.connect(self._open_baphomet_grid)
-        tools_layout.addWidget(baphomet_btn)
+        for i, (icon, title, desc, color, callback) in enumerate(tools):
+            card = self._create_tool_card(icon, title, desc, color, callback)
+            grid.addWidget(card, i // 3, i % 3)
         
-        layout.addLayout(tools_layout)
+        layout.addLayout(grid)
+
+        # Kamea section header
+        kamea_header = QLabel("Kamea Grids")
+        kamea_header.setStyleSheet("""
+            QLabel {
+                color: #475569;
+                font-size: 14pt;
+                font-weight: 600;
+                margin-top: 16px;
+            }
+        """)
+        layout.addWidget(kamea_header)
+
+        # Kamea grids
+        kamea_tools = [
+            ("◫", "Kamea of Maut", "Primary kamea grid visualizer", "#0f172a", self._open_kamea_grid),
+            ("⛋", "Kamea of Baphomet", "Baphomet variant kamea grid", "#7f1d1d", self._open_baphomet_grid),
+        ]
+
+        kamea_grid = QGridLayout()
+        kamea_grid.setSpacing(16)
         
-        # Future Tools Placeholder
-        future_label = QLabel(
-            "\nComing Soon:\n"
-            "• Trigrammaton Mapper\n"
-            "• QBLH Pattern Analyzer\n"
-            "• Symbol Correlation Tool"
-        )
-        future_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        future_label.setStyleSheet("color: #9ca3af; margin-top: 30px;")
-        layout.addWidget(future_label)
+        for i, (icon, title, desc, color, callback) in enumerate(kamea_tools):
+            card = self._create_tool_card(icon, title, desc, color, callback)
+            kamea_grid.addWidget(card, 0, i)
+        
+        layout.addLayout(kamea_grid)
+        
+        # Coming soon
+        coming_soon = QLabel("Coming Soon: Trigrammaton Mapper \u2022 QBLH Pattern Analyzer")
+        coming_soon.setStyleSheet("""
+            QLabel {
+                color: #94a3b8;
+                font-size: 10pt;
+                padding: 20px;
+            }
+        """)
+        coming_soon.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(coming_soon)
         
         layout.addStretch()
+        
+        scroll.setWidget(container)
+        
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.addWidget(scroll)
+    
+    def _create_tool_card(self, icon: str, title: str, description: str, accent_color: str, callback) -> QFrame:
+        """Create a modern tool card."""
+        card = QFrame()
+        card.setCursor(Qt.CursorShape.PointingHandCursor)
+        card.setStyleSheet(f"""
+            QFrame {{
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #ffffff, stop:1 #f8fafc);
+                border: 1px solid #e2e8f0;
+                border-radius: 12px;
+                padding: 0;
+            }}
+            QFrame:hover {{
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #ffffff, stop:1 #f1f5f9);
+                border-color: {accent_color};
+            }}
+        """)
+        card.setMinimumSize(200, 140)
+        card.setMaximumHeight(160)
+        
+        shadow = QGraphicsDropShadowEffect()
+        shadow.setBlurRadius(12)
+        shadow.setOffset(0, 2)
+        shadow.setColor(QColor(0, 0, 0, 25))
+        card.setGraphicsEffect(shadow)
+        
+        card_layout = QVBoxLayout(card)
+        card_layout.setContentsMargins(20, 20, 20, 20)
+        card_layout.setSpacing(8)
+        
+        icon_container = QLabel(icon)
+        icon_container.setFixedSize(48, 48)
+        icon_container.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        icon_container.setStyleSheet(f"""
+            QLabel {{
+                background: {accent_color}20;
+                border-radius: 10px;
+                font-size: 22pt;
+            }}
+        """)
+        card_layout.addWidget(icon_container)
+        
+        title_label = QLabel(title)
+        title_label.setStyleSheet("""
+            QLabel {
+                color: #1e293b;
+                font-size: 13pt;
+                font-weight: 600;
+                background: transparent;
+            }
+        """)
+        card_layout.addWidget(title_label)
+        
+        desc_label = QLabel(description)
+        desc_label.setStyleSheet("""
+            QLabel {
+                color: #64748b;
+                font-size: 9pt;
+                background: transparent;
+            }
+        """)
+        desc_label.setWordWrap(True)
+        card_layout.addWidget(desc_label)
+        
+        card_layout.addStretch()
+        
+        card.mousePressEvent = lambda e: callback()
+        
+        return card
 
     def _open_ternary_converter(self):
         """Open the ternary converter window."""

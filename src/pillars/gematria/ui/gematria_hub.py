@@ -1,7 +1,10 @@
 """Gematria pillar hub - launcher interface for gematria tools."""
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QPushButton, QLabel
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, 
+    QFrame, QGridLayout, QGraphicsDropShadowEffect, QScrollArea
+)
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFont
+from PyQt6.QtGui import QFont, QColor
 from shared.ui import WindowManager
 from .gematria_calculator_window import GematriaCalculatorWindow
 from .saved_calculations_window import SavedCalculationsWindow
@@ -62,77 +65,158 @@ class GematriaHub(QWidget):
     
     def _setup_ui(self):
         """Set up the hub interface."""
-        layout = QVBoxLayout(self)
-        layout.setSpacing(20)
-        layout.setContentsMargins(30, 30, 30, 30)
+        # Scroll area for the hub content
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setStyleSheet("QScrollArea { border: none; background: transparent; }")
+        
+        container = QWidget()
+        layout = QVBoxLayout(container)
+        layout.setSpacing(24)
+        layout.setContentsMargins(40, 32, 40, 40)
 
-        # Title section to match other pillars
-        title_label = QLabel("Gematria Pillar")
-        title_font = QFont()
-        title_font.setPointSize(24)
-        title_font.setBold(True)
-        title_label.setFont(title_font)
-        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(title_label)
+        # Header section
+        header = QWidget()
+        header_layout = QVBoxLayout(header)
+        header_layout.setSpacing(8)
+        header_layout.setContentsMargins(0, 0, 0, 0)
+        
+        title_label = QLabel("Gematria")
+        title_label.setStyleSheet("""
+            QLabel {
+                color: #1e293b;
+                font-size: 32pt;
+                font-weight: 700;
+                letter-spacing: -1px;
+            }
+        """)
+        header_layout.addWidget(title_label)
 
-        desc_label = QLabel(
-            "Numerical analysis across Hebrew, Greek, and English systems"
-        )
-        desc_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        desc_font = QFont()
-        desc_font.setPointSize(12)
-        desc_label.setFont(desc_font)
-        desc_label.setStyleSheet("color: #666; margin-bottom: 20px;")
-        layout.addWidget(desc_label)
+        desc_label = QLabel("Numerical analysis across Hebrew, Greek, and English systems")
+        desc_label.setStyleSheet("""
+            QLabel {
+                color: #64748b;
+                font-size: 12pt;
+            }
+        """)
+        header_layout.addWidget(desc_label)
+        
+        layout.addWidget(header)
 
-        tools_layout = QVBoxLayout()
-        tools_layout.setSpacing(15)
-
-        buttons = [
-            ("Gematria Calculator", "#2563eb", "#1d4ed8", self._open_calculator),
-            ("Saved Calculations", "#059669", "#047857", self._open_saved_calculations),
-            ("Batch Calculator", "#7c3aed", "#6d28d9", self._open_batch_calculator),
-            ("Text Analysis", "#db2777", "#be185d", self._open_text_analysis),
-            ("Database Tools", "#f97316", "#ea580c", self._open_database_tools),
-            ("Methods Reference", "#2563eb", "#1d4ed8", self._open_methods_reference),
+        # Tools grid
+        tools = [
+            ("🔢", "Calculator", "Interactive gematria calculator", "#3b82f6", self._open_calculator),
+            ("💾", "Saved", "Browse saved calculations", "#10b981", self._open_saved_calculations),
+            ("📊", "Batch", "Process multiple entries", "#8b5cf6", self._open_batch_calculator),
+            ("📝", "Text Analysis", "Analyze passages & texts", "#ec4899", self._open_text_analysis),
+            ("🗄️", "Database", "Manage calculation data", "#f97316", self._open_database_tools),
+            ("📖", "Reference", "Method documentation", "#06b6d4", self._open_methods_reference),
         ]
 
-        for label, base_color, hover_color, callback in buttons:
-            tools_layout.addWidget(
-                self._create_primary_button(label, base_color, hover_color, callback)
-            )
-
-        layout.addLayout(tools_layout)
-
-        future_label = QLabel(
-            "\nComing Soon:\n"
-            "• Number Analysis\n"
-            "• Comparison Tool"
-        )
-        future_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        future_label.setStyleSheet("color: #9ca3af; margin-top: 30px;")
-        layout.addWidget(future_label)
-
+        grid = QGridLayout()
+        grid.setSpacing(16)
+        
+        for i, (icon, title, desc, color, callback) in enumerate(tools):
+            card = self._create_tool_card(icon, title, desc, color, callback)
+            grid.addWidget(card, i // 3, i % 3)
+        
+        layout.addLayout(grid)
+        
+        # Coming soon section
+        coming_soon = QLabel("Coming Soon: Number Analysis • Comparison Tool")
+        coming_soon.setStyleSheet("""
+            QLabel {
+                color: #94a3b8;
+                font-size: 10pt;
+                padding: 20px;
+            }
+        """)
+        coming_soon.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(coming_soon)
+        
         layout.addStretch()
-    def _create_primary_button(self, label: str, base_color: str, hover_color: str, callback):
-        """Create a pillar-style primary button with shared styling."""
-        button = QPushButton(label)
-        button.setMinimumHeight(50)
-        button.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {base_color};
-                color: white;
-                font-size: 14pt;
-                font-weight: bold;
-                border-radius: 8px;
-                padding: 10px;
+        
+        scroll.setWidget(container)
+        
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.addWidget(scroll)
+    
+    def _create_tool_card(self, icon: str, title: str, description: str, accent_color: str, callback) -> QFrame:
+        """Create a modern tool card."""
+        card = QFrame()
+        card.setCursor(Qt.CursorShape.PointingHandCursor)
+        card.setStyleSheet(f"""
+            QFrame {{
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #ffffff, stop:1 #f8fafc);
+                border: 1px solid #e2e8f0;
+                border-radius: 12px;
+                padding: 0;
             }}
-            QPushButton:hover {{
-                background-color: {hover_color};
+            QFrame:hover {{
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #ffffff, stop:1 #f1f5f9);
+                border-color: {accent_color};
             }}
         """)
-        button.clicked.connect(callback)
-        return button
+        card.setMinimumSize(200, 140)
+        card.setMaximumHeight(160)
+        
+        # Shadow effect
+        shadow = QGraphicsDropShadowEffect()
+        shadow.setBlurRadius(12)
+        shadow.setOffset(0, 2)
+        shadow.setColor(QColor(0, 0, 0, 25))
+        card.setGraphicsEffect(shadow)
+        
+        layout = QVBoxLayout(card)
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(8)
+        
+        # Icon with accent background
+        icon_container = QLabel(icon)
+        icon_container.setFixedSize(48, 48)
+        icon_container.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        icon_container.setStyleSheet(f"""
+            QLabel {{
+                background: {accent_color}20;
+                border-radius: 10px;
+                font-size: 22pt;
+            }}
+        """)
+        layout.addWidget(icon_container)
+        
+        # Title
+        title_label = QLabel(title)
+        title_label.setStyleSheet("""
+            QLabel {
+                color: #1e293b;
+                font-size: 13pt;
+                font-weight: 600;
+                background: transparent;
+            }
+        """)
+        layout.addWidget(title_label)
+        
+        # Description
+        desc_label = QLabel(description)
+        desc_label.setStyleSheet("""
+            QLabel {
+                color: #64748b;
+                font-size: 9pt;
+                background: transparent;
+            }
+        """)
+        desc_label.setWordWrap(True)
+        layout.addWidget(desc_label)
+        
+        layout.addStretch()
+        
+        # Click handler
+        card.mousePressEvent = lambda e: callback()
+        
+        return card
     
     def _open_calculator(self):
         """Open the Gematria Calculator window."""

@@ -593,6 +593,16 @@ class DocumentLibrary(QMainWindow):
         
         with document_service_context() as service:
             doc = service.get_document(doc_id)
-        
-        if doc:
-            self.document_opened.emit(doc)
+            if doc:
+                # Force-load content while session is active
+                _ = doc.content
+                _ = doc.raw_content
+                _ = doc.title
+                _ = doc.file_type
+                self.document_opened.emit(doc)
+            else:
+                QMessageBox.warning(
+                    self,
+                    "Document Not Found",
+                    f"Document ID {doc_id} was not found in the database."
+                )
