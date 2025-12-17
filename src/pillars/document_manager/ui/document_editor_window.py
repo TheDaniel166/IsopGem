@@ -161,23 +161,33 @@ class DocumentEditorWindow(QMainWindow):
             
         self.setWindowTitle(title)
 
-    def load_document_model(self, doc, search_term=None):
-        """Load a document from the database model."""
+    def load_document_model(self, doc, search_term=None, restored_html=None):
+        """Load a document from the database model.
+        
+        Args:
+            doc: Document model object
+            search_term: Optional search term to highlight
+            restored_html: Optional pre-restored HTML with images (from get_document_with_images)
+        """
         if not self._check_unsaved_changes():
             return
 
         self.current_doc_model = doc
         self.current_file = None
         
-        # Prefer raw content (HTML/RTF) if available, else plain content
-        content = doc.raw_content if doc.raw_content else doc.content
+        # Use restored_html if provided (has images restored from docimg:// references)
+        # Otherwise fall back to raw_content or content
+        if restored_html:
+            content = restored_html
+        else:
+            content = doc.raw_content if doc.raw_content else doc.content
         
         # If we have raw content, it's likely HTML (from our parser)
         # or if the file type is explicitly HTML
-        if doc.raw_content or doc.file_type == 'html':
-            self.editor.set_html(content)
+        if restored_html or doc.raw_content or doc.file_type == 'html':
+            self.editor.set_html(content or '')
         else:
-            self.editor.set_text(content)
+            self.editor.set_text(content or '')
             
         self.is_modified = False
         self._update_title()

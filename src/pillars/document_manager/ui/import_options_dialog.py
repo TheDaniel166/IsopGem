@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import (
-    QDialog, QVBoxLayout, QFormLayout, QLineEdit, 
-    QComboBox, QDialogButtonBox, QLabel
+    QDialog, QVBoxLayout, QFormLayout,
+    QComboBox, QDialogButtonBox
 )
 
 class ImportOptionsDialog(QDialog):
@@ -23,11 +23,6 @@ class ImportOptionsDialog(QDialog):
             self.collection_combo.addItem(coll)
         form.addRow("Collection:", self.collection_combo)
 
-        # Tags
-        self.tags_edit = QLineEdit()
-        self.tags_edit.setPlaceholderText("tag1, tag2, tag3")
-        form.addRow("Tags:", self.tags_edit)
-
         layout.addLayout(form)
 
         # Buttons
@@ -42,5 +37,4 @@ class ImportOptionsDialog(QDialog):
     def get_data(self):
         return {
             'collection': self.collection_combo.currentText().strip() or None,
-            'tags': self.tags_edit.text().strip() or None
         }

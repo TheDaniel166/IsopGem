@@ -147,6 +147,181 @@ TIME_UNITS: List[Dict[str, object]] = [
         "to_si": 365.24219 * 86400.0,
         "note": "Mean value; varies slightly over time.",
     },
+
+    # Hindu Units of Time (Surya Siddhanta tradition)
+    # Small units
+    {
+        "name": "Truti (Hindu)",
+        "system": "Hindu",
+        "category": "time",
+        "si_unit": "s",
+        "to_si": 1.0 / 33750.0,  # ~29.63 microseconds
+        "note": "Smallest practical Hindu time unit; 1/33,750 of a second (Surya Siddhanta).",
+    },
+    {
+        "name": "Tatpara (Hindu)",
+        "system": "Hindu",
+        "category": "time",
+        "si_unit": "s",
+        "to_si": 100.0 / 33750.0,  # 100 Trutis ≈ 2.963 ms
+        "note": "100 Trutis = 1 Tatpara.",
+    },
+    {
+        "name": "Nimesha (Hindu)",
+        "system": "Hindu",
+        "category": "time",
+        "si_unit": "s",
+        "to_si": 16.0 / 75.0,  # ~0.2133 seconds (blink of an eye)
+        "note": "The blink of an eye; 16/75 seconds. 30 Tatparas = 1 Nimesha.",
+    },
+    {
+        "name": "Kashtha (Hindu)",
+        "system": "Hindu",
+        "category": "time",
+        "si_unit": "s",
+        "to_si": 18.0 * 16.0 / 75.0,  # 18 Nimeshas = 3.84 seconds
+        "note": "18 Nimeshas = 1 Kashtha.",
+    },
+    {
+        "name": "Kala (Hindu)",
+        "system": "Hindu",
+        "category": "time",
+        "si_unit": "s",
+        "to_si": 30.0 * 18.0 * 16.0 / 75.0,  # 30 Kashthas = 115.2 seconds
+        "note": "30 Kashthas = 1 Kala (approximately 1.92 minutes).",
+    },
+    {
+        "name": "Ghatika/Ghati (Hindu)",
+        "system": "Hindu",
+        "category": "time",
+        "si_unit": "s",
+        "to_si": 24.0 * 60.0,  # 24 minutes = 1440 seconds
+        "note": "30 Kalas = 1 Ghatika = 24 minutes. 60 Ghatikas = 1 day.",
+    },
+    {
+        "name": "Muhurta (Hindu)",
+        "system": "Hindu",
+        "category": "time",
+        "si_unit": "s",
+        "to_si": 48.0 * 60.0,  # 48 minutes = 2880 seconds
+        "note": "2 Ghatikas = 1 Muhurta = 48 minutes. 30 Muhurtas = 1 day. Auspicious time unit for rituals.",
+    },
+    {
+        "name": "Prahara/Yama (Hindu)",
+        "system": "Hindu",
+        "category": "time",
+        "si_unit": "s",
+        "to_si": 3.0 * 3600.0,  # 3 hours = 10800 seconds
+        "note": "1/8 of a day = 3 hours. Also called Yama (watch).",
+    },
+    {
+        "name": "Ahoratra (Hindu Day)",
+        "system": "Hindu",
+        "category": "time",
+        "si_unit": "s",
+        "to_si": 86400.0,  # 24 hours
+        "note": "A full day and night cycle = 30 Muhurtas = 60 Ghatikas.",
+    },
+
+    # Hindu Calendar Units
+    {
+        "name": "Paksha (Hindu Fortnight)",
+        "system": "Hindu",
+        "category": "time",
+        "si_unit": "s",
+        "to_si": 15.0 * 86400.0,  # 15 days
+        "note": "Half a lunar month = 15 tithis (lunar days). Shukla (bright) or Krishna (dark) Paksha.",
+    },
+    {
+        "name": "Masa (Hindu Month)",
+        "system": "Hindu",
+        "category": "time",
+        "si_unit": "s",
+        "to_si": 30.0 * 86400.0,  # 30 days
+        "note": "2 Pakshas = 1 lunar month (approximately 29.5 solar days). Using 30-day convention.",
+    },
+    {
+        "name": "Ritu (Hindu Season)",
+        "system": "Hindu",
+        "category": "time",
+        "si_unit": "s",
+        "to_si": 2.0 * 30.0 * 86400.0,  # 2 months = 60 days
+        "note": "2 months = 1 season. Six Ritus in a year.",
+    },
+    {
+        "name": "Ayana (Hindu Half-Year)",
+        "system": "Hindu",
+        "category": "time",
+        "si_unit": "s",
+        "to_si": 6.0 * 30.0 * 86400.0,  # 6 months = 180 days
+        "note": "6 months = 1 Ayana. Uttarayana (northward) or Dakshinayana (southward) sun movement.",
+    },
+    {
+        "name": "Samvatsara (Hindu Year)",
+        "system": "Hindu",
+        "category": "time",
+        "si_unit": "s",
+        "to_si": 360.0 * 86400.0,  # 360 days (traditional)
+        "note": "Traditional Hindu year of 360 days (12 months of 30 days). Tropical year also used.",
+    },
+
+    # Hindu Cosmic Time Units (Yuga System)
+    {
+        "name": "Kali Yuga (Hindu)",
+        "system": "Hindu Cosmic",
+        "category": "time",
+        "si_unit": "s",
+        "to_si": 432000.0 * 365.25 * 86400.0,  # 432,000 years
+        "note": "The current age; 432,000 years. The shortest and most degraded of the four Yugas.",
+    },
+    {
+        "name": "Dvapara Yuga (Hindu)",
+        "system": "Hindu Cosmic",
+        "category": "time",
+        "si_unit": "s",
+        "to_si": 864000.0 * 365.25 * 86400.0,  # 864,000 years
+        "note": "2× Kali Yuga = 864,000 years. Third age of the cosmic cycle.",
+    },
+    {
+        "name": "Treta Yuga (Hindu)",
+        "system": "Hindu Cosmic",
+        "category": "time",
+        "si_unit": "s",
+        "to_si": 1296000.0 * 365.25 * 86400.0,  # 1,296,000 years
+        "note": "3× Kali Yuga = 1,296,000 years. Second age of the cosmic cycle.",
+    },
+    {
+        "name": "Satya Yuga/Krita Yuga (Hindu)",
+        "system": "Hindu Cosmic",
+        "category": "time",
+        "si_unit": "s",
+        "to_si": 1728000.0 * 365.25 * 86400.0,  # 1,728,000 years
+        "note": "4× Kali Yuga = 1,728,000 years. The golden age of truth and virtue.",
+    },
+    {
+        "name": "Mahayuga/Chaturyuga (Hindu)",
+        "system": "Hindu Cosmic",
+        "category": "time",
+        "si_unit": "s",
+        "to_si": 4320000.0 * 365.25 * 86400.0,  # 4,320,000 years
+        "note": "Sum of all four Yugas = 4,320,000 years. One complete cosmic cycle.",
+    },
+    {
+        "name": "Manvantara (Hindu)",
+        "system": "Hindu Cosmic",
+        "category": "time",
+        "si_unit": "s",
+        "to_si": 71.0 * 4320000.0 * 365.25 * 86400.0,  # ~306,720,000 years
+        "note": "71 Mahayugas = 1 Manvantara (~306.72 million years). Reign of one Manu.",
+    },
+    {
+        "name": "Kalpa (Hindu)",
+        "system": "Hindu Cosmic",
+        "category": "time",
+        "si_unit": "s",
+        "to_si": 1000.0 * 4320000.0 * 365.25 * 86400.0,  # 4.32 billion years
+        "note": "1000 Mahayugas = 1 Kalpa = 4.32 billion years. One day of Brahma.",
+    },
 ]
 
 

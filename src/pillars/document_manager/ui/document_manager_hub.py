@@ -173,10 +173,10 @@ class DocumentManagerHub(QWidget):
         # Connect signal safely
         if isinstance(window, DocumentLibrary):
             try:
-                window.document_opened.disconnect(self._open_document_from_library)
+                window.document_opened.disconnect(self._on_library_document_opened)
             except TypeError:
                 pass
-            window.document_opened.connect(self._open_document_from_library)
+            window.document_opened.connect(self._on_library_document_opened)
         
     def _open_document_editor(self):
         """Open the document editor window."""
@@ -210,14 +210,18 @@ class DocumentManagerHub(QWidget):
 
 
 
-    def _open_document_from_library(self, doc, search_term=None):
+    def _open_document_from_library(self, doc, search_term=None, restored_html=None):
         """Open a document from the library in the editor."""
         window = self.window_manager.open_window(
             "document_editor",
             DocumentEditorWindow
         )
         if isinstance(window, DocumentEditorWindow):
-            window.load_document_model(doc, search_term)
+            window.load_document_model(doc, search_term, restored_html)
+
+    def _on_library_document_opened(self, doc, restored_html):
+        """Handle document_opened signal from library (doc, restored_html)."""
+        self._open_document_from_library(doc, None, restored_html)
 
     def _open_document_by_id(self, doc_id, search_term=None):
         """Open a document by ID in the editor."""
@@ -227,18 +231,14 @@ class DocumentManagerHub(QWidget):
         
         try:
             with document_service_context() as service:
-                doc = service.get_document(doc_id)
-                logger.debug(f"get_document({doc_id}) returned: {doc}")
+                # Use the new method that restores images
+                result = service.get_document_with_images(doc_id)
                 
-                if doc:
-                    # Force-load all content while session is active
-                    _ = doc.content
-                    _ = doc.raw_content
-                    _ = doc.title
-                    _ = doc.file_type
-                    logger.debug(f"Document loaded: '{doc.title}', content_len={len(doc.content or '')}")
-                    # Now open the document using the same method as library
-                    self._open_document_from_library(doc, search_term)
+                if result:
+                    doc, restored_html = result
+                    logger.debug(f"Document loaded: '{doc.title}', html_len={len(restored_html)}")
+                    # Open the document with restored HTML
+                    self._open_document_from_library(doc, search_term, restored_html)
                 else:
                     # Document not found in DB - might be stale search index
                     from PyQt6.QtWidgets import QMessageBox

@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 class DocumentLibrary(QMainWindow):
     """Window for managing and searching the document database."""
     
-    document_opened = pyqtSignal(object) # Emits Document object
+    document_opened = pyqtSignal(object, str) # Emits (Document object, restored_html)
     
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -84,8 +84,8 @@ class DocumentLibrary(QMainWindow):
         
         # Right: Document Table
         self.table = QTableWidget()
-        self.table.setColumnCount(5)
-        self.table.setHorizontalHeaderLabels(["ID", "Title", "Type", "Tags", "Created"])
+        self.table.setColumnCount(3)
+        self.table.setHorizontalHeaderLabels(["ID", "Title", "Type"])
         header = self.table.horizontalHeader()
         if header:
             header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
@@ -139,7 +139,7 @@ class DocumentLibrary(QMainWindow):
             # Collect unique collections
             collections = set()
             for doc in docs:
-                if doc.collection is not None:
+                if doc.collection:
                     collections.add(doc.collection)
             
             # Add collection items
@@ -203,8 +203,6 @@ class DocumentLibrary(QMainWindow):
             
             self.table.setItem(row, 1, QTableWidgetItem(doc.title))
             self.table.setItem(row, 2, QTableWidgetItem(doc.file_type))
-            self.table.setItem(row, 3, QTableWidgetItem(doc.tags or ""))
-            self.table.setItem(row, 4, QTableWidgetItem(str(doc.created_at)))
             if idx % 500 == 0:
                 logger.debug(
                     "DocumentLibrary: inserted %s rows (%.1f ms so far)",
@@ -220,12 +218,11 @@ class DocumentLibrary(QMainWindow):
     def _show_context_menu(self, position):
         menu = QMenu()
         edit_action = menu.addAction("Properties")
-        add_tags_action = menu.addAction("Add Tags...")
         delete_action = menu.addAction("Delete")
         
         menu.addSeparator()
         
-        # Add to Collection submenu
+        # Move to Collection submenu
         collection_menu = menu.addMenu("Move to Collection")
         new_coll_action = None
         
@@ -234,7 +231,7 @@ class DocumentLibrary(QMainWindow):
             collection_menu.addSeparator()
             
             # Get existing collections
-            collections = sorted({d.collection for d in self.all_docs if d.collection is not None})
+            collections = sorted({d.collection for d in self.all_docs if d.collection})
             for coll in collections:
                 from PyQt6.QtGui import QAction
                 action = QAction(str(coll), collection_menu)
@@ -248,50 +245,12 @@ class DocumentLibrary(QMainWindow):
         
         if action == edit_action:
             self._edit_properties()
-        elif action == add_tags_action:
-            self._add_tags_to_selection()
         elif action == delete_action:
             self._delete_document()
         elif new_coll_action and action == new_coll_action:
             self._move_to_new_collection()
         elif collection_menu and action and action.parent() == collection_menu:
             self._move_to_collection(action.data())
-
-    def _add_tags_to_selection(self):
-        selection_model = self.table.selectionModel()
-        if not selection_model:
-            return
-        selected_rows = selection_model.selectedRows()
-        if not selected_rows:
-            return
-
-        from PyQt6.QtWidgets import QInputDialog
-        text, ok = QInputDialog.getText(self, "Add Tags", "Tags (comma separated):")
-        if ok and text:
-            new_tags = [t.strip() for t in text.split(',') if t.strip()]
-            if not new_tags:
-                return
-
-            with document_service_context() as service:
-                for row_idx in selected_rows:
-                    item = self.table.item(row_idx.row(), 0)
-                    if item is None:
-                        continue
-                    doc = item.data(Qt.ItemDataRole.UserRole)
-                    
-                    current_tags = set()
-                    if doc.tags:
-                        current_tags = {t.strip() for t in doc.tags.split(',') if t.strip()}
-                    
-                    current_tags.update(new_tags)
-                    updated_tags_str = ", ".join(sorted(current_tags))
-                    
-                    try:
-                        service.update_document(doc.id, tags=updated_tags_str)
-                    except Exception as e:
-                        print(f"Error updating tags for doc {doc.id}: {e}")
-            
-            self._load_documents()
 
     def _move_to_collection(self, collection_name):
         try:
@@ -384,7 +343,7 @@ class DocumentLibrary(QMainWindow):
         
         if file_path:
             # Get existing collections for the dialog
-            collections = sorted({d.collection for d in self.all_docs if d.collection is not None})
+            collections = sorted({d.collection for d in self.all_docs if d.collection})
             dialog = ImportOptionsDialog(collections, self)
             
             if dialog.exec():
@@ -393,7 +352,6 @@ class DocumentLibrary(QMainWindow):
                     with document_service_context() as service:
                         service.import_document(
                             file_path, 
-                            tags=options['tags'] or '', 
                             collection=options['collection']
                         )
                     self._load_documents()
@@ -491,7 +449,6 @@ class DocumentLibrary(QMainWindow):
                 try:
                     service.import_document(
                         file_path,
-                        tags=options['tags'] if options and options['tags'] else '',
                         collection=options.get('collection') or '' if options else ''
                     )
                     succeeded += 1
@@ -592,14 +549,11 @@ class DocumentLibrary(QMainWindow):
         doc_id = int(item.text())
         
         with document_service_context() as service:
-            doc = service.get_document(doc_id)
-            if doc:
-                # Force-load content while session is active
-                _ = doc.content
-                _ = doc.raw_content
-                _ = doc.title
-                _ = doc.file_type
-                self.document_opened.emit(doc)
+            # Use the new method that restores images
+            result = service.get_document_with_images(doc_id)
+            if result:
+                doc, restored_html = result
+                self.document_opened.emit(doc, restored_html)
             else:
                 QMessageBox.warning(
                     self,

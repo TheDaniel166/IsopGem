@@ -39,7 +39,6 @@ class DocumentSearchRepository:
             title=TEXT(stored=True, field_boost=2.0, analyzer=analyzer),
             content=TEXT(stored=True, analyzer=analyzer),
             file_type=KEYWORD(stored=True),
-            tags=KEYWORD(stored=True, commas=True, scorable=True),
             author=TEXT(stored=True),
             collection=KEYWORD(stored=True),
             created_at=DATETIME(stored=True),
@@ -78,7 +77,6 @@ class DocumentSearchRepository:
                 title=doc.title,
                 content=doc.content,
                 file_type=doc.file_type,
-                tags=doc.tags or "",
                 author=doc.author or "",
                 collection=doc.collection or "",
                 created_at=doc.created_at,
@@ -104,7 +102,6 @@ class DocumentSearchRepository:
                     title=doc.title,
                     content=doc.content,
                     file_type=doc.file_type,
-                    tags=doc.tags or "",
                     author=doc.author or "",
                     collection=doc.collection or "",
                     created_at=doc.created_at,
@@ -142,7 +139,7 @@ class DocumentSearchRepository:
             List of dictionaries containing document info (id, title, etc.)
         """
         with self.ix.searcher() as searcher:
-            parser = MultifieldParser(["title", "content", "tags", "author"], schema=self.schema)
+            parser = MultifieldParser(["title", "content", "author"], schema=self.schema)
             query = parser.parse(query_str)
             
             results = searcher.search(query, limit=limit)
@@ -156,6 +153,7 @@ class DocumentSearchRepository:
                     'id': int(r['id']),
                     'title': r['title'],
                     'file_type': r['file_type'],
+                    'collection': r.get('collection') or '',
                     'created_at': r['created_at'],
                     'highlights': r.highlights("content") or r.highlights("title") or ""
                 }
@@ -181,7 +179,6 @@ class DocumentSearchRepository:
                         title=doc.title,
                         content=doc.content,
                         file_type=doc.file_type,
-                        tags=doc.tags or "",
                         author=doc.author or "",
                         collection=doc.collection or "",
                         created_at=doc.created_at,

@@ -46,15 +46,6 @@ class DocumentPropertiesDialog(QDialog):
             self.author_edit.setPlaceholderText("<Multiple Values> - Leave blank to keep")
         form.addRow("Author:", self.author_edit)
         
-        # Tags
-        self.tags_edit = QLineEdit()
-        common_tags = get_common_value("tags")
-        if common_tags is not None:
-            self.tags_edit.setText(common_tags)
-        else:
-            self.tags_edit.setPlaceholderText("<Multiple Values> - Leave blank to keep")
-        form.addRow("Tags:", self.tags_edit)
-        
         # Collection
         self.collection_edit = QLineEdit()
         common_collection = get_common_value("collection")
@@ -110,7 +101,6 @@ class DocumentPropertiesDialog(QDialog):
                 return "" # User cleared it or it was already empty
         
         data['author'] = get_update_value(self.author_edit, 'author')
-        data['tags'] = get_update_value(self.tags_edit, 'tags')
         data['collection'] = get_update_value(self.collection_edit, 'collection')
         
         return data

@@ -1,7 +1,7 @@
 """Service layer for Document Manager."""
 from sqlalchemy.orm import Session
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional, List, Tuple
 from contextlib import contextmanager
 import time
 import logging
@@ -10,15 +10,24 @@ from shared.database import get_db_session
 from pillars.document_manager.repositories.document_repository import DocumentRepository
 from pillars.document_manager.repositories.document_verse_repository import DocumentVerseRepository
 from pillars.document_manager.repositories.search_repository import DocumentSearchRepository
+from pillars.document_manager.repositories.image_repository import ImageRepository
 from pillars.document_manager.utils.parsers import DocumentParser
+from pillars.document_manager.utils.image_utils import (
+    extract_images_from_html, 
+    restore_images_in_html,
+    has_embedded_images
+)
 from pillars.document_manager.models.document import Document
 
 logger = logging.getLogger(__name__)
 
+
 class DocumentService:
     def __init__(self, db: Session):
+        self.db = db
         self.repo = DocumentRepository(db)
         self.verse_repo = DocumentVerseRepository(db)
+        self.image_repo = ImageRepository(db)
         self.search_repo = DocumentSearchRepository()
 
     def _update_links(self, doc: Document):
@@ -47,7 +56,7 @@ class DocumentService:
             
         self.repo.db.commit()
 
-    def import_document(self, file_path: str, tags: Optional[str] = None, collection: Optional[str] = None) -> Document:
+    def import_document(self, file_path: str, collection: Optional[str] = None) -> Document:
         """
         Import a document from a file path.
         Parses content and saves to database.
@@ -73,17 +82,38 @@ class DocumentService:
         if not doc_title or not doc_title.strip():
             doc_title = path.stem
 
-        # Create document record
+        # Create document record first (without images extracted yet)
         doc = self.repo.create(
             title=doc_title,
             content=content,
             file_type=file_type,
             file_path=str(path),
-            raw_content=raw_content,
-            tags=tags or "",
+            raw_content=raw_content,  # Will be updated after image extraction
             author=metadata.get('author') or "",
             collection=collection or ""
         )
+        
+        # Extract and store images separately if raw_content has embedded images
+        if raw_content and has_embedded_images(raw_content):
+            def store_image(image_bytes: bytes, mime_type: str) -> int:
+                img = self.image_repo.create(
+                    document_id=doc.id,
+                    data=image_bytes,
+                    mime_type=mime_type
+                )
+                return img.id
+            
+            # Extract images and update raw_content with docimg:// references
+            modified_html, images_info = extract_images_from_html(raw_content, store_image)
+            
+            if images_info:
+                # Update the document with the lighter raw_content
+                doc.raw_content = modified_html
+                self.db.commit()
+                logger.debug(
+                    "DocumentService: extracted %d images from '%s'",
+                    len(images_info), path.name
+                )
         
         # Update links
         self._update_links(doc)
@@ -149,12 +179,54 @@ class DocumentService:
     def get_document(self, doc_id: int):
         return self.repo.get(doc_id)
     
+    def get_document_with_images(self, doc_id: int) -> Optional[Tuple[Document, str]]:
+        """
+        Get a document with images restored in raw_content.
+        
+        Returns:
+            Tuple of (Document, restored_html) or None if not found
+        """
+        doc = self.repo.get(doc_id)
+        if not doc:
+            return None
+        
+        raw_content = doc.raw_content or doc.content or ""
+        
+        # If the document has docimg:// references, restore them
+        from pillars.document_manager.utils.image_utils import has_docimg_references
+        
+        if has_docimg_references(raw_content):
+            def fetch_image(image_id: int) -> Tuple[bytes, str]:
+                img = self.image_repo.get(image_id)
+                if img:
+                    data = self.image_repo.get_decompressed_data(img)
+                    return data, img.mime_type
+                raise ValueError(f"Image {image_id} not found")
+            
+            restored_html = restore_images_in_html(raw_content, fetch_image)
+            return doc, restored_html
+        
+        return doc, raw_content
+    
+    def get_image(self, image_id: int) -> Optional[Tuple[bytes, str]]:
+        """
+        Get an image by ID.
+        
+        Returns:
+            Tuple of (image_bytes, mime_type) or None if not found
+        """
+        img = self.image_repo.get(image_id)
+        if img:
+            data = self.image_repo.get_decompressed_data(img)
+            return data, img.mime_type
+        return None
+    
     def update_document(self, doc_id: int, **kwargs):
         """
         Update document fields.
         Args:
             doc_id: Document ID
-            **kwargs: Fields to update (content, raw_content, title, tags, author, collection)
+            **kwargs: Fields to update (content, raw_content, title, author, collection)
         """
         start = time.perf_counter()
         doc = self.repo.update(doc_id, **kwargs)

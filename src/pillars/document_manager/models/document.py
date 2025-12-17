@@ -45,7 +45,6 @@ class Document(Base):
     raw_content = Column(Text, nullable=True) # HTML/RTF raw content if needed
     
     # Metadata
-    tags = Column(String, nullable=True) # Comma-separated tags
     author = Column(String, nullable=True)
     collection = Column(String, nullable=True) # Virtual folder/collection name
     

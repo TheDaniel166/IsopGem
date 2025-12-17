@@ -24,18 +24,13 @@ class DocumentRepository:
         """Fetch all documents but only load lightweight metadata fields."""
         start = time.perf_counter()
         logger.debug("DocumentRepository: preparing metadata query with load_only")
-        # Explicitly load ONLY these columns - much faster than defer for large blobs
+        # Use minimal columns for fast loading
         query = self.db.query(Document).options(
             load_only(
                 Document.id,
                 Document.title,
-                Document.file_path,
                 Document.file_type,
-                Document.tags,
-                Document.author,
                 Document.collection,
-                Document.created_at,
-                Document.updated_at,
             )
         )
         logger.debug("DocumentRepository: executing metadata query ...")
@@ -61,7 +56,6 @@ class DocumentRepository:
         file_type: str,
         file_path: Optional[str] = None,
         raw_content: Optional[str] = None,
-        tags: Optional[str] = None,
         author: Optional[str] = None,
         collection: Optional[str] = None,
     ) -> Document:
@@ -71,7 +65,6 @@ class DocumentRepository:
             file_type=file_type,
             file_path=file_path,
             raw_content=raw_content,
-            tags=tags,
             author=author,
             collection=collection
         )
