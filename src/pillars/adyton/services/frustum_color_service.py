@@ -28,13 +28,13 @@ class FrustumColorService:
     """Resolves center-face colors for frustums based on per-wall CSV data."""
 
     WALL_FILES = {
-        0: "saturn_wall.csv",
-        1: "sun_wall.csv",
-        2: "mercury_wall.csv",
-        3: "luna_wall.csv",
-        4: "venus_wall.csv",
-        5: "jupiter_wall.csv",
-        6: "mars_wall.csv",
+        0: "sun_wall.csv",
+        1: "mercury_wall.csv",
+        2: "luna_wall.csv",
+        3: "venus_wall.csv",
+        4: "jupiter_wall.csv",
+        5: "mars_wall.csv",
+        6: "saturn_wall.csv",
     }
 
     def __init__(self, docs_root: Optional[Path] = None):
@@ -59,6 +59,39 @@ class FrustumColorService:
         self._top_rows = {0, 1, 2}
         self._middle_rows = {3, 4}
         self._bottom_rows = {5, 6, 7}
+        self._cache_decimal: Dict[int, List[List[int]]] = {}
+
+    def get_wall_decimals(self, wall_index: int) -> List[List[int]]:
+        """Returns the raw decimal values from the wall CSV (8 rows × 13 cols)."""
+        if wall_index in self._cache_decimal:
+            return self._cache_decimal[wall_index]
+
+        filename = self.WALL_FILES.get(wall_index)
+        if not filename:
+            return []
+
+        path = self.docs_root / filename
+        if not path.exists():
+            return []
+
+        grid: List[List[int]] = []
+        with path.open("r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                cells = line.split(",")
+                row: List[int] = []
+                for cell in cells:
+                    cell = cell.strip()
+                    try:
+                        row.append(int(cell))
+                    except ValueError:
+                        row.append(0)
+                grid.append(row)
+
+        self._cache_decimal[wall_index] = grid
+        return grid
 
     def get_center_color(self, wall_index: int, row: int, col: int) -> QColor:
         grid = self._load_wall(wall_index)
@@ -155,6 +188,8 @@ class FrustumColorService:
         if not trigram_path.exists():
             return {}
         mapping: Dict[int, QColor] = {}
+        self._trigram_glyphs: Dict[int, str] = {}
+        self._trigram_letters: Dict[int, str] = {}
         with trigram_path.open("r", encoding="utf-8") as f:
             next(f, None)  # skip header
             for line in f:
@@ -172,7 +207,20 @@ class FrustumColorService:
                 except ValueError:
                     continue
                 mapping[trigram_dec] = QColor(r, g, b)
+                # Load glyph and letter if present
+                if len(parts) >= 5:
+                    self._trigram_glyphs[trigram_dec] = parts[4].strip()
+                if len(parts) >= 6:
+                    self._trigram_letters[trigram_dec] = parts[5].strip()
         return mapping
+
+    def get_trigram_glyph(self, trigram_dec: int) -> str:
+        """Returns the glyph symbol for a trigram decimal value."""
+        return self._trigram_glyphs.get(trigram_dec, "")
+
+    def get_trigram_letter(self, trigram_dec: int) -> str:
+        """Returns the letter for a trigram decimal value."""
+        return self._trigram_letters.get(trigram_dec, "")
 
     def _build_zodiac_cycle(self) -> List[int]:
         # Standard zodiac order starting with Aries
@@ -265,3 +313,43 @@ class FrustumColorService:
         if code is None:
             return QColor("#000000")
         return self._trigram_map.get(code, QColor("#000000"))
+
+    def get_left_face_trigram_code(self, wall_index: int, row: int) -> int:
+        """Get the trigram code for the left face (planet-based)."""
+        planet_name = self._wall_planet_order[wall_index % len(self._wall_planet_order)]
+
+        def planet_by_offset(offset: int) -> Optional[str]:
+            idx = (wall_index + offset) % len(self._wall_planet_order)
+            return self._wall_planet_order[idx]
+
+        if row == 0:
+            target_planet = planet_by_offset(-3)
+        elif row == 1:
+            target_planet = planet_by_offset(-2)
+        elif row == 2:
+            target_planet = planet_by_offset(-1)
+        elif row in self._middle_rows:
+            target_planet = planet_name
+        elif row == 5:
+            target_planet = planet_by_offset(1)
+        elif row == 6:
+            target_planet = planet_by_offset(2)
+        elif row == 7:
+            target_planet = planet_by_offset(3)
+        else:
+            target_planet = planet_name
+
+        if target_planet is None:
+            return 0
+        return self._planet_color_codes.get(target_planet, 0)
+
+    def get_right_face_trigram_code(self, wall_index: int, col: int) -> int:
+        """Get the trigram code for the right face (zodiac-based)."""
+        if col == self._center_column:
+            planet_name = self._wall_planet_order[wall_index % len(self._wall_planet_order)]
+            return self._planet_color_codes.get(planet_name, 0)
+
+        if not self._zodiac_cycle:
+            return 0
+        return self._zodiac_cycle[col % len(self._zodiac_cycle)]
+

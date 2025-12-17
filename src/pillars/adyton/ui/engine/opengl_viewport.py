@@ -34,19 +34,13 @@ from OpenGL.GL import (
     glVertex3f,
     glPointSize,
     glLineWidth,
-    glBlendFunc,
-    glDepthMask,
     GL_COLOR_BUFFER_BIT,
     GL_DEPTH_BUFFER_BIT,
     GL_DEPTH_TEST,
-    GL_BLEND,
-    GL_SRC_ALPHA,
-    GL_ONE,
     GL_PROJECTION,
     GL_MODELVIEW,
     GL_TRIANGLES,
     GL_LINE_LOOP,
-    GL_POINTS,
 )
 
 from pillars.adyton.models.geometry_types import Object3D, Face3D
@@ -76,11 +70,17 @@ class AdytonGLViewport(QOpenGLWidget):
             self.scene_objects: List[Object3D] = SevenSidedPrism.build()
             self.draw_labels = False  # disable overlays by default (stability)
         else:
-            self.scene_objects = SevenSidedPrism.build_wall(wall_index)
-            self.draw_labels = False  # wall-only view; no overlays/floor
-        # Starfield disabled for performance
-        self.star_service = None
-        self.star_samples = []
+            # Use flat wall builder for front-facing isolated view
+            self.scene_objects = SevenSidedPrism.build_wall_flat(wall_index)
+            self.draw_labels = False
+            # Configure camera to face wall front-on
+            # Wall is at origin, interior faces toward -Z
+            # Camera looks from -Z toward origin
+            from pillars.adyton.constants import WALL_WIDTH_INCHES, WALL_HEIGHT_INCHES
+            self.camera.target = QVector3D(0, WALL_HEIGHT_INCHES / 2, 0)
+            self.camera.radius = max(WALL_WIDTH_INCHES, WALL_HEIGHT_INCHES) * 1.2
+            self.camera.theta = 90.0  # horizontal
+            self.camera.phi = 180.0   # looking from -Z toward +Z
 
         self.last_pos: QPoint = QPoint()
         self.mouse_pressed: bool = False
@@ -117,6 +117,10 @@ class AdytonGLViewport(QOpenGLWidget):
             glMultMatrixf(mv.data())
 
             self._draw_object(obj)
+
+        # DEBUG: Draw a test swatch in the corner to verify teal color
+        # This should show the exact color that cell (0,0) should display
+        self._draw_test_swatch()
 
         if self.draw_labels:
             self._draw_overlays(projection, view)
@@ -182,7 +186,31 @@ class AdytonGLViewport(QOpenGLWidget):
         painter.setRenderHint(QPainter.RenderHint.TextAntialiasing)
         painter.setFont(QFont("DejaVu Sans", 16, QFont.Weight.Bold))
 
+        # Planet names for wall labels
+        planet_names = ["Sun", "Mercury", "Moon", "Venus", "Mars", "Jupiter", "Saturn"]
+
         for obj in self.scene_objects:
+            # Draw wall labels (planet names above walls)
+            if hasattr(obj, "wall_index"):
+                wall_idx = obj.wall_index
+                planet_name = planet_names[wall_idx % len(planet_names)]
+                
+                # Get wall center position (top of wall)
+                model = self._model_matrix(obj)
+                # Project the top-center of the wall
+                wall_top = QVector3D(0, 8.0, 0)  # Top center of wall (8 units = wall height)
+                screen_pt = self._project_point(wall_top, model, view, projection)
+                if screen_pt:
+                    # Draw label with white text and black outline
+                    painter.setPen(QColor(0, 0, 0))
+                    for dx in [-1, 0, 1]:
+                        for dy in [-1, 0, 1]:
+                            if dx != 0 or dy != 0:
+                                painter.drawText(screen_pt.x() + dx, screen_pt.y() + dy, planet_name)
+                    painter.setPen(QColor(255, 255, 255))
+                    painter.drawText(screen_pt, planet_name)
+
+            # Existing vowel ring labels
             if not hasattr(obj, "label_positions"):
                 continue
 
@@ -208,35 +236,7 @@ class AdytonGLViewport(QOpenGLWidget):
 
         painter.end()
 
-    def _draw_starfield(self, projection: QMatrix4x4, view: QMatrix4x4):
-        if not self.star_points:
-            return
-        from OpenGL.GL import glDisable, glEnable, glBegin, glEnd, glColor4f, glVertex3f, GL_POINTS, GL_DEPTH_TEST, GL_BLEND, glBlendFunc, GL_SRC_ALPHA, GL_ONE
 
-        glDisable(GL_DEPTH_TEST)
-        glEnable(GL_BLEND)
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE)
-
-        # Align +Z to Galactic Center already handled by Venus wall orientation; no extra rotation
-        glMatrixMode(GL_PROJECTION)
-        glLoadIdentity()
-        glMultMatrixf(projection.data())
-
-        glMatrixMode(GL_MODELVIEW)
-        glLoadIdentity()
-        glMultMatrixf(view.data())
-
-        glBegin(GL_POINTS)
-        for sp in self.star_points:
-            r, g, b = sp.color
-            alpha = max(0.3, min(1.0, 1.2 - (sp.magnitude * 0.15 if sp.magnitude >= 0 else 0.2)))
-            glColor4f(r, g, b, alpha)
-            x, y, z = sp.direction
-            glVertex3f(x * 2000.0, y * 2000.0, z * 2000.0)
-        glEnd()
-
-        glDisable(GL_BLEND)
-        glEnable(GL_DEPTH_TEST)
 
     def _project_point(self, point: QVector3D, model: QMatrix4x4, view: QMatrix4x4, proj: QMatrix4x4):
         vec = QVector4D(point.x(), point.y(), point.z(), 1.0)
@@ -270,16 +270,11 @@ class AdytonGLViewport(QOpenGLWidget):
         if len(verts) < 3:
             return
 
-        # Simple ambient + directional shading
-        light_dir = QVector3D(0.25, -0.6, 0.75).normalized()
-        v0, v1, v2 = verts[0], verts[1], verts[2]
-        normal = QVector3D.crossProduct(v1 - v0, v2 - v0).normalized()
-        ambient = 0.35
-        diffuse = max(0.0, QVector3D.dotProduct(normal, light_dir))
-        shade = min(1.0, ambient + diffuse * 0.75)
-
         col = face.color
-        glColor3f(col.redF() * shade, col.greenF() * shade, col.blueF() * shade)
+        
+        # Pass QColor values directly - they're already in sRGB space
+        # which matches the monitor's color space for fixed-function OpenGL
+        glColor3f(col.redF(), col.greenF(), col.blueF())
 
         glBegin(GL_TRIANGLES)
         if len(verts) == 3:
@@ -312,6 +307,3 @@ class AdytonGLViewport(QOpenGLWidget):
             glVertex3f(v.x(), v.y(), v.z())
         glEnd()
 
-    # Starfield disabled for performance
-    def _draw_starfield(self, projection: QMatrix4x4, view: QMatrix4x4):
-        return

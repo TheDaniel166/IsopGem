@@ -6,6 +6,7 @@ from shared.ui import WindowManager
 from .engine.window import AdytonSanctuaryEngine
 from .engine.opengl_viewport import AdytonGLViewport
 from .engine.wall_window import AdytonWallWindow
+from .wall_analytics_window import WallAnalyticsWindow
 
 class AdytonHub(QWidget):
     """Hub widget for Adyton pillar - displays available tools."""
@@ -99,6 +100,17 @@ class AdytonHub(QWidget):
             wall_btn.clicked.connect(lambda _=False, i=idx: self._open_wall_view(i))
             buttons_layout.addWidget(wall_btn, alignment=Qt.AlignmentFlag.AlignHCenter)
 
+        # Analytics section
+        analytics_label = QLabel("Analytics")
+        analytics_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        analytics_label.setStyleSheet("color: #444; margin-top: 8px;")
+        buttons_layout.addWidget(analytics_label)
+
+        analytics_btn = QPushButton("Wall Analytics (3D Data Cube)")
+        style_button(analytics_btn, width=280)
+        analytics_btn.clicked.connect(self._open_wall_analytics)
+        buttons_layout.addWidget(analytics_btn, alignment=Qt.AlignmentFlag.AlignHCenter)
+
         layout.addWidget(container, alignment=Qt.AlignmentFlag.AlignHCenter)
 
     def _open_sanctuary(self) -> None:
@@ -124,4 +136,13 @@ class AdytonHub(QWidget):
             AdytonWallWindow,
             allow_multiple=True,
             wall_index=wall_index,
+        )
+
+    def _open_wall_analytics(self) -> None:
+        """Launch the Wall Analytics window."""
+        self.window_manager.open_window(
+            "adyton_wall_analytics",
+            WallAnalyticsWindow,
+            allow_multiple=False,
+            window_manager=self.window_manager,
         )
