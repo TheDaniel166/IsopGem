@@ -1,0 +1,1049 @@
+{
+    "Sun": {
+        "1": {
+            "text": "The Sun in the 1st House illuminates the self. You project confidence and vitality.",
+            "archetype": "The Persona",
+            "essence": "Self-expression, vitality, physical appearance.",
+            "shadow": "Self-absorption, vanity.",
+            "gift": "A strong, radiant presence.",
+            "keywords": [
+                "Self",
+                "Appearance",
+                "Vitality"
+            ]
+        },
+        "10": {
+            "text": "The Sun in the 10th House shines in the public sphere. Career and reputation are central themes.",
+            "archetype": "The Authority",
+            "essence": "Public reputation, career, vocation.",
+            "shadow": "Obsession with status, workaholism.",
+            "gift": "Leadership and public recognition.",
+            "keywords": [
+                "Career",
+                "Public Status",
+                "Authority"
+            ]
+        },
+        "2": {
+            "text": "Sun in House 2. Your core identity and vitality. How you shine. Focused on The House of Value. Personal resources, money, and self-worth..",
+            "archetype": "Sun of the 2th House",
+            "essence": "Focusing Sun energy into The House of Value. Personal resources, money, and self-worth.",
+            "shadow": "Over-identification with 2th house matters; neglecting other areas.",
+            "gift": "Mastery of 2th house affairs through Sun."
+        },
+        "3": {
+            "text": "Sun in House 3. Your core identity and vitality. How you shine. Focused on The House of Mind. Communication, siblings, and local environment..",
+            "archetype": "Sun of the 3th House",
+            "essence": "Focusing Sun energy into The House of Mind. Communication, siblings, and local environment.",
+            "shadow": "Over-identification with 3th house matters; neglecting other areas.",
+            "gift": "Mastery of 3th house affairs through Sun."
+        },
+        "4": {
+            "text": "Sun in House 4. Your core identity and vitality. How you shine. Focused on The House of Home. Roots, ancestry, and emotional foundation..",
+            "archetype": "Sun of the 4th House",
+            "essence": "Focusing Sun energy into The House of Home. Roots, ancestry, and emotional foundation.",
+            "shadow": "Over-identification with 4th house matters; neglecting other areas.",
+            "gift": "Mastery of 4th house affairs through Sun."
+        },
+        "5": {
+            "text": "Sun in House 5. Your core identity and vitality. How you shine. Focused on The House of Joy. Creativity, romance, children, and play..",
+            "archetype": "Sun of the 5th House",
+            "essence": "Focusing Sun energy into The House of Joy. Creativity, romance, children, and play.",
+            "shadow": "Over-identification with 5th house matters; neglecting other areas.",
+            "gift": "Mastery of 5th house affairs through Sun."
+        },
+        "6": {
+            "text": "Sun in House 6. Your core identity and vitality. How you shine. Focused on The House of Service. Daily work, health, and rituals..",
+            "archetype": "Sun of the 6th House",
+            "essence": "Focusing Sun energy into The House of Service. Daily work, health, and rituals.",
+            "shadow": "Over-identification with 6th house matters; neglecting other areas.",
+            "gift": "Mastery of 6th house affairs through Sun."
+        },
+        "7": {
+            "text": "Sun in House 7. Your core identity and vitality. How you shine. Focused on The House of Others. Relationships, contracts, and open enemies..",
+            "archetype": "Sun of the 7th House",
+            "essence": "Focusing Sun energy into The House of Others. Relationships, contracts, and open enemies.",
+            "shadow": "Over-identification with 7th house matters; neglecting other areas.",
+            "gift": "Mastery of 7th house affairs through Sun."
+        },
+        "8": {
+            "text": "Sun in House 8. Your core identity and vitality. How you shine. Focused on The House of Transformation. Intimacy, shared resources, and death/rebirth..",
+            "archetype": "Sun of the 8th House",
+            "essence": "Focusing Sun energy into The House of Transformation. Intimacy, shared resources, and death/rebirth.",
+            "shadow": "Over-identification with 8th house matters; neglecting other areas.",
+            "gift": "Mastery of 8th house affairs through Sun."
+        },
+        "9": {
+            "text": "Sun in House 9. Your core identity and vitality. How you shine. Focused on The House of Spirit. Philosophy, long travel, and higher mind..",
+            "archetype": "Sun of the 9th House",
+            "essence": "Focusing Sun energy into The House of Spirit. Philosophy, long travel, and higher mind.",
+            "shadow": "Over-identification with 9th house matters; neglecting other areas.",
+            "gift": "Mastery of 9th house affairs through Sun."
+        },
+        "11": {
+            "text": "Sun in House 11. Your core identity and vitality. How you shine. Focused on The House of Community. Friends, groups, and future hopes..",
+            "archetype": "Sun of the 11th House",
+            "essence": "Focusing Sun energy into The House of Community. Friends, groups, and future hopes.",
+            "shadow": "Over-identification with 11th house matters; neglecting other areas.",
+            "gift": "Mastery of 11th house affairs through Sun."
+        },
+        "12": {
+            "text": "Sun in House 12. Your core identity and vitality. How you shine. Focused on The House of Secrets. The unconscious, isolation, and spiritual transcendence..",
+            "archetype": "Sun of the 12th House",
+            "essence": "Focusing Sun energy into The House of Secrets. The unconscious, isolation, and spiritual transcendence.",
+            "shadow": "Over-identification with 12th house matters; neglecting other areas.",
+            "gift": "Mastery of 12th house affairs through Sun."
+        }
+    },
+    "Moon": {
+        "1": {
+            "text": "The Moon in the 1st House wears its heart on its sleeve. You are emotionally responsive and intuitive.",
+            "archetype": "The Feeler",
+            "essence": "Emotional sensitivity, nurturing presence.",
+            "shadow": "Moodiness, over-sensitivity.",
+            "gift": "Deep empathy and intuitive connection.",
+            "keywords": [
+                "Emotion",
+                "Intuition",
+                "Sensitivity"
+            ]
+        },
+        "2": {
+            "text": "Moon in House 2. Your emotional nature and subconscious needs. How you comfort yourself. Focused on The House of Value. Personal resources, money, and self-worth..",
+            "archetype": "Moon of the 2th House",
+            "essence": "Focusing Moon energy into The House of Value. Personal resources, money, and self-worth.",
+            "shadow": "Over-identification with 2th house matters; neglecting other areas.",
+            "gift": "Mastery of 2th house affairs through Moon."
+        },
+        "3": {
+            "text": "Moon in House 3. Your emotional nature and subconscious needs. How you comfort yourself. Focused on The House of Mind. Communication, siblings, and local environment..",
+            "archetype": "Moon of the 3th House",
+            "essence": "Focusing Moon energy into The House of Mind. Communication, siblings, and local environment.",
+            "shadow": "Over-identification with 3th house matters; neglecting other areas.",
+            "gift": "Mastery of 3th house affairs through Moon."
+        },
+        "4": {
+            "text": "Moon in House 4. Your emotional nature and subconscious needs. How you comfort yourself. Focused on The House of Home. Roots, ancestry, and emotional foundation..",
+            "archetype": "Moon of the 4th House",
+            "essence": "Focusing Moon energy into The House of Home. Roots, ancestry, and emotional foundation.",
+            "shadow": "Over-identification with 4th house matters; neglecting other areas.",
+            "gift": "Mastery of 4th house affairs through Moon."
+        },
+        "5": {
+            "text": "Moon in House 5. Your emotional nature and subconscious needs. How you comfort yourself. Focused on The House of Joy. Creativity, romance, children, and play..",
+            "archetype": "Moon of the 5th House",
+            "essence": "Focusing Moon energy into The House of Joy. Creativity, romance, children, and play.",
+            "shadow": "Over-identification with 5th house matters; neglecting other areas.",
+            "gift": "Mastery of 5th house affairs through Moon."
+        },
+        "6": {
+            "text": "Moon in House 6. Your emotional nature and subconscious needs. How you comfort yourself. Focused on The House of Service. Daily work, health, and rituals..",
+            "archetype": "Moon of the 6th House",
+            "essence": "Focusing Moon energy into The House of Service. Daily work, health, and rituals.",
+            "shadow": "Over-identification with 6th house matters; neglecting other areas.",
+            "gift": "Mastery of 6th house affairs through Moon."
+        },
+        "7": {
+            "text": "Moon in House 7. Your emotional nature and subconscious needs. How you comfort yourself. Focused on The House of Others. Relationships, contracts, and open enemies..",
+            "archetype": "Moon of the 7th House",
+            "essence": "Focusing Moon energy into The House of Others. Relationships, contracts, and open enemies.",
+            "shadow": "Over-identification with 7th house matters; neglecting other areas.",
+            "gift": "Mastery of 7th house affairs through Moon."
+        },
+        "8": {
+            "text": "Moon in House 8. Your emotional nature and subconscious needs. How you comfort yourself. Focused on The House of Transformation. Intimacy, shared resources, and death/rebirth..",
+            "archetype": "Moon of the 8th House",
+            "essence": "Focusing Moon energy into The House of Transformation. Intimacy, shared resources, and death/rebirth.",
+            "shadow": "Over-identification with 8th house matters; neglecting other areas.",
+            "gift": "Mastery of 8th house affairs through Moon."
+        },
+        "9": {
+            "text": "Moon in House 9. Your emotional nature and subconscious needs. How you comfort yourself. Focused on The House of Spirit. Philosophy, long travel, and higher mind..",
+            "archetype": "Moon of the 9th House",
+            "essence": "Focusing Moon energy into The House of Spirit. Philosophy, long travel, and higher mind.",
+            "shadow": "Over-identification with 9th house matters; neglecting other areas.",
+            "gift": "Mastery of 9th house affairs through Moon."
+        },
+        "10": {
+            "text": "Moon in House 10. Your emotional nature and subconscious needs. How you comfort yourself. Focused on The House of Reputation. Career, public standing, and legacy..",
+            "archetype": "Moon of the 10th House",
+            "essence": "Focusing Moon energy into The House of Reputation. Career, public standing, and legacy.",
+            "shadow": "Over-identification with 10th house matters; neglecting other areas.",
+            "gift": "Mastery of 10th house affairs through Moon."
+        },
+        "11": {
+            "text": "Moon in House 11. Your emotional nature and subconscious needs. How you comfort yourself. Focused on The House of Community. Friends, groups, and future hopes..",
+            "archetype": "Moon of the 11th House",
+            "essence": "Focusing Moon energy into The House of Community. Friends, groups, and future hopes.",
+            "shadow": "Over-identification with 11th house matters; neglecting other areas.",
+            "gift": "Mastery of 11th house affairs through Moon."
+        },
+        "12": {
+            "text": "Moon in House 12. Your emotional nature and subconscious needs. How you comfort yourself. Focused on The House of Secrets. The unconscious, isolation, and spiritual transcendence..",
+            "archetype": "Moon of the 12th House",
+            "essence": "Focusing Moon energy into The House of Secrets. The unconscious, isolation, and spiritual transcendence.",
+            "shadow": "Over-identification with 12th house matters; neglecting other areas.",
+            "gift": "Mastery of 12th house affairs through Moon."
+        }
+    },
+    "Mercury": {
+        "1": {
+            "text": "Mercury in House 1. Your mind and communication style. How you perceive the world. Focused on The House of Self. Appearance, vitality, and first impressions..",
+            "archetype": "Mercury of the 1th House",
+            "essence": "Focusing Mercury energy into The House of Self. Appearance, vitality, and first impressions.",
+            "shadow": "Over-identification with 1th house matters; neglecting other areas.",
+            "gift": "Mastery of 1th house affairs through Mercury."
+        },
+        "2": {
+            "text": "Mercury in House 2. Your mind and communication style. How you perceive the world. Focused on The House of Value. Personal resources, money, and self-worth..",
+            "archetype": "Mercury of the 2th House",
+            "essence": "Focusing Mercury energy into The House of Value. Personal resources, money, and self-worth.",
+            "shadow": "Over-identification with 2th house matters; neglecting other areas.",
+            "gift": "Mastery of 2th house affairs through Mercury."
+        },
+        "3": {
+            "text": "Mercury in House 3. Your mind and communication style. How you perceive the world. Focused on The House of Mind. Communication, siblings, and local environment..",
+            "archetype": "Mercury of the 3th House",
+            "essence": "Focusing Mercury energy into The House of Mind. Communication, siblings, and local environment.",
+            "shadow": "Over-identification with 3th house matters; neglecting other areas.",
+            "gift": "Mastery of 3th house affairs through Mercury."
+        },
+        "4": {
+            "text": "Mercury in House 4. Your mind and communication style. How you perceive the world. Focused on The House of Home. Roots, ancestry, and emotional foundation..",
+            "archetype": "Mercury of the 4th House",
+            "essence": "Focusing Mercury energy into The House of Home. Roots, ancestry, and emotional foundation.",
+            "shadow": "Over-identification with 4th house matters; neglecting other areas.",
+            "gift": "Mastery of 4th house affairs through Mercury."
+        },
+        "5": {
+            "text": "Mercury in House 5. Your mind and communication style. How you perceive the world. Focused on The House of Joy. Creativity, romance, children, and play..",
+            "archetype": "Mercury of the 5th House",
+            "essence": "Focusing Mercury energy into The House of Joy. Creativity, romance, children, and play.",
+            "shadow": "Over-identification with 5th house matters; neglecting other areas.",
+            "gift": "Mastery of 5th house affairs through Mercury."
+        },
+        "6": {
+            "text": "Mercury in House 6. Your mind and communication style. How you perceive the world. Focused on The House of Service. Daily work, health, and rituals..",
+            "archetype": "Mercury of the 6th House",
+            "essence": "Focusing Mercury energy into The House of Service. Daily work, health, and rituals.",
+            "shadow": "Over-identification with 6th house matters; neglecting other areas.",
+            "gift": "Mastery of 6th house affairs through Mercury."
+        },
+        "7": {
+            "text": "Mercury in House 7. Your mind and communication style. How you perceive the world. Focused on The House of Others. Relationships, contracts, and open enemies..",
+            "archetype": "Mercury of the 7th House",
+            "essence": "Focusing Mercury energy into The House of Others. Relationships, contracts, and open enemies.",
+            "shadow": "Over-identification with 7th house matters; neglecting other areas.",
+            "gift": "Mastery of 7th house affairs through Mercury."
+        },
+        "8": {
+            "text": "Mercury in House 8. Your mind and communication style. How you perceive the world. Focused on The House of Transformation. Intimacy, shared resources, and death/rebirth..",
+            "archetype": "Mercury of the 8th House",
+            "essence": "Focusing Mercury energy into The House of Transformation. Intimacy, shared resources, and death/rebirth.",
+            "shadow": "Over-identification with 8th house matters; neglecting other areas.",
+            "gift": "Mastery of 8th house affairs through Mercury."
+        },
+        "9": {
+            "text": "Mercury in House 9. Your mind and communication style. How you perceive the world. Focused on The House of Spirit. Philosophy, long travel, and higher mind..",
+            "archetype": "Mercury of the 9th House",
+            "essence": "Focusing Mercury energy into The House of Spirit. Philosophy, long travel, and higher mind.",
+            "shadow": "Over-identification with 9th house matters; neglecting other areas.",
+            "gift": "Mastery of 9th house affairs through Mercury."
+        },
+        "10": {
+            "text": "Mercury in House 10. Your mind and communication style. How you perceive the world. Focused on The House of Reputation. Career, public standing, and legacy..",
+            "archetype": "Mercury of the 10th House",
+            "essence": "Focusing Mercury energy into The House of Reputation. Career, public standing, and legacy.",
+            "shadow": "Over-identification with 10th house matters; neglecting other areas.",
+            "gift": "Mastery of 10th house affairs through Mercury."
+        },
+        "11": {
+            "text": "Mercury in House 11. Your mind and communication style. How you perceive the world. Focused on The House of Community. Friends, groups, and future hopes..",
+            "archetype": "Mercury of the 11th House",
+            "essence": "Focusing Mercury energy into The House of Community. Friends, groups, and future hopes.",
+            "shadow": "Over-identification with 11th house matters; neglecting other areas.",
+            "gift": "Mastery of 11th house affairs through Mercury."
+        },
+        "12": {
+            "text": "Mercury in House 12. Your mind and communication style. How you perceive the world. Focused on The House of Secrets. The unconscious, isolation, and spiritual transcendence..",
+            "archetype": "Mercury of the 12th House",
+            "essence": "Focusing Mercury energy into The House of Secrets. The unconscious, isolation, and spiritual transcendence.",
+            "shadow": "Over-identification with 12th house matters; neglecting other areas.",
+            "gift": "Mastery of 12th house affairs through Mercury."
+        }
+    },
+    "Venus": {
+        "1": {
+            "text": "Venus in House 1. Your values, love style, and aesthetic sense. What you attract. Focused on The House of Self. Appearance, vitality, and first impressions..",
+            "archetype": "Venus of the 1th House",
+            "essence": "Focusing Venus energy into The House of Self. Appearance, vitality, and first impressions.",
+            "shadow": "Over-identification with 1th house matters; neglecting other areas.",
+            "gift": "Mastery of 1th house affairs through Venus."
+        },
+        "2": {
+            "text": "Venus in House 2. Your values, love style, and aesthetic sense. What you attract. Focused on The House of Value. Personal resources, money, and self-worth..",
+            "archetype": "Venus of the 2th House",
+            "essence": "Focusing Venus energy into The House of Value. Personal resources, money, and self-worth.",
+            "shadow": "Over-identification with 2th house matters; neglecting other areas.",
+            "gift": "Mastery of 2th house affairs through Venus."
+        },
+        "3": {
+            "text": "Venus in House 3. Your values, love style, and aesthetic sense. What you attract. Focused on The House of Mind. Communication, siblings, and local environment..",
+            "archetype": "Venus of the 3th House",
+            "essence": "Focusing Venus energy into The House of Mind. Communication, siblings, and local environment.",
+            "shadow": "Over-identification with 3th house matters; neglecting other areas.",
+            "gift": "Mastery of 3th house affairs through Venus."
+        },
+        "4": {
+            "text": "Venus in House 4. Your values, love style, and aesthetic sense. What you attract. Focused on The House of Home. Roots, ancestry, and emotional foundation..",
+            "archetype": "Venus of the 4th House",
+            "essence": "Focusing Venus energy into The House of Home. Roots, ancestry, and emotional foundation.",
+            "shadow": "Over-identification with 4th house matters; neglecting other areas.",
+            "gift": "Mastery of 4th house affairs through Venus."
+        },
+        "5": {
+            "text": "Venus in House 5. Your values, love style, and aesthetic sense. What you attract. Focused on The House of Joy. Creativity, romance, children, and play..",
+            "archetype": "Venus of the 5th House",
+            "essence": "Focusing Venus energy into The House of Joy. Creativity, romance, children, and play.",
+            "shadow": "Over-identification with 5th house matters; neglecting other areas.",
+            "gift": "Mastery of 5th house affairs through Venus."
+        },
+        "6": {
+            "text": "Venus in House 6. Your values, love style, and aesthetic sense. What you attract. Focused on The House of Service. Daily work, health, and rituals..",
+            "archetype": "Venus of the 6th House",
+            "essence": "Focusing Venus energy into The House of Service. Daily work, health, and rituals.",
+            "shadow": "Over-identification with 6th house matters; neglecting other areas.",
+            "gift": "Mastery of 6th house affairs through Venus."
+        },
+        "7": {
+            "text": "Venus in House 7. Your values, love style, and aesthetic sense. What you attract. Focused on The House of Others. Relationships, contracts, and open enemies..",
+            "archetype": "Venus of the 7th House",
+            "essence": "Focusing Venus energy into The House of Others. Relationships, contracts, and open enemies.",
+            "shadow": "Over-identification with 7th house matters; neglecting other areas.",
+            "gift": "Mastery of 7th house affairs through Venus."
+        },
+        "8": {
+            "text": "Venus in House 8. Your values, love style, and aesthetic sense. What you attract. Focused on The House of Transformation. Intimacy, shared resources, and death/rebirth..",
+            "archetype": "Venus of the 8th House",
+            "essence": "Focusing Venus energy into The House of Transformation. Intimacy, shared resources, and death/rebirth.",
+            "shadow": "Over-identification with 8th house matters; neglecting other areas.",
+            "gift": "Mastery of 8th house affairs through Venus."
+        },
+        "9": {
+            "text": "Venus in House 9. Your values, love style, and aesthetic sense. What you attract. Focused on The House of Spirit. Philosophy, long travel, and higher mind..",
+            "archetype": "Venus of the 9th House",
+            "essence": "Focusing Venus energy into The House of Spirit. Philosophy, long travel, and higher mind.",
+            "shadow": "Over-identification with 9th house matters; neglecting other areas.",
+            "gift": "Mastery of 9th house affairs through Venus."
+        },
+        "10": {
+            "text": "Venus in House 10. Your values, love style, and aesthetic sense. What you attract. Focused on The House of Reputation. Career, public standing, and legacy..",
+            "archetype": "Venus of the 10th House",
+            "essence": "Focusing Venus energy into The House of Reputation. Career, public standing, and legacy.",
+            "shadow": "Over-identification with 10th house matters; neglecting other areas.",
+            "gift": "Mastery of 10th house affairs through Venus."
+        },
+        "11": {
+            "text": "Venus in House 11. Your values, love style, and aesthetic sense. What you attract. Focused on The House of Community. Friends, groups, and future hopes..",
+            "archetype": "Venus of the 11th House",
+            "essence": "Focusing Venus energy into The House of Community. Friends, groups, and future hopes.",
+            "shadow": "Over-identification with 11th house matters; neglecting other areas.",
+            "gift": "Mastery of 11th house affairs through Venus."
+        },
+        "12": {
+            "text": "Venus in House 12. Your values, love style, and aesthetic sense. What you attract. Focused on The House of Secrets. The unconscious, isolation, and spiritual transcendence..",
+            "archetype": "Venus of the 12th House",
+            "essence": "Focusing Venus energy into The House of Secrets. The unconscious, isolation, and spiritual transcendence.",
+            "shadow": "Over-identification with 12th house matters; neglecting other areas.",
+            "gift": "Mastery of 12th house affairs through Venus."
+        }
+    },
+    "Mars": {
+        "1": {
+            "text": "Mars in House 1. Your drive, desire, and conflict style. How you get what you want. Focused on The House of Self. Appearance, vitality, and first impressions..",
+            "archetype": "Mars of the 1th House",
+            "essence": "Focusing Mars energy into The House of Self. Appearance, vitality, and first impressions.",
+            "shadow": "Over-identification with 1th house matters; neglecting other areas.",
+            "gift": "Mastery of 1th house affairs through Mars."
+        },
+        "2": {
+            "text": "Mars in House 2. Your drive, desire, and conflict style. How you get what you want. Focused on The House of Value. Personal resources, money, and self-worth..",
+            "archetype": "Mars of the 2th House",
+            "essence": "Focusing Mars energy into The House of Value. Personal resources, money, and self-worth.",
+            "shadow": "Over-identification with 2th house matters; neglecting other areas.",
+            "gift": "Mastery of 2th house affairs through Mars."
+        },
+        "3": {
+            "text": "Mars in House 3. Your drive, desire, and conflict style. How you get what you want. Focused on The House of Mind. Communication, siblings, and local environment..",
+            "archetype": "Mars of the 3th House",
+            "essence": "Focusing Mars energy into The House of Mind. Communication, siblings, and local environment.",
+            "shadow": "Over-identification with 3th house matters; neglecting other areas.",
+            "gift": "Mastery of 3th house affairs through Mars."
+        },
+        "4": {
+            "text": "Mars in House 4. Your drive, desire, and conflict style. How you get what you want. Focused on The House of Home. Roots, ancestry, and emotional foundation..",
+            "archetype": "Mars of the 4th House",
+            "essence": "Focusing Mars energy into The House of Home. Roots, ancestry, and emotional foundation.",
+            "shadow": "Over-identification with 4th house matters; neglecting other areas.",
+            "gift": "Mastery of 4th house affairs through Mars."
+        },
+        "5": {
+            "text": "Mars in House 5. Your drive, desire, and conflict style. How you get what you want. Focused on The House of Joy. Creativity, romance, children, and play..",
+            "archetype": "Mars of the 5th House",
+            "essence": "Focusing Mars energy into The House of Joy. Creativity, romance, children, and play.",
+            "shadow": "Over-identification with 5th house matters; neglecting other areas.",
+            "gift": "Mastery of 5th house affairs through Mars."
+        },
+        "6": {
+            "text": "Mars in House 6. Your drive, desire, and conflict style. How you get what you want. Focused on The House of Service. Daily work, health, and rituals..",
+            "archetype": "Mars of the 6th House",
+            "essence": "Focusing Mars energy into The House of Service. Daily work, health, and rituals.",
+            "shadow": "Over-identification with 6th house matters; neglecting other areas.",
+            "gift": "Mastery of 6th house affairs through Mars."
+        },
+        "7": {
+            "text": "Mars in House 7. Your drive, desire, and conflict style. How you get what you want. Focused on The House of Others. Relationships, contracts, and open enemies..",
+            "archetype": "Mars of the 7th House",
+            "essence": "Focusing Mars energy into The House of Others. Relationships, contracts, and open enemies.",
+            "shadow": "Over-identification with 7th house matters; neglecting other areas.",
+            "gift": "Mastery of 7th house affairs through Mars."
+        },
+        "8": {
+            "text": "Mars in House 8. Your drive, desire, and conflict style. How you get what you want. Focused on The House of Transformation. Intimacy, shared resources, and death/rebirth..",
+            "archetype": "Mars of the 8th House",
+            "essence": "Focusing Mars energy into The House of Transformation. Intimacy, shared resources, and death/rebirth.",
+            "shadow": "Over-identification with 8th house matters; neglecting other areas.",
+            "gift": "Mastery of 8th house affairs through Mars."
+        },
+        "9": {
+            "text": "Mars in House 9. Your drive, desire, and conflict style. How you get what you want. Focused on The House of Spirit. Philosophy, long travel, and higher mind..",
+            "archetype": "Mars of the 9th House",
+            "essence": "Focusing Mars energy into The House of Spirit. Philosophy, long travel, and higher mind.",
+            "shadow": "Over-identification with 9th house matters; neglecting other areas.",
+            "gift": "Mastery of 9th house affairs through Mars."
+        },
+        "10": {
+            "text": "Mars in House 10. Your drive, desire, and conflict style. How you get what you want. Focused on The House of Reputation. Career, public standing, and legacy..",
+            "archetype": "Mars of the 10th House",
+            "essence": "Focusing Mars energy into The House of Reputation. Career, public standing, and legacy.",
+            "shadow": "Over-identification with 10th house matters; neglecting other areas.",
+            "gift": "Mastery of 10th house affairs through Mars."
+        },
+        "11": {
+            "text": "Mars in House 11. Your drive, desire, and conflict style. How you get what you want. Focused on The House of Community. Friends, groups, and future hopes..",
+            "archetype": "Mars of the 11th House",
+            "essence": "Focusing Mars energy into The House of Community. Friends, groups, and future hopes.",
+            "shadow": "Over-identification with 11th house matters; neglecting other areas.",
+            "gift": "Mastery of 11th house affairs through Mars."
+        },
+        "12": {
+            "text": "Mars in House 12. Your drive, desire, and conflict style. How you get what you want. Focused on The House of Secrets. The unconscious, isolation, and spiritual transcendence..",
+            "archetype": "Mars of the 12th House",
+            "essence": "Focusing Mars energy into The House of Secrets. The unconscious, isolation, and spiritual transcendence.",
+            "shadow": "Over-identification with 12th house matters; neglecting other areas.",
+            "gift": "Mastery of 12th house affairs through Mars."
+        }
+    },
+    "Jupiter": {
+        "1": {
+            "text": "Jupiter in House 1. Your growth, abundance, and philosophy. Where you find luck. Focused on The House of Self. Appearance, vitality, and first impressions..",
+            "archetype": "Jupiter of the 1th House",
+            "essence": "Focusing Jupiter energy into The House of Self. Appearance, vitality, and first impressions.",
+            "shadow": "Over-identification with 1th house matters; neglecting other areas.",
+            "gift": "Mastery of 1th house affairs through Jupiter."
+        },
+        "2": {
+            "text": "Jupiter in House 2. Your growth, abundance, and philosophy. Where you find luck. Focused on The House of Value. Personal resources, money, and self-worth..",
+            "archetype": "Jupiter of the 2th House",
+            "essence": "Focusing Jupiter energy into The House of Value. Personal resources, money, and self-worth.",
+            "shadow": "Over-identification with 2th house matters; neglecting other areas.",
+            "gift": "Mastery of 2th house affairs through Jupiter."
+        },
+        "3": {
+            "text": "Jupiter in House 3. Your growth, abundance, and philosophy. Where you find luck. Focused on The House of Mind. Communication, siblings, and local environment..",
+            "archetype": "Jupiter of the 3th House",
+            "essence": "Focusing Jupiter energy into The House of Mind. Communication, siblings, and local environment.",
+            "shadow": "Over-identification with 3th house matters; neglecting other areas.",
+            "gift": "Mastery of 3th house affairs through Jupiter."
+        },
+        "4": {
+            "text": "Jupiter in House 4. Your growth, abundance, and philosophy. Where you find luck. Focused on The House of Home. Roots, ancestry, and emotional foundation..",
+            "archetype": "Jupiter of the 4th House",
+            "essence": "Focusing Jupiter energy into The House of Home. Roots, ancestry, and emotional foundation.",
+            "shadow": "Over-identification with 4th house matters; neglecting other areas.",
+            "gift": "Mastery of 4th house affairs through Jupiter."
+        },
+        "5": {
+            "text": "Jupiter in House 5. Your growth, abundance, and philosophy. Where you find luck. Focused on The House of Joy. Creativity, romance, children, and play..",
+            "archetype": "Jupiter of the 5th House",
+            "essence": "Focusing Jupiter energy into The House of Joy. Creativity, romance, children, and play.",
+            "shadow": "Over-identification with 5th house matters; neglecting other areas.",
+            "gift": "Mastery of 5th house affairs through Jupiter."
+        },
+        "6": {
+            "text": "Jupiter in House 6. Your growth, abundance, and philosophy. Where you find luck. Focused on The House of Service. Daily work, health, and rituals..",
+            "archetype": "Jupiter of the 6th House",
+            "essence": "Focusing Jupiter energy into The House of Service. Daily work, health, and rituals.",
+            "shadow": "Over-identification with 6th house matters; neglecting other areas.",
+            "gift": "Mastery of 6th house affairs through Jupiter."
+        },
+        "7": {
+            "text": "Jupiter in House 7. Your growth, abundance, and philosophy. Where you find luck. Focused on The House of Others. Relationships, contracts, and open enemies..",
+            "archetype": "Jupiter of the 7th House",
+            "essence": "Focusing Jupiter energy into The House of Others. Relationships, contracts, and open enemies.",
+            "shadow": "Over-identification with 7th house matters; neglecting other areas.",
+            "gift": "Mastery of 7th house affairs through Jupiter."
+        },
+        "8": {
+            "text": "Jupiter in House 8. Your growth, abundance, and philosophy. Where you find luck. Focused on The House of Transformation. Intimacy, shared resources, and death/rebirth..",
+            "archetype": "Jupiter of the 8th House",
+            "essence": "Focusing Jupiter energy into The House of Transformation. Intimacy, shared resources, and death/rebirth.",
+            "shadow": "Over-identification with 8th house matters; neglecting other areas.",
+            "gift": "Mastery of 8th house affairs through Jupiter."
+        },
+        "9": {
+            "text": "Jupiter in House 9. Your growth, abundance, and philosophy. Where you find luck. Focused on The House of Spirit. Philosophy, long travel, and higher mind..",
+            "archetype": "Jupiter of the 9th House",
+            "essence": "Focusing Jupiter energy into The House of Spirit. Philosophy, long travel, and higher mind.",
+            "shadow": "Over-identification with 9th house matters; neglecting other areas.",
+            "gift": "Mastery of 9th house affairs through Jupiter."
+        },
+        "10": {
+            "text": "Jupiter in House 10. Your growth, abundance, and philosophy. Where you find luck. Focused on The House of Reputation. Career, public standing, and legacy..",
+            "archetype": "Jupiter of the 10th House",
+            "essence": "Focusing Jupiter energy into The House of Reputation. Career, public standing, and legacy.",
+            "shadow": "Over-identification with 10th house matters; neglecting other areas.",
+            "gift": "Mastery of 10th house affairs through Jupiter."
+        },
+        "11": {
+            "text": "Jupiter in House 11. Your growth, abundance, and philosophy. Where you find luck. Focused on The House of Community. Friends, groups, and future hopes..",
+            "archetype": "Jupiter of the 11th House",
+            "essence": "Focusing Jupiter energy into The House of Community. Friends, groups, and future hopes.",
+            "shadow": "Over-identification with 11th house matters; neglecting other areas.",
+            "gift": "Mastery of 11th house affairs through Jupiter."
+        },
+        "12": {
+            "text": "Jupiter in House 12. Your growth, abundance, and philosophy. Where you find luck. Focused on The House of Secrets. The unconscious, isolation, and spiritual transcendence..",
+            "archetype": "Jupiter of the 12th House",
+            "essence": "Focusing Jupiter energy into The House of Secrets. The unconscious, isolation, and spiritual transcendence.",
+            "shadow": "Over-identification with 12th house matters; neglecting other areas.",
+            "gift": "Mastery of 12th house affairs through Jupiter."
+        }
+    },
+    "Saturn": {
+        "1": {
+            "text": "Saturn in House 1. Your boundaries, fears, and responsibilities. Where you must do the work. Focused on The House of Self. Appearance, vitality, and first impressions..",
+            "archetype": "Saturn of the 1th House",
+            "essence": "Focusing Saturn energy into The House of Self. Appearance, vitality, and first impressions.",
+            "shadow": "Over-identification with 1th house matters; neglecting other areas.",
+            "gift": "Mastery of 1th house affairs through Saturn."
+        },
+        "2": {
+            "text": "Saturn in House 2. Your boundaries, fears, and responsibilities. Where you must do the work. Focused on The House of Value. Personal resources, money, and self-worth..",
+            "archetype": "Saturn of the 2th House",
+            "essence": "Focusing Saturn energy into The House of Value. Personal resources, money, and self-worth.",
+            "shadow": "Over-identification with 2th house matters; neglecting other areas.",
+            "gift": "Mastery of 2th house affairs through Saturn."
+        },
+        "3": {
+            "text": "Saturn in House 3. Your boundaries, fears, and responsibilities. Where you must do the work. Focused on The House of Mind. Communication, siblings, and local environment..",
+            "archetype": "Saturn of the 3th House",
+            "essence": "Focusing Saturn energy into The House of Mind. Communication, siblings, and local environment.",
+            "shadow": "Over-identification with 3th house matters; neglecting other areas.",
+            "gift": "Mastery of 3th house affairs through Saturn."
+        },
+        "4": {
+            "text": "Saturn in House 4. Your boundaries, fears, and responsibilities. Where you must do the work. Focused on The House of Home. Roots, ancestry, and emotional foundation..",
+            "archetype": "Saturn of the 4th House",
+            "essence": "Focusing Saturn energy into The House of Home. Roots, ancestry, and emotional foundation.",
+            "shadow": "Over-identification with 4th house matters; neglecting other areas.",
+            "gift": "Mastery of 4th house affairs through Saturn."
+        },
+        "5": {
+            "text": "Saturn in House 5. Your boundaries, fears, and responsibilities. Where you must do the work. Focused on The House of Joy. Creativity, romance, children, and play..",
+            "archetype": "Saturn of the 5th House",
+            "essence": "Focusing Saturn energy into The House of Joy. Creativity, romance, children, and play.",
+            "shadow": "Over-identification with 5th house matters; neglecting other areas.",
+            "gift": "Mastery of 5th house affairs through Saturn."
+        },
+        "6": {
+            "text": "Saturn in House 6. Your boundaries, fears, and responsibilities. Where you must do the work. Focused on The House of Service. Daily work, health, and rituals..",
+            "archetype": "Saturn of the 6th House",
+            "essence": "Focusing Saturn energy into The House of Service. Daily work, health, and rituals.",
+            "shadow": "Over-identification with 6th house matters; neglecting other areas.",
+            "gift": "Mastery of 6th house affairs through Saturn."
+        },
+        "7": {
+            "text": "Saturn in House 7. Your boundaries, fears, and responsibilities. Where you must do the work. Focused on The House of Others. Relationships, contracts, and open enemies..",
+            "archetype": "Saturn of the 7th House",
+            "essence": "Focusing Saturn energy into The House of Others. Relationships, contracts, and open enemies.",
+            "shadow": "Over-identification with 7th house matters; neglecting other areas.",
+            "gift": "Mastery of 7th house affairs through Saturn."
+        },
+        "8": {
+            "text": "Saturn in House 8. Your boundaries, fears, and responsibilities. Where you must do the work. Focused on The House of Transformation. Intimacy, shared resources, and death/rebirth..",
+            "archetype": "Saturn of the 8th House",
+            "essence": "Focusing Saturn energy into The House of Transformation. Intimacy, shared resources, and death/rebirth.",
+            "shadow": "Over-identification with 8th house matters; neglecting other areas.",
+            "gift": "Mastery of 8th house affairs through Saturn."
+        },
+        "9": {
+            "text": "Saturn in House 9. Your boundaries, fears, and responsibilities. Where you must do the work. Focused on The House of Spirit. Philosophy, long travel, and higher mind..",
+            "archetype": "Saturn of the 9th House",
+            "essence": "Focusing Saturn energy into The House of Spirit. Philosophy, long travel, and higher mind.",
+            "shadow": "Over-identification with 9th house matters; neglecting other areas.",
+            "gift": "Mastery of 9th house affairs through Saturn."
+        },
+        "10": {
+            "text": "Saturn in House 10. Your boundaries, fears, and responsibilities. Where you must do the work. Focused on The House of Reputation. Career, public standing, and legacy..",
+            "archetype": "Saturn of the 10th House",
+            "essence": "Focusing Saturn energy into The House of Reputation. Career, public standing, and legacy.",
+            "shadow": "Over-identification with 10th house matters; neglecting other areas.",
+            "gift": "Mastery of 10th house affairs through Saturn."
+        },
+        "11": {
+            "text": "Saturn in House 11. Your boundaries, fears, and responsibilities. Where you must do the work. Focused on The House of Community. Friends, groups, and future hopes..",
+            "archetype": "Saturn of the 11th House",
+            "essence": "Focusing Saturn energy into The House of Community. Friends, groups, and future hopes.",
+            "shadow": "Over-identification with 11th house matters; neglecting other areas.",
+            "gift": "Mastery of 11th house affairs through Saturn."
+        },
+        "12": {
+            "text": "Saturn in House 12. Your boundaries, fears, and responsibilities. Where you must do the work. Focused on The House of Secrets. The unconscious, isolation, and spiritual transcendence..",
+            "archetype": "Saturn of the 12th House",
+            "essence": "Focusing Saturn energy into The House of Secrets. The unconscious, isolation, and spiritual transcendence.",
+            "shadow": "Over-identification with 12th house matters; neglecting other areas.",
+            "gift": "Mastery of 12th house affairs through Saturn."
+        }
+    },
+    "Uranus": {
+        "1": {
+            "text": "Uranus in House 1. Your liberation and awakening. Where you break the rules. Focused on The House of Self. Appearance, vitality, and first impressions..",
+            "archetype": "Uranus of the 1th House",
+            "essence": "Focusing Uranus energy into The House of Self. Appearance, vitality, and first impressions.",
+            "shadow": "Over-identification with 1th house matters; neglecting other areas.",
+            "gift": "Mastery of 1th house affairs through Uranus."
+        },
+        "2": {
+            "text": "Uranus in House 2. Your liberation and awakening. Where you break the rules. Focused on The House of Value. Personal resources, money, and self-worth..",
+            "archetype": "Uranus of the 2th House",
+            "essence": "Focusing Uranus energy into The House of Value. Personal resources, money, and self-worth.",
+            "shadow": "Over-identification with 2th house matters; neglecting other areas.",
+            "gift": "Mastery of 2th house affairs through Uranus."
+        },
+        "3": {
+            "text": "Uranus in House 3. Your liberation and awakening. Where you break the rules. Focused on The House of Mind. Communication, siblings, and local environment..",
+            "archetype": "Uranus of the 3th House",
+            "essence": "Focusing Uranus energy into The House of Mind. Communication, siblings, and local environment.",
+            "shadow": "Over-identification with 3th house matters; neglecting other areas.",
+            "gift": "Mastery of 3th house affairs through Uranus."
+        },
+        "4": {
+            "text": "Uranus in House 4. Your liberation and awakening. Where you break the rules. Focused on The House of Home. Roots, ancestry, and emotional foundation..",
+            "archetype": "Uranus of the 4th House",
+            "essence": "Focusing Uranus energy into The House of Home. Roots, ancestry, and emotional foundation.",
+            "shadow": "Over-identification with 4th house matters; neglecting other areas.",
+            "gift": "Mastery of 4th house affairs through Uranus."
+        },
+        "5": {
+            "text": "Uranus in House 5. Your liberation and awakening. Where you break the rules. Focused on The House of Joy. Creativity, romance, children, and play..",
+            "archetype": "Uranus of the 5th House",
+            "essence": "Focusing Uranus energy into The House of Joy. Creativity, romance, children, and play.",
+            "shadow": "Over-identification with 5th house matters; neglecting other areas.",
+            "gift": "Mastery of 5th house affairs through Uranus."
+        },
+        "6": {
+            "text": "Uranus in House 6. Your liberation and awakening. Where you break the rules. Focused on The House of Service. Daily work, health, and rituals..",
+            "archetype": "Uranus of the 6th House",
+            "essence": "Focusing Uranus energy into The House of Service. Daily work, health, and rituals.",
+            "shadow": "Over-identification with 6th house matters; neglecting other areas.",
+            "gift": "Mastery of 6th house affairs through Uranus."
+        },
+        "7": {
+            "text": "Uranus in House 7. Your liberation and awakening. Where you break the rules. Focused on The House of Others. Relationships, contracts, and open enemies..",
+            "archetype": "Uranus of the 7th House",
+            "essence": "Focusing Uranus energy into The House of Others. Relationships, contracts, and open enemies.",
+            "shadow": "Over-identification with 7th house matters; neglecting other areas.",
+            "gift": "Mastery of 7th house affairs through Uranus."
+        },
+        "8": {
+            "text": "Uranus in House 8. Your liberation and awakening. Where you break the rules. Focused on The House of Transformation. Intimacy, shared resources, and death/rebirth..",
+            "archetype": "Uranus of the 8th House",
+            "essence": "Focusing Uranus energy into The House of Transformation. Intimacy, shared resources, and death/rebirth.",
+            "shadow": "Over-identification with 8th house matters; neglecting other areas.",
+            "gift": "Mastery of 8th house affairs through Uranus."
+        },
+        "9": {
+            "text": "Uranus in House 9. Your liberation and awakening. Where you break the rules. Focused on The House of Spirit. Philosophy, long travel, and higher mind..",
+            "archetype": "Uranus of the 9th House",
+            "essence": "Focusing Uranus energy into The House of Spirit. Philosophy, long travel, and higher mind.",
+            "shadow": "Over-identification with 9th house matters; neglecting other areas.",
+            "gift": "Mastery of 9th house affairs through Uranus."
+        },
+        "10": {
+            "text": "Uranus in House 10. Your liberation and awakening. Where you break the rules. Focused on The House of Reputation. Career, public standing, and legacy..",
+            "archetype": "Uranus of the 10th House",
+            "essence": "Focusing Uranus energy into The House of Reputation. Career, public standing, and legacy.",
+            "shadow": "Over-identification with 10th house matters; neglecting other areas.",
+            "gift": "Mastery of 10th house affairs through Uranus."
+        },
+        "11": {
+            "text": "Uranus in House 11. Your liberation and awakening. Where you break the rules. Focused on The House of Community. Friends, groups, and future hopes..",
+            "archetype": "Uranus of the 11th House",
+            "essence": "Focusing Uranus energy into The House of Community. Friends, groups, and future hopes.",
+            "shadow": "Over-identification with 11th house matters; neglecting other areas.",
+            "gift": "Mastery of 11th house affairs through Uranus."
+        },
+        "12": {
+            "text": "Uranus in House 12. Your liberation and awakening. Where you break the rules. Focused on The House of Secrets. The unconscious, isolation, and spiritual transcendence..",
+            "archetype": "Uranus of the 12th House",
+            "essence": "Focusing Uranus energy into The House of Secrets. The unconscious, isolation, and spiritual transcendence.",
+            "shadow": "Over-identification with 12th house matters; neglecting other areas.",
+            "gift": "Mastery of 12th house affairs through Uranus."
+        }
+    },
+    "Neptune": {
+        "1": {
+            "text": "Neptune in House 1. Your dreams and spirituality. Where you dissolve boundaries. Focused on The House of Self. Appearance, vitality, and first impressions..",
+            "archetype": "Neptune of the 1th House",
+            "essence": "Focusing Neptune energy into The House of Self. Appearance, vitality, and first impressions.",
+            "shadow": "Over-identification with 1th house matters; neglecting other areas.",
+            "gift": "Mastery of 1th house affairs through Neptune."
+        },
+        "2": {
+            "text": "Neptune in House 2. Your dreams and spirituality. Where you dissolve boundaries. Focused on The House of Value. Personal resources, money, and self-worth..",
+            "archetype": "Neptune of the 2th House",
+            "essence": "Focusing Neptune energy into The House of Value. Personal resources, money, and self-worth.",
+            "shadow": "Over-identification with 2th house matters; neglecting other areas.",
+            "gift": "Mastery of 2th house affairs through Neptune."
+        },
+        "3": {
+            "text": "Neptune in House 3. Your dreams and spirituality. Where you dissolve boundaries. Focused on The House of Mind. Communication, siblings, and local environment..",
+            "archetype": "Neptune of the 3th House",
+            "essence": "Focusing Neptune energy into The House of Mind. Communication, siblings, and local environment.",
+            "shadow": "Over-identification with 3th house matters; neglecting other areas.",
+            "gift": "Mastery of 3th house affairs through Neptune."
+        },
+        "4": {
+            "text": "Neptune in House 4. Your dreams and spirituality. Where you dissolve boundaries. Focused on The House of Home. Roots, ancestry, and emotional foundation..",
+            "archetype": "Neptune of the 4th House",
+            "essence": "Focusing Neptune energy into The House of Home. Roots, ancestry, and emotional foundation.",
+            "shadow": "Over-identification with 4th house matters; neglecting other areas.",
+            "gift": "Mastery of 4th house affairs through Neptune."
+        },
+        "5": {
+            "text": "Neptune in House 5. Your dreams and spirituality. Where you dissolve boundaries. Focused on The House of Joy. Creativity, romance, children, and play..",
+            "archetype": "Neptune of the 5th House",
+            "essence": "Focusing Neptune energy into The House of Joy. Creativity, romance, children, and play.",
+            "shadow": "Over-identification with 5th house matters; neglecting other areas.",
+            "gift": "Mastery of 5th house affairs through Neptune."
+        },
+        "6": {
+            "text": "Neptune in House 6. Your dreams and spirituality. Where you dissolve boundaries. Focused on The House of Service. Daily work, health, and rituals..",
+            "archetype": "Neptune of the 6th House",
+            "essence": "Focusing Neptune energy into The House of Service. Daily work, health, and rituals.",
+            "shadow": "Over-identification with 6th house matters; neglecting other areas.",
+            "gift": "Mastery of 6th house affairs through Neptune."
+        },
+        "7": {
+            "text": "Neptune in House 7. Your dreams and spirituality. Where you dissolve boundaries. Focused on The House of Others. Relationships, contracts, and open enemies..",
+            "archetype": "Neptune of the 7th House",
+            "essence": "Focusing Neptune energy into The House of Others. Relationships, contracts, and open enemies.",
+            "shadow": "Over-identification with 7th house matters; neglecting other areas.",
+            "gift": "Mastery of 7th house affairs through Neptune."
+        },
+        "8": {
+            "text": "Neptune in House 8. Your dreams and spirituality. Where you dissolve boundaries. Focused on The House of Transformation. Intimacy, shared resources, and death/rebirth..",
+            "archetype": "Neptune of the 8th House",
+            "essence": "Focusing Neptune energy into The House of Transformation. Intimacy, shared resources, and death/rebirth.",
+            "shadow": "Over-identification with 8th house matters; neglecting other areas.",
+            "gift": "Mastery of 8th house affairs through Neptune."
+        },
+        "9": {
+            "text": "Neptune in House 9. Your dreams and spirituality. Where you dissolve boundaries. Focused on The House of Spirit. Philosophy, long travel, and higher mind..",
+            "archetype": "Neptune of the 9th House",
+            "essence": "Focusing Neptune energy into The House of Spirit. Philosophy, long travel, and higher mind.",
+            "shadow": "Over-identification with 9th house matters; neglecting other areas.",
+            "gift": "Mastery of 9th house affairs through Neptune."
+        },
+        "10": {
+            "text": "Neptune in House 10. Your dreams and spirituality. Where you dissolve boundaries. Focused on The House of Reputation. Career, public standing, and legacy..",
+            "archetype": "Neptune of the 10th House",
+            "essence": "Focusing Neptune energy into The House of Reputation. Career, public standing, and legacy.",
+            "shadow": "Over-identification with 10th house matters; neglecting other areas.",
+            "gift": "Mastery of 10th house affairs through Neptune."
+        },
+        "11": {
+            "text": "Neptune in House 11. Your dreams and spirituality. Where you dissolve boundaries. Focused on The House of Community. Friends, groups, and future hopes..",
+            "archetype": "Neptune of the 11th House",
+            "essence": "Focusing Neptune energy into The House of Community. Friends, groups, and future hopes.",
+            "shadow": "Over-identification with 11th house matters; neglecting other areas.",
+            "gift": "Mastery of 11th house affairs through Neptune."
+        },
+        "12": {
+            "text": "Neptune in House 12. Your dreams and spirituality. Where you dissolve boundaries. Focused on The House of Secrets. The unconscious, isolation, and spiritual transcendence..",
+            "archetype": "Neptune of the 12th House",
+            "essence": "Focusing Neptune energy into The House of Secrets. The unconscious, isolation, and spiritual transcendence.",
+            "shadow": "Over-identification with 12th house matters; neglecting other areas.",
+            "gift": "Mastery of 12th house affairs through Neptune."
+        }
+    },
+    "Pluto": {
+        "1": {
+            "text": "Pluto in House 1. Your power and transformation. Where you undergo metamorphosis. Focused on The House of Self. Appearance, vitality, and first impressions..",
+            "archetype": "Pluto of the 1th House",
+            "essence": "Focusing Pluto energy into The House of Self. Appearance, vitality, and first impressions.",
+            "shadow": "Over-identification with 1th house matters; neglecting other areas.",
+            "gift": "Mastery of 1th house affairs through Pluto."
+        },
+        "2": {
+            "text": "Pluto in House 2. Your power and transformation. Where you undergo metamorphosis. Focused on The House of Value. Personal resources, money, and self-worth..",
+            "archetype": "Pluto of the 2th House",
+            "essence": "Focusing Pluto energy into The House of Value. Personal resources, money, and self-worth.",
+            "shadow": "Over-identification with 2th house matters; neglecting other areas.",
+            "gift": "Mastery of 2th house affairs through Pluto."
+        },
+        "3": {
+            "text": "Pluto in House 3. Your power and transformation. Where you undergo metamorphosis. Focused on The House of Mind. Communication, siblings, and local environment..",
+            "archetype": "Pluto of the 3th House",
+            "essence": "Focusing Pluto energy into The House of Mind. Communication, siblings, and local environment.",
+            "shadow": "Over-identification with 3th house matters; neglecting other areas.",
+            "gift": "Mastery of 3th house affairs through Pluto."
+        },
+        "4": {
+            "text": "Pluto in House 4. Your power and transformation. Where you undergo metamorphosis. Focused on The House of Home. Roots, ancestry, and emotional foundation..",
+            "archetype": "Pluto of the 4th House",
+            "essence": "Focusing Pluto energy into The House of Home. Roots, ancestry, and emotional foundation.",
+            "shadow": "Over-identification with 4th house matters; neglecting other areas.",
+            "gift": "Mastery of 4th house affairs through Pluto."
+        },
+        "5": {
+            "text": "Pluto in House 5. Your power and transformation. Where you undergo metamorphosis. Focused on The House of Joy. Creativity, romance, children, and play..",
+            "archetype": "Pluto of the 5th House",
+            "essence": "Focusing Pluto energy into The House of Joy. Creativity, romance, children, and play.",
+            "shadow": "Over-identification with 5th house matters; neglecting other areas.",
+            "gift": "Mastery of 5th house affairs through Pluto."
+        },
+        "6": {
+            "text": "Pluto in House 6. Your power and transformation. Where you undergo metamorphosis. Focused on The House of Service. Daily work, health, and rituals..",
+            "archetype": "Pluto of the 6th House",
+            "essence": "Focusing Pluto energy into The House of Service. Daily work, health, and rituals.",
+            "shadow": "Over-identification with 6th house matters; neglecting other areas.",
+            "gift": "Mastery of 6th house affairs through Pluto."
+        },
+        "7": {
+            "text": "Pluto in House 7. Your power and transformation. Where you undergo metamorphosis. Focused on The House of Others. Relationships, contracts, and open enemies..",
+            "archetype": "Pluto of the 7th House",
+            "essence": "Focusing Pluto energy into The House of Others. Relationships, contracts, and open enemies.",
+            "shadow": "Over-identification with 7th house matters; neglecting other areas.",
+            "gift": "Mastery of 7th house affairs through Pluto."
+        },
+        "8": {
+            "text": "Pluto in House 8. Your power and transformation. Where you undergo metamorphosis. Focused on The House of Transformation. Intimacy, shared resources, and death/rebirth..",
+            "archetype": "Pluto of the 8th House",
+            "essence": "Focusing Pluto energy into The House of Transformation. Intimacy, shared resources, and death/rebirth.",
+            "shadow": "Over-identification with 8th house matters; neglecting other areas.",
+            "gift": "Mastery of 8th house affairs through Pluto."
+        },
+        "9": {
+            "text": "Pluto in House 9. Your power and transformation. Where you undergo metamorphosis. Focused on The House of Spirit. Philosophy, long travel, and higher mind..",
+            "archetype": "Pluto of the 9th House",
+            "essence": "Focusing Pluto energy into The House of Spirit. Philosophy, long travel, and higher mind.",
+            "shadow": "Over-identification with 9th house matters; neglecting other areas.",
+            "gift": "Mastery of 9th house affairs through Pluto."
+        },
+        "10": {
+            "text": "Pluto in House 10. Your power and transformation. Where you undergo metamorphosis. Focused on The House of Reputation. Career, public standing, and legacy..",
+            "archetype": "Pluto of the 10th House",
+            "essence": "Focusing Pluto energy into The House of Reputation. Career, public standing, and legacy.",
+            "shadow": "Over-identification with 10th house matters; neglecting other areas.",
+            "gift": "Mastery of 10th house affairs through Pluto."
+        },
+        "11": {
+            "text": "Pluto in House 11. Your power and transformation. Where you undergo metamorphosis. Focused on The House of Community. Friends, groups, and future hopes..",
+            "archetype": "Pluto of the 11th House",
+            "essence": "Focusing Pluto energy into The House of Community. Friends, groups, and future hopes.",
+            "shadow": "Over-identification with 11th house matters; neglecting other areas.",
+            "gift": "Mastery of 11th house affairs through Pluto."
+        },
+        "12": {
+            "text": "Pluto in House 12. Your power and transformation. Where you undergo metamorphosis. Focused on The House of Secrets. The unconscious, isolation, and spiritual transcendence..",
+            "archetype": "Pluto of the 12th House",
+            "essence": "Focusing Pluto energy into The House of Secrets. The unconscious, isolation, and spiritual transcendence.",
+            "shadow": "Over-identification with 12th house matters; neglecting other areas.",
+            "gift": "Mastery of 12th house affairs through Pluto."
+        }
+    },
+    "Chiron": {
+        "1": {
+            "text": "Chiron in House 1. Your deepest wound and your power to heal. Focused on The House of Self. Appearance, vitality, and first impressions..",
+            "archetype": "Chiron of the 1th House",
+            "essence": "Focusing Chiron energy into The House of Self. Appearance, vitality, and first impressions.",
+            "shadow": "Over-identification with 1th house matters; neglecting other areas.",
+            "gift": "Mastery of 1th house affairs through Chiron."
+        },
+        "2": {
+            "text": "Chiron in House 2. Your deepest wound and your power to heal. Focused on The House of Value. Personal resources, money, and self-worth..",
+            "archetype": "Chiron of the 2th House",
+            "essence": "Focusing Chiron energy into The House of Value. Personal resources, money, and self-worth.",
+            "shadow": "Over-identification with 2th house matters; neglecting other areas.",
+            "gift": "Mastery of 2th house affairs through Chiron."
+        },
+        "3": {
+            "text": "Chiron in House 3. Your deepest wound and your power to heal. Focused on The House of Mind. Communication, siblings, and local environment..",
+            "archetype": "Chiron of the 3th House",
+            "essence": "Focusing Chiron energy into The House of Mind. Communication, siblings, and local environment.",
+            "shadow": "Over-identification with 3th house matters; neglecting other areas.",
+            "gift": "Mastery of 3th house affairs through Chiron."
+        },
+        "4": {
+            "text": "Chiron in House 4. Your deepest wound and your power to heal. Focused on The House of Home. Roots, ancestry, and emotional foundation..",
+            "archetype": "Chiron of the 4th House",
+            "essence": "Focusing Chiron energy into The House of Home. Roots, ancestry, and emotional foundation.",
+            "shadow": "Over-identification with 4th house matters; neglecting other areas.",
+            "gift": "Mastery of 4th house affairs through Chiron."
+        },
+        "5": {
+            "text": "Chiron in House 5. Your deepest wound and your power to heal. Focused on The House of Joy. Creativity, romance, children, and play..",
+            "archetype": "Chiron of the 5th House",
+            "essence": "Focusing Chiron energy into The House of Joy. Creativity, romance, children, and play.",
+            "shadow": "Over-identification with 5th house matters; neglecting other areas.",
+            "gift": "Mastery of 5th house affairs through Chiron."
+        },
+        "6": {
+            "text": "Chiron in House 6. Your deepest wound and your power to heal. Focused on The House of Service. Daily work, health, and rituals..",
+            "archetype": "Chiron of the 6th House",
+            "essence": "Focusing Chiron energy into The House of Service. Daily work, health, and rituals.",
+            "shadow": "Over-identification with 6th house matters; neglecting other areas.",
+            "gift": "Mastery of 6th house affairs through Chiron."
+        },
+        "7": {
+            "text": "Chiron in House 7. Your deepest wound and your power to heal. Focused on The House of Others. Relationships, contracts, and open enemies..",
+            "archetype": "Chiron of the 7th House",
+            "essence": "Focusing Chiron energy into The House of Others. Relationships, contracts, and open enemies.",
+            "shadow": "Over-identification with 7th house matters; neglecting other areas.",
+            "gift": "Mastery of 7th house affairs through Chiron."
+        },
+        "8": {
+            "text": "Chiron in House 8. Your deepest wound and your power to heal. Focused on The House of Transformation. Intimacy, shared resources, and death/rebirth..",
+            "archetype": "Chiron of the 8th House",
+            "essence": "Focusing Chiron energy into The House of Transformation. Intimacy, shared resources, and death/rebirth.",
+            "shadow": "Over-identification with 8th house matters; neglecting other areas.",
+            "gift": "Mastery of 8th house affairs through Chiron."
+        },
+        "9": {
+            "text": "Chiron in House 9. Your deepest wound and your power to heal. Focused on The House of Spirit. Philosophy, long travel, and higher mind..",
+            "archetype": "Chiron of the 9th House",
+            "essence": "Focusing Chiron energy into The House of Spirit. Philosophy, long travel, and higher mind.",
+            "shadow": "Over-identification with 9th house matters; neglecting other areas.",
+            "gift": "Mastery of 9th house affairs through Chiron."
+        },
+        "10": {
+            "text": "Chiron in House 10. Your deepest wound and your power to heal. Focused on The House of Reputation. Career, public standing, and legacy..",
+            "archetype": "Chiron of the 10th House",
+            "essence": "Focusing Chiron energy into The House of Reputation. Career, public standing, and legacy.",
+            "shadow": "Over-identification with 10th house matters; neglecting other areas.",
+            "gift": "Mastery of 10th house affairs through Chiron."
+        },
+        "11": {
+            "text": "Chiron in House 11. Your deepest wound and your power to heal. Focused on The House of Community. Friends, groups, and future hopes..",
+            "archetype": "Chiron of the 11th House",
+            "essence": "Focusing Chiron energy into The House of Community. Friends, groups, and future hopes.",
+            "shadow": "Over-identification with 11th house matters; neglecting other areas.",
+            "gift": "Mastery of 11th house affairs through Chiron."
+        },
+        "12": {
+            "text": "Chiron in House 12. Your deepest wound and your power to heal. Focused on The House of Secrets. The unconscious, isolation, and spiritual transcendence..",
+            "archetype": "Chiron of the 12th House",
+            "essence": "Focusing Chiron energy into The House of Secrets. The unconscious, isolation, and spiritual transcendence.",
+            "shadow": "Over-identification with 12th house matters; neglecting other areas.",
+            "gift": "Mastery of 12th house affairs through Chiron."
+        }
+    },
+    "North Node": {
+        "1": {
+            "text": "North Node in House 1. Your destiny and evolutionary path. Focused on The House of Self. Appearance, vitality, and first impressions..",
+            "archetype": "North Node of the 1th House",
+            "essence": "Focusing North Node energy into The House of Self. Appearance, vitality, and first impressions.",
+            "shadow": "Over-identification with 1th house matters; neglecting other areas.",
+            "gift": "Mastery of 1th house affairs through North Node."
+        },
+        "2": {
+            "text": "North Node in House 2. Your destiny and evolutionary path. Focused on The House of Value. Personal resources, money, and self-worth..",
+            "archetype": "North Node of the 2th House",
+            "essence": "Focusing North Node energy into The House of Value. Personal resources, money, and self-worth.",
+            "shadow": "Over-identification with 2th house matters; neglecting other areas.",
+            "gift": "Mastery of 2th house affairs through North Node."
+        },
+        "3": {
+            "text": "North Node in House 3. Your destiny and evolutionary path. Focused on The House of Mind. Communication, siblings, and local environment..",
+            "archetype": "North Node of the 3th House",
+            "essence": "Focusing North Node energy into The House of Mind. Communication, siblings, and local environment.",
+            "shadow": "Over-identification with 3th house matters; neglecting other areas.",
+            "gift": "Mastery of 3th house affairs through North Node."
+        },
+        "4": {
+            "text": "North Node in House 4. Your destiny and evolutionary path. Focused on The House of Home. Roots, ancestry, and emotional foundation..",
+            "archetype": "North Node of the 4th House",
+            "essence": "Focusing North Node energy into The House of Home. Roots, ancestry, and emotional foundation.",
+            "shadow": "Over-identification with 4th house matters; neglecting other areas.",
+            "gift": "Mastery of 4th house affairs through North Node."
+        },
+        "5": {
+            "text": "North Node in House 5. Your destiny and evolutionary path. Focused on The House of Joy. Creativity, romance, children, and play..",
+            "archetype": "North Node of the 5th House",
+            "essence": "Focusing North Node energy into The House of Joy. Creativity, romance, children, and play.",
+            "shadow": "Over-identification with 5th house matters; neglecting other areas.",
+            "gift": "Mastery of 5th house affairs through North Node."
+        },
+        "6": {
+            "text": "North Node in House 6. Your destiny and evolutionary path. Focused on The House of Service. Daily work, health, and rituals..",
+            "archetype": "North Node of the 6th House",
+            "essence": "Focusing North Node energy into The House of Service. Daily work, health, and rituals.",
+            "shadow": "Over-identification with 6th house matters; neglecting other areas.",
+            "gift": "Mastery of 6th house affairs through North Node."
+        },
+        "7": {
+            "text": "North Node in House 7. Your destiny and evolutionary path. Focused on The House of Others. Relationships, contracts, and open enemies..",
+            "archetype": "North Node of the 7th House",
+            "essence": "Focusing North Node energy into The House of Others. Relationships, contracts, and open enemies.",
+            "shadow": "Over-identification with 7th house matters; neglecting other areas.",
+            "gift": "Mastery of 7th house affairs through North Node."
+        },
+        "8": {
+            "text": "North Node in House 8. Your destiny and evolutionary path. Focused on The House of Transformation. Intimacy, shared resources, and death/rebirth..",
+            "archetype": "North Node of the 8th House",
+            "essence": "Focusing North Node energy into The House of Transformation. Intimacy, shared resources, and death/rebirth.",
+            "shadow": "Over-identification with 8th house matters; neglecting other areas.",
+            "gift": "Mastery of 8th house affairs through North Node."
+        },
+        "9": {
+            "text": "North Node in House 9. Your destiny and evolutionary path. Focused on The House of Spirit. Philosophy, long travel, and higher mind..",
+            "archetype": "North Node of the 9th House",
+            "essence": "Focusing North Node energy into The House of Spirit. Philosophy, long travel, and higher mind.",
+            "shadow": "Over-identification with 9th house matters; neglecting other areas.",
+            "gift": "Mastery of 9th house affairs through North Node."
+        },
+        "10": {
+            "text": "North Node in House 10. Your destiny and evolutionary path. Focused on The House of Reputation. Career, public standing, and legacy..",
+            "archetype": "North Node of the 10th House",
+            "essence": "Focusing North Node energy into The House of Reputation. Career, public standing, and legacy.",
+            "shadow": "Over-identification with 10th house matters; neglecting other areas.",
+            "gift": "Mastery of 10th house affairs through North Node."
+        },
+        "11": {
+            "text": "North Node in House 11. Your destiny and evolutionary path. Focused on The House of Community. Friends, groups, and future hopes..",
+            "archetype": "North Node of the 11th House",
+            "essence": "Focusing North Node energy into The House of Community. Friends, groups, and future hopes.",
+            "shadow": "Over-identification with 11th house matters; neglecting other areas.",
+            "gift": "Mastery of 11th house affairs through North Node."
+        },
+        "12": {
+            "text": "North Node in House 12. Your destiny and evolutionary path. Focused on The House of Secrets. The unconscious, isolation, and spiritual transcendence..",
+            "archetype": "North Node of the 12th House",
+            "essence": "Focusing North Node energy into The House of Secrets. The unconscious, isolation, and spiritual transcendence.",
+            "shadow": "Over-identification with 12th house matters; neglecting other areas.",
+            "gift": "Mastery of 12th house affairs through North Node."
+        }
+    }
+}

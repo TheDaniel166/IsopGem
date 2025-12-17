@@ -420,7 +420,7 @@ class ChartCanvas(QWidget):
             # Check for aspect
             matched_color = None
             for angle, orb, color in aspects:
-                if abs(diff - angle) <= orb:
+                if abs(diff - angle) <= orb * self._orb_factor:
                     matched_color = color
                     break
             

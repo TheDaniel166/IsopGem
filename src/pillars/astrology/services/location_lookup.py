@@ -4,7 +4,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import List, Optional
 
-import requests
+try:
+    import requests
+except ImportError:
+    requests = None
 
 
 class LocationLookupError(RuntimeError):
@@ -36,8 +39,11 @@ class LocationLookupService:
 
     API_URL = "https://geocoding-api.open-meteo.com/v1/search"
 
-    def __init__(self, session: Optional[requests.Session] = None):
-        self._session = session or requests.Session()
+    def __init__(self, session=None):
+        if requests:
+            self._session = session or requests.Session()
+        else:
+            self._session = None
 
     def search(self, query: str, count: int = 7, language: str = "en") -> List[LocationResult]:
         cleaned = query.strip()

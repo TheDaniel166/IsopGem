@@ -14,7 +14,16 @@
 - [image_utils.py](file://src/pillars/document_manager/utils/image_utils.py)
 - [document_repository.py](file://src/pillars/document_manager/repositories/document_repository.py)
 - [image_repository.py](file://src/pillars/document_manager/repositories/image_repository.py)
+- [migrate_document_images.py](file://scripts/migrate_document_images.py)
 </cite>
+
+## Update Summary
+**Changes Made**   
+- Updated image handling system to extract base64 images from HTML content and store them separately in document_images table
+- Added migration script for existing documents with embedded images
+- Updated document service to handle image restoration when loading documents
+- Modified document editor and library to work with restored HTML content
+- Updated architectural diagrams to reflect new image storage and retrieval workflow
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -29,6 +38,8 @@
 
 ## Introduction
 The Document Manager Image Editing Suite is a comprehensive document management and rich text editing system designed for organizing, analyzing, and visualizing textual content. The system features advanced image handling capabilities, document parsing, and a visual "mindscape" for creating connections between documents and concepts. Built with a modular architecture, the suite provides tools for document import, search, rich text editing with image manipulation, and semantic analysis through verse parsing and rule-based processing.
+
+The system has recently been updated to improve image handling by extracting base64-encoded images from HTML content and storing them separately in a dedicated document_images table. This change enhances performance, reduces storage requirements, and enables better image management through deduplication and compression.
 
 ## Project Structure
 The Document Manager suite is organized into a well-structured modular architecture with clear separation of concerns. The system follows a layered design pattern with distinct components for models, services, repositories, and user interface elements.
@@ -511,11 +522,14 @@ The Document Manager Image Editing Suite incorporates several performance optimi
 
 8. **Caching**: The system implements deduplication for images using SHA256 hashes, preventing storage of identical images multiple times.
 
+9. **Migration Support**: The system includes a migration script (`migrate_document_images.py`) that extracts embedded images from existing documents and stores them in the new document_images table, ensuring backward compatibility while optimizing storage.
+
 **Section sources**
 - [image_repository.py](file://src/pillars/document_manager/repositories/image_repository.py)
 - [document_repository.py](file://src/pillars/document_manager/repositories/document_repository.py)
 - [document_service.py](file://src/pillars/document_manager/services/document_service.py)
 - [image_features.py](file://src/pillars/document_manager/ui/image_features.py)
+- [migrate_document_images.py](file://scripts/migrate_document_images.py)
 
 ## Troubleshooting Guide
 
@@ -551,11 +565,22 @@ The Document Manager Image Editing Suite incorporates several performance optimi
    - **Cause**: File path is invalid or file has been moved
    - **Solution**: Verify the file path and ensure the file exists
 
+7. **Missing Images After Migration**
+   - **Symptom**: Documents that previously had embedded images now show broken image links
+   - **Cause**: The migration script has not been run to extract images from existing documents
+   - **Solution**: Run the migration script `python scripts/migrate_document_images.py` to extract embedded images and update document references
+
+8. **Image Loading Performance Issues**
+   - **Symptom**: Document loading is slow when documents contain many images
+   - **Cause**: Images are being decompressed and converted to base64 during document loading
+   - **Solution**: The system uses lazy loading for images, so performance should improve after initial load. Consider reducing image sizes before import.
+
 **Section sources**
 - [rich_text_editor.py](file://src/pillars/document_manager/ui/rich_text_editor.py)
 - [document_service.py](file://src/pillars/document_manager/services/document_service.py)
 - [mindscape_service.py](file://src/pillars/document_manager/services/mindscape_service.py)
 - [image_features.py](file://src/pillars/document_manager/ui/image_features.py)
+- [migrate_document_images.py](file://scripts/migrate_document_images.py)
 
 ## Conclusion
 
@@ -568,5 +593,6 @@ Key strengths of the system include:
 - Powerful search functionality with a dedicated search index
 - Visual knowledge mapping through the Mindscape graph system
 - Extensible architecture that supports additional features and integrations
+- Improved image handling with separate storage in document_images table and docimg:// references
 
 The system is designed for users who need to manage complex documents with embedded images while maintaining the ability to analyze and visualize relationships between different pieces of information. Its clean architecture and well-defined interfaces make it suitable for both standalone use and integration into larger applications.

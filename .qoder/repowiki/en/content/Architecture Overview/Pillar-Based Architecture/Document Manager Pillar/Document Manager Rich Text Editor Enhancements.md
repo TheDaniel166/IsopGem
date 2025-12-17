@@ -14,7 +14,17 @@
 - [image_utils.py](file://src/pillars/document_manager/utils/image_utils.py)
 - [document.py](file://src/pillars/document_manager/models/document.py)
 - [document_service.py](file://src/pillars/document_manager/services/document_service.py)
+- [image_repository.py](file://src/pillars/document_manager/repositories/image_repository.py)
 </cite>
+
+## Update Summary
+**Changes Made**
+- Updated documentation to reflect the new image handling system that extracts and restores images from HTML content
+- Added detailed explanation of the image extraction and restoration workflow
+- Enhanced the ImageFeature section with new implementation details
+- Updated the DocumentService section to include image handling functionality
+- Added new sequence diagram for the image extraction process
+- Updated section sources to include new relevant files
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -81,7 +91,7 @@ DocSvc --> ImgUtils
 - [parsers.py](file://src/pillars/document_manager/utils/parsers.py#L1-L275)
 - [image_utils.py](file://src/pillars/document_manager/utils/image_utils.py#L1-L143)
 - [document.py](file://src/pillars/document_manager/models/document.py#L1-L71)
-- [document_service.py](file://src/pillars/document_manager/services/document_service.py#L1-L330)
+- [document_service.py](file://src/pillars/document_manager/services/document_service.py#L1-L329)
 
 **Section sources**
 - [rich_text_editor.py](file://src/pillars/document_manager/ui/rich_text_editor.py#L520-L1510)
@@ -266,6 +276,7 @@ Note over TableF : Updates menu state based on cursor position
   - Adjustments: brightness, contrast, saturation, sharpness, and filters
   - Layout options: display size presets, alignment, and margins
 - On accept, inserts the processed image into the document with a UUID resource and applies properties.
+- Implements a new image handling system that extracts embedded base64 images from HTML content and replaces them with docimg:// references for efficient storage.
 
 ```mermaid
 sequenceDiagram
@@ -335,6 +346,7 @@ SearchF->>Editor : setTextCursor(pos)
 - Hosts the RichTextEditor and wires signals for text changes and wiki-link requests.
 - Implements File menu actions: New, Open, Save, Save As, Export PDF.
 - Uses DocumentService to persist HTML content and plain text, and to restore images for display.
+- When loading documents, checks for docimg:// references and restores images from the database.
 
 ```mermaid
 sequenceDiagram
@@ -355,7 +367,40 @@ Win-->>User : "Saved"
 
 **Section sources**
 - [document_editor_window.py](file://src/pillars/document_manager/ui/document_editor_window.py#L1-L339)
-- [document_service.py](file://src/pillars/document_manager/services/document_service.py#L1-L330)
+- [document_service.py](file://src/pillars/document_manager/services/document_service.py#L1-L329)
+
+### Image Handling System: Extraction and Restoration
+- Implements a new system for handling images in documents to improve storage efficiency and performance.
+- Extracts embedded base64 images from HTML content during document import and saves them to the database.
+- Replaces base64 data with docimg:// references in the document content.
+- Restores images from the database when displaying documents by replacing docimg:// references with base64 data.
+- Uses a callback pattern to handle image storage and retrieval, allowing for flexible integration with different storage backends.
+
+```mermaid
+sequenceDiagram
+participant Import as "Document Import"
+participant Extract as "extract_images_from_html"
+participant Store as "ImageRepository"
+participant HTML as "HTML Content"
+Import->>Extract : raw_content, store_callback
+Extract->>HTML : Scan for base64 images
+loop Each base64 image
+HTML->>Extract : Match
+Extract->>Store : store_callback(image_bytes, mime_type)
+Store->>Extract : image_id
+Extract->>HTML : Replace with docimg : //image_id
+end
+Extract->>Import : modified_html, images_info
+```
+
+**Diagram sources**
+- [image_utils.py](file://src/pillars/document_manager/utils/image_utils.py#L20-L79)
+- [document_service.py](file://src/pillars/document_manager/services/document_service.py#L97-L107)
+
+**Section sources**
+- [image_utils.py](file://src/pillars/document_manager/utils/image_utils.py#L1-L143)
+- [document_service.py](file://src/pillars/document_manager/services/document_service.py#L1-L329)
+- [image_repository.py](file://src/pillars/document_manager/repositories/image_repository.py#L1-L104)
 
 ## Dependency Analysis
 - Internal dependencies:
@@ -379,21 +424,26 @@ Win --> DS["DocumentService"]
 DS --> DM["Document Model"]
 DS --> PU["DocumentParser"]
 DS --> IU["Image Utils"]
+DS --> IR["ImageRepository"]
+IU --> ER["extract_images_from_html"]
+IU --> RR["restore_images_in_html"]
 ```
 
 **Diagram sources**
 - [rich_text_editor.py](file://src/pillars/document_manager/ui/rich_text_editor.py#L520-L1510)
 - [document_editor_window.py](file://src/pillars/document_manager/ui/document_editor_window.py#L1-L339)
-- [document_service.py](file://src/pillars/document_manager/services/document_service.py#L1-L330)
+- [document_service.py](file://src/pillars/document_manager/services/document_service.py#L1-L329)
 - [parsers.py](file://src/pillars/document_manager/utils/parsers.py#L1-L275)
 - [image_utils.py](file://src/pillars/document_manager/utils/image_utils.py#L1-L143)
 - [document.py](file://src/pillars/document_manager/models/document.py#L1-L71)
+- [image_repository.py](file://src/pillars/document_manager/repositories/image_repository.py#L1-L104)
 
 **Section sources**
-- [document_service.py](file://src/pillars/document_manager/services/document_service.py#L1-L330)
+- [document_service.py](file://src/pillars/document_manager/services/document_service.py#L1-L329)
 - [parsers.py](file://src/pillars/document_manager/utils/parsers.py#L1-L275)
 - [image_utils.py](file://src/pillars/document_manager/utils/image_utils.py#L1-L143)
 - [document.py](file://src/pillars/document_manager/models/document.py#L1-L71)
+- [image_repository.py](file://src/pillars/document_manager/repositories/image_repository.py#L1-L104)
 
 ## Performance Considerations
 - Large paste protection: The editor warns before inserting very large text to prevent UI freezes.
@@ -401,6 +451,8 @@ DS --> IU["Image Utils"]
 - Image processing offloading: Decoding and editing images runs in a background thread to keep the UI responsive.
 - Printing/PDF: Uses Qt’s print pipeline; page layout is configurable and cached for subsequent operations.
 - Search-all: Iterates the document to collect matches; consider limiting result lists for very large documents.
+- Image handling: Extracting base64 images from HTML content reduces document size and improves database performance.
+- Image restoration: Restoring images on demand rather than storing them in the document reduces memory usage.
 
 [No sources needed since this section provides general guidance]
 
@@ -410,6 +462,8 @@ DS --> IU["Image Utils"]
 - Image insertion issues: Ensure Pillow is installed for the “Edit & Insert” workflow. If crops fail, verify the selection rectangle is valid and the image is decodable.
 - PDF export margins: Use Page Setup to define margins and orientation; Export PDF applies these settings automatically.
 - Wiki links: When typing [[, the editor emits a signal; ensure the link selector dialog is reachable and that DocumentService is available to resolve titles.
+- Missing images: If images don't display after loading a document, check that the image repository is properly initialized and that the docimg:// references can be resolved.
+- Image extraction failures: During document import, if base64 images fail to extract, verify that the image_utils module is correctly handling the base64 decoding and that the image repository can store the binary data.
 
 **Section sources**
 - [rich_text_editor.py](file://src/pillars/document_manager/ui/rich_text_editor.py#L24-L53)
@@ -418,7 +472,7 @@ DS --> IU["Image Utils"]
 - [document_editor_window.py](file://src/pillars/document_manager/ui/document_editor_window.py#L1-L339)
 
 ## Conclusion
-The Document Manager’s Rich Text Editor is a robust, extensible component that brings professional-grade editing to the application. Its modular architecture, comprehensive Ribbon interface, and deep integration with persistence and search enable authors to produce rich documents with tables, images, and structured content. The enhancements outlined here—especially the image pre-edit workflow, table management, and print/export capabilities—make it suitable for advanced documentation scenarios.
+The Document Manager’s Rich Text Editor is a robust, extensible component that brings professional-grade editing to the application. Its modular architecture, comprehensive Ribbon interface, and deep integration with persistence and search enable authors to produce rich documents with tables, images, and structured content. The enhancements outlined here—especially the image pre-edit workflow, table management, and print/export capabilities—make it suitable for advanced documentation scenarios. The new image handling system improves performance and storage efficiency by extracting embedded images and managing them separately from the document content.
 
 [No sources needed since this section summarizes without analyzing specific files]
 
@@ -433,6 +487,8 @@ The Document Manager’s Rich Text Editor is a robust, extensible component that
 - ImageFeature: create_toolbar_action, extend_context_menu
 - SearchReplaceFeature: show_search_dialog, find_next, find_all, replace_current, replace_all
 - RibbonWidget: add_ribbon_tab, RibbonTab.add_group, RibbonGroup.add_action/add_widget/add_separator
+- image_utils: extract_images_from_html, restore_images_in_html, has_embedded_images, has_docimg_references
+- ImageRepository: create, get, get_by_document, get_decompressed_data
 
 **Section sources**
 - [rich_text_editor.py](file://src/pillars/document_manager/ui/rich_text_editor.py#L520-L1510)
@@ -441,3 +497,5 @@ The Document Manager’s Rich Text Editor is a robust, extensible component that
 - [image_features.py](file://src/pillars/document_manager/ui/image_features.py#L1-L983)
 - [search_features.py](file://src/pillars/document_manager/ui/search_features.py#L1-L365)
 - [ribbon_widget.py](file://src/pillars/document_manager/ui/ribbon_widget.py#L1-L237)
+- [image_utils.py](file://src/pillars/document_manager/utils/image_utils.py#L1-L143)
+- [image_repository.py](file://src/pillars/document_manager/repositories/image_repository.py#L1-L104)

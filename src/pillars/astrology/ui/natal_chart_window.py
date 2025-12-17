@@ -14,7 +14,7 @@ from typing import Dict, List, Optional
 
 import pytz
 from PyQt6.QtCore import Qt, QDateTime
-from PyQt6.QtGui import QCloseEvent, QFont
+from PyQt6.QtGui import QCloseEvent, QFont, QColor
 from PyQt6.QtWidgets import (
     QApplication,
     QCheckBox,
@@ -33,6 +33,7 @@ from PyQt6.QtWidgets import (
     QMessageBox,
     QPushButton,
     QPlainTextEdit,
+    QSlider,
     QSpinBox,
     QSplitter,
     QTabWidget,
@@ -63,6 +64,9 @@ from ..services import (
 from ..utils import AstrologyPreferences, DefaultLocation
 from ..utils.conversions import to_zodiacal_string
 from .chart_canvas import ChartCanvas
+from .interpretation_widget import InterpretationWidget
+from ..services.interpretation_service import InterpretationService
+from ..repositories.interpretation_repository import InterpretationRepository
 
 
 class ChartPickerDialog(QDialog):
@@ -199,6 +203,10 @@ class NatalChartWindow(QMainWindow):
         self._midpoints_service = MidpointsService()
         self._harmonics_service = HarmonicsService()
         self._aspects_service = AspectsService()
+        from ..services.maat_symbols_service import MaatSymbolsService
+        self._maat_service = MaatSymbolsService()
+        self._interpretation_service = InterpretationService(repository=InterpretationRepository())
+
         self._last_request: Optional[ChartRequest] = None
         self._last_result: Optional[ChartResult] = None
         self._preferences = AstrologyPreferences()
@@ -260,6 +268,14 @@ class NatalChartWindow(QMainWindow):
         adv_layout.setContentsMargins(8, 8, 8, 8)
         adv_layout.addWidget(self._build_advanced_tab())
         self.tabs.addTab(self.advanced_tab, "Advanced")
+
+        # Tab 5: Interpretation
+        self.interpretation_tab = QWidget()
+        interp_layout = QVBoxLayout(self.interpretation_tab)
+        interp_layout.setContentsMargins(0, 0, 0, 0)
+        self.interpretation_widget = InterpretationWidget()
+        interp_layout.addWidget(self.interpretation_widget)
+        self.tabs.addTab(self.interpretation_tab, "Interpretation")
 
         # Persistent Action Row (Bottom)
         layout.addLayout(self._build_action_row())
@@ -382,6 +398,11 @@ class NatalChartWindow(QMainWindow):
         self.clear_button.clicked.connect(self._clear_results)
         row.addWidget(self.clear_button)
 
+        self.interpret_button = QPushButton("Interpret")
+        self.interpret_button.clicked.connect(lambda: self._generate_interpretation(switch_tab=True))
+        self.interpret_button.setEnabled(False)
+        row.addWidget(self.interpret_button)
+
         if self._service is None:
             self.generate_button.setEnabled(False)
 
@@ -427,18 +448,47 @@ class NatalChartWindow(QMainWindow):
         
         # 3. Midpoints
         self.midpoints_tab = QWidget()
+        mp_main_layout = QVBoxLayout(self.midpoints_tab)
+        
+        # Controls row
+        mp_controls = QHBoxLayout()
+        
+        # Classic 7 filter checkbox
+        self.classic7_checkbox = QCheckBox("Classic 7 Only")
+        self.classic7_checkbox.setChecked(True)
+        self.classic7_checkbox.stateChanged.connect(self._on_midpoints_filter_changed)
+        mp_controls.addWidget(self.classic7_checkbox)
+        mp_controls.addStretch()
+        mp_main_layout.addLayout(mp_controls)
+        
+        # Sub-tabs for Tree, Dial, and Table views
+        self.midpoints_subtabs = QTabWidget()
+        
+        # Tree view
+        from PyQt6.QtWidgets import QTreeWidget, QTreeWidgetItem
+        tree_widget = QWidget()
+        tree_layout = QVBoxLayout(tree_widget)
+        self.midpoints_tree = QTreeWidget()
+        self.midpoints_tree.setHeaderLabels(["Planet / Midpoint", "Position"])
+        self.midpoints_tree.setColumnWidth(0, 200)
+        tree_layout.addWidget(self.midpoints_tree)
+        self.midpoints_subtabs.addTab(tree_widget, "Tree")
+        
+        # Dial view
+        from .midpoints_dial import MidpointsDial
+        self.midpoints_dial = MidpointsDial()
+        self.midpoints_subtabs.addTab(self.midpoints_dial, "Dial")
+        
+        # Table view (original)
+        table_widget = QWidget()
+        table_layout = QVBoxLayout(table_widget)
         self.midpoints_table = QTableWidget(0, 2)
         self.midpoints_table.setHorizontalHeaderLabels(["Pair", "Midpoint"])
         self.midpoints_table.horizontalHeader().setStretchLastSection(True)
+        table_layout.addWidget(self.midpoints_table)
+        self.midpoints_subtabs.addTab(table_widget, "Table")
         
-        # Classic 7 filter checkbox
-        self.classic7_checkbox = QCheckBox("Classic 7 Only (Sun through Saturn)")
-        self.classic7_checkbox.setChecked(True)
-        self.classic7_checkbox.stateChanged.connect(self._on_midpoints_filter_changed)
-        
-        mp_layout = QVBoxLayout(self.midpoints_tab)
-        mp_layout.addWidget(self.classic7_checkbox)
-        mp_layout.addWidget(self.midpoints_table)
+        mp_main_layout.addWidget(self.midpoints_subtabs)
         self.advanced_tabs.addTab(self.midpoints_tab, "Midpoints")
         
         # 4. Harmonics
@@ -468,13 +518,47 @@ class NatalChartWindow(QMainWindow):
         controls_layout.addStretch()
         h_layout.addLayout(controls_layout)
         
-        # Harmonics table
+        # Sub-tabs for Dial and Table views
+        self.harmonics_subtabs = QTabWidget()
+        
+        # Dial view
+        from .harmonics_dial import HarmonicsDial
+        self.harmonics_dial = HarmonicsDial()
+        self.harmonics_subtabs.addTab(self.harmonics_dial, "Dial")
+        
+        # Table view
+        table_widget = QWidget()
+        table_layout = QVBoxLayout(table_widget)
         self.harmonics_table = QTableWidget(0, 3)
         self.harmonics_table.setHorizontalHeaderLabels(["Planet", "Natal", "Harmonic"])
         self.harmonics_table.horizontalHeader().setStretchLastSection(True)
-        h_layout.addWidget(self.harmonics_table)
+        table_layout.addWidget(self.harmonics_table)
+        self.harmonics_subtabs.addTab(table_widget, "Table")
+        
+        h_layout.addWidget(self.harmonics_subtabs)
         
         self.advanced_tabs.addTab(self.harmonics_tab, "Harmonics")
+        
+        # 5. Maat Symbols
+        self.maat_tab = QWidget()
+        maat_layout = QVBoxLayout(self.maat_tab)
+        
+        # Info label
+        maat_info = QLabel("Egyptian degree symbols - each degree has a unique symbolic description")
+        maat_info.setStyleSheet("color: #888; font-style: italic;")
+        maat_layout.addWidget(maat_info)
+        
+        # Table for planet symbols
+        self.maat_table = QTableWidget(0, 4)
+        self.maat_table.setHorizontalHeaderLabels(["Planet", "Position", "Heaven", "Symbol"])
+        self.maat_table.horizontalHeader().setStretchLastSection(True)
+        self.maat_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        self.maat_table.setWordWrap(True)
+        self.maat_table.verticalHeader().setDefaultSectionSize(60)  # Taller rows
+        maat_layout.addWidget(self.maat_table)
+        
+        self.advanced_tabs.addTab(self.maat_tab, "Maat Symbols")
+
         
         # 5. Aspects Table
         self.aspects_tab = QWidget()
@@ -483,11 +567,18 @@ class NatalChartWindow(QMainWindow):
         # Controls row
         asp_controls = QHBoxLayout()
         
-        # Minor aspects checkbox
-        self.minor_aspects_checkbox = QCheckBox("Include Minor Aspects")
-        self.minor_aspects_checkbox.setChecked(False)
-        self.minor_aspects_checkbox.stateChanged.connect(self._on_aspects_filter_changed)
-        asp_controls.addWidget(self.minor_aspects_checkbox)
+        # Aspect tier dropdown
+        asp_controls.addWidget(QLabel("Show:"))
+        self.aspect_tier_combo = QComboBox()
+        self.aspect_tier_combo.addItems([
+            "Major Only",
+            "Major + Common Minor",
+            "Major + All Minor",
+            "All Aspects"
+        ])
+        self.aspect_tier_combo.setCurrentIndex(0)
+        self.aspect_tier_combo.currentIndexChanged.connect(self._on_aspects_filter_changed)
+        asp_controls.addWidget(self.aspect_tier_combo)
         
         # Orb slider
         asp_controls.addWidget(QLabel("Orb:"))
@@ -504,11 +595,38 @@ class NatalChartWindow(QMainWindow):
         asp_controls.addStretch()
         asp_layout.addLayout(asp_controls)
         
-        # Aspects table
+        # Sub-tabs for Grid and List views
+        self.aspects_subtabs = QTabWidget()
+        
+        # Grid view tab
+        grid_widget = QWidget()
+        grid_layout = QVBoxLayout(grid_widget)
+        self.aspects_grid = QTableWidget()
+        self.aspects_grid.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        grid_layout.addWidget(self.aspects_grid)
+        self.aspects_subtabs.addTab(grid_widget, "Grid")
+        
+        # List view tab (existing table)
+        list_widget = QWidget()
+        list_layout = QVBoxLayout(list_widget)
         self.aspects_table = QTableWidget(0, 5)
         self.aspects_table.setHorizontalHeaderLabels(["Planet A", "Aspect", "Planet B", "Orb", "Type"])
         self.aspects_table.horizontalHeader().setStretchLastSection(True)
-        asp_layout.addWidget(self.aspects_table)
+        list_layout.addWidget(self.aspects_table)
+        self.aspects_subtabs.addTab(list_widget, "List")
+        
+        # Legend tab
+        legend_widget = QWidget()
+        legend_layout = QVBoxLayout(legend_widget)
+        self.aspects_legend = QTableWidget()
+        self.aspects_legend.setColumnCount(3)
+        self.aspects_legend.setHorizontalHeaderLabels(["Symbol", "Aspect", "Angle"])
+        self.aspects_legend.horizontalHeader().setStretchLastSection(True)
+        self.aspects_legend.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        legend_layout.addWidget(self.aspects_legend)
+        self.aspects_subtabs.addTab(legend_widget, "Legend")
+        
+        asp_layout.addWidget(self.aspects_subtabs)
         
         self.advanced_tabs.addTab(self.aspects_tab, "Aspects")
         
@@ -588,11 +706,42 @@ class NatalChartWindow(QMainWindow):
             self._last_request = request
             self._last_result = result
             self.save_chart_button.setEnabled(True)
+            self.interpret_button.setEnabled(True)
             self._render_result(result)
             self.tabs.setCurrentWidget(self.results_tab)
             self._set_status("Chart generated successfully.")
+            
+            # Auto-generate interpretation (without switching tabs) so it is ready
+            self._generate_interpretation(switch_tab=False)
+
+    def _generate_interpretation(self, switch_tab: bool = True) -> None:
+        """Generate and display the chart interpretation."""
+        if not self._last_result:
+            return
+            
+        try:
+            # We don't necessarily need busy cursor for this fast operation, 
+            # but we keep it if switching tabs to indicate activity.
+            if switch_tab:
+                QApplication.setOverrideCursor(Qt.CursorShape.BusyCursor)
+                
+            chart_name = self._last_request.primary_event.name if self._last_request else "Chart"
+            report = self._interpretation_service.interpret_chart(self._last_result, chart_name)
+            self.interpretation_widget.display_report(report)
+            
+            if switch_tab:
+                self.tabs.setCurrentWidget(self.interpretation_tab)
+                
+        except Exception as e:
+             # Only show error if user explicitly requested it (clicked button), 
+             # otherwise log it to avoid spamming user on auto-gen
+             if switch_tab:
+                 QMessageBox.critical(self, "Interpretation Error", str(e))
+             else:
+                 print(f"Auto-interpretation failed: {e}")
         finally:
-            QApplication.restoreOverrideCursor()
+            if switch_tab:
+                QApplication.restoreOverrideCursor()
 
     def _build_request(self) -> ChartRequest:
         dt = self.datetime_input.dateTime().toPyDateTime()
@@ -653,7 +802,9 @@ class NatalChartWindow(QMainWindow):
         self._render_midpoints(result)
         self._render_harmonics(result)
         self._render_aspects_table(result)
+        self._render_maat_symbols(result)
         self._handle_svg(result)
+
         if hasattr(self, 'chart_canvas'):
             self.chart_canvas.set_data(result.planet_positions, result.house_positions)
 
@@ -804,10 +955,66 @@ class NatalChartWindow(QMainWindow):
                 # Midpoint position
                 pos_str = to_zodiacal_string(mp.longitude)
                 self.midpoints_table.setItem(row, 1, QTableWidgetItem(pos_str))
+            
+            # Update tree view
+            self._render_midpoints_tree(midpoints)
+            
+            # Update dial view
+            if hasattr(self, 'midpoints_dial'):
+                dial_data = [(mp.planet_a, mp.planet_b, mp.longitude) for mp in midpoints]
+                # Filter planet_lons to main bodies
+                main_bodies = {"sun", "moon", "mercury", "venus", "mars", "jupiter", "saturn"}
+                filtered_lons = {k: v for k, v in planet_lons.items() if k.lower() in main_bodies}
+                self.midpoints_dial.set_data(dial_data, filtered_lons)
                 
         except Exception as exc:
             import logging
             logging.getLogger(__name__).warning(f"Midpoints calculation failed: {exc}")
+
+    def _render_midpoints_tree(self, midpoints) -> None:
+        """Populate the midpoints tree view grouped by planet."""
+        if not hasattr(self, 'midpoints_tree'):
+            return
+        
+        from PyQt6.QtWidgets import QTreeWidgetItem
+        
+        self.midpoints_tree.clear()
+        
+        # Group midpoints by planet
+        tree_data: dict = {}
+        for mp in midpoints:
+            # Add to planet A's tree
+            if mp.planet_a not in tree_data:
+                tree_data[mp.planet_a] = []
+            tree_data[mp.planet_a].append(mp)
+            
+            # Add to planet B's tree
+            if mp.planet_b not in tree_data:
+                tree_data[mp.planet_b] = []
+            tree_data[mp.planet_b].append(mp)
+        
+        # Planet glyphs
+        glyphs = {
+            "Sun": "☉", "Moon": "☽", "Mercury": "☿", "Venus": "♀",
+            "Mars": "♂", "Jupiter": "♃", "Saturn": "♄",
+        }
+        
+        # Build tree
+        for planet, mps in sorted(tree_data.items()):
+            glyph = glyphs.get(planet.title(), planet[:2])
+            planet_item = QTreeWidgetItem([f"{glyph} {planet.title()}", ""])
+            
+            for mp in mps:
+                other = mp.planet_b if mp.planet_a == planet else mp.planet_a
+                other_glyph = glyphs.get(other.title(), other[:2])
+                pos_str = to_zodiacal_string(mp.longitude)
+                child = QTreeWidgetItem([f"  {glyph}/{other_glyph}", pos_str])
+                planet_item.addChild(child)
+            
+            self.midpoints_tree.addTopLevelItem(planet_item)
+        
+        self.midpoints_tree.expandAll()
+
 
     def _on_midpoints_filter_changed(self, state: int) -> None:
         """Re-render midpoints when filter changes."""
@@ -850,10 +1057,87 @@ class NatalChartWindow(QMainWindow):
                 # Harmonic position
                 harmonic_str = to_zodiacal_string(hp.harmonic_longitude)
                 self.harmonics_table.setItem(row, 2, QTableWidgetItem(harmonic_str))
+            
+            # Update dial widget (filter to main 10 planets only)
+            if hasattr(self, 'harmonics_dial'):
+                main_bodies = {"sun", "moon", "mercury", "venus", "mars", "jupiter", "saturn", "uranus", "neptune", "pluto"}
+                dial_data = [(hp.planet, hp.harmonic_longitude) for hp in positions if hp.planet.lower() in main_bodies]
+                self.harmonics_dial.set_data(dial_data, harmonic)
                 
         except Exception as exc:
             import logging
             logging.getLogger(__name__).warning(f"Harmonics calculation failed: {exc}")
+
+    def _render_maat_symbols(self, result: ChartResult) -> None:
+        """Populate the Maat Symbols table with symbols for each planet's degree."""
+        if not hasattr(self, 'maat_table'):
+            return
+        
+        self.maat_table.setRowCount(0)
+        
+        if not result.planet_positions:
+            return
+        
+        # Planet glyphs
+        glyphs = {
+            "Sun": "☉", "Moon": "☽", "Mercury": "☿", "Venus": "♀",
+            "Mars": "♂", "Jupiter": "♃", "Saturn": "♄", "Uranus": "♅",
+            "Neptune": "♆", "Pluto": "♇",
+        }
+        
+        # Heaven colors for visual distinction
+        heaven_colors = {
+            1: "#FFD700",  # Ptah - Gold
+            2: "#98FB98",  # Hathor - Pale Green
+            3: "#87CEEB",  # Thoth - Sky Blue
+            4: "#FF6347",  # Horus/Set - Tomato Red
+            5: "#DDA0DD",  # Ma'at - Plum
+            6: "#808080",  # Osiris - Gray
+            7: "#FFA500",  # Ra - Orange
+        }
+        
+        # Main 10 planets only
+        main_bodies = {"sun", "moon", "mercury", "venus", "mars", "jupiter", "saturn", "uranus", "neptune", "pluto"}
+        
+        for pos in result.planet_positions:
+            if pos.name.strip().lower() not in main_bodies:
+                continue
+            
+            planet_name = pos.name.strip().title()
+            
+            # Get Maat symbol
+            symbol = self._maat_service.get_symbol(pos.degree)
+            
+            row = self.maat_table.rowCount()
+            self.maat_table.insertRow(row)
+            
+            # Planet name with glyph
+            glyph = glyphs.get(planet_name, "")
+            planet_item = QTableWidgetItem(f"{glyph} {planet_name}")
+            self.maat_table.setItem(row, 0, planet_item)
+            
+            # Position
+            pos_str = to_zodiacal_string(pos.degree)
+            self.maat_table.setItem(row, 1, QTableWidgetItem(pos_str))
+            
+            # Heaven
+            heaven_str = f"{symbol.heaven}. {symbol.heaven_name}"
+            heaven_item = QTableWidgetItem(heaven_str)
+            color = heaven_colors.get(symbol.heaven, "#FFFFFF")
+            heaven_item.setForeground(QColor(color))
+            self.maat_table.setItem(row, 2, heaven_item)
+            
+            # Symbol text (italicized)
+            symbol_item = QTableWidgetItem(symbol.text)
+            font = symbol_item.font()
+            font.setItalic(True)
+            symbol_item.setFont(font)
+            self.maat_table.setItem(row, 3, symbol_item)
+        
+        # Resize columns
+        self.maat_table.resizeColumnsToContents()
+        self.maat_table.setColumnWidth(3, 400)  # Symbol column wider
+
 
     def _on_harmonic_changed(self, value: int) -> None:
         """Re-render harmonics when spinbox value changes."""
@@ -882,11 +1166,11 @@ class NatalChartWindow(QMainWindow):
                 planet_lons[pos.name.strip()] = pos.degree
             
             # Get filter settings
-            include_minor = self.minor_aspects_checkbox.isChecked() if hasattr(self, 'minor_aspects_checkbox') else False
+            tier = self.aspect_tier_combo.currentIndex() if hasattr(self, 'aspect_tier_combo') else 0
             orb_factor = self.orb_slider.value() / 100.0 if hasattr(self, 'orb_slider') else 1.0
             
             # Calculate aspects
-            aspects = self._aspects_service.calculate_aspects(planet_lons, include_minor, orb_factor)
+            aspects = self._aspects_service.calculate_aspects(planet_lons, tier, orb_factor)
             
             for asp in aspects:
                 row = self.aspects_table.rowCount()
@@ -913,6 +1197,115 @@ class NatalChartWindow(QMainWindow):
         except Exception as exc:
             import logging
             logging.getLogger(__name__).warning(f"Aspects calculation failed: {exc}")
+        
+        # Also render grid and legend
+        self._render_aspects_grid(result)
+        self._render_aspects_legend()
+
+    def _render_aspects_grid(self, result: ChartResult) -> None:
+        """Populate the Aspects grid matrix."""
+        if not hasattr(self, 'aspects_grid'):
+            return
+            
+        self.aspects_grid.clearContents()
+        self.aspects_grid.setRowCount(0)
+        self.aspects_grid.setColumnCount(0)
+        
+        if not result.planet_positions:
+            return
+            
+        try:
+            # Get planet list
+            planet_names = [pos.name.strip() for pos in result.planet_positions]
+            planet_lons = {pos.name.strip(): pos.degree for pos in result.planet_positions}
+            
+            # Planet glyphs
+            glyphs = {
+                "Sun": "☉", "Moon": "☽", "Mercury": "☿", "Venus": "♀",
+                "Mars": "♂", "Jupiter": "♃", "Saturn": "♄", "Uranus": "♅",
+                "Neptune": "♆", "Pluto": "♇", "North Node": "☊", "True Node": "☊",
+                "South Node": "☋", "Chiron": "⚷",
+            }
+            
+            # Filter to main bodies (case-insensitive)
+            main_bodies_lower = {"sun", "moon", "mercury", "venus", "mars", "jupiter", "saturn", "uranus", "neptune", "pluto"}
+            planets = [p for p in planet_names if p.lower() in main_bodies_lower]
+            
+
+            if not planets:
+                return
+            
+            n = len(planets)
+            self.aspects_grid.setRowCount(n)
+            self.aspects_grid.setColumnCount(n)
+            
+            # Set headers with glyphs (use title case for lookup)
+            headers = [glyphs.get(p.title(), p[:2]) for p in planets]
+            self.aspects_grid.setHorizontalHeaderLabels(headers)
+            self.aspects_grid.setVerticalHeaderLabels(headers)
+            
+            # Get filter settings
+            tier = self.aspect_tier_combo.currentIndex() if hasattr(self, 'aspect_tier_combo') else 0
+            orb_factor = self.orb_slider.value() / 100.0 if hasattr(self, 'orb_slider') else 1.0
+            
+            # Filter planet_lons to only main bodies for grid calculation
+            grid_planet_lons = {p: planet_lons[p] for p in planets if p in planet_lons}
+            
+            # Calculate aspects only for the 10 main planets
+            aspects = self._aspects_service.calculate_aspects(grid_planet_lons, tier, orb_factor)
+            
+
+            # Build lookup dict (normalize keys to title case)
+            aspect_lookup = {}
+            for asp in aspects:
+                key1 = (asp.planet_a.title(), asp.planet_b.title())
+                key2 = (asp.planet_b.title(), asp.planet_a.title())
+                aspect_lookup[key1] = asp.aspect.symbol
+                aspect_lookup[key2] = asp.aspect.symbol
+            
+
+            # Fill grid (normalize planet names for lookup)
+            for i, p1 in enumerate(planets):
+                for j, p2 in enumerate(planets):
+                    if i == j:
+                        item = QTableWidgetItem("-")
+                    else:
+                        symbol = aspect_lookup.get((p1.title(), p2.title()), "")
+                        item = QTableWidgetItem(symbol)
+                    item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                    self.aspects_grid.setItem(i, j, item)
+            
+            # Resize columns to fit
+            self.aspects_grid.resizeColumnsToContents()
+            self.aspects_grid.resizeRowsToContents()
+                
+        except Exception as exc:
+            import logging
+            logging.getLogger(__name__).warning(f"Aspects grid failed: {exc}")
+
+    def _render_aspects_legend(self) -> None:
+        """Populate the aspects legend table."""
+        if not hasattr(self, 'aspects_legend'):
+            return
+            
+        from ..services.aspects_service import ASPECT_TIERS
+        
+        tier = self.aspect_tier_combo.currentIndex() if hasattr(self, 'aspect_tier_combo') else 0
+        aspects_defs = ASPECT_TIERS.get(tier, [])
+        
+        self.aspects_legend.setRowCount(len(aspects_defs))
+        
+        for i, asp in enumerate(aspects_defs):
+            # Symbol
+            self.aspects_legend.setItem(i, 0, QTableWidgetItem(asp.symbol))
+            # Name
+            self.aspects_legend.setItem(i, 1, QTableWidgetItem(asp.name))
+            # Angle
+            angle_str = f"{asp.angle}°"
+            self.aspects_legend.setItem(i, 2, QTableWidgetItem(angle_str))
+        
+        self.aspects_legend.resizeColumnsToContents()
+
 
     def _on_aspects_filter_changed(self, state: int) -> None:
         """Re-render aspects and update chart when filter changes."""
@@ -931,7 +1324,8 @@ class NatalChartWindow(QMainWindow):
     def _sync_chart_aspects(self) -> None:
         """Sync aspect settings with chart canvas."""
         if hasattr(self, 'chart_canvas'):
-            include_minor = self.minor_aspects_checkbox.isChecked() if hasattr(self, 'minor_aspects_checkbox') else False
+            tier = self.aspect_tier_combo.currentIndex() if hasattr(self, 'aspect_tier_combo') else 0
+            include_minor = tier > 0  # Any tier above 0 shows some minor aspects
             orb_factor = self.orb_slider.value() / 100.0 if hasattr(self, 'orb_slider') else 1.0
             if hasattr(self.chart_canvas, 'set_aspect_options'):
                 self.chart_canvas.set_aspect_options(include_minor, orb_factor)

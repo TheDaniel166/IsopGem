@@ -41,6 +41,8 @@ class EphemerisProvider:
             "data/de441.bsp",
             os.path.join(base_dir, "de441.bsp"),
             os.path.join(base_dir, "data/de441.bsp"),
+            # Check IsopGem build directory
+            os.path.expanduser("~/IsopGem/_internal/assets/ephemeris/de441.bsp"),
             "de421.bsp",
             "data/de421.bsp",
             os.path.join(base_dir, "de421.bsp"),
@@ -56,16 +58,49 @@ class EphemerisProvider:
                 break
         
         if not found:
-            # If nothing found, try to load de441 if explicit, or fallback to de421
-            # Skyfield load() will download to PWD if not found
-            # We prefer de421 for auto-download if de441 is missing to avoid 3GB surprise
-             pass
-
+            # Prefer big file for new installs or updates
+            file_path = "de441.bsp"
+            
         print(f"Loading ephemeris from: {file_path}")
         self._ts = load.timescale()
-        self._planets = load(file_path)
+        self._planets = load(file_path) # This will download if missing
         self._loaded = True
         print("Ephemeris loaded successfully.")
+
+    def get_osculating_north_node(self, dt: datetime) -> float:
+        """
+        Calculates the Geocentric Osculating North Node (True Node) of the Moon.
+        Defined as the intersection of the Moon's instantaneous orbital plane with the Ecliptic.
+        """
+        if not self._loaded:
+            raise EphemerisNotLoadedError("Ephemeris data is still loading.")
+
+        t = self._ts.from_datetime(dt)
+        earth = self._planets['earth']
+        moon = self._planets['moon']
+        
+        # 1. Get Moon's Geocentric Position and Velocity
+        # Note: 'true' parameter provides GCRS position/velocity
+        astrometric = earth.at(t).observe(moon)
+        pos = astrometric.position.au
+        vel = astrometric.velocity.au_per_d
+        
+        # 2. Calculate Angular Momentum Vector L = r x v
+        # This vector is perpendicular to the orbital plane
+        Lx = pos[1]*vel[2] - pos[2]*vel[1]
+        Ly = pos[2]*vel[0] - pos[0]*vel[2]
+        Lz = pos[0]*vel[1] - pos[1]*vel[0]
+        
+        # 3. Calculate Node Longitude
+        # The line of nodes is the intersection of orbital plane and ecliptic plane (z=0)
+        # Vector pointing to ascending node is N = k x L (where k is z-axis unit vector)
+        # N = (-Ly, Lx, 0)
+        # Longitude = atan2(Ny, Nx) = atan2(Lx, -Ly)
+        
+        node_rad = math.atan2(Lx, -Ly)
+        node_deg = math.degrees(node_rad)
+        
+        return node_deg % 360.0
 
     def get_geocentric_ecliptic_position(self, body_name: str, dt: datetime) -> float:
         """

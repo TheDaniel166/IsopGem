@@ -1,0 +1,42 @@
+{
+    "Sun_Moon": {
+        "Conjunction": {
+            "text": "The Sun/Moon conjunction unifies the Will and the Emotions. You are single-minded and focused.",
+            "archetype": "The New Moon",
+            "essence": "Unity of purpose and feeling.",
+            "shadow": "Subjectivity and lack of perspective.",
+            "gift": "Total integration of self.",
+            "keywords": [
+                "Unity",
+                "Focus",
+                "Subjectivity"
+            ]
+        },
+        "Opposition": {
+            "text": "The Sun/Moon opposition creates a push-pull between conscious wants and emotional needs.",
+            "archetype": "The Full Moon",
+            "essence": "Polarity and awareness through relationship.",
+            "shadow": "Inner conflict and projection.",
+            "gift": "Objectivity and illumination.",
+            "keywords": [
+                "Polarity",
+                "Awareness",
+                "Tension"
+            ]
+        }
+    },
+    "Sun_Mars": {
+        "Trine": {
+            "text": "A harmonious flow between Will (Sun) and Drive (Mars). Action comes naturally.",
+            "archetype": "The Natural Warrior",
+            "essence": "Effortless action and vitality.",
+            "shadow": "Taking energy for granted.",
+            "gift": "Confidence and fluid capability.",
+            "keywords": [
+                "Flow",
+                "Strength",
+                "Ease"
+            ]
+        }
+    }
+}

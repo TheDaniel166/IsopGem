@@ -1,0 +1,1754 @@
+{
+    "Sun": {
+        "Aries": {
+            "text": "The Sun in Aries represents the archetype of the Pioneer. Vitality is expressed through action, initiative, and the assertion of the will.",
+            "archetype": "The Pioneer",
+            "essence": "Radiant vitality, will to exist, pure action.",
+            "shadow": "Aggression, selfishness, impulsiveness.",
+            "gift": "The ability to start anew and lead with conviction.",
+            "keywords": [
+                "Vitality",
+                "Action",
+                "Identity"
+            ]
+        },
+        "Taurus": {
+            "text": "The Sun in Taurus grounds the solar purpose in the material world. There is a deep need for stability, beauty, and the accumulation of resources.",
+            "archetype": "The Builder",
+            "essence": "Sustaining power, sensory enjoyment, stability.",
+            "shadow": "Stubbornness, materialism, stagnation.",
+            "gift": "The ability to manifest and sustain value.",
+            "keywords": [
+                "stability",
+                "values",
+                "endurance"
+            ]
+        },
+        "Gemini": {
+            "text": "Your core identity and vitality. How you shine. Expressed through the lens of Gemini: Mutable Air. Curiosity, connection, and the weaving of ideas.. You identify as The Messenger. Your path involves mastering Communication and Learning.",
+            "archetype": "The Messenger",
+            "essence": "Mutable Air. Curiosity, connection, and the weaving of ideas.",
+            "shadow": "Sun expressed as Scattered energy, superficiality, deceit.",
+            "gift": "Versatility and the ability to bridge paradoxes.",
+            "keywords": [
+                "Communication",
+                "Learning",
+                "Adaptability"
+            ]
+        },
+        "Cancer": {
+            "text": "Your core identity and vitality. How you shine. Expressed through the lens of Cancer: Cardinal Water. Emotional security, nurturing, and ancestral memory.. You identify as The Mother. Your path involves mastering Home and Emotion.",
+            "archetype": "The Mother",
+            "essence": "Cardinal Water. Emotional security, nurturing, and ancestral memory.",
+            "shadow": "Sun expressed as Clinging, moodiness, defensive shells.",
+            "gift": "Profound empathy and the power to protect life.",
+            "keywords": [
+                "Home",
+                "Emotion",
+                "Nurture"
+            ]
+        },
+        "Leo": {
+            "text": "Your core identity and vitality. How you shine. Expressed through the lens of Leo: Fixed Fire. Self-expression, creativity, and the joy of being.. You identify as The King/Queen. Your path involves mastering Creativity and Pride.",
+            "archetype": "The King/Queen",
+            "essence": "Fixed Fire. Self-expression, creativity, and the joy of being.",
+            "shadow": "Sun expressed as Arrogance, narcissism, drama.",
+            "gift": "Radiant generosity and the power to inspire others.",
+            "keywords": [
+                "Creativity",
+                "Pride",
+                "Heart"
+            ]
+        },
+        "Virgo": {
+            "text": "Your core identity and vitality. How you shine. Expressed through the lens of Virgo: Mutable Earth. Purification, service, and the refinement of matter.. You identify as The Healer. Your path involves mastering Service and Analysis.",
+            "archetype": "The Healer",
+            "essence": "Mutable Earth. Purification, service, and the refinement of matter.",
+            "shadow": "Sun expressed as Perfectionism, criticism, anxiety.",
+            "gift": "Discernment and the skill to make things whole.",
+            "keywords": [
+                "Service",
+                "Analysis",
+                "Purity"
+            ]
+        },
+        "Libra": {
+            "text": "Your core identity and vitality. How you shine. Expressed through the lens of Libra: Cardinal Air. Balance, harmony, and the mirror of the Other.. You identify as The Diplomat. Your path involves mastering Balance and Relationship.",
+            "archetype": "The Diplomat",
+            "essence": "Cardinal Air. Balance, harmony, and the mirror of the Other.",
+            "shadow": "Sun expressed as Indecision, codependency, superficial harmony.",
+            "gift": "Justice and the creation of beauty in relationship.",
+            "keywords": [
+                "Balance",
+                "Relationship",
+                "Beauty"
+            ]
+        },
+        "Scorpio": {
+            "text": "Your core identity and vitality. How you shine. Expressed through the lens of Scorpio: Fixed Water. Transformation, intensity, and the depths of the psyche.. You identify as The Sorcerer. Your path involves mastering Transformation and Power.",
+            "archetype": "The Sorcerer",
+            "essence": "Fixed Water. Transformation, intensity, and the depths of the psyche.",
+            "shadow": "Sun expressed as Obsession, manipulation, vengeance.",
+            "gift": "Regeneration and the courage to face the darkness.",
+            "keywords": [
+                "Transformation",
+                "Power",
+                "Depth"
+            ]
+        },
+        "Sagittarius": {
+            "text": "Your core identity and vitality. How you shine. Expressed through the lens of Sagittarius: Mutable Fire. Quest for meaning, expansion, and truth.. You identify as The Explorer. Your path involves mastering Wisdom and Adventure.",
+            "archetype": "The Explorer",
+            "essence": "Mutable Fire. Quest for meaning, expansion, and truth.",
+            "shadow": "Sun expressed as Dogmatism, recklessness, escapism.",
+            "gift": "Optimism and the wisdom to see the big picture.",
+            "keywords": [
+                "Wisdom",
+                "Adventure",
+                "Philosophy"
+            ]
+        },
+        "Capricorn": {
+            "text": "Your core identity and vitality. How you shine. Expressed through the lens of Capricorn: Cardinal Earth. Structure, ambition, and the mastery of time.. You identify as The Elder. Your path involves mastering Ambition and Discipline.",
+            "archetype": "The Elder",
+            "essence": "Cardinal Earth. Structure, ambition, and the mastery of time.",
+            "shadow": "Sun expressed as Rigidity, ruthlessness, depression.",
+            "gift": "Integrity and the power to build expanding legacies.",
+            "keywords": [
+                "Ambition",
+                "Discipline",
+                "Legacy"
+            ]
+        },
+        "Aquarius": {
+            "text": "Your core identity and vitality. How you shine. Expressed through the lens of Aquarius: Fixed Air. Innovation, humanity, and the breaking of patterns.. You identify as The Visionary. Your path involves mastering Innovation and Humanity.",
+            "archetype": "The Visionary",
+            "essence": "Fixed Air. Innovation, humanity, and the breaking of patterns.",
+            "shadow": "Sun expressed as Detachment, rebellion without cause, aloofness.",
+            "gift": "Genius and the dedication to future progress.",
+            "keywords": [
+                "Innovation",
+                "Humanity",
+                "Freedom"
+            ]
+        },
+        "Pisces": {
+            "text": "Your core identity and vitality. How you shine. Expressed through the lens of Pisces: Mutable Water. Dissolution, unity, and the ocean of consciousness.. You identify as The Mystic. Your path involves mastering Dreams and Unity.",
+            "archetype": "The Mystic",
+            "essence": "Mutable Water. Dissolution, unity, and the ocean of consciousness.",
+            "shadow": "Sun expressed as Delusion, victimhood, escapism.",
+            "gift": "Compassion and the realization of Oneness.",
+            "keywords": [
+                "Dreams",
+                "Unity",
+                "Compassion"
+            ]
+        }
+    },
+    "Moon": {
+        "Aries": {
+            "text": "The Moon in Aries reacts instinctively with speed and passion. Emotional security is found in independence.",
+            "archetype": "The Emotional Warrior",
+            "essence": "Instinctive bravery, emotional honesty.",
+            "shadow": "Emotional volatility, irritability.",
+            "gift": "Emotional courage and spontaneity.",
+            "keywords": [
+                "instinct",
+                "passion",
+                "independence"
+            ]
+        },
+        "Taurus": {
+            "text": "Your emotional nature and subconscious needs. How you comfort yourself. Expressed through the lens of Taurus: Fixed Earth. Determining value, sustaining growth, and sensory embodiment.. You find safety in Sensation and react with Stability. Your emotional self is The Builder.",
+            "archetype": "The Builder",
+            "essence": "Fixed Earth. Determining value, sustaining growth, and sensory embodiment.",
+            "shadow": "Moon expressed as Stubbornness, greed, stagnation.",
+            "gift": "Unshakable stability and the creation of lasting beauty.",
+            "keywords": [
+                "Stability",
+                "Resource",
+                "Sensation"
+            ]
+        },
+        "Gemini": {
+            "text": "Your emotional nature and subconscious needs. How you comfort yourself. Expressed through the lens of Gemini: Mutable Air. Curiosity, connection, and the weaving of ideas.. You find safety in Adaptability and react with Communication. Your emotional self is The Messenger.",
+            "archetype": "The Messenger",
+            "essence": "Mutable Air. Curiosity, connection, and the weaving of ideas.",
+            "shadow": "Moon expressed as Scattered energy, superficiality, deceit.",
+            "gift": "Versatility and the ability to bridge paradoxes.",
+            "keywords": [
+                "Communication",
+                "Learning",
+                "Adaptability"
+            ]
+        },
+        "Cancer": {
+            "text": "Your emotional nature and subconscious needs. How you comfort yourself. Expressed through the lens of Cancer: Cardinal Water. Emotional security, nurturing, and ancestral memory.. You find safety in Nurture and react with Home. Your emotional self is The Mother.",
+            "archetype": "The Mother",
+            "essence": "Cardinal Water. Emotional security, nurturing, and ancestral memory.",
+            "shadow": "Moon expressed as Clinging, moodiness, defensive shells.",
+            "gift": "Profound empathy and the power to protect life.",
+            "keywords": [
+                "Home",
+                "Emotion",
+                "Nurture"
+            ]
+        },
+        "Leo": {
+            "text": "Your emotional nature and subconscious needs. How you comfort yourself. Expressed through the lens of Leo: Fixed Fire. Self-expression, creativity, and the joy of being.. You find safety in Heart and react with Creativity. Your emotional self is The King/Queen.",
+            "archetype": "The King/Queen",
+            "essence": "Fixed Fire. Self-expression, creativity, and the joy of being.",
+            "shadow": "Moon expressed as Arrogance, narcissism, drama.",
+            "gift": "Radiant generosity and the power to inspire others.",
+            "keywords": [
+                "Creativity",
+                "Pride",
+                "Heart"
+            ]
+        },
+        "Virgo": {
+            "text": "Your emotional nature and subconscious needs. How you comfort yourself. Expressed through the lens of Virgo: Mutable Earth. Purification, service, and the refinement of matter.. You find safety in Purity and react with Service. Your emotional self is The Healer.",
+            "archetype": "The Healer",
+            "essence": "Mutable Earth. Purification, service, and the refinement of matter.",
+            "shadow": "Moon expressed as Perfectionism, criticism, anxiety.",
+            "gift": "Discernment and the skill to make things whole.",
+            "keywords": [
+                "Service",
+                "Analysis",
+                "Purity"
+            ]
+        },
+        "Libra": {
+            "text": "Your emotional nature and subconscious needs. How you comfort yourself. Expressed through the lens of Libra: Cardinal Air. Balance, harmony, and the mirror of the Other.. You find safety in Beauty and react with Balance. Your emotional self is The Diplomat.",
+            "archetype": "The Diplomat",
+            "essence": "Cardinal Air. Balance, harmony, and the mirror of the Other.",
+            "shadow": "Moon expressed as Indecision, codependency, superficial harmony.",
+            "gift": "Justice and the creation of beauty in relationship.",
+            "keywords": [
+                "Balance",
+                "Relationship",
+                "Beauty"
+            ]
+        },
+        "Scorpio": {
+            "text": "Your emotional nature and subconscious needs. How you comfort yourself. Expressed through the lens of Scorpio: Fixed Water. Transformation, intensity, and the depths of the psyche.. You find safety in Depth and react with Transformation. Your emotional self is The Sorcerer.",
+            "archetype": "The Sorcerer",
+            "essence": "Fixed Water. Transformation, intensity, and the depths of the psyche.",
+            "shadow": "Moon expressed as Obsession, manipulation, vengeance.",
+            "gift": "Regeneration and the courage to face the darkness.",
+            "keywords": [
+                "Transformation",
+                "Power",
+                "Depth"
+            ]
+        },
+        "Sagittarius": {
+            "text": "Your emotional nature and subconscious needs. How you comfort yourself. Expressed through the lens of Sagittarius: Mutable Fire. Quest for meaning, expansion, and truth.. You find safety in Philosophy and react with Wisdom. Your emotional self is The Explorer.",
+            "archetype": "The Explorer",
+            "essence": "Mutable Fire. Quest for meaning, expansion, and truth.",
+            "shadow": "Moon expressed as Dogmatism, recklessness, escapism.",
+            "gift": "Optimism and the wisdom to see the big picture.",
+            "keywords": [
+                "Wisdom",
+                "Adventure",
+                "Philosophy"
+            ]
+        },
+        "Capricorn": {
+            "text": "Your emotional nature and subconscious needs. How you comfort yourself. Expressed through the lens of Capricorn: Cardinal Earth. Structure, ambition, and the mastery of time.. You find safety in Legacy and react with Ambition. Your emotional self is The Elder.",
+            "archetype": "The Elder",
+            "essence": "Cardinal Earth. Structure, ambition, and the mastery of time.",
+            "shadow": "Moon expressed as Rigidity, ruthlessness, depression.",
+            "gift": "Integrity and the power to build expanding legacies.",
+            "keywords": [
+                "Ambition",
+                "Discipline",
+                "Legacy"
+            ]
+        },
+        "Aquarius": {
+            "text": "Your emotional nature and subconscious needs. How you comfort yourself. Expressed through the lens of Aquarius: Fixed Air. Innovation, humanity, and the breaking of patterns.. You find safety in Freedom and react with Innovation. Your emotional self is The Visionary.",
+            "archetype": "The Visionary",
+            "essence": "Fixed Air. Innovation, humanity, and the breaking of patterns.",
+            "shadow": "Moon expressed as Detachment, rebellion without cause, aloofness.",
+            "gift": "Genius and the dedication to future progress.",
+            "keywords": [
+                "Innovation",
+                "Humanity",
+                "Freedom"
+            ]
+        },
+        "Pisces": {
+            "text": "Your emotional nature and subconscious needs. How you comfort yourself. Expressed through the lens of Pisces: Mutable Water. Dissolution, unity, and the ocean of consciousness.. You find safety in Compassion and react with Dreams. Your emotional self is The Mystic.",
+            "archetype": "The Mystic",
+            "essence": "Mutable Water. Dissolution, unity, and the ocean of consciousness.",
+            "shadow": "Moon expressed as Delusion, victimhood, escapism.",
+            "gift": "Compassion and the realization of Oneness.",
+            "keywords": [
+                "Dreams",
+                "Unity",
+                "Compassion"
+            ]
+        }
+    },
+    "Mercury": {
+        "Aries": {
+            "text": "Your mind and communication style. How you perceive the world. Expressed through the lens of Aries: Cardianl Fire. Pure vitality, impulse, and the will to exist..",
+            "archetype": "The Pioneer",
+            "essence": "Cardianl Fire. Pure vitality, impulse, and the will to exist.",
+            "shadow": "Mercury expressed as Aggression, selfishness, impatience.",
+            "gift": "Courage to begin and the strength to stand alone.",
+            "keywords": [
+                "Initiative",
+                "Independence",
+                "Action"
+            ]
+        },
+        "Taurus": {
+            "text": "Your mind and communication style. How you perceive the world. Expressed through the lens of Taurus: Fixed Earth. Determining value, sustaining growth, and sensory embodiment..",
+            "archetype": "The Builder",
+            "essence": "Fixed Earth. Determining value, sustaining growth, and sensory embodiment.",
+            "shadow": "Mercury expressed as Stubbornness, greed, stagnation.",
+            "gift": "Unshakable stability and the creation of lasting beauty.",
+            "keywords": [
+                "Stability",
+                "Resource",
+                "Sensation"
+            ]
+        },
+        "Gemini": {
+            "text": "Your mind and communication style. How you perceive the world. Expressed through the lens of Gemini: Mutable Air. Curiosity, connection, and the weaving of ideas..",
+            "archetype": "The Messenger",
+            "essence": "Mutable Air. Curiosity, connection, and the weaving of ideas.",
+            "shadow": "Mercury expressed as Scattered energy, superficiality, deceit.",
+            "gift": "Versatility and the ability to bridge paradoxes.",
+            "keywords": [
+                "Communication",
+                "Learning",
+                "Adaptability"
+            ]
+        },
+        "Cancer": {
+            "text": "Your mind and communication style. How you perceive the world. Expressed through the lens of Cancer: Cardinal Water. Emotional security, nurturing, and ancestral memory..",
+            "archetype": "The Mother",
+            "essence": "Cardinal Water. Emotional security, nurturing, and ancestral memory.",
+            "shadow": "Mercury expressed as Clinging, moodiness, defensive shells.",
+            "gift": "Profound empathy and the power to protect life.",
+            "keywords": [
+                "Home",
+                "Emotion",
+                "Nurture"
+            ]
+        },
+        "Leo": {
+            "text": "Your mind and communication style. How you perceive the world. Expressed through the lens of Leo: Fixed Fire. Self-expression, creativity, and the joy of being..",
+            "archetype": "The King/Queen",
+            "essence": "Fixed Fire. Self-expression, creativity, and the joy of being.",
+            "shadow": "Mercury expressed as Arrogance, narcissism, drama.",
+            "gift": "Radiant generosity and the power to inspire others.",
+            "keywords": [
+                "Creativity",
+                "Pride",
+                "Heart"
+            ]
+        },
+        "Virgo": {
+            "text": "Your mind and communication style. How you perceive the world. Expressed through the lens of Virgo: Mutable Earth. Purification, service, and the refinement of matter..",
+            "archetype": "The Healer",
+            "essence": "Mutable Earth. Purification, service, and the refinement of matter.",
+            "shadow": "Mercury expressed as Perfectionism, criticism, anxiety.",
+            "gift": "Discernment and the skill to make things whole.",
+            "keywords": [
+                "Service",
+                "Analysis",
+                "Purity"
+            ]
+        },
+        "Libra": {
+            "text": "Your mind and communication style. How you perceive the world. Expressed through the lens of Libra: Cardinal Air. Balance, harmony, and the mirror of the Other..",
+            "archetype": "The Diplomat",
+            "essence": "Cardinal Air. Balance, harmony, and the mirror of the Other.",
+            "shadow": "Mercury expressed as Indecision, codependency, superficial harmony.",
+            "gift": "Justice and the creation of beauty in relationship.",
+            "keywords": [
+                "Balance",
+                "Relationship",
+                "Beauty"
+            ]
+        },
+        "Scorpio": {
+            "text": "Your mind and communication style. How you perceive the world. Expressed through the lens of Scorpio: Fixed Water. Transformation, intensity, and the depths of the psyche..",
+            "archetype": "The Sorcerer",
+            "essence": "Fixed Water. Transformation, intensity, and the depths of the psyche.",
+            "shadow": "Mercury expressed as Obsession, manipulation, vengeance.",
+            "gift": "Regeneration and the courage to face the darkness.",
+            "keywords": [
+                "Transformation",
+                "Power",
+                "Depth"
+            ]
+        },
+        "Sagittarius": {
+            "text": "Your mind and communication style. How you perceive the world. Expressed through the lens of Sagittarius: Mutable Fire. Quest for meaning, expansion, and truth..",
+            "archetype": "The Explorer",
+            "essence": "Mutable Fire. Quest for meaning, expansion, and truth.",
+            "shadow": "Mercury expressed as Dogmatism, recklessness, escapism.",
+            "gift": "Optimism and the wisdom to see the big picture.",
+            "keywords": [
+                "Wisdom",
+                "Adventure",
+                "Philosophy"
+            ]
+        },
+        "Capricorn": {
+            "text": "Your mind and communication style. How you perceive the world. Expressed through the lens of Capricorn: Cardinal Earth. Structure, ambition, and the mastery of time..",
+            "archetype": "The Elder",
+            "essence": "Cardinal Earth. Structure, ambition, and the mastery of time.",
+            "shadow": "Mercury expressed as Rigidity, ruthlessness, depression.",
+            "gift": "Integrity and the power to build expanding legacies.",
+            "keywords": [
+                "Ambition",
+                "Discipline",
+                "Legacy"
+            ]
+        },
+        "Aquarius": {
+            "text": "Your mind and communication style. How you perceive the world. Expressed through the lens of Aquarius: Fixed Air. Innovation, humanity, and the breaking of patterns..",
+            "archetype": "The Visionary",
+            "essence": "Fixed Air. Innovation, humanity, and the breaking of patterns.",
+            "shadow": "Mercury expressed as Detachment, rebellion without cause, aloofness.",
+            "gift": "Genius and the dedication to future progress.",
+            "keywords": [
+                "Innovation",
+                "Humanity",
+                "Freedom"
+            ]
+        },
+        "Pisces": {
+            "text": "Your mind and communication style. How you perceive the world. Expressed through the lens of Pisces: Mutable Water. Dissolution, unity, and the ocean of consciousness..",
+            "archetype": "The Mystic",
+            "essence": "Mutable Water. Dissolution, unity, and the ocean of consciousness.",
+            "shadow": "Mercury expressed as Delusion, victimhood, escapism.",
+            "gift": "Compassion and the realization of Oneness.",
+            "keywords": [
+                "Dreams",
+                "Unity",
+                "Compassion"
+            ]
+        }
+    },
+    "Venus": {
+        "Aries": {
+            "text": "Your values, love style, and aesthetic sense. What you attract. Expressed through the lens of Aries: Cardianl Fire. Pure vitality, impulse, and the will to exist..",
+            "archetype": "The Pioneer",
+            "essence": "Cardianl Fire. Pure vitality, impulse, and the will to exist.",
+            "shadow": "Venus expressed as Aggression, selfishness, impatience.",
+            "gift": "Courage to begin and the strength to stand alone.",
+            "keywords": [
+                "Initiative",
+                "Independence",
+                "Action"
+            ]
+        },
+        "Taurus": {
+            "text": "Your values, love style, and aesthetic sense. What you attract. Expressed through the lens of Taurus: Fixed Earth. Determining value, sustaining growth, and sensory embodiment..",
+            "archetype": "The Builder",
+            "essence": "Fixed Earth. Determining value, sustaining growth, and sensory embodiment.",
+            "shadow": "Venus expressed as Stubbornness, greed, stagnation.",
+            "gift": "Unshakable stability and the creation of lasting beauty.",
+            "keywords": [
+                "Stability",
+                "Resource",
+                "Sensation"
+            ]
+        },
+        "Gemini": {
+            "text": "Your values, love style, and aesthetic sense. What you attract. Expressed through the lens of Gemini: Mutable Air. Curiosity, connection, and the weaving of ideas..",
+            "archetype": "The Messenger",
+            "essence": "Mutable Air. Curiosity, connection, and the weaving of ideas.",
+            "shadow": "Venus expressed as Scattered energy, superficiality, deceit.",
+            "gift": "Versatility and the ability to bridge paradoxes.",
+            "keywords": [
+                "Communication",
+                "Learning",
+                "Adaptability"
+            ]
+        },
+        "Cancer": {
+            "text": "Your values, love style, and aesthetic sense. What you attract. Expressed through the lens of Cancer: Cardinal Water. Emotional security, nurturing, and ancestral memory..",
+            "archetype": "The Mother",
+            "essence": "Cardinal Water. Emotional security, nurturing, and ancestral memory.",
+            "shadow": "Venus expressed as Clinging, moodiness, defensive shells.",
+            "gift": "Profound empathy and the power to protect life.",
+            "keywords": [
+                "Home",
+                "Emotion",
+                "Nurture"
+            ]
+        },
+        "Leo": {
+            "text": "Your values, love style, and aesthetic sense. What you attract. Expressed through the lens of Leo: Fixed Fire. Self-expression, creativity, and the joy of being..",
+            "archetype": "The King/Queen",
+            "essence": "Fixed Fire. Self-expression, creativity, and the joy of being.",
+            "shadow": "Venus expressed as Arrogance, narcissism, drama.",
+            "gift": "Radiant generosity and the power to inspire others.",
+            "keywords": [
+                "Creativity",
+                "Pride",
+                "Heart"
+            ]
+        },
+        "Virgo": {
+            "text": "Your values, love style, and aesthetic sense. What you attract. Expressed through the lens of Virgo: Mutable Earth. Purification, service, and the refinement of matter..",
+            "archetype": "The Healer",
+            "essence": "Mutable Earth. Purification, service, and the refinement of matter.",
+            "shadow": "Venus expressed as Perfectionism, criticism, anxiety.",
+            "gift": "Discernment and the skill to make things whole.",
+            "keywords": [
+                "Service",
+                "Analysis",
+                "Purity"
+            ]
+        },
+        "Libra": {
+            "text": "Your values, love style, and aesthetic sense. What you attract. Expressed through the lens of Libra: Cardinal Air. Balance, harmony, and the mirror of the Other..",
+            "archetype": "The Diplomat",
+            "essence": "Cardinal Air. Balance, harmony, and the mirror of the Other.",
+            "shadow": "Venus expressed as Indecision, codependency, superficial harmony.",
+            "gift": "Justice and the creation of beauty in relationship.",
+            "keywords": [
+                "Balance",
+                "Relationship",
+                "Beauty"
+            ]
+        },
+        "Scorpio": {
+            "text": "Your values, love style, and aesthetic sense. What you attract. Expressed through the lens of Scorpio: Fixed Water. Transformation, intensity, and the depths of the psyche..",
+            "archetype": "The Sorcerer",
+            "essence": "Fixed Water. Transformation, intensity, and the depths of the psyche.",
+            "shadow": "Venus expressed as Obsession, manipulation, vengeance.",
+            "gift": "Regeneration and the courage to face the darkness.",
+            "keywords": [
+                "Transformation",
+                "Power",
+                "Depth"
+            ]
+        },
+        "Sagittarius": {
+            "text": "Your values, love style, and aesthetic sense. What you attract. Expressed through the lens of Sagittarius: Mutable Fire. Quest for meaning, expansion, and truth..",
+            "archetype": "The Explorer",
+            "essence": "Mutable Fire. Quest for meaning, expansion, and truth.",
+            "shadow": "Venus expressed as Dogmatism, recklessness, escapism.",
+            "gift": "Optimism and the wisdom to see the big picture.",
+            "keywords": [
+                "Wisdom",
+                "Adventure",
+                "Philosophy"
+            ]
+        },
+        "Capricorn": {
+            "text": "Your values, love style, and aesthetic sense. What you attract. Expressed through the lens of Capricorn: Cardinal Earth. Structure, ambition, and the mastery of time..",
+            "archetype": "The Elder",
+            "essence": "Cardinal Earth. Structure, ambition, and the mastery of time.",
+            "shadow": "Venus expressed as Rigidity, ruthlessness, depression.",
+            "gift": "Integrity and the power to build expanding legacies.",
+            "keywords": [
+                "Ambition",
+                "Discipline",
+                "Legacy"
+            ]
+        },
+        "Aquarius": {
+            "text": "Your values, love style, and aesthetic sense. What you attract. Expressed through the lens of Aquarius: Fixed Air. Innovation, humanity, and the breaking of patterns..",
+            "archetype": "The Visionary",
+            "essence": "Fixed Air. Innovation, humanity, and the breaking of patterns.",
+            "shadow": "Venus expressed as Detachment, rebellion without cause, aloofness.",
+            "gift": "Genius and the dedication to future progress.",
+            "keywords": [
+                "Innovation",
+                "Humanity",
+                "Freedom"
+            ]
+        },
+        "Pisces": {
+            "text": "Your values, love style, and aesthetic sense. What you attract. Expressed through the lens of Pisces: Mutable Water. Dissolution, unity, and the ocean of consciousness..",
+            "archetype": "The Mystic",
+            "essence": "Mutable Water. Dissolution, unity, and the ocean of consciousness.",
+            "shadow": "Venus expressed as Delusion, victimhood, escapism.",
+            "gift": "Compassion and the realization of Oneness.",
+            "keywords": [
+                "Dreams",
+                "Unity",
+                "Compassion"
+            ]
+        }
+    },
+    "Mars": {
+        "Aries": {
+            "text": "Your drive, desire, and conflict style. How you get what you want. Expressed through the lens of Aries: Cardianl Fire. Pure vitality, impulse, and the will to exist..",
+            "archetype": "The Pioneer",
+            "essence": "Cardianl Fire. Pure vitality, impulse, and the will to exist.",
+            "shadow": "Mars expressed as Aggression, selfishness, impatience.",
+            "gift": "Courage to begin and the strength to stand alone.",
+            "keywords": [
+                "Initiative",
+                "Independence",
+                "Action"
+            ]
+        },
+        "Taurus": {
+            "text": "Your drive, desire, and conflict style. How you get what you want. Expressed through the lens of Taurus: Fixed Earth. Determining value, sustaining growth, and sensory embodiment..",
+            "archetype": "The Builder",
+            "essence": "Fixed Earth. Determining value, sustaining growth, and sensory embodiment.",
+            "shadow": "Mars expressed as Stubbornness, greed, stagnation.",
+            "gift": "Unshakable stability and the creation of lasting beauty.",
+            "keywords": [
+                "Stability",
+                "Resource",
+                "Sensation"
+            ]
+        },
+        "Gemini": {
+            "text": "Your drive, desire, and conflict style. How you get what you want. Expressed through the lens of Gemini: Mutable Air. Curiosity, connection, and the weaving of ideas..",
+            "archetype": "The Messenger",
+            "essence": "Mutable Air. Curiosity, connection, and the weaving of ideas.",
+            "shadow": "Mars expressed as Scattered energy, superficiality, deceit.",
+            "gift": "Versatility and the ability to bridge paradoxes.",
+            "keywords": [
+                "Communication",
+                "Learning",
+                "Adaptability"
+            ]
+        },
+        "Cancer": {
+            "text": "Your drive, desire, and conflict style. How you get what you want. Expressed through the lens of Cancer: Cardinal Water. Emotional security, nurturing, and ancestral memory..",
+            "archetype": "The Mother",
+            "essence": "Cardinal Water. Emotional security, nurturing, and ancestral memory.",
+            "shadow": "Mars expressed as Clinging, moodiness, defensive shells.",
+            "gift": "Profound empathy and the power to protect life.",
+            "keywords": [
+                "Home",
+                "Emotion",
+                "Nurture"
+            ]
+        },
+        "Leo": {
+            "text": "Your drive, desire, and conflict style. How you get what you want. Expressed through the lens of Leo: Fixed Fire. Self-expression, creativity, and the joy of being..",
+            "archetype": "The King/Queen",
+            "essence": "Fixed Fire. Self-expression, creativity, and the joy of being.",
+            "shadow": "Mars expressed as Arrogance, narcissism, drama.",
+            "gift": "Radiant generosity and the power to inspire others.",
+            "keywords": [
+                "Creativity",
+                "Pride",
+                "Heart"
+            ]
+        },
+        "Virgo": {
+            "text": "Your drive, desire, and conflict style. How you get what you want. Expressed through the lens of Virgo: Mutable Earth. Purification, service, and the refinement of matter..",
+            "archetype": "The Healer",
+            "essence": "Mutable Earth. Purification, service, and the refinement of matter.",
+            "shadow": "Mars expressed as Perfectionism, criticism, anxiety.",
+            "gift": "Discernment and the skill to make things whole.",
+            "keywords": [
+                "Service",
+                "Analysis",
+                "Purity"
+            ]
+        },
+        "Libra": {
+            "text": "Your drive, desire, and conflict style. How you get what you want. Expressed through the lens of Libra: Cardinal Air. Balance, harmony, and the mirror of the Other..",
+            "archetype": "The Diplomat",
+            "essence": "Cardinal Air. Balance, harmony, and the mirror of the Other.",
+            "shadow": "Mars expressed as Indecision, codependency, superficial harmony.",
+            "gift": "Justice and the creation of beauty in relationship.",
+            "keywords": [
+                "Balance",
+                "Relationship",
+                "Beauty"
+            ]
+        },
+        "Scorpio": {
+            "text": "Your drive, desire, and conflict style. How you get what you want. Expressed through the lens of Scorpio: Fixed Water. Transformation, intensity, and the depths of the psyche..",
+            "archetype": "The Sorcerer",
+            "essence": "Fixed Water. Transformation, intensity, and the depths of the psyche.",
+            "shadow": "Mars expressed as Obsession, manipulation, vengeance.",
+            "gift": "Regeneration and the courage to face the darkness.",
+            "keywords": [
+                "Transformation",
+                "Power",
+                "Depth"
+            ]
+        },
+        "Sagittarius": {
+            "text": "Your drive, desire, and conflict style. How you get what you want. Expressed through the lens of Sagittarius: Mutable Fire. Quest for meaning, expansion, and truth..",
+            "archetype": "The Explorer",
+            "essence": "Mutable Fire. Quest for meaning, expansion, and truth.",
+            "shadow": "Mars expressed as Dogmatism, recklessness, escapism.",
+            "gift": "Optimism and the wisdom to see the big picture.",
+            "keywords": [
+                "Wisdom",
+                "Adventure",
+                "Philosophy"
+            ]
+        },
+        "Capricorn": {
+            "text": "Your drive, desire, and conflict style. How you get what you want. Expressed through the lens of Capricorn: Cardinal Earth. Structure, ambition, and the mastery of time..",
+            "archetype": "The Elder",
+            "essence": "Cardinal Earth. Structure, ambition, and the mastery of time.",
+            "shadow": "Mars expressed as Rigidity, ruthlessness, depression.",
+            "gift": "Integrity and the power to build expanding legacies.",
+            "keywords": [
+                "Ambition",
+                "Discipline",
+                "Legacy"
+            ]
+        },
+        "Aquarius": {
+            "text": "Your drive, desire, and conflict style. How you get what you want. Expressed through the lens of Aquarius: Fixed Air. Innovation, humanity, and the breaking of patterns..",
+            "archetype": "The Visionary",
+            "essence": "Fixed Air. Innovation, humanity, and the breaking of patterns.",
+            "shadow": "Mars expressed as Detachment, rebellion without cause, aloofness.",
+            "gift": "Genius and the dedication to future progress.",
+            "keywords": [
+                "Innovation",
+                "Humanity",
+                "Freedom"
+            ]
+        },
+        "Pisces": {
+            "text": "Your drive, desire, and conflict style. How you get what you want. Expressed through the lens of Pisces: Mutable Water. Dissolution, unity, and the ocean of consciousness..",
+            "archetype": "The Mystic",
+            "essence": "Mutable Water. Dissolution, unity, and the ocean of consciousness.",
+            "shadow": "Mars expressed as Delusion, victimhood, escapism.",
+            "gift": "Compassion and the realization of Oneness.",
+            "keywords": [
+                "Dreams",
+                "Unity",
+                "Compassion"
+            ]
+        }
+    },
+    "Jupiter": {
+        "Aries": {
+            "text": "Your growth, abundance, and philosophy. Where you find luck. Expressed through the lens of Aries: Cardianl Fire. Pure vitality, impulse, and the will to exist..",
+            "archetype": "The Pioneer",
+            "essence": "Cardianl Fire. Pure vitality, impulse, and the will to exist.",
+            "shadow": "Jupiter expressed as Aggression, selfishness, impatience.",
+            "gift": "Courage to begin and the strength to stand alone.",
+            "keywords": [
+                "Initiative",
+                "Independence",
+                "Action"
+            ]
+        },
+        "Taurus": {
+            "text": "Your growth, abundance, and philosophy. Where you find luck. Expressed through the lens of Taurus: Fixed Earth. Determining value, sustaining growth, and sensory embodiment..",
+            "archetype": "The Builder",
+            "essence": "Fixed Earth. Determining value, sustaining growth, and sensory embodiment.",
+            "shadow": "Jupiter expressed as Stubbornness, greed, stagnation.",
+            "gift": "Unshakable stability and the creation of lasting beauty.",
+            "keywords": [
+                "Stability",
+                "Resource",
+                "Sensation"
+            ]
+        },
+        "Gemini": {
+            "text": "Your growth, abundance, and philosophy. Where you find luck. Expressed through the lens of Gemini: Mutable Air. Curiosity, connection, and the weaving of ideas..",
+            "archetype": "The Messenger",
+            "essence": "Mutable Air. Curiosity, connection, and the weaving of ideas.",
+            "shadow": "Jupiter expressed as Scattered energy, superficiality, deceit.",
+            "gift": "Versatility and the ability to bridge paradoxes.",
+            "keywords": [
+                "Communication",
+                "Learning",
+                "Adaptability"
+            ]
+        },
+        "Cancer": {
+            "text": "Your growth, abundance, and philosophy. Where you find luck. Expressed through the lens of Cancer: Cardinal Water. Emotional security, nurturing, and ancestral memory..",
+            "archetype": "The Mother",
+            "essence": "Cardinal Water. Emotional security, nurturing, and ancestral memory.",
+            "shadow": "Jupiter expressed as Clinging, moodiness, defensive shells.",
+            "gift": "Profound empathy and the power to protect life.",
+            "keywords": [
+                "Home",
+                "Emotion",
+                "Nurture"
+            ]
+        },
+        "Leo": {
+            "text": "Your growth, abundance, and philosophy. Where you find luck. Expressed through the lens of Leo: Fixed Fire. Self-expression, creativity, and the joy of being..",
+            "archetype": "The King/Queen",
+            "essence": "Fixed Fire. Self-expression, creativity, and the joy of being.",
+            "shadow": "Jupiter expressed as Arrogance, narcissism, drama.",
+            "gift": "Radiant generosity and the power to inspire others.",
+            "keywords": [
+                "Creativity",
+                "Pride",
+                "Heart"
+            ]
+        },
+        "Virgo": {
+            "text": "Your growth, abundance, and philosophy. Where you find luck. Expressed through the lens of Virgo: Mutable Earth. Purification, service, and the refinement of matter..",
+            "archetype": "The Healer",
+            "essence": "Mutable Earth. Purification, service, and the refinement of matter.",
+            "shadow": "Jupiter expressed as Perfectionism, criticism, anxiety.",
+            "gift": "Discernment and the skill to make things whole.",
+            "keywords": [
+                "Service",
+                "Analysis",
+                "Purity"
+            ]
+        },
+        "Libra": {
+            "text": "Your growth, abundance, and philosophy. Where you find luck. Expressed through the lens of Libra: Cardinal Air. Balance, harmony, and the mirror of the Other..",
+            "archetype": "The Diplomat",
+            "essence": "Cardinal Air. Balance, harmony, and the mirror of the Other.",
+            "shadow": "Jupiter expressed as Indecision, codependency, superficial harmony.",
+            "gift": "Justice and the creation of beauty in relationship.",
+            "keywords": [
+                "Balance",
+                "Relationship",
+                "Beauty"
+            ]
+        },
+        "Scorpio": {
+            "text": "Your growth, abundance, and philosophy. Where you find luck. Expressed through the lens of Scorpio: Fixed Water. Transformation, intensity, and the depths of the psyche..",
+            "archetype": "The Sorcerer",
+            "essence": "Fixed Water. Transformation, intensity, and the depths of the psyche.",
+            "shadow": "Jupiter expressed as Obsession, manipulation, vengeance.",
+            "gift": "Regeneration and the courage to face the darkness.",
+            "keywords": [
+                "Transformation",
+                "Power",
+                "Depth"
+            ]
+        },
+        "Sagittarius": {
+            "text": "Your growth, abundance, and philosophy. Where you find luck. Expressed through the lens of Sagittarius: Mutable Fire. Quest for meaning, expansion, and truth..",
+            "archetype": "The Explorer",
+            "essence": "Mutable Fire. Quest for meaning, expansion, and truth.",
+            "shadow": "Jupiter expressed as Dogmatism, recklessness, escapism.",
+            "gift": "Optimism and the wisdom to see the big picture.",
+            "keywords": [
+                "Wisdom",
+                "Adventure",
+                "Philosophy"
+            ]
+        },
+        "Capricorn": {
+            "text": "Your growth, abundance, and philosophy. Where you find luck. Expressed through the lens of Capricorn: Cardinal Earth. Structure, ambition, and the mastery of time..",
+            "archetype": "The Elder",
+            "essence": "Cardinal Earth. Structure, ambition, and the mastery of time.",
+            "shadow": "Jupiter expressed as Rigidity, ruthlessness, depression.",
+            "gift": "Integrity and the power to build expanding legacies.",
+            "keywords": [
+                "Ambition",
+                "Discipline",
+                "Legacy"
+            ]
+        },
+        "Aquarius": {
+            "text": "Your growth, abundance, and philosophy. Where you find luck. Expressed through the lens of Aquarius: Fixed Air. Innovation, humanity, and the breaking of patterns..",
+            "archetype": "The Visionary",
+            "essence": "Fixed Air. Innovation, humanity, and the breaking of patterns.",
+            "shadow": "Jupiter expressed as Detachment, rebellion without cause, aloofness.",
+            "gift": "Genius and the dedication to future progress.",
+            "keywords": [
+                "Innovation",
+                "Humanity",
+                "Freedom"
+            ]
+        },
+        "Pisces": {
+            "text": "Your growth, abundance, and philosophy. Where you find luck. Expressed through the lens of Pisces: Mutable Water. Dissolution, unity, and the ocean of consciousness..",
+            "archetype": "The Mystic",
+            "essence": "Mutable Water. Dissolution, unity, and the ocean of consciousness.",
+            "shadow": "Jupiter expressed as Delusion, victimhood, escapism.",
+            "gift": "Compassion and the realization of Oneness.",
+            "keywords": [
+                "Dreams",
+                "Unity",
+                "Compassion"
+            ]
+        }
+    },
+    "Saturn": {
+        "Aries": {
+            "text": "Your boundaries, fears, and responsibilities. Where you must do the work. Expressed through the lens of Aries: Cardianl Fire. Pure vitality, impulse, and the will to exist..",
+            "archetype": "The Pioneer",
+            "essence": "Cardianl Fire. Pure vitality, impulse, and the will to exist.",
+            "shadow": "Saturn expressed as Aggression, selfishness, impatience.",
+            "gift": "Courage to begin and the strength to stand alone.",
+            "keywords": [
+                "Initiative",
+                "Independence",
+                "Action"
+            ]
+        },
+        "Taurus": {
+            "text": "Your boundaries, fears, and responsibilities. Where you must do the work. Expressed through the lens of Taurus: Fixed Earth. Determining value, sustaining growth, and sensory embodiment..",
+            "archetype": "The Builder",
+            "essence": "Fixed Earth. Determining value, sustaining growth, and sensory embodiment.",
+            "shadow": "Saturn expressed as Stubbornness, greed, stagnation.",
+            "gift": "Unshakable stability and the creation of lasting beauty.",
+            "keywords": [
+                "Stability",
+                "Resource",
+                "Sensation"
+            ]
+        },
+        "Gemini": {
+            "text": "Your boundaries, fears, and responsibilities. Where you must do the work. Expressed through the lens of Gemini: Mutable Air. Curiosity, connection, and the weaving of ideas..",
+            "archetype": "The Messenger",
+            "essence": "Mutable Air. Curiosity, connection, and the weaving of ideas.",
+            "shadow": "Saturn expressed as Scattered energy, superficiality, deceit.",
+            "gift": "Versatility and the ability to bridge paradoxes.",
+            "keywords": [
+                "Communication",
+                "Learning",
+                "Adaptability"
+            ]
+        },
+        "Cancer": {
+            "text": "Your boundaries, fears, and responsibilities. Where you must do the work. Expressed through the lens of Cancer: Cardinal Water. Emotional security, nurturing, and ancestral memory..",
+            "archetype": "The Mother",
+            "essence": "Cardinal Water. Emotional security, nurturing, and ancestral memory.",
+            "shadow": "Saturn expressed as Clinging, moodiness, defensive shells.",
+            "gift": "Profound empathy and the power to protect life.",
+            "keywords": [
+                "Home",
+                "Emotion",
+                "Nurture"
+            ]
+        },
+        "Leo": {
+            "text": "Your boundaries, fears, and responsibilities. Where you must do the work. Expressed through the lens of Leo: Fixed Fire. Self-expression, creativity, and the joy of being..",
+            "archetype": "The King/Queen",
+            "essence": "Fixed Fire. Self-expression, creativity, and the joy of being.",
+            "shadow": "Saturn expressed as Arrogance, narcissism, drama.",
+            "gift": "Radiant generosity and the power to inspire others.",
+            "keywords": [
+                "Creativity",
+                "Pride",
+                "Heart"
+            ]
+        },
+        "Virgo": {
+            "text": "Your boundaries, fears, and responsibilities. Where you must do the work. Expressed through the lens of Virgo: Mutable Earth. Purification, service, and the refinement of matter..",
+            "archetype": "The Healer",
+            "essence": "Mutable Earth. Purification, service, and the refinement of matter.",
+            "shadow": "Saturn expressed as Perfectionism, criticism, anxiety.",
+            "gift": "Discernment and the skill to make things whole.",
+            "keywords": [
+                "Service",
+                "Analysis",
+                "Purity"
+            ]
+        },
+        "Libra": {
+            "text": "Your boundaries, fears, and responsibilities. Where you must do the work. Expressed through the lens of Libra: Cardinal Air. Balance, harmony, and the mirror of the Other..",
+            "archetype": "The Diplomat",
+            "essence": "Cardinal Air. Balance, harmony, and the mirror of the Other.",
+            "shadow": "Saturn expressed as Indecision, codependency, superficial harmony.",
+            "gift": "Justice and the creation of beauty in relationship.",
+            "keywords": [
+                "Balance",
+                "Relationship",
+                "Beauty"
+            ]
+        },
+        "Scorpio": {
+            "text": "Your boundaries, fears, and responsibilities. Where you must do the work. Expressed through the lens of Scorpio: Fixed Water. Transformation, intensity, and the depths of the psyche..",
+            "archetype": "The Sorcerer",
+            "essence": "Fixed Water. Transformation, intensity, and the depths of the psyche.",
+            "shadow": "Saturn expressed as Obsession, manipulation, vengeance.",
+            "gift": "Regeneration and the courage to face the darkness.",
+            "keywords": [
+                "Transformation",
+                "Power",
+                "Depth"
+            ]
+        },
+        "Sagittarius": {
+            "text": "Your boundaries, fears, and responsibilities. Where you must do the work. Expressed through the lens of Sagittarius: Mutable Fire. Quest for meaning, expansion, and truth..",
+            "archetype": "The Explorer",
+            "essence": "Mutable Fire. Quest for meaning, expansion, and truth.",
+            "shadow": "Saturn expressed as Dogmatism, recklessness, escapism.",
+            "gift": "Optimism and the wisdom to see the big picture.",
+            "keywords": [
+                "Wisdom",
+                "Adventure",
+                "Philosophy"
+            ]
+        },
+        "Capricorn": {
+            "text": "Your boundaries, fears, and responsibilities. Where you must do the work. Expressed through the lens of Capricorn: Cardinal Earth. Structure, ambition, and the mastery of time..",
+            "archetype": "The Elder",
+            "essence": "Cardinal Earth. Structure, ambition, and the mastery of time.",
+            "shadow": "Saturn expressed as Rigidity, ruthlessness, depression.",
+            "gift": "Integrity and the power to build expanding legacies.",
+            "keywords": [
+                "Ambition",
+                "Discipline",
+                "Legacy"
+            ]
+        },
+        "Aquarius": {
+            "text": "Your boundaries, fears, and responsibilities. Where you must do the work. Expressed through the lens of Aquarius: Fixed Air. Innovation, humanity, and the breaking of patterns..",
+            "archetype": "The Visionary",
+            "essence": "Fixed Air. Innovation, humanity, and the breaking of patterns.",
+            "shadow": "Saturn expressed as Detachment, rebellion without cause, aloofness.",
+            "gift": "Genius and the dedication to future progress.",
+            "keywords": [
+                "Innovation",
+                "Humanity",
+                "Freedom"
+            ]
+        },
+        "Pisces": {
+            "text": "Your boundaries, fears, and responsibilities. Where you must do the work. Expressed through the lens of Pisces: Mutable Water. Dissolution, unity, and the ocean of consciousness..",
+            "archetype": "The Mystic",
+            "essence": "Mutable Water. Dissolution, unity, and the ocean of consciousness.",
+            "shadow": "Saturn expressed as Delusion, victimhood, escapism.",
+            "gift": "Compassion and the realization of Oneness.",
+            "keywords": [
+                "Dreams",
+                "Unity",
+                "Compassion"
+            ]
+        }
+    },
+    "Uranus": {
+        "Aries": {
+            "text": "Your liberation and awakening. Where you break the rules. Expressed through the lens of Aries: Cardianl Fire. Pure vitality, impulse, and the will to exist..",
+            "archetype": "The Pioneer",
+            "essence": "Cardianl Fire. Pure vitality, impulse, and the will to exist.",
+            "shadow": "Uranus expressed as Aggression, selfishness, impatience.",
+            "gift": "Courage to begin and the strength to stand alone.",
+            "keywords": [
+                "Initiative",
+                "Independence",
+                "Action"
+            ]
+        },
+        "Taurus": {
+            "text": "Your liberation and awakening. Where you break the rules. Expressed through the lens of Taurus: Fixed Earth. Determining value, sustaining growth, and sensory embodiment..",
+            "archetype": "The Builder",
+            "essence": "Fixed Earth. Determining value, sustaining growth, and sensory embodiment.",
+            "shadow": "Uranus expressed as Stubbornness, greed, stagnation.",
+            "gift": "Unshakable stability and the creation of lasting beauty.",
+            "keywords": [
+                "Stability",
+                "Resource",
+                "Sensation"
+            ]
+        },
+        "Gemini": {
+            "text": "Your liberation and awakening. Where you break the rules. Expressed through the lens of Gemini: Mutable Air. Curiosity, connection, and the weaving of ideas..",
+            "archetype": "The Messenger",
+            "essence": "Mutable Air. Curiosity, connection, and the weaving of ideas.",
+            "shadow": "Uranus expressed as Scattered energy, superficiality, deceit.",
+            "gift": "Versatility and the ability to bridge paradoxes.",
+            "keywords": [
+                "Communication",
+                "Learning",
+                "Adaptability"
+            ]
+        },
+        "Cancer": {
+            "text": "Your liberation and awakening. Where you break the rules. Expressed through the lens of Cancer: Cardinal Water. Emotional security, nurturing, and ancestral memory..",
+            "archetype": "The Mother",
+            "essence": "Cardinal Water. Emotional security, nurturing, and ancestral memory.",
+            "shadow": "Uranus expressed as Clinging, moodiness, defensive shells.",
+            "gift": "Profound empathy and the power to protect life.",
+            "keywords": [
+                "Home",
+                "Emotion",
+                "Nurture"
+            ]
+        },
+        "Leo": {
+            "text": "Your liberation and awakening. Where you break the rules. Expressed through the lens of Leo: Fixed Fire. Self-expression, creativity, and the joy of being..",
+            "archetype": "The King/Queen",
+            "essence": "Fixed Fire. Self-expression, creativity, and the joy of being.",
+            "shadow": "Uranus expressed as Arrogance, narcissism, drama.",
+            "gift": "Radiant generosity and the power to inspire others.",
+            "keywords": [
+                "Creativity",
+                "Pride",
+                "Heart"
+            ]
+        },
+        "Virgo": {
+            "text": "Your liberation and awakening. Where you break the rules. Expressed through the lens of Virgo: Mutable Earth. Purification, service, and the refinement of matter..",
+            "archetype": "The Healer",
+            "essence": "Mutable Earth. Purification, service, and the refinement of matter.",
+            "shadow": "Uranus expressed as Perfectionism, criticism, anxiety.",
+            "gift": "Discernment and the skill to make things whole.",
+            "keywords": [
+                "Service",
+                "Analysis",
+                "Purity"
+            ]
+        },
+        "Libra": {
+            "text": "Your liberation and awakening. Where you break the rules. Expressed through the lens of Libra: Cardinal Air. Balance, harmony, and the mirror of the Other..",
+            "archetype": "The Diplomat",
+            "essence": "Cardinal Air. Balance, harmony, and the mirror of the Other.",
+            "shadow": "Uranus expressed as Indecision, codependency, superficial harmony.",
+            "gift": "Justice and the creation of beauty in relationship.",
+            "keywords": [
+                "Balance",
+                "Relationship",
+                "Beauty"
+            ]
+        },
+        "Scorpio": {
+            "text": "Your liberation and awakening. Where you break the rules. Expressed through the lens of Scorpio: Fixed Water. Transformation, intensity, and the depths of the psyche..",
+            "archetype": "The Sorcerer",
+            "essence": "Fixed Water. Transformation, intensity, and the depths of the psyche.",
+            "shadow": "Uranus expressed as Obsession, manipulation, vengeance.",
+            "gift": "Regeneration and the courage to face the darkness.",
+            "keywords": [
+                "Transformation",
+                "Power",
+                "Depth"
+            ]
+        },
+        "Sagittarius": {
+            "text": "Your liberation and awakening. Where you break the rules. Expressed through the lens of Sagittarius: Mutable Fire. Quest for meaning, expansion, and truth..",
+            "archetype": "The Explorer",
+            "essence": "Mutable Fire. Quest for meaning, expansion, and truth.",
+            "shadow": "Uranus expressed as Dogmatism, recklessness, escapism.",
+            "gift": "Optimism and the wisdom to see the big picture.",
+            "keywords": [
+                "Wisdom",
+                "Adventure",
+                "Philosophy"
+            ]
+        },
+        "Capricorn": {
+            "text": "Your liberation and awakening. Where you break the rules. Expressed through the lens of Capricorn: Cardinal Earth. Structure, ambition, and the mastery of time..",
+            "archetype": "The Elder",
+            "essence": "Cardinal Earth. Structure, ambition, and the mastery of time.",
+            "shadow": "Uranus expressed as Rigidity, ruthlessness, depression.",
+            "gift": "Integrity and the power to build expanding legacies.",
+            "keywords": [
+                "Ambition",
+                "Discipline",
+                "Legacy"
+            ]
+        },
+        "Aquarius": {
+            "text": "Your liberation and awakening. Where you break the rules. Expressed through the lens of Aquarius: Fixed Air. Innovation, humanity, and the breaking of patterns..",
+            "archetype": "The Visionary",
+            "essence": "Fixed Air. Innovation, humanity, and the breaking of patterns.",
+            "shadow": "Uranus expressed as Detachment, rebellion without cause, aloofness.",
+            "gift": "Genius and the dedication to future progress.",
+            "keywords": [
+                "Innovation",
+                "Humanity",
+                "Freedom"
+            ]
+        },
+        "Pisces": {
+            "text": "Your liberation and awakening. Where you break the rules. Expressed through the lens of Pisces: Mutable Water. Dissolution, unity, and the ocean of consciousness..",
+            "archetype": "The Mystic",
+            "essence": "Mutable Water. Dissolution, unity, and the ocean of consciousness.",
+            "shadow": "Uranus expressed as Delusion, victimhood, escapism.",
+            "gift": "Compassion and the realization of Oneness.",
+            "keywords": [
+                "Dreams",
+                "Unity",
+                "Compassion"
+            ]
+        }
+    },
+    "Neptune": {
+        "Aries": {
+            "text": "Your dreams and spirituality. Where you dissolve boundaries. Expressed through the lens of Aries: Cardianl Fire. Pure vitality, impulse, and the will to exist..",
+            "archetype": "The Pioneer",
+            "essence": "Cardianl Fire. Pure vitality, impulse, and the will to exist.",
+            "shadow": "Neptune expressed as Aggression, selfishness, impatience.",
+            "gift": "Courage to begin and the strength to stand alone.",
+            "keywords": [
+                "Initiative",
+                "Independence",
+                "Action"
+            ]
+        },
+        "Taurus": {
+            "text": "Your dreams and spirituality. Where you dissolve boundaries. Expressed through the lens of Taurus: Fixed Earth. Determining value, sustaining growth, and sensory embodiment..",
+            "archetype": "The Builder",
+            "essence": "Fixed Earth. Determining value, sustaining growth, and sensory embodiment.",
+            "shadow": "Neptune expressed as Stubbornness, greed, stagnation.",
+            "gift": "Unshakable stability and the creation of lasting beauty.",
+            "keywords": [
+                "Stability",
+                "Resource",
+                "Sensation"
+            ]
+        },
+        "Gemini": {
+            "text": "Your dreams and spirituality. Where you dissolve boundaries. Expressed through the lens of Gemini: Mutable Air. Curiosity, connection, and the weaving of ideas..",
+            "archetype": "The Messenger",
+            "essence": "Mutable Air. Curiosity, connection, and the weaving of ideas.",
+            "shadow": "Neptune expressed as Scattered energy, superficiality, deceit.",
+            "gift": "Versatility and the ability to bridge paradoxes.",
+            "keywords": [
+                "Communication",
+                "Learning",
+                "Adaptability"
+            ]
+        },
+        "Cancer": {
+            "text": "Your dreams and spirituality. Where you dissolve boundaries. Expressed through the lens of Cancer: Cardinal Water. Emotional security, nurturing, and ancestral memory..",
+            "archetype": "The Mother",
+            "essence": "Cardinal Water. Emotional security, nurturing, and ancestral memory.",
+            "shadow": "Neptune expressed as Clinging, moodiness, defensive shells.",
+            "gift": "Profound empathy and the power to protect life.",
+            "keywords": [
+                "Home",
+                "Emotion",
+                "Nurture"
+            ]
+        },
+        "Leo": {
+            "text": "Your dreams and spirituality. Where you dissolve boundaries. Expressed through the lens of Leo: Fixed Fire. Self-expression, creativity, and the joy of being..",
+            "archetype": "The King/Queen",
+            "essence": "Fixed Fire. Self-expression, creativity, and the joy of being.",
+            "shadow": "Neptune expressed as Arrogance, narcissism, drama.",
+            "gift": "Radiant generosity and the power to inspire others.",
+            "keywords": [
+                "Creativity",
+                "Pride",
+                "Heart"
+            ]
+        },
+        "Virgo": {
+            "text": "Your dreams and spirituality. Where you dissolve boundaries. Expressed through the lens of Virgo: Mutable Earth. Purification, service, and the refinement of matter..",
+            "archetype": "The Healer",
+            "essence": "Mutable Earth. Purification, service, and the refinement of matter.",
+            "shadow": "Neptune expressed as Perfectionism, criticism, anxiety.",
+            "gift": "Discernment and the skill to make things whole.",
+            "keywords": [
+                "Service",
+                "Analysis",
+                "Purity"
+            ]
+        },
+        "Libra": {
+            "text": "Your dreams and spirituality. Where you dissolve boundaries. Expressed through the lens of Libra: Cardinal Air. Balance, harmony, and the mirror of the Other..",
+            "archetype": "The Diplomat",
+            "essence": "Cardinal Air. Balance, harmony, and the mirror of the Other.",
+            "shadow": "Neptune expressed as Indecision, codependency, superficial harmony.",
+            "gift": "Justice and the creation of beauty in relationship.",
+            "keywords": [
+                "Balance",
+                "Relationship",
+                "Beauty"
+            ]
+        },
+        "Scorpio": {
+            "text": "Your dreams and spirituality. Where you dissolve boundaries. Expressed through the lens of Scorpio: Fixed Water. Transformation, intensity, and the depths of the psyche..",
+            "archetype": "The Sorcerer",
+            "essence": "Fixed Water. Transformation, intensity, and the depths of the psyche.",
+            "shadow": "Neptune expressed as Obsession, manipulation, vengeance.",
+            "gift": "Regeneration and the courage to face the darkness.",
+            "keywords": [
+                "Transformation",
+                "Power",
+                "Depth"
+            ]
+        },
+        "Sagittarius": {
+            "text": "Your dreams and spirituality. Where you dissolve boundaries. Expressed through the lens of Sagittarius: Mutable Fire. Quest for meaning, expansion, and truth..",
+            "archetype": "The Explorer",
+            "essence": "Mutable Fire. Quest for meaning, expansion, and truth.",
+            "shadow": "Neptune expressed as Dogmatism, recklessness, escapism.",
+            "gift": "Optimism and the wisdom to see the big picture.",
+            "keywords": [
+                "Wisdom",
+                "Adventure",
+                "Philosophy"
+            ]
+        },
+        "Capricorn": {
+            "text": "Your dreams and spirituality. Where you dissolve boundaries. Expressed through the lens of Capricorn: Cardinal Earth. Structure, ambition, and the mastery of time..",
+            "archetype": "The Elder",
+            "essence": "Cardinal Earth. Structure, ambition, and the mastery of time.",
+            "shadow": "Neptune expressed as Rigidity, ruthlessness, depression.",
+            "gift": "Integrity and the power to build expanding legacies.",
+            "keywords": [
+                "Ambition",
+                "Discipline",
+                "Legacy"
+            ]
+        },
+        "Aquarius": {
+            "text": "Your dreams and spirituality. Where you dissolve boundaries. Expressed through the lens of Aquarius: Fixed Air. Innovation, humanity, and the breaking of patterns..",
+            "archetype": "The Visionary",
+            "essence": "Fixed Air. Innovation, humanity, and the breaking of patterns.",
+            "shadow": "Neptune expressed as Detachment, rebellion without cause, aloofness.",
+            "gift": "Genius and the dedication to future progress.",
+            "keywords": [
+                "Innovation",
+                "Humanity",
+                "Freedom"
+            ]
+        },
+        "Pisces": {
+            "text": "Your dreams and spirituality. Where you dissolve boundaries. Expressed through the lens of Pisces: Mutable Water. Dissolution, unity, and the ocean of consciousness..",
+            "archetype": "The Mystic",
+            "essence": "Mutable Water. Dissolution, unity, and the ocean of consciousness.",
+            "shadow": "Neptune expressed as Delusion, victimhood, escapism.",
+            "gift": "Compassion and the realization of Oneness.",
+            "keywords": [
+                "Dreams",
+                "Unity",
+                "Compassion"
+            ]
+        }
+    },
+    "Pluto": {
+        "Aries": {
+            "text": "Your power and transformation. Where you undergo metamorphosis. Expressed through the lens of Aries: Cardianl Fire. Pure vitality, impulse, and the will to exist..",
+            "archetype": "The Pioneer",
+            "essence": "Cardianl Fire. Pure vitality, impulse, and the will to exist.",
+            "shadow": "Pluto expressed as Aggression, selfishness, impatience.",
+            "gift": "Courage to begin and the strength to stand alone.",
+            "keywords": [
+                "Initiative",
+                "Independence",
+                "Action"
+            ]
+        },
+        "Taurus": {
+            "text": "Your power and transformation. Where you undergo metamorphosis. Expressed through the lens of Taurus: Fixed Earth. Determining value, sustaining growth, and sensory embodiment..",
+            "archetype": "The Builder",
+            "essence": "Fixed Earth. Determining value, sustaining growth, and sensory embodiment.",
+            "shadow": "Pluto expressed as Stubbornness, greed, stagnation.",
+            "gift": "Unshakable stability and the creation of lasting beauty.",
+            "keywords": [
+                "Stability",
+                "Resource",
+                "Sensation"
+            ]
+        },
+        "Gemini": {
+            "text": "Your power and transformation. Where you undergo metamorphosis. Expressed through the lens of Gemini: Mutable Air. Curiosity, connection, and the weaving of ideas..",
+            "archetype": "The Messenger",
+            "essence": "Mutable Air. Curiosity, connection, and the weaving of ideas.",
+            "shadow": "Pluto expressed as Scattered energy, superficiality, deceit.",
+            "gift": "Versatility and the ability to bridge paradoxes.",
+            "keywords": [
+                "Communication",
+                "Learning",
+                "Adaptability"
+            ]
+        },
+        "Cancer": {
+            "text": "Your power and transformation. Where you undergo metamorphosis. Expressed through the lens of Cancer: Cardinal Water. Emotional security, nurturing, and ancestral memory..",
+            "archetype": "The Mother",
+            "essence": "Cardinal Water. Emotional security, nurturing, and ancestral memory.",
+            "shadow": "Pluto expressed as Clinging, moodiness, defensive shells.",
+            "gift": "Profound empathy and the power to protect life.",
+            "keywords": [
+                "Home",
+                "Emotion",
+                "Nurture"
+            ]
+        },
+        "Leo": {
+            "text": "Your power and transformation. Where you undergo metamorphosis. Expressed through the lens of Leo: Fixed Fire. Self-expression, creativity, and the joy of being..",
+            "archetype": "The King/Queen",
+            "essence": "Fixed Fire. Self-expression, creativity, and the joy of being.",
+            "shadow": "Pluto expressed as Arrogance, narcissism, drama.",
+            "gift": "Radiant generosity and the power to inspire others.",
+            "keywords": [
+                "Creativity",
+                "Pride",
+                "Heart"
+            ]
+        },
+        "Virgo": {
+            "text": "Your power and transformation. Where you undergo metamorphosis. Expressed through the lens of Virgo: Mutable Earth. Purification, service, and the refinement of matter..",
+            "archetype": "The Healer",
+            "essence": "Mutable Earth. Purification, service, and the refinement of matter.",
+            "shadow": "Pluto expressed as Perfectionism, criticism, anxiety.",
+            "gift": "Discernment and the skill to make things whole.",
+            "keywords": [
+                "Service",
+                "Analysis",
+                "Purity"
+            ]
+        },
+        "Libra": {
+            "text": "Your power and transformation. Where you undergo metamorphosis. Expressed through the lens of Libra: Cardinal Air. Balance, harmony, and the mirror of the Other..",
+            "archetype": "The Diplomat",
+            "essence": "Cardinal Air. Balance, harmony, and the mirror of the Other.",
+            "shadow": "Pluto expressed as Indecision, codependency, superficial harmony.",
+            "gift": "Justice and the creation of beauty in relationship.",
+            "keywords": [
+                "Balance",
+                "Relationship",
+                "Beauty"
+            ]
+        },
+        "Scorpio": {
+            "text": "Your power and transformation. Where you undergo metamorphosis. Expressed through the lens of Scorpio: Fixed Water. Transformation, intensity, and the depths of the psyche..",
+            "archetype": "The Sorcerer",
+            "essence": "Fixed Water. Transformation, intensity, and the depths of the psyche.",
+            "shadow": "Pluto expressed as Obsession, manipulation, vengeance.",
+            "gift": "Regeneration and the courage to face the darkness.",
+            "keywords": [
+                "Transformation",
+                "Power",
+                "Depth"
+            ]
+        },
+        "Sagittarius": {
+            "text": "Your power and transformation. Where you undergo metamorphosis. Expressed through the lens of Sagittarius: Mutable Fire. Quest for meaning, expansion, and truth..",
+            "archetype": "The Explorer",
+            "essence": "Mutable Fire. Quest for meaning, expansion, and truth.",
+            "shadow": "Pluto expressed as Dogmatism, recklessness, escapism.",
+            "gift": "Optimism and the wisdom to see the big picture.",
+            "keywords": [
+                "Wisdom",
+                "Adventure",
+                "Philosophy"
+            ]
+        },
+        "Capricorn": {
+            "text": "Your power and transformation. Where you undergo metamorphosis. Expressed through the lens of Capricorn: Cardinal Earth. Structure, ambition, and the mastery of time..",
+            "archetype": "The Elder",
+            "essence": "Cardinal Earth. Structure, ambition, and the mastery of time.",
+            "shadow": "Pluto expressed as Rigidity, ruthlessness, depression.",
+            "gift": "Integrity and the power to build expanding legacies.",
+            "keywords": [
+                "Ambition",
+                "Discipline",
+                "Legacy"
+            ]
+        },
+        "Aquarius": {
+            "text": "Your power and transformation. Where you undergo metamorphosis. Expressed through the lens of Aquarius: Fixed Air. Innovation, humanity, and the breaking of patterns..",
+            "archetype": "The Visionary",
+            "essence": "Fixed Air. Innovation, humanity, and the breaking of patterns.",
+            "shadow": "Pluto expressed as Detachment, rebellion without cause, aloofness.",
+            "gift": "Genius and the dedication to future progress.",
+            "keywords": [
+                "Innovation",
+                "Humanity",
+                "Freedom"
+            ]
+        },
+        "Pisces": {
+            "text": "Your power and transformation. Where you undergo metamorphosis. Expressed through the lens of Pisces: Mutable Water. Dissolution, unity, and the ocean of consciousness..",
+            "archetype": "The Mystic",
+            "essence": "Mutable Water. Dissolution, unity, and the ocean of consciousness.",
+            "shadow": "Pluto expressed as Delusion, victimhood, escapism.",
+            "gift": "Compassion and the realization of Oneness.",
+            "keywords": [
+                "Dreams",
+                "Unity",
+                "Compassion"
+            ]
+        }
+    },
+    "Chiron": {
+        "Aries": {
+            "text": "Your deepest wound and your power to heal. Expressed through the lens of Aries: Cardianl Fire. Pure vitality, impulse, and the will to exist..",
+            "archetype": "The Pioneer",
+            "essence": "Cardianl Fire. Pure vitality, impulse, and the will to exist.",
+            "shadow": "Chiron expressed as Aggression, selfishness, impatience.",
+            "gift": "Courage to begin and the strength to stand alone.",
+            "keywords": [
+                "Initiative",
+                "Independence",
+                "Action"
+            ]
+        },
+        "Taurus": {
+            "text": "Your deepest wound and your power to heal. Expressed through the lens of Taurus: Fixed Earth. Determining value, sustaining growth, and sensory embodiment..",
+            "archetype": "The Builder",
+            "essence": "Fixed Earth. Determining value, sustaining growth, and sensory embodiment.",
+            "shadow": "Chiron expressed as Stubbornness, greed, stagnation.",
+            "gift": "Unshakable stability and the creation of lasting beauty.",
+            "keywords": [
+                "Stability",
+                "Resource",
+                "Sensation"
+            ]
+        },
+        "Gemini": {
+            "text": "Your deepest wound and your power to heal. Expressed through the lens of Gemini: Mutable Air. Curiosity, connection, and the weaving of ideas..",
+            "archetype": "The Messenger",
+            "essence": "Mutable Air. Curiosity, connection, and the weaving of ideas.",
+            "shadow": "Chiron expressed as Scattered energy, superficiality, deceit.",
+            "gift": "Versatility and the ability to bridge paradoxes.",
+            "keywords": [
+                "Communication",
+                "Learning",
+                "Adaptability"
+            ]
+        },
+        "Cancer": {
+            "text": "Your deepest wound and your power to heal. Expressed through the lens of Cancer: Cardinal Water. Emotional security, nurturing, and ancestral memory..",
+            "archetype": "The Mother",
+            "essence": "Cardinal Water. Emotional security, nurturing, and ancestral memory.",
+            "shadow": "Chiron expressed as Clinging, moodiness, defensive shells.",
+            "gift": "Profound empathy and the power to protect life.",
+            "keywords": [
+                "Home",
+                "Emotion",
+                "Nurture"
+            ]
+        },
+        "Leo": {
+            "text": "Your deepest wound and your power to heal. Expressed through the lens of Leo: Fixed Fire. Self-expression, creativity, and the joy of being..",
+            "archetype": "The King/Queen",
+            "essence": "Fixed Fire. Self-expression, creativity, and the joy of being.",
+            "shadow": "Chiron expressed as Arrogance, narcissism, drama.",
+            "gift": "Radiant generosity and the power to inspire others.",
+            "keywords": [
+                "Creativity",
+                "Pride",
+                "Heart"
+            ]
+        },
+        "Virgo": {
+            "text": "Your deepest wound and your power to heal. Expressed through the lens of Virgo: Mutable Earth. Purification, service, and the refinement of matter..",
+            "archetype": "The Healer",
+            "essence": "Mutable Earth. Purification, service, and the refinement of matter.",
+            "shadow": "Chiron expressed as Perfectionism, criticism, anxiety.",
+            "gift": "Discernment and the skill to make things whole.",
+            "keywords": [
+                "Service",
+                "Analysis",
+                "Purity"
+            ]
+        },
+        "Libra": {
+            "text": "Your deepest wound and your power to heal. Expressed through the lens of Libra: Cardinal Air. Balance, harmony, and the mirror of the Other..",
+            "archetype": "The Diplomat",
+            "essence": "Cardinal Air. Balance, harmony, and the mirror of the Other.",
+            "shadow": "Chiron expressed as Indecision, codependency, superficial harmony.",
+            "gift": "Justice and the creation of beauty in relationship.",
+            "keywords": [
+                "Balance",
+                "Relationship",
+                "Beauty"
+            ]
+        },
+        "Scorpio": {
+            "text": "Your deepest wound and your power to heal. Expressed through the lens of Scorpio: Fixed Water. Transformation, intensity, and the depths of the psyche..",
+            "archetype": "The Sorcerer",
+            "essence": "Fixed Water. Transformation, intensity, and the depths of the psyche.",
+            "shadow": "Chiron expressed as Obsession, manipulation, vengeance.",
+            "gift": "Regeneration and the courage to face the darkness.",
+            "keywords": [
+                "Transformation",
+                "Power",
+                "Depth"
+            ]
+        },
+        "Sagittarius": {
+            "text": "Your deepest wound and your power to heal. Expressed through the lens of Sagittarius: Mutable Fire. Quest for meaning, expansion, and truth..",
+            "archetype": "The Explorer",
+            "essence": "Mutable Fire. Quest for meaning, expansion, and truth.",
+            "shadow": "Chiron expressed as Dogmatism, recklessness, escapism.",
+            "gift": "Optimism and the wisdom to see the big picture.",
+            "keywords": [
+                "Wisdom",
+                "Adventure",
+                "Philosophy"
+            ]
+        },
+        "Capricorn": {
+            "text": "Your deepest wound and your power to heal. Expressed through the lens of Capricorn: Cardinal Earth. Structure, ambition, and the mastery of time..",
+            "archetype": "The Elder",
+            "essence": "Cardinal Earth. Structure, ambition, and the mastery of time.",
+            "shadow": "Chiron expressed as Rigidity, ruthlessness, depression.",
+            "gift": "Integrity and the power to build expanding legacies.",
+            "keywords": [
+                "Ambition",
+                "Discipline",
+                "Legacy"
+            ]
+        },
+        "Aquarius": {
+            "text": "Your deepest wound and your power to heal. Expressed through the lens of Aquarius: Fixed Air. Innovation, humanity, and the breaking of patterns..",
+            "archetype": "The Visionary",
+            "essence": "Fixed Air. Innovation, humanity, and the breaking of patterns.",
+            "shadow": "Chiron expressed as Detachment, rebellion without cause, aloofness.",
+            "gift": "Genius and the dedication to future progress.",
+            "keywords": [
+                "Innovation",
+                "Humanity",
+                "Freedom"
+            ]
+        },
+        "Pisces": {
+            "text": "Your deepest wound and your power to heal. Expressed through the lens of Pisces: Mutable Water. Dissolution, unity, and the ocean of consciousness..",
+            "archetype": "The Mystic",
+            "essence": "Mutable Water. Dissolution, unity, and the ocean of consciousness.",
+            "shadow": "Chiron expressed as Delusion, victimhood, escapism.",
+            "gift": "Compassion and the realization of Oneness.",
+            "keywords": [
+                "Dreams",
+                "Unity",
+                "Compassion"
+            ]
+        }
+    },
+    "North Node": {
+        "Aries": {
+            "text": "Your destiny and evolutionary path. Expressed through the lens of Aries: Cardianl Fire. Pure vitality, impulse, and the will to exist..",
+            "archetype": "The Pioneer",
+            "essence": "Cardianl Fire. Pure vitality, impulse, and the will to exist.",
+            "shadow": "North Node expressed as Aggression, selfishness, impatience.",
+            "gift": "Courage to begin and the strength to stand alone.",
+            "keywords": [
+                "Initiative",
+                "Independence",
+                "Action"
+            ]
+        },
+        "Taurus": {
+            "text": "Your destiny and evolutionary path. Expressed through the lens of Taurus: Fixed Earth. Determining value, sustaining growth, and sensory embodiment..",
+            "archetype": "The Builder",
+            "essence": "Fixed Earth. Determining value, sustaining growth, and sensory embodiment.",
+            "shadow": "North Node expressed as Stubbornness, greed, stagnation.",
+            "gift": "Unshakable stability and the creation of lasting beauty.",
+            "keywords": [
+                "Stability",
+                "Resource",
+                "Sensation"
+            ]
+        },
+        "Gemini": {
+            "text": "Your destiny and evolutionary path. Expressed through the lens of Gemini: Mutable Air. Curiosity, connection, and the weaving of ideas..",
+            "archetype": "The Messenger",
+            "essence": "Mutable Air. Curiosity, connection, and the weaving of ideas.",
+            "shadow": "North Node expressed as Scattered energy, superficiality, deceit.",
+            "gift": "Versatility and the ability to bridge paradoxes.",
+            "keywords": [
+                "Communication",
+                "Learning",
+                "Adaptability"
+            ]
+        },
+        "Cancer": {
+            "text": "Your destiny and evolutionary path. Expressed through the lens of Cancer: Cardinal Water. Emotional security, nurturing, and ancestral memory..",
+            "archetype": "The Mother",
+            "essence": "Cardinal Water. Emotional security, nurturing, and ancestral memory.",
+            "shadow": "North Node expressed as Clinging, moodiness, defensive shells.",
+            "gift": "Profound empathy and the power to protect life.",
+            "keywords": [
+                "Home",
+                "Emotion",
+                "Nurture"
+            ]
+        },
+        "Leo": {
+            "text": "Your destiny and evolutionary path. Expressed through the lens of Leo: Fixed Fire. Self-expression, creativity, and the joy of being..",
+            "archetype": "The King/Queen",
+            "essence": "Fixed Fire. Self-expression, creativity, and the joy of being.",
+            "shadow": "North Node expressed as Arrogance, narcissism, drama.",
+            "gift": "Radiant generosity and the power to inspire others.",
+            "keywords": [
+                "Creativity",
+                "Pride",
+                "Heart"
+            ]
+        },
+        "Virgo": {
+            "text": "Your destiny and evolutionary path. Expressed through the lens of Virgo: Mutable Earth. Purification, service, and the refinement of matter..",
+            "archetype": "The Healer",
+            "essence": "Mutable Earth. Purification, service, and the refinement of matter.",
+            "shadow": "North Node expressed as Perfectionism, criticism, anxiety.",
+            "gift": "Discernment and the skill to make things whole.",
+            "keywords": [
+                "Service",
+                "Analysis",
+                "Purity"
+            ]
+        },
+        "Libra": {
+            "text": "Your destiny and evolutionary path. Expressed through the lens of Libra: Cardinal Air. Balance, harmony, and the mirror of the Other..",
+            "archetype": "The Diplomat",
+            "essence": "Cardinal Air. Balance, harmony, and the mirror of the Other.",
+            "shadow": "North Node expressed as Indecision, codependency, superficial harmony.",
+            "gift": "Justice and the creation of beauty in relationship.",
+            "keywords": [
+                "Balance",
+                "Relationship",
+                "Beauty"
+            ]
+        },
+        "Scorpio": {
+            "text": "Your destiny and evolutionary path. Expressed through the lens of Scorpio: Fixed Water. Transformation, intensity, and the depths of the psyche..",
+            "archetype": "The Sorcerer",
+            "essence": "Fixed Water. Transformation, intensity, and the depths of the psyche.",
+            "shadow": "North Node expressed as Obsession, manipulation, vengeance.",
+            "gift": "Regeneration and the courage to face the darkness.",
+            "keywords": [
+                "Transformation",
+                "Power",
+                "Depth"
+            ]
+        },
+        "Sagittarius": {
+            "text": "Your destiny and evolutionary path. Expressed through the lens of Sagittarius: Mutable Fire. Quest for meaning, expansion, and truth..",
+            "archetype": "The Explorer",
+            "essence": "Mutable Fire. Quest for meaning, expansion, and truth.",
+            "shadow": "North Node expressed as Dogmatism, recklessness, escapism.",
+            "gift": "Optimism and the wisdom to see the big picture.",
+            "keywords": [
+                "Wisdom",
+                "Adventure",
+                "Philosophy"
+            ]
+        },
+        "Capricorn": {
+            "text": "Your destiny and evolutionary path. Expressed through the lens of Capricorn: Cardinal Earth. Structure, ambition, and the mastery of time..",
+            "archetype": "The Elder",
+            "essence": "Cardinal Earth. Structure, ambition, and the mastery of time.",
+            "shadow": "North Node expressed as Rigidity, ruthlessness, depression.",
+            "gift": "Integrity and the power to build expanding legacies.",
+            "keywords": [
+                "Ambition",
+                "Discipline",
+                "Legacy"
+            ]
+        },
+        "Aquarius": {
+            "text": "Your destiny and evolutionary path. Expressed through the lens of Aquarius: Fixed Air. Innovation, humanity, and the breaking of patterns..",
+            "archetype": "The Visionary",
+            "essence": "Fixed Air. Innovation, humanity, and the breaking of patterns.",
+            "shadow": "North Node expressed as Detachment, rebellion without cause, aloofness.",
+            "gift": "Genius and the dedication to future progress.",
+            "keywords": [
+                "Innovation",
+                "Humanity",
+                "Freedom"
+            ]
+        },
+        "Pisces": {
+            "text": "Your destiny and evolutionary path. Expressed through the lens of Pisces: Mutable Water. Dissolution, unity, and the ocean of consciousness..",
+            "archetype": "The Mystic",
+            "essence": "Mutable Water. Dissolution, unity, and the ocean of consciousness.",
+            "shadow": "North Node expressed as Delusion, victimhood, escapism.",
+            "gift": "Compassion and the realization of Oneness.",
+            "keywords": [
+                "Dreams",
+                "Unity",
+                "Compassion"
+            ]
+        }
+    }
+}

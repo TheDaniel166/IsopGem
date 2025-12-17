@@ -25,16 +25,55 @@ MAJOR_ASPECTS = [
     AspectDefinition("Opposition", 180, 8.0, "☍", True),
 ]
 
-# Minor Aspects
+# Minor Aspects - Comprehensive List
 MINOR_ASPECTS = [
+    # Very small aspects (10-30°)
+    AspectDefinition("Vigintile", 18, 1.0, "V", False),
+    AspectDefinition("Quindecile", 24, 1.0, "Qd", False),
     AspectDefinition("Semi-sextile", 30, 2.0, "⚺", False),
+    
+    # Small aspects (30-50°)
+    AspectDefinition("Undecile", 32.73, 1.0, "U", False),
+    AspectDefinition("Decile", 36, 1.5, "⊼", False),
+    AspectDefinition("Novile", 40, 1.5, "N", False),
     AspectDefinition("Semi-square", 45, 2.0, "∠", False),
+    
+    # Septile family (51-155°)
+    AspectDefinition("Septile", 51.43, 1.5, "S", False),
+    AspectDefinition("Biseptile", 102.86, 1.5, "bS", False),
+    AspectDefinition("Triseptile", 154.29, 1.5, "tS", False),
+    
+    # Quintile family (72-144°)
     AspectDefinition("Quintile", 72, 2.0, "Q", False),
+    AspectDefinition("Tredecile", 108, 1.5, "Td", False),
+    AspectDefinition("Biquintile", 144, 2.0, "bQ", False),
+    
+    # Larger minor aspects (135-165°)
     AspectDefinition("Sesquiquadrate", 135, 2.0, "⚼", False),
     AspectDefinition("Quincunx", 150, 3.0, "⚻", False),
+    
+    # Novile family
+    AspectDefinition("Binovile", 80, 1.5, "bN", False),
+    AspectDefinition("Quadnovile", 160, 1.5, "qN", False),
 ]
 
+# Common minor aspects (traditionally used)
+COMMON_MINOR_NAMES = {"Semi-sextile", "Semi-square", "Quintile", "Sesquiquadrate", "Quincunx", "Biquintile"}
+COMMON_MINOR = [a for a in MINOR_ASPECTS if a.name in COMMON_MINOR_NAMES]
+
+# Harmonic aspects (quintile + septile + novile families)
+HARMONIC_NAMES = {"Quintile", "Biquintile", "Tredecile", "Septile", "Biseptile", "Triseptile", "Novile", "Binovile", "Quadnovile", "Decile"}
+HARMONIC_ASPECTS = [a for a in MINOR_ASPECTS if a.name in HARMONIC_NAMES]
+
 ALL_ASPECTS = MAJOR_ASPECTS + MINOR_ASPECTS
+
+# Tier-based aspect groups
+ASPECT_TIERS = {
+    0: MAJOR_ASPECTS,                          # Major Only
+    1: MAJOR_ASPECTS + COMMON_MINOR,           # Major + Common Minor
+    2: MAJOR_ASPECTS + MINOR_ASPECTS,          # Major + All Minor
+    3: ALL_ASPECTS,                            # All (same as tier 2 for now)
+}
 
 
 @dataclass(slots=True)
@@ -53,7 +92,7 @@ class AspectsService:
     def calculate_aspects(
         self,
         planet_longitudes: Dict[str, float],
-        include_minor: bool = False,
+        tier: int = 0,
         orb_factor: float = 1.0,
     ) -> List[CalculatedAspect]:
         """
@@ -61,7 +100,7 @@ class AspectsService:
 
         Args:
             planet_longitudes: Dict mapping planet name to ecliptic longitude
-            include_minor: If True, include minor aspects
+            tier: Aspect tier (0=Major, 1=+Common Minor, 2=+All Minor, 3=All)
             orb_factor: Multiplier for default orbs (0.5 = tight, 1.5 = wide)
 
         Returns:
@@ -73,8 +112,8 @@ class AspectsService:
             n = name.strip().title()
             norm_planets[n] = lon % 360
 
-        # Select aspect definitions
-        aspects_to_check = MAJOR_ASPECTS if not include_minor else ALL_ASPECTS
+        # Select aspect definitions based on tier
+        aspects_to_check = ASPECT_TIERS.get(tier, MAJOR_ASPECTS)
 
         results: List[CalculatedAspect] = []
 

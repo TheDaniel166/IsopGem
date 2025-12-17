@@ -5,8 +5,8 @@ including opening, closing, positioning, and tracking active windows.
 """
 from typing import Dict, Optional, Type
 import logging
-from PyQt6.QtWidgets import QWidget, QMainWindow
-from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QWidget, QMainWindow, QApplication
+from PyQt6.QtCore import Qt, QTimer
 
 
 logger = logging.getLogger(__name__)
@@ -82,12 +82,12 @@ class WindowManager:
         # Prevent tool windows from closing the entire application
         window.setAttribute(Qt.WidgetAttribute.WA_QuitOnClose, False)
         
-        # Keep window as a separate window but owned by parent
-        # Changed to WindowType.Window to guarantee minimize/maximize buttons are respected by the WM
-        # NOTE: This may allow windows to be obscured by the main window (no longer transient-on-top)
+        # Use Tool type with transient parent for proper z-ordering on Linux
+        # Tool windows stay above their transient parent in most window managers
         window.setWindowFlags(
-            Qt.WindowType.Window | 
-            Qt.WindowType.WindowMinMaxButtonsHint | 
+            Qt.WindowType.Tool |
+            Qt.WindowType.WindowTitleHint |
+            Qt.WindowType.WindowSystemMenuHint |
             Qt.WindowType.WindowCloseButtonHint
         )
         
@@ -102,10 +102,18 @@ class WindowManager:
             original_title = window.windowTitle()
             window.setWindowTitle(f"{original_title} #{self._window_counters[window_type]}")
         
-        # Show and ensure window is focused
+        # Show the window first so it has a valid windowHandle
         window.show()
+        
+        # Set the transient parent at the window system level
+        # This tells X11/Wayland that this window belongs to the main window
+        if self.parent and self.parent.windowHandle() and window.windowHandle():
+            window.windowHandle().setTransientParent(self.parent.windowHandle())
+            logger.debug("Set transient parent for %s", window_type)
+        
         window.raise_()
         window.activateWindow()
+        
         logger.debug("Opened window %s (id=%s)", window_type, window_id)
         
         return window
@@ -210,11 +218,23 @@ class WindowManager:
             Number of active windows
         """
         return len(self._active_windows)
+
     def raise_all_windows(self):
         """
         Bring all active windows to the front.
         """
-        for window in self._active_windows.values():
-            if window.isVisible():
+        def do_raise():
+            windows = list(self._active_windows.values())
+            visible = [w for w in windows if w.isVisible()]
+            
+            for window in visible:
                 window.raise_()
-        logger.debug("Raised all active windows")
+            
+            # Activate the last raised window (if any) to give it focus
+            if visible:
+                visible[-1].activateWindow()
+            
+            logger.debug("Raised %d active windows", len(visible))
+        
+        # Small delay to ensure proper timing after tab changes
+        QTimer.singleShot(50, do_raise)
