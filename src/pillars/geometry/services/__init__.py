@@ -141,6 +141,7 @@ from .archimedean_solids import (
 )
 from .torus_solid import TorusSolidService, TorusSolidCalculator
 from .torus_knot_solid import TorusKnotSolidService, TorusKnotSolidCalculator
+from .vault_of_hestia_solid import VaultOfHestiaSolidService, VaultOfHestiaSolidCalculator
 
 __all__ = [
     'GeometricShape',
@@ -284,5 +285,7 @@ __all__ = [
     'TorusSolidCalculator',
     'TorusKnotSolidService',
     'TorusKnotSolidCalculator',
+    'VaultOfHestiaSolidService',
+    'VaultOfHestiaSolidCalculator',
 ]
 

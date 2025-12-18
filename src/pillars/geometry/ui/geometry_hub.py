@@ -6,7 +6,7 @@ from typing import Callable, List, Optional, Dict, Any, cast
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QFrame, QSpinBox, QScrollArea, QLayout, QInputDialog,
-    QGridLayout, QGraphicsDropShadowEffect
+    QGridLayout, QGraphicsDropShadowEffect, QDialog
 )
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont, QColor
@@ -17,1144 +17,8 @@ from .geometry_calculator_window import GeometryCalculatorWindow
 from .polygonal_number_window import PolygonalNumberWindow
 from .experimental_star_window import ExperimentalStarWindow
 from .figurate_3d_window import Figurate3DWindow
-from ..services.vault_of_hestia_shape import VaultOfHestiaShape
-from ..services.seed_of_life_shape import SeedOfLifeShape
-from ..services import (
-    AnnulusShape,
-    CircleShape,
-    CrescentShape,
-    EllipseShape,
-    RoseCurveShape,
-    SquareShape,
-    RectangleShape,
-    ParallelogramShape,
-    RhombusShape,
-    TrapezoidShape,
-    IsoscelesTrapezoidShape,
-    KiteShape,
-    DeltoidShape,
-    EquilateralTriangleShape,
-    RightTriangleShape,
-    IsoscelesTriangleShape,
-    ScaleneTriangleShape,
-    AcuteTriangleShape,
-    ObtuseTriangleShape,
-    HeronianTriangleShape,
-    IsoscelesRightTriangleShape,
-    ThirtySixtyNinetyTriangleShape,
-    GoldenTriangleShape,
-    TriangleSolverShape,
-    VaultOfHestiaShape,
-    CyclicQuadrilateralShape,
-    TangentialQuadrilateralShape,
-    BicentricQuadrilateralShape,
-    QuadrilateralSolverShape,
-    RegularPolygonShape,
-    VesicaPiscisShape,
-    TetrahedronSolidService,
-    TetrahedronSolidCalculator,
-    CubeSolidService,
-    CubeSolidCalculator,
-    OctahedronSolidService,
-    OctahedronSolidCalculator,
-    DodecahedronSolidService,
-    DodecahedronSolidCalculator,
-    IcosahedronSolidService,
-    IcosahedronSolidCalculator,
-    TesseractSolidService,
-    TesseractSolidCalculator,
-    SquarePyramidSolidService,
-    SquarePyramidSolidCalculator,
-    SquarePyramidFrustumSolidService,
-    SquarePyramidFrustumSolidCalculator,
-    PentagonalPyramidFrustumSolidService,
-    PentagonalPyramidFrustumSolidCalculator,
-    HexagonalPyramidFrustumSolidService,
-    HexagonalPyramidFrustumSolidCalculator,
-    RectangularPyramidSolidService,
-    RectangularPyramidSolidCalculator,
-    TriangularPyramidSolidService,
-    TriangularPyramidSolidCalculator,
-    PentagonalPyramidSolidService,
-    PentagonalPyramidSolidCalculator,
-    HexagonalPyramidSolidService,
-    HexagonalPyramidSolidCalculator,
-    HeptagonalPyramidSolidService,
-    HeptagonalPyramidSolidCalculator,
-    GoldenPyramidSolidService,
-    GoldenPyramidSolidCalculator,
-    StepPyramidSolidService,
-    StepPyramidSolidCalculator,
-    RectangularPrismSolidService,
-    RectangularPrismSolidCalculator,
-    TriangularPrismSolidService,
-    TriangularPrismSolidCalculator,
-    PentagonalPrismSolidService,
-    PentagonalPrismSolidCalculator,
-    HexagonalPrismSolidService,
-    HexagonalPrismSolidCalculator,
-    OctagonalPrismSolidService,
-    OctagonalPrismSolidCalculator,
-    HeptagonalPrismSolidService,
-    HeptagonalPrismSolidCalculator,
-    ObliquePrismSolidService,
-    ObliquePrismSolidCalculator,
-    TorusSolidService,
-    TorusSolidCalculator,
-    TorusKnotSolidService,
-    TorusKnotSolidCalculator,
-    PrismaticFrustumSolidService,
-    PrismaticFrustumSolidCalculator,
-    TriangularAntiprismSolidService,
-    TriangularAntiprismSolidCalculator,
-    SquareAntiprismSolidService,
-    SquareAntiprismSolidCalculator,
-    PentagonalAntiprismSolidService,
-    PentagonalAntiprismSolidCalculator,
-    HexagonalAntiprismSolidService,
-    HexagonalAntiprismSolidCalculator,
-    OctagonalAntiprismSolidService,
-    OctagonalAntiprismSolidCalculator,
-    HeptagonalAntiprismSolidService,
-    HeptagonalAntiprismSolidCalculator,
-    CuboctahedronSolidService,
-    CuboctahedronSolidCalculator,
-    TruncatedTetrahedronSolidService,
-    TruncatedTetrahedronSolidCalculator,
-    TruncatedCubeSolidService,
-    TruncatedCubeSolidCalculator,
-    TruncatedOctahedronSolidService,
-    TruncatedOctahedronSolidCalculator,
-    RhombicuboctahedronSolidService,
-    RhombicuboctahedronSolidCalculator,
-    RhombicosidodecahedronSolidService,
-    RhombicosidodecahedronSolidCalculator,
-    TruncatedCuboctahedronSolidService,
-    TruncatedCuboctahedronSolidCalculator,
-    IcosidodecahedronSolidService,
-    IcosidodecahedronSolidCalculator,
-    TruncatedDodecahedronSolidService,
-    TruncatedDodecahedronSolidCalculator,
-    TruncatedIcosahedronSolidService,
-    TruncatedIcosahedronSolidCalculator,
-    TruncatedIcosidodecahedronSolidService,
-    TruncatedIcosidodecahedronSolidCalculator,
-    SnubCubeSolidService,
-    SnubCubeSolidCalculator,
-    SnubDodecahedronSolidService,
-    SnubDodecahedronSolidCalculator,
-)
+from .geometry_definitions import CATEGORY_DEFINITIONS, SOLID_VIEWER_CONFIG
 from .geometry3d.window3d import Geometry3DWindow
-
-
-def _category(name: str, icon: str, tagline: str, shapes: List[dict], menu: Optional[List[Any]] = None) -> dict:
-    return {
-        'name': name,
-        'icon': icon,
-        'tagline': tagline,
-        'shapes': shapes,
-        'menu': menu,
-    }
-
-
-CATEGORY_DEFINITIONS: List[dict] = [
-    _category(
-        name="Circles",
-        icon="◯",
-        tagline="Curves, arcs, and ellipses",
-        shapes=[
-            {
-                'name': 'Circle',
-                'summary': 'Radius, diameter, circumference, area',
-                'factory': CircleShape,
-            },
-            {
-                'name': 'Oval (Ellipse)',
-                'summary': 'Semi-major/minor axes, eccentricity, Ramanujan perimeter',
-                'factory': EllipseShape,
-            },
-            {
-                'name': 'Annulus',
-                'summary': 'Ring width, concentric circumferences, area delta',
-                'factory': AnnulusShape,
-            },
-            {
-                'name': 'Crescent',
-                'summary': 'Lune carved by offset inner circle with overlap metrics',
-                'factory': CrescentShape,
-            },
-            {
-                'name': 'Vesica Piscis',
-                'summary': 'Sacred lens of two equal circles with arc + area data',
-                'factory': VesicaPiscisShape,
-            },
-            {
-                'name': 'Rose (Rhodonea Curve)',
-                'summary': 'Amplitude and harmonic-driven petal curves',
-                'factory': RoseCurveShape,
-            },
-        ],
-    ),
-    _category(
-        name="Triangles",
-        icon="△",
-        tagline="Classical sacred triples",
-        shapes=[
-            {
-                'name': 'Equilateral Triangle',
-                'summary': 'Side, height, area, radii',
-                'factory': EquilateralTriangleShape,
-            },
-            {
-                'name': 'Right Triangle',
-                'summary': 'Base, height, hypotenuse, area',
-                'factory': RightTriangleShape,
-            },
-            {
-                'name': 'Isosceles Triangle',
-                'summary': 'Equal legs from base + height inputs with area/perimeter',
-                'factory': IsoscelesTriangleShape,
-            },
-            {
-                'name': 'Scalene Triangle',
-                'summary': 'Three unequal sides with SSS validation, altitudes, radii',
-                'factory': ScaleneTriangleShape,
-            },
-            {
-                'name': 'Acute Triangle',
-                'summary': 'All interior angles < 90° with altitude breakdowns',
-                'factory': AcuteTriangleShape,
-            },
-            {
-                'name': 'Obtuse Triangle',
-                'summary': 'Detects >90° angle scenarios with exterior altitude tracing',
-                'factory': ObtuseTriangleShape,
-            },
-            {
-                'name': 'Isosceles Right Triangle (45-45-90)',
-                'summary': '45-45-90 triangle with √2 leg relationships & radii',
-                'factory': IsoscelesRightTriangleShape,
-            },
-            {
-                'name': '30-60-90 Triangle',
-                'summary': 'Half-equilateral proportions with √3 ratios and heights',
-                'factory': ThirtySixtyNinetyTriangleShape,
-            },
-            {
-                'name': 'Golden Triangle',
-                'summary': 'Isosceles phi-based triangle with derived short side + area',
-                'factory': GoldenTriangleShape,
-            },
-            {
-                'name': 'Heronian Triangle',
-                'summary': 'Integer side + area validation using Heron’s formula',
-                'factory': HeronianTriangleShape,
-            },
-            {
-                'name': 'Triangle Solver (any sides/angles)',
-                'summary': 'General SAS/ASA/SSA/SSS solver with visualization',
-                'factory': TriangleSolverShape,
-            },
-        ],
-    ),
-    _category(
-        name="Sacred Geometry",
-        icon="☥",
-        tagline="Esoteric and mystical constructions",
-        shapes=[
-            {
-                'name': 'Vault of Hestia',
-                'summary': 'Square-Triangle-Circle generator of Phi',
-                'factory': VaultOfHestiaShape,
-            },
-            {
-                'name': 'Seed of Life',
-                'summary': 'Seven circles in hexagonal symmetry representing creation',
-                'factory': SeedOfLifeShape,
-            },
-        ],
-    ),
-    _category(
-        name="Quadrilaterals",
-        icon="▭",
-        tagline="Squares, rectangles, and beyond",
-        shapes=[
-            {
-                'name': 'Square',
-                'summary': 'Side, perimeter, area, diagonal',
-                'factory': SquareShape,
-            },
-            {
-                'name': 'Rectangle',
-                'summary': 'Length, width, perimeter, diagonal',
-                'factory': RectangleShape,
-            },
-            {
-                'name': 'Parallelogram',
-                'summary': 'Opposite sides parallel with angle, height, and diagonal data',
-                'factory': ParallelogramShape,
-            },
-            {
-                'name': 'Rhombus',
-                'summary': 'Equal sides with diagonal, area, and height solvers',
-                'factory': RhombusShape,
-            },
-            {
-                'name': 'Trapezoid',
-                'summary': 'General trapezoid with base, leg, and altitude validation',
-                'factory': TrapezoidShape,
-            },
-            {
-                'name': 'Isosceles Trapezoid',
-                'summary': 'Symmetric trapezoid with equal legs and diagonal readouts',
-                'factory': IsoscelesTrapezoidShape,
-            },
-            {
-                'name': 'Kite',
-                'summary': 'Adjacent equal sides with diagonal + area from side-angle inputs',
-                'factory': KiteShape,
-            },
-            {
-                'name': 'Deltoid / Dart',
-                'summary': 'Concave kite (dart) variant using reflex angles',
-                'factory': DeltoidShape,
-            },
-            {
-                'name': 'Cyclic Quadrilateral',
-                'summary': 'All vertices on a circle with Brahmagupta area and R',
-                'factory': CyclicQuadrilateralShape,
-            },
-            {
-                'name': 'Tangential Quadrilateral',
-                'summary': 'Incircle touches every side with Pitot + inradius checks',
-                'factory': TangentialQuadrilateralShape,
-            },
-            {
-                'name': 'Bicentric Quadrilateral',
-                'summary': 'Simultaneously cyclic and tangential (incircle + circumcircle)',
-                'factory': BicentricQuadrilateralShape,
-            },
-            {
-                'name': 'General Quadrilateral Solver',
-                'summary': 'Mix sides with diagonal lengths + included diagonal angle',
-                'factory': QuadrilateralSolverShape,
-            },
-        ],
-    ),
-    _category(
-        name="Polygons",
-        icon="⬢",
-        tagline="Regular and star polygons",
-        shapes=[
-            {
-                'name': 'Regular Pentagon (5-gon)',
-                'summary': 'Equal sides and angles – sacred pentagonal ratios',
-                'polygon_sides': 5,
-            },
-            {
-                'name': 'Regular Hexagon (6-gon)',
-                'summary': 'Hexagonal lattices, honeycomb symmetries',
-                'polygon_sides': 6,
-            },
-            {
-                'name': 'Regular Heptagon (7-gon)',
-                'summary': 'Septenary geometry studies',
-                'polygon_sides': 7,
-            },
-            {
-                'name': 'Regular Octagon (8-gon)',
-                'summary': 'Stop-sign symmetry, eastern mandalas',
-                'polygon_sides': 8,
-            },
-            {
-                'name': 'Regular Nonagon (9-gon)',
-                'summary': 'Ninefold geometry explorations',
-                'polygon_sides': 9,
-            },
-            {
-                'name': 'Regular Decagon (10-gon)',
-                'summary': 'Golden ratio relationships in tenfold form',
-                'polygon_sides': 10,
-            },
-            {
-                'name': 'Regular Hendecagon (11-gon)',
-                'summary': 'Rarer elevenfold rotational symmetry',
-                'polygon_sides': 11,
-            },
-            {
-                'name': 'Regular Dodecagon (12-gon)',
-                'summary': 'Twelvefold cycles and sacred geometry',
-                'polygon_sides': 12,
-            },
-            {
-                'name': 'Any Regular n-gon',
-                'summary': 'Choose any number of sides ≥ 3',
-                'type': 'regular_polygon_custom',
-            },
-        ],
-    ),
-    _category(
-        name="Pyramids",
-        icon="⌂",
-        tagline="Tapered solids rising from sacred bases",
-        shapes=[
-            {
-                'name': 'Square Pyramid',
-                'summary': 'Base edge, slant height, apothem, volume',
-                'type': 'solid_viewer',
-                'solid_id': 'square_pyramid',
-            },
-            {
-                'name': 'Rectangular Pyramid',
-                'summary': 'Independent base edges with dual slant heights and volume',
-                'type': 'solid_viewer',
-                'solid_id': 'rectangular_pyramid',
-            },
-            {
-                'name': 'Equilateral Triangular Pyramid (Tetrahedral)',
-                'summary': 'Equilateral base with adjustable apex height, slant, and volume',
-                'type': 'solid_viewer',
-                'solid_id': 'triangular_pyramid',
-            },
-            {
-                'name': 'Regular Pentagonal Pyramid',
-                'summary': 'Fivefold symmetry with apothem, slant, and lateral metrics',
-                'type': 'solid_viewer',
-                'solid_id': 'pentagonal_pyramid',
-            },
-            {
-                'name': 'Regular Hexagonal Pyramid',
-                'summary': 'Honeycomb-style base with live perimeter and volume solving',
-                'type': 'solid_viewer',
-                'solid_id': 'hexagonal_pyramid',
-            },
-            {
-                'name': 'Regular Heptagonal Pyramid',
-                'summary': 'Sevenfold base showcasing rare apothem and slant couplings',
-                'type': 'solid_viewer',
-                'solid_id': 'heptagonal_pyramid',
-            },
-            {
-                'name': 'Oblique Pyramid',
-                'summary': 'Coming soon: apex offset with lateral face resolution',
-                'status': 'Coming Soon',
-                'factory': None,
-            },
-            {
-                'name': 'Square Pyramid Frustum',
-                'summary': 'Dual-base truncated square pyramid with coupled slant metrics',
-                'type': 'solid_viewer',
-                'solid_id': 'square_pyramid_frustum',
-            },
-            {
-                'name': 'Pentagonal Pyramid Frustum',
-                'summary': 'Fivefold truncated pyramid with dual perimeter + slant metrics',
-                'type': 'solid_viewer',
-                'solid_id': 'pentagonal_pyramid_frustum',
-            },
-            {
-                'name': 'Hexagonal Pyramid Frustum',
-                'summary': 'Honeycomb-based truncated pyramid with apothem-driven slant control',
-                'type': 'solid_viewer',
-                'solid_id': 'hexagonal_pyramid_frustum',
-            },
-            {
-                'name': 'Golden Pyramid',
-                'summary': 'Great Pyramid inspired φ-ratio pyramid with derived slant + height',
-                'type': 'solid_viewer',
-                'solid_id': 'golden_pyramid',
-            },
-            {
-                'name': 'Step Pyramid',
-                'summary': 'Tiered mastaba stack with adjustable steps and cumulative metrics',
-                'type': 'solid_viewer',
-                'solid_id': 'step_pyramid',
-            },
-            {
-                'name': 'General n-gonal Pyramid Solver',
-                'summary': 'Coming soon: arbitrary base polygon with apex control',
-                'status': 'Coming Soon',
-                'factory': None,
-            },
-        ],
-        menu=[
-            {
-                'label': 'Right Regular Pyramids',
-                'items': [
-                    'Square Pyramid',
-                    'Rectangular Pyramid',
-                    'Equilateral Triangular Pyramid (Tetrahedral)',
-                    'Regular Pentagonal Pyramid',
-                    'Regular Hexagonal Pyramid',
-                    'Regular Heptagonal Pyramid',
-                ],
-            },
-            {
-                'label': 'Oblique & Frustums',
-                'items': [
-                    'Oblique Pyramid',
-                    'Square Pyramid Frustum',
-                    'Pentagonal Pyramid Frustum',
-                    'Hexagonal Pyramid Frustum',
-                ],
-            },
-            {
-                'label': 'Sacred & General Tools',
-                'items': [
-                    'Golden Pyramid',
-                    'Step Pyramid',
-                    'General n-gonal Pyramid Solver',
-                ],
-            },
-        ],
-    ),
-    _category(
-        name="Prisms",
-        icon="▱",
-        tagline="Uniform cross-section solids",
-        shapes=[
-            {
-                'name': 'Triangular Prism',
-                'summary': 'Equilateral base prism with apothem, lateral area, and volume solving.',
-                'type': 'solid_viewer',
-                'solid_id': 'triangular_prism',
-            },
-            {
-                'name': 'Rectangular Prism',
-                'summary': 'Independent length × width × height box with diagonal readouts.',
-                'type': 'solid_viewer',
-                'solid_id': 'rectangular_prism',
-            },
-            {
-                'name': 'Pentagonal Prism',
-                'summary': 'Fivefold regular prism showing perimeter, apothem, and volume coupling.',
-                'type': 'solid_viewer',
-                'solid_id': 'pentagonal_prism',
-            },
-            {
-                'name': 'Hexagonal Prism',
-                'summary': 'Honeycomb regular prism with live lateral/surface area metrics.',
-                'type': 'solid_viewer',
-                'solid_id': 'hexagonal_prism',
-            },
-            {
-                'name': 'Heptagonal Prism',
-                'summary': 'Sevenfold base prism showcasing rare perimeter/apothem couplings.',
-                'type': 'solid_viewer',
-                'solid_id': 'heptagonal_prism',
-            },
-            {
-                'name': 'Octagonal Prism',
-                'summary': 'Stop-sign base prism featuring radius, apothem, and face analytics.',
-                'type': 'solid_viewer',
-                'solid_id': 'octagonal_prism',
-            },
-            {
-                'name': 'Oblique Prism',
-                'summary': 'Skewed regular prism with editable lateral offset.',
-                'type': 'solid_viewer',
-                'solid_id': 'oblique_prism',
-            },
-            {
-                'name': 'Prismatic Frustum',
-                'summary': 'Regular prism truncated between dual polygon bases.',
-                'type': 'solid_viewer',
-                'solid_id': 'prismatic_frustum',
-            },
-            {
-                'name': 'Gyroelongated Square Prism',
-                'summary': 'Coming soon: Johnson solid combo of prisms and antiprisms',
-                'status': 'Coming Soon',
-                'factory': None,
-            },
-            {
-                'name': 'General n-gonal Prism Solver',
-                'summary': 'Coming soon: configurable base polygon with extrusion height',
-                'status': 'Coming Soon',
-                'factory': None,
-            },
-            {
-                'name': 'Prism Net Explorer',
-                'summary': 'Coming soon: unfoldable nets and face adjacency maps',
-                'status': 'Coming Soon',
-                'factory': None,
-            },
-        ],
-        menu=[
-            {
-                'label': 'Right Prisms',
-                'items': [
-                    'Triangular Prism',
-                    'Rectangular Prism',
-                    'Pentagonal Prism',
-                    'Hexagonal Prism',
-                    'Heptagonal Prism',
-                    'Octagonal Prism',
-                ],
-            },
-            {
-                'label': 'Oblique & Truncated Forms',
-                'items': [
-                    'Oblique Prism',
-                    'Prismatic Frustum',
-                    'Gyroelongated Square Prism',
-                ],
-            },
-            {
-                'label': 'Explorers & Solvers',
-                'items': [
-                    'General n-gonal Prism Solver',
-                    'Prism Net Explorer',
-                ],
-            },
-        ],
-    ),
-    _category(
-        name="Antiprisms",
-        icon="⧖",
-        tagline="Twisted twin-base solids",
-        shapes=[
-            {
-                'name': 'Triangular Antiprism',
-                'summary': 'Dual rotated triangles joined by equilateral lateral faces.',
-                'type': 'solid_viewer',
-                'solid_id': 'triangular_antiprism',
-            },
-            {
-                'name': 'Square Antiprism',
-                'summary': 'Square bases rotated 45° with eight congruent triangles.',
-                'type': 'solid_viewer',
-                'solid_id': 'square_antiprism',
-            },
-            {
-                'name': 'Pentagonal Antiprism',
-                'summary': 'Decagonal waist linking rotated pentagons with ten faces.',
-                'type': 'solid_viewer',
-                'solid_id': 'pentagonal_antiprism',
-            },
-            {
-                'name': 'Hexagonal Antiprism',
-                'summary': 'Staggered honeycomb pair producing twelve lateral triangles.',
-                'type': 'solid_viewer',
-                'solid_id': 'hexagonal_antiprism',
-            },
-            {
-                'name': 'Heptagonal Antiprism',
-                'summary': 'Sevenfold antiprism with fourteen lateral equilateral faces.',
-                'type': 'solid_viewer',
-                'solid_id': 'heptagonal_antiprism',
-            },
-            {
-                'name': 'Octagonal Antiprism',
-                'summary': 'Sixteen-triangle belt between rotated octagons.',
-                'type': 'solid_viewer',
-                'solid_id': 'octagonal_antiprism',
-            },
-            {
-                'name': 'Snub Antiprism',
-                'summary': 'Coming soon: chiral extension with alternating twists',
-                'status': 'Coming Soon',
-                'factory': None,
-            },
-            {
-                'name': 'Twisted Icosahedral Antiprism',
-                'summary': 'Coming soon: high-order antiprism approaching icosahedron',
-                'status': 'Coming Soon',
-                'factory': None,
-            },
-            {
-                'name': 'General n-gonal Antiprism Solver',
-                'summary': 'Coming soon: configure any base polygon and twist angle',
-                'status': 'Coming Soon',
-                'factory': None,
-            },
-            {
-                'name': 'Antiprism Net Explorer',
-                'summary': 'Coming soon: unfolding studies for twisted solids',
-                'status': 'Coming Soon',
-                'factory': None,
-            },
-        ],
-        menu=[
-            {
-                'label': 'Standard Antiprisms',
-                'items': [
-                    'Triangular Antiprism',
-                    'Square Antiprism',
-                    'Pentagonal Antiprism',
-                    'Hexagonal Antiprism',
-                    'Heptagonal Antiprism',
-                    'Octagonal Antiprism',
-                ],
-            },
-            {
-                'label': 'Advanced & Chiral',
-                'items': [
-                    'Snub Antiprism',
-                    'Twisted Icosahedral Antiprism',
-                ],
-            },
-            {
-                'label': 'Tools & Explorers',
-                'items': [
-                    'General n-gonal Antiprism Solver',
-                    'Antiprism Net Explorer',
-                ],
-            },
-        ],
-    ),
-    _category(
-        name="Platonic Solids",
-        icon="◆",
-        tagline="Perfect 3D symmetry",
-        shapes=[
-            {
-                'name': 'Tetrahedron',
-                'summary': 'Edge, height, area, volume',
-                'type': 'solid_viewer',
-                'solid_id': 'tetrahedron',
-            },
-            {
-                'name': 'Cube',
-                'summary': 'Edge, diagonals, volume',
-                'type': 'solid_viewer',
-                'solid_id': 'cube',
-            },
-            {
-                'name': 'Octahedron',
-                'summary': 'Dual of cube with triangular faces',
-                'type': 'solid_viewer',
-                'solid_id': 'octahedron',
-            },
-            {
-                'name': 'Dodecahedron',
-                'summary': 'Sacred pentagonal faces',
-                'type': 'solid_viewer',
-                'solid_id': 'dodecahedron',
-            },
-            {
-                'name': 'Icosahedron',
-                'summary': 'Twenty equilateral faces and golden ratios',
-                'type': 'solid_viewer',
-                'solid_id': 'icosahedron',
-            },
-        ],
-    ),
-    _category(
-        name="Archimedean Solids",
-        icon="◇",
-        tagline="Truncated and blended forms",
-        shapes=[
-            {
-                'name': 'Truncated Tetrahedron',
-                'summary': 'Regular tetra unfolded into 4 triangles + 4 hexagons.',
-                'type': 'solid_viewer',
-                'solid_id': 'truncated_tetrahedron',
-            },
-            {
-                'name': 'Cuboctahedron',
-                'summary': 'Eight triangles and six squares sharing uniform edges.',
-                'type': 'solid_viewer',
-                'solid_id': 'cuboctahedron',
-            },
-            {
-                'name': 'Truncated Cube',
-                'summary': 'Octagon-square composition generated by trimming cube corners.',
-                'type': 'solid_viewer',
-                'solid_id': 'truncated_cube',
-            },
-            {
-                'name': 'Truncated Octahedron',
-                'summary': 'Space-filling solid blending hexagons with squares.',
-                'type': 'solid_viewer',
-                'solid_id': 'truncated_octahedron',
-            },
-            {
-                'name': 'Rhombicuboctahedron',
-                'summary': 'Uniform mix of 18 squares and 8 triangles with full symmetry.',
-                'type': 'solid_viewer',
-                'solid_id': 'rhombicuboctahedron',
-            },
-            {
-                'name': 'Truncated Cuboctahedron',
-                'summary': 'Great rhombicuboctahedron weaving hexagons, squares, and octagons.',
-                'type': 'solid_viewer',
-                'solid_id': 'truncated_cuboctahedron',
-            },
-            {
-                'name': 'Snub Cube',
-                'summary': 'Chiral solid pairing squares with equilateral triangles.',
-                'type': 'solid_viewer',
-                'solid_id': 'snub_cube',
-            },
-            {
-                'name': 'Icosidodecahedron',
-                'summary': 'Alternating pentagon-triangle faces bridging icosahedron and dodecahedron.',
-                'type': 'solid_viewer',
-                'solid_id': 'icosidodecahedron',
-            },
-            {
-                'name': 'Truncated Dodecahedron',
-                'summary': 'Decagon-triangle mixture carved from a dodecahedron.',
-                'type': 'solid_viewer',
-                'solid_id': 'truncated_dodecahedron',
-            },
-            {
-                'name': 'Truncated Icosahedron',
-                'summary': 'Classic soccer-ball blend of pentagons and hexagons.',
-                'type': 'solid_viewer',
-                'solid_id': 'truncated_icosahedron',
-            },
-            {
-                'name': 'Rhombicosidodecahedron',
-                'summary': 'Uniform solid with 20 triangles, 30 squares, and 12 pentagons.',
-                'type': 'solid_viewer',
-                'solid_id': 'rhombicosidodecahedron',
-            },
-            {
-                'name': 'Truncated Icosidodecahedron',
-                'summary': 'Great rhombicosidodecahedron combining pentagons, decagons, and squares.',
-                'type': 'solid_viewer',
-                'solid_id': 'truncated_icosidodecahedron',
-            },
-            {
-                'name': 'Snub Dodecahedron',
-                'summary': 'Chiral pentagon-triangle solid completing the Archimedean family.',
-                'type': 'solid_viewer',
-                'solid_id': 'snub_dodecahedron',
-            },
-        ],
-    ),
-    _category(
-        name="Other Solids",
-        icon="⚪",
-        tagline="Cylinders, cones, and torus forms",
-        shapes=[
-            {
-                'name': 'Sphere',
-                'summary': 'Coming soon: radius, area, volume',
-                'status': 'Coming Soon',
-                'factory': None,
-            },
-            {
-                'name': 'Cylinder',
-                'summary': 'Coming soon: radius, height, lateral area',
-                'status': 'Coming Soon',
-                'factory': None,
-            },
-            {
-                'name': 'Cone',
-                'summary': 'Coming soon: slant height, volume',
-                'status': 'Coming Soon',
-                'factory': None,
-            },
-            {
-                'name': 'Torus',
-                'summary': 'Donut shape with major/minor radii, surface, and volume',
-                'type': 'solid_viewer',
-                'solid_id': 'torus',
-            },
-            {
-                'name': 'Torus Knot',
-                'summary': '(p, q) Torus Knot tube with customizable windings.',
-                'type': 'solid_viewer',
-                'solid_id': 'torus_knot',
-            },
-        ],
-    ),
-    _category(
-        name="Hypercube",
-        icon="⧈",
-        tagline="Dimensional expansions and projections",
-        shapes=[
-            {
-                'name': 'Tesseract',
-                'summary': 'Dual-cube Schlegel projection with 24 square faces.',
-                'type': 'solid_viewer',
-                'solid_id': 'tesseract',
-            },
-        ],
-    ),
-]
-
-SOLID_VIEWER_CONFIG: Dict[str, dict] = {
-    'tetrahedron': {
-        'title': 'Tetrahedron',
-        'summary': 'Edge-equal platonic solid with 4 faces, 6 edges, and 4 vertices.',
-        'builder': TetrahedronSolidService.build,
-        'calculator': TetrahedronSolidCalculator,
-    },
-    'cube': {
-        'title': 'Cube',
-        'summary': 'Six perfect squares with equal edges, diagonals, and orthogonal faces.',
-        'builder': CubeSolidService.build,
-        'calculator': CubeSolidCalculator,
-    },
-    'octahedron': {
-        'title': 'Octahedron',
-        'summary': 'Dual of the cube featuring eight equilateral triangles and axial symmetry.',
-        'builder': OctahedronSolidService.build,
-        'calculator': OctahedronSolidCalculator,
-    },
-    'dodecahedron': {
-        'title': 'Dodecahedron',
-        'summary': 'Twelve sacred pentagons with golden-ratio symmetry and rich radii.',
-        'builder': DodecahedronSolidService.build,
-        'calculator': DodecahedronSolidCalculator,
-    },
-    'icosahedron': {
-        'title': 'Icosahedron',
-        'summary': 'Twenty equilateral faces yielding maximal symmetry among platonic solids.',
-        'builder': IcosahedronSolidService.build,
-        'calculator': IcosahedronSolidCalculator,
-    },
-    'tesseract': {
-        'title': 'Tesseract (Hypercube)',
-        'summary': 'Schlegel projection of a four-dimensional cube with paired shells.',
-        'builder': TesseractSolidService.build,
-        'calculator': TesseractSolidCalculator,
-    },
-    'square_pyramid': {
-        'title': 'Square Pyramid',
-        'summary': 'Right square pyramid with interactive base + height driven metric coupling.',
-        'builder': SquarePyramidSolidService.build,
-        'calculator': SquarePyramidSolidCalculator,
-    },
-    'rectangular_pyramid': {
-        'title': 'Rectangular Pyramid',
-        'summary': 'Unequal base edges with dual slant heights and apex-controlled volume.',
-        'builder': RectangularPyramidSolidService.build,
-        'calculator': RectangularPyramidSolidCalculator,
-    },
-    'triangular_pyramid': {
-        'title': 'Equilateral Triangular Pyramid',
-        'summary': 'Regular triangle base with editable height, apothem, and slant relations.',
-        'builder': TriangularPyramidSolidService.build,
-        'calculator': TriangularPyramidSolidCalculator,
-    },
-    'pentagonal_pyramid': {
-        'title': 'Regular Pentagonal Pyramid',
-        'summary': 'Fivefold base pyramid highlighting apothem, lateral, and perimeter data.',
-        'builder': PentagonalPyramidSolidService.build,
-        'calculator': PentagonalPyramidSolidCalculator,
-    },
-    'hexagonal_pyramid': {
-        'title': 'Regular Hexagonal Pyramid',
-        'summary': 'Sixfold honeycomb base with full metric solving and 3D payload.',
-        'builder': HexagonalPyramidSolidService.build,
-        'calculator': HexagonalPyramidSolidCalculator,
-    },
-    'heptagonal_pyramid': {
-        'title': 'Regular Heptagonal Pyramid',
-        'summary': 'Sevenfold symmetry drive with detailed apothem, slant, and volume outputs.',
-        'builder': HeptagonalPyramidSolidService.build,
-        'calculator': HeptagonalPyramidSolidCalculator,
-    },
-    'square_pyramid_frustum': {
-        'title': 'Square Pyramid Frustum',
-        'summary': 'Truncated square pyramid with editable dual bases and slant-coupled metrics.',
-        'builder': SquarePyramidFrustumSolidService.build,
-        'calculator': SquarePyramidFrustumSolidCalculator,
-    },
-    'pentagonal_pyramid_frustum': {
-        'title': 'Pentagonal Pyramid Frustum',
-        'summary': 'Fivefold truncated pyramid with apothem-aware slant + volume solving.',
-        'builder': PentagonalPyramidFrustumSolidService.build,
-        'calculator': PentagonalPyramidFrustumSolidCalculator,
-    },
-    'hexagonal_pyramid_frustum': {
-        'title': 'Hexagonal Pyramid Frustum',
-        'summary': 'Sixfold honeycomb frustum with dual perimeters and metric coupling.',
-        'builder': HexagonalPyramidFrustumSolidService.build,
-        'calculator': HexagonalPyramidFrustumSolidCalculator,
-    },
-    'golden_pyramid': {
-        'title': 'Golden Pyramid',
-        'summary': 'Great Pyramid style square pyramid enforcing φ-based slant/height links.',
-        'builder': GoldenPyramidSolidService.build,
-        'calculator': GoldenPyramidSolidCalculator,
-    },
-    'step_pyramid': {
-        'title': 'Step Pyramid',
-        'summary': 'Adjustable terraced mastaba stack with tier-aware metrics.',
-        'builder': StepPyramidSolidService.build,
-        'calculator': StepPyramidSolidCalculator,
-    },
-    'rectangular_prism': {
-        'title': 'Rectangular Prism',
-        'summary': 'Axis-aligned box with independent length, width, height, and diagonal metrics.',
-        'builder': RectangularPrismSolidService.build,
-        'calculator': RectangularPrismSolidCalculator,
-    },
-    'triangular_prism': {
-        'title': 'Triangular Prism',
-        'summary': 'Equilateral base right prism featuring apothem, lateral area, and volume coupling.',
-        'builder': TriangularPrismSolidService.build,
-        'calculator': TriangularPrismSolidCalculator,
-    },
-    'pentagonal_prism': {
-        'title': 'Pentagonal Prism',
-        'summary': 'Fivefold regular prism with perimeter/apothem metrics and expansive surface data.',
-        'builder': PentagonalPrismSolidService.build,
-        'calculator': PentagonalPrismSolidCalculator,
-    },
-    'hexagonal_prism': {
-        'title': 'Hexagonal Prism',
-        'summary': 'Honeycomb-style regular prism highlighting lateral area and volume relationships.',
-        'builder': HexagonalPrismSolidService.build,
-        'calculator': HexagonalPrismSolidCalculator,
-    },
-    'heptagonal_prism': {
-        'title': 'Heptagonal Prism',
-        'summary': 'Sevenfold regular prism emphasizing perimeter/apothem coupling and volume.',
-        'builder': HeptagonalPrismSolidService.build,
-        'calculator': HeptagonalPrismSolidCalculator,
-    },
-    'octagonal_prism': {
-        'title': 'Octagonal Prism',
-        'summary': 'Stop-sign base prism with extended perimeter, apothem, and surface analytics.',
-        'builder': OctagonalPrismSolidService.build,
-        'calculator': OctagonalPrismSolidCalculator,
-    },
-    'oblique_prism': {
-        'title': 'Oblique Prism',
-        'summary': 'Regular prism sheared by a horizontal offset with edge and skew metrics.',
-        'builder': ObliquePrismSolidService.build,
-        'calculator': ObliquePrismSolidCalculator,
-    },
-    'prismatic_frustum': {
-        'title': 'Prismatic Frustum',
-        'summary': 'Truncated regular prism bridging distinct polygon edges with linear taper.',
-        'builder': PrismaticFrustumSolidService.build,
-        'calculator': PrismaticFrustumSolidCalculator,
-    },
-    'triangular_antiprism': {
-        'title': 'Triangular Antiprism',
-        'summary': 'Dual equilateral triangles rotated 60° and joined by six faces.',
-        'builder': TriangularAntiprismSolidService.build,
-        'calculator': TriangularAntiprismSolidCalculator,
-    },
-    'square_antiprism': {
-        'title': 'Square Antiprism',
-        'summary': 'Forty-five degree rotated squares creating an eight-triangle belt.',
-        'builder': SquareAntiprismSolidService.build,
-        'calculator': SquareAntiprismSolidCalculator,
-    },
-    'pentagonal_antiprism': {
-        'title': 'Pentagonal Antiprism',
-        'summary': 'Rotated pentagons producing a decagonal midsection with ten faces.',
-        'builder': PentagonalAntiprismSolidService.build,
-        'calculator': PentagonalAntiprismSolidCalculator,
-    },
-    'hexagonal_antiprism': {
-        'title': 'Hexagonal Antiprism',
-        'summary': 'Honeycomb antiprism featuring twelve lateral equilateral triangles.',
-        'builder': HexagonalAntiprismSolidService.build,
-        'calculator': HexagonalAntiprismSolidCalculator,
-    },
-    'octagonal_antiprism': {
-        'title': 'Octagonal Antiprism',
-        'summary': 'Stop-sign antiprism with sixteen congruent triangle faces.',
-        'builder': OctagonalAntiprismSolidService.build,
-        'calculator': OctagonalAntiprismSolidCalculator,
-    },
-    'heptagonal_antiprism': {
-        'title': 'Heptagonal Antiprism',
-        'summary': 'Sevenfold antiprism forming fourteen lateral equilateral triangles.',
-        'builder': HeptagonalAntiprismSolidService.build,
-        'calculator': HeptagonalAntiprismSolidCalculator,
-    },
-    'truncated_tetrahedron': {
-        'title': 'Truncated Tetrahedron',
-        'summary': 'Four hexagons and four triangles derived from a sliced tetrahedron.',
-        'builder': TruncatedTetrahedronSolidService.build,
-        'calculator': TruncatedTetrahedronSolidCalculator,
-    },
-    'cuboctahedron': {
-        'title': 'Cuboctahedron',
-        'summary': 'Uniform solid blending cube and octahedron symmetries.',
-        'builder': CuboctahedronSolidService.build,
-        'calculator': CuboctahedronSolidCalculator,
-    },
-    'truncated_cube': {
-        'title': 'Truncated Cube',
-        'summary': 'Eight triangles and six octagons from shaving cube corners.',
-        'builder': TruncatedCubeSolidService.build,
-        'calculator': TruncatedCubeSolidCalculator,
-    },
-    'truncated_octahedron': {
-        'title': 'Truncated Octahedron',
-        'summary': 'Space-filling Archimedean solid mixing squares and hexagons.',
-        'builder': TruncatedOctahedronSolidService.build,
-        'calculator': TruncatedOctahedronSolidCalculator,
-    },
-    'rhombicuboctahedron': {
-        'title': 'Rhombicuboctahedron',
-        'summary': 'Eighteen squares and eight triangles arranged with uniform edges.',
-        'builder': RhombicuboctahedronSolidService.build,
-        'calculator': RhombicuboctahedronSolidCalculator,
-    },
-    'truncated_cuboctahedron': {
-        'title': 'Truncated Cuboctahedron',
-        'summary': 'Great rhombicuboctahedron weaving hexagons, squares, and octagons.',
-        'builder': TruncatedCuboctahedronSolidService.build,
-        'calculator': TruncatedCuboctahedronSolidCalculator,
-    },
-    'snub_cube': {
-        'title': 'Snub Cube',
-        'summary': 'Chiral Archimedean solid pairing squares with equilateral triangles.',
-        'builder': SnubCubeSolidService.build,
-        'calculator': SnubCubeSolidCalculator,
-    },
-    'icosidodecahedron': {
-        'title': 'Icosidodecahedron',
-        'summary': 'Alternating pentagon-triangle faces bridging platonic duals.',
-        'builder': IcosidodecahedronSolidService.build,
-        'calculator': IcosidodecahedronSolidCalculator,
-    },
-    'truncated_dodecahedron': {
-        'title': 'Truncated Dodecahedron',
-        'summary': 'Decagon-triangle mixture carved from a dodecahedron.',
-        'builder': TruncatedDodecahedronSolidService.build,
-        'calculator': TruncatedDodecahedronSolidCalculator,
-    },
-    'truncated_icosahedron': {
-        'title': 'Truncated Icosahedron',
-        'summary': 'Soccer-ball blend of twelve pentagons and twenty hexagons.',
-        'builder': TruncatedIcosahedronSolidService.build,
-        'calculator': TruncatedIcosahedronSolidCalculator,
-    },
-    'rhombicosidodecahedron': {
-        'title': 'Rhombicosidodecahedron',
-        'summary': 'Uniform solid with triangles, squares, and pentagons in harmony.',
-        'builder': RhombicosidodecahedronSolidService.build,
-        'calculator': RhombicosidodecahedronSolidCalculator,
-    },
-    'truncated_icosidodecahedron': {
-        'title': 'Truncated Icosidodecahedron',
-        'summary': 'Great rhombicosidodecahedron with pentagons, decagons, and squares.',
-        'builder': TruncatedIcosidodecahedronSolidService.build,
-        'calculator': TruncatedIcosidodecahedronSolidCalculator,
-    },
-    'snub_dodecahedron': {
-        'title': 'Snub Dodecahedron',
-        'summary': 'Chiral pentagon-triangle solid completing the Archimedean family.',
-        'builder': SnubDodecahedronSolidService.build,
-        'calculator': SnubDodecahedronSolidCalculator,
-    },
-    'torus': {
-        'title': 'Torus',
-        'summary': 'Donut shape with major/minor radii, surface, and volume.',
-        'builder': TorusSolidService.build,
-        'calculator': TorusSolidCalculator,
-    },
-    'torus_knot': {
-        'title': 'Torus Knot',
-        'summary': '(p, q) Torus Knot tube with adjustable windings and radii.',
-        'builder': TorusKnotSolidService.build,
-        'calculator': TorusKnotSolidCalculator,
-    },
-}
 
 
 class GeometryHub(QWidget):
@@ -1396,22 +260,13 @@ class GeometryHub(QWidget):
     def _build_content_area(self) -> QWidget:
         frame = QFrame()
         frame.setStyleSheet("background-color: transparent;")
-        outer_layout = QVBoxLayout(frame)
-        outer_layout.setContentsMargins(0, 0, 0, 0)
-        outer_layout.setSpacing(0)
-
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setStyleSheet("QScrollArea { border: none; }")
-
-        content_widget = QWidget()
-        scroll.setWidget(content_widget)
-
-        self.content_layout = QVBoxLayout(content_widget)
+        
+        # Direct layout, no inner scroll
+        self.content_layout = QVBoxLayout(frame)
         self.content_layout.setContentsMargins(0, 0, 0, 0)
         self.content_layout.setSpacing(16)
+        self.content_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
-        outer_layout.addWidget(scroll)
         return frame
 
     def _category_button_style(self, active: bool) -> str:
@@ -1437,7 +292,7 @@ class GeometryHub(QWidget):
         self._populate_menu(self.categories[index])
 
     def _populate_category_content(self, category: dict):
-        if not self.content_layout:
+        if self.content_layout is None:
             return
         self._clear_layout(self.content_layout)
 
@@ -1462,6 +317,10 @@ class GeometryHub(QWidget):
             card = self._create_shape_card(shape_def)
             self.content_layout.addWidget(card)
 
+        # The Geometric Codex (Footer)
+        codex = self._build_geometric_codex()
+        self.content_layout.addWidget(codex)
+        
         self.content_layout.addStretch()
 
     def _populate_menu(self, category: dict):
@@ -1619,16 +478,18 @@ class GeometryHub(QWidget):
 
         polygon_sides = shape_definition.get('polygon_sides')
         shape_type = shape_definition.get('type')
+        description = shape_definition.get('esoteric_description')
+        
+        # --- Primary Action Area ---
+        action_widget = None
 
         if shape_type == 'regular_polygon':
             layout.addSpacing(6)
             ctrl_row = QHBoxLayout()
             ctrl_row.setSpacing(10)
-
             spin_label = QLabel("Sides:")
             spin_label.setStyleSheet("color: #475569; font-weight: 600;")
             ctrl_row.addWidget(spin_label)
-
             polygon_spin = QSpinBox()
             polygon_spin.setMinimum(3)
             polygon_spin.setMaximum(40)
@@ -1639,74 +500,224 @@ class GeometryHub(QWidget):
             )
             ctrl_row.addWidget(polygon_spin)
             ctrl_row.addStretch()
-
-            open_btn = QPushButton("Open Regular Polygon Calculator")
-            open_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            open_btn.setStyleSheet(self._primary_button_style())
-            open_btn.clicked.connect(lambda _, spin=polygon_spin: self._open_polygon_calculator(spin.value()))
             layout.addLayout(ctrl_row)
-            layout.addWidget(open_btn)
-            return frame
-        if polygon_sides:
-            open_btn = QPushButton(f"Open {polygon_sides}-gon Calculator")
-            open_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            open_btn.setStyleSheet(self._primary_button_style())
-            open_btn.clicked.connect(lambda _, n=polygon_sides: self._open_polygon_calculator(n))
-            layout.addWidget(open_btn)
-            return frame
 
-        if shape_type == 'regular_polygon_custom':
-            layout.addSpacing(6)
-            open_btn = QPushButton("Choose n and Open Calculator")
-            open_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            open_btn.setStyleSheet(self._primary_button_style())
-            open_btn.clicked.connect(self._prompt_custom_polygon)
-            layout.addWidget(open_btn)
-            return frame
-        if shape_type == 'polygonal_numbers':
-            layout.addSpacing(6)
-            open_btn = QPushButton("Open Polygonal Visualizer")
-            open_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            open_btn.setStyleSheet(self._primary_button_style())
-            open_btn.clicked.connect(self._open_polygonal_number_visualizer)
-            layout.addWidget(open_btn)
-            return frame
+            action_widget = QPushButton("Open Regular Polygon Calculator")
+            action_widget.clicked.connect(lambda _, spin=polygon_spin: self._open_polygon_calculator(spin.value()))
 
-        if shape_type == 'star_numbers':
-            layout.addSpacing(6)
-            open_btn = QPushButton("Open Star Visualizer")
-            open_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            open_btn.setStyleSheet(self._primary_button_style())
-            open_btn.clicked.connect(self._open_star_number_visualizer)
-            layout.addWidget(open_btn)
-            return frame
+        elif polygon_sides:
+            action_widget = QPushButton(f"Open {polygon_sides}-gon Calculator")
+            action_widget.clicked.connect(lambda _, n=polygon_sides: self._open_polygon_calculator(n))
 
-        if shape_definition.get('type') == 'solid_viewer':
+        elif shape_type == 'regular_polygon_custom':
+            layout.addSpacing(6)
+            action_widget = QPushButton("Choose n and Open Calculator")
+            action_widget.clicked.connect(self._prompt_custom_polygon)
+
+        elif shape_type == 'polygonal_numbers':
+            layout.addSpacing(6)
+            action_widget = QPushButton("Open Polygonal Visualizer")
+            action_widget.clicked.connect(self._open_polygonal_number_visualizer)
+
+        elif shape_type == 'star_numbers':
+            layout.addSpacing(6)
+            action_widget = QPushButton("Open Star Visualizer")
+            action_widget.clicked.connect(self._open_star_number_visualizer)
+
+        elif shape_type == 'solid_viewer':
             solid_id = shape_definition.get('solid_id')
-            open_btn = QPushButton("Open 3D Viewer")
-            open_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            open_btn.setStyleSheet(self._primary_button_style())
+            action_widget = QPushButton("Open 3D Viewer")
             if solid_id in SOLID_VIEWER_CONFIG:
-                open_btn.clicked.connect(lambda _, sid=solid_id: self._open_solid_viewer(sid))
+                action_widget.clicked.connect(lambda _, sid=solid_id: self._open_solid_viewer(sid))
             else:
-                open_btn.setEnabled(False)
-                open_btn.setCursor(Qt.CursorShape.ArrowCursor)
-            layout.addWidget(open_btn)
-            return frame
+                action_widget.setEnabled(False)
+                action_widget.setCursor(Qt.CursorShape.ArrowCursor)
 
-        factory: Optional[Callable] = shape_definition.get('factory')
-        if factory:
-            open_btn = QPushButton("Open Calculator")
-            open_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            open_btn.setStyleSheet(self._primary_button_style())
-            open_btn.clicked.connect(lambda _, ctor=factory: self._open_shape_calculator(ctor()))
-            layout.addWidget(open_btn)
         else:
-            hint = QLabel("Stay tuned – this shape is currently in design.")
-            hint.setStyleSheet("color: #94a3b8; font-size: 9.5pt; font-style: italic;")
-            layout.addWidget(hint)
+            # Default Factory Check
+            factory: Optional[Callable] = shape_definition.get('factory')
+            if factory:
+                action_widget = QPushButton("Open Calculator")
+                action_widget.clicked.connect(lambda _, ctor=factory: self._open_shape_calculator(ctor()))
+            else:
+                hint = QLabel("Stay tuned – this shape is currently in design.")
+                hint.setStyleSheet("color: #94a3b8; font-size: 9.5pt; font-style: italic;")
+                layout.addWidget(hint)
+
+        if action_widget and not description:
+            action_widget.setCursor(Qt.CursorShape.PointingHandCursor)
+            action_widget.setStyleSheet(self._primary_button_style())
+            layout.addWidget(action_widget)
+
+        # --- Esoteric Wisdom ---
+        # description parsed earlier
+        if description:
+            # layout.addSpacing(4)
+            wisdom_btn = QPushButton("Esoteric Wisdom")
+            wisdom_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            wisdom_btn.setStyleSheet("""
+                QPushButton {
+                    background-color: #7c3aed; 
+                    color: white; 
+                    border: none;
+                    padding: 8px 12px; 
+                    border-radius: 8px; 
+                    font-weight: 600;
+                    font-size: 10pt;
+                }
+                QPushButton:hover { background-color: #6d28d9; }
+                QPushButton:pressed { background-color: #5b21b6; }
+            """)
+            wisdom_btn.clicked.connect(lambda _, t=shape_definition['name'], d=description: self._show_esoteric_meaning(t, d))
+            layout.addWidget(wisdom_btn)
 
         return frame
+
+    def _show_esoteric_meaning(self, title: str, description: Any):
+        """Show a dialog with the esoteric meaning of the shape."""
+        dialog = QDialog(self)
+        dialog.setWindowTitle(f"Wisdom of the {title}")
+        dialog.setMinimumWidth(500)
+        dialog.setStyleSheet("background-color: #f8fafc;")
+        
+        layout = QVBoxLayout(dialog)
+        layout.setSpacing(16)
+        layout.setContentsMargins(24, 24, 24, 24)
+        
+        header = QLabel(f"The {title}")
+        header.setStyleSheet("color: #1e293b; font-size: 20pt; font-weight: 700; font-family: 'Cinzel', serif;")
+        header.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(header)
+        
+        # Decorative divider
+        line = QFrame()
+        line.setFrameShape(QFrame.Shape.HLine)
+        line.setStyleSheet("color: #cbd5e1;")
+        layout.addWidget(line)
+        
+        base_style = """
+            color: #334155; 
+            font-size: 13pt; 
+            line-height: 1.6;
+            font-family: 'Crimson Text', serif;
+        """
+
+        if isinstance(description, dict):
+            # Structured Definition
+            # 1. Title/Summary
+            summary = description.get('summary', '')
+            if summary:
+                lbl_summary = QLabel(summary)
+                lbl_summary.setWordWrap(True)
+                lbl_summary.setStyleSheet(base_style + "font-style: italic; padding-bottom: 12px;")
+                layout.addWidget(lbl_summary)
+
+            # 2. Stellations (The User's Request)
+            stellations = description.get('stellations', {})
+            if stellations:
+                st_header = QLabel("The Harmonic Stars (Stellations)")
+                st_header.setStyleSheet("color: #7c3aed; font-weight: 700; font-size: 11pt; margin-top: 8px;")
+                layout.addWidget(st_header)
+                for key, val in stellations.items():
+                    if isinstance(val, dict):
+                        # Rich Stellation Schema (Part 3)
+                        s_name = val.get('name', key)
+                        s_desc = val.get('description', '')
+                        s_magic = val.get('magical_function', '')
+
+                        # Title Line
+                        row_text = f"<b style='color:#5b21b6;'>{key} — {s_name}</b>"
+                        lbl_st = QLabel(row_text)
+                        lbl_st.setWordWrap(True)
+                        lbl_st.setStyleSheet("font-size: 11pt; margin-left: 12px; margin-top: 6px; color: #334155;")
+                        layout.addWidget(lbl_st)
+                        
+                        # Body
+                        if s_desc:
+                            lbl_desc = QLabel(s_desc)
+                            lbl_desc.setWordWrap(True)
+                            lbl_desc.setStyleSheet("font-size: 10pt; margin-left: 20px; color: #475569;")
+                            layout.addWidget(lbl_desc)
+                            
+                        # Magic Function
+                        if s_magic:
+                            lbl_mag = QLabel(f"<i>Use for: {s_magic}</i>")
+                            lbl_mag.setWordWrap(True)
+                            lbl_mag.setStyleSheet("font-size: 10pt; margin-left: 20px; color: #6d28d9;")
+                            layout.addWidget(lbl_mag)
+
+                    else:
+                        # Legacy/Simple String
+                        row_text = f"<b style='color:#5b21b6;'>{key}</b>: {val}"
+                        lbl_st = QLabel(row_text)
+                        lbl_st.setWordWrap(True)
+                        lbl_st.setStyleSheet("font-size: 11pt; margin-left: 12px; color: #334155;")
+                        layout.addWidget(lbl_st)
+
+            # 3. Correspondences
+            correspondences = description.get('correspondences', {})
+            if correspondences:
+                corr_header = QLabel("Correspondences")
+                corr_header.setStyleSheet("color: #059669; font-weight: 700; font-size: 11pt; margin-top: 8px;")
+                layout.addWidget(corr_header)
+                
+                # Render as a grid or comma list? Let's do a flowing text or grid.
+                # Let's try a flowing list for compactness.
+                corr_text = " • ".join([f"<b>{k}</b>: {v}" for k, v in correspondences.items()])
+                lbl_corr = QLabel(corr_text)
+                lbl_corr.setWordWrap(True)
+                lbl_corr.setStyleSheet("font-size: 11pt; color: #047857; margin-left: 12px;")
+                layout.addWidget(lbl_corr)
+
+            # 4. Attributes
+            attributes = description.get('attributes', {})
+            if attributes:
+                attr_header = QLabel("Geometric Attributes")
+                attr_header.setStyleSheet("color: #1e293b; font-weight: 700; font-size: 11pt; margin-top: 8px;")
+                layout.addWidget(attr_header)
+                for key, val in attributes.items():
+                    row_text = f"<b>{key}</b>: {val}"
+                    lbl_attr = QLabel(row_text)
+                    lbl_attr.setWordWrap(True)
+                    lbl_attr.setStyleSheet("font-size: 11pt; margin-left: 12px; color: #475569;")
+                    layout.addWidget(lbl_attr)
+
+            # 5. Meditation
+            meditation = description.get('meditation', '')
+            if meditation:
+                med_header = QLabel("Meditation")
+                med_header.setStyleSheet("color: #9333ea; font-weight: 700; font-size: 11pt; margin-top: 8px;")
+                layout.addWidget(med_header)
+                
+                lbl_med = QLabel(meditation)
+                lbl_med.setWordWrap(True)
+                lbl_med.setStyleSheet("""
+                    font-size: 11pt; 
+                    font-style: italic; 
+                    color: #581c87; 
+                    background-color: #f3e8ff; 
+                    padding: 10px; 
+                    border-radius: 6px;
+                    border: 1px solid #d8b4fe;
+                """)
+                layout.addWidget(lbl_med)
+                
+        else:
+            # Fallback for simple string
+            content = QLabel(str(description))
+            content.setWordWrap(True)
+            content.setStyleSheet(base_style + "padding: 10px;")
+            layout.addWidget(content)
+        
+        layout.addStretch()
+
+        close_btn = QPushButton("Meditate")
+        close_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        close_btn.setStyleSheet(self._primary_button_style())
+        close_btn.clicked.connect(dialog.accept)
+        layout.addWidget(close_btn, 0, Qt.AlignmentFlag.AlignCenter)
+        
+        dialog.exec()
 
     def _primary_button_style(self) -> str:
         return (
@@ -1826,3 +837,80 @@ class GeometryHub(QWidget):
             allow_multiple=True,
             window_manager=self.window_manager,
         )
+
+    def _build_geometric_codex(self) -> QWidget:
+        container = QFrame()
+        container.setStyleSheet(
+            """
+            QFrame {
+                background-color: #f8fafc;
+                border: 1px solid #e2e8f0;
+                border-radius: 12px;
+            }
+            """
+        )
+        layout = QVBoxLayout(container)
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(16)
+
+        header = QLabel("The Geometric Codex")
+        header.setStyleSheet("color: #1e293b; font-size: 12pt; font-weight: 700; border: none; background: transparent;")
+        layout.addWidget(header)
+
+        grid_layout = QGridLayout()
+        grid_layout.setSpacing(12)
+        
+        constants = [
+            ("π", "Archimedes' Constant", "3.141592653"),
+            ("φ", "The Golden Ratio", "1.618033988"),
+            ("√2", "Pythagoras' Constant", "1.414213562"),
+            ("√3", "Theodorus' Constant", "1.732050807"),
+            ("e", "Euler's Number", "2.718281828"),
+        ]
+
+        for i, (symbol, name, value) in enumerate(constants):
+            card = QFrame()
+            card.setStyleSheet(
+                """
+                QFrame {
+                    background-color: white;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 8px;
+                }
+                QFrame:hover {
+                    border-color: #94a3b8;
+                    background-color: #f1f5f9;
+                }
+                """
+            )
+            card.setCursor(Qt.CursorShape.PointingHandCursor)
+            card.setToolTip(f"{name}: {value}...")
+            
+            card_layout = QVBoxLayout(card)
+            card_layout.setContentsMargins(12, 12, 12, 12)
+            card_layout.setSpacing(4)
+            
+            sym_label = QLabel(symbol)
+            sym_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            sym_label.setStyleSheet("color: #0f172a; font-size: 18pt; font-weight: 700; border: none; background: transparent;")
+            card_layout.addWidget(sym_label)
+            
+            val_label = QLabel(value)
+            val_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            val_label.setStyleSheet("color: #64748b; font-size: 9pt; font-family: monospace; border: none; background: transparent;")
+            card_layout.addWidget(val_label)
+            
+            row = i // 3  # 3 columns
+            col = i % 3
+            grid_layout.addWidget(card, row, col)
+
+        layout.addLayout(grid_layout)
+        
+        inspiration = QLabel(
+            "\"Geometry will draw the soul toward truth and create the spirit of philosophy.\"\n— Plato"
+        )
+        inspiration.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        inspiration.setStyleSheet("color: #94a3b8; font-style: italic; font-size: 9pt; margin-top: 10px; border: none; background: transparent;")
+        layout.addWidget(inspiration)
+
+        return container

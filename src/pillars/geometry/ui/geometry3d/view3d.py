@@ -167,7 +167,7 @@ class Geometry3DView(QWidget):
         light_dir = QVector3D(-0.5, 0.5, 1.0).normalized() # Light from top-left-front
         
         if payload.faces:
-            for face_indices in payload.faces:
+            for i, face_indices in enumerate(payload.faces):
                 # Calc Centroid & Normal
                 v_positions = [transformed_verts[i] for i in face_indices]
                 if len(v_positions) < 3:
@@ -189,7 +189,7 @@ class Geometry3DView(QWidget):
                 dot = QVector3D.dotProduct(normal, light_dir)
                 intensity = max(0.1, min(1.0, (dot + 1.0) * 0.5)) # Remap -1..1 to 0..1 for ambient+diffuse look
                 
-                faces_to_draw.append((centroid_z, face_indices, intensity))
+                faces_to_draw.append((centroid_z, face_indices, intensity, i))
                 
             # Sort: Farthest Z first.
             # In our camera, if distance is positive, larger Z might be closer?
@@ -201,16 +201,31 @@ class Geometry3DView(QWidget):
 
             # 3. Draw Faces
             painter.setPen(Qt.PenStyle.NoPen)
-            for _, indices, intensity in faces_to_draw:
+            for _, indices, intensity, original_idx in faces_to_draw:
                 poly = [screen_points[i] for i in indices]
                 
-                # "Crystal" Color: Cyan-ish base modulated by light
-                # Base: R=0, G=150, B=255
-                r = int(0 * intensity)
-                g = int(180 * intensity)
-                b = int(255 * intensity)
-                alpha = 210 # Semi-transparent
                 
+                # Color Logic
+                base_color = None
+                if payload.face_colors and original_idx < len(payload.face_colors):
+                     raw_color = payload.face_colors[original_idx]
+                     if raw_color:
+                         base_color = QColor(*raw_color)
+                
+                if base_color:
+                    # Modulate intensity
+                    # Scaling RGB
+                    r = int(base_color.red() * intensity)
+                    g = int(base_color.green() * intensity)
+                    b = int(base_color.blue() * intensity)
+                    alpha = base_color.alpha()
+                else:
+                    # Default "Crystal" Color
+                    r = int(0 * intensity)
+                    g = int(180 * intensity)
+                    b = int(255 * intensity)
+                    alpha = 210
+
                 color = QColor(r, g, b, alpha)
                 painter.setBrush(color)
                 

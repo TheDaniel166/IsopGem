@@ -23,6 +23,7 @@ class SolidPayload:
     faces: List[Face] = field(default_factory=list)
     labels: List[SolidLabel] = field(default_factory=list)
     metadata: dict = field(default_factory=dict)
+    face_colors: List[Optional[Tuple[int, int, int, int]]] = field(default_factory=list)
     suggested_scale: Optional[float] = None
 
     def __init__(
@@ -33,6 +34,7 @@ class SolidPayload:
         faces: Optional[List[Face]] = None,
         labels: Optional[List[SolidLabel]] = None,
         metadata: Optional[dict] = None,
+        face_colors: Optional[List[Optional[Tuple[int, int, int, int]]]] = None,
         suggested_scale: Optional[float] = None,
     ) -> None:
         self.vertices = list(vertices) if vertices is not None else []
@@ -40,6 +42,7 @@ class SolidPayload:
         self.faces = list(faces) if faces is not None else []
         self.labels = list(labels) if labels is not None else []
         self.metadata = dict(metadata) if metadata is not None else {}
+        self.face_colors = list(face_colors) if face_colors is not None else []
         self.suggested_scale = suggested_scale
 
     def bounds(self) -> Optional[Tuple[Vec3, Vec3]]:

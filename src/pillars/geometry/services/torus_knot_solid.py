@@ -149,115 +149,139 @@ class TorusKnotSolidService:
         segments = config.tubular_segments
         radial_seg = config.radial_segments
         
-        # Precompute curve points and frames
-        frames = []
+        # 1. Compute curve points & tangents using forward difference or analytical derivative
+        curve_frames = [] # List of (pos, T, N, B)
         
-        # We need to loop 0 to 2pi. The curve is closed.
-        # Use Parallel Transport Frame or Frenet Frame? 
-        # Frenet frame is undefined at inflection points (curvature=0).
-        # Parallel transport is better for tubes to avoid twisting artifacts.
-        # But for simplicity, let's try a stable heuristic up-vector.
-        
-        # Algorithm:
-        # 1. Calculate points along curve.
-        # 2. At each point, calculate Tangent (T).
-        # 3. Calculate Normal (N) and Binormal (B).
-        #    If T is essentially (0,0,1), use X as temp up.
-        #    Else use Z as temp up. 
-        #    Twisting might happen. 
-        #    Better: Parallel Transport.
-        
-        # Initial frame
-        p0 = TorusKnotSolidService._curve_point(0, p, q, R, r)
-        p1 = TorusKnotSolidService._curve_point(0.001, p, q, R, r)
-        T0 = vec_normalize(vec_sub(p1, p0))
-        # Arbitrary N0
-        N0 = vec_normalize(vec_cross(T0, (0, 0, 1) if abs(T0[2]) < 0.9 else (0, 1, 0)))
-        B0 = vec_cross(T0, N0)
-        
-        current_N = N0
-        current_B = B0
-        
-        curve_points = []
+        # Calculate points for 0 to 2pi (inclusive to find total twist)
+        total_steps = segments
+        points = []
         tangents = []
         
-        for i in range(segments + 1): # +1 to close loop nicely or handle wrap?
-            # Actually for closed loop we want i=0 to segments. 
-            # p[segments] should match p[0] geographically but maybe not frame-wise?
-            # Let's do 0..segments-1 and wrap faces manually.
-            pass
+        for i in range(total_steps + 1):
+            t = (i / total_steps) * 2 * math.pi
+            pos = TorusKnotSolidService._curve_point(t, p, q, R, r)
+            points.append(pos)
             
-        # Let's populate frames for 0..segments
-        frames = []
-        for i in range(segments):
-            frac = i / segments
-            t = frac * 2 * math.pi
-            
-            pt = TorusKnotSolidService._curve_point(t, p, q, R, r)
-            
-            # Forward difference tangent
-            # For last point, wrap to 0?
-            t_next = ((i + 1) / segments) * 2 * math.pi
-            pt_next = TorusKnotSolidService._curve_point(t_next, p, q, R, r)
-            
-            T = vec_normalize(vec_sub(pt_next, pt))
-            
-            # Parallel transport: Compute rotation from prev T to current T
-            # But simpler loop:
-            if i == 0:
-                N = current_N
-                B = current_B
-            else:
-                prev_T, prev_N, prev_B = frames[-1][1:]
-                # Rotation axis = prev_T x T
-                # Reference: "Parallel Transport Frame"
-                # For now, let's stick to simple Frenet-like or iterative projection.
-                # Project prev_N onto plane normal to T, then re-normalize.
-                # N = prev_N - proj_of_prev_N_on_T
-                # N = prev_N - dot(prev_N, T) * T
-                
-                n_proj = vec_sub(prev_N, vec_scale(T, prev_N[0]*T[0] + prev_N[1]*T[1] + prev_N[2]*T[2])) # Dot product manual
-                # Check degenerate
-                if vec_length(n_proj) < 1e-6:
-                   # T matches prev_T perfectly or opposite?
-                   N = prev_N
-                else:
-                   N = vec_normalize(n_proj)
-                B = vec_cross(T, N)
-                
-            frames.append((pt, T, N, B))
+            # Analytical derivative for T is better, but numerical is fine for now
+            # Central difference or forward
+            t_next = (t + 0.0001)
+            pos_next = TorusKnotSolidService._curve_point(t_next, p, q, R, r)
+            tangent = vec_normalize(vec_sub(pos_next, pos))
+            tangents.append(tangent)
 
-        # Close the loop frame alignment?
-        # Parallel transport might result in a twist after full circle (holonomy).
-        # We might need to distribute the twist error across the segments to make it close perfectly.
-        # Twist error check:
-        first_N = frames[0][2]
-        last_N = frames[-1][2] # Not exactly, we need to transport from seg[-1] to seg[0]
-        # Let's ignore twist correction for "MVP" as it's complex for a quick script. 
-        # Most torus knots (p,q) coprime close reasonably well or the twist is part of the topology.
+        # 2. Parallel Transport First Pass
+        # Initial Frame at i=0
+        T0 = tangents[0]
+        # Robust initial Normal: use simplified heuristic or arbitrary axis
+        # If T is up, use X. If T is X, use Y.
+        if abs(T0[2]) < 0.9:
+            up = (0, 0, 1)
+        else:
+            up = (1, 0, 0)
+        N0 = vec_normalize(vec_cross(T0, up))
+        B0 = vec_normalize(vec_cross(T0, N0))
         
-        # Generate tube vertices
-        # Grid: segments (u) x radial (v)
+        current_N = N0
+        parallel_frames = [(points[0], T0, N0, B0)]
         
-        for i in range(segments):
-            center, T, N, B = frames[i]
+        for i in range(1, total_steps + 1):
+            prev_pos, prev_T, prev_N, prev_B = parallel_frames[-1]
+            curr_pos = points[i]
+            curr_T = tangents[i]
             
+            # Transport prev_N to current frame
+            # Axis of rotation A = prev_T x curr_T
+            axis = vec_cross(prev_T, curr_T)
+            
+            # If collinear (straight line), just update T
+            if vec_length(axis) < 1e-9:
+                curr_N = prev_N
+            else:
+                 axis = vec_normalize(axis)
+                 # Angle between tangents
+                 dot = prev_T[0]*curr_T[0] + prev_T[1]*curr_T[1] + prev_T[2]*curr_T[2]
+                 # Clamp for safety
+                 phi = math.acos(max(-1.0, min(1.0, dot)))
+                 
+                 # Rotate prev_N around axis by phi
+                 # Rodrigues rotation formula
+                 # v_rot = v cos(phi) + (k x v) sin(phi) + k (k . v) (1 - cos(phi))
+                 cos_phi = math.cos(phi)
+                 sin_phi = math.sin(phi)
+                 k_cross_v = vec_cross(axis, prev_N)
+                 k_dot_v = axis[0]*prev_N[0] + axis[1]*prev_N[1] + axis[2]*prev_N[2]
+                 
+                 term1 = vec_scale(prev_N, cos_phi)
+                 term2 = vec_scale(k_cross_v, sin_phi)
+                 term3 = vec_scale(axis, k_dot_v * (1 - cos_phi))
+                 
+                 curr_N = vec_add(vec_add(term1, term2), term3)
+                 curr_N = vec_normalize(curr_N)
+
+            # Re-orthogonalize to ensure perfect N-T orthogonality
+            # N = N - (N . T) * T
+            dot_val = curr_N[0]*curr_T[0] + curr_N[1]*curr_T[1] + curr_N[2]*curr_T[2]
+            curr_N = vec_sub(curr_N, vec_scale(curr_T, dot_val))
+            curr_N = vec_normalize(curr_N)
+            
+            curr_B = vec_normalize(vec_cross(curr_T, curr_N))
+            
+            parallel_frames.append((curr_pos, curr_T, curr_N, curr_B))
+
+        # 3. Calculate Correction Twist Angle
+        # Compare frame at 2pi (index segments) with frame at 0
+        # They are at the same spatial point.
+        first_N = parallel_frames[0][2]
+        last_N = parallel_frames[segments][2]
+        
+        # Angle alpha between first_N and last_N (in the plane normal to T)
+        # We can use atan2(det, dot) where det = (first_N x last_N) . T
+        cross_Ns = vec_cross(first_N, last_N)
+        T_end = parallel_frames[segments][1]
+        det = cross_Ns[0]*T_end[0] + cross_Ns[1]*T_end[1] + cross_Ns[2]*T_end[2]
+        dot = first_N[0]*last_N[0] + first_N[1]*last_N[1] + first_N[2]*last_N[2]
+        
+        total_twist = math.atan2(det, dot)
+        
+        # 4. Generate Final Twisted Frames & Vertices
+        for i in range(segments):
+            pos, T, N_transport, B_transport = parallel_frames[i]
+            
+            # Twist adjustment
+            # We want to distribute -total_twist over the length
+            theta = -(total_twist * (i / segments))
+            
+            cos_theta = math.cos(theta)
+            sin_theta = math.sin(theta)
+            
+            # Rotate N, B around T
+            # N_final = N cos + B sin
+            # B_final = -N sin + B cos
+            
+            N_final_x = N_transport[0]*cos_theta + B_transport[0]*sin_theta
+            N_final_y = N_transport[1]*cos_theta + B_transport[1]*sin_theta
+            N_final_z = N_transport[2]*cos_theta + B_transport[2]*sin_theta
+            N_final = (N_final_x, N_final_y, N_final_z)
+            
+            B_final_x = -N_transport[0]*sin_theta + B_transport[0]*cos_theta
+            B_final_y = -N_transport[1]*sin_theta + B_transport[1]*cos_theta
+            B_final_z = -N_transport[2]*sin_theta + B_transport[2]*cos_theta
+            B_final = (B_final_x, B_final_y, B_final_z)
+            
+            # Generate Tube Ring
             for j in range(radial_seg):
                 angle = (j / radial_seg) * 2 * math.pi
                 cos_a = math.cos(angle)
                 sin_a = math.sin(angle)
                 
-                # N is "x" in local frame, B is "y"
-                # offset = tube_r * (cos(a) * N + sin(a) * B)
-                
-                off_x = vec_scale(N, tube_r * cos_a)
-                off_y = vec_scale(B, tube_r * sin_a)
+                off_x = vec_scale(N_final, tube_r * cos_a)
+                off_y = vec_scale(B_final, tube_r * sin_a)
                 offset = vec_add(off_x, off_y)
                 
-                pos = vec_add(center, offset)
-                vertices.append(pos)
+                vertex = vec_add(pos, offset)
+                vertices.append(vertex)
                 
-        # Faces
+        # 5. Generate Faces
         for i in range(segments):
             next_i = (i + 1) % segments
             

@@ -26,7 +26,14 @@ The **Geometry Engine** is the **Weaver of Form**. It renders the sacred shapes,
 *   **The Purpose**: The numerological core for calculating Figurate Numbers ($P_n$) and Star Numbers.
 *   **Key Logic**:
     *   `generalized_star_number_points`: Uses vector ray-casting to determine points for any $P$-gram star ($P \ge 3$).
+    *   `generalized_star_number_points`: Uses vector ray-casting to determine points for any $P$-gram star ($P \ge 3$).
     *   `centered_polygonal_points`: Generates concentric rings.
+
+### **[shape_detection_service.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/geometry/services/shape_detection_service.py)**
+*   **Architectural Role**: Service (The Eye)
+*   **The Purpose**: Analyzes raw 2D points to identify geometric forms (Triangle, Square, Parallelogram).
+*   **Key Logic**:
+    *   `detect_from_points`: Counts vertices and checks side/angle relationships to return the most specific `GeometricShape` instance.
 
 ### **The Shape Library (2D)**
 A collection of specific shape calculators inheriting from **`[base_shape.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/geometry/services/base_shape.py)**.
@@ -35,6 +42,8 @@ A collection of specific shape calculators inheriting from **`[base_shape.py](fi
 *   **`[polygon_shape.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/geometry/services/polygon_shape.py)**: Regular $N$-gon logic.
 *   **`[square_shape.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/geometry/services/square_shape.py)**: Square logic.
 *   **`[triangle_shape.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/geometry/services/triangle_shape.py)**: Solvers for all triangle types (Equilateral, Isosceles, Scalene, Right).
+*   **`[vault_of_hestia_shape.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/geometry/services/vault_of_hestia_shape.py)**: The Phi-Generator (Square/Triangle/Circle construction).
+*   **`[seed_of_life_shape.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/geometry/services/seed_of_life_shape.py)**: The Genesis Pattern (7 Circles).
 *   **`[vesica_piscis_shape.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/geometry/services/vesica_piscis_shape.py)**: The Mother of Form.
 *   **And Others**: `annulus_shape`, `ellipse_shape`, `irregular_polygon_shape`, `quadrilateral_shape`, `rose_curve_shape`.
 
@@ -43,8 +52,10 @@ A collection of specific shape calculators inheriting from **`[base_shape.py](fi
 *   **Platonic Solids**: `tetrahedron_solid`, `cube_solid`, `octahedron_solid`, `dodecahedron_solid`, `icosahedron_solid`.
 *   **Archimedean**: `archimedean_solids`, `regular_prism_solids`, `regular_antiprism_solids`.
 *   **Pyramids**: `square_pyramid_solid`, `rectangular_pyramid_solid`, `step_pyramid_solid`, `golden_pyramid_solid`.
+*   **Pyramids**: `square_pyramid_solid`, `rectangular_pyramid_solid`, `step_pyramid_solid`, `golden_pyramid_solid`.
 *   **Prisms**: `rectangular_prism_solid`, `oblique_prism_solid`.
-*   **Exotic**: `tesseract_solid` (4D Hypercube).
+*   **Torus**: `torus_solid` (Donut), `torus_knot_solid` (Trefoil Knot loops).
+*   **Exotic**: `tesseract_solid` (4D Hypercube), `vault_of_hestia_solid` (Phi Generator).
 
 ## The Presentation Layer (UI)
 
