@@ -29,11 +29,9 @@ class TQGematriaCalculator(GematriaCalculator):
     - Esoteric letter symbolism
     
     Applications:
-    - English language numerology
-    - Modern Western Qabalah
-    - Chaos magick sigilization
-    - Finding numerical patterns in English text
-    - Personal name analysis
+    - **English Resonance**: Designed specifically to unlock the "phonetic spirit" of the English language, avoiding the arbitrary nature of mapping A=1, B=2 to a non-Semitic language.
+    - **Archetypal Filtering**: Using determining logic (Trigrams) to filter out "noise" and find words that truly resonate with specific archetypal energies.
+    - **Sigil Construction**: Providing a precise coordinate system for drawing Sigils on the Rose Cross or Kamea, which requires a non-linear alphabet.
     
     Example:
     LIGHT:
@@ -326,10 +324,9 @@ class TQPositionCalculator(GematriaCalculator):
     different energetic signatures.
     
     Applications:
-    - Advanced TQ analysis
-    - Word structure significance
-    - Finding positional patterns
-    - Magickal name construction
+    - **Vector Analysis**: Determining the "directionality" of a word's energy. Does it start strong and fade, or build up to a climax?
+    - **Differentiation of Anagrams**: Distinguishing between *EARTH* and *HEART* which would otherwise have identical values, acknowledging that *order* creates distinct reality.
+    - **Process Modeling**: Mapping the stages of a magical result to ensure the energy flows in the correct sequence (e.g., Will -> Action -> Result).
     
     Example:
     LIGHT:

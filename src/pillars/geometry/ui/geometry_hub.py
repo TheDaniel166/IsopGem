@@ -17,6 +17,8 @@ from .geometry_calculator_window import GeometryCalculatorWindow
 from .polygonal_number_window import PolygonalNumberWindow
 from .experimental_star_window import ExperimentalStarWindow
 from .figurate_3d_window import Figurate3DWindow
+from ..services.vault_of_hestia_shape import VaultOfHestiaShape
+from ..services.seed_of_life_shape import SeedOfLifeShape
 from ..services import (
     AnnulusShape,
     CircleShape,
@@ -42,6 +44,7 @@ from ..services import (
     ThirtySixtyNinetyTriangleShape,
     GoldenTriangleShape,
     TriangleSolverShape,
+    VaultOfHestiaShape,
     CyclicQuadrilateralShape,
     TangentialQuadrilateralShape,
     BicentricQuadrilateralShape,
@@ -96,6 +99,10 @@ from ..services import (
     HeptagonalPrismSolidCalculator,
     ObliquePrismSolidService,
     ObliquePrismSolidCalculator,
+    TorusSolidService,
+    TorusSolidCalculator,
+    TorusKnotSolidService,
+    TorusKnotSolidCalculator,
     PrismaticFrustumSolidService,
     PrismaticFrustumSolidCalculator,
     TriangularAntiprismSolidService,
@@ -247,6 +254,23 @@ CATEGORY_DEFINITIONS: List[dict] = [
                 'name': 'Triangle Solver (any sides/angles)',
                 'summary': 'General SAS/ASA/SSA/SSS solver with visualization',
                 'factory': TriangleSolverShape,
+            },
+        ],
+    ),
+    _category(
+        name="Sacred Geometry",
+        icon="☥",
+        tagline="Esoteric and mystical constructions",
+        shapes=[
+            {
+                'name': 'Vault of Hestia',
+                'summary': 'Square-Triangle-Circle generator of Phi',
+                'factory': VaultOfHestiaShape,
+            },
+            {
+                'name': 'Seed of Life',
+                'summary': 'Seven circles in hexagonal symmetry representing creation',
+                'factory': SeedOfLifeShape,
             },
         ],
     ),
@@ -824,6 +848,18 @@ CATEGORY_DEFINITIONS: List[dict] = [
                 'status': 'Coming Soon',
                 'factory': None,
             },
+            {
+                'name': 'Torus',
+                'summary': 'Donut shape with major/minor radii, surface, and volume',
+                'type': 'solid_viewer',
+                'solid_id': 'torus',
+            },
+            {
+                'name': 'Torus Knot',
+                'summary': '(p, q) Torus Knot tube with customizable windings.',
+                'type': 'solid_viewer',
+                'solid_id': 'torus_knot',
+            },
         ],
     ),
     _category(
@@ -1105,6 +1141,18 @@ SOLID_VIEWER_CONFIG: Dict[str, dict] = {
         'summary': 'Chiral pentagon-triangle solid completing the Archimedean family.',
         'builder': SnubDodecahedronSolidService.build,
         'calculator': SnubDodecahedronSolidCalculator,
+    },
+    'torus': {
+        'title': 'Torus',
+        'summary': 'Donut shape with major/minor radii, surface, and volume.',
+        'builder': TorusSolidService.build,
+        'calculator': TorusSolidCalculator,
+    },
+    'torus_knot': {
+        'title': 'Torus Knot',
+        'summary': '(p, q) Torus Knot tube with adjustable windings and radii.',
+        'builder': TorusKnotSolidService.build,
+        'calculator': TorusKnotSolidCalculator,
     },
 }
 

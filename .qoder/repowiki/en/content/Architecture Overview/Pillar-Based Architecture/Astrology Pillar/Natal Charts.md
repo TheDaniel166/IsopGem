@@ -16,14 +16,21 @@
 - [fixed_stars_service.py](file://src/pillars/astrology/services/fixed_stars_service.py)
 - [harmonics_service.py](file://src/pillars/astrology/services/harmonics_service.py)
 - [midpoints_service.py](file://src/pillars/astrology/services/midpoints_service.py)
+- [interpretation_widget.py](file://src/pillars/astrology/ui/interpretation_widget.py)
+- [interpretation_service.py](file://src/pillars/astrology/services/interpretation_service.py)
+- [maat_symbols_service.py](file://src/pillars/astrology/services/maat_symbols_service.py)
+- [interpretation_models.py](file://src/pillars/astrology/models/interpretation_models.py)
+- [interpretation_repository.py](file://src/pillars/astrology/repositories/interpretation_repository.py)
 </cite>
 
 ## Update Summary
 **Changes Made**   
-- Added documentation for the new Advanced tab and its five sub-tabs: Fixed Stars, Arabic Parts, Midpoints, Harmonics, and Aspects
-- Updated component analysis to include new services for Arabic Parts, aspects, fixed stars, harmonics, and midpoints
-- Added new sections for each of the advanced calculation services
+- Added documentation for the new Interpretation tab and its integration with InterpretationWidget and InterpretationService
+- Added documentation for the new Maat Symbols tab and its integration with MaatSymbolsService
+- Updated component analysis to include new services for chart interpretation and Egyptian degree symbols
+- Added new sections for InterpretationService and MaatSymbolsService
 - Updated the architecture overview and component analysis to reflect the new UI structure and service integrations
+- Added documentation for the interpretation data repository and models
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -37,7 +44,7 @@
 9. [Conclusion](#conclusion)
 
 ## Introduction
-The Natal Chart feature is a core component of the Astrology pillar in the IsopGem system, designed to generate and visualize birth charts based on user-provided birth data including date, time, and location. This documentation details the implementation of the natal chart functionality, focusing on the integration between the UI component `natal_chart_window.py`, the `openastro_service` for celestial calculations, and the `chart_storage_service` for persistence. The system handles data flow from input validation through ephemeris lookup to chart rendering, with support for aspect detection, house system configuration, and planetary placement interpretation. The feature integrates with the preferences system for default settings and uses timezone handling via location lookup to address common issues like daylight saving time discrepancies and geolocation accuracy. Recent updates have added an Advanced tab with five sub-tabs for specialized astrological calculations.
+The Natal Chart feature is a core component of the Astrology pillar in the IsopGem system, designed to generate and visualize birth charts based on user-provided birth data including date, time, and location. This documentation details the implementation of the natal chart functionality, focusing on the integration between the UI component `natal_chart_window.py`, the `openastro_service` for celestial calculations, and the `chart_storage_service` for persistence. The system handles data flow from input validation through ephemeris lookup to chart rendering, with support for aspect detection, house system configuration, and planetary placement interpretation. The feature integrates with the preferences system for default settings and uses timezone handling via location lookup to address common issues like daylight saving time discrepancies and geolocation accuracy. Recent updates have added an Interpretation tab with structured reports combining planet-in-sign, planet-in-house, and combinatorial triad data, and a Maat Symbols tab displaying Egyptian degree symbols for each planet's position with color-coded Heavens and symbolic text.
 
 ## Project Structure
 The Natal Chart feature is organized within the astrology pillar of the IsopGem project, following a modular architecture that separates concerns between UI, services, models, and repositories. The core components are located in the `src/pillars/astrology/` directory, with specific subdirectories for UI components, services, models, and repositories. The UI is implemented in the `ui/` subdirectory with `natal_chart_window.py` as the primary interface, while business logic is encapsulated in the `services/` directory with `openastro_service.py` and `chart_storage_service.py`. Data models are defined in `models/` and database interactions are handled by repositories in the `repositories/` directory. This structure enables clear separation of concerns and facilitates maintenance and extension of the feature.
@@ -47,29 +54,33 @@ graph TD
 subgraph "UI Layer"
 A[natal_chart_window.py]
 B[astrology_hub.py]
+C[interpretation_widget.py]
 end
 subgraph "Service Layer"
-C[openastro_service.py]
-D[chart_storage_service.py]
-E[location_lookup.py]
-F[arabic_parts_service.py]
-G[aspects_service.py]
-H[fixed_stars_service.py]
-I[harmonics_service.py]
-J[midpoints_service.py]
+D[openastro_service.py]
+E[chart_storage_service.py]
+F[location_lookup.py]
+G[arabic_parts_service.py]
+H[aspects_service.py]
+I[fixed_stars_service.py]
+J[harmonics_service.py]
+K[midpoints_service.py]
+L[interpretation_service.py]
+M[maat_symbols_service.py]
 end
 subgraph "Model Layer"
-K[chart_models.py]
-L[chart_record.py]
+N[chart_models.py]
+O[chart_record.py]
+P[interpretation_models.py]
 end
 subgraph "Repository Layer"
-M[chart_repository.py]
+Q[chart_repository.py]
+R[interpretation_repository.py]
 end
 subgraph "Utility Layer"
-N[preferences.py]
-O[conversions.py]
+S[preferences.py]
+T[conversions.py]
 end
-A --> C
 A --> D
 A --> E
 A --> F
@@ -77,12 +88,19 @@ A --> G
 A --> H
 A --> I
 A --> J
-A --> N
-C --> K
-D --> L
-D --> M
-C --> O
-D --> O
+A --> K
+A --> L
+A --> M
+A --> C
+C --> L
+L --> R
+D --> N
+E --> O
+E --> Q
+C --> P
+L --> P
+D --> T
+E --> T
 ```
 
 **Diagram sources**
@@ -94,9 +112,13 @@ D --> O
 - [fixed_stars_service.py](file://src/pillars/astrology/services/fixed_stars_service.py)
 - [harmonics_service.py](file://src/pillars/astrology/services/harmonics_service.py)
 - [midpoints_service.py](file://src/pillars/astrology/services/midpoints_service.py)
+- [interpretation_service.py](file://src/pillars/astrology/services/interpretation_service.py)
+- [maat_symbols_service.py](file://src/pillars/astrology/services/maat_symbols_service.py)
+- [interpretation_widget.py](file://src/pillars/astrology/ui/interpretation_widget.py)
 - [chart_models.py](file://src/pillars/astrology/models/chart_models.py)
 - [chart_record.py](file://src/pillars/astrology/models/chart_record.py)
 - [chart_repository.py](file://src/pillars/astrology/repositories/chart_repository.py)
+- [interpretation_repository.py](file://src/pillars/astrology/repositories/interpretation_repository.py)
 - [preferences.py](file://src/pillars/astrology/utils/preferences.py)
 - [conversions.py](file://src/pillars/astrology/utils/conversions.py)
 
@@ -109,14 +131,18 @@ D --> O
 - [fixed_stars_service.py](file://src/pillars/astrology/services/fixed_stars_service.py)
 - [harmonics_service.py](file://src/pillars/astrology/services/harmonics_service.py)
 - [midpoints_service.py](file://src/pillars/astrology/services/midpoints_service.py)
+- [interpretation_service.py](file://src/pillars/astrology/services/interpretation_service.py)
+- [maat_symbols_service.py](file://src/pillars/astrology/services/maat_symbols_service.py)
+- [interpretation_widget.py](file://src/pillars/astrology/ui/interpretation_widget.py)
 - [chart_models.py](file://src/pillars/astrology/models/chart_models.py)
 - [chart_record.py](file://src/pillars/astrology/models/chart_record.py)
 - [chart_repository.py](file://src/pillars/astrology/repositories/chart_repository.py)
+- [interpretation_repository.py](file://src/pillars/astrology/repositories/interpretation_repository.py)
 - [preferences.py](file://src/pillars/astrology/utils/preferences.py)
 - [conversions.py](file://src/pillars/astrology/utils/conversions.py)
 
 ## Core Components
-The Natal Chart feature consists of several core components that work together to provide a complete birth chart generation and visualization system. The primary UI component is `natal_chart_window.py`, which provides a comprehensive interface for users to input birth data and view chart results. This component integrates with `openastro_service.py` to perform celestial calculations using the OpenAstro2 library, and with `chart_storage_service.py` to persist charts in the database. The system uses data models defined in `chart_models.py` to represent chart data in memory and `chart_record.py` to define the database schema for persistent storage. Utility components like `preferences.py` and `location_lookup.py` provide additional functionality for managing user preferences and geolocation data. Recent updates have added five new services for advanced astrological calculations: `arabic_parts_service.py`, `aspects_service.py`, `fixed_stars_service.py`, `harmonics_service.py`, and `midpoints_service.py`.
+The Natal Chart feature consists of several core components that work together to provide a complete birth chart generation and visualization system. The primary UI component is `natal_chart_window.py`, which provides a comprehensive interface for users to input birth data and view chart results. This component integrates with `openastro_service.py` to perform celestial calculations using the OpenAstro2 library, and with `chart_storage_service.py` to persist charts in the database. The system uses data models defined in `chart_models.py` to represent chart data in memory and `chart_record.py` to define the database schema for persistent storage. Utility components like `preferences.py` and `location_lookup.py` provide additional functionality for managing user preferences and geolocation data. Recent updates have added new services for advanced astrological calculations: `arabic_parts_service.py`, `aspects_service.py`, `fixed_stars_service.py`, `harmonics_service.py`, `midpoints_service.py`, `interpretation_service.py`, and `maat_symbols_service.py`. The new `interpretation_widget.py` provides a UI for displaying structured interpretation reports, while the `interpretation_repository.py` manages access to interpretation texts stored in JSON files.
 
 **Section sources**
 - [natal_chart_window.py](file://src/pillars/astrology/ui/natal_chart_window.py)
@@ -127,13 +153,17 @@ The Natal Chart feature consists of several core components that work together t
 - [fixed_stars_service.py](file://src/pillars/astrology/services/fixed_stars_service.py)
 - [harmonics_service.py](file://src/pillars/astrology/services/harmonics_service.py)
 - [midpoints_service.py](file://src/pillars/astrology/services/midpoints_service.py)
+- [interpretation_service.py](file://src/pillars/astrology/services/interpretation_service.py)
+- [maat_symbols_service.py](file://src/pillars/astrology/services/maat_symbols_service.py)
+- [interpretation_widget.py](file://src/pillars/astrology/ui/interpretation_widget.py)
 - [chart_models.py](file://src/pillars/astrology/models/chart_models.py)
 - [chart_record.py](file://src/pillars/astrology/models/chart_record.py)
 - [preferences.py](file://src/pillars/astrology/utils/preferences.py)
 - [location_lookup.py](file://src/pillars/astrology/services/location_lookup.py)
+- [interpretation_repository.py](file://src/pillars/astrology/repositories/interpretation_repository.py)
 
 ## Architecture Overview
-The Natal Chart feature follows a layered architecture with clear separation between presentation, business logic, and data access layers. The UI layer handles user interaction and display, the service layer orchestrates business logic and external integrations, and the data layer manages persistence. This architecture enables the system to handle the complex data flow required for natal chart generation, from input validation through ephemeris lookup to chart rendering. The system integrates with external services like OpenAstro2 for celestial calculations and Open-Meteo for geolocation lookup, while providing a robust persistence mechanism for storing and retrieving charts. The recent addition of the Advanced tab with five sub-tabs has expanded the service layer to include specialized calculation services for Arabic Parts, aspects, fixed stars, harmonics, and midpoints.
+The Natal Chart feature follows a layered architecture with clear separation between presentation, business logic, and data access layers. The UI layer handles user interaction and display, the service layer orchestrates business logic and external integrations, and the data layer manages persistence. This architecture enables the system to handle the complex data flow required for natal chart generation, from input validation through ephemeris lookup to chart rendering. The system integrates with external services like OpenAstro2 for celestial calculations and Open-Meteo for geolocation lookup, while providing a robust persistence mechanism for storing and retrieving charts. The recent addition of the Interpretation and Maat Symbols tabs has expanded the service layer to include specialized services for generating structured reports and displaying Egyptian degree symbols.
 
 ```mermaid
 graph TD
@@ -158,12 +188,14 @@ B --> |Render| A
 - [fixed_stars_service.py](file://src/pillars/astrology/services/fixed_stars_service.py)
 - [harmonics_service.py](file://src/pillars/astrology/services/harmonics_service.py)
 - [midpoints_service.py](file://src/pillars/astrology/services/midpoints_service.py)
+- [interpretation_service.py](file://src/pillars/astrology/services/interpretation_service.py)
+- [maat_symbols_service.py](file://src/pillars/astrology/services/maat_symbols_service.py)
 - [chart_repository.py](file://src/pillars/astrology/repositories/chart_repository.py)
 
 ## Detailed Component Analysis
 
 ### Natal Chart Window Analysis
-The `natal_chart_window.py` file implements the primary UI for creating natal charts within the astrology pillar. It provides a comprehensive interface with tabs for configuration and results, allowing users to input birth data including name, date, time, location, and preferences. The window integrates with multiple services to provide location lookup, chart generation, and persistence functionality. It handles user interactions through a series of methods that validate input, generate charts, and manage the display of results. The component also provides functionality for saving and loading charts, viewing SVG visualizations, and managing default locations. The recent update has added an Advanced tab with five sub-tabs: Fixed Stars, Arabic Parts, Midpoints, Harmonics, and Aspects, each providing specialized astrological calculations.
+The `natal_chart_window.py` file implements the primary UI for creating natal charts within the astrology pillar. It provides a comprehensive interface with tabs for configuration and results, allowing users to input birth data including name, date, time, location, and preferences. The window integrates with multiple services to provide location lookup, chart generation, and persistence functionality. It handles user interactions through a series of methods that validate input, generate charts, and manage the display of results. The component also provides functionality for saving and loading charts, viewing SVG visualizations, and managing default locations. The recent update has added two new tabs: an Interpretation tab with `InterpretationWidget` for generating structured reports combining planet-in-sign, planet-in-house, and combinatorial triad data, and a Maat Symbols tab for displaying Egyptian degree symbols for each planet's position with color-coded Heavens and symbolic text.
 
 ```mermaid
 classDiagram
@@ -181,6 +213,9 @@ class NatalChartWindow {
 -_midpoints_service : MidpointsService
 -_harmonics_service : HarmonicsService
 -_aspects_service : AspectsService
+-_maat_service : MaatSymbolsService
+-_interpretation_service : InterpretationService
+-_interpretation_widget : InterpretationWidget
 -_last_request : Optional[ChartRequest]
 -_last_result : Optional[ChartResult]
 -_preferences : AstrologyPreferences
@@ -239,6 +274,9 @@ NatalChartWindow --> ArabicPartsService : "uses"
 NatalChartWindow --> MidpointsService : "uses"
 NatalChartWindow --> HarmonicsService : "uses"
 NatalChartWindow --> AspectsService : "uses"
+NatalChartWindow --> MaatSymbolsService : "uses"
+NatalChartWindow --> InterpretationService : "uses"
+NatalChartWindow --> InterpretationWidget : "uses"
 ```
 
 **Diagram sources**
@@ -253,6 +291,9 @@ NatalChartWindow --> AspectsService : "uses"
 - [fixed_stars_service.py](file://src/pillars/astrology/services/fixed_stars_service.py)
 - [harmonics_service.py](file://src/pillars/astrology/services/harmonics_service.py)
 - [midpoints_service.py](file://src/pillars/astrology/services/midpoints_service.py)
+- [maat_symbols_service.py](file://src/pillars/astrology/services/maat_symbols_service.py)
+- [interpretation_service.py](file://src/pillars/astrology/services/interpretation_service.py)
+- [interpretation_widget.py](file://src/pillars/astrology/ui/interpretation_widget.py)
 
 **Section sources**
 - [natal_chart_window.py](file://src/pillars/astrology/ui/natal_chart_window.py)
@@ -666,8 +707,222 @@ MidpointsService --> Midpoint : "creates"
 **Section sources**
 - [midpoints_service.py](file://src/pillars/astrology/services/midpoints_service.py)
 
+### Interpretation Service Analysis
+The `interpretation_service.py` file implements a service for generating structured chart interpretation reports by combining planet-in-sign, planet-in-house, and combinatorial triad data. The service orchestrates the generation of interpretation reports by first attempting to find combinatorial interpretations (triads) that combine planet, sign, and house placement. If no triad is found, it falls back to planet-in-sign interpretations, and if those are unavailable, to planet-in-house interpretations. The service uses the `InterpretationRepository` to access interpretation texts stored in JSON files and returns a structured `InterpretationReport` containing multiple interpretation segments with titles, content, and tags.
+
+```mermaid
+classDiagram
+class InterpretationService {
++__init__(repository : Optional[InterpretationRepository])
++interpret_chart(chart : ChartResult, chart_name : str) InterpretationReport
++_interpret_planets(planets : List[PlanetPosition], houses : List[HousePosition], report : InterpretationReport) void
++_resolve_house(planet_degree : float, houses : List[HousePosition]) int
++_is_between(target : float, start : float, end : float) bool
+}
+InterpretationService --> InterpretationReport : "creates"
+InterpretationService --> InterpretationRepository : "uses"
+```
+
+**Diagram sources**
+- [interpretation_service.py](file://src/pillars/astrology/services/interpretation_service.py)
+- [interpretation_repository.py](file://src/pillars/astrology/repositories/interpretation_repository.py)
+- [interpretation_models.py](file://src/pillars/astrology/models/interpretation_models.py)
+
+**Section sources**
+- [interpretation_service.py](file://src/pillars/astrology/services/interpretation_service.py)
+
+### Interpretation Widget Analysis
+The `interpretation_widget.py` file implements a UI component for displaying generated chart interpretation reports. The widget provides a clean interface with a header label and a read-only text view that displays the interpretation report in Markdown format. The text view is styled with custom colors from the application theme and includes a placeholder text when no report is available. The widget's `display_report` method takes an `InterpretationReport` object and renders it as Markdown in the text view, with the chart name displayed in the header.
+
+```mermaid
+classDiagram
+class InterpretationWidget {
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_init_ui() void
+-_......
+```
+
+**Diagram sources**
+- [interpretation_widget.py](file://src/pillars/astrology/ui/interpretation_widget.py)
+- [interpretation_models.py](file://src/pillars/astrology/models/interpretation_models.py)
+
+**Section sources**
+- [interpretation_widget.py](file://src/pillars/astrology/ui/interpretation_widget.py)
+
+### Maat Symbols Service Analysis
+The `maat_symbols_service.py` file implements a service for looking up Egyptian degree symbols for each planet's position. The service divides the zodiac into seven Heavens, each with a specific range of degrees and symbolic meaning. For each degree (0-359), the service provides a unique symbolic description based on ancient Egyptian cosmology. The service maintains a comprehensive database of 360 symbols, one for each degree of the zodiac, with color-coded Heavens and symbolic text. The service can return symbols for individual longitudes or for a dictionary of planet positions, making it easy to display the symbolic meaning of each planet's placement in the chart.
+
+```mermaid
+classDiagram
+class MaatSymbol {
++degree : int
++sign : str
++sign_degree : int
++heaven : int
++heaven_name : str
++text : str
+}
+class MaatSymbolsService {
++__init__()
++_load_symbols() void
++get_symbol(longitude : float) MaatSymbol
++get_symbols_for_positions(positions : Dict[str, float]) List[tuple[str, MaatSymbol]]
+}
+MaatSymbolsService --> MaatSymbol : "creates"
+```
+
+**Diagram sources**
+- [maat_symbols_service.py](file://src/pillars/astrology/services/maat_symbols_service.py)
+
+**Section sources**
+- [maat_symbols_service.py](file://src/pillars/astrology/services/maat_symbols_service.py)
+
+### Interpretation Models Analysis
+The `interpretation_models.py` file defines the data models used for chart interpretation reports. The models use Python dataclasses to structure interpretation content with rich fields including archetype, essence, shadow, gift, and alchemical process. The `InterpretationReport` class contains multiple `InterpretationSegment` objects, each representing a specific interpretation of a planet's placement. The models support hierarchical interpretation with combinatorial triads (planet-sign-house) taking precedence over individual planet-sign or planet-house interpretations. The `to_markdown` method allows reports to be rendered in a formatted text format suitable for display in the UI.
+
+```mermaid
+classDiagram
+class RichInterpretationContent {
++text : str
++archetype : Optional[str]
++essence : Optional[str]
++shadow : Optional[str]
++gift : Optional[str]
++alchemical_process : Optional[str]
++keywords : List[str]
+}
+class InterpretationSegment {
++title : str
++content : RichInterpretationContent
++tags : List[str]
++weight : float
+}
+class InterpretationReport {
++chart_name : str
++segments : List[InterpretationSegment]
++add_segment(title : str, content : RichInterpretationContent | str, tags : Optional[List[str]], weight : float) void
++to_markdown() str
+}
+InterpretationReport --> InterpretationSegment : "contains"
+InterpretationSegment --> RichInterpretationContent : "contains"
+```
+
+**Diagram sources**
+- [interpretation_models.py](file://src/pillars/astrology/models/interpretation_models.py)
+
+**Section sources**
+- [interpretation_models.py](file://src/pillars/astrology/models/interpretation_models.py)
+
+### Interpretation Repository Analysis
+The `interpretation_repository.py` file implements a repository for accessing interpretation texts stored in JSON files. The repository manages access to four data files: `planets_in_signs.json`, `planets_in_houses.json`, `combinatorial.json`, and `aspects.json`. The repository uses caching to improve performance when accessing frequently used interpretation texts. It provides methods to retrieve interpretation content for specific planetary combinations, with a fallback hierarchy that prioritizes combinatorial triads (planet-sign-house) over individual planet-sign or planet-house interpretations. The repository parses raw JSON data into `RichInterpretationContent` objects, handling both simple text strings and structured objects with archetype, essence, shadow, and other fields.
+
+```mermaid
+classDiagram
+class InterpretationRepository {
++__init__(data_dir : Optional[Path])
++_ensure_data_dir() void
++_load_json(filename : str) Dict[str, Any]
++_parse_content(raw : Any) Optional[RichInterpretationContent]
++get_planet_sign_text(planet : str, sign : str) Optional[RichInterpretationContent]
++get_planet_house_text(planet : str, house : int) Optional[RichInterpretationContent]
++get_planet_sign_house_text(planet : str, sign : str, house : int) Optional[RichInterpretationContent]
++get_aspect_text(planet_a : str, planet_b : str, aspect_name : str) Optional[RichInterpretationContent]
+}
+InterpretationRepository --> RichInterpretationContent : "returns"
+```
+
+**Diagram sources**
+- [interpretation_repository.py](file://src/pillars/astrology/repositories/interpretation_repository.py)
+- [interpretation_models.py](file://src/pillars/astrology/models/interpretation_models.py)
+
+**Section sources**
+- [interpretation_repository.py](file://src/pillars/astrology/repositories/interpretation_repository.py)
+
 ## Dependency Analysis
-The Natal Chart feature has a well-defined dependency structure that follows the dependency inversion principle, with higher-level modules depending on abstractions rather than concrete implementations. The UI component `natal_chart_window.py` depends on service interfaces rather than directly on external libraries, allowing for easier testing and maintenance. The service layer depends on data models and external APIs, while the data layer depends on the database schema and ORM. This structure enables the system to be modular and extensible, with clear boundaries between components. The addition of the Advanced tab has introduced new dependencies on specialized calculation services for Arabic Parts, aspects, fixed stars, harmonics, and midpoints.
+The Natal Chart feature has a well-defined dependency structure that follows the dependency inversion principle, with higher-level modules depending on abstractions rather than concrete implementations. The UI component `natal_chart_window.py` depends on service interfaces rather than directly on external libraries, allowing for easier testing and maintenance. The service layer depends on data models and external APIs, while the data layer depends on the database schema and ORM. This structure enables the system to be modular and extensible, with clear boundaries between components. The addition of the Interpretation and Maat Symbols tabs has introduced new dependencies on specialized services for generating structured reports and displaying Egyptian degree symbols.
 
 ```mermaid
 graph TD
@@ -680,19 +935,28 @@ A --> G[aspects_service.py]
 A --> H[fixed_stars_service.py]
 A --> I[harmonics_service.py]
 A --> J[midpoints_service.py]
-B --> K[chart_models.py]
-C --> L[chart_record.py]
-C --> M[chart_repository.py]
-D --> N[requests]
-E --> O[json]
-F --> P[dataclasses]
-G --> Q[dataclasses]
-H --> R[swisseph]
-I --> S[dataclasses]
-J --> T[dataclasses]
-K --> U[dataclasses]
-L --> V[SQLAlchemy]
-M --> W[SQLAlchemy]
+A --> K[interpretation_service.py]
+A --> L[maat_symbols_service.py]
+A --> M[interpretation_widget.py]
+B --> N[chart_models.py]
+C --> O[chart_record.py]
+C --> P[chart_repository.py]
+K --> Q[interpretation_repository.py]
+K --> R[interpretation_models.py]
+M --> R
+D --> S[requests]
+E --> T[json]
+F --> U[dataclasses]
+G --> V[dataclasses]
+H --> W[swisseph]
+I --> X[dataclasses]
+J --> Y[dataclasses]
+K --> Z[dataclasses]
+L --> AA[dataclasses]
+N --> AB[dataclasses]
+O --> AC[SQLAlchemy]
+P --> AD[SQLAlchemy]
+Q --> AE[json]
 ```
 
 **Diagram sources**
@@ -706,15 +970,20 @@ M --> W[SQLAlchemy]
 - [fixed_stars_service.py](file://src/pillars/astrology/services/fixed_stars_service.py)
 - [harmonics_service.py](file://src/pillars/astrology/services/harmonics_service.py)
 - [midpoints_service.py](file://src/pillars/astrology/services/midpoints_service.py)
+- [interpretation_service.py](file://src/pillars/astrology/services/interpretation_service.py)
+- [maat_symbols_service.py](file://src/pillars/astrology/services/maat_symbols_service.py)
+- [interpretation_widget.py](file://src/pillars/astrology/ui/interpretation_widget.py)
 - [chart_models.py](file://src/pillars/astrology/models/chart_models.py)
 - [chart_record.py](file://src/pillars/astrology/models/chart_record.py)
 - [chart_repository.py](file://src/pillars/astrology/repositories/chart_repository.py)
+- [interpretation_repository.py](file://src/pillars/astrology/repositories/interpretation_repository.py)
+- [interpretation_models.py](file://src/pillars/astrology/models/interpretation_models.py)
 
 ## Performance Considerations
-The Natal Chart feature is designed with performance in mind, minimizing unnecessary computations and optimizing data access patterns. The system uses efficient data structures and algorithms for handling chart data, with dataclasses providing fast attribute access and JSON serialization for persistence. The service layer caches frequently accessed data, such as house system labels, to reduce redundant computations. Database queries are optimized with appropriate indexing and query patterns, with recent charts loaded in descending order of event timestamp. Network requests are handled asynchronously where possible, with timeouts and error handling to prevent UI blocking. The system also includes mechanisms for cleaning up temporary files, such as SVG files created for browser viewing, to prevent disk space issues. The addition of advanced calculation services may impact performance, particularly for fixed stars which require external ephemeris data, so these calculations are performed only when the Advanced tab is accessed.
+The Natal Chart feature is designed with performance in mind, minimizing unnecessary computations and optimizing data access patterns. The system uses efficient data structures and algorithms for handling chart data, with dataclasses providing fast attribute access and JSON serialization for persistence. The service layer caches frequently accessed data, such as house system labels, to reduce redundant computations. Database queries are optimized with appropriate indexing and query patterns, with recent charts loaded in descending order of event timestamp. Network requests are handled asynchronously where possible, with timeouts and error handling to prevent UI blocking. The system also includes mechanisms for cleaning up temporary files, such as SVG files created for browser viewing, to prevent disk space issues. The addition of interpretation and Maat symbols services may impact performance, particularly for large charts with many planets, so these calculations are performed only when the respective tabs are accessed or when explicitly requested by the user.
 
 ## Troubleshooting Guide
-Common issues with the Natal Chart feature typically relate to external dependencies, configuration, or data input. If OpenAstro2 is not available, the system will display an error message indicating that the library needs to be installed. Geolocation lookup issues may occur if the Open-Meteo API is unreachable or returns no results, which can be addressed by checking network connectivity or trying alternative search terms. Timezone discrepancies can occur due to daylight saving time rules or incorrect location input, which can be mitigated by using the location lookup service to automatically detect timezone information. Database issues may arise from file permissions or schema mismatches, which can be resolved by checking the database file location and running any necessary migration scripts. Users experiencing issues with chart generation should verify their input data, particularly the date, time, and location, and ensure that the OpenAstro2 library is properly installed and configured. For the new Advanced tab features, users should ensure that the Swiss Ephemeris data is properly configured for fixed stars calculations, and that sufficient system resources are available for the additional calculations.
+Common issues with the Natal Chart feature typically relate to external dependencies, configuration, or data input. If OpenAstro2 is not available, the system will display an error message indicating that the library needs to be installed. Geolocation lookup issues may occur if the Open-Meteo API is unreachable or returns no results, which can be addressed by checking network connectivity or trying alternative search terms. Timezone discrepancies can occur due to daylight saving time rules or incorrect location input, which can be mitigated by using the location lookup service to automatically detect timezone information. Database issues may arise from file permissions or schema mismatches, which can be resolved by checking the database file location and running any necessary migration scripts. Users experiencing issues with chart generation should verify their input data, particularly the date, time, and location, and ensure that the OpenAstro2 library is properly installed and configured. For the new Interpretation tab features, users should ensure that the interpretation data files (`planets_in_signs.json`, `planets_in_houses.json`, `combinatorial.json`) are present in the correct directory and properly formatted. For the Maat Symbols tab, users should verify that the `MAAT_SYMBOLS_DATA` in `maat_symbols_service.py` contains all 360 degree symbols.
 
 **Section sources**
 - [natal_chart_window.py](file://src/pillars/astrology/ui/natal_chart_window.py)
@@ -726,6 +995,8 @@ Common issues with the Natal Chart feature typically relate to external dependen
 - [fixed_stars_service.py](file://src/pillars/astrology/services/fixed_stars_service.py)
 - [harmonics_service.py](file://src/pillars/astrology/services/harmonics_service.py)
 - [midpoints_service.py](file://src/pillars/astrology/services/midpoints_service.py)
+- [interpretation_service.py](file://src/pillars/astrology/services/interpretation_service.py)
+- [maat_symbols_service.py](file://src/pillars/astrology/services/maat_symbols_service.py)
 
 ## Conclusion
-The Natal Chart feature provides a comprehensive system for generating and visualizing birth charts based on user-provided birth data. The implementation follows a clean, modular architecture with clear separation of concerns between UI, services, models, and data access layers. The system integrates with external services for celestial calculations and geolocation lookup, while providing robust persistence for chart data. The recent addition of the Advanced tab with five sub-tabs for Fixed Stars, Arabic Parts, Midpoints, Harmonics, and Aspects has significantly expanded the analytical capabilities of the feature, integrating new services for specialized astrological calculations. While the current implementation does not show direct integration with gematria values and TQ systems for cross-pillar analysis, the architecture is extensible and could support such integrations in the future through additional service components or data model extensions.
+The Natal Chart feature provides a comprehensive system for generating and visualizing birth charts based on user-provided birth data. The implementation follows a clean, modular architecture with clear separation of concerns between UI, services, models, and data access layers. The system integrates with external services for celestial calculations and geolocation lookup, while providing robust persistence for chart data. The recent addition of the Interpretation tab with structured reports combining planet-in-sign, planet-in-house, and combinatorial triad data, and the Maat Symbols tab displaying Egyptian degree symbols for each planet's position with color-coded Heavens and symbolic text, has significantly expanded the analytical capabilities of the feature. The architecture is extensible and could support future integrations with gematria values and TQ systems for cross-pillar analysis through additional service components or data model extensions.

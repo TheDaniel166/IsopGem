@@ -20,10 +20,9 @@ class HebrewGematriaCalculator(GematriaCalculator):
     the foundation of Kabbalah and appears in the Talmud and Midrash.
     
     Applications:
-    - Finding numerical relationships between Hebrew words
-    - Discovering hidden meanings in Torah text
-    - Kabbalistic meditation and spiritual practice
-    - Comparing words with equivalent values (gematria equivalents)
+    - **Semantic Equivalence (Gezera Shava)**: Identifying words that share the same "soul" or essence despite different meanings (e.g., *Mashiach* (Messiah) and *Nachash* (Snake) both = 358, implying the redemption of the primal fall).
+    - **Commentary Decoding**: Unlocking specific interpretations in Midrash where rabbis link verses based solely on numerical equality.
+    - **Theological Validation**: Confirming the mystical legitimacy of a concept by finding its numerical "root" in Torah.
     
     Example:
     יהוה (YHWH, the Tetragrammaton):
@@ -111,10 +110,9 @@ class HebrewSofitCalculator(GematriaCalculator):
     reveal deeper layers of meaning that standard gematria doesn't show.
     
     Applications:
-    - Advanced Kabbalistic calculations
-    - Revealing hidden numerical relationships in final letters
-    - Comparing words with different final letter compositions
-    - Finding connections between words ending in sofit letters
+    - **Eschatological Analysis**: Exploring concepts related to the "End of Days" or the final state of the Soul, as final letters represent the ultimate manifestation.
+    - **Grounding Energy**: Distinguishing between an energy in transit vs. an energy that has fully precipitated into reality (Sofit values).
+    - **Expansion of Scope**: Allowing for calculations of much larger cosmic cycles (e.g., the year 5784) without reducing to smaller units.
     
     Example:
     מלך (Melech, "king"):
@@ -283,10 +281,9 @@ class HebrewOrdinalCalculator(GematriaCalculator):
     often revealing patterns related to the structural essence of words.
     
     Applications:
-    - Simplified gematria calculations
-    - Finding ordinal relationships between words
-    - Reducing large numerical values for easier pattern recognition
-    - Comparing words based on their alphabetical structure
+    - **Structural Blueprints**: Analyzing the "skeleton" of a word (its place in the alphabet) vs. its "flesh" (cosmic value).
+    - **Inter-Language Comparison**: Offering a standardized baseline to compare Hebrew words with English/Greek words purely by alphabetic slot (1st letter = 1).
+    - **Sequence Analysis**: Understanding the logical progression of concepts (e.g., why *Aleph* comes before *Bet*).
     
     Example:
     יהוה (YHWH):
@@ -550,10 +547,9 @@ class HebrewKolelCalculator(GematriaCalculator):
     particularly significant in finding matches between related concepts.
     
     Applications:
-    - Finding numerical equivalences that standard gematria misses
-    - Emphasizing the importance of word structure
-    - Discovering relationships between words of different lengths
-    - Kabbalistic meditation on wholeness and unity
+    - **Bridging the Gap**: Connecting two concepts that are *almost* identical (off by 1), showing that they are essentially the same but separated by a thin veil (the *Kolel*).
+    - **Inclusive Unity**: representing the "Whole" that contains the parts. Used when a word implies a group or a system.
+    - **Correction of Deviation**: Accounting for slight transmission errors or "fuzziness" in the material manifestation of a spiritual concept.
     
     Example:
     תורה ("Torah"):

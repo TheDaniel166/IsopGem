@@ -31,6 +31,7 @@ from .triangle_shape import (
     GoldenTriangleShape,
     TriangleSolverShape,
 )
+from .vault_of_hestia_shape import VaultOfHestiaShape
 from .polygon_shape import RegularPolygonShape
 from .vesica_piscis_shape import VesicaPiscisShape
 from .polygonal_numbers import (
@@ -138,6 +139,8 @@ from .archimedean_solids import (
     SnubDodecahedronSolidService,
     SnubDodecahedronSolidCalculator,
 )
+from .torus_solid import TorusSolidService, TorusSolidCalculator
+from .torus_knot_solid import TorusKnotSolidService, TorusKnotSolidCalculator
 
 __all__ = [
     'GeometricShape',
@@ -181,6 +184,7 @@ __all__ = [
     "star_number_points",
     "max_radius",
     'RoseCurveShape',
+    'VaultOfHestiaShape',
     'VesicaPiscisShape',
     'TetrahedronSolidService',
     'TetrahedronSolidCalculator',
@@ -276,5 +280,9 @@ __all__ = [
     'SnubCubeSolidCalculator',
     'SnubDodecahedronSolidService',
     'SnubDodecahedronSolidCalculator',
+    'TorusSolidService',
+    'TorusSolidCalculator',
+    'TorusKnotSolidService',
+    'TorusKnotSolidCalculator',
 ]
 

@@ -310,18 +310,21 @@ def _parse_single_primitive(spec: Dict) -> Optional[Primitive]:
         return LinePrimitive(start=start, end=end, pen=pen)
         
     elif type_ == "polyline":
-        # Polyline is just a list of lines for now, not a single primitive type in our setup
-        # But we need to return a single primitive?
-        # Actually _custom_primitives expected a list return.
-        # But here we are parsing recursive.
-        # Refactor: recursive parser returns Single primitive.
-        # If spec describes multiple (polyline), we might need CompositePrimitive?
-        # For now, let's just return None for polyline here and handle it in caller if needed,
-        # OR better: convert polyline to multiple lines?
-        # But _parse_single_primitive returns Optional[Primitive].
-        # We can make it return List[Primitive] but that complicates recursion.
-        # Let's say Polyline is not supported in Boolean ops for now.
-        pass
+        points = [tuple(point) for point in spec.get("points", [])]
+        if not points:
+            return None
+        
+        pen = _decode_pen(spec.get("pen"))
+        
+        # Default to no brush for polyline unless specified
+        brush_config = spec.get("brush")
+        if brush_config:
+            brush = _decode_brush(brush_config)
+        else:
+            brush = BrushStyle(enabled=False)
+            
+        closed = bool(spec.get("closed", False))
+        return PolygonPrimitive(points=points, pen=pen, brush=brush, closed=closed)
         
     return None
 

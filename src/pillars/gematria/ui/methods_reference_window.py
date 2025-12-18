@@ -173,16 +173,147 @@ class MethodsReferenceWindow(QMainWindow):
         if not calc:
             self.detail_text.clear()
             return
+            
+        # Determine theme based on language
+        theme = self._get_theme_for_calc(name)
+        
+        # Build HTML content
+        html_parts = []
+        
+        # 1. Title
+        html_parts.append(f"<h2 style='color: {theme['dark']}; margin-bottom: 5px;'>{name}</h2>")
+        
+        # 2. Docstring (formatted)
         doc = calc.__class__.__doc__ or "No description available."
-        # Build detail text
-        lines = [f"Name: {name}", "", doc.strip(), "", "Example:"]
+        formatted_doc = self._format_docstring_html(doc, theme)
+        html_parts.append(formatted_doc)
+        
+        # 3. Visual Cipher Chart
+        # Only if we have values
+        mapping = getattr(calc, "_letter_values", {})
+        if mapping:
+            chart_html = self._generate_cipher_chart_html(mapping, theme)
+            html_parts.append(f"<h3 style='color: {theme['medium']}; margin-top: 20px;'>Cipher Chart</h3>")
+            html_parts.append(chart_html)
+            
+        # 4. Example
+        html_parts.append(f"<h3 style='color: {theme['medium']}; margin-top: 20px;'>Example</h3>")
         sample_word = self.example_input.text().strip() or self._default_sample_for(calc)
         try:
             value = calc.calculate(sample_word)
-            lines.append(f"  {sample_word} = {value}")
+            # Make the value pop
+            html_parts.append(
+                f"<div style='background-color: {theme['light']}; padding: 10px; border-radius: 6px; border-left: 4px solid {theme['accent']};'>"
+                f"<span style='font-size: 14pt;'>{sample_word} = <b>{value}</b></span>"
+                f"</div>"
+            )
         except Exception:
-            lines.append("  (Failed to calculate example)")
-        self.detail_text.setPlainText("\n".join(lines))
+            html_parts.append("<p>(Failed to calculate example)</p>")
+
+        self.detail_text.setHtml("".join(html_parts))
+
+    def _get_theme_for_calc(self, name: str) -> Dict[str, str]:
+        """Return color palette for the calculator language."""
+        if "Hebrew" in name:
+            return {
+                "light": "#e0f2fe",   # Sky 100
+                "medium": "#0284c7",  # Sky 600
+                "dark": "#0c4a6e",    # Sky 900
+                "accent": "#0ea5e9",  # Sky 500
+                "border": "#bae6fd"   # Sky 200
+            }
+        elif "Greek" in name:
+            return {
+                "light": "#ccfbf1",   # Teal 100
+                "medium": "#0d9488",  # Teal 600
+                "dark": "#115e59",    # Teal 800
+                "accent": "#14b8a6",  # Teal 500
+                "border": "#99f6e4"   # Teal 200
+            }
+        else: # TQ / English
+            return {
+                "light": "#f3e8ff",   # Purple 100
+                "medium": "#9333ea",  # Purple 600
+                "dark": "#581c87",    # Purple 900
+                "accent": "#a855f7",  # Purple 500
+                "border": "#e9d5ff"   # Purple 200
+            }
+
+    def _format_docstring_html(self, doc: str, theme: Dict[str, str]) -> str:
+        """Convert standard docstring format to styled HTML."""
+        lines = []
+        # Basic parsing: treating lines ending in ':' as headers
+        # and first line as summary
+        
+        raw_lines = doc.strip().split('\n')
+        
+        # Summary (first paragraph)
+        lines.append(f"<p style='font-size: 11pt; color: #334155;'><b>{raw_lines[0]}</b></p>")
+        
+        in_list = False
+        
+        for line in raw_lines[1:]:
+            line = line.strip()
+            if not line:
+                if in_list:
+                    lines.append("</ul>")
+                    in_list = False
+                continue
+                
+            if line.endswith(':'):
+                # Header
+                if in_list:
+                    lines.append("</ul>")
+                    in_list = False
+                lines.append(f"<h4 style='color: {theme['medium']}; margin-top: 12px; margin-bottom: 4px;'>{line}</h4>")
+            elif line.startswith('- '):
+                # List item
+                if not in_list:
+                    lines.append("<ul style='margin-left: -20px; color: #475569;'>")
+                    in_list = True
+                content = line[2:]
+                lines.append(f"<li>{content}</li>")
+            else:
+                # Normal text
+                if in_list:
+                    lines.append("</ul>")
+                    in_list = False
+                lines.append(f"<p style='color: #475569; margin-top: 4px;'>{line}</p>")
+                
+        if in_list:
+            lines.append("</ul>")
+            
+        return "".join(lines)
+
+    def _generate_cipher_chart_html(self, mapping: Dict[str, int], theme: Dict[str, str]) -> str:
+        """Create a grid of letter-value badges."""
+        html = "<div style='width: 100%; display: flex; flex-wrap: wrap; gap: 8px;'>"
+        
+        # Iterate over mapping. Assuming insertion order preserves alphabet or meaningful order
+        # If necessary, we can try to sort if it looks messy, but usually calculators defs are ordered.
+        
+        style = (
+            f"background-color: {theme['light']}; "
+            f"border: 1px solid {theme['border']}; "
+            f"border-radius: 4px; "
+            f"padding: 4px 8px; "
+            f"color: {theme['dark']}; "
+            f"font-family: monospace; "
+            f"font-size: 11pt; "
+            f"text-align: center; "
+            f"display: inline-block; "
+            f"margin: 4px;"
+        )
+        
+        for char, val in mapping.items():
+            html += (
+                f"<span style='{style}'>"
+                f"<b>{char}</b>: {val}"
+                f"</span>"
+            )
+            
+        html += "</div>"
+        return html
 
     def _calculate_example(self):
         item = self.methods_list.currentItem()

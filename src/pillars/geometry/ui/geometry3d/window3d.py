@@ -58,9 +58,6 @@ class Geometry3DWindow(QMainWindow):
         root_layout.setContentsMargins(24, 24, 24, 24)
         root_layout.setSpacing(16)
 
-        header = self._build_header()
-        root_layout.addWidget(header)
-
         toolbar = self._build_toolbar()
         root_layout.addLayout(toolbar)
 
@@ -107,21 +104,7 @@ class Geometry3DWindow(QMainWindow):
     # ------------------------------------------------------------------
     # UI builders
     # ------------------------------------------------------------------
-    def _build_header(self) -> QWidget:
-        frame = QFrame()
-        frame.setStyleSheet(
-            "QFrame {background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #1d4ed8, stop:1 #9333ea);"
-            "border-radius: 18px; padding: 20px;}"
-        )
-        layout = QVBoxLayout(frame)
-        layout.setContentsMargins(0, 0, 0, 0)
-        title = QLabel("3D Solid Explorer")
-        title.setStyleSheet("color: white; font-size: 22pt; font-weight: 800;")
-        subtitle = QLabel("Rotate, pan, and inspect sacred solids in an orthographic viewport")
-        subtitle.setStyleSheet("color: rgba(255,255,255,0.85); font-size: 11pt;")
-        layout.addWidget(title)
-        layout.addWidget(subtitle)
-        return frame
+
 
     def _build_toolbar(self) -> QHBoxLayout:
         layout = QHBoxLayout()
@@ -261,6 +244,10 @@ class Geometry3DWindow(QMainWindow):
         axes_cb.toggled.connect(self._view.set_axes_visible)
         layout.addWidget(axes_cb)
         self._axes_checkbox = axes_cb
+
+        labels_cb = self._create_checkbox("Show labels", self._view.labels_visible())
+        labels_cb.toggled.connect(self._view.set_labels_visible)
+        layout.addWidget(labels_cb)
 
         sphere_toggles = (
             ('incircle', 'Show insphere (inradius)'),

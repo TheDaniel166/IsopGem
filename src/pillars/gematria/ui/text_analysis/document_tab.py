@@ -18,6 +18,8 @@ class DocumentTab(QWidget):
     text_selected = pyqtSignal(bool) # has_selection
     save_verse_requested = pyqtSignal(dict)
     save_all_requested = pyqtSignal(list)
+    save_text_requested = pyqtSignal(str)
+    open_quadset_requested = pyqtSignal(int)
     teach_requested = pyqtSignal()
     
     def __init__(self, document: Document, analysis_service: TextAnalysisService, parent=None):
@@ -48,6 +50,11 @@ class DocumentTab(QWidget):
         self.calc_sel_btn.clicked.connect(self._on_calculate_selection)
         self.calc_sel_btn.setEnabled(False)
         header.addWidget(self.calc_sel_btn)
+
+        self.save_sel_btn = QPushButton("Save Selection")
+        self.save_sel_btn.clicked.connect(self._on_save_selection)
+        self.save_sel_btn.setEnabled(False)
+        header.addWidget(self.save_sel_btn)
         layout.addLayout(header)
         
         # Stack
@@ -55,6 +62,9 @@ class DocumentTab(QWidget):
         
         self.doc_viewer = DocumentViewer()
         self.doc_viewer.text_selected.connect(self._on_text_selection_changed)
+        self.doc_viewer.save_requested.connect(self._on_viewer_save)
+        self.doc_viewer.calculate_requested.connect(self._on_viewer_calculate)
+        self.doc_viewer.send_to_quadset_requested.connect(self._on_viewer_quadset)
         self.stack.addWidget(self.doc_viewer)
         
         self.verse_list = VerseList()
@@ -126,7 +136,9 @@ class DocumentTab(QWidget):
     def _on_text_selection_changed(self):
         txt = self.doc_viewer.get_selected_text()
         has_sel = bool(txt)
+        has_sel = bool(txt)
         self.calc_sel_btn.setEnabled(has_sel)
+        self.save_sel_btn.setEnabled(has_sel)
         self.text_selected.emit(has_sel)
         if not txt:
             self.sel_result_lbl.setText("")
@@ -147,3 +159,24 @@ class DocumentTab(QWidget):
         # But wait, the checkbox in main window needs to update. 
         # We might need a signal 'view_mode_changed'.
         self.doc_viewer.select_range(start, end)
+
+    def _on_save_selection(self):
+        txt = self.doc_viewer.get_selected_text()
+        if txt:
+            self.save_text_requested.emit(txt)
+
+    def _on_viewer_save(self, text):
+        self.save_text_requested.emit(text)
+
+    def _on_viewer_calculate(self, text):
+        # We can just run the calculation logic
+        if not text or not self.current_calculator:
+            return
+        val = self.analysis_service.calculate_text(text, self.current_calculator, self.include_numbers)
+        self.sel_result_lbl.setText(f"Value: {val}")
+
+    def _on_viewer_quadset(self, text):
+        if not text or not self.current_calculator:
+            return
+        val = self.analysis_service.calculate_text(text, self.current_calculator, self.include_numbers)
+        self.open_quadset_requested.emit(val)

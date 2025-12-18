@@ -27,10 +27,9 @@ class GreekGematriaCalculator(GematriaCalculator):
     Testament Greek texts.
     
     Applications:
-    - New Testament textual analysis
-    - Ancient Greek philosophy and mysticism
-    - Finding numerical relationships in classical texts
-    - Gnostic and early Christian numerology
+    - **Theological Proofing**: Validating divine titles by their numerical weight (e.g., confirming *Iēsous* as 888 to contrast with the "imperfect" 666).
+    - **Philosophical Constants**: Linking abstract concepts (like *Logos*) to physical constants or geometric proportions through number.
+    - **Cosmological Mapping**: Finding the "formula" of the universe by converting planetary names and distances into Greek values.
     
     Example:
     Ἰησοῦς (Iēsous, "Jesus"):
@@ -196,10 +195,9 @@ class GreekOrdinalCalculator(GematriaCalculator):
     alphabetical structure rather than traditional numerical values.
     
     Applications:
-    - Simplified Greek numerology
-    - Finding ordinal patterns in text
-    - Modern New Age applications
-    - Structural analysis of Greek words
+    - **Cryptographic Puzzles**: Solving ancient "riddles" where the answer is hidden in the alphabetical rank rather than the sum (often found in graffiti or casual correspondence).
+    - **Alphabetical Archetypes**: Analyzing the 24 (or 27) letters as a complete cycle of creation, from *Alpha* (Initiation) to *Omega* (Completion).
+    - **Liturgical Structure**: Understanding the organization of hymns and prayers that follow an acrostic or ordinal pattern.
     
     Example:
     Λόγος ("Logos"):

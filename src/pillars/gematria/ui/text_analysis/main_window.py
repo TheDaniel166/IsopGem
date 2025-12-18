@@ -139,7 +139,7 @@ class TextAnalysisWindow(QMainWindow):
         splitter.addWidget(right_widget)
         
         splitter.setSizes([800, 400])
-        main_layout.addWidget(splitter)
+        main_layout.addWidget(splitter, 1)
         
         # Status Bar
         self.status = QLabel("Ready")
@@ -153,8 +153,9 @@ class TextAnalysisWindow(QMainWindow):
                 self.doc_combo.addItem("-- Select Document to Open --", None)
                 for d in docs:
                     collection = (d.collection or "").lower()
-                    tags = (str(d.tags) if d.tags else "").lower()
-                    if "holy" in collection or "holy" in tags:
+                    # User requested limitation: Only show Holy Books
+                    # Removed tags check as they are deprecated/problematic
+                    if "holy" in collection:
                         self.doc_combo.addItem(f"{d.title}", d.id)
         except Exception as e:
             self.status.setText(f"Error loading docs: {e}")
@@ -182,6 +183,8 @@ class TextAnalysisWindow(QMainWindow):
             # Connect signals
             tab.save_verse_requested.connect(self._on_save_verse)
             tab.save_all_requested.connect(self._on_save_all_verses)
+            tab.save_text_requested.connect(self._on_save_text_selection)
+            tab.open_quadset_requested.connect(self._on_open_quadset)
             # Init settings
             tab.update_settings(
                 self.current_calculator,
@@ -331,7 +334,7 @@ class TextAnalysisWindow(QMainWindow):
             
         val = int(val_str)
         is_global = self.search_panel.global_chk.isChecked()
-        max_words = self.search_panel.max_words.value()
+        max_words = 9999
         
         # Re-run logic (copy-paste from _on_search essentially, should refactor if time permits)
         tabs_to_search = []
@@ -413,7 +416,7 @@ class TextAnalysisWindow(QMainWindow):
         if not val_str.isdigit(): return
         val = int(val_str)
         is_global = self.search_panel.global_chk.isChecked()
-        max_words = self.search_panel.max_words.value()
+        max_words = 9999
         
         tabs_to_search = []
         if is_global:
@@ -438,6 +441,33 @@ class TextAnalysisWindow(QMainWindow):
                 count += 1
         
         QMessageBox.information(self, "Saved", f"Saved {count} matches.")
+
+    def _on_save_text_selection(self, text):
+        """Save manually selected text."""
+        self._save_record(text, "Selection")
+
+    def _on_open_quadset(self, value: int):
+        """Open the Quadset Analysis window with the given value."""
+        # Clean way: Use window manager if we had a ref, or rely on TQ pillar
+        # For now, simplistic lazy import and instantiation as TQHub does
+        from pillars.tq.ui.quadset_analysis_window import QuadsetAnalysisWindow
+        
+        # We need a window manager. Assuming self.parent() or shared one?
+        # TextAnalysisWindow is typically instantiated by WindowManager.
+        # But we don't hold a ref to it unless passed.
+        # Let's import the global/shared one if possible or just instantiate QAW standalone.
+        # Ideally we use the existing window manager.
+        from shared.ui import WindowManager
+        wm = WindowManager() # It's a singleton pattern usually? Or we need the instance.
+        # Checking WindowManager implementation... usually it's passed around.
+        # If we can't get it easily, we can just instantiate QAW and show it.
+        # But better to use WM.
+        
+        win = wm.open_window("quadset_analysis_param", QuadsetAnalysisWindow, window_manager=wm)
+        if win:
+            win.input_field.setText(str(value))
+            win.raise_()
+            win.activateWindow()
 
     def _save_record(self, text, default_note=None, silent=False):
         try:

@@ -7,8 +7,8 @@ from PyQt6.QtWidgets import (
     QPushButton, QScrollArea, QCheckBox, QSplitter, QFrame,
     QApplication, QComboBox, QTabWidget, QToolButton, QMenu, QGroupBox
 )
-from PyQt6.QtCore import Qt, QPoint
-from PyQt6.QtGui import QDoubleValidator, QCursor, QAction, QColor
+from PyQt6.QtCore import Qt, QPoint, QLocale, QRegularExpression
+from PyQt6.QtGui import QDoubleValidator, QCursor, QAction, QColor, QRegularExpressionValidator
 from pillars.geometry.services import GeometricShape
 from shared.ui import WindowManager
 from .geometry_scene import GeometryScene
@@ -294,10 +294,11 @@ class GeometryCalculatorWindow(QMainWindow):
         """)
         self._install_value_context_menu(input_field)
         
-        # Only allow positive numbers
-        validator = QDoubleValidator(0.0001, 999999999, 6)
-        validator.setNotation(QDoubleValidator.Notation.StandardNotation)
-        input_field.setValidator(validator)
+        # Use Regex Validator for robust decimal support
+        # Allows "123", "123.", "123.456", ".456"
+        # regex = QRegularExpression(r"^[0-9]*\.?[0-9]*$")
+        # validator = QRegularExpressionValidator(regex)
+        # input_field.setValidator(validator)
         
         # Store reference
         self.property_inputs[prop.key] = input_field
@@ -980,24 +981,35 @@ class GeometryCalculatorWindow(QMainWindow):
         return cb
     
     def _on_property_changed(self, key: str, text: str):
-        """Handle property value change."""
+        """Handle property input changes."""
         if self.updating:
             return
-        
-        if not text:
-            return
-        
-        try:
-            value = float(text)
-            if value <= 0:
-                return
             
-            # Calculate all properties from this value
-            if self.shape.set_property(key, value):
+        if not text:
+            # Clear value if empty
+            if self.shape.get_property(key) is not None:
+                self.shape.properties[key].value = None
                 self._update_all_fields()
                 self._update_viewport()
-        
+            return
+
+        try:
+            # Handle comma as decimal separator for flexibility
+            clean_text = text.replace(',', '.')
+            val = float(clean_text)
+            
+            # Validate
+            is_valid, error = self.shape.validate_value(key, val)
+            if not is_valid:
+                return
+                
+            # Update shape
+            if self.shape.set_property(key, val):
+                self._update_all_fields()
+                self._update_viewport()
+                
         except ValueError:
+            # Ignore invalid float input while typing (e.g. "1.")
             pass
     
     def _update_all_fields(self):
@@ -1005,7 +1017,20 @@ class GeometryCalculatorWindow(QMainWindow):
         self.updating = True
         
         for prop in self.shape.get_all_properties():
+            if prop.key not in self.property_inputs:
+                continue
+                
             input_field = self.property_inputs[prop.key]
+            
+            # Don't update the field the user is currently typing in
+            if input_field.hasFocus():
+                continue
+            
+            # Apply default if value is missing and default exists
+            if prop.value is None and prop.default is not None:
+                # Calculate using the default value
+                self.shape.calculate_from_property(prop.key, prop.default)
+                
             if prop.value is not None:
                 # Format without scientific notation
                 formatted_value = f"{prop.value:.{prop.precision}f}".rstrip('0').rstrip('.')
@@ -1020,6 +1045,7 @@ class GeometryCalculatorWindow(QMainWindow):
                             border-radius: 8px;
                         }
                     """)
+                
             else:
                 input_field.clear()
                 # Unsolved State: Revert to default
@@ -1070,8 +1096,24 @@ class GeometryCalculatorWindow(QMainWindow):
         self.shape.clear_all()
         
         # Clear input fields
-        for input_field in self.property_inputs.values():
-            input_field.clear()
+        for key, input_field in self.property_inputs.items():
+            val = self.shape.get_property(key)
+            
+            # Apply default if value is missing and default exists
+            if val is None:
+                prop = self.shape.properties.get(key)
+                if prop and prop.default is not None:
+                    # Calculate using the default value
+                    self.shape.calculate_from_property(key, prop.default)
+                    val = self.shape.get_property(key)
+            
+            if val is not None:
+                prop = self.shape.properties.get(key)
+                precision = prop.precision if prop else 4
+                formatted_value = f"{val:.{precision}f}".rstrip('0').rstrip('.')
+                input_field.setText(formatted_value)
+            else:
+                input_field.clear()
         
         # Clear viewport
         self.scene.clear_payload()

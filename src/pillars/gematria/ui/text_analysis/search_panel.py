@@ -73,8 +73,8 @@ class SearchPanel(QWidget):
         
         input_layout.addWidget(QLabel("Value:"))
         input_layout.addWidget(self.value_input)
-        input_layout.addWidget(QLabel("Max Words:"))
-        input_layout.addWidget(self.max_words)
+        input_layout.addWidget(QLabel("Value:"))
+        input_layout.addWidget(self.value_input)
         input_layout.addWidget(search_btn)
         
         # Global Search Checkbox
@@ -121,7 +121,8 @@ class SearchPanel(QWidget):
         val_str = self.value_input.text().strip()
         if not val_str or not val_str.isdigit():
             return
-        self.search_requested.emit(int(val_str), self.max_words.value(), self.global_chk.isChecked())
+        # Hardcoded to 9999 as requested by user
+        self.search_requested.emit(int(val_str), 9999, self.global_chk.isChecked())
         
     def _on_export(self):
         self.export_requested.emit()

@@ -1,12 +1,15 @@
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QTextEdit
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QTextEdit, QMenu
 from PyQt6.QtCore import pyqtSignal, Qt
-from PyQt6.QtGui import QTextCursor, QTextCharFormat, QColor, QFont
+from PyQt6.QtGui import QTextCursor, QTextCharFormat, QColor, QFont, QAction
 
 class DocumentViewer(QWidget):
     """
     Widget for displaying read-only text with highlighting capabilities.
     """
     text_selected = pyqtSignal()  # Emitted when user selects text
+    save_requested = pyqtSignal(str)
+    calculate_requested = pyqtSignal(str)
+    send_to_quadset_requested = pyqtSignal(str)
     
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -31,7 +34,31 @@ class DocumentViewer(QWidget):
             }
         """)
         self.text_edit.selectionChanged.connect(self.text_selected.emit)
+        # Enable custom context menu
+        self.text_edit.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.text_edit.customContextMenuRequested.connect(self._show_context_menu)
         layout.addWidget(self.text_edit)
+
+    def _show_context_menu(self, pos):
+        menu = self.text_edit.createStandardContextMenu()
+        
+        selected_text = self.get_selected_text()
+        if selected_text:
+            menu.addSeparator()
+            
+            calc_action = QAction("Calculate Selection", self)
+            calc_action.triggered.connect(lambda: self.calculate_requested.emit(selected_text))
+            menu.addAction(calc_action)
+            
+            save_action = QAction("Save Selection", self)
+            save_action.triggered.connect(lambda: self.save_requested.emit(selected_text))
+            menu.addAction(save_action)
+            
+            quad_action = QAction("Send Total to Quadset Analysis", self)
+            quad_action.triggered.connect(lambda: self.send_to_quadset_requested.emit(selected_text))
+            menu.addAction(quad_action)
+            
+        menu.exec(self.text_edit.mapToGlobal(pos))
         
     def set_text(self, text: str):
         self.text_edit.setPlainText(text)

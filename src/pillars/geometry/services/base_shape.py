@@ -13,6 +13,7 @@ class ShapeProperty:
     unit: str = ""      # Unit suffix (e.g., "cm", "cm²")
     readonly: bool = False  # If True, can't be edited (calculated only)
     precision: int = 4  # Decimal places for display
+    default: Optional[float] = None # Default value for initialization
 
 
 class GeometricShape(ABC):

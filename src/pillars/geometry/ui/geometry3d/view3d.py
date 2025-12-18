@@ -55,6 +55,7 @@ class Geometry3DView(QWidget):
             'midsphere': False,
             'circumsphere': False,
         }
+        self._show_labels = True
 
     # ------------------------------------------------------------------
     # Public API
@@ -79,6 +80,13 @@ class Geometry3DView(QWidget):
 
     def axes_visible(self) -> bool:
         return self._show_axes
+
+    def set_labels_visible(self, visible: bool):
+        self._show_labels = visible
+        self.update()
+
+    def labels_visible(self) -> bool:
+        return self._show_labels
 
     def set_sphere_visible(self, kind: str, visible: bool):
         if kind in self._sphere_visibility:
@@ -136,8 +144,97 @@ class Geometry3DView(QWidget):
             return
 
         matrix, scale, pan_offset = self._projection_parameters()
-        points = self._project_vertices(payload, matrix, scale, pan_offset)
-        self._draw_edges(painter, payload, points)
+        
+        # 1. Transform all vertices to World Space (rotated) and Screen Space
+        transformed_verts = []
+        screen_points = []
+        
+        for vx, vy, vz in payload.vertices:
+            vec = QVector3D(vx, vy, vz)
+            rotated = matrix * vec
+            transformed_verts.append(rotated)
+            
+            sx = rotated.x() * scale + pan_offset.x()
+            sy = -rotated.y() * scale + pan_offset.y()
+            screen_points.append(QPointF(sx, sy))
+
+        # 2. Collect and Sort Faces (Painter's Algorithm)
+        #    Sort by centroid Z (depth). Positive Z is towards camera in standard OpenGL,
+        #    but here let's check coordinate system. Qt 3D usually: Y up, X right, Z out of screen?
+        #    Actually we just need relative sort.
+        
+        faces_to_draw = []
+        light_dir = QVector3D(-0.5, 0.5, 1.0).normalized() # Light from top-left-front
+        
+        if payload.faces:
+            for face_indices in payload.faces:
+                # Calc Centroid & Normal
+                v_positions = [transformed_verts[i] for i in face_indices]
+                if len(v_positions) < 3:
+                    continue
+                    
+                # Centroid Z for sorting
+                z_sum = sum(v.z() for v in v_positions)
+                centroid_z = z_sum / len(v_positions)
+                
+                # Normal (using first 3 points, assuming planar-ish)
+                v0 = v_positions[0]
+                v1 = v_positions[1]
+                v2 = v_positions[2]
+                normal = QVector3D.crossProduct(v1 - v0, v2 - v0).normalized()
+                
+                # Flat Shading
+                # Dot product: -1 (backlit) to 1 (facing light)
+                # Clamp to [0, 1] for simple diffuse
+                dot = QVector3D.dotProduct(normal, light_dir)
+                intensity = max(0.1, min(1.0, (dot + 1.0) * 0.5)) # Remap -1..1 to 0..1 for ambient+diffuse look
+                
+                faces_to_draw.append((centroid_z, face_indices, intensity))
+                
+            # Sort: Farthest Z first.
+            # In our camera, if distance is positive, larger Z might be closer?
+            # Camera rotation is simple rotation. 
+            # Usually Z-buffer sorts by depth.
+            # Let's try sorting by Z descending (paint farthest/smallest Z first? No, paint farthest Z first).
+            # If Z points to viewer, negative Z is far. So paint smallest Z first.
+            faces_to_draw.sort(key=lambda x: x[0]) 
+
+            # 3. Draw Faces
+            painter.setPen(Qt.PenStyle.NoPen)
+            for _, indices, intensity in faces_to_draw:
+                poly = [screen_points[i] for i in indices]
+                
+                # "Crystal" Color: Cyan-ish base modulated by light
+                # Base: R=0, G=150, B=255
+                r = int(0 * intensity)
+                g = int(180 * intensity)
+                b = int(255 * intensity)
+                alpha = 210 # Semi-transparent
+                
+                color = QColor(r, g, b, alpha)
+                painter.setBrush(color)
+                
+                qpoly = [p.toPoint() for p in poly] # drawPolygon needs QPoint
+                painter.drawPolygon(qpoly)
+
+        # 4. Draw Edges (Wireframe overlay - simpler, cleaner)
+        #    Draw edges faint or bright?
+        #    Let's draw edges for definition
+        edge_pen = QPen(QColor(255, 255, 255, 60), 1.0)
+        painter.setPen(edge_pen)
+        painter.setBrush(Qt.BrushStyle.NoBrush)
+        
+        # Optimization: Only draw edges that are part of the payload.edges list
+        # If no explicit edges, do we infer? 
+        # The payload currently has explicit edges.
+        
+        # To avoid Z-fighting/mess, maybe only draw silhouette or boundary?
+        # For "Prism", allow wireframe on top for now.
+        for edge in payload.edges:
+            if len(edge) != 2: continue
+            i, j = edge
+            painter.drawLine(screen_points[i], screen_points[j])
+
         self._draw_spheres(painter, payload, scale, pan_offset)
         self._draw_labels(painter, payload, matrix, scale, pan_offset)
         if self._show_axes:
@@ -216,17 +313,6 @@ class Geometry3DView(QWidget):
         y = -rotated.y() * scale + pan_offset.y()
         return QPointF(x, y)
 
-    def _draw_edges(self, painter: QPainter, payload: SolidPayload, points):
-        pen = QPen(QColor(148, 197, 255), 2.0)
-        painter.setPen(pen)
-        for edge in payload.edges:
-            if len(edge) != 2:
-                continue
-            i, j = edge
-            if i >= len(points) or j >= len(points):
-                continue
-            painter.drawLine(points[i], points[j])
-
     def _draw_spheres(self, painter: QPainter, payload: SolidPayload, scale: float, pan_offset: QPointF):
         metadata = payload.metadata or {}
         sphere_specs = (
@@ -244,6 +330,7 @@ class Geometry3DView(QWidget):
             pixel_radius = radius_value * scale
             pen = QPen(color, 1.4, Qt.PenStyle.DashLine)
             painter.setPen(pen)
+            painter.setBrush(Qt.BrushStyle.NoBrush)
             painter.drawEllipse(center, pixel_radius, pixel_radius)
 
     def _draw_labels(
@@ -254,7 +341,7 @@ class Geometry3DView(QWidget):
         scale: float,
         pan_offset: QPointF,
     ):
-        if not payload.labels:
+        if not payload.labels or not self._show_labels:
             return
         painter.save()
         font = QFont(painter.font())

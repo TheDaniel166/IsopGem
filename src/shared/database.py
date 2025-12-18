@@ -8,12 +8,10 @@ import os
 # Define Base for models
 Base = declarative_base()
 
+from shared.paths import get_data_path
+
 # Database path
-# FIX: Use absolute path relative to this file to avoid CWD issues
-# src/shared/database.py -> src/shared -> src -> PROJECT_ROOT
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-DB_DIR = PROJECT_ROOT / "data"
-DB_DIR.mkdir(exist_ok=True)
+DB_DIR = get_data_path()
 DB_PATH = DB_DIR / "isopgem.db"
 
 # Create engine
