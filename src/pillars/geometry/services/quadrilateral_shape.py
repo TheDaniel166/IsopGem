@@ -216,8 +216,8 @@ class ParallelogramShape(GeometricShape):
 		area = self.properties['area'].value
 		perimeter = self.properties['perimeter'].value
 		return [
-			(f"A = {area:.4f}".rstrip('0').rstrip('.'), centroid[0], centroid[1]),
-			(f"P = {perimeter:.4f}".rstrip('0').rstrip('.'), centroid[0], centroid[1] - 0.3),
+			(f"A = {area:.4f}".rstrip('0').rstrip('.'), centroid[0], centroid[1] + 0.2),
+			(f"P = {perimeter:.4f}".rstrip('0').rstrip('.'), centroid[0], centroid[1] - 0.2),
 		]
 
 
@@ -342,7 +342,7 @@ class RhombusShape(GeometricShape):
 		centroid = _polygon_centroid(self._points)
 		area = self.properties['area'].value
 		return [
-			(f"A = {area:.4f}".rstrip('0').rstrip('.'), centroid[0], centroid[1])
+			(f"A = {area:.4f}".rstrip('0').rstrip('.'), centroid[0], centroid[1] + 0.1)
 		]
 
 
@@ -494,7 +494,7 @@ class TrapezoidShape(GeometricShape):
 		centroid = _polygon_centroid(self._points)
 		area = self.properties['area'].value
 		return [
-			(f"A = {area:.4f}".rstrip('0').rstrip('.'), centroid[0], centroid[1])
+			(f"A = {area:.4f}".rstrip('0').rstrip('.'), centroid[0], centroid[1] + 0.1)
 		]
 
 
@@ -616,7 +616,7 @@ class IsoscelesTrapezoidShape(GeometricShape):
 		centroid = _polygon_centroid(self._points)
 		area = self.properties['area'].value
 		return [
-			(f"A = {area:.4f}".rstrip('0').rstrip('.'), centroid[0], centroid[1])
+			(f"A = {area:.4f}".rstrip('0').rstrip('.'), centroid[0], centroid[1] + 0.1)
 		]
 
 
@@ -709,7 +709,7 @@ class _BaseAdjacentEqualShape(GeometricShape):
 		centroid = _polygon_centroid(self._points)
 		area = self.properties['area'].value
 		return [
-			(f"A = {area:.4f}".rstrip('0').rstrip('.'), centroid[0], centroid[1])
+			(f"A = {area:.4f}".rstrip('0').rstrip('.'), centroid[0], centroid[1] + 0.1)
 		]
 
 
@@ -1156,7 +1156,7 @@ class QuadrilateralSolverShape(GeometricShape):
 		centroid = _polygon_centroid(self._points)
 		area = self.properties['area'].value
 		return [
-			(f"A = {area:.4f}".rstrip('0').rstrip('.'), centroid[0], centroid[1])
+			(f"A = {area:.4f}".rstrip('0').rstrip('.'), centroid[0], centroid[1] + 0.1)
 		]
 
 

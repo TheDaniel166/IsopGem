@@ -129,7 +129,7 @@ class EllipseShape(GeometricShape):
 
         area = self.properties['area'].value
         if area is not None:
-            labels.append((f"A = {area:.4f}".rstrip('0').rstrip('.'), 0, 0))
+            labels.append((f"A = {area:.4f}".rstrip('0').rstrip('.'), 0, 0.2))
 
         return labels
 

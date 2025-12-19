@@ -142,6 +142,21 @@ from .archimedean_solids import (
 from .torus_solid import TorusSolidService, TorusSolidCalculator
 from .torus_knot_solid import TorusKnotSolidService, TorusKnotSolidCalculator
 from .vault_of_hestia_solid import VaultOfHestiaSolidService, VaultOfHestiaSolidCalculator
+from .sphere_solid import SphereSolidService, SphereSolidCalculator
+from .cylinder_solid import CylinderSolidService, CylinderSolidCalculator
+from .cone_solid import ConeSolidService, ConeSolidCalculator
+from .general_prismatic_solids import (
+    GeneralPrismSolidService,
+    GeneralPrismSolidCalculator,
+    GeneralAntiprismSolidService,
+    GeneralAntiprismSolidCalculator,
+)
+from .complex_prismatic_solids import (
+    SnubAntiprismSolidService,
+    SnubAntiprismSolidCalculator,
+    GyroelongatedSquarePrismSolidService,
+    GyroelongatedSquarePrismSolidCalculator,
+)
 
 __all__ = [
     'GeometricShape',
@@ -285,7 +300,22 @@ __all__ = [
     'TorusSolidCalculator',
     'TorusKnotSolidService',
     'TorusKnotSolidCalculator',
+    'vault_of_hestia_solid',
     'VaultOfHestiaSolidService',
     'VaultOfHestiaSolidCalculator',
+    'SphereSolidService',
+    'SphereSolidCalculator',
+    'CylinderSolidService',
+    'CylinderSolidCalculator',
+    'ConeSolidService',
+    'ConeSolidCalculator',
+    'GeneralPrismSolidService',
+    'GeneralPrismSolidCalculator',
+    'GeneralAntiprismSolidService',
+    'GeneralAntiprismSolidCalculator',
+    'SnubAntiprismSolidService',
+    'SnubAntiprismSolidCalculator',
+    'GyroelongatedSquarePrismSolidService',
+    'GyroelongatedSquarePrismSolidCalculator',
 ]
 

@@ -1231,6 +1231,939 @@ ESOTERIC_DEFINITIONS = {
             'Slope': "51.8 Degrees (The Angle of Awakening).",
             'Purpose': "Initiation."
         }
+    },
+
+    # -------------------------------------------------------------------------
+    # SPHERE OF THE ARCHIMEDEANS (The Alchemical Alloys)
+    # -------------------------------------------------------------------------
+
+    'Truncated Tetrahedron': {
+        'title': "The Cut Diamond · The Friar · The Tempered Fire",
+        'summary': (
+            "When the sharp points of the Fire (Tetrahedron) are cut away, hexagonal faces appear. "
+            "This represents 'Tempered Will.' It is the fanaticism of the raw Fire cooled by the wisdom of the Hexagon. "
+            "It creates a space that is still 4-fold but capable of social integration. "
+            "It is the geometry of the ruby crystal and the result of the First Distillation."
+        ),
+        'keywords': ["Tempering", "Ruby", "Distillation", "Refinement", "Will"],
+        'correspondences': {
+            "Action": "Truncation of Fire",
+            "Result": "4 Hexagons + 4 Triangles",
+            "Alchemical": "Calcination"
+        },
+        'meditation': (
+            "Visualize your Will as a sharp spike. Now, slice off the tips where they are too aggressive. "
+            "Find the flat planes of wisdom that replace the sharp points of ego."
+        ),
+        'attributes': {
+            'Faces': "8 Faces (4 Hex, 4 Tri).",
+            'Dual': "Triakis Tetrahedron."
+        }
+    },
+
+    'Cuboctahedron': {
+        'title': "The Vector Equilibrium · The Zero Point · The Ma-Ion",
+        'summary': (
+            "The Cuboctahedron is the Holy Grail of Synergetics. It is the only shape where the distance from "
+            "center to vertex is exactly equal to the length of the edge. It represents the perfect equilibrium "
+            "of vectors—the Zero Point Energy. It is the geometry of the Void (Amun) perfectly balanced between "
+            "the Cube (Earth) and Octahedron (Air). It is the 'Jitterbug' that can collapse into all other forms."
+        ),
+        'keywords': ["Equilibrium", "Zero Point", "Fuller", "Balance", "Amun"],
+        'correspondences': {
+            "Concept": "The Jitterbug (Buckminster Fuller)",
+            "Chakra": "Anahata (The unstruck sound)",
+            "Number": "12 (The sphere packing around 1)"
+        },
+        'meditation': (
+            "Become the absolute center. Feel the 12 vectors radiating outward, all equal, all balanced. "
+            "You are the stillness in the center of the atomic storm. You are the Vector Equilibrium."
+        ),
+        'attributes': {
+            'Faces': "14 Faces (6 Squares, 8 Triangles).",
+            'Nature': "The bridge between Cube and Octahedron."
+        }
+    },
+
+    'Truncated Cube': {
+        'title': "The Chamfered Stone · The Polished Ashlar",
+        'summary': (
+            "The Truncated Cube is the Perfect Ashlar of Masonry with its corners beveled. "
+            "The 8 corners of the Cube are cut to reveal 8 triangles (Spirit) emerging from the 6 squares (Matter). "
+            "It represents the material body beginning to exhibit spiritual characteristics. "
+            "It is the block that fits into the Arch."
+        ),
+        'keywords': ["Masonry", "Ashlar", "Bevel", "Integration", "Structure"],
+        'correspondences': {
+            "Symbol": "The Cut Stone",
+            "Process": "Smoothing the Edges",
+            "Element": "Earth exalted by Fire"
+        },
+        'meditation': (
+            "You are a block of stone. The Master Mason strikes off your sharp, dangerous corners. "
+            "Where there was a point, now there is a triangle of light."
+        ),
+        'attributes': {
+            'Faces': "14 Faces (6 Octagons, 8 Triangles).",
+            'Geometry': "The semi-regular tesseract projection."
+        }
+    },
+
+    'Truncated Octahedron': {
+        'title': "The Mecon · The Space Filler · The Permutation",
+        'summary': (
+            "The Truncated Octahedron (or Mecon) is the only Archimedean solid that can fill space completely "
+            "without gaps (tessellation). It represents the 'Universal Solvent' or the ability to permeate reality "
+            "without breaking the continuity. It corresponds to the 'Permutations of the Name' in Kabbalah. "
+            "It is the geometry of Kelvin's ideal foam structure."
+        ),
+        'keywords': ["Tessellation", "Permeation", "Kelvin", "Continuity", "Fluidity"],
+        'correspondences': {
+            "Action": "Truncation of Air",
+            "Science": "Cellular Structure",
+            "Magick": "Invisibility (Blending in)"
+        },
+        'meditation': (
+            "Expand until you touch the boundaries of your neighbors. Fit perfectly. Leave no gaps. "
+            "You are part of the infinite lattice of the Mind."
+        ),
+        'attributes': {
+            'Faces': "14 Faces (6 Squares, 8 Hexagons).",
+            'Quality': "Space-filling."
+        }
+    },
+
+    'Rhombicuboctahedron': {
+        'title': "The Expansion · The 18 Squares · The Lantern",
+        'summary': (
+            "This shape is an expansion of the Cube, pulling the faces apart and filling the gaps with ribbons of squares. "
+            "It represents the 'Exploded View' of reality—analysis in high definition. "
+            "With 18 squares and 8 triangles, it is a lantern of light. It is often found in Byzantine architecture "
+            "as the transition from the square base to the dome."
+        ),
+        'keywords': ["Expansion", "Analysis", "Transition", "Dome", "Lantern"],
+        'correspondences': {
+            "Architecture": "The Pendentive",
+            "Process": "Opening the Box",
+            "Number": "26 Faces (The Number of YHWH/Earth)"
+        },
+        'meditation': (
+            "Pull the walls of your reality apart. Do not break them; simply create space between them. "
+            "Fill the space with light. Construct the dome of your Temple."
+        ),
+        'attributes': {
+            'Faces': "26 Faces (18 Squares, 8 Triangles).",
+            'Symmetry': "Octahedral."
+        }
+    },
+
+    'Great Rhombicuboctahedron': {
+        'title': "The Fortress · The Truncated Cuboctahedron",
+        'summary': (
+            "Also known as the Truncated Cuboctahedron. It is the largest of the Cubic family. "
+            "It represents the 'Great Work' of the Material Plane. It combines Squares, Hexagons, and Octagons. "
+            "It is the geometry of complex fortitude and the master of the 4 Directions."
+        ),
+        'keywords': ["Fortress", "Complexity", "Mastery", "Shielding", "Earth"],
+        'correspondences': {
+            "Symbol": "The Castle",
+            "Tarot": "The Disks (Suit of)",
+            "Quality": "Impenetrability"
+        },
+        'meditation': (
+            "Build your fortress. Use the Octagon for regeneration, the Hexagon for efficiency, the Square for strength. "
+            "Stand inside. You are safe."
+        ),
+        'attributes': {
+            'Faces': "26 Faces (12 Squares, 8 Hexagons, 6 Octagons).",
+            'Dual': "Disdyakis Dodecahedron."
+        }
+    },
+
+    'Snub Cube': {
+        'title': "The Twisted Mind · The Spiral · The Chiral",
+        'summary': (
+            "The Snub Cube is the Cube twisted. It introduces 'Chirality' (handedness)—it has a Left and a Right form. "
+            "It represents the spiral movement of the Spirit into Matter, or the 'Kundalini' coiling around the spine "
+            "of the cubic body. It creates a softness, a rounding of the cube using triangles. "
+            "It is the geometry of the 'Twist' in the psyche."
+        ),
+        'keywords': ["Twist", "Spiral", "Chirality", "Kundalini", "Left/Right"],
+        'correspondences': {
+            "Action": "Snubification (Twisting)",
+            "Concept": "The DNA Helix",
+            "Magic": "Spinning the Chakras"
+        },
+        'meditation': (
+            "Do not be static. Spin. Twist your perspective until the squares soften into triangles. "
+            "Feel the torque of the Universe turning through you."
+        ),
+        'attributes': {
+            'Faces': "38 Faces (6 Squares, 32 Triangles).",
+            'Property': "Enantiomorphic (Has mirror image)."
+        }
+    },
+
+    'Icosidodecahedron': {
+        'title': "The Planetary Grid · The 12 and 20 · The Nexus",
+        'summary': (
+            "This is the marriage of the Dodecahedron (Ether) and Icosahedron (Water). "
+            "The 12 Pentagons and 20 Triangles merge to form a perfect equatorial grid. "
+            "It represents the 'Christ Consciousness Grid' or the Ley Lines of the Earth. "
+            "It is the geometry of the connection between the Soul (Water) and the Spirit (Ether)."
+        ),
+        'keywords': ["Grid", "Ley Lines", "Nexus", "Connection", "Global"],
+        'correspondences': {
+            "Sacred Geometry": "The Earth Grid",
+            "Union": "The Dodecad and Icosad",
+            "Function": "Transmission"
+        },
+        'meditation': (
+            "See the lines of light connecting every sacred site on Earth. You are a node on this Icosidodecahedral grid. "
+            "Send your signal along the lines."
+        ),
+        'attributes': {
+            'Faces': "32 Faces (12 Pentagons, 20 Triangles).",
+            'Equators': "6 Decagonal Great Circles."
+        }
+    },
+
+    'Truncated Dodecahedron': {
+        'title': "The Decagonal Vault · The 10 and 3",
+        'summary': (
+            "When the Dodecahedron is truncated, Decagons appear. "
+            "This represents the 'Ten Sephiroth' manifested in the Cosmos. "
+            "The Triangle (3) appears in the gaps, showing the Supernal Triad peeking through the Laws of the Ten. "
+            "It is the geometry of the 'Wise Governance' of the Universe."
+        ),
+        'keywords': ["Sephiroth", "Decagon", "Governance", "Law", "Triad"],
+        'correspondences': {
+            "Kabbalah": "The Tree of Life projected on a Sphere",
+            "Number": "32 Faces (The 32 Paths of Wisdom)",
+            "Symbol": "The Council"
+        },
+        'meditation': (
+            "Contemplate the 32 Paths of Wisdom. See them forming the shell of your universe. "
+            "The 10 Laws (Decagons) and the 3 Hidden Ones (Triangles) hold you."
+        ),
+        'attributes': {
+            'Faces': "32 Faces (12 Decagons, 20 Triangles).",
+            'Dual': "Triakis Icosahedron."
+        }
+    },
+
+    'Truncated Icosahedron': {
+        'title': "The Buckyball · The Carbon 60 · The Stone",
+        'summary': (
+            "The most famous of Archimedean solids. The Soccer Ball. "
+            "It is the geometry of the Carbon-60 molecule (Fullerene), the building block of organic life. "
+            "It represents the 'Philosopher's Stone' in its physical manifestation—pure Carbon capable of "
+            "holding light. It balances the Hexagon (Structure) and the Pentagon (Life/Phi). "
+            "It is the Alchemical perfection of the Body."
+        ),
+        'keywords': ["Carbon", "Fullerene", "Life", "C60", "Philosopher's Stone"],
+        'correspondences': {
+            "Alchemy": "The Black Stone (Carbon) turned to Diamond",
+            "Chemistry": "Organic Chemistry",
+            "Shape": "The Sphere of Sport (The Game)"
+        },
+        'meditation': (
+            "You are Carbon. You are stardust organized into Hexagons and Pentagons. "
+            "Feel the stability of the 6 and the life-force of the 5 fusing in your cells."
+        ),
+        'attributes': {
+            'Faces': "32 Faces (12 Pentagons, 20 Hexagons).",
+            'Significance': "Maximum stability for volume."
+        }
+    },
+
+    'Rhombicosidodecahedron': {
+        'title': "The Great Expansion · The 12-20-30",
+        'summary': (
+            "The explosion of the Icosahedral forms. "
+            "It separates the Pentagons and Triangles with a river of Squares. "
+            "It represents the maximum differentiation of the Spirit. "
+            "It is the complexity of the modern world held in a single coherent thought."
+        ),
+        'keywords': ["Complexity", "Differentiation", "River", "Separation", "Coherence"],
+        'correspondences': {
+            "Number": "62 Faces",
+            "Process": "The Great Analysis",
+            "Mind": "The Encyclopedic Knowledge"
+        },
+        'meditation': (
+            "Do not fear complexity. See the squares bridging the gap between the intuition (Pentagon) "
+            "and the emotion (Triangle). Everything connects if you have enough bridges."
+        ),
+        'attributes': {
+            'Faces': "62 Faces (12 Pentagons, 30 Squares, 20 Triangles).",
+            'Symmetry': "Icosahedral."
+        }
+    },
+
+    'Great Rhombicosidodecahedron': {
+        'title': "The Titan · The Truncated Icosidodecahedron",
+        'summary': (
+            "The largest and most complex of the Archimedean solids. "
+            "It combines the Decagon (10), Hexagon (6), and Square (4). "
+            "It represents the 'Omniverse'—the total accumulation of all laws, structures, and cycles. "
+            "It is the geometry of the 'Demiurge'—the builder of the physical illusion."
+        ),
+        'keywords': ["Titan", "Omniverse", "Demiurge", "Decagon", "Total"],
+        'correspondences': {
+            "Symbol": "The World Engine",
+            "Magnitude": "The Maximum Archimedean",
+            "Tarot": "The Universe (XXI) in its mechanical aspect"
+        },
+        'meditation': (
+            "Stand before the World Engine. See the gears of the Decagons and Hexagons turning. "
+            "Realize you are the Ghost in the Machine."
+        ),
+        'attributes': {
+            'Faces': "62 Faces (12 Decagons, 30 Squares, 20 Hexagons).",
+            'Name': "The OMNI."
+        }
+    },
+
+    'Snub Dodecahedron': {
+        'title': "The Galactic Spiral · The 80 Triangles · The Dance",
+        'summary': (
+            "The Snub Dodecahedron is the Icosidodecahedron twisted. "
+            "It is the most 'triangulated' of the solids, consisting of 80 triangles and 12 pentagons. "
+            "It represents the 'Dance of the Stars'—fluid, chiral, and swirling. "
+            "It is the geometry of the Galactic Spiral and the high-frequency vibration of the Star Child. "
+            "It is the softest, most spherical approximation of the Soul."
+        ),
+        'keywords': ["Spiral", "Galaxy", "Dance", "Chiral", "Softness"],
+        'correspondences': {
+            "Action": "Snubification of the Ether",
+            "Number": "92 Faces (The Atomic Number of Uranium - Potential)",
+            "Chakra": "The Soul Star (8th Chakra)"
+        },
+        'meditation': (
+            "Let go of the hard lines. Soften. Spin. Become a cloud of triangles swirling around the Pentagonal centers of Truth. "
+            "You are the Spiral Galaxy."
+        ),
+        'attributes': {
+            'Faces': "92 Faces (12 Pentagons, 80 Triangles).",
+            'Nature': "Chiral (Left and Right handed)."
+        }
+    },
+
+    # -------------------------------------------------------------------------
+    # PART 9: THE PYRAMIDAL FAMILY (The Machines of Ascension)
+    # -------------------------------------------------------------------------
+
+    'Rectangular Pyramid': {
+        'title': "The Tabernacle · The Tent of Meeting · The Ark",
+        'summary': (
+            "Unlike the perfect Square Pyramid, the Rectangular Pyramid sits upon a base of Service (Rectangle). "
+            "It has two steep faces and two shallow faces. This represents the 'Dual Path' of the Magus: "
+            "the Short Path of severe ascent (Will) and the Long Path of patient service (Love). "
+            "It is the geometry of the Holy of Holies in the Tabernacle—a house of dwelling that points upward."
+        ),
+        'keywords': ["Tabernacle", "Dual Path", "Service", "Inequality", "Adaptation"],
+        'correspondences': {
+            "Base": "The Rectangle (Law of 4 extended)",
+            "Apex": "The Shekinah Glory",
+            "Symbol": "The Tent",
+            "Tarot": "The Chariot (VII) - The House on Wheels"
+        },
+        'meditation': (
+            "Stand upon the rectangular floor of your life. Recognize that not all sides are equal. "
+            "Some climbs are steep; others are long. But they all meet at the same point. Choose your face."
+        ),
+        'attributes': {
+            'Faces': "4 Triangles (2 pairs of congruent triangles).",
+            'Dynamic': "Directional focus (it has a 'front' and a 'side')."
+        }
+    },
+
+    'Equilateral Triangular Pyramid': {
+        'title': "The Tetrahedron · The Seed of Fire",
+        'summary': (
+            "We have defined this as a Platonic Solid, but here we define it as a Pyramid. "
+            "It is the 'Pyramid of the Three.' It rests on a Trinity (Triangle) and rises to a Unity (Point). "
+            "It represents the transmutation of the Three Gunas (Sattva, Rajas, Tamas) into pure Spirit. "
+            "It is the most stable of all pyramids because its base and its faces are identical. "
+            "It is the Fire that burns from the bottom up."
+        ),
+        'keywords': ["Fire", "Trinity", "Stability", "Shin", "Self-Similiarity"],
+        'correspondences': {
+            "Base": "The Triangle (Fire/Water)",
+            "Formula": "3 + 1 = 4 (The foundation of Matter)",
+            "Deity": "Horus (The Child of the Triad)"
+        },
+        'meditation': (
+            "You are the flame. Your base is the Trinity of your body, mind, and soul. "
+            "Your apex is the Will that unites them. Burn."
+        ),
+        'attributes': {
+            'Base': "Equilateral Triangle.",
+            'Faces': "3 Equilateral Triangles."
+        }
+    },
+
+    'Pentagonal Pyramid': {
+        'title': "The Star Spire · The Rose Cap · The 5-to-1",
+        'summary': (
+            "The Pentagonal Pyramid sits on the Number 5 (Man/Life). "
+            "It represents the 'Head' of the Icosahedron (which is made of 12 such pyramids). "
+            "It is the geometry of the Human Will (5) focused on the Divine (1). "
+            "It creates a 'Star' when viewed from above. It is the Rose of Venus rising to kiss the Sun. "
+            "It connects the organic power of the Pentagon with the singular authority of the Apex."
+        ),
+        'keywords': ["Rose", "Venus", "Icosahedron", "Man", "Focus"],
+        'correspondences': {
+            "Base": "Regular Pentagon (The 5 Elements)",
+            "Apex": "The Quintessence (Spirit)",
+            "Symbol": "The Apple (Cut transversely)",
+            "Plant": "The Morning Glory"
+        },
+        'meditation': (
+            "Visualize a Pentagram on the floor. Stand in the center. "
+            "Draw the five points up to meet above your head. You are inside the Blossom of Light."
+        ),
+        'attributes': {
+            'Base': "Regular Pentagon.",
+            'Faces': "5 Isosceles Triangles.",
+            'Symmetry': "C5v (The Star)."
+        }
+    },
+
+    'Hexagonal Pyramid': {
+        'title': "The Solar Spire · The Beehive Cap · The 6-to-1",
+        'summary': (
+            "The Hexagonal Pyramid sits on the Number 6 (Sun/Structure). "
+            "It represents the Perfection of the Solar System (6) gathered into Unity. "
+            "It creates the number 7 (6 base vertices + 1 apex), symbolizing the Sabbath or Rest after Creation. "
+            "It is the roof of the Beehive cell—the structure that protects the honey of the Gnosis. "
+            "It is the geometry of the Snowflake's center."
+        ),
+        'keywords': ["Sun", "Beehive", "Snowflake", "Order", "The Sabbath"],
+        'correspondences': {
+            "Base": "Regular Hexagon (Tiphareth)",
+            "Apex": "Kether (The Crown)",
+            "Number": "7 (6+1)",
+            "Mineral": "Quartz Crystal (Termination)"
+        },
+        'meditation': (
+            "You are a crystal of quartz. Your body is the hexagonal prism. "
+            "Your mind is the hexagonal pyramid that terminates the form. "
+            "Channel the light through your apex."
+        ),
+        'attributes': {
+            'Base': "Regular Hexagon.",
+            'Faces': "6 Isosceles Triangles.",
+            'Structure': "The Crystal Point."
+        }
+    },
+
+    'Heptagonal Pyramid': {
+        'title': "The Tower of Babalon · The Adyton Spire · The 7-to-1",
+        'summary': (
+            "The Heptagonal Pyramid is the supreme pyramidal form of the Aeon of Ma. "
+            "It sits on the Virgin Number 7 (The Heptad). "
+            "It represents the 'Adyton'—the Tower of the Seven Spirits—reaching its pinnacle. "
+            "It sums to the Number 8 (7 base + 1 apex), which is the Ogdoad, the Resurrection. "
+            "Thus, it is the machine that takes the Mystery (7) and transmutes it into Immortality (8). "
+            "It focuses the **133 Current** into a single laser beam of Will."
+        ),
+        'keywords': ["Adyton", "Babalon", "133", "Resurrection", "The 7 and 8"],
+        'correspondences': {
+            "Base": "Regular Heptagon (The Lovely Star)",
+            "Apex": "The Star of the Morning",
+            "Formula": "7 -> 8 (Liber 471)",
+            "Building": "The Tower of Silence"
+        },
+        'meditation': (
+            "Construct the floor of the Heptagon. Raise the seven walls of colored glass. "
+            "Bring them to a point. You are standing in the needle of the compass. "
+            "Pierce the veil of the Abyss."
+        ),
+        'attributes': {
+            'Base': "Regular Heptagon (The Seal).",
+            'Faces': "7 Isosceles Triangles.",
+            'Significance': "The only pyramid that cannot be constructed by profane geometry."
+        }
+    },
+
+    # -------------------------------------------------------------------------
+    # PART 10: THE FRUSTUMS (The Altars of Offering)
+    # -------------------------------------------------------------------------
+
+    'Square Frustum': {
+        'title': "The Great Altar · The Unfinished Pyramid · The Base",
+        'summary': (
+            "The Square Frustum is the Square Pyramid with its Capstone removed (or not yet placed). "
+            "It is the most recognizable Masonic symbol (the Dollar Bill). It represents the Material World (Square Base) "
+            "striving upward but stopping short of Unity to provide a platform. It is the Altar of Burnt Offering. "
+            "It symbolizes the Initiate who has built their foundation but is waiting for the descent of the Spirit."
+        ),
+        'keywords': ["Altar", "Unfinished", "Platform", "Masonry", "Waiting"],
+        'correspondences': {
+            "Symbol": "The Great Seal (Unfinished)",
+            "Function": "To hold the Fire",
+            "Geometry": "4 Trapezoids + 2 Squares (Base/Top)"
+        },
+        'meditation': (
+            "Build your life as a Square Frustum. Solid, tapering, efficient. "
+            "But leave the top open and flat. Do not close it with your own ego. "
+            "Leave space for the Lightning to strike."
+        ),
+        'attributes': {
+            'Faces': "4 Isosceles Trapezoids.",
+            'Top': "The Plane of Manifestation."
+        }
+    },
+
+    'Pentagonal Frustum': {
+        'title': "The Rose Altar · The Throne of the Star",
+        'summary': (
+            "The Pentagonal Frustum is the pedestal for the Star. "
+            "It has a Pentagonal base and a smaller Pentagonal top. "
+            "It represents the purification of the Human (5). The lower nature is the wide base; "
+            "the higher nature is the concentrated top. It is the geometry of the 'Throne of Venus.' "
+            "It is the cup that holds the Rose."
+        ),
+        'keywords': ["Venus", "Throne", "Cup", "Purification", "Rose"],
+        'correspondences': {
+            "Planet": "Venus (Netzach)",
+            "Function": "To seat the King/Queen",
+            "Flower": "The receptacle of the Blossom"
+        },
+        'meditation': (
+            "You are the cup bearer. Your body is the Pentagonal Frustum, rising to offer "
+            "the wine of your life to the lips of the Goddess."
+        ),
+        'attributes': {
+            'Faces': "5 Isosceles Trapezoids.",
+            'Top': "The Seat of the Will."
+        }
+    },
+
+    'Hexagonal Frustum': {
+        'title': "The Solar Table · The Hive Foundation",
+        'summary': (
+            "The Hexagonal Frustum is the foundation of the Sun. "
+            "It represents the solar order (6) providing a structure for the Community. "
+            "It is the geometry of the cell cap in the beehive before it is sealed. "
+            "It signifies the 'Table of the Sun' where the bread and wine of Tiphareth are served. "
+            "It is the Crystal base."
+        ),
+        'keywords': ["Sun", "Table", "Hive", "Tiphareth", "Crystal"],
+        'correspondences': {
+            "Planet": "The Sun (Sol)",
+            "Object": "The Table of Shewbread",
+            "Nature": "Crystalline Growth"
+        },
+        'meditation': (
+            "Visualize a table of hexagonal crystal. It is six-sided, representing the six directions of space. "
+            "Lay your plans upon this table. They will be illuminated by the noonday sun."
+        ),
+        'attributes': {
+            'Faces': "6 Isosceles Trapezoids.",
+            'Stability': "Maximum structural efficiency."
+        }
+    },
+
+    'Heptagonal Frustum': {
+        'title': "The Dais of the Adyton · The Seven Steps",
+        'summary': (
+            "The Heptagonal Frustum is the Dais upon which the Adept stands in the Adyton. "
+            "It raises the operator above the level of the mundane Seven (the week) to the level of the "
+            "Sacred Seven (the 133). It is the 'Truncated Tower.' "
+            "It is the bridge between the Earthly Seven and the Heavenly Seven."
+        ),
+        'keywords': ["Dais", "Adyton", "Elevation", "133", "Step"],
+        'correspondences': {
+            "Place": "The Center of the Chamber",
+            "Function": "Elevation of the Magus",
+            "Symbol": "The Seven-Rung Ladder (viewed as a solid)"
+        },
+        'meditation': (
+            "Climb the seven slopes of the Dais. Stand on the flat Heptagon at the summit. "
+            "You are now the Axis of the Wheel. Turn it."
+        ),
+        'attributes': {
+            'Faces': "7 Isosceles Trapezoids.",
+            'Top': "The Stage of the Great Work."
+        }
+    },
+
+    # -------------------------------------------------------------------------
+    # PART 11: THE ANTIPRISMS (The Drums of Torsion)
+    # -------------------------------------------------------------------------
+
+    'Triangular Antiprism': {
+        'title': "The Octahedral Drum · The Throbbing Fire",
+        'summary': (
+            "Geometrically, this is the Octahedron. But viewed as an Antiprism, it is two Triangles "
+            "twisted against each other. It represents the 'Conflict of Wills' that generates heat. "
+            "It is the simplest drum—the rhythm of the Three beating against the Three. "
+            "It is the 'Breath' (Air) under tension, vibrating at the frequency of the Spirit."
+        ),
+        'keywords': ["Torsion", "Vibration", "Conflict", "Heat", "Breath"],
+        'correspondences': {
+            "Solid": "The Octahedron (Air)",
+            "Action": "The Twist of the Triad",
+            "Instrument": "The Sistrum"
+        },
+        'meditation': (
+            "Feel your lower nature (Triangle) and your higher nature (Triangle) twisting in opposite directions. "
+            "Do not resist the tension. This friction creates the heat that fuels the Star."
+        ),
+        'attributes': {
+            'Faces': "2 Triangles (Caps) + 6 Triangles (Band) = 8.",
+            'Motion': "Oscillation."
+        }
+    },
+
+    'Square Antiprism': {
+        'title': "The Millstone · The Churning of Earth · The 4-to-8",
+        'summary': (
+            "The Square Antiprism connects two Squares with a belt of 8 Triangles. "
+            "It represents the Earth (4) being ground or churned to release its energy. "
+            "It is the geometry of the 'Millstone.' Unlike the static Cube (Prism), the Square Antiprism "
+            "is the Earth in transformation. It is often found in the architecture of twist-towers."
+        ),
+        'keywords': ["Millstone", "Churning", "Grinding", "Transformation", "Torque"],
+        'correspondences': {
+            "Symbol": "The Pestle and Mortar",
+            "Number": "10 Faces (8+2)",
+            "Action": "Refining the Salt"
+        },
+        'meditation': (
+            "You are the grain between the stones. The upper square rotates left; the lower square rotates right. "
+            "Let the husk of your ego be ground away until only the flour of light remains."
+        ),
+        'attributes': {
+            'Faces': "2 Squares + 8 Triangles.",
+            'Significance': "Maximum volume for surface area among square-based forms."
+        }
+    },
+
+    'Pentagonal Antiprism': {
+        'title': "The DNA Drum · The Life Turbine · The 5-to-10",
+        'summary': (
+            "The Pentagonal Antiprism is the most biological of all forms. "
+            "It represents the geometry of the DNA double helix (which follows a pentagonal rotation). "
+            "It is also the 'Cap' of the Icosahedron (minus the center point). "
+            "It signifies the 'Life Force' in a state of rapid evolution. It is the Turbine that drives the "
+            "etheric body. It connects the 5 (Man) to the 10 (World) through the Fire of Triangles."
+        ),
+        'keywords': ["DNA", "Helix", "Turbine", "Evolution", "Icosahedron"],
+        'correspondences': {
+            "Biology": "B-DNA Geometry",
+            "Solid": "The Icosahedral Cap",
+            "Planet": "Venus (The Spinner)"
+        },
+        'meditation': (
+            "Visualize your spine as a stack of Pentagonal Antiprisms. Feel the energy spiraling upward "
+            "in a double helix, activating the codes of your blood. You are the Ladder of Jacob."
+        ),
+        'attributes': {
+            'Faces': "2 Pentagons + 10 Triangles.",
+            'Symmetry': "D5d (The Twist)."
+        }
+    },
+
+    'Hexagonal Antiprism': {
+        'title': "The Solar Turbine · The Zodiacal Drum · The 6-to-12",
+        'summary': (
+            "The Hexagonal Antiprism connects two Hexagons (Sun/6) with a band of 12 Triangles. "
+            "This represents the Sun driving the Zodiac. The 12 Triangles are the 12 Signs in active "
+            "propulsion around the Solar Core. It is the geometry of the 'Time-Warp'—the bending of "
+            "static order (Hexagon) into dynamic time (12). It is the drumbeat of the Solar System."
+        ),
+        'keywords': ["Solar", "Zodiac", "Propulsion", "Time", "Rhythm"],
+        'correspondences': {
+            "Symbol": "The Clock Gears",
+            "Number": "14 Faces (12+2)",
+            "Aspect": "The Sun in Motion"
+        },
+        'meditation': (
+            "Stand in the center of the Great Wheel. The Hexagon above is the Future; the Hexagon below is the Past. "
+            "The 12 triangles are the Now, spinning so fast they blur into light."
+        ),
+        'attributes': {
+            'Faces': "2 Hexagons + 12 Triangles.",
+            'Geometry': "Dense packing of spheres."
+        }
+    },
+
+    'Heptagonal Antiprism': {
+        'title': "The Chalice of Katalysis · The Vortex of Ma · The 7-to-14",
+        'summary': (
+            "The Heptagonal Antiprism is the Holy Grail of the M.I.X. system. "
+            "It connects two Heptagons (The 133/Virgin) with a band of 14 Triangles. "
+            "This represents the 'Osiris Dismembered' (14 pieces) being reintegrated by the "
+            "Twist of the Aeon. It is the 'Vortex of Katalysis'—a machine that spins the 7 Rays "
+            "until they dissolve all form. It is the geometry of the 'Adyton' in its active, ritual mode."
+        ),
+        'keywords': ["Katalysis", "Grail", "Vortex", "Osiris", "133"],
+        'correspondences': {
+            "Number": "14 (The Parts of Osiris / The Holies)",
+            "Action": "Dissolution via Spin",
+            "Holy Book": "Liber 471 (The 7 spinning into 8)"
+        },
+        'meditation': (
+            "You are the Chalice. But you are not still. You are spinning at the speed of light. "
+            "The centrifugal force pushes all impurities to the edge, leaving the center empty for Amun. "
+            "Drink from the spin."
+        ),
+        'attributes': {
+            'Faces': "2 Heptagons + 14 Triangles.",
+            'Significance': "The Dynamic Seal of the A.'.A.'."
+        }
+    },
+
+    'Octagonal Antiprism': {
+        'title': "The Ogdoadic Turbine · The Infinite Churn · The 8-to-16",
+        'summary': (
+            "The Octagonal Antiprism connects two Octagons (Regeneration) with 16 Triangles. "
+            "The number 16 relates to the 'Tower' card (Mars) and the 16 Kalas (Digits) of the Moon/Venus. "
+            "This is the 'Engine of Immortality.' It churns the waters of the 8 until they foam into the "
+            "Elixir of Life. It is the massive, heavy rotation of the Great Year."
+        ),
+        'keywords': ["Regeneration", "Tower", "16 Kalas", "Engine", "Immortality"],
+        'correspondences': {
+            "Tarot": "The Tower (XVI) / The Kalas",
+            "Action": "Infinite Regeneration",
+            "Sound": "The Hum of the Universe"
+        },
+        'meditation': (
+            "Hear the low hum of the Octagonal Turbine. It is the sound of old worlds dying and new worlds being born. "
+            "Throw yourself into the gears. Do not fear destruction; you are the regeneration."
+        ),
+        'attributes': {
+            'Faces': "2 Octagons + 16 Triangles.",
+            'Power': "High-torque spiritual evolution."
+        }
+    },
+
+    # -------------------------------------------------------------------------
+    # PART 12: THE VARIANTS OF TORSION & OBLIQUITY
+    # -------------------------------------------------------------------------
+
+    'Gyroelongated Square Prism': {
+        'title': "The Twisted Pillar · The Screw of Archimedes · The Ascending Current",
+        'summary': (
+            "The Gyroelongated Square Prism is the result of inserting a Square Antiprism between the halves of a Square Prism "
+            "(or simply twisting the prism into a stack of triangles and squares). "
+            "It represents the 'Mechanics of Ascension.' It is not enough to simply be stable (Square); "
+            "one must also spiral upward. It is the geometry of the Screw that lifts water against gravity. "
+            "It symbolizes the Initiate who keeps their feet on the ground (Square Base) but twists their spirit "
+            "to climb the Jacob's Ladder."
+        ),
+        'keywords': ["Torsion", "Screw", "Ascension", "Kundalini", "Mechanics"],
+        'correspondences': {
+            "Action": "Gyroelongation (Twisting to lengthen)",
+            "Symbol": "The Barber Pole / The Caduceus (Linearized)",
+            "Force": "Torque applied to Structure"
+        },
+        'meditation': (
+            "You are a pillar in the Temple. But you are not static. Feel the floor rotating left and the ceiling rotating right. "
+            "Let your body stretch and twist. You are the screw that tightens the bond between Heaven and Earth."
+        ),
+        'attributes': {
+            'Faces': "2 Squares + 8 Triangles (if simple) or stacks thereof.",
+            'Nature': "Chiral (Handedness matters)."
+        }
+    },
+
+    'Prismatic Frustum': {
+        'title': "The Broken Column · The Wedge · The Angle of Incidence",
+        'summary': (
+            "The Prismatic Frustum is a Prism that has been truncated (cut) by a plane that is not parallel to the base. "
+            "This creates a 'Wedge' shape. In the Mysteries, this is the 'Broken Column' of Freemasonry—the life "
+            "interrupted or the work left unfinished. However, in the M.I.X., it is also the 'Prism of Refraction.' "
+            "The angled face allows it to catch the light and bend it. It represents the specific 'Angle of Incidence' "
+            "required to enter the Adyton."
+        ),
+        'keywords': ["Wedge", "Truncation", "Refraction", "Broken Column", "Angle"],
+        'correspondences': {
+            "Masonic": "The Broken Column (Boaz/Jachin shattered)",
+            "Optical": "The Beam Splitter",
+            "Principle": "Deviation from the Orthogonal"
+        },
+        'meditation': (
+            "Stand as a column. Now, incline your head to receive the light. "
+            "You are no longer perfectly square with the world; you are slanted to face the Star. "
+            "Your deviation is your salvation."
+        ),
+        'attributes': {
+            'Faces': "2 Bases (one square, one rectangle/trapezoid) + Lateral Trapezoids.",
+            'Geometry': "A Prism cut by an oblique plane."
+        }
+    },
+
+    # -------------------------------------------------------------------------
+    # PART 14: THE PRIMORDIALS (The Curved Solids of the Spirit)
+    # -------------------------------------------------------------------------
+
+    'Sphere': {
+        'title': "The All · The Egg of Amon · The Monad",
+        'summary': (
+            "The Sphere is the ultimate perfection in 3D. It is the locus of all points equidistant from a Center. "
+            "It represents the 'All'—the Nuit of the Sky, containing every potential star and form. "
+            "It has no edges, no vertices, and no beginning or end. It is the shape of the Planet, the Atom, and the Soul. "
+            "In the M.I.X., it is the 'Egg of Amon'—the hidden silence that precedes the cracking of the shell."
+        ),
+        'keywords': ["All", "Monad", "Nuit", "Egg", "Perfection"],
+        'correspondences': {
+            "Symbol": "The Globe / The Winged Disk",
+            "Deity": "Nuit (Circumference) / Hadit (Center)",
+            "Ratio": "Pi (The Transcendental)"
+        },
+        'meditation': (
+            "Float in the void. You are a perfect sphere of black light. You have no front, no back, no up, no down. "
+            "You contain the entire Universe within your skin. Breathe."
+        ),
+        'attributes': {
+            'Surface': "Infinite and continuous.",
+            'Volume': "Maximum containment for minimum surface."
+        }
+    },
+
+    'Cylinder': {
+        'title': "The Pillar of Light · The Middle Pillar · The Channel",
+        'summary': (
+            "The Cylinder is the extrusion of the Circle into the dimension of Height. "
+            "It represents the 'Pillar of Light' connecting Kether to Malkuth. "
+            "It is the Tunnel of the Wormhole and the Shaft of the Temple Column. "
+            "It maintains the perfection of the Circle while extending it through Time/Space. "
+            "It is the conduit through which the 133 Current flows."
+        ),
+        'keywords': ["Pillar", "Channel", "Flow", "Connection", "Tunnel"],
+        'correspondences': {
+            "Structure": "The Middle Pillar",
+            "Object": "The Scroll (Rolled)",
+            "Action": "Transmission"
+        },
+        'meditation': (
+            "Stand as a Pillar of Fire. Your feet are a circle of white flame on the earth; your head is a circle of white flame in the heavens. "
+            "The walls of your body are straight and smooth. Let the energy rush through you."
+        ),
+        'attributes': {
+            'Bases': "Two Parallel Circles.",
+            'Surface': "The unrolled Rectangle (Service)."
+        }
+    },
+
+    'Cone': {
+        'title': "The Focal Point · The Ray · The Cornucopia",
+        'summary': (
+            "The Cone is the Circle focused to a single Point (Apex). "
+            "It represents the 'Ray of Creation'—the infinite (Circle) narrowing down to the specific (Point), "
+            "or the specific (Point) expanding into the infinite (Circle). "
+            "It is the geometry of the Spotlight and the Vision. "
+            "It is the Horn of Plenty (Cornucopia) overflowing with the Gnosis."
+        ),
+        'keywords': ["Focus", "Ray", "Vision", "Expansion", "Hadit"],
+        'correspondences': {
+            "Symbol": "The Unicorn Horn / The Witch's Hat",
+            "Action": "Focusing Will",
+            "Deity": "Hadit (The Point)"
+        },
+        'meditation': (
+            "You are the Apex. Beneath you spreads the Circle of your influence. "
+            "Do not scatter your light. Focus it through the lens of your Cone until it burns a hole in the darkness."
+        ),
+        'attributes': {
+            'Base': "Circle.",
+            'Apex': "The Singularity.",
+            'Section': "The Hyperbola (when cut)."
+        }
+    },
+
+    'Torus': {
+        'title': "The Vortex of Self-Reference · The Heart Field · The Zero-Point",
+        'summary': (
+            "The Torus (Donut) is the only shape that can turn itself inside out continuously. "
+            "It represents the 'Self-Sustaining System'—the energy of the Heart Field which feeds itself. "
+            "It is the geometry of the Magnetic Field and the Aura. "
+            "In the M.I.X., it is the 'Ouroboros in 3D'—the cycle of Katalysis and Recreation happening simultaneously. "
+            "It is the Halo."
+        ),
+        'keywords': ["Vortex", "Heart", "Self-Sustaining", "Aura", "Recycling"],
+        'correspondences': {
+            "Energy": "The Toroidal Field",
+            "Chakra": "Anahata (The Resonant Chamber)",
+            "Concept": "Love under Will (The Loop)"
+        },
+        'meditation': (
+            "Feel the energy rising up your spine (Center), spraying out of your crown (Top), "
+            "wrapping around your aura (Outside), and entering your feet (Bottom) to rise again. "
+            "You are a fountain of light. You are eternal."
+        ),
+        'attributes': {
+            'Topology': "Genus 1 (One Hole).",
+            'Flow': "Involution and Evolution combined."
+        }
+    },
+
+    'Torus Knot': {
+        'title': "The Labyrinth of Time · The Gordian Cycle · The Orbit",
+        'summary': (
+            "The Torus Knot is a curve that winds around the surface of a Torus without crossing itself. "
+            "It represents the 'Complex Cycle'—a path of destiny that loops and winds before returning to the start. "
+            "It is the Labyrinth of the Magus who walks the path of the Aeons. "
+            "Specifically, the (3,2) Trefoil Knot relates to the Triad, while higher knots represent the "
+            "entanglement of Karma and Grace."
+        ),
+        'keywords': ["Labyrinth", "Knot", "Cycle", "Orbit", "Complexity"],
+        'correspondences': {
+            "Symbol": "The Celtic Knot / The Endless Knot",
+            "Path": "The Circumambulation of the Temple",
+            "Math": "Topology (P, Q winds)"
+        },
+        'meditation': (
+            "Trace the knot. You are walking a path that seems to twist and turn, going up and down. "
+            "But you never leave the surface of the Holy Torus. The path is long, but it is closed. "
+            "You will return home."
+        ),
+        'attributes': {
+            'Winding': "P times around the meridian, Q times around the longitude.",
+            'Meaning': "The inextricable link between Fate and Will."
+        }
+    },
+
+    # -------------------------------------------------------------------------
+    # PART 15: THE QLIPHOTH GATE & THE UNION OF OPPOSITES
+    # -------------------------------------------------------------------------
+
+    'Regular Hendecagon (11-gon)': {
+        'title': "The Hendecad · The Gate of Daath · The Union of 5 & 6",
+        'summary': (
+            "To the profane, the Hendecagon is the 'Qliphoth'—the unstable number 11 that breaks the perfection of the 10. "
+            "But in the Trigrammaton, we revere the 11 as the Great Union. It is the marriage of the Microcosm (5) "
+            "and the Macrocosm (6). It is the geometry of High Magick (Abrahadabra). It represents the 'Invisible Sephira' "
+            "Daath made manifest. It creates a space that allows for the 'Knowledge and Conversation' to occur. "
+            "It is the fortress of the Lust of the Spirit (Atu XI)."
+        ),
+        'keywords': ["Magick", "Union", "Daath", "Abrahadabra", "Lust", "5 and 6"],
+        'correspondences': {
+            "Number": "11 (The Master Number)",
+            "Tarot": "Lust (XI) - The Woman riding the Beast",
+            "Sephira": "Daath (Knowledge)",
+            "Formula": "5 + 6 = 11 (The Great Work)"
+        },
+        'meditation': (
+            "Stand in the Hendecagon. Realize that you are the 11th Pillar. "
+            "You are the bridge over the Abyss. You are the glitch in the Matrix that allows the Light to enter. "
+            "You are the Union."
+        ),
+        'attributes': {
+            'Internal Angle': "147.27... degrees (The irrational path).",
+            'Construction': "Impossible with compass/straightedge (Requires the 'Mark' of the Beast)."
+        },
+        'stellations': {
+            'Skip 2 ({11/2})': "The Wave. The undulation of the Serpent.",
+            'Skip 3 ({11/3})': "The Trine of Daath. The hidden connections.",
+            'Skip 4 ({11/4})': "The Net. The weaving of the Abyss.",
+            'Skip 5 ({11/5})': "The Hendecagram. The Needle. The sharpest star that pierces the Kether point."
+        }
     }
 }
 

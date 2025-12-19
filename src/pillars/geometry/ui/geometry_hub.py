@@ -19,6 +19,7 @@ from .experimental_star_window import ExperimentalStarWindow
 from .figurate_3d_window import Figurate3DWindow
 from .geometry_definitions import CATEGORY_DEFINITIONS, SOLID_VIEWER_CONFIG
 from .geometry3d.window3d import Geometry3DWindow
+from ..services.polygon_shape import RegularPolygonShape
 
 
 class GeometryHub(QWidget):
@@ -544,7 +545,7 @@ class GeometryHub(QWidget):
                 hint.setStyleSheet("color: #94a3b8; font-size: 9.5pt; font-style: italic;")
                 layout.addWidget(hint)
 
-        if action_widget and not description:
+        if action_widget:
             action_widget.setCursor(Qt.CursorShape.PointingHandCursor)
             action_widget.setStyleSheet(self._primary_button_style())
             layout.addWidget(action_widget)
@@ -577,23 +578,36 @@ class GeometryHub(QWidget):
         """Show a dialog with the esoteric meaning of the shape."""
         dialog = QDialog(self)
         dialog.setWindowTitle(f"Wisdom of the {title}")
-        dialog.setMinimumWidth(500)
+        dialog.setMinimumWidth(550)
+        dialog.setMinimumHeight(600)
         dialog.setStyleSheet("background-color: #f8fafc;")
         
-        layout = QVBoxLayout(dialog)
-        layout.setSpacing(16)
-        layout.setContentsMargins(24, 24, 24, 24)
+        main_layout = QVBoxLayout(dialog)
+        main_layout.setSpacing(0)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        
+        # Header (Fixed)
+        header_widget = QWidget()
+        header_widget.setStyleSheet("background-color: #ffffff; border-bottom: 1px solid #e2e8f0;")
+        header_layout = QVBoxLayout(header_widget)
+        header_layout.setContentsMargins(24, 24, 24, 16)
         
         header = QLabel(f"The {title}")
-        header.setStyleSheet("color: #1e293b; font-size: 20pt; font-weight: 700; font-family: 'Cinzel', serif;")
+        header.setStyleSheet("color: #1e293b; font-size: 22pt; font-weight: 700; font-family: 'Cinzel', serif; background: transparent;")
         header.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(header)
+        header_layout.addWidget(header)
+        main_layout.addWidget(header_widget)
+
+        # Scrollable Content Area
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setStyleSheet("QScrollArea { border: none; background: transparent; }")
         
-        # Decorative divider
-        line = QFrame()
-        line.setFrameShape(QFrame.Shape.HLine)
-        line.setStyleSheet("color: #cbd5e1;")
-        layout.addWidget(line)
+        scroll_content = QWidget()
+        scroll_content.setStyleSheet("background: transparent;")
+        layout = QVBoxLayout(scroll_content)
+        layout.setSpacing(16)
+        layout.setContentsMargins(24, 16, 24, 24)
         
         base_style = """
             color: #334155; 
@@ -603,8 +617,7 @@ class GeometryHub(QWidget):
         """
 
         if isinstance(description, dict):
-            # Structured Definition
-            # 1. Title/Summary
+            # 1. Summary
             summary = description.get('summary', '')
             if summary:
                 lbl_summary = QLabel(summary)
@@ -612,7 +625,7 @@ class GeometryHub(QWidget):
                 lbl_summary.setStyleSheet(base_style + "font-style: italic; padding-bottom: 12px;")
                 layout.addWidget(lbl_summary)
 
-            # 2. Stellations (The User's Request)
+            # 2. Stellations
             stellations = description.get('stellations', {})
             if stellations:
                 st_header = QLabel("The Harmonic Stars (Stellations)")
@@ -620,34 +633,25 @@ class GeometryHub(QWidget):
                 layout.addWidget(st_header)
                 for key, val in stellations.items():
                     if isinstance(val, dict):
-                        # Rich Stellation Schema (Part 3)
                         s_name = val.get('name', key)
                         s_desc = val.get('description', '')
                         s_magic = val.get('magical_function', '')
-
-                        # Title Line
                         row_text = f"<b style='color:#5b21b6;'>{key} — {s_name}</b>"
                         lbl_st = QLabel(row_text)
                         lbl_st.setWordWrap(True)
                         lbl_st.setStyleSheet("font-size: 11pt; margin-left: 12px; margin-top: 6px; color: #334155;")
                         layout.addWidget(lbl_st)
-                        
-                        # Body
                         if s_desc:
                             lbl_desc = QLabel(s_desc)
                             lbl_desc.setWordWrap(True)
                             lbl_desc.setStyleSheet("font-size: 10pt; margin-left: 20px; color: #475569;")
                             layout.addWidget(lbl_desc)
-                            
-                        # Magic Function
                         if s_magic:
                             lbl_mag = QLabel(f"<i>Use for: {s_magic}</i>")
                             lbl_mag.setWordWrap(True)
                             lbl_mag.setStyleSheet("font-size: 10pt; margin-left: 20px; color: #6d28d9;")
                             layout.addWidget(lbl_mag)
-
                     else:
-                        # Legacy/Simple String
                         row_text = f"<b style='color:#5b21b6;'>{key}</b>: {val}"
                         lbl_st = QLabel(row_text)
                         lbl_st.setWordWrap(True)
@@ -660,9 +664,6 @@ class GeometryHub(QWidget):
                 corr_header = QLabel("Correspondences")
                 corr_header.setStyleSheet("color: #059669; font-weight: 700; font-size: 11pt; margin-top: 8px;")
                 layout.addWidget(corr_header)
-                
-                # Render as a grid or comma list? Let's do a flowing text or grid.
-                # Let's try a flowing list for compactness.
                 corr_text = " • ".join([f"<b>{k}</b>: {v}" for k, v in correspondences.items()])
                 lbl_corr = QLabel(corr_text)
                 lbl_corr.setWordWrap(True)
@@ -688,34 +689,38 @@ class GeometryHub(QWidget):
                 med_header = QLabel("Meditation")
                 med_header.setStyleSheet("color: #9333ea; font-weight: 700; font-size: 11pt; margin-top: 8px;")
                 layout.addWidget(med_header)
-                
                 lbl_med = QLabel(meditation)
                 lbl_med.setWordWrap(True)
                 lbl_med.setStyleSheet("""
-                    font-size: 11pt; 
-                    font-style: italic; 
-                    color: #581c87; 
-                    background-color: #f3e8ff; 
-                    padding: 10px; 
-                    border-radius: 6px;
+                    font-size: 11pt; font-style: italic; color: #581c87; 
+                    background-color: #f3e8ff; padding: 12px; border-radius: 8px;
                     border: 1px solid #d8b4fe;
                 """)
                 layout.addWidget(lbl_med)
-                
         else:
-            # Fallback for simple string
             content = QLabel(str(description))
             content.setWordWrap(True)
             content.setStyleSheet(base_style + "padding: 10px;")
             layout.addWidget(content)
         
         layout.addStretch()
+        scroll.setWidget(scroll_content)
+        main_layout.addWidget(scroll)
 
+        # Footer (Fixed)
+        footer_widget = QWidget()
+        footer_widget.setStyleSheet("background-color: #f1f5f9; border-top: 1px solid #e2e8f0;")
+        footer_layout = QHBoxLayout(footer_widget)
+        footer_layout.setContentsMargins(24, 12, 24, 12)
+        
         close_btn = QPushButton("Meditate")
         close_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         close_btn.setStyleSheet(self._primary_button_style())
         close_btn.clicked.connect(dialog.accept)
-        layout.addWidget(close_btn, 0, Qt.AlignmentFlag.AlignCenter)
+        footer_layout.addStretch()
+        footer_layout.addWidget(close_btn)
+        footer_layout.addStretch()
+        main_layout.addWidget(footer_widget)
         
         dialog.exec()
 

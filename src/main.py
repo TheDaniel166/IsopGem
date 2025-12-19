@@ -22,6 +22,7 @@ from pillars.astrology.ui import AstrologyHub
 from pillars.tq.ui import TQHub
 from pillars.adyton.ui import AdytonHub
 from pillars.correspondences.ui import CorrespondenceHub
+from pillars.time_mechanics.ui import TimeMechanicsHub
 
 
 class IsopGemMainWindow(QMainWindow):
@@ -94,6 +95,7 @@ class IsopGemMainWindow(QMainWindow):
         self._init_tq_pillar()
         self._init_adyton_pillar()
         self._init_correspondences_pillar()
+        self._init_time_mechanics_pillar()
         
         # Connect tab change to raise all tool windows
         self.tabs.currentChanged.connect(self.window_manager.raise_all_windows)
@@ -140,6 +142,7 @@ class IsopGemMainWindow(QMainWindow):
             ("🔺", "TQ", "Ternary quadsets"),
             ("🏛️", "Adyton", "Inner sanctuary"),
             ("💎", "Emerald", "Correspondences"),
+            ("⏳", "Time", "Time Mechanics"),
         ]
         
         for i, (icon, name, tooltip) in enumerate(nav_items):
@@ -283,6 +286,7 @@ class IsopGemMainWindow(QMainWindow):
             "🔺 TQ Analysis",
             "🏛️ Adyton Sanctuary",
             "💎 Emerald Tablet",
+            "⏳ Time Mechanics",
         ]
         if 0 <= index < len(titles):
             self.header_title.setText(titles[index])
@@ -328,6 +332,11 @@ class IsopGemMainWindow(QMainWindow):
         """Initialize the Emerald Tablet pillar."""
         correspondence_hub = CorrespondenceHub(self.window_manager)
         self.tabs.addTab(correspondence_hub, "Emerald Tablet")
+
+    def _init_time_mechanics_pillar(self):
+        """Initialize the Time Mechanics pillar."""
+        time_hub = TimeMechanicsHub(self.window_manager)
+        self.tabs.addTab(time_hub, "Time Mechanics")
     
     def closeEvent(self, a0: QCloseEvent | None):
         """Handle main window close event."""

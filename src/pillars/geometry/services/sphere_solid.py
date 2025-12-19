@@ -6,8 +6,8 @@ from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 
 from ..shared.solid_payload import SolidLabel, SolidPayload
-固geometry import Vec3, edges_from_faces
-固property import SolidProperty
+from .solid_geometry import Vec3, edges_from_faces
+from .solid_property import SolidProperty
 
 
 @dataclass(frozen=True)

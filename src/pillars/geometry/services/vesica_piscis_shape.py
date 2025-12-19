@@ -208,10 +208,10 @@ class VesicaPiscisShape(GeometricShape):
 
         labels.append((self._fmt("r", radius), -radius * 0.2, radius * 0.1))
         if separation is not None:
-            labels.append((self._fmt("d", separation), 0, -0.25))
+            labels.append((self._fmt("d", separation), 0, -0.3))
         area = self.properties["lens_area"].value
         if area is not None:
-            labels.append((self._fmt("A", area), 0, 0))
+            labels.append((self._fmt("A", area), 0, 0.2))
         angle = self.properties["apex_angle"].value
         if angle is not None:
             label_y = radius * 0.6 if separation else radius * 0.5

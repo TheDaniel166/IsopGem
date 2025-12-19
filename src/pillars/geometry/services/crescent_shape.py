@@ -264,7 +264,7 @@ class CrescentShape(GeometricShape):
 
         crescent_area = self.properties["crescent_area"].value
         if crescent_area is not None:
-            labels.append((self._fmt("A", crescent_area), -outer * 0.3, 0))
+            labels.append((self._fmt("A", crescent_area), -outer * 0.3, 0.2))
 
         return labels
 

@@ -205,7 +205,7 @@ class AnnulusShape(GeometricShape):
 
         area = self.properties["area"].value
         if area is not None:
-            labels.append((self._fmt("A", area), 0, -0.2))
+            labels.append((self._fmt("A", area), 0, 0.2))
 
         ratio = self.properties["radius_ratio"].value
         if ratio is not None:

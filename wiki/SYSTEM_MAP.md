@@ -15,6 +15,7 @@ The following Grimoires detail the inner workings of each Sphere:
 *   **[The Gematria Protocol](pillars/Gematria_Protocol.md)**: The Tongue of God. Transforms text into number using sacred ciphers (Hebrew, English, Greek, Runes).
 *   **[The Geometry Engine](pillars/Geometry_Engine.md)**: The Weaver of Form. Renders the sacred shapes, from the Vesica Piscis to the Platonic Solids.
 *   **[The TQ Engine](pillars/TQ_Engine.md)**: The Three-Fold Kabbalah. Implements the *Trigrammaton Qabalah* logic of serial operators and numeric reduction.
+*   **[Time Mechanics](pillars/Time_Mechanics.md)**: The Master of Cycles. Implements the harmonic filters of time, including the Tzolkin and future calendar systems.
 
 ## The Nervous System (Signal Bus)
 The Pillars communicate via a central **Signal Bus**. This decouples the organs, ensuring that if one fails, the body survives.

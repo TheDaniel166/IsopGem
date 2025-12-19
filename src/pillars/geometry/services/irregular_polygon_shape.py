@@ -137,7 +137,7 @@ class IrregularPolygonShape(GeometricShape):
         labels = []
         cx, cy = _polygon_centroid(tuple(self._points))
         area = self.properties['area'].value
-        labels.append((f"A = {area:.2f}", cx, cy))
+        labels.append((f"A = {area:.2f}", cx, cy + 0.2))
         
         # Vertex labels?
         for i, (x, y) in enumerate(self._points):

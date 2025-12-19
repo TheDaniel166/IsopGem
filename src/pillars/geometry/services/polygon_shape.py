@@ -217,13 +217,13 @@ class RegularPolygonShape(GeometricShape):
         
         # Diagonals
         
-        # Area label (center)
+        # Area label (shifted up)
         area = self.get_property('area')
         if area is not None:
-            labels.append((f'A = {area:.4f}'.rstrip('0').rstrip('.'), 0, 0))
+            labels.append((f'A = {area:.4f}'.rstrip('0').rstrip('.'), 0, 0.2))
         
-        # Number of sides label
-        labels.append((f'n = {self.num_sides}', 0, -0.2))
+        # Number of sides label (shifted down)
+        labels.append((f'n = {self.num_sides}', 0, -0.3))
         
         return labels
 

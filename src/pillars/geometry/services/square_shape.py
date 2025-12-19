@@ -102,9 +102,9 @@ class SquareShape(GeometricShape):
         # Side label
         labels.append((f's = {side:.4f}'.rstrip('0').rstrip('.'), 0, -half - 0.3))
         
-        # Area label (center)
+        # Area label (shifted up)
         area = self.get_property('area')
-        labels.append((f'A = {area:.4f}'.rstrip('0').rstrip('.'), 0, 0))
+        labels.append((f'A = {area:.4f}'.rstrip('0').rstrip('.'), 0, 0.2))
         
         # Diagonal label
         diagonal = self.get_property('diagonal')
@@ -259,10 +259,10 @@ class RectangleShape(GeometricShape):
         # Width label
         labels.append((f'w = {width:.4f}'.rstrip('0').rstrip('.'), -half_l - 0.3, 0))
         
-        # Area label (center)
+        # Area label (shifted up)
         area = self.get_property('area')
         if area:
-            labels.append((f'A = {area:.4f}'.rstrip('0').rstrip('.'), 0, 0))
+            labels.append((f'A = {area:.4f}'.rstrip('0').rstrip('.'), 0, 0.2))
         
         # Diagonal label
         diagonal = self.get_property('diagonal')

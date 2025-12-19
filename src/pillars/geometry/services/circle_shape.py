@@ -184,9 +184,9 @@ class CircleShape(GeometricShape):
         diameter = self.get_property('diameter')
         labels.append((f'd = {diameter:.4f}'.rstrip('0').rstrip('.'), 0, radius + 0.2))
         
-        # Area label (in center)
+        # Area label (shifted up)
         area = self.get_property('area')
-        labels.append((f'A = {area:.4f}'.rstrip('0').rstrip('.'), 0, -0.3))
+        labels.append((f'A = {area:.4f}'.rstrip('0').rstrip('.'), 0, 0.2))
         
         # Circumference label (outside bottom)
         circ = self.get_property('circumference')

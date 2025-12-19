@@ -347,7 +347,7 @@ class EquilateralTriangleShape(GeometricShape):
         
         # Area label
         area = self.get_property('area')
-        labels.append((f'A = {area:.4f}'.rstrip('0').rstrip('.'), 0, 0))
+        labels.append((f'A = {area:.4f}'.rstrip('0').rstrip('.'), 0, 0.2))
         
         return labels
 
@@ -695,8 +695,8 @@ class IsoscelesTriangleShape(GeometricShape):
             return []
         centroid = _centroid(self._solution.points)
         labels = [
-            (f"A = {self._solution.area:.4f}".rstrip('0').rstrip('.'), centroid[0], centroid[1]),
-            (f"P = {self._solution.perimeter:.4f}".rstrip('0').rstrip('.'), centroid[0], centroid[1] - 0.3),
+            (f"A = {self._solution.area:.4f}".rstrip('0').rstrip('.'), centroid[0], centroid[1] + 0.2),
+            (f"P = {self._solution.perimeter:.4f}".rstrip('0').rstrip('.'), centroid[0], centroid[1] - 0.2),
         ]
         base = self.properties['base'].value or 0.0
         labels.append((f"b = {base:.4f}".rstrip('0').rstrip('.'), base / 2, -0.4))
@@ -1039,8 +1039,8 @@ class GoldenTriangleShape(GeometricShape):
             return []
         centroid = _centroid(self._solution.points)
         return [
-            (f"φ = {self.PHI:.4f}", centroid[0], centroid[1]),
-            (f"A = {self._solution.area:.4f}".rstrip('0').rstrip('.'), centroid[0], centroid[1] - 0.3),
+            (f"φ = {self.PHI:.4f}", centroid[0], centroid[1] + 0.2),
+            (f"A = {self._solution.area:.4f}".rstrip('0').rstrip('.'), centroid[0], centroid[1] - 0.2),
         ]
 
 
@@ -1232,6 +1232,6 @@ class TriangleSolverShape(GeometricShape):
             return []
         centroid = _centroid(self._solution.points)
         return [
-            (f"A = {self._solution.area:.4f}".rstrip('0').rstrip('.'), centroid[0], centroid[1]),
-            (f"P = {self._solution.perimeter:.4f}".rstrip('0').rstrip('.'), centroid[0], centroid[1] - 0.3),
+            (f"A = {self._solution.area:.4f}".rstrip('0').rstrip('.'), centroid[0], centroid[1] + 0.2),
+            (f"P = {self._solution.perimeter:.4f}".rstrip('0').rstrip('.'), centroid[0], centroid[1] - 0.2),
         ]
