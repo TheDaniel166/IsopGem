@@ -11,6 +11,7 @@ from .current_transit_window import CurrentTransitWindow
 from .planetary_positions_window import PlanetaryPositionsWindow
 from .neo_aubrey_window import NeoAubreyWindow
 from .venus_rose_window import VenusRoseWindow
+from .differential_natal_window import DifferentialNatalWindow
 
 
 class AstrologyHub(QWidget):
@@ -63,6 +64,7 @@ class AstrologyHub(QWidget):
         # Tools grid
         tools = [
             ("☉", "Natal Chart", "Generate birth charts with planetary placements", "#8b5cf6", self._open_natal_chart),
+            ("Δ", "Differential", "Map planets to Conrune pairs", "#06b6d4", self._open_differential_chart),
             ("↻", "Transits", "View current planetary transits in real-time", "#3b82f6", self._open_transit_viewer),
             ("♈", "Positions", "Ephemeris table of planetary positions", "#10b981", self._open_planetary_positions),
             ("◐", "Eclipse Clock", "Neo-Aubrey eclipse timing calculator", "#f97316", self._open_neo_aubrey),
@@ -196,4 +198,13 @@ class AstrologyHub(QWidget):
             "astrology_venus_rose",
             VenusRoseWindow,
             allow_multiple=False,
+        )
+
+    def _open_differential_chart(self) -> None:
+        """Launch the Differential Natal Chart window."""
+        self.window_manager.open_window(
+            "astrology_differential_chart",
+            DifferentialNatalWindow,
+            allow_multiple=False,
+            window_manager=self.window_manager,
         )

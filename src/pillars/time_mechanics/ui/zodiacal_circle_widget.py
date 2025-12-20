@@ -96,6 +96,11 @@ class ZodiacalCircleWidget(QWidget):
         self._show_reversal = False
         self.c_reversal = QColor("#FF69B4")  # Hot Pink for reversal line
         
+        # Center perspective mode
+        self._center_perspective = False
+        self.c_gold = QColor("#D4AF37")  # Gold for selected point line
+        self.c_silver = QColor("#C0C0C0")  # Silver for divisor lines
+        
         # Load Astronomicon font
         self._astro_font_family = self._load_astronomicon_font()
         
@@ -141,7 +146,20 @@ class ZodiacalCircleWidget(QWidget):
                     if pair.is_prime_ditrune:
                         tooltip = f"⚡ Prime Ditrune Gate\n{pair.gregorian_date}\nDitrune: {pair.ditrune} | Contrune: {pair.contrune}"
                     else:
-                        tooltip = f"{pair.zodiacal} ({pair.gregorian_date})\nDitrune: {pair.ditrune} | Contrune: {pair.contrune}"
+                        # Convert letter to sign info
+                        sign_letter = pair.sign_letter
+                        sign_info = ZODIAC_SIGNS.get(sign_letter, ("Unknown", 0)) if sign_letter else ("Unknown", 0)
+                        sign_name = sign_info[0]
+                        # Unicode zodiac symbols
+                        unicode_symbols = {
+                            'A': '♈', 'B': '♉', 'C': '♊', 'D': '♋',
+                            'E': '♌', 'F': '♍', 'G': '♎', 'H': '♏',
+                            'I': '♐', 'J': '♑', 'K': '♒', 'L': '♓'
+                        }
+                        symbol = unicode_symbols.get(sign_letter, "") if sign_letter else ""
+                        day = pair.sign_day if pair.sign_day is not None else 0
+                        zodiac_display = f"{day}° {symbol} {sign_name}"
+                        tooltip = f"{zodiac_display} ({pair.gregorian_date})\nDitrune: {pair.ditrune} | Contrune: {pair.contrune}"
                     QToolTip.showText(event.globalPosition().toPoint(), tooltip, self)
                 
                 self.update()
@@ -211,7 +229,10 @@ class ZodiacalCircleWidget(QWidget):
         
         # Draw divisor relationship lines (if any divisors active and point selected)
         if self._selected_degree and self._active_divisors:
-            self._draw_relationship_lines(p, cx, cy, r_degree_inner * 0.95)
+            if self._center_perspective:
+                self._draw_center_perspective_lines(p, cx, cy, r_degree_inner * 0.95)
+            else:
+                self._draw_relationship_lines(p, cx, cy, r_degree_inner * 0.95)
         
         # Draw reversal pair line if enabled
         if self._selected_degree and self._show_reversal:
@@ -472,6 +493,112 @@ class ZodiacalCircleWidget(QWidget):
                 
                 # Draw small marker at related point
                 p.setBrush(QBrush(color))
+                p.drawEllipse(QPointF(rel_x, rel_y), 5, 5)
+                p.setBrush(Qt.BrushStyle.NoBrush)
+    
+    def set_show_reversal(self, show: bool) -> None:
+        """Toggle showing the reversal pair line."""
+        self._show_reversal = show
+        self.update()
+    
+    def _draw_reversal_line(self, p: QPainter, cx: float, cy: float,
+                            r_line: float) -> None:
+        """Draw line from selected point to its reversal pair."""
+        if not self._selected_degree:
+            return
+        
+        # Get selected pair
+        selected_pair = self._service.get_pair_by_difference(self._selected_degree)
+        if selected_pair is None:
+            return
+        
+        # Get reversal pair
+        reversal_pair = self._service.get_reversal_pair(selected_pair)
+        if reversal_pair is None:
+            return
+        
+        # Get degrees for both
+        selected_deg = self._difference_to_degree(self._selected_degree)
+        reversal_deg = self._difference_to_degree(reversal_pair.difference)
+        
+        if selected_deg is None or reversal_deg is None:
+            return
+        
+        # Calculate positions
+        selected_rad = math.radians(-selected_deg + 90)
+        reversal_rad = math.radians(-reversal_deg + 90)
+        
+        sel_x = cx + math.cos(selected_rad) * r_line
+        sel_y = cy + math.sin(selected_rad) * r_line
+        rev_x = cx + math.cos(reversal_rad) * r_line
+        rev_y = cy + math.sin(reversal_rad) * r_line
+        
+        # Draw the reversal line (dashed, hot pink)
+        pen = QPen(self.c_reversal, 3)
+        pen.setStyle(Qt.PenStyle.DashLine)
+        p.setPen(pen)
+        p.drawLine(QPointF(sel_x, sel_y), QPointF(rev_x, rev_y))
+        
+        # Draw marker at reversal point
+        p.setPen(QPen(self.c_reversal, 2))
+        p.setBrush(QBrush(self.c_reversal))
+        p.drawEllipse(QPointF(rev_x, rev_y), 4, 4)
+        p.setBrush(Qt.BrushStyle.NoBrush)
+    
+    def set_center_perspective(self, enabled: bool) -> None:
+        """Toggle center perspective mode."""
+        self._center_perspective = enabled
+        self.update()
+    
+    def _draw_center_perspective_lines(self, p: QPainter, cx: float, cy: float,
+                                        r_line: float) -> None:
+        """Draw lines from center: gold to selected point, silver to divisor points."""
+        if not self._selected_degree:
+            return
+        
+        # Get the degree of the selected point
+        selected_deg = self._difference_to_degree(self._selected_degree)
+        if selected_deg is None:
+            return
+        
+        # Calculate selected point position
+        selected_rad = math.radians(-selected_deg + 90)
+        sel_x = cx + math.cos(selected_rad) * r_line
+        sel_y = cy + math.sin(selected_rad) * r_line
+        
+        # Draw GOLD line from center to selected point
+        gold_pen = QPen(self.c_gold, 3)
+        p.setPen(gold_pen)
+        p.drawLine(QPointF(cx, cy), QPointF(sel_x, sel_y))
+        
+        # Draw gold marker at selected point
+        p.setBrush(QBrush(self.c_gold))
+        p.drawEllipse(QPointF(sel_x, sel_y), 8, 8)
+        p.setBrush(Qt.BrushStyle.NoBrush)           
+        
+        # Draw SILVER lines from center to all divisor-related points
+        silver_pen = QPen(self.c_silver, 2)
+        p.setPen(silver_pen)
+        
+        divisors = self.DIVISORS_360
+        for divisor in self._active_divisors:
+            if divisor not in divisors:
+                continue
+            
+            _, _, angle = divisors[divisor]
+            
+            for i in range(1, divisor):
+                related_deg = (selected_deg + i * angle) % 360
+                related_rad = math.radians(-related_deg + 90)
+                
+                rel_x = cx + math.cos(related_rad) * r_line
+                rel_y = cy + math.sin(related_rad) * r_line
+                
+                # Silver line from center
+                p.drawLine(QPointF(cx, cy), QPointF(rel_x, rel_y))
+                
+                # Silver marker at point
+                p.setBrush(QBrush(self.c_silver))
                 p.drawEllipse(QPointF(rel_x, rel_y), 5, 5)
                 p.setBrush(Qt.BrushStyle.NoBrush)
 

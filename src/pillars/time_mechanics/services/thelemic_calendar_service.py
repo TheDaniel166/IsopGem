@@ -131,6 +131,30 @@ class ThelemicCalendarService:
         self.ensure_loaded()
         return [p for p in self._all_pairs if p.is_prime_ditrune]
     
+    def search_by_value(self, field: str, value: int) -> List[ConrunePair]:
+        """
+        Search for pairs where a specific field matches the given value.
+        
+        Args:
+            field: One of 'ditrune', 'contrune', or 'difference'
+            value: The value to search for
+            
+        Returns:
+            List of matching ConrunePair objects.
+        """
+        self.ensure_loaded()
+        
+        results = []
+        for pair in self._all_pairs:
+            if field == 'ditrune' and pair.ditrune == value:
+                results.append(pair)
+            elif field == 'contrune' and pair.contrune == value:
+                results.append(pair)
+            elif field == 'difference' and pair.difference == value:
+                results.append(pair)
+        
+        return results
+    
     def difference_to_zodiac_degree(self, difference: int) -> float:
         """
         Convert a Difference value to zodiacal degrees (0-360).
@@ -179,25 +203,85 @@ class ThelemicCalendarService:
         # Each sign is 30 degrees
         return (sign_idx * 30 + day_in_sign) % 360
     
+    def zodiac_degree_to_difference(self, degree: float) -> Optional[int]:
+        """
+        Convert a zodiacal degree (0-360) to a Difference value.
+        
+        This is an approximate reverse lookup - finds the closest matching day.
+        
+        Args:
+            degree: Zodiacal degree (0-360)
+            
+        Returns:
+            Difference value, or None if not found.
+        """
+        self.ensure_loaded()
+        
+        # Normalize degree
+        degree = degree % 360
+        
+        # Find the pair with closest matching zodiacal degree
+        best_diff = None
+        best_distance = 999
+        
+        for diff, pair in self._pairs_by_difference.items():
+            pair_deg = self.difference_to_zodiac_degree(diff)
+            distance = abs(pair_deg - degree)
+            # Handle wraparound at 0/360
+            distance = min(distance, 360 - distance)
+            
+            if distance < best_distance:
+                best_distance = distance
+                best_diff = diff
+        
+        return best_diff
+    
     def get_reversal_pair(self, pair: ConrunePair) -> Optional[ConrunePair]:
         """
-        Find the reversal pair where Ditrune and Contrune are swapped.
+        Find the reversal pair using ternary string reversal.
         
-        For a pair (A, B), finds the pair where ditrune=B and contrune=A.
+        The Reversal is the Y-Mirror: the ternary string reversed (read backwards).
+        Example: Ditrune 12 (ternary "110") reverses to "011" = decimal 4.
         
         Args:
             pair: The original ConrunePair
             
         Returns:
-            The reversal ConrunePair if found, None otherwise.
+            The reversal ConrunePair (pair where Ditrune equals the reversed value), 
+            or None if not found.
         """
         self.ensure_loaded()
         
-        target_ditrune = pair.contrune
-        target_contrune = pair.ditrune
+        # Import ternary service for conversion
+        try:
+            from ..tq.services.ternary_service import TernaryService
+        except ImportError:
+            # Fallback: do inline conversion
+            def decimal_to_ternary(n):
+                if n == 0:
+                    return "0"
+                nums = []
+                while n:
+                    n, r = divmod(n, 3)
+                    nums.append(str(r))
+                return ''.join(reversed(nums))
+            
+            def ternary_to_decimal(t):
+                return int(t, 3) if t else 0
+            
+            # Get Ditrune as ternary, PAD TO 6 DIGITS, reverse it, convert back
+            ditrune_ternary = decimal_to_ternary(pair.ditrune).zfill(6)
+            reversed_ternary = ditrune_ternary[::-1]
+            target_decimal = ternary_to_decimal(reversed_ternary)
+        else:
+            # Use TernaryService - PAD TO 6 DIGITS
+            ditrune_ternary = TernaryService.decimal_to_ternary(pair.ditrune).zfill(6)
+            reversed_ternary = ditrune_ternary[::-1]  # Manual reverse with padding
+            target_decimal = TernaryService.ternary_to_decimal(reversed_ternary)
         
+        # Find the pair where Ditrune equals the reversed value
         for p in self._all_pairs:
-            if p.ditrune == target_ditrune and p.contrune == target_contrune:
+            if p.ditrune == target_decimal:
                 return p
         
         return None

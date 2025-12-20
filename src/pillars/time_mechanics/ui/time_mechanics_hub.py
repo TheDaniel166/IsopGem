@@ -80,7 +80,8 @@ class TimeMechanicsHub(QWidget):
         if self.window_manager:
             self.window_manager.open_window(
                 "zodiacal_circle",
-                ZodiacalCircleWindow
+                ZodiacalCircleWindow,
+                window_manager=self.window_manager
             )
         else:
             self.zodiacal = ZodiacalCircleWindow()
