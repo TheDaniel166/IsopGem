@@ -11,6 +11,7 @@ from PyQt6.QtGui import (
     QBrush,
     QRadialGradient,
     QLinearGradient,
+    QMouseEvent,
 )
 from PyQt6.QtWidgets import QWidget
 
@@ -114,8 +115,8 @@ class ChartCanvas(QWidget):
         self._orb_factor = orb_factor
         self.update()
 
-    def mouseMoveEvent(self, event) -> None:
-        pos = event.position()
+    def mouseMoveEvent(self, a0: Optional[QMouseEvent]) -> None:
+        pos = a0.position() if a0 else QPointF()
         
         # Check Planets
         hovered_planet = None

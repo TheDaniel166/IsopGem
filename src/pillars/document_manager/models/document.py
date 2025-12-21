@@ -50,6 +50,9 @@ class Document(Base):
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    # OneNote integration
+    section_id = Column(Integer, ForeignKey("sections.id"), nullable=True, index=True)
 
     # Relationships
     # This allows accessing linked documents via doc.outgoing_links

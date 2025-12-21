@@ -123,6 +123,18 @@ class NatalChartWindow(QMainWindow):
         self._build_ui()
         self._initialize_preferences()
 
+    def _stretch_last_section(self, table: QTableWidget) -> None:
+        """Safely stretch the last header section when a header exists."""
+        header = table.horizontalHeader()
+        if header:
+            header.setStretchLastSection(True)
+
+    def _set_vertical_section_size(self, table: QTableWidget, size: int) -> None:
+        """Safely apply a default row height when a vertical header exists."""
+        v_header = table.verticalHeader()
+        if v_header:
+            v_header.setDefaultSectionSize(size)
+
     # ------------------------------------------------------------------
     # UI assembly
     # ------------------------------------------------------------------
@@ -336,7 +348,7 @@ class NatalChartWindow(QMainWindow):
         self.fixed_stars_tab = QWidget()
         self.fixed_stars_table = QTableWidget(0, 2)
         self.fixed_stars_table.setHorizontalHeaderLabels(["Star", "Position"])
-        self.fixed_stars_table.horizontalHeader().setStretchLastSection(True)
+        self._stretch_last_section(self.fixed_stars_table)
         
         fs_layout = QVBoxLayout(self.fixed_stars_tab)
         fs_layout.addWidget(self.fixed_stars_table)
@@ -346,7 +358,7 @@ class NatalChartWindow(QMainWindow):
         self.arabic_parts_tab = QWidget()
         self.arabic_parts_table = QTableWidget(0, 3)
         self.arabic_parts_table.setHorizontalHeaderLabels(["Part", "Formula", "Position"])
-        self.arabic_parts_table.horizontalHeader().setStretchLastSection(True)
+        self._stretch_last_section(self.arabic_parts_table)
         
         ap_layout = QVBoxLayout(self.arabic_parts_tab)
         ap_layout.addWidget(self.arabic_parts_table)
@@ -390,7 +402,7 @@ class NatalChartWindow(QMainWindow):
         table_layout = QVBoxLayout(table_widget)
         self.midpoints_table = QTableWidget(0, 2)
         self.midpoints_table.setHorizontalHeaderLabels(["Pair", "Midpoint"])
-        self.midpoints_table.horizontalHeader().setStretchLastSection(True)
+        self._stretch_last_section(self.midpoints_table)
         table_layout.addWidget(self.midpoints_table)
         self.midpoints_subtabs.addTab(table_widget, "Table")
         
@@ -437,7 +449,7 @@ class NatalChartWindow(QMainWindow):
         table_layout = QVBoxLayout(table_widget)
         self.harmonics_table = QTableWidget(0, 3)
         self.harmonics_table.setHorizontalHeaderLabels(["Planet", "Natal", "Harmonic"])
-        self.harmonics_table.horizontalHeader().setStretchLastSection(True)
+        self._stretch_last_section(self.harmonics_table)
         table_layout.addWidget(self.harmonics_table)
         self.harmonics_subtabs.addTab(table_widget, "Table")
         
@@ -457,10 +469,10 @@ class NatalChartWindow(QMainWindow):
         # Table for planet symbols
         self.maat_table = QTableWidget(0, 4)
         self.maat_table.setHorizontalHeaderLabels(["Planet", "Position", "Heaven", "Symbol"])
-        self.maat_table.horizontalHeader().setStretchLastSection(True)
+        self._stretch_last_section(self.maat_table)
         self.maat_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.maat_table.setWordWrap(True)
-        self.maat_table.verticalHeader().setDefaultSectionSize(60)  # Taller rows
+        self._set_vertical_section_size(self.maat_table, 60)  # Taller rows
         maat_layout.addWidget(self.maat_table)
         
         self.advanced_tabs.addTab(self.maat_tab, "Maat Symbols")
@@ -517,7 +529,7 @@ class NatalChartWindow(QMainWindow):
         list_layout = QVBoxLayout(list_widget)
         self.aspects_table = QTableWidget(0, 5)
         self.aspects_table.setHorizontalHeaderLabels(["Planet A", "Aspect", "Planet B", "Orb", "Type"])
-        self.aspects_table.horizontalHeader().setStretchLastSection(True)
+        self._stretch_last_section(self.aspects_table)
         list_layout.addWidget(self.aspects_table)
         self.aspects_subtabs.addTab(list_widget, "List")
         
@@ -527,7 +539,7 @@ class NatalChartWindow(QMainWindow):
         self.aspects_legend = QTableWidget()
         self.aspects_legend.setColumnCount(3)
         self.aspects_legend.setHorizontalHeaderLabels(["Symbol", "Aspect", "Angle"])
-        self.aspects_legend.horizontalHeader().setStretchLastSection(True)
+        self._stretch_last_section(self.aspects_legend)
         self.aspects_legend.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         legend_layout.addWidget(self.aspects_legend)
         self.aspects_subtabs.addTab(legend_widget, "Legend")

@@ -108,19 +108,17 @@ class ZodiacalCircleWidget(QWidget):
         self._today_difference = self._get_today_difference()
     
     def _load_astronomicon_font(self) -> str:
-        """Load Astronomicon font and return its family name."""
-        # Find the font file
-        current_dir = Path(__file__).parent
-        project_root = current_dir.parent.parent.parent.parent
-        font_path = project_root / "resources" / "fonts" / "Astronomicon.ttf"
+        """Return the Astronomicon font family name if available."""
+        # Fonts are now loaded globally by src/shared/ui/font_loader.py
+        # We just need to check if it's available
+        families = QFontDatabase.families()
         
-        if font_path.exists():
-            font_id = QFontDatabase.addApplicationFont(str(font_path))
-            if font_id != -1:
-                families = QFontDatabase.applicationFontFamilies(font_id)
-                if families:
-                    return families[0]
-        
+        # Check for Astronomicon (or typical variations)
+        target = "Astronomicon"
+        for family in families:
+            if target.lower() in family.lower():
+                return family
+                
         # Fallback to default font
         return "Arial"
     

@@ -107,46 +107,379 @@ class DocumentParser:
         with open(path, 'r', encoding='utf-8', errors='ignore') as f:
             return f.read()
 
+
     @staticmethod
-    def _parse_docx(path: Path) -> tuple[str, str, str, dict]:
-        metadata = {}
-        # Try mammoth first for HTML conversion
-        if mammoth:
-            with open(path, "rb") as docx_file:
-                result = mammoth.convert_to_html(docx_file)
-                html = result.value
-                
-                # Post-process HTML to ensure tables have borders
-                # QTextEdit needs border="1" to show grid lines
-                html = html.replace("<table>", '<table border="1" cellspacing="0" cellpadding="5" style="border-collapse: collapse; width: 100%;">')
-        else:
-            html = None
+    def _get_run_images_as_html(run_element, parts_proxy) -> list[str]:
+        """Extract images from a run element and return as HTML img tags with base64."""
+        image_htmls = []
+        for elem in run_element.iter():
+            if elem.tag.endswith('blip'):
+                embed_attr = elem.get('{http://schemas.openxmlformats.org/officeDocument/2006/relationships}embed')
+                if embed_attr:
+                    try:
+                        image_part = parts_proxy.related_parts[embed_attr]
+                        image_data = image_part.blob
+                        header = image_data[:4]
+                        mime = 'image/png'
+                        if header.startswith(b'\xff\xd8'): mime = 'image/jpeg'
+                        elif header.startswith(b'GIF'): mime = 'image/gif'
+                        b64 = base64.b64encode(image_data).decode('utf-8')
+                        image_htmls.append(f'<img src="data:{mime};base64,{b64}" />')
+                    except Exception as e:
+                        print(f"Failed to extract image: {e}")
+        return image_htmls
 
-        # Use python-docx for text extraction (reliable) & metadata
-        if docx:
-            try:
-                doc = docx.Document(str(path))
-                text = "\n".join([para.text for para in doc.paragraphs])
+    @staticmethod
+    def _process_docx_paragraph(para, tag_override=None) -> tuple[str, bool]:
+        """
+        Convert a docx Paragraph to HTML string.
+        Returns: (html_string, is_empty_boolean)
+        """
+        style_name = para.style.name.lower()
+        tag = tag_override if tag_override else 'p'
+        
+        if not tag_override:
+            if 'heading 1' in style_name: tag = 'h1'
+            elif 'heading 2' in style_name: tag = 'h2'
+            elif 'heading 3' in style_name: tag = 'h3'
+            elif 'heading 4' in style_name: tag = 'h4'
+            elif 'title' in style_name: tag = 'h1'
+            elif 'code' in style_name: tag = 'pre'
+        
+        # Alignment
+        align_attr = "left"
+        if para.alignment:
+            if 'CENTER' in str(para.alignment): align_attr = "center"
+            elif 'JUSTIFY' in str(para.alignment): align_attr = "justify"
+            elif 'RIGHT' in str(para.alignment): align_attr = "right"
+
+        para_content = []
+        has_content = False
+        
+        for run in para.runs:
+            run_text = run.text
+            
+            # Handle Images
+            images = DocumentParser._get_run_images_as_html(run.element, run.part)
+            if images:
+                para_content.extend(images)
+                has_content = True
+            
+            if not run_text:
+                continue
                 
-                # Extract copy props
-                core_props = doc.core_properties
-                if core_props.title:
-                    metadata['title'] = core_props.title
-                if core_props.author:
-                    metadata['author'] = core_props.author
-                if core_props.created:
-                    metadata['created'] = core_props.created
+            run_text = run_text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('\t', '&nbsp;&nbsp;&nbsp;&nbsp;')
+            
+            # If run has text (even spaces, though we might want to trim? for now keep strict)
+            if run_text.strip():
+                has_content = True
+
+            styles = []
+            if run.bold: styles.append("font-weight: bold")
+            if run.italic: styles.append("font-style: italic")
+            if run.underline: styles.append("text-decoration: underline")
+            
+            # Fonts
+            font_name = run.font.name
+            if not font_name and para.style and para.style.font:
+                font_name = para.style.font.name
+            
+            if font_name:
+                styles.append(f"font-family: '{font_name}'")
+
+            # Colors
+            if run.font.color and run.font.color.rgb:
+                styles.append(f"color: #{run.font.color.rgb}")
+            
+            if styles:
+                style_str = "; ".join(styles)
+                para_content.append(f'<span style="{style_str}">{run_text}</span>')
+            else:
+                para_content.append(run_text)
+        
+        # Paragraph Formatting (Margins/Line Height)
+        # pdf2docx can sometimes produce massive space_after values (~1.5 million EMUs)
+        # 12700 EMUs = 1 pt. 1581150 EMUs approx 125pt or 1.7 inches.
+        # We will clamp these values to prevent huge gaps.
+        
+        MAX_MARGIN_PT = 24  # Cap margin-bottom at 24pt
+        MAX_LINE_HEIGHT = 2.0 # Cap relative line-height at 2.0
+        
+        para_style_parts = []
+        if para.paragraph_format:
+            fmt = para.paragraph_format
+            
+            # Space After (Margin Bottom)
+            if fmt.space_after is not None:
+                # Value is usually in EMUs or Pt. Python-docx Length object behaves like int (EMU).
+                # 914400 EMUs per inch. 12700 EMUs per point.
+                # If value is huge (> 50pt), likely an artifact.
+                try:
+                    pt_value = fmt.space_after.pt
+                    if pt_value > MAX_MARGIN_PT:
+                        # print(f"DEBUG: Clamping huge paragraph spacing: {pt_value}pt -> {MAX_MARGIN_PT}pt")
+                        pt_value = MAX_MARGIN_PT
                     
-            except Exception as e:
-                print(f"Error parsing DOCX with python-docx: {e}")
-                text = ""
-        else:
-            if not mammoth:
-                 raise ImportError("python-docx or mammoth is required for .docx files")
-            text = "" # Fallback if only mammoth
+                    if pt_value > 0:
+                        para_style_parts.append(f"margin-bottom: {pt_value}pt")
+                except:
+                    pass
 
-        if not html:
-            html = f"<pre>{text}</pre>"
+            # Space Before (Margin Top)
+            if fmt.space_before is not None:
+                try:
+                    pt_value = fmt.space_before.pt
+                    if pt_value > MAX_MARGIN_PT:
+                        pt_value = MAX_MARGIN_PT
+                    
+                    if pt_value > 0:
+                        para_style_parts.append(f"margin-top: {pt_value}pt")
+                except:
+                    pass
+            
+            # Line Spacing (Line Height)
+            if fmt.line_spacing is not None:
+                # If float, it's relative (e.g. 1.5). If int, it's exact (Twips or similar? wait docx uses lengths)
+                # python-docx: line_spacing property: "If a float, it represents the number of lines... If a Length, it represents the specific height."
+                if isinstance(fmt.line_spacing, float):
+                     val = fmt.line_spacing
+                     if val > MAX_LINE_HEIGHT: val = MAX_LINE_HEIGHT
+                     para_style_parts.append(f"line-height: {val}")
+                # Ignoring exact line spacing for now to avoid complexity, letting browser handle default unless relative.
+
+        para_style_attr = ""
+        if para_style_parts:
+            para_style_attr = f" style='{'; '.join(para_style_parts)}'"
+
+        if para_content:
+            return f"<{tag} dir='ltr' align='{align_attr}'{para_style_attr}>{''.join(para_content)}</{tag}>", not has_content
+        else:
+            return f"<{tag} dir='ltr' align='{align_attr}'{para_style_attr}><br/></{tag}>", True
+
+    @staticmethod
+    def _process_docx_table(table) -> str:
+        """Convert a docx Table to HTML string with shading and font support."""
+        rows_html = []
+        for row in table.rows:
+            cells_html = []
+            for cell in row.cells:
+                # Recursively process cell content
+                cell_inner_html = ""
+                
+                # Use iter_inner_content to handle mixed content (paragraphs + nested tables)
+                # Apply whitespace collapsing logic (same as main doc loop)
+                empty_para_count = 0
+                MAX_EMPTY_PARAS = 1
+                
+                try:
+                    # iter_inner_content() is preferred if available
+                    content_iter = cell.iter_inner_content()
+                except AttributeError:
+                    # Fallback for older python-docx versions
+                    content_iter = cell.paragraphs
+                
+                for block in content_iter:
+                    if isinstance(block, docx.text.paragraph.Paragraph):
+                        html, is_empty = DocumentParser._process_docx_paragraph(block)
+                        if is_empty:
+                            empty_para_count += 1
+                            if empty_para_count <= MAX_EMPTY_PARAS:
+                                cell_inner_html += html
+                        else:
+                            empty_para_count = 0
+                            cell_inner_html += html
+                    elif isinstance(block, docx.table.Table):
+                        # Nested table
+                        empty_para_count = 0
+                        cell_inner_html += DocumentParser._process_docx_table(block)
+                
+                # Extract Cell Properties (Shading/Background)
+                style_attr = "border: 1px solid #ccc; padding: 5px; vertical-align: top;"
+                tc = cell._tc
+                if tc is not None:
+                    tcPr = tc.get_or_add_tcPr()
+                    shd = tcPr.find("{http://schemas.openxmlformats.org/wordprocessingml/2006/main}shd")
+                    if shd is not None:
+                        fill = shd.get("{http://schemas.openxmlformats.org/wordprocessingml/2006/main}fill")
+                        if fill and fill != 'auto':
+                            style_attr += f" background-color: #{fill};"
+                
+                cells_html.append(f"<td style='{style_attr}'>{cell_inner_html}</td>")
+            rows_html.append(f"<tr>{''.join(cells_html)}</tr>")
+        return f"<table dir='ltr' style='border-collapse: collapse; width: 100%; border: 1px solid #ddd; margin: 10px 0;'>{''.join(rows_html)}</table>"
+
+    @staticmethod
+    def _get_list_properties(para) -> tuple[str, int]:
+        """
+        Determine if paragraph is a list item.
+        Returns: (list_type ('ul'|'ol'|None), level (0-indexed))
+        """
+        try:
+            # Check for direct numbering properties (numPr)
+            if para._p.pPr.numPr is not None:
+                # Get indent level
+                level = 0
+                if para._p.pPr.numPr.ilvl is not None:
+                    # ilvl val is usually string "0", "1", etc.
+                    level = int(para._p.pPr.numPr.ilvl.val)
+                
+                # Determine type: This is heuristic without checking numbering.xml
+                # If style name suggests numbering, use ol, else ul
+                style_name = para.style.name.lower()
+                list_type = 'ul'
+                if 'num' in style_name or 'order' in style_name:
+                    list_type = 'ol'
+                
+                return list_type, level
+            
+            # Fallback based on style name
+            style_name = para.style.name.lower()
+            if 'list paragraph' in style_name or 'bullet' in style_name:
+                 return 'ul', 0
+                 
+        except Exception:
+            pass
+            
+        return None, 0
+
+    @staticmethod
+    def _parse_docx(source: object) -> tuple[str, str, str, dict]:
+        """
+        Parse a DOCX file from a path or file-like object.
+        Args:
+            source: Path (str/Path) or file-like object (BytesIO).
+        """
+        metadata = {}
+        text = ""
+        html = ""
+
+        # Optimized imports
+        if not docx:
+             if not mammoth:
+                 raise ImportError("python-docx or mammoth is required for .docx files")
+             # Fallback to pure mammoth if python-docx is missing
+             if hasattr(source, 'read'):
+                 docx_file = source
+             else:
+                 docx_file = open(source, "rb")
+                 
+             try:
+                 result = mammoth.convert_to_html(docx_file)
+                 html = result.value
+                 text = result.messages
+             finally:
+                 if not hasattr(source, 'read'):
+                     docx_file.close()
+                     
+             return text, html, 'docx', metadata
+
+        try:
+            # python-docx accepts path (str) or file-like object
+            doc_source = str(source) if isinstance(source, (str, Path)) else source
+            doc = docx.Document(doc_source)
+            
+            # Extract Metadata
+            core_props = doc.core_properties
+            if core_props.title: metadata['title'] = core_props.title
+            if core_props.author: metadata['author'] = core_props.author
+            if core_props.created: metadata['created'] = core_props.created
+            
+            # --- Text Extraction ---
+            text = "\n".join([para.text for para in doc.paragraphs])
+            
+            # --- Custom HTML Generation (Preserving Fonts & Order) ---
+            html_parts = []
+            
+            # Optimization: Collapse consecutive empty paragraphs
+            empty_para_count = 0
+            MAX_EMPTY_PARAS = 1 # Allow at most 1 empty line for spacing
+            
+            # List State Tracking
+            # Stack of open list types. Length represents current nesting level.
+            # e.g., ['ul', 'ol', 'ul'] means level 2 is 'ul' nested in 'ol' nested in 'ul'.
+            list_stack = [] 
+            
+            # Iterate through document content in order
+            for block in doc.iter_inner_content():
+                # --- LIST STATE MANAGEMENT ---
+                is_list_item = False
+                list_type, list_level = None, 0
+                
+                if isinstance(block, docx.text.paragraph.Paragraph):
+                   list_type, list_level = DocumentParser._get_list_properties(block)
+                
+                if list_type:
+                    is_list_item = True
+                    # Reset empty paragraphs if we hit a list (lists usually dense)
+                    empty_para_count = 0 
+                    
+                    # 1. Close lists if we dropped levels
+                    while len(list_stack) > (list_level + 1):
+                        closing_type = list_stack.pop()
+                        html_parts.append(f"</{closing_type}>")
+                    
+                    # 2. Open lists if we increased levels
+                    # Ensure we have parent lists for intermediate levels if needed (simplify to just opening needed levels)
+                    while len(list_stack) < (list_level + 1):
+                         list_stack.append(list_type)
+                         html_parts.append(f"<{list_type} dir='ltr'>")
+                    
+                    # 3. Handle type switch at same level (uncommon but possible)
+                    if list_stack[-1] != list_type:
+                        old_type = list_stack.pop()
+                        html_parts.append(f"</{old_type}>")
+                        list_stack.append(list_type)
+                        html_parts.append(f"<{list_type} dir='ltr'>")
+                        
+                else:
+                    # Not a list item: Close ALL open lists
+                    while list_stack:
+                        closing_type = list_stack.pop()
+                        html_parts.append(f"</{closing_type}>")
+
+                # --- BLOCK PROCESSING ---
+                if isinstance(block, docx.text.paragraph.Paragraph):
+                    # Pass 'li' if it's a list item
+                    tag_override = 'li' if is_list_item else None
+                    html, is_empty = DocumentParser._process_docx_paragraph(block, tag_override=tag_override)
+                    
+                    if is_empty:
+                        empty_para_count += 1
+                        if empty_para_count <= MAX_EMPTY_PARAS:
+                            html_parts.append(html)
+                    else:
+                        empty_para_count = 0
+                        html_parts.append(html)
+                        
+                elif isinstance(block, docx.table.Table):
+                    # Reset empty count on table
+                    empty_para_count = 0
+                    html_parts.append(DocumentParser._process_docx_table(block))
+            
+            # Final cleanup: Close any remaining lists
+            while list_stack:
+                closing_type = list_stack.pop()
+                html_parts.append(f"</{closing_type}>")
+
+            html = "\n".join(html_parts)
+            
+        except Exception as e:
+            print(f"Custom DOCX parsing failed, falling back to mammoth: {e}")
+            if mammoth:
+                if hasattr(source, 'read'):
+                    source.seek(0)
+                    docx_file = source
+                else:
+                    docx_file = open(source, "rb")
+                    
+                try:
+                    result = mammoth.convert_to_html(docx_file)
+                    html = result.value
+                finally:
+                    if not hasattr(source, 'read'):
+                        docx_file.close()
+            else:
+                html = f"<pre>{text}</pre>"
 
         return text, html, 'docx', metadata
 
@@ -158,25 +491,26 @@ class DocumentParser:
         
         # Try pdf2docx -> mammoth pipeline for better table/layout preservation
         if Converter and mammoth and docx:
-            import tempfile
-            
-            # Create temp file for DOCX
-            with tempfile.NamedTemporaryFile(suffix='.docx', delete=False) as tmp:
-                docx_path = tmp.name
-            
             try:
-                # Convert PDF to DOCX
+                # SAFEGUARD: Skip pdf2docx for large files (>10MB) to prevent hanging/OOM
+                file_size = os.path.getsize(path)
+                if file_size > 10 * 1024 * 1024: # 10MB
+                    print(f"PDF > 10MB ({file_size} bytes), skipping high-fidelity conversion. Using fallback.")
+                    raise ValueError("File too large for expensive conversion")
+
+                # OPTIMIZATION: Use in-memory ByteIO stream instead of temp file
+                # avoiding disk I/O improves performance and kept cleaner filesystem
+                docx_stream = io.BytesIO()
+                
+                # Convert PDF to DOCX stream
+                # multi_processing=False required for stream operations
                 cv = Converter(str(path))
-                cv.convert(docx_path, start=0)
+                cv.convert(docx_stream, start=0, multi_processing=False)
                 cv.close()
                 
-                # Parse the generated DOCX using our existing method
-                # This gives us clean HTML with tables from mammoth
-                # NOTE: We ignore the metadata from the temp docx as it wont be the original PDF metadata
-                text, html, _, _ = DocumentParser._parse_docx(Path(docx_path))
-                
-                # Clean up
-                os.unlink(docx_path)
+                # Parse the generated DOCX from memory
+                docx_stream.seek(0)
+                text, html, _, _ = DocumentParser._parse_docx(docx_stream)
                 
                 # Now extract real PDF metadata using pypdf or fitz
                 metadata = DocumentParser._extract_pdf_metadata(path)
@@ -184,9 +518,7 @@ class DocumentParser:
                 return text, html, 'pdf', metadata
                 
             except Exception as e:
-                print(f"pdf2docx conversion failed, falling back to fitz: {e}")
-                if os.path.exists(docx_path):
-                    os.unlink(docx_path)
+                print(f"pdf2docx stream conversion failed, falling back to fitz: {e}")
                 # Fall through to fitz/pypdf fallback
 
         # Use PyMuPDF (fitz) for HTML with images
@@ -200,12 +532,16 @@ class DocumentParser:
                     if meta.get('title'): metadata['title'] = meta['title']
                     if meta.get('author'): metadata['author'] = meta['author']
                 
+                html_parts = []
                 for page in doc:
                     # Get text
                     text += str(page.get_text("text"))
                     # Get HTML
-                    html += str(page.get_text("html"))
+                    page_html = str(page.get_text("html"))
+                    # Wrap page content in LTR div to enforce directionality even in fallback
+                    html_parts.append(f"<div dir='ltr' align='left'>{page_html}</div>")
                     
+                html = "\n".join(html_parts)
                 doc.close()
             except Exception as e:
                 # Handle encrypted pdfs etc
@@ -234,7 +570,7 @@ class DocumentParser:
             except Exception as e:
                  raise ValueError(f"pypdf failed: {e}")
                  
-            html = f"<pre>{text}</pre>"
+            html = f"<pre dir='ltr' align='left'>{text}</pre>"
         else:
              raise ImportError("PyMuPDF or pypdf is required for .pdf files")
 

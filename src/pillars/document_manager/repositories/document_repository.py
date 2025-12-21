@@ -1,6 +1,7 @@
 """Repository for Document model."""
 from sqlalchemy.orm import Session, defer, load_only
 from pillars.document_manager.models.document import Document
+from pillars.document_manager.models.dtos import DocumentMetadataDTO
 from typing import Any, List, Optional, cast
 import time
 import logging
@@ -20,27 +21,40 @@ class DocumentRepository:
     def get_all(self) -> List[Document]:
         return self.db.query(Document).all()
 
-    def get_all_metadata(self) -> List[Document]:
+    def get_all_metadata(self) -> List[DocumentMetadataDTO]:
         """Fetch all documents but only load lightweight metadata fields."""
         start = time.perf_counter()
-        logger.debug("DocumentRepository: preparing metadata query with load_only")
-        # Use minimal columns for fast loading
-        query = self.db.query(Document).options(
-            load_only(
-                Document.id,
-                Document.title,
-                Document.file_type,
-                Document.collection,
+        logger.debug("DocumentRepository: preparing metadata query")
+        
+        # Query specific columns to create lightweight DTOs
+        # This avoids detached instance errors by not returning SQLAlchemy models
+        results = self.db.query(
+            Document.id,
+            Document.title,
+            Document.file_type,
+            Document.collection,
+            Document.author
+        ).all()
+        
+        logger.debug("DocumentRepository: converting to DTOs ...")
+        
+        dtos = [
+            DocumentMetadataDTO(
+                id=row.id,
+                title=row.title,
+                file_type=row.file_type,
+                collection=row.collection,
+                author=row.author
             )
-        )
-        logger.debug("DocumentRepository: executing metadata query ...")
-        docs = query.all()
+            for row in results
+        ]
+        
         logger.debug(
-            "DocumentRepository: get_all_metadata fetched %s rows in %.1f ms",
-            len(docs),
+            "DocumentRepository: get_all_metadata fetched %s DTOs in %.1f ms",
+            len(dtos),
             (time.perf_counter() - start) * 1000,
         )
-        return docs
+        return dtos
 
     def search(self, query: str) -> List[Document]:
         # Basic SQL LIKE search. For advanced search, we'd use Whoosh or Full Text Search.

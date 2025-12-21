@@ -1,13 +1,14 @@
 """Dialog for editing document metadata."""
-from typing import List, Optional
+from typing import List, Optional, Union, Any
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, 
     QLineEdit, QPushButton, QFormLayout, QCheckBox
 )
 from pillars.document_manager.models.document import Document
+from pillars.document_manager.models.dtos import DocumentMetadataDTO
 
 class DocumentPropertiesDialog(QDialog):
-    def __init__(self, documents: List[Document], parent=None):
+    def __init__(self, documents: List[Union[Document, DocumentMetadataDTO]], parent=None):
         super().__init__(parent)
         self.documents = documents
         

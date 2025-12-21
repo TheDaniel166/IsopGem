@@ -12,8 +12,14 @@ os.environ['QT_QPA_PLATFORM'] = 'xcb'
 
 from PyQt6.QtWidgets import QApplication, QMainWindow, QTabWidget, QVBoxLayout, QWidget, QLabel, QHBoxLayout, QFrame, QGraphicsDropShadowEffect
 from PyQt6.QtCore import Qt, QEvent
-from PyQt6.QtGui import QCloseEvent, QIcon, QFont, QColor
+from PyQt6.QtGui import QCloseEvent, QIcon, QFont, QColor, QImageReader
+
+# Increase image allocation limit to 512MB to prevent "Rejecting image" errors
+# Default is 256MB in Qt 6
+QImageReader.setAllocationLimit(512)
+
 from shared.ui import WindowManager, get_app_stylesheet
+from shared.ui.font_loader import load_custom_fonts
 from shared.database import init_db
 from pillars.gematria.ui import GematriaHub
 from pillars.geometry.ui import GeometryHub
@@ -367,6 +373,9 @@ def main():
     
     # Apply modern theme
     app.setStyleSheet(get_app_stylesheet())
+    
+    # Load custom fonts
+    load_custom_fonts()
     
     # Configure app behavior - allow quit on last window close
     app.setQuitOnLastWindowClosed(True)

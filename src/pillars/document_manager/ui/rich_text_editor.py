@@ -25,6 +25,60 @@ class SafeTextEdit(QTextEdit):
     """
     A hardened QTextEdit that protects against 'Paste Attacks' (Mars Seal).
     """
+    def loadResource(self, type_id: int, url: QUrl):
+        """
+        Handle custom resource loading, specifically for docimg:// scheme.
+        """
+        if url.scheme() == "docimg":
+            try:
+                # Extract image ID
+                path = url.path().strip('/')
+                host = url.host()
+                
+                image_id = None
+                
+                # Case 1: docimg:///123 (Triple slash, stored in path)
+                if path and path.isdigit():
+                    image_id = int(path)
+                
+                # Case 2: docimg://123 (Double slash, Qt parses 123 as '0.0.0.123' host)
+                elif host:
+                    # Check for IP address format 
+                    parts = host.split('.')
+                    if len(parts) == 4 and all(p.isdigit() for p in parts):
+                        # Decode IP to Int: a.b.c.d -> (a<<24) + (b<<16) + (c<<8) + d
+                        p = [int(part) for part in parts]
+                        image_id = (p[0] << 24) + (p[1] << 16) + (p[2] << 8) + p[3]
+                    elif host.isdigit():
+                        # Direct integer host (unlikely with QUrl but possible)
+                        image_id = int(host)
+                
+                if image_id is None:
+                     print(f"Failed to parse image ID from url: {url.toString()}")
+                     return super().loadResource(type_id, url)
+
+                # We need to access the service. 
+                # Ideally, the editor should have a callback or access to the service.
+                # For now, we'll use a local context, though dependency injection would be cleaner.
+                from pillars.document_manager.services.document_service import document_service_context
+                
+                with document_service_context() as service:
+                    result = service.get_image(image_id)
+                    if result:
+                        data, mime_type = result
+                        
+                        # Return properly typed resource
+                        # For ImageResource, return QVariant(QImage) or QVariant(QPixmap) or QVariant(bytes)
+                        # QImage.fromData handles bytes directly
+                        from PyQt6.QtGui import QImage
+                        image = QImage()
+                        image.loadFromData(data)
+                        return image
+            except Exception as e:
+                print(f"Failed to load image resource {url.toString()}: {e}")
+                
+        return super().loadResource(type_id, url)
+
     def insertFromMimeData(self, source: QMimeData):
         """
         Override paste behavior to protect against freezing.
@@ -528,7 +582,7 @@ class RichTextEditor(QWidget):
     # Signal emitted when [[ is typed
     wiki_link_requested = pyqtSignal()
     
-    def __init__(self, parent=None, placeholder_text="Start typing..."):
+    def __init__(self, parent=None, placeholder_text="Start typing...", show_ui=True):
         super().__init__(parent)
         self.virtual_keyboard: VirtualKeyboard | None = None
         
@@ -545,17 +599,22 @@ class RichTextEditor(QWidget):
         # Features
         self.search_feature = None # Lazy or init later? better init in setup
         
-        self._setup_ui(placeholder_text)
+        self._setup_ui(placeholder_text, show_ui)
+        self._init_features() 
         
-    def _setup_ui(self, placeholder_text):
+        # Force LTR by default to prevent auto-detection issues
+        self.editor.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
+        
+    def _setup_ui(self, placeholder_text, show_ui):
         """Initialize the UI components."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         
         # --- Ribbon ---
-        self.ribbon = RibbonWidget()
-        layout.addWidget(self.ribbon)
+        if show_ui:
+            self.ribbon = RibbonWidget()
+            layout.addWidget(self.ribbon)
         
         # --- Editor ---
         self.editor = SafeTextEdit()
@@ -563,7 +622,7 @@ class RichTextEditor(QWidget):
         self.editor.setStyleSheet("""
             QTextEdit {
                 border: none;
-                padding: 50px;
+                padding: 10px; /* Reduced padding for canvas */
                 background-color: #fefefe;
                 selection-background-color: #bfdbfe;
                 selection-color: #1e293b;
@@ -601,107 +660,109 @@ class RichTextEditor(QWidget):
         
         layout.addWidget(self.editor)
         
-        # --- Status Bar with Word Count and Zoom ---
-        self.status_bar = QStatusBar()
-        self.status_bar.setStyleSheet("""
-            QStatusBar {
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #f8fafc, stop:1 #e2e8f0);
-                border-top: 1px solid #cbd5e1;
-                padding: 2px 8px;
-            }
-            QStatusBar QLabel {
-                color: #475569;
-                font-size: 9pt;
-            }
-            QSlider::groove:horizontal {
-                height: 6px;
-                background: #e2e8f0;
-                border-radius: 3px;
-            }
-            QSlider::handle:horizontal {
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #ffffff, stop:1 #e2e8f0);
-                border: 1px solid #94a3b8;
-                width: 14px;
-                margin: -4px 0;
-                border-radius: 7px;
-            }
-            QSlider::handle:horizontal:hover {
-                background: #dbeafe;
-                border-color: #3b82f6;
-            }
-            QToolButton {
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #ffffff, stop:1 #f1f5f9);
-                border: 1px solid #cbd5e1;
-                border-radius: 4px;
-                padding: 3px 8px;
-                color: #475569;
-                font-weight: 500;
-            }
-            QToolButton:hover {
-                background: #eff6ff;
-                border-color: #93c5fd;
-                color: #1d4ed8;
-            }
-        """)
+        if show_ui:
+            # --- Status Bar with Word Count and Zoom ---
+            self.status_bar = QStatusBar()
+            self.status_bar.setStyleSheet("""
+                QStatusBar {
+                    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                        stop:0 #f8fafc, stop:1 #e2e8f0);
+                    border-top: 1px solid #cbd5e1;
+                    padding: 2px 8px;
+                }
+                QStatusBar QLabel {
+                    color: #475569;
+                    font-size: 9pt;
+                }
+                QSlider::groove:horizontal {
+                    height: 6px;
+                    background: #e2e8f0;
+                    border-radius: 3px;
+                }
+                QSlider::handle:horizontal {
+                    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                        stop:0 #ffffff, stop:1 #e2e8f0);
+                    border: 1px solid #94a3b8;
+                    width: 14px;
+                    margin: -4px 0;
+                    border-radius: 7px;
+                }
+                QSlider::handle:horizontal:hover {
+                    background: #dbeafe;
+                    border-color: #3b82f6;
+                }
+                QToolButton {
+                    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                        stop:0 #ffffff, stop:1 #f1f5f9);
+                    border: 1px solid #cbd5e1;
+                    border-radius: 4px;
+                    padding: 3px 8px;
+                    color: #475569;
+                    font-weight: 500;
+                }
+                QToolButton:hover {
+                    background: #eff6ff;
+                    border-color: #93c5fd;
+                    color: #1d4ed8;
+                }
+            """)
+            
+            # Word count label
+            self.word_count_label = QLabel("Words: 0 | Characters: 0")
+            self.status_bar.addWidget(self.word_count_label)
+            
+            # Spacer
+            self.status_bar.addWidget(QLabel(""), 1)  # Stretch
+            
+            # Zoom controls
+            zoom_widget = QWidget()
+            zoom_layout = QHBoxLayout(zoom_widget)
+            zoom_layout.setContentsMargins(0, 0, 0, 0)
+            zoom_layout.setSpacing(5)
+            
+            self.zoom_label = QLabel("100%")
+            self.zoom_label.setMinimumWidth(40)
+            
+            self.zoom_slider = QSlider(Qt.Orientation.Horizontal)
+            self.zoom_slider.setRange(25, 400)
+            self.zoom_slider.setValue(100)
+            self.zoom_slider.setFixedWidth(100)
+            self.zoom_slider.valueChanged.connect(self._on_zoom_changed)
+            
+            btn_zoom_out = QToolButton()
+            btn_zoom_out.setText("-")
+            btn_zoom_out.clicked.connect(lambda: self.zoom_slider.setValue(max(25, self.zoom_slider.value() - 25)))
+            
+            btn_zoom_in = QToolButton()
+            btn_zoom_in.setText("+")
+            btn_zoom_in.clicked.connect(lambda: self.zoom_slider.setValue(min(400, self.zoom_slider.value() + 25)))
+            
+            btn_zoom_reset = QToolButton()
+            btn_zoom_reset.setText("100%")
+            btn_zoom_reset.setToolTip("Reset Zoom")
+            btn_zoom_reset.clicked.connect(lambda: self.zoom_slider.setValue(100))
+            
+            zoom_layout.addWidget(btn_zoom_out)
+            zoom_layout.addWidget(self.zoom_slider)
+            zoom_layout.addWidget(btn_zoom_in)
+            zoom_layout.addWidget(self.zoom_label)
+            zoom_layout.addWidget(btn_zoom_reset)
+            
+            self.status_bar.addPermanentWidget(zoom_widget)
+            layout.addWidget(self.status_bar)
+            
+            # Connect text changed to update word count
+            self.editor.textChanged.connect(self._update_word_count)
         
-        # Word count label
-        self.word_count_label = QLabel("Words: 0 | Characters: 0")
-        self.status_bar.addWidget(self.word_count_label)
-        
-        # Spacer
-        self.status_bar.addWidget(QLabel(""), 1)  # Stretch
-        
-        # Zoom controls
-        zoom_widget = QWidget()
-        zoom_layout = QHBoxLayout(zoom_widget)
-        zoom_layout.setContentsMargins(0, 0, 0, 0)
-        zoom_layout.setSpacing(5)
-        
-        self.zoom_label = QLabel("100%")
-        self.zoom_label.setMinimumWidth(40)
-        
-        self.zoom_slider = QSlider(Qt.Orientation.Horizontal)
-        self.zoom_slider.setRange(25, 400)
-        self.zoom_slider.setValue(100)
-        self.zoom_slider.setFixedWidth(100)
-        self.zoom_slider.valueChanged.connect(self._on_zoom_changed)
-        
-        btn_zoom_out = QToolButton()
-        btn_zoom_out.setText("-")
-        btn_zoom_out.clicked.connect(lambda: self.zoom_slider.setValue(max(25, self.zoom_slider.value() - 25)))
-        
-        btn_zoom_in = QToolButton()
-        btn_zoom_in.setText("+")
-        btn_zoom_in.clicked.connect(lambda: self.zoom_slider.setValue(min(400, self.zoom_slider.value() + 25)))
-        
-        btn_zoom_reset = QToolButton()
-        btn_zoom_reset.setText("100%")
-        btn_zoom_reset.setToolTip("Reset Zoom")
-        btn_zoom_reset.clicked.connect(lambda: self.zoom_slider.setValue(100))
-        
-        zoom_layout.addWidget(btn_zoom_out)
-        zoom_layout.addWidget(self.zoom_slider)
-        zoom_layout.addWidget(btn_zoom_in)
-        zoom_layout.addWidget(self.zoom_label)
-        zoom_layout.addWidget(btn_zoom_reset)
-        
-        self.status_bar.addPermanentWidget(zoom_widget)
-        layout.addWidget(self.status_bar)
-        
-        # Connect text changed to update word count
-        self.editor.textChanged.connect(self._update_word_count)
-        
-        # Keybindings
+        # Keybindings (Available even with show_ui=False)
         self.action_find = QAction("Find", self)
         self.action_find.setShortcut("Ctrl+F")
         self.action_find.triggered.connect(self.search_feature.show_search_dialog)
         self.addAction(self.action_find)
         
-        # Initialize Ribbon Content
-        self._init_ribbon()
+        if show_ui:
+            # Initialize Ribbon Content (must be after action_find is created)
+            self._init_ribbon()
 
     def insertFromMimeData(self, source):
         """
@@ -758,6 +819,64 @@ class RichTextEditor(QWidget):
             if hasattr(self, 'image_feature'):
                 self.image_feature.extend_context_menu(menu)
             menu.exec(self.editor.mapToGlobal(pos))
+
+    def _init_features(self):
+        """Initialize features that don't require the Ribbon UI."""
+        # Lists - always needed
+        self.list_feature = ListFeature(self.editor, self)
+        
+        # Note: table_feature and image_feature are initialized in _init_ribbon()
+        # when show_ui=True. For headless mode, they can be initialized here:
+        if not hasattr(self, 'table_feature') and 'TableFeature' in globals():
+            self.table_feature = TableFeature(self.editor, self)
+             
+        if not hasattr(self, 'image_feature') and 'ImageFeature' in globals():
+            self.image_feature = ImageFeature(self.editor, self)
+
+    def show_search(self):
+        """Public API for Global Ribbon."""
+        # Initialize if strictly needed or assume _init_features did it
+        if not hasattr(self, 'search_feature'):
+             self.search_feature = SearchReplaceFeature(self.editor, self)
+        self.search_feature.show_search_dialog()
+
+    def toggle_list(self, style):
+        """Public API for Global Ribbon."""
+        if hasattr(self, 'list_feature'):
+            self.list_feature.toggle_list(style)
+
+    def set_alignment(self, align):
+        """Public API for Global Ribbon."""
+        self.editor.setAlignment(align)
+
+    def insert_table(self, rows=3, cols=3):
+        """Public API for Global Ribbon."""
+        if hasattr(self, 'table_feature'):
+             self.table_feature.insert_table(rows, cols)
+
+    def insert_image(self):
+        """Public API for Global Ribbon."""
+        if hasattr(self, 'image_feature'):
+            self.image_feature.insert_image()
+
+    def set_highlight(self, color):
+        """Public API for Global Ribbon."""
+        fmt = QTextCharFormat()
+        fmt.setBackground(color)
+        self.editor.mergeCurrentCharFormat(fmt)
+    
+    def clear_formatting(self):
+        """Public API"""
+        self._clear_formatting()
+
+    def toggle_strikethrough(self):
+        self._toggle_strikethrough()
+
+    def toggle_subscript(self):
+        self._toggle_subscript()
+
+    def toggle_superscript(self):
+        self._toggle_superscript()
 
     def _init_ribbon(self):
         """Populate the ribbon with tabs and groups."""
@@ -1432,6 +1551,9 @@ class RichTextEditor(QWidget):
 
     def _update_format_widgets(self, fmt):
         """Update the ribbon widgets based on the current text format."""
+        if not hasattr(self, 'font_combo'):
+            return
+
         # Block signals to prevent triggering changes while updating UI
         self.font_combo.blockSignals(True)
         self.size_combo.blockSignals(True)
@@ -1488,6 +1610,8 @@ class RichTextEditor(QWidget):
         
     def set_html(self, html: str):
         self.editor.setHtml(html)
+        # Ensure LTR is maintained after setting content
+        self.editor.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
         
     def get_text(self) -> str:
         return self.editor.toPlainText()

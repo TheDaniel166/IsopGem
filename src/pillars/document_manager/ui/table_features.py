@@ -463,7 +463,7 @@ class TableFeature:
         """Initialize menu actions."""
         # Insert Table
         action_insert = QAction("Insert Table...", self.parent)
-        action_insert.triggered.connect(self._insert_table)
+        action_insert.triggered.connect(lambda: self.insert_table())
         self.menu.addAction(action_insert)
         
         self.menu.addSeparator()
@@ -615,7 +615,8 @@ class TableFeature:
         # Update state
         self._update_menu_state()
 
-    def _insert_table(self):
+    def insert_table(self, rows=None, cols=None):
+        # Ignore rows/cols for now and always show dialog, or use them as defaults if we wanted
         dialog = TableDialog(self.parent)
         if dialog.exec():
             data = dialog.get_data()

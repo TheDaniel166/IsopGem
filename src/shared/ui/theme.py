@@ -169,6 +169,32 @@ def get_app_stylesheet() -> str:
         image: none;
     }}
     
+    /* Lists and Trees */
+    QListView, QTreeView {{
+        background-color: {COLORS['surface']};
+        border: 1px solid {COLORS['border']};
+        border-radius: 6px;
+        color: {COLORS['text_primary']};
+        outline: none;
+    }}
+    
+    QListView::item, QTreeView::item {{
+        padding: 4px;
+        border-bottom: 1px solid transparent;
+    }}
+    
+    QListView::item:selected, QTreeView::item:selected {{
+        background-color: {COLORS['primary_light']};
+        color: {COLORS['primary']};
+        border: none;
+    }}
+
+    QListView::item:hover, QTreeView::item:hover {{
+        background-color: {COLORS['surface_hover']};
+    }}
+
+    /* File dialogs use system native styling - no custom QSS needed */
+
     /* Tables */
     QTableWidget {{
         background-color: {COLORS['surface']};
@@ -381,6 +407,34 @@ def get_title_style(size: int = 24) -> str:
         letter-spacing: -0.5px;
     """
 
+
+def apply_light_theme(app):
+    """
+    Apply a consistent light theme to the application using QPalette.
+    This overrides system dark mode settings for Qt widgets.
+    """
+    from PyQt6.QtGui import QPalette, QColor
+    from PyQt6.QtWidgets import QApplication
+
+    app.setStyle("Fusion")
+
+    palette = QPalette()
+    palette.setColor(QPalette.ColorRole.Window, QColor("#ffffff"))
+    palette.setColor(QPalette.ColorRole.WindowText, QColor("#111827"))
+    palette.setColor(QPalette.ColorRole.Base, QColor("#ffffff"))
+    palette.setColor(QPalette.ColorRole.AlternateBase, QColor("#f9fafb"))
+    palette.setColor(QPalette.ColorRole.ToolTipBase, QColor("#111827"))
+    palette.setColor(QPalette.ColorRole.ToolTipText, QColor("#ffffff"))
+    palette.setColor(QPalette.ColorRole.Text, QColor("#111827"))
+    palette.setColor(QPalette.ColorRole.Button, QColor("#f3f4f6"))
+    palette.setColor(QPalette.ColorRole.ButtonText, QColor("#111827"))
+    palette.setColor(QPalette.ColorRole.BrightText, QColor("#ef4444"))
+    palette.setColor(QPalette.ColorRole.Link, QColor("#2563eb"))
+    palette.setColor(QPalette.ColorRole.Highlight, QColor("#2563eb"))
+    palette.setColor(QPalette.ColorRole.HighlightedText, QColor("#ffffff"))
+
+    app.setPalette(palette)
+    app.setStyleSheet(get_app_stylesheet())
 
 def get_subtitle_style() -> str:
     """Get style for subtitle labels."""

@@ -11,6 +11,7 @@ from .document_editor_window import DocumentEditorWindow
 from .document_library import DocumentLibrary
 from .document_search_window import DocumentSearchWindow
 from .mindscape_window import MindscapeWindow
+from .database_manager import DatabaseManagerWindow
 
 
 class DocumentManagerHub(QWidget):
@@ -72,6 +73,7 @@ class DocumentManagerHub(QWidget):
             ("📚", "Library", "Browse and manage your documents", "#10b981", self._open_document_library),
             ("🔍", "Search", "Full-text search across all documents", "#8b5cf6", self._open_document_search),
             ("🧠", "Mindscape", "The Living Graph - visual connections", "#06b6d4", self._open_mindscape),
+            ("🛠️", "Database Admin", "Stats, maintenance, and cleanup", "#f59e0b", self._open_database_manager),
         ]
 
         grid = QGridLayout()
@@ -205,6 +207,13 @@ class DocumentManagerHub(QWidget):
         self.window_manager.open_window(
             "mindscape",
             MindscapeWindow,
+            allow_multiple=False
+        )
+    def _open_database_manager(self):
+        """Open the database manager window."""
+        self.window_manager.open_window(
+            "database_manager",
+            DatabaseManagerWindow,
             allow_multiple=False
         )
 

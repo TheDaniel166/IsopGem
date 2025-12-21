@@ -381,7 +381,7 @@ class ImageEditorDialog(QDialog):
     # --- UI handlers ---
     def _choose_image(self):
         file_path, _ = QFileDialog.getOpenFileName(
-            self,
+            None,  # Use None for independent top-level window
             "Select Image",
             "",
             "Images (*.png *.jpg *.jpeg *.bmp *.gif)"
@@ -834,7 +834,7 @@ class ImageFeature:
     def _init_actions(self):
         self.action_insert = QAction("Edit && Insert Image...", self.parent)
         self.action_insert.setToolTip("Open image editor before inserting")
-        self.action_insert.triggered.connect(self._insert_image)
+        self.action_insert.triggered.connect(self.insert_image)
         
         self.action_props = QAction("Image Properties...", self.parent)
         self.action_props.triggered.connect(self._edit_image_properties)
@@ -862,7 +862,7 @@ class ImageFeature:
             menu.addSeparator()
             menu.addAction(self.action_props)
 
-    def _insert_image(self):
+    def insert_image(self):
         # Ensure Pillow is available
         try:
             import PIL  # noqa: F401

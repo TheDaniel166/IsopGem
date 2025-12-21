@@ -1,6 +1,6 @@
 from .document import Document, DocumentImage
 from .document_verse import DocumentVerse, VerseRule, VerseEditLog
-from .mindscape import MindNode, MindEdge
+from .notebook import Notebook, Section
 
 __all__ = [
 	"Document",
@@ -8,6 +8,6 @@ __all__ = [
 	"DocumentVerse",
     "VerseRule",
 	"VerseEditLog",
-    "MindNode",
-    "MindEdge"
+    "Notebook",
+    "Section"
 ]

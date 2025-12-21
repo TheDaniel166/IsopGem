@@ -17,7 +17,9 @@ from pillars.document_manager.utils.image_utils import (
     restore_images_in_html,
     has_embedded_images
 )
-from pillars.document_manager.models.document import Document
+from pillars.document_manager.models.document import Document, DocumentImage
+from pillars.document_manager.models.dtos import DocumentMetadataDTO
+from sqlalchemy import func
 
 logger = logging.getLogger(__name__)
 
@@ -165,7 +167,7 @@ class DocumentService:
     def get_all_documents(self):
         return self.repo.get_all()
     
-    def get_all_documents_metadata(self):
+    def get_all_documents_metadata(self) -> List[DocumentMetadataDTO]:
         """Get all documents without loading heavy content fields."""
         start = time.perf_counter()
         docs = self.repo.get_all_metadata()
@@ -179,12 +181,17 @@ class DocumentService:
     def get_document(self, doc_id: int):
         return self.repo.get(doc_id)
     
-    def get_document_with_images(self, doc_id: int) -> Optional[Tuple[Document, str]]:
+    def get_document_with_images(self, doc_id: int, restore_images: bool = False) -> Optional[Tuple[Document, str]]:
         """
-        Get a document with images restored in raw_content.
+        Get a document with images. 
+        
+        Args:
+            doc_id: Document ID
+            restore_images: If True, expands docimg:// links to base64 (expensive). 
+                          If False (default), keeps docimg:// links for efficient lazy loading.
         
         Returns:
-            Tuple of (Document, restored_html) or None if not found
+            Tuple of (Document, html_content) or None if not found
         """
         doc = self.repo.get(doc_id)
         if not doc:
@@ -192,10 +199,10 @@ class DocumentService:
         
         raw_content = doc.raw_content or doc.content or ""
         
-        # If the document has docimg:// references, restore them
+        # If the document has docimg:// references and restoration is requested
         from pillars.document_manager.utils.image_utils import has_docimg_references
         
-        if has_docimg_references(raw_content):
+        if restore_images and has_docimg_references(raw_content):
             def fetch_image(image_id: int) -> Tuple[bytes, str]:
                 img = self.image_repo.get(image_id)
                 if img:
@@ -229,6 +236,29 @@ class DocumentService:
             **kwargs: Fields to update (content, raw_content, title, author, collection)
         """
         start = time.perf_counter()
+        
+        # Check if we need to extract images from raw_content
+        raw_content = kwargs.get('raw_content')
+        if raw_content and has_embedded_images(raw_content):
+            def store_image(image_bytes: bytes, mime_type: str) -> int:
+                img = self.image_repo.create(
+                    document_id=doc_id,
+                    data=image_bytes,
+                    mime_type=mime_type
+                )
+                return img.id
+                
+            # Extract images and replace with docimg:// references
+            modified_html, images_info = extract_images_from_html(raw_content, store_image)
+            
+            if images_info:
+                # Update kwargs with the lightweight content
+                kwargs['raw_content'] = modified_html
+                logger.debug(
+                    "DocumentService: update_document extracted %d images for doc %s",
+                    len(images_info), doc_id
+                )
+
         doc = self.repo.update(doc_id, **kwargs)
         if doc:
             # If content was updated, re-parse links
@@ -305,6 +335,79 @@ class DocumentService:
             len(docs),
             (time.perf_counter() - start) * 1000,
         )
+
+    def get_database_stats(self) -> dict:
+        """Get database statistics."""
+        doc_count = self.db.query(func.count(Document.id)).scalar()
+        img_count = self.db.query(func.count(DocumentImage.id)).scalar()
+        # Sum of image data size (in bytes)
+        img_size_bytes = self.db.query(func.sum(func.length(DocumentImage.data))).scalar() or 0
+        
+        return {
+            "document_count": doc_count,
+            "image_count": img_count,
+            "image_storage_bytes": img_size_bytes,
+            "image_storage_mb": round(img_size_bytes / (1024 * 1024), 2)
+        }
+
+    def cleanup_orphans(self, dry_run: bool = True) -> dict:
+        """
+        Find and delete orphan images (stored in DB but not used in any document).
+        
+        Args:
+            dry_run: If True, only returns count of orphans without deleting.
+            
+        Returns:
+            dict with 'safe_ids', 'orphan_ids', 'deleted_count'
+        """
+        start = time.perf_counter()
+        
+        # 1. Get all used image IDs from document raw_content
+        # We need to scan ALL documents. This might be heavy for massive DBs, 
+        # but necessary for integrity.
+        docs = self.db.query(Document.raw_content).filter(Document.raw_content.isnot(None)).all()
+        
+        used_ids = set()
+        docimg_pattern = re.compile(r'docimg:///*(\d+)')
+        
+        for (content,) in docs:
+            if content:
+                ids = docimg_pattern.findall(content)
+                for i in ids:
+                    used_ids.add(int(i))
+                    
+        # 2. Get all stored image IDs
+        stored_images = self.db.query(DocumentImage.id).all()
+        stored_ids = {i[0] for i in stored_images}
+        
+        # 3. Find orphans
+        orphan_ids = stored_ids - used_ids
+        
+        deleted_count = 0
+        if not dry_run and orphan_ids:
+            # Delete orphans
+            # SQLite implies limit on variables in IN clause (usually 999).
+            # We process in chunks.
+            orphan_list = list(orphan_ids)
+            chunk_size = 500
+            for i in range(0, len(orphan_list), chunk_size):
+                chunk = orphan_list[i:i + chunk_size]
+                self.db.query(DocumentImage).filter(DocumentImage.id.in_(chunk)).delete(synchronize_session=False)
+            
+            self.db.commit()
+            deleted_count = len(orphan_ids)
+            
+        logger.info(
+            "DocumentService: cleanup_orphans (dry_run=%s) found %s orphans, deleted %s in %.1f ms",
+            dry_run, len(orphan_ids), deleted_count, (time.perf_counter() - start) * 1000
+        )
+        
+        return {
+            "total_images": len(stored_ids),
+            "used_images": len(used_ids),
+            "orphan_count": len(orphan_ids),
+            "deleted_count": deleted_count
+        }
 
     # ------------------------------------------------------------------
     # Verse helpers (used by the Holy Book teacher backend)

@@ -1,0 +1,41 @@
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text
+from sqlalchemy.orm import relationship
+from shared.database import Base
+from datetime import datetime
+
+class Notebook(Base):
+    """
+    Top-level container (e.g., 'Work', 'Personal').
+    Analogous to a OneNote Notebook.
+    """
+    __tablename__ = "notebooks"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, nullable=False)
+    description = Column(String, nullable=True)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Relationship
+    sections = relationship("Section", back_populates="notebook", cascade="all, delete-orphan", order_by="Section.id")
+
+class Section(Base):
+    """
+    Mid-level container (e.g., 'Project Alpha', 'Meeting Notes').
+    Analogous to a OneNote Section / Tab.
+    """
+    __tablename__ = "sections"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, nullable=False)
+    color = Column(String, default="#CCCCCC") # For tab color
+    
+    notebook_id = Column(Integer, ForeignKey("notebooks.id"), nullable=False, index=True)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    notebook = relationship("Notebook", back_populates="sections")
+    # Pages are Documents
+    pages = relationship("Document", backref="section", order_by="Document.id") 
+    # Note: 'backref' on 'pages' adds 'section' attribute to Document
