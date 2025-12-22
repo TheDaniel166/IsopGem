@@ -18,6 +18,7 @@ from .table_features import TableFeature
 from .image_features import ImageFeature
 from .list_features import ListFeature
 from .search_features import SearchReplaceFeature
+from .shape_features import ShapeFeature
 from .ribbon_widget import RibbonWidget
 from shared.ui import VirtualKeyboard, get_shared_virtual_keyboard
 
@@ -1104,6 +1105,10 @@ class RichTextEditor(QWidget):
         grp_illus = tab_insert.add_group("Illustrations")
         self.image_feature = ImageFeature(self.editor, self)
         grp_illus.add_action(self.image_feature.create_toolbar_action(), Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
+        
+        # Shapes
+        self.shape_feature = ShapeFeature(self)
+        grp_illus.add_widget(self.shape_feature.create_toolbar_button())
         
         # Group: Symbols
         grp_sym = tab_insert.add_group("Symbols")

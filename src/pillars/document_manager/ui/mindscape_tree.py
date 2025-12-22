@@ -176,7 +176,24 @@ class MindscapeTreeWidget(QTreeWidget):
             with notebook_service_context() as svc:
                 page = svc.create_page(sec_id, text)
                 
-                # Add visually
+                # If pages weren't loaded yet, load them first (but exclude the new page
+                # since it's about to be added manually)
+                is_loaded = sec_item.data(0, Qt.ItemDataRole.UserRole + 2)
+                if not is_loaded:
+                    # Load existing pages (the new one is already in DB, so filter it out)
+                    existing_pages = svc.get_section_pages(sec_id)
+                    for p in existing_pages:
+                        if p.id != page.id:  # Skip the page we just created
+                            p_item = QTreeWidgetItem(sec_item)
+                            p_item.setText(0, p.title)
+                            p_item.setData(0, Qt.ItemDataRole.UserRole, p.id)
+                            p_item.setData(0, Qt.ItemDataRole.UserRole + 1, self.TYPE_PAGE)
+                            p_item.setIcon(0, self.style().standardIcon(self.style().StandardPixmap.SP_FileIcon))
+                
+                # Mark as loaded BEFORE expanding to prevent double loading
+                sec_item.setData(0, Qt.ItemDataRole.UserRole + 2, True)
+                
+                # Add the new page visually
                 p_item = QTreeWidgetItem(sec_item)
                 p_item.setText(0, page.title)
                 p_item.setData(0, Qt.ItemDataRole.UserRole, page.id)
@@ -184,9 +201,6 @@ class MindscapeTreeWidget(QTreeWidget):
                 p_item.setIcon(0, self.style().standardIcon(self.style().StandardPixmap.SP_FileIcon))
                 
                 sec_item.setExpanded(True)
-                # Ensure marked loaded if we just added manually to avoid dupes on expand?
-                # Actually if we add manually, we should ensure it was loaded first or just mark loaded.
-                sec_item.setData(0, Qt.ItemDataRole.UserRole + 2, True)
 
     def _delete_item(self, item, type_str):
         item_id = item.data(0, Qt.ItemDataRole.UserRole)

@@ -3,6 +3,11 @@ from PyQt6.QtCore import Qt, pyqtSignal, QPointF
 from PyQt6.QtGui import QPainter, QBrush, QColor, QMouseEvent
 
 from .note_container import NoteContainerItemMovable
+from ..shape_item import (
+    BaseShapeItem, RectShapeItem, EllipseShapeItem,
+    TriangleShapeItem, LineShapeItem, ArrowShapeItem,
+    create_shape_from_dict
+)
 import json
 import logging
 
@@ -37,9 +42,10 @@ class InfiniteCanvasView(QGraphicsView):
         # Scrollbars always on for infinite feel?
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-
-    def mousePressEvent(self, event):
-        super().mousePressEvent(event)
+        
+        # Shape insert mode
+        self._insert_mode = False
+        self._insert_shape_type = None
 
     def mouseDoubleClickEvent(self, event: QMouseEvent):
         """Create new note container on double click."""
@@ -75,10 +81,74 @@ class InfiniteCanvasView(QGraphicsView):
     def clear_canvas(self):
         self._scene.clear()
         self._scene.setSceneRect(0, 0, 5000, 5000)
+        self._insert_mode = False
+        self._insert_shape_type = None
+
+    # --- Shape Support ---
+    
+    def add_shape(self, shape: BaseShapeItem):
+        """Add a shape to the canvas."""
+        self._scene.addItem(shape)
+        self.content_changed.emit()
+    
+    def start_shape_insert(self, shape_type: type):
+        """Enter insert mode for shapes."""
+        self._insert_mode = True
+        self._insert_shape_type = shape_type
+        self.setCursor(Qt.CursorShape.CrossCursor)
+    
+    def cancel_shape_insert(self):
+        """Cancel shape insert mode."""
+        self._insert_mode = False
+        self._insert_shape_type = None
+        self._polygon_config = None
+        self.setCursor(Qt.CursorShape.ArrowCursor)
+
+    def mousePressEvent(self, event):
+        """Handle mouse press - check for shape insert mode."""
+        if self._insert_mode and self._insert_shape_type:
+            scene_pos = self.mapToScene(event.pos())
+            
+            # Check for polygon with custom config
+            if self._insert_shape_type.__name__ == "PolygonShapeItem" and hasattr(self, '_polygon_config') and self._polygon_config:
+                from ..shape_item import PolygonShapeItem
+                sides, skip = self._polygon_config
+                shape = PolygonShapeItem(scene_pos.x(), scene_pos.y(), 100, 100, sides, skip)
+                self._polygon_config = None
+            else:
+                shape = self._insert_shape_type(scene_pos.x(), scene_pos.y())
+            
+            self.add_shape(shape)
+            shape.setSelected(True)
+            self._insert_mode = False
+            self._insert_shape_type = None
+            self.setCursor(Qt.CursorShape.ArrowCursor)
+            event.accept()
+            return
+        super().mousePressEvent(event)
+
+    def keyPressEvent(self, event):
+        """Handle delete key for shapes."""
+        if event.key() in (Qt.Key.Key_Delete, Qt.Key.Key_Backspace):
+            for item in self._scene.selectedItems():
+                if isinstance(item, BaseShapeItem):
+                    self._scene.removeItem(item)
+                    self.content_changed.emit()
+            event.accept()
+            return
+        
+        if event.key() == Qt.Key.Key_Escape and self._insert_mode:
+            self.cancel_shape_insert()
+            event.accept()
+            return
+        
+        super().keyPressEvent(event)
 
     def get_json_data(self) -> str:
         """Serialize all items to JSON."""
         items_data = []
+        shapes_data = []
+        
         for item in self._scene.items():
             if isinstance(item, NoteContainerItemMovable):
                 data = {
@@ -88,10 +158,13 @@ class InfiniteCanvasView(QGraphicsView):
                     "content": item.widget_inner.get_html()
                 }
                 items_data.append(data)
+            elif isinstance(item, BaseShapeItem):
+                shapes_data.append(item.to_dict())
         
         payload = {
-            "version": 1,
-            "items": items_data
+            "version": 2,  # Updated version for shape support
+            "items": items_data,
+            "shapes": shapes_data
         }
         return json.dumps(payload)
 
@@ -103,18 +176,26 @@ class InfiniteCanvasView(QGraphicsView):
             
         try:
             data = json.loads(json_str)
-            if data.get("version") == 1:
-                for item_data in data.get("items", []):
-                    self.add_note_container(
-                        item_data["x"],
-                        item_data["y"],
-                        item_data["content"],
-                        item_data.get("width", 400)
-                    )
-            else:
-                 # Legacy or unknown format
-                 pass
+            version = data.get("version", 1)
+            
+            # Load note containers
+            for item_data in data.get("items", []):
+                self.add_note_container(
+                    item_data["x"],
+                    item_data["y"],
+                    item_data["content"],
+                    item_data.get("width", 400)
+                )
+            
+            # Load shapes (v2+)
+            if version >= 2:
+                for shape_data in data.get("shapes", []):
+                    shape = create_shape_from_dict(shape_data)
+                    if shape:
+                        self._scene.addItem(shape)
+                        
         except json.JSONDecodeError:
             # Fallback: Treat as raw HTML and create single container
             self.add_note_container(50, 50, json_str)
             logger.info("Converted legacy HTML to Note Container")
+

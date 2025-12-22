@@ -446,6 +446,7 @@ class TableFeature:
         self.parent = parent
         self.menu = QMenu(parent)
         self.actions = {}
+        self._init_menu_actions()  # Initialize actions immediately
 
     def create_toolbar_button(self) -> QToolButton:
         """Create and configure the toolbar button for tables."""
@@ -456,7 +457,6 @@ class TableFeature:
         self.menu.aboutToShow.connect(self._update_menu_state)
         btn.setMenu(self.menu)
         
-        self._init_menu_actions()
         return btn
 
     def _init_menu_actions(self):

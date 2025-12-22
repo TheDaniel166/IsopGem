@@ -190,6 +190,33 @@ class MindscapePageWidget(QWidget):
         wrapper = self._get_active_wrapper()
         if wrapper: wrapper.show_search()
 
+    def _start_shape_insert(self, shape_type: type):
+        """Start inserting a shape on the canvas."""
+        self.canvas.start_shape_insert(shape_type)
+    
+    def _show_polygon_dialog(self):
+        """Show polygon configuration dialog."""
+        from .shape_features import PolygonConfigDialog
+        from .shape_item import PolygonShapeItem
+        
+        dialog = PolygonConfigDialog(self)
+        if dialog.exec():
+            sides, skip = dialog.get_config()
+            # Create custom insert handler for configured polygon
+            self._pending_polygon = (sides, skip)
+            self._start_polygon_insert()
+    
+    def _start_polygon_insert(self):
+        """Start inserting a configured polygon."""
+        from .shape_item import PolygonShapeItem
+        from PyQt6.QtCore import Qt
+        
+        sides, skip = self._pending_polygon
+        self.canvas._insert_mode = True
+        self.canvas._insert_shape_type = PolygonShapeItem
+        self.canvas._polygon_config = (sides, skip)
+        self.canvas.setCursor(Qt.CursorShape.CrossCursor)
+
     def _init_actions(self):
         # Basic Formatting
         self.act_save = QAction("Save", self)
@@ -325,6 +352,37 @@ class MindscapePageWidget(QWidget):
         btn_img.setText("Image")
         btn_img.clicked.connect(self._insert_image)
         grp_illus.add_widget(btn_img)
+        
+        # Shapes dropdown
+        from .shape_item import (
+            RectShapeItem, EllipseShapeItem, TriangleShapeItem,
+            LineShapeItem, ArrowShapeItem
+        )
+        from PyQt6.QtWidgets import QMenu
+        
+        btn_shapes = QToolButton()
+        btn_shapes.setText("Shapes")
+        btn_shapes.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+        
+        menu_shapes = QMenu(btn_shapes)
+        for name, shape_cls in [
+            ("Rectangle", RectShapeItem),
+            ("Ellipse", EllipseShapeItem),
+            ("Triangle", TriangleShapeItem),
+            ("Line", LineShapeItem),
+            ("Arrow", ArrowShapeItem),
+        ]:
+            action = menu_shapes.addAction(name)
+            action.triggered.connect(
+                lambda checked, sc=shape_cls: self._start_shape_insert(sc)
+            )
+        
+        menu_shapes.addSeparator()
+        polygon_action = menu_shapes.addAction("Polygon...")
+        polygon_action.triggered.connect(self._show_polygon_dialog)
+        
+        btn_shapes.setMenu(menu_shapes)
+        grp_illus.add_widget(btn_shapes)
         
     def load_node(self, doc_id: int):
         """Load content from Document."""
