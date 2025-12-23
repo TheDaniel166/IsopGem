@@ -25,9 +25,14 @@ class InfiniteCanvasScene(QGraphicsScene):
 
 class InfiniteCanvasView(QGraphicsView):
     """
-    OneNote-style Click-to-Type Canvas.
+    OneNote-style Click-to-Type Canvas with zoom and grid support.
     """
     content_changed = pyqtSignal()
+    zoom_changed = pyqtSignal(float)  # Emits zoom percentage
+    
+    # Zoom limits
+    MIN_ZOOM = 0.1  # 10%
+    MAX_ZOOM = 4.0  # 400%
     
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -46,6 +51,65 @@ class InfiniteCanvasView(QGraphicsView):
         # Shape insert mode
         self._insert_mode = False
         self._insert_shape_type = None
+        
+        # Zoom state
+        self._zoom_factor = 1.0
+        
+        # Grid settings
+        self._show_grid = False
+        self._grid_size = 20
+    
+    # --- Zoom Methods ---
+    
+    def get_zoom(self) -> float:
+        """Get current zoom factor (1.0 = 100%)."""
+        return self._zoom_factor
+    
+    def set_zoom(self, factor: float):
+        """Set absolute zoom factor."""
+        factor = max(self.MIN_ZOOM, min(self.MAX_ZOOM, factor))
+        self.resetTransform()
+        self.scale(factor, factor)
+        self._zoom_factor = factor
+        self.zoom_changed.emit(factor * 100)
+    
+    def zoom_in(self):
+        """Zoom in by 25%."""
+        self.set_zoom(self._zoom_factor * 1.25)
+    
+    def zoom_out(self):
+        """Zoom out by 25%."""
+        self.set_zoom(self._zoom_factor / 1.25)
+    
+    def zoom_reset(self):
+        """Reset to 100% zoom."""
+        self.set_zoom(1.0)
+    
+    def zoom_fit(self):
+        """Fit all content in view."""
+        items_rect = self._scene.itemsBoundingRect()
+        if items_rect.isEmpty():
+            self.zoom_reset()
+            return
+        # Add padding
+        items_rect.adjust(-50, -50, 50, 50)
+        self.fitInView(items_rect, Qt.AspectRatioMode.KeepAspectRatio)
+        self._zoom_factor = self.transform().m11()
+        self.zoom_changed.emit(self._zoom_factor * 100)
+    
+    def wheelEvent(self, event):
+        """Handle mouse wheel for zooming (with Ctrl) or scrolling."""
+        if event.modifiers() == Qt.KeyboardModifier.ControlModifier:
+            # Zoom with Ctrl+Wheel
+            delta = event.angleDelta().y()
+            if delta > 0:
+                self.zoom_in()
+            elif delta < 0:
+                self.zoom_out()
+            event.accept()
+        else:
+            # Normal scrolling
+            super().wheelEvent(event)
 
     def mouseDoubleClickEvent(self, event: QMouseEvent):
         """Create new note container on double click."""

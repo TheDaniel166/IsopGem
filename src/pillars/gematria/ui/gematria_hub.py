@@ -12,6 +12,7 @@ from .batch_calculator_window import BatchCalculatorWindow
 from .database_tools_window import DatabaseToolsWindow
 from .text_analysis_window import TextAnalysisWindow
 from .methods_reference_window import MethodsReferenceWindow
+from .els_search_window import ELSSearchWindow
 from ..services import (
     HebrewGematriaCalculator,
     HebrewSofitCalculator,
@@ -109,6 +110,7 @@ class GematriaHub(QWidget):
             ("💾", "Saved", "Browse saved calculations", "#10b981", self._open_saved_calculations),
             ("📊", "Batch", "Process multiple entries", "#8b5cf6", self._open_batch_calculator),
             ("📝", "Text Analysis", "Analyze passages & texts", "#ec4899", self._open_text_analysis),
+            ("🔮", "TQ Text Sequencer", "Hidden letter sequences", "#7C3AED", self._open_els_search),
             ("🗄️", "Database", "Manage calculation data", "#f97316", self._open_database_tools),
             ("📖", "Reference", "Method documentation", "#06b6d4", self._open_methods_reference),
         ]
@@ -437,4 +439,13 @@ class GematriaHub(QWidget):
             window_class=MethodsReferenceWindow,
             allow_multiple=False,
             calculators=calculators
+        )
+
+    def _open_els_search(self):
+        """Open the TQ Text Sequencer window."""
+        self.window_manager.open_window(
+            window_type="els_search",
+            window_class=ELSSearchWindow,
+            allow_multiple=False,
+            window_manager=self.window_manager
         )

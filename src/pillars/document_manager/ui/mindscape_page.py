@@ -1,7 +1,7 @@
 from .canvas.infinite_canvas import InfiniteCanvasView
 from .ribbon_widget import RibbonWidget
 from ..services.document_service import document_service_context
-from PyQt6.QtWidgets import QApplication, QTextEdit, QWidget, QVBoxLayout, QHBoxLayout, QToolBar, QMessageBox, QComboBox, QFontComboBox, QColorDialog, QToolButton, QFrame
+from PyQt6.QtWidgets import QApplication, QTextEdit, QWidget, QVBoxLayout, QHBoxLayout, QToolBar, QMessageBox, QComboBox, QFontComboBox, QColorDialog, QToolButton, QFrame, QSlider, QLabel, QPushButton
 from PyQt6.QtGui import QFont, QTextCharFormat, QAction, QIcon, QColor, QTextListFormat
 from PyQt6.QtCore import Qt, pyqtSlot
 import logging
@@ -27,6 +27,9 @@ class MindscapePageWidget(QWidget):
         # --- Canvas ---
         self.canvas = InfiniteCanvasView()
         self.layout.addWidget(self.canvas)
+        
+        # --- Status Bar with Zoom Controls ---
+        self._init_status_bar()
         
         self.current_doc_id = None
         self.active_editor = None
@@ -216,6 +219,88 @@ class MindscapePageWidget(QWidget):
         self.canvas._insert_shape_type = PolygonShapeItem
         self.canvas._polygon_config = (sides, skip)
         self.canvas.setCursor(Qt.CursorShape.CrossCursor)
+    
+    def _init_status_bar(self):
+        """Initialize status bar with zoom controls."""
+        status_bar = QFrame()
+        status_bar.setFrameShape(QFrame.Shape.NoFrame)
+        status_bar.setStyleSheet("""
+            QFrame {
+                background: #f0f0f0;
+                border-top: 1px solid #d0d0d0;
+            }
+            QPushButton {
+                background: transparent;
+                border: 1px solid #c0c0c0;
+                border-radius: 3px;
+                padding: 2px 8px;
+                min-width: 24px;
+            }
+            QPushButton:hover { background: #e0e0e0; }
+            QPushButton:pressed { background: #d0d0d0; }
+            QLabel { padding: 0 8px; }
+        """)
+        
+        status_layout = QHBoxLayout(status_bar)
+        status_layout.setContentsMargins(8, 4, 8, 4)
+        status_layout.setSpacing(4)
+        
+        # Left spacer (for future status text)
+        status_layout.addStretch()
+        
+        # Zoom controls (right side)
+        btn_zoom_out = QPushButton("−")
+        btn_zoom_out.setToolTip("Zoom Out (Ctrl+Wheel Down)")
+        btn_zoom_out.clicked.connect(self.canvas.zoom_out)
+        status_layout.addWidget(btn_zoom_out)
+        
+        # Slider
+        self.zoom_slider = QSlider(Qt.Orientation.Horizontal)
+        self.zoom_slider.setRange(10, 400)  # 10% to 400%
+        self.zoom_slider.setValue(100)
+        self.zoom_slider.setFixedWidth(120)
+        self.zoom_slider.setToolTip("Zoom Level")
+        self.zoom_slider.valueChanged.connect(self._on_zoom_slider_changed)
+        status_layout.addWidget(self.zoom_slider)
+        
+        btn_zoom_in = QPushButton("+")
+        btn_zoom_in.setToolTip("Zoom In (Ctrl+Wheel Up)")
+        btn_zoom_in.clicked.connect(self.canvas.zoom_in)
+        status_layout.addWidget(btn_zoom_in)
+        
+        # Percentage label
+        self.zoom_label = QLabel("100%")
+        self.zoom_label.setFixedWidth(50)
+        status_layout.addWidget(self.zoom_label)
+        
+        # Fit button
+        btn_zoom_fit = QPushButton("Fit")
+        btn_zoom_fit.setToolTip("Fit to Content")
+        btn_zoom_fit.clicked.connect(self.canvas.zoom_fit)
+        status_layout.addWidget(btn_zoom_fit)
+        
+        # Reset button  
+        btn_zoom_reset = QPushButton("100%")
+        btn_zoom_reset.setToolTip("Reset to 100%")
+        btn_zoom_reset.clicked.connect(self.canvas.zoom_reset)
+        status_layout.addWidget(btn_zoom_reset)
+        
+        self.layout.addWidget(status_bar)
+        
+        # Connect canvas zoom signal to update UI
+        self.canvas.zoom_changed.connect(self._on_canvas_zoom_changed)
+    
+    def _on_zoom_slider_changed(self, value: int):
+        """Handle slider value change."""
+        self.canvas.set_zoom(value / 100.0)
+    
+    def _on_canvas_zoom_changed(self, percentage: float):
+        """Update UI when canvas zoom changes."""
+        self.zoom_slider.blockSignals(True)
+        self.zoom_slider.setValue(int(percentage))
+        self.zoom_slider.blockSignals(False)
+        self.zoom_label.setText(f"{int(percentage)}%")
+
 
     def _init_actions(self):
         # Basic Formatting

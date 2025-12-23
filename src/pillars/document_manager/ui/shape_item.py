@@ -479,6 +479,12 @@ class LineShapeItem(BaseShapeItem):
                     self._active_handle = handle
                     self._resize_start_pos = event.scenePos()
                     self._resize_start_rect = None  # Mark as rotation mode
+                    # Store starting angle for relative calculation
+                    center = self.mapToScene(self._rect.center())
+                    dx = self._resize_start_pos.x() - center.x()
+                    dy = self._resize_start_pos.y() - center.y()
+                    self._rotation_start_angle = math.degrees(math.atan2(dy, dx))
+                    self._rotation_start_value = self._angle
                     event.accept()
                     return
                 else:
@@ -499,13 +505,17 @@ class LineShapeItem(BaseShapeItem):
                 center = self.mapToScene(self._rect.center())
                 mouse_pos = event.scenePos()
                 
-                # Calculate angle from center to mouse
+                # Calculate current angle from center to mouse
                 dx = mouse_pos.x() - center.x()
                 dy = mouse_pos.y() - center.y()
-                angle = math.degrees(math.atan2(dy, dx))
+                current_angle = math.degrees(math.atan2(dy, dx))
                 
-                self._angle = angle
-                self.setRotation(angle)
+                # Apply delta to starting rotation value
+                angle_delta = current_angle - self._rotation_start_angle
+                new_angle = self._rotation_start_value + angle_delta
+                
+                self._angle = new_angle % 360
+                self.setRotation(self._angle)
                 event.accept()
                 return
             else:
@@ -597,64 +607,72 @@ class LineShapeItem(BaseShapeItem):
         size = self.END_SIZE
         
         if style == LINE_END_ARROW:
-            # Filled triangle
+            # Filled triangle - x is the edge, arrow points towards edge
             painter.setBrush(QBrush(self._stroke_color))
             path = QPainterPath()
             if pointing_right:
-                path.moveTo(x + size, y_mid)
-                path.lineTo(x, y_mid - size / 2)
-                path.lineTo(x, y_mid + size / 2)
+                # Tip at x (right edge), base at x - size
+                path.moveTo(x, y_mid)  # Tip
+                path.lineTo(x - size, y_mid - size / 2)  # Base top
+                path.lineTo(x - size, y_mid + size / 2)  # Base bottom
             else:
-                path.moveTo(x - size, y_mid)
-                path.lineTo(x, y_mid - size / 2)
-                path.lineTo(x, y_mid + size / 2)
+                # Tip at x (left edge), base at x + size
+                path.moveTo(x, y_mid)  # Tip
+                path.lineTo(x + size, y_mid - size / 2)  # Base top
+                path.lineTo(x + size, y_mid + size / 2)  # Base bottom
             path.closeSubpath()
             painter.drawPath(path)
             
         elif style == LINE_END_OPEN_ARROW:
-            # Open triangle (outline only)
+            # Open triangle (outline only) - tip at edge
             painter.setBrush(Qt.BrushStyle.NoBrush)
             if pointing_right:
-                painter.drawLine(QLineF(x, y_mid - size / 2, x + size, y_mid))
-                painter.drawLine(QLineF(x + size, y_mid, x, y_mid + size / 2))
+                # Tip at x, base at x - size
+                painter.drawLine(QLineF(x - size, y_mid - size / 2, x, y_mid))
+                painter.drawLine(QLineF(x, y_mid, x - size, y_mid + size / 2))
             else:
-                painter.drawLine(QLineF(x, y_mid - size / 2, x - size, y_mid))
-                painter.drawLine(QLineF(x - size, y_mid, x, y_mid + size / 2))
+                # Tip at x, base at x + size
+                painter.drawLine(QLineF(x + size, y_mid - size / 2, x, y_mid))
+                painter.drawLine(QLineF(x, y_mid, x + size, y_mid + size / 2))
                 
         elif style == LINE_END_CIRCLE:
-            # Filled circle
+            # Filled circle - center at half size from edge
             painter.setBrush(QBrush(self._stroke_color))
             radius = size / 2
-            cx = x + radius if pointing_right else x - radius
+            cx = x - radius if pointing_right else x + radius
             painter.drawEllipse(QPointF(cx, y_mid), radius, radius)
             
         elif style == LINE_END_DIAMOND:
-            # Filled diamond
+            # Filled diamond - edge point at x
             painter.setBrush(QBrush(self._stroke_color))
             path = QPainterPath()
             half = size / 2
             if pointing_right:
-                cx = x + half
+                # Diamond tip at x, center at x - half
+                path.moveTo(x, y_mid)  # Right tip (at edge)
+                path.lineTo(x - half, y_mid - half)
+                path.lineTo(x - size, y_mid)  # Left tip
+                path.lineTo(x - half, y_mid + half)
             else:
-                cx = x - half
-            path.moveTo(cx, y_mid - half)
-            path.lineTo(cx + half, y_mid)
-            path.lineTo(cx, y_mid + half)
-            path.lineTo(cx - half, y_mid)
+                # Diamond tip at x, center at x + half
+                path.moveTo(x, y_mid)  # Left tip (at edge)
+                path.lineTo(x + half, y_mid - half)
+                path.lineTo(x + size, y_mid)  # Right tip
+                path.lineTo(x + half, y_mid + half)
             path.closeSubpath()
             painter.drawPath(path)
             
         elif style == LINE_END_SQUARE:
-            # Filled square
+            # Filled square - edge at x
             painter.setBrush(QBrush(self._stroke_color))
             half = size / 2
             if pointing_right:
-                painter.drawRect(QRectF(x, y_mid - half, size, size))
-            else:
                 painter.drawRect(QRectF(x - size, y_mid - half, size, size))
+            else:
+                painter.drawRect(QRectF(x, y_mid - half, size, size))
                 
         elif style == LINE_END_BAR:
-            # Perpendicular bar
+            # Perpendicular bar at edge
             painter.setBrush(Qt.BrushStyle.NoBrush)
             painter.drawLine(QLineF(x, y_mid - size / 2, x, y_mid + size / 2))
     
