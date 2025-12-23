@@ -434,20 +434,24 @@ class ELSSearchService:
         self,
         text: str,
         term: str,
-        max_results: int = 1000
+        reverse: bool = False,
+        max_results: int = 0  # 0 = unlimited
     ) -> ChainSearchSummary:
         """
         Search for term by finding nearest occurrence of each letter in sequence.
         
-        For 'ABCD':
+        For 'ABCD' (forward):
         1. Find each 'A' as starting point
         2. From each A, find the next 'B' (closest forward)
         3. From B, find the next 'C'
         4. Continue until term complete
         
+        For reverse: search backwards from each starting position.
+        
         Args:
             text: Source text
             term: Word to search for
+            reverse: If True, search backwards (find previous occurrence)
             max_results: Maximum results to return (for performance)
             
         Returns:
@@ -469,7 +473,7 @@ class ELSSearchService:
         start_positions = [i for i, c in enumerate(stripped_upper) if c == first_letter]
         
         for start_pos in start_positions:
-            if len(results) >= max_results:
+            if max_results > 0 and len(results) >= max_results:
                 break
                 
             # Try to build a complete chain from this start
@@ -487,19 +491,31 @@ class ELSSearchService:
                         intervening_gematria=0
                     ))
                 else:
-                    # Find next occurrence of this letter after current position
+                    # Find next/previous occurrence of this letter
                     next_pos = None
-                    for i in range(current_pos + 1, n):
-                        if stripped_upper[i] == letter:
-                            next_pos = i
-                            break
+                    
+                    if reverse:
+                        # Search backwards
+                        for i in range(current_pos - 1, -1, -1):
+                            if stripped_upper[i] == letter:
+                                next_pos = i
+                                break
+                    else:
+                        # Search forwards
+                        for i in range(current_pos + 1, n):
+                            if stripped_upper[i] == letter:
+                                next_pos = i
+                                break
                     
                     if next_pos is None:
                         # Can't complete chain from this start
                         break
                     
-                    interval = next_pos - current_pos
-                    intervening = stripped_upper[current_pos + 1:next_pos]
+                    interval = abs(next_pos - current_pos)
+                    if reverse:
+                        intervening = stripped_upper[next_pos + 1:current_pos]
+                    else:
+                        intervening = stripped_upper[current_pos + 1:next_pos]
                     
                     steps.append(ChainStep(
                         letter=letter,
@@ -517,7 +533,8 @@ class ELSSearchService:
                     steps=steps
                 ))
         
-        logger.info(f"Chain search for '{term}' found {len(results)} paths")
+        direction_str = "reverse" if reverse else "forward"
+        logger.info(f"Chain search ({direction_str}) for '{term}' found {len(results)} paths")
         
         return ChainSearchSummary(
             results=results,

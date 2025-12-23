@@ -8,7 +8,8 @@ from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QSplitter,
     QLabel, QLineEdit, QSpinBox, QPushButton, QComboBox, QRadioButton,
     QGroupBox, QTableWidget, QTableWidgetItem, QHeaderView, QTextEdit,
-    QFileDialog, QMessageBox, QButtonGroup, QFrame, QScrollArea, QTabWidget
+    QFileDialog, QMessageBox, QButtonGroup, QFrame, QScrollArea, QTabWidget,
+    QCheckBox
 )
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QColor
@@ -257,9 +258,16 @@ class ELSSearchWindow(QMainWindow):
         search_layout.addLayout(seq_layout)
         
         # Chain mode
-        self._chain_radio = QRadioButton("🔗 Chain (nearest)")
+        chain_layout = QHBoxLayout()
+        self._chain_radio = QRadioButton("🔗 Chain")
         self._skip_group.addButton(self._chain_radio)
-        search_layout.addWidget(self._chain_radio)
+        chain_layout.addWidget(self._chain_radio)
+        
+        self._chain_reverse_check = QCheckBox("Reverse")
+        self._chain_reverse_check.setToolTip("Search backwards for each letter")
+        chain_layout.addWidget(self._chain_reverse_check)
+        chain_layout.addStretch()
+        search_layout.addLayout(chain_layout)
         
         # Direction
         dir_layout = QHBoxLayout()
@@ -328,9 +336,22 @@ class ELSSearchWindow(QMainWindow):
         self._results_table.cellClicked.connect(self._on_result_clicked)
         layout.addWidget(self._results_table)
         
+        # Filter and count row
+        filter_layout = QHBoxLayout()
         self._hits_label = QLabel("Total: 0 hits")
         self._hits_label.setStyleSheet("font-weight: bold;")
-        layout.addWidget(self._hits_label)
+        filter_layout.addWidget(self._hits_label)
+        
+        filter_layout.addStretch()
+        
+        filter_layout.addWidget(QLabel("Gem:"))
+        self._gematria_filter = QLineEdit()
+        self._gematria_filter.setPlaceholderText("e.g. 93")
+        self._gematria_filter.setFixedWidth(60)
+        self._gematria_filter.textChanged.connect(self._apply_gematria_filter)
+        filter_layout.addWidget(self._gematria_filter)
+        
+        layout.addLayout(filter_layout)
         
         # === Gematria Breakdown Section ===
         breakdown_group = QGroupBox("🔢 Gematria Breakdown")
@@ -555,8 +576,10 @@ class ELSSearchWindow(QMainWindow):
             )
         elif self._chain_radio.isChecked():
             # Chain search - opens separate results window
-            chain_summary = self._service.search_chain(self._stripped_text, term)
-            self._status_label.setText(f"Found {len(chain_summary.results)} chain paths for '{term}'")
+            reverse = self._chain_reverse_check.isChecked()
+            chain_summary = self._service.search_chain(self._stripped_text, term, reverse=reverse)
+            direction_str = "reverse" if reverse else "forward"
+            self._status_label.setText(f"Found {len(chain_summary.results)} chain paths ({direction_str}) for '{term}'")
             
             if chain_summary.results:
                 from .chain_results_window import ChainResultsWindow
@@ -571,10 +594,54 @@ class ELSSearchWindow(QMainWindow):
                 self._stripped_text, term, skip=skip, direction=direction
             )
         
+        self._all_results = summary.results
         self._current_results = summary.results
+        self._gematria_filter.clear()  # Clear filter on new search
         self._display_results()
         
         self._status_label.setText(f"Found {len(self._current_results)} matches for '{term}'")
+    
+    def _apply_gematria_filter(self):
+        """Filter displayed results by gematria value."""
+        if not hasattr(self, '_all_results'):
+            return
+        
+        filter_text = self._gematria_filter.text().strip()
+        
+        if not filter_text:
+            # Show all results
+            self._current_results = self._all_results
+        else:
+            try:
+                target_gematria = int(filter_text)
+                # Calculate gematria for each result and filter
+                calc = TQGematriaCalculator()
+                filtered = []
+                for result in self._all_results:
+                    # Calculate total gematria for this result's intervening letters
+                    result_gematria = 0
+                    if self._stripped_text:
+                        segments = self._service.extract_intervening_letters(
+                            self._stripped_text.upper(),
+                            result.letter_positions,
+                            result.term
+                        )
+                        for seg in segments:
+                            if seg.letters:
+                                result_gematria += calc.calculate(seg.letters)
+                    
+                    term_gematria = calc.calculate(result.term)
+                    total = term_gematria + result_gematria
+                    
+                    if total == target_gematria:
+                        filtered.append(result)
+                
+                self._current_results = filtered
+            except ValueError:
+                # Invalid input, show all
+                self._current_results = self._all_results
+        
+        self._display_results()
     
     def _display_results(self):
         """Populate results table."""
@@ -586,7 +653,11 @@ class ELSSearchWindow(QMainWindow):
             self._results_table.setItem(i, 2, QTableWidgetItem(str(result.start_pos)))
             self._results_table.setItem(i, 3, QTableWidgetItem(result.direction[:3]))
         
-        self._hits_label.setText(f"Total: {len(self._current_results)} hits")
+        all_count = len(self._all_results) if hasattr(self, '_all_results') else len(self._current_results)
+        if len(self._current_results) < all_count:
+            self._hits_label.setText(f"Showing: {len(self._current_results)} / {all_count} hits")
+        else:
+            self._hits_label.setText(f"Total: {len(self._current_results)} hits")
         
         # Highlight all results on grid
         self._grid_view.clear_highlights()

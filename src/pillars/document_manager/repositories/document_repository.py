@@ -63,6 +63,12 @@ class DocumentRepository:
             (Document.content.ilike(f"%{query}%"))
         ).all()
 
+    def get_by_collection_name(self, collection_query: str) -> List[Document]:
+        """Find documents where the collection name contains the query string (case-insensitive)."""
+        return self.db.query(Document).filter(
+            Document.collection.ilike(f"%{collection_query}%")
+        ).all()
+
     def create(
         self,
         title: str,

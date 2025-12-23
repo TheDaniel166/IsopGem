@@ -13,6 +13,8 @@ from .database_tools_window import DatabaseToolsWindow
 from .text_analysis_window import TextAnalysisWindow
 from .methods_reference_window import MethodsReferenceWindow
 from .els_search_window import ELSSearchWindow
+from .acrostics_window import AcrosticsWindow
+from .chiastic_window import ChiasticWindow
 from ..services import (
     HebrewGematriaCalculator,
     HebrewSofitCalculator,
@@ -111,6 +113,8 @@ class GematriaHub(QWidget):
             ("📊", "Batch", "Process multiple entries", "#8b5cf6", self._open_batch_calculator),
             ("📝", "Text Analysis", "Analyze passages & texts", "#ec4899", self._open_text_analysis),
             ("🔮", "TQ Text Sequencer", "Hidden letter sequences", "#7C3AED", self._open_els_search),
+            ("🗝️", "Acrostic Discovery", "Find hidden messages in text", "#f43f5e", self._open_acrostics),
+            ("⚖️", "Chiastic TQ Finder", "Find symmetrical Gematria patterns", "#E11D48", self._open_chiasmus),
             ("🗄️", "Database", "Manage calculation data", "#f97316", self._open_database_tools),
             ("📖", "Reference", "Method documentation", "#06b6d4", self._open_methods_reference),
         ]
@@ -446,6 +450,25 @@ class GematriaHub(QWidget):
         self.window_manager.open_window(
             window_type="els_search",
             window_class=ELSSearchWindow,
+            allow_multiple=False,
+            window_manager=self.window_manager
+        )
+
+
+    def _open_acrostics(self):
+        """Open the Acrostic Discovery window."""
+        self.window_manager.open_window(
+            window_type="acrostics",
+            window_class=AcrosticsWindow,
+            allow_multiple=False,
+            window_manager=self.window_manager
+        )
+
+    def _open_chiasmus(self):
+        """Open the Chiastic TQ Finder window."""
+        self.window_manager.open_window(
+            window_type="chiasmus",
+            window_class=ChiasticWindow,
             allow_multiple=False,
             window_manager=self.window_manager
         )

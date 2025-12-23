@@ -64,6 +64,8 @@ class AdytonHub(QWidget):
         tools = [
             ("⛩", "3D Engine", "Enter the Adyton sanctuary", "#3b82f6", self._open_sanctuary),
             ("◈", "OpenGL Depth", "Advanced depth-buffered viewport", "#8b5cf6", self._open_sanctuary_gl),
+            ("△", "Enochian Watchtowers", "View the Kamea Tablets (156 Cells)", "#d97706", self._open_watchtowers),
+            ("▦", "Constellation Map", "Explore Planetary Constellation Networks", "#10b981", self._open_wall_designer),
         ]
 
         grid = QGridLayout()
@@ -295,3 +297,37 @@ class AdytonHub(QWidget):
             allow_multiple=True,
             wall_index=wall_index,
         )
+
+    def _open_watchtowers(self) -> None:
+        """Launch the Enochian Watchtowers viewer."""
+        import os
+        from pillars.adyton.services.kamea_loader_service import KameaLoaderService
+        from pillars.adyton.ui.watchtower_view import WatchtowerView
+        
+        # Determine project root (5 levels up from this file)
+        # src/pillars/adyton/ui/adyton_hub.py -> ... -> project_root
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.abspath(os.path.join(current_dir, "../../../../"))
+        
+        loader = KameaLoaderService(project_root)
+        
+        self.window_manager.open_window(
+            "enochian_watchtowers",
+            WatchtowerView,
+            allow_multiple=False,
+            loader_service=loader
+        )
+
+    def _open_wall_designer(self) -> None:
+        """Launch the Wall Designer tool."""
+        # Need to import locally to avoid circulars if any, 
+        # though adyton_hub is high level.
+        from .wall_designer import WallDesignerWindow
+        
+        self.window_manager.open_window(
+            "wall_designer",
+            WallDesignerWindow,
+            allow_multiple=False,
+            window_manager=self.window_manager
+        )
+

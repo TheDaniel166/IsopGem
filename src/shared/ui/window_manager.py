@@ -67,8 +67,9 @@ class WindowManager:
                 return window
         
         # Create new window
-        # Pass parent to maintain proper window hierarchy
-        window = window_class(*args, parent=self.parent, **kwargs)
+        # Pass parent=None to ensure the window is a top-level independent window
+        # This is critical for multi-monitor support so the OS doesn't bind it to the main window
+        window = window_class(*args, parent=None, **kwargs)
         
         # Store window type for later reference
         window.setProperty("window_type", window_type)
@@ -82,13 +83,14 @@ class WindowManager:
         # Prevent tool windows from closing the entire application
         window.setAttribute(Qt.WidgetAttribute.WA_QuitOnClose, False)
         
-        # Use Tool type with transient parent for proper z-ordering on Linux
-        # Tool windows stay above their transient parent in most window managers
+        # Use Window type for independent behavior (allows taskbar entry and multi-monitor movement)
         window.setWindowFlags(
-            Qt.WindowType.Tool |
+            Qt.WindowType.Window |
+            Qt.WindowType.WindowCloseButtonHint |
+            Qt.WindowType.WindowMinimizeButtonHint |
+            Qt.WindowType.WindowMaximizeButtonHint |
             Qt.WindowType.WindowTitleHint |
-            Qt.WindowType.WindowSystemMenuHint |
-            Qt.WindowType.WindowCloseButtonHint
+            Qt.WindowType.WindowSystemMenuHint
         )
         
         # Track window closure
@@ -102,14 +104,13 @@ class WindowManager:
             original_title = window.windowTitle()
             window.setWindowTitle(f"{original_title} #{self._window_counters[window_type]}")
         
-        # Show the window first so it has a valid windowHandle
+        # Show the window handles
         window.show()
         
-        # Set the transient parent at the window system level
-        # This tells X11/Wayland that this window belongs to the main window
-        if self.parent and self.parent.windowHandle() and window.windowHandle():
-            window.windowHandle().setTransientParent(self.parent.windowHandle())
-            logger.debug("Set transient parent for %s", window_type)
+        # IMPORTANT: We purposefully DO NOT set the transient parent here.
+        # Setting a transient parent (on Linux/X11) often locks the child window
+        # to the same monitor as the parent and prevents independent movement.
+        # By leaving them independent, the user gains full multi-monitor control.
         
         window.raise_()
         window.activateWindow()
@@ -230,9 +231,9 @@ class WindowManager:
             for window in visible:
                 window.raise_()
             
-            # Activate the last raised window (if any) to give it focus
-            if visible:
-                visible[-1].activateWindow()
+            # Note: We do NOT activate the last window here, as that would steal
+            # focus from the main window if the user just clicked it.
+            # window.raise_() is sufficient to bring them to view.
             
             logger.debug("Raised %d active windows", len(visible))
         
