@@ -424,10 +424,12 @@ class WallDesignerWindow(QMainWindow):
             self.load_wall_values(wall_name)
             
         self.update_grid_overlay()
-        # Reset info
-        self.lbl_constellation_id.setText("ID: -")
+        # Reset info panel
+        self.lbl_name.setText("Select a constellation...")
+        self.lbl_greek.setText("")
         self.lbl_total.setText("0")
         self.txt_values.setText("-")
+        self.txt_grimoire.clear()
 
     def load_wall_values(self, wall_name):
         # Map Name to Filename
@@ -500,15 +502,54 @@ class WallDesignerWindow(QMainWindow):
         if not ordered_values:
              ordered_values = values # Fallback
              
-        # Update UI
-        sym = str(gid)
-        if gid == 10: sym = "A"
-        if gid == 11: sym = "B"
-        if gid == 12: sym = "C"
-        
-        self.lbl_constellation_id.setText(f"Constellation {sym}")
+        # Update UI - Values
         self.txt_values.setText(", ".join(map(str, ordered_values)))
         self.lbl_total.setText(str(total))
+        
+        # Update Grimoire Display
+        wall_name = self.wall_selector.currentText()
+        gid_str = str(gid)
+        
+        if wall_name in self.mythos_data and gid_str in self.mythos_data[wall_name]:
+            entry = self.mythos_data[wall_name][gid_str]
+            self.lbl_name.setText(entry.get("Name", f"Constellation #{gid}"))
+            self.lbl_greek.setText(entry.get("GreekKey", ""))
+            
+            # Format HTML for Grimoire text
+            html = self._format_grimoire_html(entry)
+            self.txt_grimoire.setHtml(html)
+        else:
+            # Fallback if no Grimoire entry
+            sym = str(gid)
+            if gid == 10: sym = "A"
+            if gid == 11: sym = "B"
+            if gid == 12: sym = "C"
+            self.lbl_name.setText(f"Constellation {sym}")
+            self.lbl_greek.setText("")
+            self.txt_grimoire.setPlainText("No Grimoire entry found for this constellation.")
+    
+    def _format_grimoire_html(self, entry):
+        """Format Grimoire entry as styled HTML."""
+        mythos = entry.get("Mythos", "").replace("\n", "<br>")
+        texture = entry.get("Texture", "").replace("\n", "<br>")
+        mantra = entry.get("Mantra", "")
+        
+        html = f"""
+        <p style='color: #ccc; line-height: 1.6;'>
+            <b style='color: #d4af37;'>⸭ THE MYTHOS ⸭</b><br><br>
+            {mythos}
+        </p>
+        <hr style='border-color: #444;'>
+        <p style='color: #aaa; line-height: 1.6;'>
+            <b style='color: #888;'>⸭ THE TEXTURE ⸭</b><br><br>
+            {texture}
+        </p>
+        <hr style='border-color: #444;'>
+        <p style='color: #d4af37; font-style: italic; text-align: center; font-size: 11pt;'>
+            {mantra}
+        </p>
+        """
+        return html
 
     def on_cell_right_clicked(self, row, col, global_pos):
         """Handle right click on a cell to show context menu."""
