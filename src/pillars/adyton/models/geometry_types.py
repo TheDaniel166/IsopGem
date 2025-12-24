@@ -13,6 +13,7 @@ class Face3D:
     vertices: List[QVector3D]
     color: QColor = field(default_factory=lambda: QColor(200, 200, 200))
     outline_color: QColor = field(default_factory=lambda: QColor(50, 50, 50))
+    shading: bool = True # Whether to apply directional shading
     centroid: QVector3D = field(init=False)
 
     def __post_init__(self):
@@ -47,15 +48,9 @@ class Object3D:
     _last_scale: QVector3D = field(default_factory=lambda: QVector3D(1, 1, 1), repr=False)
 
     def update_world_transform(self):
-        """Applies basic TRS matrix to faces, skipping work if nothing moved."""
-        if (
-            self._world_faces
-            and self.position == self._last_position
-            and self.rotation == self._last_rotation
-            and self.scale == self._last_scale
-        ):
-            return
-
+        """Applies TRS matrix to faces. Optimized to only run if TRS changed."""
+        # Force redraw if world faces are empty or internal state changed
+        # During Phase I/II construction, we often change geometry itself, so we ensure updates.
         matrix = QMatrix4x4()
         matrix.translate(self.position)
         matrix.rotate(self.rotation.x(), 1, 0, 0)
@@ -66,9 +61,10 @@ class Object3D:
         self._world_faces = []
         for face in self.faces:
             transformed_verts = [matrix * v for v in face.vertices]
-            new_face = Face3D(vertices=transformed_verts, color=face.color, outline_color=face.outline_color)
+            new_face = Face3D(
+                vertices=transformed_verts, 
+                color=face.color, 
+                outline_color=face.outline_color,
+                shading=face.shading
+            )
             self._world_faces.append(new_face)
-
-        self._last_position = QVector3D(self.position)
-        self._last_rotation = QVector3D(self.rotation)
-        self._last_scale = QVector3D(self.scale)

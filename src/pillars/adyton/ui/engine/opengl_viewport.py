@@ -7,6 +7,7 @@ painter sorting by relying on the GL Z-buffer.
 from typing import List
 
 from PyQt6.QtOpenGLWidgets import QOpenGLWidget
+from PyQt6.QtCore import Qt, QPoint, QPointF
 from PyQt6.QtGui import (
     QSurfaceFormat,
     QMatrix4x4,
@@ -17,8 +18,9 @@ from PyQt6.QtGui import (
     QColor,
     QVector3D,
     QVector4D,
+    QPolygonF,
+    QTransform,
 )
-from PyQt6.QtCore import Qt, QPoint
 from OpenGL.GL import (
     glClearColor,
     glClear,
@@ -51,6 +53,7 @@ from OpenGL.GL import (
 
 from pillars.adyton.models.geometry_types import Object3D, Face3D
 from pillars.adyton.models.prism import SevenSidedPrism
+from ...constants import COLOR_GOLD, COLOR_SILVER
 from .camera import AdytonCamera
 
 
@@ -179,15 +182,23 @@ class AdytonGLViewport(QOpenGLWidget):
     # ------------------------------------------------------------------
     def _draw_overlays(self, projection: QMatrix4x4, view: QMatrix4x4):
         painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         painter.setRenderHint(QPainter.RenderHint.TextAntialiasing)
-        painter.setFont(QFont("DejaVu Sans", 16, QFont.Weight.Bold))
+        
+        # KILL RAYS: Ensure nothing draws outside the widget's bounds
+        painter.setClipRect(self.rect())
+        
+        # Use a standard font for Greek support
+        font = QFont("DejaVu Sans", 36, QFont.Weight.Bold)
+        painter.setFont(font)
+        painter.setPen(COLOR_GOLD)
 
         for obj in self.scene_objects:
-            if not hasattr(obj, "label_positions"):
+            # Check if object has valid label metadata
+            positions = getattr(obj, "label_positions", None)
+            if not positions:
                 continue
 
-            positions = getattr(obj, "label_positions", [])
-            colors = getattr(obj, "label_colors", [])
             planets = getattr(obj, "label_planets", [])
             model = self._model_matrix(obj)
 
@@ -197,14 +208,75 @@ class AdytonGLViewport(QOpenGLWidget):
                 if not greek:
                     continue
 
-                ring_color = colors[idx % len(colors)] if colors else QColor(255, 255, 255)
-                flash = QColor(255 - ring_color.red(), 255 - ring_color.green(), 255 - ring_color.blue())
+                # Local orientation for the slanted surface
+                # radial_dir points horizontally away from center
+                radial_dir = QVector3D(pos.x(), 0, pos.z()).normalized()
+                
+                # The 'slant' vector points from bottom (inner) to top (outer)
+                # Outer is at y=0, inner is at y=-10.
+                # So the vector 'up the slant' has a positive Y and positive radial component.
+                # We can derive it by assuming it's orthogonal to the tangent.
+                right_vec = QVector3D.crossProduct(QVector3D(0, 1, 0), radial_dir).normalized()
+                
+                # Calculate slant direction: diagonal from inner-bottom to outer-top
+                # Vowel ring width is ~19 units, depth is 10.
+                # We approximate the slant 'up' vector:
+                up_vec = (radial_dir * 1.9 + QVector3D(0, 1.0, 0)).normalized()
+                
+                # Letter size on the slant
+                h_size = 14.0
+                w_size = 14.0
+                
+                # Quad corners on the diagonal plane
+                p_bottom_left  = pos - (w_size/2)*right_vec - (h_size/2)*up_vec
+                p_bottom_right = pos + (w_size/2)*right_vec - (h_size/2)*up_vec
+                p_top_right    = pos + (w_size/2)*right_vec + (h_size/2)*up_vec
+                p_top_left     = pos - (w_size/2)*right_vec + (h_size/2)*up_vec
 
-                screen_pt = self._project_point(pos, model, view, projection)
-                if screen_pt is None:
+                # Project to screen
+                sp0 = self._project_point(p_bottom_left,  model, view, projection)
+                sp1 = self._project_point(p_bottom_right, model, view, projection)
+                sp2 = self._project_point(p_top_right,    model, view, projection)
+                sp3 = self._project_point(p_top_left,     model, view, projection)
+
+                if any(p is None for p in [sp0, sp1, sp2, sp3]):
                     continue
-                painter.setPen(flash)
-                painter.drawText(screen_pt, greek)
+
+                # Sanity check: ensure the quad has some area and is not too extreme
+                # (prevents 'golden rays' when viewed edge-on)
+                target_quad = QPolygonF([
+                    QPointF(sp0), QPointF(sp1), QPointF(sp2), QPointF(sp3)
+                ])
+                
+                # Simple bounding rect check to avoid massive overflows
+                br = target_quad.boundingRect()
+                if br.width() > self.width() * 2 or br.height() > self.height() * 2:
+                    continue
+                if br.width() < 1 or br.height() < 1:
+                    continue
+
+                rect_size = 200
+                source_rect = QPolygonF([
+                    QPointF(0, rect_size),          # Bottom Left
+                    QPointF(rect_size, rect_size),  # Bottom Right
+                    QPointF(rect_size, 0),          # Top Right
+                    QPointF(0, 0)                  # Top Left
+                ])
+
+                transform = QTransform()
+                if QTransform.quadToQuad(source_rect, target_quad, transform):
+                    # DETECTOR OF DISTORTION:
+                    # If the transform is nearly singular or wildly scaled, skip it.
+                    # This prevents the 'Golden Rays' from degenerate perspective.
+                    if abs(transform.determinant()) < 1e-6:
+                        continue
+                        
+                    painter.save()
+                    painter.setTransform(transform, True)
+                    temp_font = QFont("DejaVu Sans", 120, QFont.Weight.Bold)
+                    painter.setFont(temp_font)
+                    painter.drawText(0, 0, rect_size, rect_size, Qt.AlignmentFlag.AlignCenter, greek)
+                    painter.restore()
 
         painter.end()
 
@@ -212,12 +284,21 @@ class AdytonGLViewport(QOpenGLWidget):
         vec = QVector4D(point.x(), point.y(), point.z(), 1.0)
         clip = proj * view * model * vec
         w = clip.w()
-        if w == 0:
+        
+        # Clip if behind near plane or degenerate
+        # Tightened from 10.0 to 15.0 to hide distant/distorted text
+        if w < 15.0:
             return None
+            
         ndc_x = clip.x() / w
         ndc_y = clip.y() / w
-        if abs(ndc_x) > 1.2 or abs(ndc_y) > 1.2:
+        
+        # TIGHTENED SEAL: Direct NDC clip
+        # If any point is even slightly outside the NDC hull [ -1, 1 ], 
+        # we discard the label to prevent perspective overflow.
+        if abs(ndc_x) > 1.0 or abs(ndc_y) > 1.0:
             return None
+            
         screen_x = (ndc_x * 0.5 + 0.5) * self.width()
         screen_y = (1.0 - (ndc_y * 0.5 + 0.5)) * self.height()
         return QPoint(int(screen_x), int(screen_y))
@@ -241,12 +322,15 @@ class AdytonGLViewport(QOpenGLWidget):
             return
 
         # Simple ambient + directional shading
-        light_dir = QVector3D(0.25, -0.6, 0.75).normalized()
-        v0, v1, v2 = verts[0], verts[1], verts[2]
-        normal = QVector3D.crossProduct(v1 - v0, v2 - v0).normalized()
-        ambient = 0.35
-        diffuse = max(0.0, QVector3D.dotProduct(normal, light_dir))
-        shade = min(1.0, ambient + diffuse * 0.75)
+        if face.shading:
+            light_dir = QVector3D(0.25, -0.6, 0.75).normalized()
+            v0, v1, v2 = verts[0], verts[1], verts[2]
+            normal = QVector3D.crossProduct(v1 - v0, v2 - v0).normalized()
+            ambient = 0.35
+            diffuse = max(0.0, QVector3D.dotProduct(normal, light_dir))
+            shade = min(1.0, ambient + diffuse * 0.75)
+        else:
+            shade = 1.0
 
         col = face.color
         glColor3f(col.redF() * shade, col.greenF() * shade, col.blueF() * shade)
@@ -274,13 +358,15 @@ class AdytonGLViewport(QOpenGLWidget):
                 glVertex3f(v2.x(), v2.y(), v2.z())
         glEnd()
 
-        # Outline for the face to emphasize frustum edges
-        glColor3f(0.0, 0.0, 0.0)
-        glLineWidth(1.0)
-        glBegin(GL_LINE_LOOP)
-        for v in verts:
-            glVertex3f(v.x(), v.y(), v.z())
-        glEnd()
+        # Outline for the face (only if different, for 'solidity')
+        oc = face.outline_color
+        if oc != col:
+            glColor3f(oc.redF(), oc.greenF(), oc.blueF())
+            glLineWidth(2.0)
+            glBegin(GL_LINE_LOOP)
+            for v in verts:
+                glVertex3f(v.x(), v.y(), v.z())
+            glEnd()
 
     # Starfield removed (kept stub for future use)
     def _draw_starfield(self, projection: QMatrix4x4, view: QMatrix4x4):

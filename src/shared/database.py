@@ -17,6 +17,22 @@ DB_PATH = DB_DIR / "isopgem.db"
 # Create engine
 engine = create_engine(f"sqlite:///{DB_PATH}", echo=False)
 
+# Register REGEXP function for SQLite
+from sqlalchemy import event
+import re
+
+@event.listens_for(engine, "connect")
+def sqlite_regexp(dbapi_connection, connection_record):
+    def regexp(expr, item):
+        if item is None:
+            return False
+        try:
+            reg = re.compile(expr, re.IGNORECASE)
+            return reg.search(item) is not None
+        except Exception:
+            return False
+    dbapi_connection.create_function("REGEXP", 2, regexp)
+
 # Create session factory
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

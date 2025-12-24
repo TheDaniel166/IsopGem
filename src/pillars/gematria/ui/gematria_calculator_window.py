@@ -2,17 +2,23 @@
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QLineEdit, QPushButton, QTextEdit, QComboBox,
-    QMessageBox, QInputDialog, QMenu
+    QMessageBox, QInputDialog, QMenu, QRadioButton,
+    QGraphicsDropShadowEffect
 )
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFont, QAction
+from PyQt6.QtGui import QFont, QAction, QColor
 from typing import Dict, List, Optional
 from ..services.base_calculator import GematriaCalculator
 from ..services import CalculationService
 from shared.ui import VirtualKeyboard, get_shared_virtual_keyboard
 from shared.ui.window_manager import WindowManager # Should be available via parent typically, but importing for type hint if needed
+from .components import ResultsDashboard
 # We need to import CorrespondenceHub to check type or use it
 from pillars.correspondences.ui.correspondence_hub import CorrespondenceHub
+from pillars.tq.ui.quadset_analysis_window import QuadsetAnalysisWindow
+from pillars.document_manager.ui.document_editor_window import DocumentEditorWindow
+from pillars.document_manager.ui.mindscape_window import MindscapeWindow
+from pillars.document_manager.services.notebook_service import notebook_service_context
 
 
 class GematriaCalculatorWindow(QMainWindow):
@@ -51,266 +57,333 @@ class GematriaCalculatorWindow(QMainWindow):
     
     def _setup_ui(self):
         """Set up the calculator interface."""
-        self.setWindowTitle("Gematria Calculator")
-        self.setMinimumSize(700, 600)
+        self.setWindowTitle("Logos Abacus")
+        self.setMinimumSize(1000, 700)
         
         # Prevent this window from closing the entire application
         self.setAttribute(Qt.WidgetAttribute.WA_QuitOnClose, False)
 
-        # Main layout anchored to a central widget for QMainWindow
+        # Central Widget & Main Horizontal Layout
         central = QWidget()
+        central.setObjectName("CentralContainer")
         self.setCentralWidget(central)
-        main_layout = QVBoxLayout(central)
-        main_layout.setSpacing(20)
-        main_layout.setContentsMargins(30, 30, 30, 30)
         
-        # Title
-        title_label = QLabel("📖 Gematria Calculator")
+        # Applying the background pattern ONLY to the central container
+        bg_path = "/home/burkettdaniel927/.gemini/antigravity/brain/2a906893-16d8-4452-966d-10a7777e72da/gematria_bg_pattern_1766530853546.png"
+        central.setStyleSheet(f"""
+            QWidget#CentralContainer {{
+                background-image: url("{bg_path}");
+                background-repeat: repeat;
+                background-position: center;
+                background-color: #f8fafc;
+            }}
+        """)
+        
+        main_layout = QHBoxLayout(central)
+        main_layout.setContentsMargins(20, 20, 20, 20)
+        main_layout.setSpacing(20)
+        
+        from PyQt6.QtWidgets import QSplitter, QFrame
+        splitter = QSplitter(Qt.Orientation.Horizontal)
+        main_layout.addWidget(splitter)
+        
+        # --- LEFT PANEL (CONTROL PANEL) ---
+        left_panel = QFrame()
+        left_panel.setObjectName("ControlPanel")
+        left_panel.setMinimumWidth(350)
+        left_panel.setMaximumWidth(450)
+        left_panel.setStyleSheet("""
+            QFrame#ControlPanel {
+                background-color: #ffffff;
+                border: 1px solid #cbd5e1;
+                border-radius: 24px;
+            }
+        """)
+        
+        # Shadow for Left Panel
+        l_shadow = QGraphicsDropShadowEffect()
+        l_shadow.setBlurRadius(20)
+        l_shadow.setColor(QColor(0, 0, 0, 30))
+        l_shadow.setOffset(4, 4)
+        left_panel.setGraphicsEffect(l_shadow)
+        
+        l_layout = QVBoxLayout(left_panel)
+        l_layout.setContentsMargins(30, 40, 30, 40)
+        l_layout.setSpacing(25)
+        
+        # Header in Left Panel
+        header_layout = QVBoxLayout()
+        header_layout.setSpacing(5)
+        
+        title_label = QLabel("LOGOS ABACUS")
         title_label.setStyleSheet("""
-            color: #111827;
-            font-size: 22pt;
-            font-weight: 700;
+            color: #0f172a;
+            font-size: 28pt;
+            font-weight: 900;
+            letter-spacing: -1px;
         """)
         title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        main_layout.addWidget(title_label)
         
-        # System selector with nested menus
-        selector_layout = QHBoxLayout()
-        selector_label = QLabel("Calculation Method:")
-        selector_label.setStyleSheet("font-size: 11pt; font-weight: 500; color: #374151;")
+        subtitle_label = QLabel("THE MATHEMATICS OF SOUL")
+        subtitle_label.setStyleSheet("""
+            color: #64748b;
+            font-size: 8pt;
+            font-weight: 700;
+            letter-spacing: 0.3em;
+        """)
+        subtitle_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
-        # Create a button that shows a menu
+        header_layout.addWidget(title_label)
+        header_layout.addWidget(subtitle_label)
+        l_layout.addLayout(header_layout)
+        
+        l_layout.addSpacing(20)
+        
+        # --- System Selection ---
+        system_section = QVBoxLayout()
+        system_section.setSpacing(10)
+        
+        selector_label = QLabel("CALCULATION METHOD")
+        selector_label.setStyleSheet("font-size: 9pt; font-weight: 800; color: #94a3b8; letter-spacing: 0.1em;")
+        system_section.addWidget(selector_label)
+        
         self.system_button = QPushButton()
-        self.system_button.setMinimumHeight(44)
+        self.system_button.setMinimumHeight(54)
         self.system_button.setStyleSheet("""
             QPushButton {
-                background-color: #2563eb;
-                color: white;
+                background-color: #ffffff;
+                color: #0f172a;
                 text-align: left;
-                padding: 8px 12px;
+                padding: 12px 18px;
                 font-size: 11pt;
-                border: none;
-                border-radius: 6px;
-                font-weight: 500;
+                border: 2px solid #e2e8f0;
+                border-radius: 12px;
+                font-weight: 700;
             }
             QPushButton:hover {
-                background-color: #1d4ed8;
-            }
-            QPushButton:pressed {
-                background-color: #1e40af;
+                background-color: #f8fafc;
+                border-color: #3b82f6;
             }
             QPushButton::menu-indicator {
-                width: 12px;
                 subcontrol-position: right center;
                 subcontrol-origin: padding;
-                left: -4px;
+                right: 15px;
             }
         """)
         
-        # Create the menu with nested structure
+        # Create the menu
         self.system_menu = QMenu(self)
         self.system_menu.setStyleSheet("""
             QMenu {
                 background-color: white;
-                border: 1px solid #e5e7eb;
-                border-radius: 6px;
-                padding: 4px;
+                border: 1px solid #e2e8f0;
+                border-radius: 12px;
+                padding: 8px;
             }
             QMenu::item {
-                padding: 8px 24px;
-                border-radius: 4px;
-                color: #111827;
+                padding: 10px 25px;
+                border-radius: 8px;
+                color: #334155;
             }
             QMenu::item:selected {
-                background-color: #dbeafe;
-                color: #1e40af;
-            }
-            QMenu::separator {
-                height: 1px;
-                background-color: #e5e7eb;
-                margin: 4px 8px;
+                background-color: #3b82f6;
+                color: white;
             }
         """)
         
         # Hebrew submenu
         hebrew_menu = self.system_menu.addMenu("📖 Hebrew")
-        if hebrew_menu is None:
-            raise RuntimeError("Failed to create Hebrew submenu")
-        # Add "All Methods" option at the top
-        all_hebrew_action = hebrew_menu.addAction("✨ All Methods")
-        if all_hebrew_action is None:
-            raise RuntimeError("Failed to create Hebrew all-methods action")
-        all_hebrew_action.setData("Hebrew_ALL")
-        all_hebrew_action.triggered.connect(lambda: self._select_calculator("Hebrew_ALL"))
+        hebrew_menu.addAction("✨ All Methods").triggered.connect(lambda: self._select_calculator("Hebrew_ALL"))
         hebrew_menu.addSeparator()
         for name in list(self.calculators.keys()):
             if "Hebrew" in name:
                 action = hebrew_menu.addAction(name.replace("Hebrew ", ""))
-                if action is None:
-                    continue
-                action.setData(name)
                 action.triggered.connect(lambda checked, n=name: self._select_calculator(n))
-        
+
         # Greek submenu
         greek_menu = self.system_menu.addMenu("🔤 Greek")
-        if greek_menu is None:
-            raise RuntimeError("Failed to create Greek submenu")
-        # Add "All Methods" option at the top
-        all_greek_action = greek_menu.addAction("✨ All Methods")
-        if all_greek_action is None:
-            raise RuntimeError("Failed to create Greek all-methods action")
-        all_greek_action.setData("Greek_ALL")
-        all_greek_action.triggered.connect(lambda: self._select_calculator("Greek_ALL"))
+        greek_menu.addAction("✨ All Methods").triggered.connect(lambda: self._select_calculator("Greek_ALL"))
         greek_menu.addSeparator()
         for name in list(self.calculators.keys()):
             if "Greek" in name:
                 action = greek_menu.addAction(name.replace("Greek ", ""))
-                if action is None:
-                    continue
-                action.setData(name)
                 action.triggered.connect(lambda checked, n=name: self._select_calculator(n))
-        
+
         # English submenu
         english_menu = self.system_menu.addMenu("🔡 English")
-        if english_menu is None:
-            raise RuntimeError("Failed to create English submenu")
-        # Add "All Methods" option at the top
-        all_english_action = english_menu.addAction("✨ All Methods")
-        if all_english_action is None:
-            raise RuntimeError("Failed to create English all-methods action")
-        all_english_action.setData("English_ALL")
-        all_english_action.triggered.connect(lambda: self._select_calculator("English_ALL"))
+        english_menu.addAction("✨ All Methods").triggered.connect(lambda: self._select_calculator("English_ALL"))
         english_menu.addSeparator()
         for name in list(self.calculators.keys()):
             if "English" in name or "TQ" in name:
                 action = english_menu.addAction(name.replace("English ", ""))
-                if action is None:
-                    continue
-                action.setData(name)
                 action.triggered.connect(lambda checked, n=name: self._select_calculator(n))
-        
+
         self.system_button.setMenu(self.system_menu)
         
         # Set first calculator as default
         first_calc = list(self.calculators.keys())[0]
-        # Display only the method name without language prefix
-        display_name = first_calc.replace("Hebrew ", "").replace("Greek ", "").replace("English ", "")
-        self.system_button.setText(display_name)
+        self.system_button.setText(first_calc.replace("Hebrew ", "").replace("Greek ", "").replace("English ", ""))
         self.current_calculator = self.calculators[first_calc]
         
-        selector_layout.addWidget(selector_label)
-        selector_layout.addWidget(self.system_button, 1)
-        main_layout.addLayout(selector_layout)
+        system_section.addWidget(self.system_button)
+        l_layout.addLayout(system_section)
         
-        # Input section
-        input_label = QLabel("Input Text:")
-        input_label.setStyleSheet("font-size: 11pt; font-weight: 500; color: #374151;")
-        main_layout.addWidget(input_label)
+        # --- Input Section ---
+        input_section = QVBoxLayout()
+        input_section.setSpacing(10)
         
-        # Input field with keyboard toggle
-        input_layout = QHBoxLayout()
+        input_label = QLabel("ENTER WISDOM")
+        input_label.setStyleSheet("font-size: 9pt; font-weight: 800; color: #94a3b8; letter-spacing: 0.1em;")
+        input_section.addWidget(input_label)
         
+        input_row = QHBoxLayout()
         self.input_field = QLineEdit()
-        self.input_field.setPlaceholderText("Type text and press Enter or Calculate...")
-        self.input_field.setStyleSheet("font-size: 14pt; min-height: 44px;")
-        # Only calculate on Enter key press, not on every text change
+        self.input_field.setPlaceholderText("The phrase to measure...")
+        self.input_field.setStyleSheet("""
+            QLineEdit {
+                font-size: 15pt;
+                min-height: 54px;
+                padding: 10px 15px;
+                border: 2px solid #e2e8f0;
+                border-radius: 12px;
+                background-color: #ffffff;
+                color: #0f172a;
+                font-weight: 500;
+            }
+            QLineEdit:focus {
+                border: 2px solid #3b82f6;
+                background-color: #ffffff;
+            }
+        """)
         self.input_field.returnPressed.connect(self._calculate)
-        input_layout.addWidget(self.input_field)
+        input_row.addWidget(self.input_field)
         
-        # Keyboard toggle button
         self.keyboard_toggle = QPushButton("⌨️")
-        self.keyboard_toggle.setToolTip("Open virtual keyboard")
-        self.keyboard_toggle.setMaximumWidth(50)
-        self.keyboard_toggle.setMinimumHeight(44)
+        self.keyboard_toggle.setFixedSize(54, 54)
+        self.keyboard_toggle.setStyleSheet("""
+            QPushButton {
+                font-size: 18pt;
+                background-color: #ffffff;
+                color: #3b82f6;
+                border-radius: 12px;
+                border: 2px solid #3b82f6;
+            }
+            QPushButton:hover {
+                background-color: #3b82f6;
+                color: #ffffff;
+            }
+        """)
         self.keyboard_toggle.clicked.connect(self._toggle_keyboard)
-        input_layout.addWidget(self.keyboard_toggle)
+        input_row.addWidget(self.keyboard_toggle)
         
-        main_layout.addLayout(input_layout)
+        input_section.addLayout(input_row)
+        l_layout.addLayout(input_section)
         
         # Virtual keyboard (popup window)
         self.virtual_keyboard = get_shared_virtual_keyboard(self)
         self.virtual_keyboard.set_target_input(self.input_field)
         
-        # Button row
-        button_layout = QHBoxLayout()
-        button_layout.setSpacing(12)
+        # --- Actions ---
+        actions_layout = QVBoxLayout()
+        actions_layout.setSpacing(12)
         
-        # Calculate button
-        self.calc_button = QPushButton("Calculate")
+        self.calc_button = QPushButton("Calculate Revelation")
         self.calc_button.clicked.connect(self._calculate)
+        self.calc_button.setMinimumHeight(64)
         self.calc_button.setStyleSheet("""
             QPushButton {
-                background-color: #2563eb;
-                font-size: 12pt;
-                font-weight: 600;
-                min-height: 44px;
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, 
+                    stop:0 #2563eb, stop:1 #1d4ed8);
+                color: white;
+                font-size: 15pt;
+                font-weight: 800;
+                border-radius: 16px;
+                border: 1px solid #1e3a8a;
             }
             QPushButton:hover {
-                background-color: #1d4ed8;
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, 
+                    stop:0 #1d4ed8, stop:1 #2563eb);
+                border-color: #3b82f6;
+                margin: -2px; /* Slight expansion feel */
+            }
+            QPushButton:pressed {
+                background-color: #1e40af;
+                padding-top: 4px;
+                margin: 0px;
             }
         """)
-        button_layout.addWidget(self.calc_button)
+        actions_layout.addWidget(self.calc_button)
         
-        # Save button (initially disabled)
-        self.save_button = QPushButton("💾 Save")
+        self.save_button = QPushButton("💾 Preserve in Chronicle")
         self.save_button.clicked.connect(self._save_calculation)
-        self.save_button.setMinimumHeight(44)
+        self.save_button.setMinimumHeight(54)
         self.save_button.setEnabled(False)
         self.save_button.setStyleSheet("""
             QPushButton:enabled {
-                background-color: #10b981;
+                background-color: #059669;
+                color: white;
                 font-size: 12pt;
-                font-weight: 600;
+                font-weight: 700;
+                border-radius: 14px;
+                border: 2px solid #064e3b;
             }
             QPushButton:enabled:hover {
-                background-color: #059669;
+                background-color: #10b981;
+                border-color: #059669;
             }
             QPushButton:disabled {
-                background-color: #e5e7eb;
-                color: #9ca3af;
-            }
-        """)
-        button_layout.addWidget(self.save_button)
-        
-        # Send to Emerald Tablet Button
-        self.send_button = QPushButton("📗 Send to Tablet")
-        self.send_button.clicked.connect(self._send_to_tablet)
-        self.send_button.setMinimumHeight(44)
-        self.send_button.setEnabled(False) # Enabled when we have results
-        self.send_button.setStyleSheet("""
-            QPushButton {
-                 background-color: #059669;
-                 color: white;
-                 font-size: 11pt;
-                 font-weight: 600;
-            }
-            QPushButton:hover { background-color: #047857; }
-            QPushButton:disabled { background-color: #e5e7eb; color: #9ca3af; }
-        """)
-        button_layout.addWidget(self.send_button)
-        
-        main_layout.addLayout(button_layout)
-        
-        # Results section
-        results_label = QLabel("Results:")
-        results_label.setStyleSheet("font-size: 11pt; font-weight: 500; color: #374151; margin-top: 8px;")
-        main_layout.addWidget(results_label)
-        
-        self.results_display = QTextEdit()
-        self.results_display.setReadOnly(True)
-        self.results_display.setStyleSheet("""
-            QTextEdit {
-                font-family: 'Courier New', monospace;
+                background-color: #ffffff;
+                color: #94a3b8;
+                border: 2px dashed #e2e8f0;
                 font-size: 11pt;
-                background-color: #f9fafb;
-                border: 1px solid #e5e7eb;
-                border-radius: 6px;
-                padding: 12px;
             }
         """)
-        main_layout.addWidget(self.results_display)
+        actions_layout.addWidget(self.save_button)
+        l_layout.addLayout(actions_layout)
         
-        # Set focus to input field
+        # Options
+        self.show_breakdown_toggle = QRadioButton("Expose Character Breakdown")
+        self.show_breakdown_toggle.setStyleSheet("""
+            QRadioButton {
+                color: #64748b;
+                font-size: 10pt;
+                font-weight: 600;
+            }
+            QRadioButton::indicator {
+                width: 18px;
+                height: 18px;
+            }
+        """)
+        self.show_breakdown_toggle.toggled.connect(self._calculate)
+        l_layout.addWidget(self.show_breakdown_toggle)
+        
+        l_layout.addStretch()
+        
+        # --- RIGHT PANEL (RESULTS PANEL) ---
+        right_panel = QFrame()
+        right_panel.setObjectName("ResultsPanel")
+        right_panel.setStyleSheet("""
+            QFrame#ResultsPanel {
+                background-color: rgba(255, 255, 255, 0.6);
+                border-radius: 20px;
+                border: 1px solid rgba(255, 255, 255, 0.4);
+            }
+        """)
+        
+        r_layout = QVBoxLayout(right_panel)
+        r_layout.setContentsMargins(0, 0, 0, 0)
+        
+        self.results_dashboard = ResultsDashboard()
+        self.results_dashboard.totalContextMenuRequested.connect(self._on_total_context_menu)
+        r_layout.addWidget(self.results_dashboard)
+        
+        # Add panes to splitter
+        splitter.addWidget(left_panel)
+        splitter.addWidget(right_panel)
+        splitter.setStretchFactor(0, 0)
+        splitter.setStretchFactor(1, 1)
+        splitter.setSizes([400, 600])
+        
         self.input_field.setFocus()
     
     def _select_calculator(self, system_name: str):
@@ -348,8 +421,11 @@ class GematriaCalculatorWindow(QMainWindow):
                 elif 'Greek' in system_name:
                     self.virtual_keyboard.set_layout('greek_lower')
         
+        # Toggle breakdown option based on mode
+        self.show_breakdown_toggle.setEnabled(self.current_calculator is not None)
+        
         # Clear results when switching systems
-        self.results_display.clear()
+        self.results_dashboard.clear()
     
     def _toggle_keyboard(self):
         """Toggle virtual keyboard visibility."""
@@ -367,7 +443,7 @@ class GematriaCalculatorWindow(QMainWindow):
         text = self.input_field.text()
         
         if not text:
-            self.results_display.clear()
+            self.results_dashboard.clear()
             self.save_button.setEnabled(False)
             return
         
@@ -403,36 +479,22 @@ class GematriaCalculatorWindow(QMainWindow):
             # Add Total Row
             rows.append(["TOTAL", str(total)])
             
-        # Only enable Send if we have data
-        self.send_button.setEnabled(bool(rows))
-        
         self.last_export_data = {
             "name": f"Gematria_{text}_{self.current_calculator.name}",
             "data": {
                 "columns": ["Character", "Value"],
-                "rows": rows,
-                "styles": {} # could add styles later
+                "data": rows, # Standardizing on 'data' key
+                "styles": {} 
             }
         }
         
-        # Format results
-        results = []
-        results.append(f"System: {self.current_calculator.name}")
-        results.append(f"\nTotal Value: {total}")
-        results.append("\n" + "="*50)
-        results.append("\nBreakdown:")
-        results.append("-"*50)
-        
-        if breakdown:
-            for char, value in breakdown:
-                results.append(f"  {char}  =  {value}")
-        else:
-            results.append("  (No recognized characters)")
-        
-        results.append("-"*50)
-        results.append(f"\nCharacters counted: {len(breakdown)}")
-        
-        self.results_display.setPlainText("\n".join(results))
+        # Update Visual Dashboard
+        self.results_dashboard.display_results(
+            text=text,
+            total=total,
+            system_name=self.current_calculator.name,
+            breakdown=breakdown if self.show_breakdown_toggle.isChecked() else []
+        )
     
     def _calculate_all_methods(self, text: str, language: str):
         """Calculate using all methods for a given language.
@@ -450,36 +512,21 @@ class GematriaCalculatorWindow(QMainWindow):
         if not lang_calculators:
             return
         
-        # Calculate with all methods
-        results = []
-        results.append(f"Text: {text}")
-        results.append(f"Language: {language}")
-        results.append("\n" + "="*60)
-        results.append("\nAll Methods - Values Only:")
-        results.append("-"*60)
-        
-        # Create table header
         # Prepare Export Data (Comparison)
         columns = ["Method", "Value"]
         rows = []
-        
-        results.append(f"{'Method':<35} {'Value':>20}")
-        results.append("-"*60)
         
         for name, calc in lang_calculators:
             try:
                 value = calc.calculate(text)
                 method_name = name.replace(f"{language} ", "")
-                results.append(f"{method_name:<35} {value:>20,}")
-                rows.append([method_name, str(value)])
-            except Exception as e:
+                rows.append([method_name, value])
+            except Exception:
                 method_name = name.replace(f"{language} ", "")
-                results.append(f"{method_name:<35} {'Error':>20}")
+                rows.append([method_name, "Error"])
         
-        results.append("-"*60)
-        results.append(f"\nTotal methods calculated: {len(lang_calculators)}")
-        
-        self.results_display.setPlainText("\n".join(results))
+        # Update Visual Dashboard
+        self.results_dashboard.display_comparison(text, language, rows)
         
         # Store for potential saving
         self.current_text = text
@@ -488,7 +535,6 @@ class GematriaCalculatorWindow(QMainWindow):
         
         # Disable save button in all methods mode
         self.save_button.setEnabled(False)
-        self.send_button.setEnabled(True)
         
         self.last_export_data = {
             "name": f"Gematria_All_{text}",
@@ -497,7 +543,7 @@ class GematriaCalculatorWindow(QMainWindow):
                 "data": rows,
                 "styles": {}
             }
-        } 
+        }
     
     def _save_calculation(self):
         """Save the current calculation to the database."""
@@ -533,6 +579,9 @@ class GematriaCalculatorWindow(QMainWindow):
         # Parse tags
         tags = [tag.strip() for tag in tags_str.split(',') if tag.strip()]
         
+        # TODO: Add input field for Source information (e.g. Book, Chapter, Verse)
+        source = ""
+        
         # Save to database
         try:
             record = self.calculation_service.save_calculation(
@@ -541,7 +590,8 @@ class GematriaCalculatorWindow(QMainWindow):
                 calculator=self.current_calculator,
                 breakdown=self.current_breakdown,
                 notes=notes,
-                tags=tags
+                tags=tags,
+                source=source  # TODO: Populate from user input
             )
             
             QMessageBox.information(
@@ -579,3 +629,192 @@ class GematriaCalculatorWindow(QMainWindow):
             name = self.last_export_data["name"]
             data = self.last_export_data["data"]
             hub.receive_import(name, data)
+
+    def _on_total_context_menu(self, value: int, pos):
+        """Build and show the context menu for the total value."""
+        menu = QMenu(self)
+        
+        # Transitions
+        menu.addAction("📗 Send to Emerald Tablet", self._send_to_tablet)
+        menu.addAction("📐 Send to Quadset Analysis", lambda: self._send_to_quadset(value))
+        menu.addAction("📝 Send to RTF Editor", lambda: self._send_to_rtf_editor(value))
+        
+        # Mindscape Submenu
+        ms_menu = menu.addMenu("🧠 Send to MindScape")
+        ms_menu.addAction("Insert into Current Page", self._ms_insert_current)
+        ms_menu.addAction("Insert into Existing Page...", self._ms_insert_existing)
+        ms_menu.addAction("New Page & Insert...", self._ms_create_page)
+        ms_menu.addSeparator()
+        ms_menu.addAction("Create New Notebook...", self._ms_new_notebook)
+        ms_menu.addAction("Create New Section...", self._ms_new_section)
+        
+        menu.exec(pos)
+
+    def _send_to_quadset(self, value: int):
+        """Send current results to Quadset Analysis."""
+        if not self.window_manager: return
+        win = self.window_manager.open_window("quadset_analysis", QuadsetAnalysisWindow, window_manager=self.window_manager)
+        if win:
+            # Quadset window has an ‘input_field’ attribute (QLineEdit)
+            if hasattr(win, "input_field"):
+                win.input_field.setText(str(value))
+            win.raise_()
+            win.activateWindow()
+
+    def _send_to_rtf_editor(self, value: int):
+        """Send results to RTF Editor."""
+        if not self.window_manager: return
+        win = self.window_manager.open_window("document_editor", DocumentEditorWindow)
+        if win:
+            # Format high-quality summary
+            res_str = f"""
+            <div style="font-family: 'Segoe UI', sans-serif;">
+                <h2 style="color: #1e40af; border-bottom: 2px solid #3b82f6; padding-bottom: 5px;">Gematria Resonance</h2>
+                <p><b>Original Text:</b> <span style="font-size: 1.2em; color: #111827;">{self.current_text}</span></p>
+                <p><b>Numeric Value:</b> <span style="font-size: 1.5em; font-weight: bold; color: #2563eb;">{value}</span></p>
+                <p><b>System Used:</b> <i style="color: #4b5563;">{self.current_calculator.name if self.current_calculator else "All Methods"}</i></p>
+            </div>
+            """
+            # RTF editor usually has a rich_text_editor attribute with a set_text(html) or similar
+            if hasattr(win, "rich_text_editor"):
+                # Append or set? Let's use append if possible, or set.
+                # Usually set_text is a custom method on our editor.
+                win.rich_text_editor.set_text(res_str)
+            win.raise_()
+            win.activateWindow()
+
+    # --- MindScape Transitions ---
+
+    def _find_active_mindscape(self) -> Optional[MindscapeWindow]:
+        """Locate the active Mindscape window via the Window Manager."""
+        if not self.window_manager: return None
+        # WindowManager usually tracks windows by key
+        return self.window_manager.get_window("mindscape")
+
+    def _ms_insert_current(self):
+        """Insert total into current Mindscape page."""
+        ms = self._find_active_mindscape()
+        if not ms or not ms.page or not ms.page.current_doc_id:
+            QMessageBox.warning(self, "MindScape", "No active Mindscape page found. Open a page first.")
+            return
+        
+        self._ms_add_note(ms.page, self.current_value)
+
+    def _ms_add_note(self, page_widget, value: int):
+        """Add the gematria result as a note to a page."""
+        content = f"""
+        <h2 style="color: #1e3a8a;">Gematria Resonance</h2>
+        <p><b>Text:</b> {self.current_text}</p>
+        <p><b>Value:</b> <span style="font-size: 1.4em; font-weight: bold;">{value}</span></p>
+        <p><b>System:</b> {self.current_calculator.name if self.current_calculator else "All"}</p>
+        """
+        if hasattr(page_widget, "canvas"):
+            # We need to provide x and y coordinates. 
+            # (50, 50) is a safe default for a new projection.
+            page_widget.canvas.add_note_container(50, 50, content)
+            # Auto-save
+            if hasattr(page_widget, "save_page"):
+                page_widget.save_page()
+            QMessageBox.information(self, "MindScape", "Note projected onto the canvas.")
+
+    def _ms_insert_existing(self):
+        """Prompt to select an existing page and insert the result."""
+        with notebook_service_context() as service:
+            notebooks = service.get_notebooks_with_structure()
+            page_map = {} # Display String -> doc_id
+            
+            for nb in notebooks:
+                for sec in nb.sections:
+                    pages = service.get_section_pages(sec.id)
+                    for page in pages:
+                        key = f"{nb.title} > {sec.title} > {page.title}"
+                        page_map[key] = page.id
+            
+            if not page_map:
+                QMessageBox.warning(self, "MindScape", "No pages found in the library.")
+                return
+                
+            choice, ok = QInputDialog.getItem(
+                self, "Select Page", "Choose target page for resonance:",
+                sorted(page_map.keys()), 0, False
+            )
+            
+            if ok and choice:
+                doc_id = page_map[choice]
+                # Open/Get Mindscape
+                ms = self.window_manager.open_window("mindscape", MindscapeWindow)
+                if ms:
+                    ms.page.load_node(doc_id)
+                    self._ms_add_note(ms.page, self.current_value)
+                    ms.raise_()
+
+    def _ms_create_page(self):
+        """Prompt for new page details and insert result."""
+        with notebook_service_context() as service:
+            notebooks = service.get_notebooks_with_structure()
+            sec_map = {} # Display String -> sec_id
+            
+            for nb in notebooks:
+                for sec in nb.sections:
+                    key = f"{nb.title} > {sec.title}"
+                    sec_map[key] = sec.id
+                    
+            if not sec_map:
+                QMessageBox.warning(self, "MindScape", "No sections found. Create a notebook and section first.")
+                return
+                
+            choice, ok = QInputDialog.getItem(
+                self, "Select Section", "Choose section for the new page:",
+                sorted(sec_map.keys()), 0, False
+            )
+            
+            if not (ok and choice): return
+            
+            title, ok = QInputDialog.getText(self, "New Page", "Enter page title:", text=f"Resonance - {self.current_text}")
+            if not (ok and title): return
+            
+            sec_id = sec_map[choice]
+            new_page = service.create_page(sec_id, title)
+            
+            # Open and insert
+            ms = self.window_manager.open_window("mindscape", MindscapeWindow)
+            if ms:
+                ms.tree.load_tree() # Refresh tree to show new page
+                ms.page.load_node(new_page.id)
+                self._ms_add_note(ms.page, self.current_value)
+                ms.raise_()
+
+    def _ms_new_notebook(self):
+        """Create a new notebook."""
+        title, ok = QInputDialog.getText(self, "New Notebook", "Enter notebook title:")
+        if ok and title:
+            with notebook_service_context() as service:
+                service.create_notebook(title)
+            QMessageBox.information(self, "MindScape", f"Notebook '{title}' created.")
+            # Refresh Mindscape if open
+            ms = self._find_active_mindscape()
+            if ms: ms.tree.load_tree()
+
+    def _ms_new_section(self):
+        """Create a new section in a chosen notebook."""
+        with notebook_service_context() as service:
+            notebooks = service.get_notebooks_with_structure()
+            nb_map = {nb.title: nb.id for nb in notebooks}
+            
+            if not nb_map:
+                QMessageBox.warning(self, "MindScape", "No notebooks found.")
+                return
+                
+            nb_choice, ok = QInputDialog.getItem(
+                self, "Select Notebook", "Choose notebook for the section:",
+                sorted(nb_map.keys()), 0, False
+            )
+            
+            if not (ok and nb_choice): return
+            
+            sec_title, ok = QInputDialog.getText(self, "New Section", "Enter section title:")
+            if ok and sec_title:
+                service.create_section(nb_map[nb_choice], sec_title)
+                QMessageBox.information(self, "MindScape", f"Section '{sec_title}' created.")
+                ms = self._find_active_mindscape()
+                if ms: ms.tree.load_tree()

@@ -158,6 +158,7 @@ class CalculationService:
         limit: int = 100,
         page: int = 1,
         summary_only: bool = True,
+        search_mode: str = "General",
     ) -> List[CalculationRecord]:
         """
         Search for calculations.
@@ -171,6 +172,7 @@ class CalculationService:
             limit: Max results
             page: Page number (1-indexed)
             summary_only: Return lightweight records if True
+            search_mode: Mode of search (General, Exact, Regex, Wildcard)
             
         Returns:
             List of matching records
@@ -184,6 +186,7 @@ class CalculationService:
             limit=limit,
             page=page,
             summary_only=summary_only,
+            search_mode=search_mode,
         )
     
     def get_all_calculations(self, limit: int = 1000) -> List[CalculationRecord]:
@@ -209,6 +212,22 @@ class CalculationService:
             List of calculations with that value
         """
         return self.repository.get_by_value(value)
+
+    def get_siblings_by_text(self, text: str, exclude_id: Optional[str] = None) -> List[CalculationRecord]:
+        """
+        Find all calculations sharing the same text (Siblings).
+        
+        Args:
+            text: The text to search for
+            exclude_id: Optional ID to exclude (usually the current record)
+            
+        Returns:
+            List of sibling records
+        """
+        records = self.repository.get_by_text(text)
+        if exclude_id:
+            return [r for r in records if r.id != exclude_id]
+        return records
     
     def get_favorite_calculations(self) -> List[CalculationRecord]:
         """

@@ -108,8 +108,8 @@ class GematriaHub(QWidget):
 
         # Tools grid
         tools = [
-            ("🔢", "Calculator", "Interactive gematria calculator", "#3b82f6", self._open_calculator),
-            ("💾", "Saved", "Browse saved calculations", "#10b981", self._open_saved_calculations),
+            ("🔢", "Logos Abacus", "Interactive gematria calculator", "#3b82f6", self._open_calculator),
+            ("💾", "Records of Karnak", "Browse saved calculations", "#10b981", self._open_saved_calculations),
             ("📊", "Batch", "Process multiple entries", "#8b5cf6", self._open_batch_calculator),
             ("📝", "Text Analysis", "Analyze passages & texts", "#ec4899", self._open_text_analysis),
             ("🔮", "TQ Text Sequencer", "Hidden letter sequences", "#7C3AED", self._open_els_search),

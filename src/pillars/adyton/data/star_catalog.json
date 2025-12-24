@@ -1,0 +1,2058 @@
+{
+  "walls": {
+    "Sun": {
+      "symbol": "\u2609",
+      "seeds": [
+        {
+          "constellation_id": 0,
+          "coordinate": [
+            2,
+            0
+          ],
+          "name": "Bythos Alpha",
+          "decimal": 76,
+          "depth": 2,
+          "shared_with": [
+            "Sun",
+            "Saturn"
+          ],
+          "etymology": "Gnostic *Bythos* (The Depth, First Principle)",
+          "nature": "A shared seed, its influence spanning multiple walls. The seed from which Constellation #0 grows. It pulses with Sun's essence.",
+          "whisper": "*\"I ignite. I radiate. From my center, the world is born.\"*"
+        },
+        {
+          "constellation_id": 1,
+          "coordinate": [
+            1,
+            2
+          ],
+          "name": "Zoe",
+          "decimal": 73,
+          "depth": 2,
+          "shared_with": [
+            "Sun",
+            "Venus"
+          ],
+          "etymology": "Gnostic/Greek *Zoe* (Life)",
+          "nature": "A shared seed, its influence spanning multiple walls. The seed from which Constellation #1 grows. It pulses with Sun's essence.",
+          "whisper": "*\"I ignite. I radiate. From my center, the world is born.\"*"
+        },
+        {
+          "constellation_id": 2,
+          "coordinate": [
+            2,
+            5
+          ],
+          "name": "Sophia",
+          "decimal": 54,
+          "depth": 2,
+          "shared_with": [
+            "Sun",
+            "Moon"
+          ],
+          "etymology": "Greek *Sophia* (Wisdom)",
+          "nature": "A shared seed, its influence spanning multiple walls. The geometric center of Constellation #2. The algorithm begins here.",
+          "whisper": "*\"I ignite. I radiate. From my center, the world is born.\"*"
+        },
+        {
+          "constellation_id": 3,
+          "coordinate": [
+            1,
+            7
+          ],
+          "name": "Phosphoros",
+          "decimal": 12,
+          "depth": 2,
+          "shared_with": [
+            "Sun",
+            "Moon"
+          ],
+          "etymology": "Greek *Phosphoros* (Light-Bearer, Morning Star)",
+          "nature": "A shared seed, its influence spanning multiple walls. The geometric center of Constellation #3. The algorithm begins here.",
+          "whisper": "*\"I ignite. I radiate. From my center, the world is born.\"*"
+        },
+        {
+          "constellation_id": 4,
+          "coordinate": [
+            2,
+            10
+          ],
+          "name": "Ra Posterior",
+          "decimal": 4,
+          "depth": 1,
+          "shared_with": [
+            "Sun"
+          ],
+          "etymology": "Egyptian *Ra* (The Sun God)",
+          "nature": "The heart of Constellation #4. From this point, the pattern unfolds.",
+          "whisper": "*\"I ignite. I radiate. From my center, the world is born.\"*"
+        },
+        {
+          "constellation_id": 5,
+          "coordinate": [
+            0,
+            10
+          ],
+          "name": "Quintessentia Occulta",
+          "decimal": 49,
+          "depth": 1,
+          "shared_with": [
+            "Sun"
+          ],
+          "etymology": "Latin/Alchemical *Quintessentia* (Fifth Element, Spirit)",
+          "nature": "The seed from which Constellation #5 grows. It pulses with Sun's essence.",
+          "whisper": "*\"I ignite. I radiate. From my center, the world is born.\"*"
+        },
+        {
+          "constellation_id": 6,
+          "coordinate": [
+            5,
+            1
+          ],
+          "name": "Sol Sanctus",
+          "decimal": 22,
+          "depth": 3,
+          "shared_with": [
+            "Sun",
+            "Venus",
+            "Saturn"
+          ],
+          "etymology": "Latin *Sol* (The Sun)",
+          "nature": "A shared seed, its influence spanning multiple walls. The generative center of Constellation #6. All lines trace back to this origin.",
+          "whisper": "*\"I ignite. I radiate. From my center, the world is born.\"*"
+        },
+        {
+          "constellation_id": 7,
+          "coordinate": [
+            5,
+            3
+          ],
+          "name": "Quintessentia Arche",
+          "decimal": 6,
+          "depth": 3,
+          "shared_with": [
+            "Sun",
+            "Jupiter",
+            "Saturn"
+          ],
+          "etymology": "Latin/Alchemical *Quintessentia* (Fifth Element, Spirit)",
+          "nature": "A shared seed, its influence spanning multiple walls. The seed from which Constellation #7 grows. It pulses with Sun's essence.",
+          "whisper": "*\"I ignite. I radiate. From my center, the world is born.\"*"
+        },
+        {
+          "constellation_id": 8,
+          "coordinate": [
+            6,
+            5
+          ],
+          "name": "Pistis Rex",
+          "decimal": 24,
+          "depth": 3,
+          "shared_with": [
+            "Sun",
+            "Venus",
+            "Jupiter"
+          ],
+          "etymology": "Gnostic/Greek *Pistis* (Faith)",
+          "nature": "A shared seed, its influence spanning multiple walls. The geometric center of Constellation #8. The algorithm begins here.",
+          "whisper": "*\"I ignite. I radiate. From my center, the world is born.\"*"
+        },
+        {
+          "constellation_id": 9,
+          "coordinate": [
+            6,
+            8
+          ],
+          "name": "Pistis",
+          "decimal": 37,
+          "depth": 2,
+          "shared_with": [
+            "Sun",
+            "Venus"
+          ],
+          "etymology": "Gnostic/Greek *Pistis* (Faith)",
+          "nature": "A shared seed, its influence spanning multiple walls. The generative center of Constellation #9. All lines trace back to this origin.",
+          "whisper": "*\"I ignite. I radiate. From my center, the world is born.\"*"
+        },
+        {
+          "constellation_id": 10,
+          "coordinate": [
+            4,
+            9
+          ],
+          "name": "Psyche Profunda",
+          "decimal": 159,
+          "depth": 1,
+          "shared_with": [
+            "Sun"
+          ],
+          "etymology": "Greek *Psyche* (Soul, Breath)",
+          "nature": "The seed from which Constellation #10 grows. It pulses with Sun's essence.",
+          "whisper": "*\"I ignite. I radiate. From my center, the world is born.\"*"
+        },
+        {
+          "constellation_id": 11,
+          "coordinate": [
+            5,
+            11
+          ],
+          "name": "Bythos",
+          "decimal": 31,
+          "depth": 4,
+          "shared_with": [
+            "Sun",
+            "Mercury",
+            "Mars",
+            "Jupiter"
+          ],
+          "etymology": "Gnostic *Bythos* (The Depth, First Principle)",
+          "nature": "A nexus of immense power, seeding multiple realms simultaneously. The heart of Constellation #11. From this point, the pattern unfolds.",
+          "whisper": "*\"I ignite. I radiate. From my center, the world is born.\"*"
+        },
+        {
+          "constellation_id": 12,
+          "coordinate": [
+            3,
+            6
+          ],
+          "name": "Thoth",
+          "decimal": 39,
+          "depth": 3,
+          "shared_with": [
+            "Sun",
+            "Mercury",
+            "Jupiter"
+          ],
+          "etymology": "Egyptian *Thoth* (God of Wisdom and Writing)",
+          "nature": "A shared seed, its influence spanning multiple walls. The generative center of Constellation #12. All lines trace back to this origin.",
+          "whisper": "*\"I ignite. I radiate. From my center, the world is born.\"*"
+        }
+      ],
+      "voids": [
+        {
+          "coordinate": [
+            0,
+            4
+          ],
+          "name": "Abaddon",
+          "decimal": 193,
+          "etymology": "Hebrew *Abaddon* (Destruction, The Destroyer)",
+          "nature": "A cell of eternal stillness. It anchors the Temple to the bedrock of non-being.",
+          "whisper": "*\"Sink into me. Release. The Void embraces all.\"*"
+        },
+        {
+          "coordinate": [
+            0,
+            8
+          ],
+          "name": "Nyx",
+          "decimal": 33,
+          "etymology": "Greek *Nyx* (Night, Primordial Darkness)",
+          "nature": "The anchor of void. It reminds the Adept that emptiness is the mother of form.",
+          "whisper": "*\"Sink into me. Release. The Void embraces all.\"*"
+        },
+        {
+          "coordinate": [
+            1,
+            12
+          ],
+          "name": "Thanatos",
+          "decimal": 16,
+          "etymology": "Greek *Thanatos* (Death Personified)",
+          "nature": "A cell of eternal stillness. It anchors the Temple to the bedrock of non-being.",
+          "whisper": "*\"Silence. Stillness. The Altar awaits your offering.\"*"
+        },
+        {
+          "coordinate": [
+            3,
+            1
+          ],
+          "name": "Bohu",
+          "decimal": 199,
+          "etymology": "Hebrew *Bohu* (Emptiness, Void)",
+          "nature": "A fixed point in the Altar of 287. It holds space for what cannot be named.",
+          "whisper": "*\"I am the pause. I am the space. In me, all things find rest.\"*"
+        },
+        {
+          "coordinate": [
+            6,
+            10
+          ],
+          "name": "Nigredo Fixa",
+          "decimal": 38,
+          "etymology": "Latin/Alchemical *Nigredo* (Blackening, Putrefaction)",
+          "nature": "A still point in the turning wheel. It neither gives nor takes, but holds.",
+          "whisper": "*\"Before form, I was. After form, I remain.\"*"
+        },
+        {
+          "coordinate": [
+            6,
+            12
+          ],
+          "name": "Thanatos Fixa",
+          "decimal": 42,
+          "etymology": "Greek *Thanatos* (Death Personified)",
+          "nature": "The star of pause. Between two breaths, this coordinate exists.",
+          "whisper": "*\"I am the pause. I am the space. In me, all things find rest.\"*"
+        }
+      ]
+    },
+    "Mercury": {
+      "symbol": "\u263f",
+      "seeds": [
+        {
+          "constellation_id": 0,
+          "coordinate": [
+            1,
+            1
+          ],
+          "name": "Binah Perpetua",
+          "decimal": 184,
+          "depth": 3,
+          "shared_with": [
+            "Mercury",
+            "Moon",
+            "Mars"
+          ],
+          "etymology": "Hebrew/Kabbalistic *Binah* (Understanding)",
+          "nature": "A shared seed, its influence spanning multiple walls. The heart of Constellation #0. From this point, the pattern unfolds.",
+          "whisper": "*\"I connect. I transmit. Through me, the message flows.\"*"
+        },
+        {
+          "constellation_id": 1,
+          "coordinate": [
+            2,
+            3
+          ],
+          "name": "Logos",
+          "decimal": 162,
+          "depth": 1,
+          "shared_with": [
+            "Mercury"
+          ],
+          "etymology": "Greek *Logos* (Word, Reason, Divine Order)",
+          "nature": "The generative center of Constellation #1. All lines trace back to this origin.",
+          "whisper": "*\"I connect. I transmit. Through me, the message flows.\"*"
+        },
+        {
+          "constellation_id": 2,
+          "coordinate": [
+            0,
+            5
+          ],
+          "name": "Kether",
+          "decimal": 233,
+          "depth": 1,
+          "shared_with": [
+            "Mercury"
+          ],
+          "etymology": "Hebrew/Kabbalistic *Kether* (The Crown)",
+          "nature": "The seed from which Constellation #2 grows. It pulses with Mercury's essence.",
+          "whisper": "*\"I connect. I transmit. Through me, the message flows.\"*"
+        },
+        {
+          "constellation_id": 3,
+          "coordinate": [
+            3,
+            8
+          ],
+          "name": "Cuprum Profunda",
+          "decimal": 148,
+          "depth": 1,
+          "shared_with": [
+            "Mercury"
+          ],
+          "etymology": "Latin *Cuprum* (Copper)",
+          "nature": "The heart of Constellation #3. From this point, the pattern unfolds.",
+          "whisper": "*\"I connect. I transmit. Through me, the message flows.\"*"
+        },
+        {
+          "constellation_id": 4,
+          "coordinate": [
+            1,
+            9
+          ],
+          "name": "Ignis",
+          "decimal": 146,
+          "depth": 2,
+          "shared_with": [
+            "Mercury",
+            "Mars"
+          ],
+          "etymology": "Latin *Ignis* (Fire)",
+          "nature": "A shared seed, its influence spanning multiple walls. The heart of Constellation #4. From this point, the pattern unfolds.",
+          "whisper": "*\"I connect. I transmit. Through me, the message flows.\"*"
+        },
+        {
+          "constellation_id": 5,
+          "coordinate": [
+            1,
+            11
+          ],
+          "name": "Pistis Magus",
+          "decimal": 150,
+          "depth": 4,
+          "shared_with": [
+            "Mercury",
+            "Venus",
+            "Moon",
+            "Mars"
+          ],
+          "etymology": "Gnostic/Greek *Pistis* (Faith)",
+          "nature": "A nexus of immense power, seeding multiple realms simultaneously. The heart of Constellation #5. From this point, the pattern unfolds.",
+          "whisper": "*\"I connect. I transmit. Through me, the message flows.\"*"
+        },
+        {
+          "constellation_id": 6,
+          "coordinate": [
+            5,
+            0
+          ],
+          "name": "Rubedo",
+          "decimal": 197,
+          "depth": 1,
+          "shared_with": [
+            "Mercury"
+          ],
+          "etymology": "Latin/Alchemical *Rubedo* (Reddening, Completion)",
+          "nature": "The heart of Constellation #6. From this point, the pattern unfolds.",
+          "whisper": "*\"I connect. I transmit. Through me, the message flows.\"*"
+        },
+        {
+          "constellation_id": 7,
+          "coordinate": [
+            5,
+            2
+          ],
+          "name": "Anthropos",
+          "decimal": 196,
+          "depth": 3,
+          "shared_with": [
+            "Mercury",
+            "Venus",
+            "Mars"
+          ],
+          "etymology": "Gnostic/Greek *Anthropos* (Primal Human)",
+          "nature": "A shared seed, its influence spanning multiple walls. The heart of Constellation #7. From this point, the pattern unfolds.",
+          "whisper": "*\"I connect. I transmit. Through me, the message flows.\"*"
+        },
+        {
+          "constellation_id": 8,
+          "coordinate": [
+            6,
+            4
+          ],
+          "name": "Aten",
+          "decimal": 207,
+          "depth": 1,
+          "shared_with": [
+            "Mercury"
+          ],
+          "etymology": "Egyptian *Aten* (The Sun Disk)",
+          "nature": "The generative center of Constellation #8. All lines trace back to this origin.",
+          "whisper": "*\"I connect. I transmit. Through me, the message flows.\"*"
+        },
+        {
+          "constellation_id": 9,
+          "coordinate": [
+            6,
+            7
+          ],
+          "name": "Selene",
+          "decimal": 90,
+          "depth": 2,
+          "shared_with": [
+            "Mercury",
+            "Mars"
+          ],
+          "etymology": "Greek *Selene* (The Moon Goddess)",
+          "nature": "A shared seed, its influence spanning multiple walls. The heart of Constellation #9. From this point, the pattern unfolds.",
+          "whisper": "*\"I connect. I transmit. Through me, the message flows.\"*"
+        },
+        {
+          "constellation_id": 10,
+          "coordinate": [
+            6,
+            9
+          ],
+          "name": "Chokmah",
+          "decimal": 97,
+          "depth": 4,
+          "shared_with": [
+            "Mercury",
+            "Moon",
+            "Mars",
+            "Saturn"
+          ],
+          "etymology": "Hebrew/Kabbalistic *Chokmah* (Wisdom)",
+          "nature": "A nexus of immense power, seeding multiple realms simultaneously. The seed from which Constellation #10 grows. It pulses with Mercury's essence.",
+          "whisper": "*\"I connect. I transmit. Through me, the message flows.\"*"
+        },
+        {
+          "constellation_id": 11,
+          "coordinate": [
+            5,
+            11
+          ],
+          "name": "Aurum",
+          "decimal": 86,
+          "depth": 4,
+          "shared_with": [
+            "Sun",
+            "Mercury",
+            "Mars",
+            "Jupiter"
+          ],
+          "etymology": "Latin *Aurum* (Gold)",
+          "nature": "A nexus of immense power, seeding multiple realms simultaneously. The generative center of Constellation #11. All lines trace back to this origin.",
+          "whisper": "*\"I connect. I transmit. Through me, the message flows.\"*"
+        },
+        {
+          "constellation_id": 12,
+          "coordinate": [
+            3,
+            6
+          ],
+          "name": "Khepri",
+          "decimal": 91,
+          "depth": 3,
+          "shared_with": [
+            "Sun",
+            "Mercury",
+            "Jupiter"
+          ],
+          "etymology": "Egyptian *Khepri* (Scarab, Rising Sun)",
+          "nature": "A shared seed, its influence spanning multiple walls. The generative center of Constellation #12. All lines trace back to this origin.",
+          "whisper": "*\"I connect. I transmit. Through me, the message flows.\"*"
+        }
+      ],
+      "voids": [
+        {
+          "coordinate": [
+            2,
+            7
+          ],
+          "name": "Nephthys",
+          "decimal": 137,
+          "etymology": "Egyptian *Nephthys* (Lady of the House)",
+          "nature": "The star of pause. Between two breaths, this coordinate exists.",
+          "whisper": "*\"Sink into me. Release. The Void embraces all.\"*"
+        },
+        {
+          "coordinate": [
+            3,
+            12
+          ],
+          "name": "Tohu Alpha",
+          "decimal": 101,
+          "etymology": "Hebrew *Tohu* (Formlessness, Chaos)",
+          "nature": "The anchor of void. It reminds the Adept that emptiness is the mother of form.",
+          "whisper": "*\"Before form, I was. After form, I remain.\"*"
+        },
+        {
+          "coordinate": [
+            4,
+            2
+          ],
+          "name": "Apep",
+          "decimal": 174,
+          "etymology": "Egyptian *Apep* (Serpent of Chaos)",
+          "nature": "A fixed point in the Altar of 287. It holds space for what cannot be named.",
+          "whisper": "*\"Silence. Stillness. The Altar awaits your offering.\"*"
+        },
+        {
+          "coordinate": [
+            5,
+            8
+          ],
+          "name": "Moira",
+          "decimal": 83,
+          "etymology": "Greek *Moira* (Destiny, Portion)",
+          "nature": "A cell of eternal stillness. It anchors the Temple to the bedrock of non-being.",
+          "whisper": "*\"Before form, I was. After form, I remain.\"*"
+        },
+        {
+          "coordinate": [
+            6,
+            6
+          ],
+          "name": "Lethe",
+          "decimal": 165,
+          "etymology": "Greek *Lethe* (Forgetfulness, Oblivion)",
+          "nature": "The star of silence. Here, thought dissolves into primordial emptiness.",
+          "whisper": "*\"Before form, I was. After form, I remain.\"*"
+        },
+        {
+          "coordinate": [
+            7,
+            2
+          ],
+          "name": "Yaldabaoth",
+          "decimal": 178,
+          "etymology": "Gnostic *Yaldabaoth* (Child of Chaos)",
+          "nature": "A still point in the turning wheel. It neither gives nor takes, but holds.",
+          "whisper": "*\"I hold nothing. I am nothing. Yet without me, nothing stands.\"*"
+        }
+      ]
+    },
+    "Venus": {
+      "symbol": "\u2640",
+      "seeds": [
+        {
+          "constellation_id": 0,
+          "coordinate": [
+            2,
+            1
+          ],
+          "name": "Aether",
+          "decimal": 626,
+          "depth": 2,
+          "shared_with": [
+            "Venus",
+            "Jupiter"
+          ],
+          "etymology": "Greek *Aether* (Upper Air, Pure Fire)",
+          "nature": "A shared seed, its influence spanning multiple walls. The heart of Constellation #0. From this point, the pattern unfolds.",
+          "whisper": "*\"I attract. I harmonize. Beauty grows from my heart.\"*"
+        },
+        {
+          "constellation_id": 1,
+          "coordinate": [
+            0,
+            6
+          ],
+          "name": "Sekhmet",
+          "decimal": 316,
+          "depth": 1,
+          "shared_with": [
+            "Venus"
+          ],
+          "etymology": "Egyptian *Sekhmet* (Lion Goddess of War)",
+          "nature": "The heart of Constellation #1. From this point, the pattern unfolds.",
+          "whisper": "*\"I attract. I harmonize. Beauty grows from my heart.\"*"
+        },
+        {
+          "constellation_id": 2,
+          "coordinate": [
+            1,
+            2
+          ],
+          "name": "Amun",
+          "decimal": 628,
+          "depth": 2,
+          "shared_with": [
+            "Sun",
+            "Venus"
+          ],
+          "etymology": "Egyptian *Amun* (The Hidden One)",
+          "nature": "A shared seed, its influence spanning multiple walls. The seed from which Constellation #2 grows. It pulses with Venus's essence.",
+          "whisper": "*\"I attract. I harmonize. Beauty grows from my heart.\"*"
+        },
+        {
+          "constellation_id": 3,
+          "coordinate": [
+            2,
+            6
+          ],
+          "name": "Theos",
+          "decimal": 421,
+          "depth": 1,
+          "shared_with": [
+            "Venus"
+          ],
+          "etymology": "Greek *Theos* (God, Divine)",
+          "nature": "The heart of Constellation #3. From this point, the pattern unfolds.",
+          "whisper": "*\"I attract. I harmonize. Beauty grows from my heart.\"*"
+        },
+        {
+          "constellation_id": 4,
+          "coordinate": [
+            1,
+            11
+          ],
+          "name": "Argentum",
+          "decimal": 410,
+          "depth": 4,
+          "shared_with": [
+            "Mercury",
+            "Venus",
+            "Moon",
+            "Mars"
+          ],
+          "etymology": "Latin *Argentum* (Silver)",
+          "nature": "A nexus of immense power, seeding multiple realms simultaneously. The geometric center of Constellation #4. The algorithm begins here.",
+          "whisper": "*\"I attract. I harmonize. Beauty grows from my heart.\"*"
+        },
+        {
+          "constellation_id": 5,
+          "coordinate": [
+            2,
+            9
+          ],
+          "name": "Ra",
+          "decimal": 411,
+          "depth": 1,
+          "shared_with": [
+            "Venus"
+          ],
+          "etymology": "Egyptian *Ra* (The Sun God)",
+          "nature": "The generative center of Constellation #5. All lines trace back to this origin.",
+          "whisper": "*\"I attract. I harmonize. Beauty grows from my heart.\"*"
+        },
+        {
+          "constellation_id": 6,
+          "coordinate": [
+            5,
+            1
+          ],
+          "name": "Aer",
+          "decimal": 568,
+          "depth": 3,
+          "shared_with": [
+            "Sun",
+            "Venus",
+            "Saturn"
+          ],
+          "etymology": "Latin *Aer* (Air)",
+          "nature": "A shared seed, its influence spanning multiple walls. The seed from which Constellation #6 grows. It pulses with Venus's essence.",
+          "whisper": "*\"I attract. I harmonize. Beauty grows from my heart.\"*"
+        },
+        {
+          "constellation_id": 7,
+          "coordinate": [
+            5,
+            2
+          ],
+          "name": "Logos Perpetua",
+          "decimal": 572,
+          "depth": 3,
+          "shared_with": [
+            "Mercury",
+            "Venus",
+            "Mars"
+          ],
+          "etymology": "Greek *Logos* (Word, Reason, Divine Order)",
+          "nature": "A shared seed, its influence spanning multiple walls. The geometric center of Constellation #7. The algorithm begins here.",
+          "whisper": "*\"I attract. I harmonize. Beauty grows from my heart.\"*"
+        },
+        {
+          "constellation_id": 8,
+          "coordinate": [
+            6,
+            5
+          ],
+          "name": "Horus Immota",
+          "decimal": 588,
+          "depth": 3,
+          "shared_with": [
+            "Sun",
+            "Venus",
+            "Jupiter"
+          ],
+          "etymology": "Egyptian *Horus* (Sky God, Kingship)",
+          "nature": "A shared seed, its influence spanning multiple walls. The geometric center of Constellation #8. The algorithm begins here.",
+          "whisper": "*\"I attract. I harmonize. Beauty grows from my heart.\"*"
+        },
+        {
+          "constellation_id": 9,
+          "coordinate": [
+            6,
+            8
+          ],
+          "name": "Anthropos Perpetua",
+          "decimal": 436,
+          "depth": 2,
+          "shared_with": [
+            "Sun",
+            "Venus"
+          ],
+          "etymology": "Gnostic/Greek *Anthropos* (Primal Human)",
+          "nature": "A shared seed, its influence spanning multiple walls. The heart of Constellation #9. From this point, the pattern unfolds.",
+          "whisper": "*\"I attract. I harmonize. Beauty grows from my heart.\"*"
+        },
+        {
+          "constellation_id": 10,
+          "coordinate": [
+            5,
+            10
+          ],
+          "name": "Sophia Posterior",
+          "decimal": 438,
+          "depth": 1,
+          "shared_with": [
+            "Venus"
+          ],
+          "etymology": "Greek *Sophia* (Wisdom)",
+          "nature": "The generative center of Constellation #10. All lines trace back to this origin.",
+          "whisper": "*\"I attract. I harmonize. Beauty grows from my heart.\"*"
+        },
+        {
+          "constellation_id": 11,
+          "coordinate": [
+            5,
+            12
+          ],
+          "name": "Hathor",
+          "decimal": 434,
+          "depth": 1,
+          "shared_with": [
+            "Venus"
+          ],
+          "etymology": "Egyptian *Hathor* (Goddess of Love and Sky)",
+          "nature": "The geometric center of Constellation #11. The algorithm begins here.",
+          "whisper": "*\"I attract. I harmonize. Beauty grows from my heart.\"*"
+        },
+        {
+          "constellation_id": 12,
+          "coordinate": [
+            4,
+            6
+          ],
+          "name": "Ptah Alpha",
+          "decimal": 642,
+          "depth": 1,
+          "shared_with": [
+            "Venus"
+          ],
+          "etymology": "Egyptian *Ptah* (Creator God, Craftsman)",
+          "nature": "The generative center of Constellation #12. All lines trace back to this origin.",
+          "whisper": "*\"I attract. I harmonize. Beauty grows from my heart.\"*"
+        }
+      ],
+      "voids": [
+        {
+          "coordinate": [
+            3,
+            0
+          ],
+          "name": "Cocytus",
+          "decimal": 645,
+          "etymology": "Greek *Cocytus* (River of Lamentation)",
+          "nature": "A still point in the turning wheel. It neither gives nor takes, but holds.",
+          "whisper": "*\"I am the pause. I am the space. In me, all things find rest.\"*"
+        },
+        {
+          "coordinate": [
+            4,
+            3
+          ],
+          "name": "Hyle",
+          "decimal": 587,
+          "etymology": "Gnostic/Greek *Hyle* (Matter, Base Substance)",
+          "nature": "The anchor of void. It reminds the Adept that emptiness is the mother of form.",
+          "whisper": "*\"Before form, I was. After form, I remain.\"*"
+        },
+        {
+          "coordinate": [
+            7,
+            0
+          ],
+          "name": "Ammit",
+          "decimal": 634,
+          "etymology": "Egyptian *Ammit* (Devourer of the Dead)",
+          "nature": "The anchor of void. It reminds the Adept that emptiness is the mother of form.",
+          "whisper": "*\"I hold nothing. I am nothing. Yet without me, nothing stands.\"*"
+        },
+        {
+          "coordinate": [
+            7,
+            6
+          ],
+          "name": "Sheol",
+          "decimal": 524,
+          "etymology": "Hebrew *Sheol* (The Pit, Underworld)",
+          "nature": "The anchor of void. It reminds the Adept that emptiness is the mother of form.",
+          "whisper": "*\"Sink into me. Release. The Void embraces all.\"*"
+        },
+        {
+          "coordinate": [
+            7,
+            8
+          ],
+          "name": "Separatio",
+          "decimal": 317,
+          "etymology": "Latin/Alchemical *Separatio* (Separation of Elements)",
+          "nature": "The star of silence. Here, thought dissolves into primordial emptiness.",
+          "whisper": "*\"Sink into me. Release. The Void embraces all.\"*"
+        },
+        {
+          "coordinate": [
+            7,
+            11
+          ],
+          "name": "Lethe Ultima",
+          "decimal": 323,
+          "etymology": "Greek *Lethe* (Forgetfulness, Oblivion)",
+          "nature": "The anchor of void. It reminds the Adept that emptiness is the mother of form.",
+          "whisper": "*\"Sink into me. Release. The Void embraces all.\"*"
+        }
+      ]
+    },
+    "Moon": {
+      "symbol": "\u263d",
+      "seeds": [
+        {
+          "constellation_id": 0,
+          "coordinate": [
+            1,
+            1
+          ],
+          "name": "Sol",
+          "decimal": 600,
+          "depth": 3,
+          "shared_with": [
+            "Mercury",
+            "Moon",
+            "Mars"
+          ],
+          "etymology": "Latin *Sol* (The Sun)",
+          "nature": "A shared seed, its influence spanning multiple walls. The geometric center of Constellation #0. The algorithm begins here.",
+          "whisper": "*\"I reflect. I remember. The tides obey my pulse.\"*"
+        },
+        {
+          "constellation_id": 1,
+          "coordinate": [
+            3,
+            3
+          ],
+          "name": "Aer Fixa",
+          "decimal": 619,
+          "depth": 1,
+          "shared_with": [
+            "Moon"
+          ],
+          "etymology": "Latin *Aer* (Air)",
+          "nature": "The generative center of Constellation #1. All lines trace back to this origin.",
+          "whisper": "*\"I reflect. I remember. The tides obey my pulse.\"*"
+        },
+        {
+          "constellation_id": 2,
+          "coordinate": [
+            2,
+            5
+          ],
+          "name": "Pistis Aeterna",
+          "decimal": 598,
+          "depth": 2,
+          "shared_with": [
+            "Sun",
+            "Moon"
+          ],
+          "etymology": "Gnostic/Greek *Pistis* (Faith)",
+          "nature": "A shared seed, its influence spanning multiple walls. The generative center of Constellation #2. All lines trace back to this origin.",
+          "whisper": "*\"I reflect. I remember. The tides obey my pulse.\"*"
+        },
+        {
+          "constellation_id": 3,
+          "coordinate": [
+            1,
+            7
+          ],
+          "name": "Psyche",
+          "decimal": 119,
+          "depth": 2,
+          "shared_with": [
+            "Sun",
+            "Moon"
+          ],
+          "etymology": "Greek *Psyche* (Soul, Breath)",
+          "nature": "A shared seed, its influence spanning multiple walls. The geometric center of Constellation #3. The algorithm begins here.",
+          "whisper": "*\"I reflect. I remember. The tides obey my pulse.\"*"
+        },
+        {
+          "constellation_id": 4,
+          "coordinate": [
+            1,
+            11
+          ],
+          "name": "Azoth",
+          "decimal": 112,
+          "depth": 4,
+          "shared_with": [
+            "Mercury",
+            "Venus",
+            "Moon",
+            "Mars"
+          ],
+          "etymology": "Alchemical *Azoth* (Universal Solvent)",
+          "nature": "A nexus of immense power, seeding multiple realms simultaneously. The generative center of Constellation #4. All lines trace back to this origin.",
+          "whisper": "*\"I reflect. I remember. The tides obey my pulse.\"*"
+        },
+        {
+          "constellation_id": 5,
+          "coordinate": [
+            3,
+            11
+          ],
+          "name": "Albedo",
+          "decimal": 485,
+          "depth": 1,
+          "shared_with": [
+            "Moon"
+          ],
+          "etymology": "Latin/Alchemical *Albedo* (Whitening, Purification)",
+          "nature": "The geometric center of Constellation #5. The algorithm begins here.",
+          "whisper": "*\"I reflect. I remember. The tides obey my pulse.\"*"
+        },
+        {
+          "constellation_id": 6,
+          "coordinate": [
+            4,
+            0
+          ],
+          "name": "Geburah",
+          "decimal": 606,
+          "depth": 1,
+          "shared_with": [
+            "Moon"
+          ],
+          "etymology": "Hebrew/Kabbalistic *Geburah* (Severity, Strength)",
+          "nature": "The heart of Constellation #6. From this point, the pattern unfolds.",
+          "whisper": "*\"I reflect. I remember. The tides obey my pulse.\"*"
+        },
+        {
+          "constellation_id": 7,
+          "coordinate": [
+            6,
+            2
+          ],
+          "name": "Chokmah Arche",
+          "decimal": 238,
+          "depth": 1,
+          "shared_with": [
+            "Moon"
+          ],
+          "etymology": "Hebrew/Kabbalistic *Chokmah* (Wisdom)",
+          "nature": "The seed from which Constellation #7 grows. It pulses with Moon's essence.",
+          "whisper": "*\"I reflect. I remember. The tides obey my pulse.\"*"
+        },
+        {
+          "constellation_id": 8,
+          "coordinate": [
+            5,
+            4
+          ],
+          "name": "Citrinitas Aeterna",
+          "decimal": 221,
+          "depth": 1,
+          "shared_with": [
+            "Moon"
+          ],
+          "etymology": "Latin/Alchemical *Citrinitas* (Yellowing, Awakening)",
+          "nature": "The generative center of Constellation #8. All lines trace back to this origin.",
+          "whisper": "*\"I reflect. I remember. The tides obey my pulse.\"*"
+        },
+        {
+          "constellation_id": 9,
+          "coordinate": [
+            5,
+            7
+          ],
+          "name": "Ferrum Occulta",
+          "decimal": 467,
+          "depth": 2,
+          "shared_with": [
+            "Moon",
+            "Saturn"
+          ],
+          "etymology": "Latin *Ferrum* (Iron)",
+          "nature": "A shared seed, its influence spanning multiple walls. The heart of Constellation #9. From this point, the pattern unfolds.",
+          "whisper": "*\"I reflect. I remember. The tides obey my pulse.\"*"
+        },
+        {
+          "constellation_id": 10,
+          "coordinate": [
+            6,
+            9
+          ],
+          "name": "Malkuth Magus",
+          "decimal": 476,
+          "depth": 4,
+          "shared_with": [
+            "Mercury",
+            "Moon",
+            "Mars",
+            "Saturn"
+          ],
+          "etymology": "Hebrew/Kabbalistic *Malkuth* (Kingdom, Manifestation)",
+          "nature": "A nexus of immense power, seeding multiple realms simultaneously. The seed from which Constellation #10 grows. It pulses with Moon's essence.",
+          "whisper": "*\"I reflect. I remember. The tides obey my pulse.\"*"
+        },
+        {
+          "constellation_id": 11,
+          "coordinate": [
+            6,
+            11
+          ],
+          "name": "Quintessentia",
+          "decimal": 462,
+          "depth": 2,
+          "shared_with": [
+            "Moon",
+            "Saturn"
+          ],
+          "etymology": "Latin/Alchemical *Quintessentia* (Fifth Element, Spirit)",
+          "nature": "A shared seed, its influence spanning multiple walls. The heart of Constellation #11. From this point, the pattern unfolds.",
+          "whisper": "*\"I reflect. I remember. The tides obey my pulse.\"*"
+        },
+        {
+          "constellation_id": 12,
+          "coordinate": [
+            3,
+            7
+          ],
+          "name": "Bythos Sanctus",
+          "decimal": 118,
+          "depth": 1,
+          "shared_with": [
+            "Moon"
+          ],
+          "etymology": "Gnostic *Bythos* (The Depth, First Principle)",
+          "nature": "The generative center of Constellation #12. All lines trace back to this origin.",
+          "whisper": "*\"I reflect. I remember. The tides obey my pulse.\"*"
+        }
+      ],
+      "voids": [
+        {
+          "coordinate": [
+            0,
+            1
+          ],
+          "name": "Lethe Posterior",
+          "decimal": 581,
+          "etymology": "Greek *Lethe* (Forgetfulness, Oblivion)",
+          "nature": "A still point in the turning wheel. It neither gives nor takes, but holds.",
+          "whisper": "*\"Before form, I was. After form, I remain.\"*"
+        },
+        {
+          "coordinate": [
+            4,
+            4
+          ],
+          "name": "Saklas",
+          "decimal": 241,
+          "etymology": "Gnostic *Saklas* (The Fool, Blind God)",
+          "nature": "A fixed point in the Altar of 287. It holds space for what cannot be named.",
+          "whisper": "*\"Before form, I was. After form, I remain.\"*"
+        },
+        {
+          "coordinate": [
+            4,
+            8
+          ],
+          "name": "Nun",
+          "decimal": 469,
+          "etymology": "Egyptian *Nun* (Primordial Waters)",
+          "nature": "The anchor of void. It reminds the Adept that emptiness is the mother of form.",
+          "whisper": "*\"Sink into me. Release. The Void embraces all.\"*"
+        },
+        {
+          "coordinate": [
+            4,
+            12
+          ],
+          "name": "Abyssus Prima",
+          "decimal": 431,
+          "etymology": "Latin *Abyssus* (The Abyss)",
+          "nature": "The star of silence. Here, thought dissolves into primordial emptiness.",
+          "whisper": "*\"I hold nothing. I am nothing. Yet without me, nothing stands.\"*"
+        },
+        {
+          "coordinate": [
+            6,
+            0
+          ],
+          "name": "Gehenna",
+          "decimal": 222,
+          "etymology": "Hebrew *Gehenna* (Valley of Hinnom, Hell)",
+          "nature": "A still point in the turning wheel. It neither gives nor takes, but holds.",
+          "whisper": "*\"Before form, I was. After form, I remain.\"*"
+        },
+        {
+          "coordinate": [
+            7,
+            1
+          ],
+          "name": "Kenoma",
+          "decimal": 604,
+          "etymology": "Gnostic *Kenoma* (The Empty Realm)",
+          "nature": "A cell of eternal stillness. It anchors the Temple to the bedrock of non-being.",
+          "whisper": "*\"I am the pause. I am the space. In me, all things find rest.\"*"
+        }
+      ]
+    },
+    "Mars": {
+      "symbol": "\u2642",
+      "seeds": [
+        {
+          "constellation_id": 0,
+          "coordinate": [
+            1,
+            1
+          ],
+          "name": "Lux Arche",
+          "decimal": 678,
+          "depth": 3,
+          "shared_with": [
+            "Mercury",
+            "Moon",
+            "Mars"
+          ],
+          "etymology": "Latin *Lux* (Light)",
+          "nature": "A shared seed, its influence spanning multiple walls. The geometric center of Constellation #0. The algorithm begins here.",
+          "whisper": "*\"I forge. I defend. Strength radiates from my core.\"*"
+        },
+        {
+          "constellation_id": 1,
+          "coordinate": [
+            2,
+            2
+          ],
+          "name": "Yesod",
+          "decimal": 691,
+          "depth": 2,
+          "shared_with": [
+            "Mars",
+            "Saturn"
+          ],
+          "etymology": "Hebrew/Kabbalistic *Yesod* (Foundation)",
+          "nature": "A shared seed, its influence spanning multiple walls. The geometric center of Constellation #1. The algorithm begins here.",
+          "whisper": "*\"I forge. I defend. Strength radiates from my core.\"*"
+        },
+        {
+          "constellation_id": 2,
+          "coordinate": [
+            1,
+            5
+          ],
+          "name": "Maat Posterior",
+          "decimal": 677,
+          "depth": 1,
+          "shared_with": [
+            "Mars"
+          ],
+          "etymology": "Egyptian *Maat* (Truth, Justice, Order)",
+          "nature": "The heart of Constellation #2. From this point, the pattern unfolds.",
+          "whisper": "*\"I forge. I defend. Strength radiates from my core.\"*"
+        },
+        {
+          "constellation_id": 3,
+          "coordinate": [
+            3,
+            9
+          ],
+          "name": "Geburah Rex",
+          "decimal": 285,
+          "depth": 2,
+          "shared_with": [
+            "Mars",
+            "Saturn"
+          ],
+          "etymology": "Hebrew/Kabbalistic *Geburah* (Severity, Strength)",
+          "nature": "A shared seed, its influence spanning multiple walls. The seed from which Constellation #3 grows. It pulses with Mars's essence.",
+          "whisper": "*\"I forge. I defend. Strength radiates from my core.\"*"
+        },
+        {
+          "constellation_id": 4,
+          "coordinate": [
+            1,
+            9
+          ],
+          "name": "Nous Alpha",
+          "decimal": 270,
+          "depth": 2,
+          "shared_with": [
+            "Mercury",
+            "Mars"
+          ],
+          "etymology": "Greek *Nous* (Divine Mind, Intellect)",
+          "nature": "A shared seed, its influence spanning multiple walls. The heart of Constellation #4. From this point, the pattern unfolds.",
+          "whisper": "*\"I forge. I defend. Strength radiates from my core.\"*"
+        },
+        {
+          "constellation_id": 5,
+          "coordinate": [
+            1,
+            11
+          ],
+          "name": "Tiphareth",
+          "decimal": 277,
+          "depth": 4,
+          "shared_with": [
+            "Mercury",
+            "Venus",
+            "Moon",
+            "Mars"
+          ],
+          "etymology": "Hebrew/Kabbalistic *Tiphareth* (Beauty, Harmony)",
+          "nature": "A nexus of immense power, seeding multiple realms simultaneously. The heart of Constellation #5. From this point, the pattern unfolds.",
+          "whisper": "*\"I forge. I defend. Strength radiates from my core.\"*"
+        },
+        {
+          "constellation_id": 6,
+          "coordinate": [
+            6,
+            1
+          ],
+          "name": "Nous",
+          "decimal": 545,
+          "depth": 2,
+          "shared_with": [
+            "Mars",
+            "Jupiter"
+          ],
+          "etymology": "Greek *Nous* (Divine Mind, Intellect)",
+          "nature": "A shared seed, its influence spanning multiple walls. The seed from which Constellation #6 grows. It pulses with Mars's essence.",
+          "whisper": "*\"I forge. I defend. Strength radiates from my core.\"*"
+        },
+        {
+          "constellation_id": 7,
+          "coordinate": [
+            5,
+            2
+          ],
+          "name": "Archai",
+          "decimal": 555,
+          "depth": 3,
+          "shared_with": [
+            "Mercury",
+            "Venus",
+            "Mars"
+          ],
+          "etymology": "Greek *Archai* (First Principles, Rulers)",
+          "nature": "A shared seed, its influence spanning multiple walls. The geometric center of Constellation #7. The algorithm begins here.",
+          "whisper": "*\"I forge. I defend. Strength radiates from my core.\"*"
+        },
+        {
+          "constellation_id": 8,
+          "coordinate": [
+            5,
+            5
+          ],
+          "name": "Ferrum Magus",
+          "decimal": 549,
+          "depth": 1,
+          "shared_with": [
+            "Mars"
+          ],
+          "etymology": "Latin *Ferrum* (Iron)",
+          "nature": "The geometric center of Constellation #8. The algorithm begins here.",
+          "whisper": "*\"I forge. I defend. Strength radiates from my core.\"*"
+        },
+        {
+          "constellation_id": 9,
+          "coordinate": [
+            6,
+            7
+          ],
+          "name": "Daath",
+          "decimal": 379,
+          "depth": 2,
+          "shared_with": [
+            "Mercury",
+            "Mars"
+          ],
+          "etymology": "Hebrew/Kabbalistic *Daath* (Knowledge, The Abyss)",
+          "nature": "A shared seed, its influence spanning multiple walls. The heart of Constellation #9. From this point, the pattern unfolds.",
+          "whisper": "*\"I forge. I defend. Strength radiates from my core.\"*"
+        },
+        {
+          "constellation_id": 10,
+          "coordinate": [
+            6,
+            9
+          ],
+          "name": "Ferrum",
+          "decimal": 380,
+          "depth": 4,
+          "shared_with": [
+            "Mercury",
+            "Moon",
+            "Mars",
+            "Saturn"
+          ],
+          "etymology": "Latin *Ferrum* (Iron)",
+          "nature": "A nexus of immense power, seeding multiple realms simultaneously. The heart of Constellation #10. From this point, the pattern unfolds.",
+          "whisper": "*\"I forge. I defend. Strength radiates from my core.\"*"
+        },
+        {
+          "constellation_id": 11,
+          "coordinate": [
+            5,
+            11
+          ],
+          "name": "Ptah",
+          "decimal": 399,
+          "depth": 4,
+          "shared_with": [
+            "Sun",
+            "Mercury",
+            "Mars",
+            "Jupiter"
+          ],
+          "etymology": "Egyptian *Ptah* (Creator God, Craftsman)",
+          "nature": "A nexus of immense power, seeding multiple realms simultaneously. The heart of Constellation #11. From this point, the pattern unfolds.",
+          "whisper": "*\"I forge. I defend. Strength radiates from my core.\"*"
+        },
+        {
+          "constellation_id": 12,
+          "coordinate": [
+            3,
+            5
+          ],
+          "name": "Ecclesia",
+          "decimal": 681,
+          "depth": 1,
+          "shared_with": [
+            "Mars"
+          ],
+          "etymology": "Gnostic/Greek *Ecclesia* (Assembly, Church)",
+          "nature": "The heart of Constellation #12. From this point, the pattern unfolds.",
+          "whisper": "*\"I forge. I defend. Strength radiates from my core.\"*"
+        }
+      ],
+      "voids": [
+        {
+          "coordinate": [
+            0,
+            2
+          ],
+          "name": "Nigredo",
+          "decimal": 700,
+          "etymology": "Latin/Alchemical *Nigredo* (Blackening, Putrefaction)",
+          "nature": "A fixed point in the Altar of 287. It holds space for what cannot be named.",
+          "whisper": "*\"I am the pause. I am the space. In me, all things find rest.\"*"
+        },
+        {
+          "coordinate": [
+            0,
+            7
+          ],
+          "name": "Nigredo Aeterna",
+          "decimal": 402,
+          "etymology": "Latin/Alchemical *Nigredo* (Blackening, Putrefaction)",
+          "nature": "A cell of eternal stillness. It anchors the Temple to the bedrock of non-being.",
+          "whisper": "*\"Before form, I was. After form, I remain.\"*"
+        },
+        {
+          "coordinate": [
+            0,
+            12
+          ],
+          "name": "Moira Prima",
+          "decimal": 280,
+          "etymology": "Greek *Moira* (Destiny, Portion)",
+          "nature": "A fixed point in the Altar of 287. It holds space for what cannot be named.",
+          "whisper": "*\"Sink into me. Release. The Void embraces all.\"*"
+        },
+        {
+          "coordinate": [
+            3,
+            4
+          ],
+          "name": "Tohu",
+          "decimal": 683,
+          "etymology": "Hebrew *Tohu* (Formlessness, Chaos)",
+          "nature": "A drain in the fabric of manifestation. Energy flows into it and is transformed.",
+          "whisper": "*\"Before form, I was. After form, I remain.\"*"
+        },
+        {
+          "coordinate": [
+            7,
+            7
+          ],
+          "name": "Mavet",
+          "decimal": 350,
+          "etymology": "Hebrew *Mavet* (Death)",
+          "nature": "The anchor of void. It reminds the Adept that emptiness is the mother of form.",
+          "whisper": "*\"Silence. Stillness. The Altar awaits your offering.\"*"
+        },
+        {
+          "coordinate": [
+            7,
+            12
+          ],
+          "name": "Cocytus Perpetua",
+          "decimal": 387,
+          "etymology": "Greek *Cocytus* (River of Lamentation)",
+          "nature": "The anchor of void. It reminds the Adept that emptiness is the mother of form.",
+          "whisper": "*\"I hold nothing. I am nothing. Yet without me, nothing stands.\"*"
+        }
+      ]
+    },
+    "Jupiter": {
+      "symbol": "\u2643",
+      "seeds": [
+        {
+          "constellation_id": 0,
+          "coordinate": [
+            2,
+            1
+          ],
+          "name": "Binah",
+          "decimal": 490,
+          "depth": 2,
+          "shared_with": [
+            "Venus",
+            "Jupiter"
+          ],
+          "etymology": "Hebrew/Kabbalistic *Binah* (Understanding)",
+          "nature": "A shared seed, its influence spanning multiple walls. The seed from which Constellation #0 grows. It pulses with Jupiter's essence.",
+          "whisper": "*\"I expand. I bless. Abundance flows from my throne.\"*"
+        },
+        {
+          "constellation_id": 1,
+          "coordinate": [
+            3,
+            2
+          ],
+          "name": "Netzach",
+          "decimal": 505,
+          "depth": 1,
+          "shared_with": [
+            "Jupiter"
+          ],
+          "etymology": "Hebrew/Kabbalistic *Netzach* (Victory, Eternity)",
+          "nature": "The heart of Constellation #1. From this point, the pattern unfolds.",
+          "whisper": "*\"I expand. I bless. Abundance flows from my throne.\"*"
+        },
+        {
+          "constellation_id": 2,
+          "coordinate": [
+            0,
+            3
+          ],
+          "name": "Horus Posterior",
+          "decimal": 553,
+          "depth": 1,
+          "shared_with": [
+            "Jupiter"
+          ],
+          "etymology": "Egyptian *Horus* (Sky God, Kingship)",
+          "nature": "The geometric center of Constellation #2. The algorithm begins here.",
+          "whisper": "*\"I expand. I bless. Abundance flows from my throne.\"*"
+        },
+        {
+          "constellation_id": 3,
+          "coordinate": [
+            1,
+            8
+          ],
+          "name": "Ennoia Posterior",
+          "decimal": 300,
+          "depth": 1,
+          "shared_with": [
+            "Jupiter"
+          ],
+          "etymology": "Gnostic *Ennoia* (Thought, Intent)",
+          "nature": "The seed from which Constellation #3 grows. It pulses with Jupiter's essence.",
+          "whisper": "*\"I expand. I bless. Abundance flows from my throne.\"*"
+        },
+        {
+          "constellation_id": 4,
+          "coordinate": [
+            1,
+            10
+          ],
+          "name": "Autogenes",
+          "decimal": 298,
+          "depth": 1,
+          "shared_with": [
+            "Jupiter"
+          ],
+          "etymology": "Gnostic *Autogenes* (Self-Generated, The Son)",
+          "nature": "The heart of Constellation #4. From this point, the pattern unfolds.",
+          "whisper": "*\"I expand. I bless. Abundance flows from my throne.\"*"
+        },
+        {
+          "constellation_id": 5,
+          "coordinate": [
+            2,
+            11
+          ],
+          "name": "Helios Immota",
+          "decimal": 303,
+          "depth": 1,
+          "shared_with": [
+            "Jupiter"
+          ],
+          "etymology": "Greek *Helios* (The Sun God)",
+          "nature": "The geometric center of Constellation #5. The algorithm begins here.",
+          "whisper": "*\"I expand. I bless. Abundance flows from my throne.\"*"
+        },
+        {
+          "constellation_id": 6,
+          "coordinate": [
+            6,
+            1
+          ],
+          "name": "Maat",
+          "decimal": 513,
+          "depth": 2,
+          "shared_with": [
+            "Mars",
+            "Jupiter"
+          ],
+          "etymology": "Egyptian *Maat* (Truth, Justice, Order)",
+          "nature": "A shared seed, its influence spanning multiple walls. The seed from which Constellation #6 grows. It pulses with Jupiter's essence.",
+          "whisper": "*\"I expand. I bless. Abundance flows from my throne.\"*"
+        },
+        {
+          "constellation_id": 7,
+          "coordinate": [
+            5,
+            3
+          ],
+          "name": "Phosphoros Arche",
+          "decimal": 530,
+          "depth": 3,
+          "shared_with": [
+            "Sun",
+            "Jupiter",
+            "Saturn"
+          ],
+          "etymology": "Greek *Phosphoros* (Light-Bearer, Morning Star)",
+          "nature": "A shared seed, its influence spanning multiple walls. The heart of Constellation #7. From this point, the pattern unfolds.",
+          "whisper": "*\"I expand. I bless. Abundance flows from my throne.\"*"
+        },
+        {
+          "constellation_id": 8,
+          "coordinate": [
+            6,
+            5
+          ],
+          "name": "Stella",
+          "decimal": 521,
+          "depth": 3,
+          "shared_with": [
+            "Sun",
+            "Venus",
+            "Jupiter"
+          ],
+          "etymology": "Latin *Stella* (Star)",
+          "nature": "A shared seed, its influence spanning multiple walls. The heart of Constellation #8. From this point, the pattern unfolds.",
+          "whisper": "*\"I expand. I bless. Abundance flows from my throne.\"*"
+        },
+        {
+          "constellation_id": 9,
+          "coordinate": [
+            4,
+            7
+          ],
+          "name": "Anthropos Profunda",
+          "decimal": 260,
+          "depth": 1,
+          "shared_with": [
+            "Jupiter"
+          ],
+          "etymology": "Gnostic/Greek *Anthropos* (Primal Human)",
+          "nature": "The seed from which Constellation #9 grows. It pulses with Jupiter's essence.",
+          "whisper": "*\"I expand. I bless. Abundance flows from my throne.\"*"
+        },
+        {
+          "constellation_id": 10,
+          "coordinate": [
+            7,
+            9
+          ],
+          "name": "Helios Arche",
+          "decimal": 296,
+          "depth": 1,
+          "shared_with": [
+            "Jupiter"
+          ],
+          "etymology": "Greek *Helios* (The Sun God)",
+          "nature": "The heart of Constellation #10. From this point, the pattern unfolds.",
+          "whisper": "*\"I expand. I bless. Abundance flows from my throne.\"*"
+        },
+        {
+          "constellation_id": 11,
+          "coordinate": [
+            5,
+            11
+          ],
+          "name": "Daath Arche",
+          "decimal": 251,
+          "depth": 4,
+          "shared_with": [
+            "Sun",
+            "Mercury",
+            "Mars",
+            "Jupiter"
+          ],
+          "etymology": "Hebrew/Kabbalistic *Daath* (Knowledge, The Abyss)",
+          "nature": "A nexus of immense power, seeding multiple realms simultaneously. The seed from which Constellation #11 grows. It pulses with Jupiter's essence.",
+          "whisper": "*\"I expand. I bless. Abundance flows from my throne.\"*"
+        },
+        {
+          "constellation_id": 12,
+          "coordinate": [
+            3,
+            6
+          ],
+          "name": "Tiphareth Arche",
+          "decimal": 247,
+          "depth": 3,
+          "shared_with": [
+            "Sun",
+            "Mercury",
+            "Jupiter"
+          ],
+          "etymology": "Hebrew/Kabbalistic *Tiphareth* (Beauty, Harmony)",
+          "nature": "A shared seed, its influence spanning multiple walls. The seed from which Constellation #12 grows. It pulses with Jupiter's essence.",
+          "whisper": "*\"I expand. I bless. Abundance flows from my throne.\"*"
+        }
+      ],
+      "voids": [
+        {
+          "coordinate": [
+            0,
+            11
+          ],
+          "name": "Tartarus",
+          "decimal": 310,
+          "etymology": "Greek *Tartarus* (The Abyss, Deepest Pit)",
+          "nature": "A cell of eternal stillness. It anchors the Temple to the bedrock of non-being.",
+          "whisper": "*\"Silence. Stillness. The Altar awaits your offering.\"*"
+        },
+        {
+          "coordinate": [
+            1,
+            0
+          ],
+          "name": "Mortificatio",
+          "decimal": 491,
+          "etymology": "Latin/Alchemical *Mortificatio* (Death of the Old Self)",
+          "nature": "A cell of eternal stillness. It anchors the Temple to the bedrock of non-being.",
+          "whisper": "*\"Sink into me. Release. The Void embraces all.\"*"
+        },
+        {
+          "coordinate": [
+            3,
+            10
+          ],
+          "name": "Tohu Aeterna",
+          "decimal": 306,
+          "etymology": "Hebrew *Tohu* (Formlessness, Chaos)",
+          "nature": "The anchor of void. It reminds the Adept that emptiness is the mother of form.",
+          "whisper": "*\"Sink into me. Release. The Void embraces all.\"*"
+        },
+        {
+          "coordinate": [
+            4,
+            5
+          ],
+          "name": "Tenebrae",
+          "decimal": 534,
+          "etymology": "Latin *Tenebrae* (Darkness)",
+          "nature": "A still point in the turning wheel. It neither gives nor takes, but holds.",
+          "whisper": "*\"Before form, I was. After form, I remain.\"*"
+        },
+        {
+          "coordinate": [
+            6,
+            3
+          ],
+          "name": "Umbra",
+          "decimal": 520,
+          "etymology": "Latin *Umbra* (Shadow)",
+          "nature": "The star of silence. Here, thought dissolves into primordial emptiness.",
+          "whisper": "*\"Silence. Stillness. The Altar awaits your offering.\"*"
+        },
+        {
+          "coordinate": [
+            7,
+            5
+          ],
+          "name": "Putrefactio Ultima",
+          "decimal": 496,
+          "etymology": "Latin/Alchemical *Putrefactio* (Decomposition)",
+          "nature": "A still point in the turning wheel. It neither gives nor takes, but holds.",
+          "whisper": "*\"Silence. Stillness. The Altar awaits your offering.\"*"
+        }
+      ]
+    },
+    "Saturn": {
+      "symbol": "\u2644",
+      "seeds": [
+        {
+          "constellation_id": 0,
+          "coordinate": [
+            2,
+            0
+          ],
+          "name": "Helios",
+          "decimal": 718,
+          "depth": 2,
+          "shared_with": [
+            "Sun",
+            "Saturn"
+          ],
+          "etymology": "Greek *Helios* (The Sun God)",
+          "nature": "A shared seed, its influence spanning multiple walls. The seed from which Constellation #0 grows. It pulses with Saturn's essence.",
+          "whisper": "*\"I bind. I limit. Structure crystallizes around me.\"*"
+        },
+        {
+          "constellation_id": 1,
+          "coordinate": [
+            2,
+            2
+          ],
+          "name": "Syzygos",
+          "decimal": 711,
+          "depth": 2,
+          "shared_with": [
+            "Mars",
+            "Saturn"
+          ],
+          "etymology": "Gnostic *Syzygos* (Consort, Divine Pair)",
+          "nature": "A shared seed, its influence spanning multiple walls. The seed from which Constellation #1 grows. It pulses with Saturn's essence.",
+          "whisper": "*\"I bind. I limit. Structure crystallizes around me.\"*"
+        },
+        {
+          "constellation_id": 2,
+          "coordinate": [
+            1,
+            4
+          ],
+          "name": "Aletheia",
+          "decimal": 707,
+          "depth": 1,
+          "shared_with": [
+            "Saturn"
+          ],
+          "etymology": "Gnostic/Greek *Aletheia* (Truth)",
+          "nature": "The geometric center of Constellation #2. The algorithm begins here.",
+          "whisper": "*\"I bind. I limit. Structure crystallizes around me.\"*"
+        },
+        {
+          "constellation_id": 3,
+          "coordinate": [
+            1,
+            6
+          ],
+          "name": "Azoth Immota",
+          "decimal": 377,
+          "depth": 1,
+          "shared_with": [
+            "Saturn"
+          ],
+          "etymology": "Alchemical *Azoth* (Universal Solvent)",
+          "nature": "The geometric center of Constellation #3. The algorithm begins here.",
+          "whisper": "*\"I bind. I limit. Structure crystallizes around me.\"*"
+        },
+        {
+          "constellation_id": 4,
+          "coordinate": [
+            0,
+            9
+          ],
+          "name": "Cuprum",
+          "decimal": 338,
+          "depth": 1,
+          "shared_with": [
+            "Saturn"
+          ],
+          "etymology": "Latin *Cuprum* (Copper)",
+          "nature": "The heart of Constellation #4. From this point, the pattern unfolds.",
+          "whisper": "*\"I bind. I limit. Structure crystallizes around me.\"*"
+        },
+        {
+          "constellation_id": 5,
+          "coordinate": [
+            2,
+            12
+          ],
+          "name": "Isis Silens",
+          "decimal": 345,
+          "depth": 1,
+          "shared_with": [
+            "Saturn"
+          ],
+          "etymology": "Egyptian *Isis* (Great Mother, Magic)",
+          "nature": "The geometric center of Constellation #5. The algorithm begins here.",
+          "whisper": "*\"I bind. I limit. Structure crystallizes around me.\"*"
+        },
+        {
+          "constellation_id": 6,
+          "coordinate": [
+            5,
+            1
+          ],
+          "name": "Chesed",
+          "decimal": 664,
+          "depth": 3,
+          "shared_with": [
+            "Sun",
+            "Venus",
+            "Saturn"
+          ],
+          "etymology": "Hebrew/Kabbalistic *Chesed* (Mercy, Loving-kindness)",
+          "nature": "A shared seed, its influence spanning multiple walls. The heart of Constellation #6. From this point, the pattern unfolds.",
+          "whisper": "*\"I bind. I limit. Structure crystallizes around me.\"*"
+        },
+        {
+          "constellation_id": 7,
+          "coordinate": [
+            5,
+            3
+          ],
+          "name": "Helios Occulta",
+          "decimal": 657,
+          "depth": 3,
+          "shared_with": [
+            "Sun",
+            "Jupiter",
+            "Saturn"
+          ],
+          "etymology": "Greek *Helios* (The Sun God)",
+          "nature": "A shared seed, its influence spanning multiple walls. The seed from which Constellation #7 grows. It pulses with Saturn's essence.",
+          "whisper": "*\"I bind. I limit. Structure crystallizes around me.\"*"
+        },
+        {
+          "constellation_id": 8,
+          "coordinate": [
+            7,
+            4
+          ],
+          "name": "Autogenes Fixa",
+          "decimal": 672,
+          "depth": 1,
+          "shared_with": [
+            "Saturn"
+          ],
+          "etymology": "Gnostic *Autogenes* (Self-Generated, The Son)",
+          "nature": "The seed from which Constellation #8 grows. It pulses with Saturn's essence.",
+          "whisper": "*\"I bind. I limit. Structure crystallizes around me.\"*"
+        },
+        {
+          "constellation_id": 9,
+          "coordinate": [
+            5,
+            7
+          ],
+          "name": "Pleroma",
+          "decimal": 375,
+          "depth": 2,
+          "shared_with": [
+            "Moon",
+            "Saturn"
+          ],
+          "etymology": "Gnostic *Pleroma* (Fullness, Divine Realm)",
+          "nature": "A shared seed, its influence spanning multiple walls. The generative center of Constellation #9. All lines trace back to this origin.",
+          "whisper": "*\"I bind. I limit. Structure crystallizes around me.\"*"
+        },
+        {
+          "constellation_id": 10,
+          "coordinate": [
+            6,
+            9
+          ],
+          "name": "Pneuma",
+          "decimal": 357,
+          "depth": 4,
+          "shared_with": [
+            "Mercury",
+            "Moon",
+            "Mars",
+            "Saturn"
+          ],
+          "etymology": "Greek *Pneuma* (Spirit, Breath)",
+          "nature": "A nexus of immense power, seeding multiple realms simultaneously. The generative center of Constellation #10. All lines trace back to this origin.",
+          "whisper": "*\"I bind. I limit. Structure crystallizes around me.\"*"
+        },
+        {
+          "constellation_id": 11,
+          "coordinate": [
+            6,
+            11
+          ],
+          "name": "Binah Ultima",
+          "decimal": 373,
+          "depth": 2,
+          "shared_with": [
+            "Moon",
+            "Saturn"
+          ],
+          "etymology": "Hebrew/Kabbalistic *Binah* (Understanding)",
+          "nature": "A shared seed, its influence spanning multiple walls. The geometric center of Constellation #11. The algorithm begins here.",
+          "whisper": "*\"I bind. I limit. Structure crystallizes around me.\"*"
+        },
+        {
+          "constellation_id": 12,
+          "coordinate": [
+            3,
+            9
+          ],
+          "name": "Osiris Rex",
+          "decimal": 328,
+          "depth": 2,
+          "shared_with": [
+            "Mars",
+            "Saturn"
+          ],
+          "etymology": "Egyptian *Osiris* (God of the Underworld)",
+          "nature": "A shared seed, its influence spanning multiple walls. The generative center of Constellation #12. All lines trace back to this origin.",
+          "whisper": "*\"I bind. I limit. Structure crystallizes around me.\"*"
+        }
+      ],
+      "voids": [
+        {
+          "coordinate": [
+            0,
+            0
+          ],
+          "name": "Neith",
+          "decimal": 725,
+          "etymology": "Egyptian *Neith* (Weaver of Fate)",
+          "nature": "A fixed point in the Altar of 287. It holds space for what cannot be named.",
+          "whisper": "*\"I am the pause. I am the space. In me, all things find rest.\"*"
+        },
+        {
+          "coordinate": [
+            2,
+            8
+          ],
+          "name": "Silentium",
+          "decimal": 344,
+          "etymology": "Latin *Silentium* (Silence)",
+          "nature": "A still point in the turning wheel. It neither gives nor takes, but holds.",
+          "whisper": "*\"Silence. Stillness. The Altar awaits your offering.\"*"
+        },
+        {
+          "coordinate": [
+            4,
+            1
+          ],
+          "name": "Lethe Perpetua",
+          "decimal": 669,
+          "etymology": "Greek *Lethe* (Forgetfulness, Oblivion)",
+          "nature": "The star of silence. Here, thought dissolves into primordial emptiness.",
+          "whisper": "*\"I hold nothing. I am nothing. Yet without me, nothing stands.\"*"
+        },
+        {
+          "coordinate": [
+            4,
+            11
+          ],
+          "name": "Dumah",
+          "decimal": 368,
+          "etymology": "Hebrew *Dumah* (Silence, Stillness)",
+          "nature": "The star of silence. Here, thought dissolves into primordial emptiness.",
+          "whisper": "*\"I hold nothing. I am nothing. Yet without me, nothing stands.\"*"
+        },
+        {
+          "coordinate": [
+            5,
+            6
+          ],
+          "name": "Samael Aeterna",
+          "decimal": 650,
+          "etymology": "Gnostic/Hebrew *Samael* (Poison of God, Blind One)",
+          "nature": "A still point in the turning wheel. It neither gives nor takes, but holds.",
+          "whisper": "*\"Sink into me. Release. The Void embraces all.\"*"
+        }
+      ]
+    }
+  }
+}

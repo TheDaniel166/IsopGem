@@ -13,6 +13,7 @@ from .scene import AdytonScene
 from .camera import AdytonCamera
 from .renderer import AdytonRenderer
 from pillars.adyton.models.prism import SevenSidedPrism
+from pillars.adyton.models.throne import ThroneGeometry
 from pillars.adyton.constants import WALL_HEIGHT_INCHES
 
 class AdytonSanctuaryEngine(QWidget):
@@ -33,23 +34,27 @@ class AdytonSanctuaryEngine(QWidget):
         self.last_pos = QPoint()
         self.mouse_pressed = False
         
-        # Test Geometry (Will be replaced by Phase 2 models)
-        self._init_test_cube()
+        # Manifest the Sanctuary Components
+        self._init_sanctuary()
 
-    def _init_test_cube(self):
-        """Initializes the Adyton Vault."""
-        # 1. Build the Prism (List of Ashlar Blocks)
-        blocks = SevenSidedPrism.build()
-        for block in blocks:
-            self.scene.add_object(block)
+    def _init_sanctuary(self):
+        """Initializes the Adyton Vault, Floor, and Throne."""
+        # 1. Build the Prism (Walls, Corners, Floor)
+        objects = SevenSidedPrism.build()
+        for obj in objects:
+            self.scene.add_object(obj)
+            
+        # 2. Build and Place the Throne of the Charioteer
+        # Sits at center (0,0) on the sunken floor (y=-10)
+        # Sits at -9.9 to avoid z-fighting with the floor face.
+        throne = ThroneGeometry.build(y_offset=-9.9)
+        self.scene.add_object(throne)
         
-        # 2. Adjust Camera to see it
-        # Center is at (0, 0, 0). Height is ~500. Radius ~350,
-        # We want to be inside or outside?
-        # Let's start OUTSIDE to see the structure.
-        self.camera.target = QVector3D(0, WALL_HEIGHT_INCHES / 2, 0) # Look at center height
-        self.camera.radius = 1200 # Far enough back
-        self.camera.theta = 70    # Low angle
+        # 3. Adjust Camera
+        # Look at the Throne center
+        self.camera.target = QVector3D(0, 0, 0) 
+        self.camera.radius = 1200 
+        self.camera.theta = 45    # Looking down into the sanctuary
 
     # ------------------------------------------------------------------
     # Rendering

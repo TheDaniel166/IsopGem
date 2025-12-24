@@ -1,236 +1,172 @@
-from PyQt6.QtWidgets import (
-    QWidget, QHBoxLayout, QVBoxLayout, QTabWidget, QToolBar, QSizePolicy, QFrame, QLabel, QLayout, QGraphicsDropShadowEffect
-)
+from PyQt6.QtWidgets import QWidget, QSizePolicy
+from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtCore import Qt, QSize
-from PyQt6.QtGui import QAction, QColor
+from pyqtribbon import RibbonBar
 
-class RibbonWidget(QTabWidget):
+class RibbonWidget(RibbonBar):
     """
-    A unified 'Ribbon' style navigation widget.
-    Contains tabs, where each tab is a toolbar-like area grouping actions.
+    A unified 'Ribbon' style navigation widget using pyqtribbon.
     """
     def __init__(self, parent=None):
         super().__init__(parent)
+        # RibbonBar usually sets itself as a menu bar, but here we use it as a widget.
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.setFixedHeight(125) # Force a reasonable height for widget usage
+        
+        # Apply comprehensive Office-like styling
         self.setStyleSheet("""
-            QTabWidget::pane {
+            /* Main Ribbon Bar Background */
+            RibbonBar {
+                background-color: #f1f5f9;
                 border: none;
-                border-top: 1px solid #e2e8f0;
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #ffffff, stop:0.5 #f8fafc, stop:1 #f1f5f9);
+                border-bottom: 1px solid #cbd5e1;
             }
-            QTabBar {
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #f8fafc, stop:1 #e2e8f0);
-            }
-            QTabBar::tab {
+
+            /* The Tab Bar Area */
+            RibbonTabBar {
                 background: transparent;
-                padding: 10px 20px;
-                margin-right: 2px;
-                border-top-left-radius: 6px;
-                border-top-right-radius: 6px;
-                font-size: 10pt;
-                font-weight: 500;
-                min-width: 80px;
+                margin-left: 5px;
             }
-            QTabBar::tab:selected {
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #ffffff, stop:1 #f8fafc);
-                border: 1px solid #e2e8f0;
-                border-bottom: none;
-                border-top: 3px solid #3b82f6;
-                font-weight: 600;
-                color: #1e40af;
-            }
-            QTabBar::tab:!selected {
-                color: #64748b;
-                margin-top: 3px;
-            }
-            QTabBar::tab:hover:!selected {
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #f1f5f9, stop:1 #e2e8f0);
+
+            /* Individual Tabs */
+            RibbonTabBar::tab {
                 color: #475569;
+                border: none;
+                background: transparent;
+                padding: 6px 16px;
+                margin-right: 2px;
+                border-top-left-radius: 4px;
+                border-top-right-radius: 4px;
+                font-size: 10pt;
+                min-width: 60px;
+            }
+
+            RibbonTabBar::tab:selected {
+                color: #2563eb;
+                background: white;
+                border: 1px solid #cbd5e1;
+                border-bottom: 1px solid white; /* Blend with content */
+                font-weight: 600;
+            }
+
+            RibbonTabBar::tab:hover:!selected {
+                color: #1e293b;
+                background: rgba(255, 255, 255, 0.5);
+            }
+
+            /* The Content Area for Tabs */
+            RibbonStackedWidget {
+                background-color: white;
+                border: 1px solid #cbd5e1;
+                border-top: none; /* Connect with tab */
+            }
+
+            /* Panels (Groups) */
+            RibbonPanel {
+                background-color: transparent;
+                border-right: 1px solid #e2e8f0;
             }
             
-            /* Style buttons inside ribbon */
-            QToolButton {
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #ffffff, stop:1 #f1f5f9);
-                border: 1px solid #e2e8f0;
-                border-radius: 6px;
-                padding: 6px 10px;
-                color: #334155;
-                font-size: 9pt;
+            RibbonPanelTitle {
+                background-color: transparent;
+                color: #94a3b8;
+                font-size: 8pt;
+                padding: 2px;
             }
-            QToolButton:hover {
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #eff6ff, stop:1 #dbeafe);
-                border-color: #93c5fd;
+
+            /* Buttons inside the ribbon */
+            RibbonToolButton {
+                background-color: transparent;
+                border: none;
+                border-radius: 3px;
+                color: #334155;
+            }
+
+            RibbonToolButton:hover {
+                background-color: #eff6ff;
+                border: 1px solid #bfdbfe;
                 color: #1d4ed8;
             }
-            QToolButton:pressed {
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #dbeafe, stop:1 #bfdbfe);
-                border-color: #60a5fa;
-            }
-            QToolButton:checked {
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #dbeafe, stop:1 #bfdbfe);
-                border: 2px solid #3b82f6;
-                color: #1e40af;
-                font-weight: 600;
-            }
-            QToolButton::menu-indicator {
-                image: none;
+
+            RibbonToolButton:pressed {
+                background-color: #dbeafe;
+                border: 1px solid #2563eb;
             }
             
-            /* Style combo boxes */
-            QComboBox {
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #ffffff, stop:1 #f8fafc);
-                border: 1px solid #e2e8f0;
-                border-radius: 6px;
-                padding: 5px 10px;
-                color: #334155;
-                font-size: 9pt;
-                min-height: 24px;
-            }
-            QComboBox:hover {
-                border-color: #93c5fd;
-            }
-            QComboBox:focus {
-                border: 2px solid #3b82f6;
-            }
-            QComboBox::drop-down {
-                border: none;
-                width: 20px;
-            }
-            QComboBox::down-arrow {
-                image: none;
-                border-left: 5px solid transparent;
-                border-right: 5px solid transparent;
-                border-top: 6px solid #64748b;
-                margin-right: 8px;
-            }
-            QComboBox QAbstractItemView {
-                background: white;
-                border: 1px solid #e2e8f0;
-                border-radius: 6px;
-                selection-background-color: #eff6ff;
-                selection-color: #1e40af;
+            /* Large button text alignment */
+            RibbonToolButton[popupMode="1"] {
+                padding-right: 10px; /* Space for menu arrow */
             }
             
-            /* Font combo specific */
-            QFontComboBox {
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #ffffff, stop:1 #f8fafc);
-                border: 1px solid #e2e8f0;
-                border-radius: 6px;
-                padding: 5px 8px;
-                min-height: 24px;
-            }
-            QFontComboBox:hover {
-                border-color: #93c5fd;
+            /* Separators */
+            RibbonSeparator {
+                background-color: #cbd5e1;
+                width: 1px;
+                margin: 4px;
             }
         """)
-        self.setDocumentMode(True)
-        self.setFixedHeight(115)
-        
-        # Add subtle shadow effect
-        shadow = QGraphicsDropShadowEffect()
-        shadow.setBlurRadius(8)
-        shadow.setOffset(0, 2)
-        shadow.setColor(QColor(0, 0, 0, 25))
-        self.setGraphicsEffect(shadow)
 
-    def add_ribbon_tab(self, title: str) -> 'RibbonTab':
-        """Create and add a new tab to the ribbon."""
-        tab = RibbonTab()
-        self.addTab(tab, title)
-        return tab
+    def add_ribbon_tab(self, title: str) -> 'RibbonTabWrapper':
+        """Create and add a new category (tab) to the ribbon."""
+        content = self.addCategory(title)
+        return RibbonTabWrapper(content)
 
-class RibbonTab(QWidget):
-    """A single page in the ribbon, containing RibbonGroups."""
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.layout = QHBoxLayout(self)
-        self.layout.setContentsMargins(5, 5, 5, 5)
-        self.layout.setSpacing(10)
-        self.layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+class RibbonTabWrapper:
+    """Wrapper around pyqtribbon Category to match old RibbonTab API."""
+    def __init__(self, category):
+        self.category = category
 
-    def add_group(self, title: str) -> 'RibbonGroup':
-        """Add a labeled group of actions to this tab."""
-        group = RibbonGroup(title)
-        self.layout.addWidget(group)
-        return group
+    def add_group(self, title: str) -> 'RibbonGroupWrapper':
+        """Add a labeled group (panel) of actions to this tab."""
+        panel = self.category.addPanel(title)
+        return RibbonGroupWrapper(panel)
 
-class RibbonGroup(QFrame):
-    """A visual grouping of controls within a RibbonTab."""
-    def __init__(self, title: str, parent=None):
-        super().__init__(parent)
-        self.setObjectName("RibbonGroup")
-        self.setStyleSheet("""
-            RibbonGroup {
-                background: transparent;
-                border-right: 1px solid #e2e8f0;
-                margin-right: 8px;
-                padding-right: 8px;
-            }
-        """)
-        
-        # Main layout: Content on top, label on bottom
-        self.main_layout = QVBoxLayout(self)
-        self.main_layout.setContentsMargins(4, 4, 8, 4)
-        self.main_layout.setSpacing(4)
-        
-        # Content Container (ToolBar-like)
-        self.content_container = QWidget()
-        self.content_layout = QHBoxLayout(self.content_container)
-        self.content_layout.setContentsMargins(0, 0, 0, 0)
-        self.content_layout.setSpacing(4)
-        
-        self.main_layout.addWidget(self.content_container)
-        self.main_layout.addStretch()
-        
-        # Group Label (Bottom center) - styled nicely
-        self.label = QLabel(title)
-        self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.label.setStyleSheet("""
-            color: #64748b;
-            font-size: 8pt;
-            font-weight: 500;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-            padding: 2px 4px;
-            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                stop:0 #f1f5f9, stop:1 #e2e8f0);
-            border-radius: 3px;
-        """)
-        self.main_layout.addWidget(self.label)
-        
+class RibbonGroupWrapper:
+    """Wrapper around pyqtribbon Panel to match old RibbonGroup API."""
+    def __init__(self, panel):
+        self.panel = panel
+
     def add_widget(self, widget: QWidget):
         """Add a custom widget to the group."""
-        self.content_layout.addWidget(widget)
+        self.panel.addWidget(widget)
         
     def add_action(self, action: QAction, tool_button_style=Qt.ToolButtonStyle.ToolButtonTextUnderIcon):
-        """Add an action as a button."""
-        from PyQt6.QtWidgets import QToolButton
-        btn = QToolButton()
-        btn.setDefaultAction(action)
-        btn.setToolButtonStyle(tool_button_style)
-        btn.setMinimumSize(44, 44)
-        btn.setIconSize(QSize(24, 24))
-        btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.content_layout.addWidget(btn)
-        return btn
+        """
+        Add an action as a button.
+        We map the style to large/small buttons.
+        """
+        # If the style implies a large icon (under text), usage addLargeButton
+        if tool_button_style == Qt.ToolButtonStyle.ToolButtonTextUnderIcon:
+            # addLargeButton(self, text, icon=None, slot=None, shortcut=None, tooltip=None, statusTip=None)
+            # But the library might return a specific button type.
+            # We must verify if the user's QAction is connected.
+            
+            # The library extracts info from QAction if we just use addAction?
+            # pyqtribbon's Panel.addLargeButton usually returns a RibbonButton.
+            # Let's see if we can pass the action directly.
+            
+            # Existing pyqtribbon examples often use specific add methods.
+            # We'll try to use the action's properties.
+            text = action.text()
+            icon = action.icon() if not action.icon().isNull() else None
+            
+            # We connect the action's trigger to the button click if we create it manually
+            # But wait, ribbon buttons *are* tool buttons.
+            
+            btn = self.panel.addLargeButton(text, icon)
+            btn.setDefaultAction(action)
+            # Override the text/icon again because setDefaultAction might reset them or sync them
+            # Ideally setDefaultAction is enough.
+            
+            # Ensure the button style is respected if possible, but LargeButton forces text under icon
+            return btn
+        else:
+            # Small button
+            btn = self.panel.addSmallButton(action.text(), action.icon())
+            btn.setDefaultAction(action)
+            return btn
         
     def add_separator(self):
-        """Add a styled separator."""
-        from PyQt6.QtWidgets import QFrame
-        sep = QFrame()
-        sep.setFrameShape(QFrame.Shape.VLine)
-        sep.setFixedWidth(1)
-        sep.setStyleSheet("""
-            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                stop:0 transparent, stop:0.2 #cbd5e1, stop:0.8 #cbd5e1, stop:1 transparent);
-        """)
-        self.content_layout.addWidget(sep)
+        """Add a separator."""
+        self.panel.addSeparator()
+

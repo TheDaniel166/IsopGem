@@ -275,6 +275,33 @@ class CalculationRepository:
             List of matching records
         """
         return self.search(tags=tags, limit=limit, summary_only=False)
+
+    def get_by_text(self, text: str, limit: int = 100) -> List[CalculationRecord]:
+        """
+        Get calculations with the exact same text.
+        
+        Args:
+            text: The text to search for
+            limit: Maximum results to return
+            
+        Returns:
+            List of matching records
+        """
+        with self.ix.searcher() as searcher:
+            # Use Term query for exact field match on stored text field
+            # Note: TEXT fields are tokenized, but phrase queries or exact matches depend on analyzer
+            # For "text" field, we want to match the whole string if possible, or use phrase
+            # But the schema defines text=TEXT. 
+            # To find "Amun", a Term query on "text" works. 
+            # To find "The Amun", Term query might fail if it expects tokens.
+            # A Phrase query is safer.
+            from whoosh.query import Phrase
+            
+            # Simple approach: Search for the text using the parser but restricted to 'text' field
+            query = self._text_parser.parse(f'text:"{text}"')
+            
+            results = searcher.search(query, limit=limit)
+            return [self._result_to_record(r) for r in results]
     
     def _result_to_summary(self, result) -> CalculationRecord:
         """Convert a Whoosh result into a lightweight CalculationRecord."""

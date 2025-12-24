@@ -63,9 +63,10 @@ class AdytonHub(QWidget):
         # Main sanctuary tools
         tools = [
             ("⛩", "3D Engine", "Enter the Adyton sanctuary", "#3b82f6", self._open_sanctuary),
-            ("◈", "OpenGL Depth", "Advanced depth-buffered viewport", "#8b5cf6", self._open_sanctuary_gl),
-            ("△", "Enochian Watchtowers", "View the Kamea Tablets (156 Cells)", "#d97706", self._open_watchtowers),
-            ("▦", "Constellation Map", "Explore Planetary Constellation Networks", "#10b981", self._open_wall_designer),
+            ("◈", "OpenGL View", "Advanced depth-buffered viewport", "#8b5cf6", self._open_sanctuary_gl),
+            ("⬡", "Floor Plan", "Precision Heptagon Foundation", "#ec4899", self._open_floor_plan),
+            ("△", "Watchtowers", "View the Kamea Tablets", "#d97706", self._open_watchtowers),
+            ("▦", "Constellations", "Planetary Constellation Networks", "#10b981", self._open_wall_designer),
         ]
 
         grid = QGridLayout()
@@ -329,5 +330,14 @@ class AdytonHub(QWidget):
             WallDesignerWindow,
             allow_multiple=False,
             window_manager=self.window_manager
+        )
+
+    def _open_floor_plan(self) -> None:
+        """Launch the dedicated Floor Plan window."""
+        from .floor_plan_window import FloorPlanWindow
+        self.window_manager.open_window(
+            "adyton_floor_plan",
+            FloorPlanWindow,
+            allow_multiple=False,
         )
 

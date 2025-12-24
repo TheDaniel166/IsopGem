@@ -49,17 +49,8 @@ class SevenSidedPrism:
         apothem_wall   = V * math.cos(beta_rad / 2.0)
         
         # --- Floor ---
-        floor_obj = FloorGeometry.build(apothem_wall, ring_colors=WALL_COLORS)
-        # Label metadata for the vowel ring: planets follow wall order
-        floor_obj.label_planets = [
-            "sun",
-            "mercury",
-            "moon",
-            "venus",
-            "jupiter",
-            "mars",
-            "saturn",
-        ]
+        # The floor now uses internal constants for 185/166 side lengths
+        floor_obj = FloorGeometry.build()
         objects.append(floor_obj)
 
         # --- 2. Construction Loop ---

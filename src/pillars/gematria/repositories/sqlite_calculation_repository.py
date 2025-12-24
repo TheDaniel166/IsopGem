@@ -82,24 +82,51 @@ class SQLiteCalculationRepository:
         limit: int = 100,
         page: int = 1,
         summary_only: bool = True,
+        search_mode: str = "General",
     ) -> List[CalculationRecord]:
         """Search calculations by metadata."""
         with self._session() as session:
             stmt = select(CalculationEntity)
 
             if query_str:
-                like_pattern = f"%{query_str}%"
-                stmt = stmt.where(
-                    or_(
-                        CalculationEntity.text.ilike(like_pattern),
-                        CalculationEntity.normalized_text.ilike(like_pattern),
-                        CalculationEntity.notes.ilike(like_pattern),
-                        CalculationEntity.source.ilike(like_pattern),
+                if search_mode == "Exact":
+                    # Strict equality on Text or Notes
+                    stmt = stmt.where(
+                        or_(
+                            CalculationEntity.text == query_str,
+                            CalculationEntity.notes == query_str
+                        )
                     )
-                )
+                elif search_mode == "Regex":
+                    # Uses the REGEXP function we injected
+                    stmt = stmt.where(
+                        or_(
+                            CalculationEntity.text.op("REGEXP")(query_str),
+                            CalculationEntity.notes.op("REGEXP")(query_str)
+                        )
+                    )
+                elif search_mode == "Wildcard":
+                    # Use LIKE with user-provided wildcards (no auto-%)
+                    stmt = stmt.where(
+                        or_(
+                            CalculationEntity.text.like(query_str),
+                            CalculationEntity.notes.like(query_str)
+                        )
+                    )
+                else:
+                    # General: Contains (auto-wildcards)
+                    like_pattern = f"%{query_str}%"
+                    stmt = stmt.where(
+                        or_(
+                            CalculationEntity.text.ilike(like_pattern),
+                            CalculationEntity.normalized_text.ilike(like_pattern),
+                            CalculationEntity.notes.ilike(like_pattern),
+                            CalculationEntity.source.ilike(like_pattern),
+                        )
+                    )
 
             if language:
-                stmt = stmt.where(CalculationEntity.language == language)
+                stmt = stmt.where(CalculationEntity.language.ilike(f"%{language}%"))
 
             if value is not None:
                 stmt = stmt.where(CalculationEntity.value == value)
@@ -140,3 +167,11 @@ class SQLiteCalculationRepository:
 
     def get_by_tags(self, tags: List[str], limit: int = 100) -> List[CalculationRecord]:
         return self.search(tags=tags, limit=limit, summary_only=False)
+
+    def get_by_text(self, text: str, limit: int = 100) -> List[CalculationRecord]:
+        """Fetch records with exact text match."""
+        with self._session() as session:
+            stmt = select(CalculationEntity).where(CalculationEntity.text == text)
+            stmt = stmt.limit(limit)
+            entities = session.execute(stmt).scalars().all()
+            return [entity.to_record() for entity in entities]
