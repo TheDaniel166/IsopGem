@@ -29,10 +29,43 @@ The **Astrology Engine** is the **Keeper of Time**. Its sovereign duty is to cal
 ### **[location_lookup.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/astrology/services/location_lookup.py)**
 *   **Architectural Role**: Handmaiden Utility (The Navigator)
 *   **The Purpose**: Resolves human-readable strings (e.g., "Athens, Greece") into terrestrial coordinates (Latitude/Longitude).
-*   **Key Logic**:
-    *   `search`: Queries the internal or external geocoding database. Calculates time zone offsets based on longitude and date.
-*   **Signal Flow**: None.
 *   **Dependencies**: `geopy` (implied/optional).
+
+### **[arabic_parts_service.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/astrology/services/arabic_parts_service.py)**
+*   **Architectural Role**: Service (The Alchemist)
+*   **The Purpose**: Calculates the "Lots" (Arabic Parts) such as Fortune, Spirit, and Eros.
+*   **Key Logic**:
+    *   **Formulae**: Implements standard calculations (e.g., Fortune = ASC + Moon - Sun).
+    *   **Sect Awareness**: Automatically reverses formulae for Night Charts (e.g., Fortune = ASC + Sun - Moon).
+    *   **Categories**: Hermetic, Esoteric, and Traditional Lots.
+
+### **[fixed_stars_service.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/astrology/services/fixed_stars_service.py)**
+*   **Architectural Role**: Service (The Stellar Map)
+*   **The Purpose**: Computes the exact positions of fixed stars (Sirius, Algol, Regulus) using the Swiss Ephemeris.
+*   **Key Logic**:
+    *   **Notable Stars**: Tracks ~25 specific stars of esoteric significance.
+    *   **Conjunctions**: Finds planets within a tight orb (default 1.5°) of these stars.
+
+### **[maat_symbols_service.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/astrology/services/maat_symbols_service.py)**
+*   **Architectural Role**: Service (The Oracle)
+*   **The Purpose**: Retrieves the "Maat Symbol" (Egyptian Degree Symbol) for any given zodiacal degree.
+*   **Key Logic**:
+    *   **The Heavens**: Maps the 360° wheel into distinct "Heavens" (e.g., "Workshop of Ptah", "Library of Thoth").
+    *   **Lookup**: Returns the poetic image and spiritual meaning for the specific degree.
+
+### **[aspects_service.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/astrology/services/aspects_service.py)**
+*   **Architectural Role**: Service (The Geometer)
+*   **The Purpose**: Calculates the angular relationships between planets.
+*   **Key Logic**:
+    *   **Tiers**: Supports Major (Conjunction, Square...), Minor (Quintile, Septile...), and Harmonic aspects.
+    *   **Orbs**: configurable rigidity for aspect validity.
+
+### **[harmonics_service.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/astrology/services/harmonics_service.py)**
+*   **Architectural Role**: Service (The Amplifier)
+*   **The Purpose**: Calculates Harmonic Charts (H-Charts).
+*   **Key Logic**:
+    *   **Transformation**: Multiplies the longitude of every planet by the Harmonic Number (N) and projects it back to 0-360°.
+    *   **Usage**: Used to investigate specific vibrational themes (H5 = Talent, H7 = Karma).
 
 ## The Presentation Layer (UI)
 

@@ -61,14 +61,16 @@ class SearchPanel(QWidget):
         search_btn.clicked.connect(self._on_search)
         search_btn.setStyleSheet("""
             QPushButton {
-                background-color: #10b981;
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #f59e0b, stop:1 #d97706);
                 color: white;
-                border: none;
+                border: 1px solid #b45309;
                 border-radius: 6px;
                 padding: 6px 12px;
                 font-weight: 600;
             }
-            QPushButton:hover { background-color: #059669; }
+            QPushButton:hover { 
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #d97706, stop:1 #f59e0b);
+            }
         """)
         
         input_layout.addWidget(QLabel("Value:"))
@@ -98,16 +100,59 @@ class SearchPanel(QWidget):
         actions_layout = QHBoxLayout()
         clear_btn = QPushButton("Clear")
         clear_btn.clicked.connect(self.clear_requested.emit)
+        clear_btn.setStyleSheet("""
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #ef4444, stop:1 #b91c1c);
+                color: white;
+                border: 1px solid #b91c1c;
+                border-radius: 6px;
+                padding: 6px 12px;
+                font-weight: 600;
+            }
+            QPushButton:hover { background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #b91c1c, stop:1 #ef4444); }
+        """)
         
         save_btn = QPushButton("💾 Save Matches")
         save_btn.clicked.connect(self.save_matches_requested.emit)
+        save_btn.setStyleSheet("""
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #10b981, stop:1 #059669);
+                color: white;
+                border: 1px solid #047857;
+                border-radius: 6px;
+                padding: 6px 12px;
+                font-weight: 600;
+            }
+            QPushButton:hover { background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #059669, stop:1 #10b981); }
+        """)
         
         export_btn = QPushButton("📤 Export")
         export_btn.clicked.connect(self._on_export)
+        export_btn.setStyleSheet("""
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #64748b, stop:1 #475569);
+                color: white;
+                border: 1px solid #334155;
+                border-radius: 6px;
+                padding: 6px 12px;
+                font-weight: 600;
+            }
+            QPushButton:hover { background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #475569, stop:1 #64748b); }
+        """)
         
         smart_btn = QPushButton("✨ Smart Filter")
         smart_btn.clicked.connect(self._on_smart_filter)
-        smart_btn.setStyleSheet("color: #0ea5e9; font-weight: bold;")
+        smart_btn.setStyleSheet("""
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #8b5cf6, stop:1 #7c3aed);
+                color: white;
+                border: 1px solid #6d28d9;
+                border-radius: 6px;
+                padding: 6px 12px;
+                font-weight: 600;
+            }
+            QPushButton:hover { background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #7c3aed, stop:1 #8b5cf6); }
+        """)
         
         actions_layout.addWidget(clear_btn)
         actions_layout.addWidget(save_btn)
@@ -221,25 +266,5 @@ class SearchPanel(QWidget):
         if filtered:
             self.send_to_tablet_requested.emit(filtered)
             
-    def contextMenuEvent(self, event):
-        """Context menu for results."""
-        if not self.results_list.itemAt(event.pos()):
-            return
-            
-        menu = QMenu(self)
-        send_action = QAction("Send Results to Emerald Tablet", self)
-        send_action.triggered.connect(self._on_send_results)
-        menu.addAction(send_action)
-        menu.exec(event.globalPos())
-        
-    def _on_send_results(self):
-        """Emit signal to send current filtered results to Tablet."""
-        # We need to construct the data here or let main window do it?
-        # Main window has the window manager, but we have the data.
-        # Let's emit a signal.
-        self.export_requested.emit() # This is for file export.
-        # Let's add a new signal or piggyback? New signal is cleaner.
-        # But we need to add it to class definition.
-        pass # To be handled by main window via a new signal if added, 
-             # OR we can just add a specific signal "send_to_tablet_requested"
+
 

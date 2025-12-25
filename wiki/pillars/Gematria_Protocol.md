@@ -45,6 +45,35 @@ The **Gematria Protocol** is the **Tongue of God**. It is responsible for the tr
 *   **Architectural Role**: Service (Strategy)
 *   **The Purpose**: Implements the Trigrammaton Qabalah English Cipher (Base-3 Logic).
 
+### **[acrostic_service.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/gematria/services/acrostic_service.py)**
+*   **Architectural Role**: Service (The Detective)
+*   **The Purpose**: Discovers hidden messages encoded in the first or last letters of lines/words.
+*   **Key Logic**:
+    *   **Modes**: "First Letter" (Acrostic) and "Last Letter" (Telestich).
+    *   **Scope**: Supports Line-based (poetry) and Word-based (prose) analysis.
+*   **Dependencies**: `CorpusDictionaryService`.
+
+### **[chiasmus_service.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/gematria/services/chiasmus_service.py)**
+*   **Architectural Role**: Service (The Mirror)
+*   **The Purpose**: Scans text for symmetric Gematria patterns (e.g., values 10-20-30-20-10).
+*   **Key Logic**:
+    *   **Patterns**: Detects both Single Pivot (A-B-C-B-A) and Mirror (A-B-B-A) structures.
+    *   **Depth Control**: Configurable recursion depth to prevent infinite loops on uniform text.
+
+### **[els_service.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/gematria/services/els_service.py)**
+*   **Architectural Role**: Service (The Grid)
+*   **The Purpose**: Implements Equidistant Letter Sequence ("Bible Code") search.
+*   **Key Logic**:
+    *   **Skip Sequences**: Supports Standard (n-th letter), Triangular (1, 3, 6...), Square (1, 4, 9...), and Fibonacci skips.
+    *   **Chain Search**: Finds non-equidistant chains of letters forming a target phrase.
+    *   **Intervening Text**: Extracts and analyzes the text *between* the ELS hits.
+
+### **[corpus_dictionary_service.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/gematria/services/corpus_dictionary_service.py)**
+*   **Architectural Role**: Service (The Lexicon)
+*   **The Purpose**: Validates if a discovered string is a real word.
+*   **Key Logic**:
+    *   **Holy Filter**: specific "Holy" documents are used to build the validation dictionary, ensuring results are theologically significant.
+
 ## The Presentation Layer (UI)
 
 ### **[gematria_hub.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/gematria/ui/gematria_hub.py)**

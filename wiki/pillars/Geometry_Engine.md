@@ -56,6 +56,9 @@ A collection of specific shape calculators inheriting from **`[base_shape.py](fi
 *   **Prisms**: `rectangular_prism_solid`, `oblique_prism_solid`.
 *   **Torus**: `torus_solid` (Donut), `torus_knot_solid` (Trefoil Knot loops).
 *   **Exotic**: `tesseract_solid` (4D Hypercube), `vault_of_hestia_solid` (Phi Generator).
+*   **Complex Forms**:
+    *   **`[complex_prismatic_solids.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/geometry/services/complex_prismatic_solids.py)**: Handling for non-convex or compound prismatic forms.
+    *   **`[regular_pyramid_frustum_solids.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/geometry/services/regular_pyramid_frustum_solids.py)**: Calculators for truncated pyramids (Frustums), essential for the Adyton architecture.
 
 ## The Presentation Layer (UI)
 

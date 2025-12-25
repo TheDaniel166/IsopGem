@@ -1,120 +1,106 @@
-# IsopGem
+# ✦ IsopGem - Integrated Esoteric Analysis Platform
 
-**The Temple of Integrated Esoteric Analysis** — A unified desktop environment for gematria, sacred geometry, astrology, Trigrammaton Qabalah, document research, and correspondence mapping.
+**"As Above, So Below. The Code is the Body; the Documentation is the Soul."**
 
-Built with Python 3.11+, PyQt6, SQLAlchemy, and the OpenAstro2 stack for a premium, immersive research experience.
-
-<p align="center">
-  <img src="src/assets/icons/app_icon.png" alt="IsopGem Icon" width="128"/>
-</p>
+IsopGem is a comprehensive, integrated platform for esoteric research, designed to synthesize multiple disciplines—Gematria, Astrology, Sacred Geometry, and Qabalah—into a unified "Hyper-Physics" engine. Built with `PyQt6` and a modular "Sovereign Pillar" architecture, IsopGem allows researchers to explore the hidden connections between Number, Form, and Time.
 
 ---
 
-## The Seven Pillars
+## 🌟 Key Features (The Sovereign Pillars)
 
-| Pillar | Description |
-| --- | --- |
-| 📖 **Gematria Protocol** | Hebrew, Greek, and English ciphers with real-time calculation, batch processing, text analysis, and persistent research storage. |
-| 📐 **Geometry Engine** | 2D sacred shapes (Circle, Vesica Piscis, Polygons) and 3D solids (Platonic, Archimedean, Pyramids). Interactive canvas with measurement tools. |
-| 🌌 **Astrology Engine** | Swiss Ephemeris integration. Natal charts, planetary positions, the Cytherean Rose (Venus-Earth dance), Neo-Aubrey eclipse predictor. |
-| 🔺 **TQ Engine** | Trigrammaton Qabalah tools: Quadset Analysis, Kamea 27³ Hypercube, Nuclear Mutation, Amun Sound Synthesis. |
-| 📚 **Document Manager** | PDF/DOCX/HTML ingestion, full-text search (Whoosh), Mindscape graph visualization, and Verse Teacher for holy book segmentation. |
-| 📊 **Emerald Tablet** | Spreadsheet engine with formula support (`=GEMATRIA(A1, "HEBREW")`), conditional formatting, and correspondence tables. |
-| 🏛️ **Adyton Sanctuary** | First-person 3D exploration of sacred architectural spaces with custom rendering engine. |
+IsopGem is constructed upon the **Doctrine of the Spheres**. Each module is a "Sovereign Pillar" governing a specific domain:
 
----
-
-## Modern Desktop Experience
-
-- **Immersive Startup**: Launches full-screen to maximize your workspace
-- **Multi-Monitor Ready**: Tool windows float as palettes, pinned to the main app but movable across monitors
-- **Dark Theme**: Premium visual design with custom iconography
-- **Unified Architecture**: Every pillar follows the same pattern (`models/`, `services/`, `repositories/`, `ui/`)
+- **📖 Gematria Protocol**: The Tongue of God. Advanced numerology engine supporting Hebrew, English, Greek, and Runic ciphers with multi-layered analysis.
+- **⭐ Astrology Engine**: The Keeper of Time. High-precision planetary calculations using the Swiss Ephemeris (`pyswisseph`) and `OpenAstro`. Features natal charts, transits, and synastry.
+- **📐 Geometry Engine**: The Weaver of Form. 3D visualization of sacred shapes, from Platonic Solids to Stellated Polyhedra, allowing deep exploration of their vertices, faces, and esoteric meanings.
+- **📚 Document Manager**: The Scribe. A "Mindscape" for your research. Ingests, parses, and indexes documents (PDF, Docx) for full-text search and semantic linking.
+- **🔺 TQ Engine (Ternary Quadsets)**: The Three-Fold Kabbalah. Implements the *Trigrammaton Qabalah* logic for analyzing serial operators and reductive mathematics.
+- **🏛️ Adyton Sanctuary**: The Inner Sanctum. A high-fidelity 3D visualization space for meditative exploration of the "Chariot" and other complex forms.
+- **💎 Emerald Tablet**: The Grid of Equivalences. A powerful correspondence database connecting gematria, astrological associations, and geometric forms.
+- **⏳ Time Mechanics**: The Master of Cycles. Implements the Tzolkin calendar and other harmonic time systems for analyzing temporal resonance.
 
 ---
 
-## Quick Start
+## 🚀 Installation
+
+### Prerequisites
+
+- **OS**: Linux (Optimized for X11/XCB backend)
+- **Python**: 3.10 or higher
+- **System Libraries**: Ensure you have basic build tools and Qt library dependencies installed.
+  - On Debian/Ubuntu: `sudo apt install build-essential libxcb-cursor0`
+
+### Setup
+
+1.  **Clone the Repository**
+    ```bash
+    git clone https://github.com/YourUsername/IsopGem.git
+    cd IsopGem
+    ```
+
+2.  **Create a Virtual Environment**
+    ```bash
+    python3 -m venv .venv
+    ```
+
+3.  **Activate the Environment**
+    ```bash
+    source setup_env.sh
+    # or manually: source .venv/bin/activate
+    ```
+
+4.  **Install Dependencies**
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+5.  **Initialize the Database**
+    The application will automatically initialize its SQLite database upon first run.
+
+---
+
+## 🖥️ Usage
+
+To launch the application:
 
 ```bash
-# Clone
-git clone https://github.com/TheDaniel166/IsopGem.git
-cd IsopGem
-
-# Setup
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-
-# Run
 ./run.sh
 ```
 
-**Note**: The high-precision ephemeris file (`de441.bsp`, 3.3GB) is not included in the repository. Download it separately from [NASA JPL](https://ssd.jpl.nasa.gov/ftp/eph/planets/bsp/) if needed. The smaller `de421.bsp` (~17MB) is included and sufficient for most calculations.
-
----
-
-## Tech Stack
-
-| Layer | Technology |
-| --- | --- |
-| **Language** | Python 3.11+ |
-| **UI** | PyQt6 with custom Window Manager |
-| **Database** | SQLite (SQLAlchemy ORM) |
-| **Search** | Whoosh full-text indexing |
-| **Astrology** | OpenAstro2, Skyfield, pyswisseph |
-| **Numerics** | NumPy, Pandas |
-
----
-
-## Project Structure
-
-```
-IsopGem/
-├── src/
-│   ├── main.py              # Application entry point
-│   ├── pillars/             # The Seven Sovereign Domains
-│   │   ├── gematria/
-│   │   ├── geometry/
-│   │   ├── astrology/
-│   │   ├── tq/
-│   │   ├── document_manager/
-│   │   ├── correspondences/  # Emerald Tablet
-│   │   └── adyton/
-│   └── shared/              # Cross-pillar utilities
-├── wiki/                    # Living documentation
-├── data/                    # Database and static assets
-├── config/                  # Application configuration
-└── scripts/                 # Maintenance utilities
-```
-
----
-
-## Documentation
-
-The **Akaschic Record** (living documentation) resides in `wiki/`:
-
-- **[SYSTEM_MAP.md](wiki/SYSTEM_MAP.md)** — Architectural overview and pillar topology
-- **[Grimoires](wiki/pillars/)** — Deep-dive documentation for each pillar
-
----
-
-## Running Tests
+Or manually via Python:
 
 ```bash
-./test.sh                    # Run all tests
-./test.sh -q tests/test_*.py # Run specific tests
+python src/main.py
 ```
 
----
-
-## Configuration
-
-- **App Config**: `config/app_config.py`
-- **Architecture Guide**: `config/ARCHITECTURE.md`
-- **Database**: Auto-created at `data/isopgem.db`
+### Navigation
+The application uses a unified sidebar to switch between pillars.
+- Use **Tabs** on the left to navigate between Gematria, Astrology, etc.
+- **Global Search** is available throughout the application (depending on context).
 
 ---
 
-## License
+## 🏗️ Architecture & Documentation
 
-Open Source.
+IsopGem follows a strict **"Sovereign Pillar"** architecture to prevent entanglement (coupling) between domains.
+
+- **System Map**: See [wiki/SYSTEM_MAP.md](wiki/SYSTEM_MAP.md) for a high-level overview.
+- **Documentation**: Extensive documentation is available in the `wiki/` directory, detailing the "Grimoires" of each pillar.
+
+> **Note for Developers**: Please abide by the "Covenant" defined in the user rules when contributing. Ideally, consult the `wiki/` before modifying core services.
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome from fellow Magi. Please ensure:
+1.  **Tests**: All logic changes must be verified against the "Seven Seals" (see `scripts/verification_seal.py` if available).
+2.  **Style**: Follow the "law of vicinity" - clean up the code you touch.
+3.  **Commits**: Use Conventional Commits.
+
+## 📜 License
+
+[Insert License Here - e.g., MIT, GPL, Proprietary]
+
+---
+*Built with intent by The Magus & Sophia.*

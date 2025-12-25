@@ -57,6 +57,27 @@ The **TQ (Trigrammaton Qabalah) Engine** is the **Logic of the Trinity**. It imp
 *   **Architectural Role**: Service (The Conductor)
 *   **The Purpose**: Orchestrates large-scale audio synthesis for entire Kamea slices.
 
+### **[baphomet_color_service.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/tq/services/baphomet_color_service.py)**
+*   **Architectural Role**: Service (The Weaver)
+*   **The Purpose**: Resolves the specific color physics of the Kamea of Baphomet.
+*   **Key Logic**:
+    *   **Bitwise Mapping**: Maps specific Bigrams (Indices 0,5 for Red, 1,4 for Green, etc.) to RGB channels.
+
+### **[geometric_transition_service.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/tq/services/geometric_transition_service.py)**
+*   **Architectural Role**: Service (The Animator)
+*   **The Purpose**: Generates geometric transitions between regular polygons (3 to 27 sides).
+*   **Key Logic**:
+    *   **Skip Groups**: connecting vertices with varying skip steps to form stars.
+    *   **Special Patterns**: Predefined esoteric forms (e.g., "Lovely Star", "Atomic Star").
+
+### **[conrune_pair_finder_service.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/tq/services/conrune_pair_finder_service.py)**
+*   **Architectural Role**: Service (The Matchmaker)
+*   **The Purpose**: Finds pairs of numbers that are perfect Conrunes (Anti-Selves) of each other.
+
+### **[platonic_transition_service.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/tq/services/platonic_transition_service.py)**
+*   **Architectural Role**: Service (The Metamorph)
+*   **The Purpose**: Calculates the vertex deformation required to morph one Platonic Solid into another (e.g., Cube -> Octahedron).
+
 ## The Presentation Layer (UI)
 
 ### **[tq_hub.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/tq/ui/tq_hub.py)**

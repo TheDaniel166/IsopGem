@@ -29,6 +29,24 @@ The **Adyton (Sanctuary)** is the **Inner Chamber**. It is a specialized 3D engi
     *   **Object Management**: list of `Block` entities.
     *   `add_block`: Validation logic for placing stones.
 
+### **[frustum_color_service.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/adyton/services/frustum_color_service.py)**
+*   **Architectural Role**: Service (The Painter)
+*   **The Purpose**: Resolves the specific colors for the walls of the Chamber based on planetary correspondences.
+*   **Key Logic**:
+    *   **Wall Loading**: Ingests CSVs (e.g., `sun_wall.csv`) mapping the grid to colors.
+    *   **Ternary Resolution**: Resolves colors for split-faces using Ditrune logic.
+
+### **[kamea_loader_service.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/adyton/services/kamea_loader_service.py)**
+*   **Architectural Role**: Service (The Mason)
+*   **The Purpose**: Loads the Master Kamea of Maut from the foundational CSV.
+*   **Key Logic**:
+    *   **Parsing**: Maps (X, Y) coordinates to `KameaCell` objects containing Ditrunes.
+    *   **Octant Logic**: Determines the spiritual "Octant" and "Tablet" for each cell.
+
+### **[kamea_color_service.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/adyton/services/kamea_color_service.py)**
+*   **Architectural Role**: Service (The Prism)
+*   **The Purpose**: Resolves colors specifically for Kamea floor/ceiling tiles.
+
 ## The Building Blocks (Models)
 
 ### **[block.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/adyton/models/block.py)**

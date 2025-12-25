@@ -1,10 +1,13 @@
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QSplitter,
     QLabel, QPushButton, QComboBox, QCheckBox, QStackedWidget,
-    QMessageBox, QInputDialog, QTabWidget, QFileDialog
+    QMessageBox, QInputDialog, QTabWidget, QFileDialog, QFrame,
+    QGraphicsDropShadowEffect
 )
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QColor, QPalette, QBrush, QImage
 from typing import List, Optional, Any, Dict
+from pathlib import Path
 
 from ...services.base_calculator import GematriaCalculator
 from ...services import CalculationService
@@ -21,9 +24,10 @@ from ..holy_book_teacher_window import HolyBookTeacherWindow
 
 import logging
 
-class TextAnalysisWindow(QMainWindow):
+class ExegesisWindow(QMainWindow):
     """
-    MDI Text Analysis Window using Tabs.
+    The Exegesis: A window for scriptural inquiry and numerological frequency analysis.
+    Formerly TextAnalysisWindow.
     """
     
     def __init__(self, calculators: List[GematriaCalculator], window_manager=None, parent=None):
@@ -50,30 +54,101 @@ class TextAnalysisWindow(QMainWindow):
         self._load_documents()
         
     def _setup_ui(self):
-        self.setWindowTitle("Gematria Text Analysis")
+        self.setWindowTitle("The Exegesis")
         self.resize(1200, 800)
         
-        central = QWidget()
-        self.setCentralWidget(central)
-        main_layout = QVBoxLayout(central)
+        # Level 0: The Background (Thematic Texture)
+        # Level 0: The Background (Thematic Texture)
         
-        # --- Toolbar ---
-        toolbar = QHBoxLayout()
+        possible_paths = [
+            Path("src/assets/patterns/exegesis_bg_pattern.png"),
+            Path("assets/patterns/exegesis_bg_pattern.png"),
+            Path(__file__).parent.parent.parent.parent.parent / "assets/patterns/exegesis_bg_pattern.png"
+        ]
+        
+        bg_path = None
+        for p in possible_paths:
+            if p.exists():
+                bg_path = p
+                break
+        
+        central = QWidget()
+        central.setObjectName("CentralContainer")
+        self.setCentralWidget(central)
+        
+        if bg_path:
+            print(f"[DEBUG] Found background pattern at: {bg_path}")
+            # Use absolute path for CSS
+            abs_path = bg_path.absolute().as_posix()
+            central.setStyleSheet(f"""
+                QWidget#CentralContainer {{
+                    border-image: url("{abs_path}") 0 0 0 0 stretch stretch;
+                    border: none;
+                    background-color: #fdfbf7;
+                }}
+            """)
+        else:
+             print("[ERROR] Background pattern not found. Using fallback color.")
+             central.setStyleSheet("QWidget#CentralContainer { background-color: #fdfbf7; }")
+        
+        # Main Layout with Padding for Floating Panels
+        main_layout = QVBoxLayout(central)
+        main_layout.setContentsMargins(24, 24, 24, 24)
+        main_layout.setSpacing(16)
+        
+        # --- Toolbar (Level 1: Floating Header) ---
+        toolbar_frame = QFrame()
+        toolbar_frame.setObjectName("FloatingHeader")
+        toolbar_frame.setStyleSheet("""
+            QFrame#FloatingHeader {
+                background-color: rgba(255, 255, 255, 0.9);
+                border: 1px solid #d4c4a8; /* Ancient Gold/Tan border */
+                border-radius: 16px;
+            }
+            QLabel { font-family: 'Inter'; font-weight: 600; color: #44403c; }
+            QComboBox { 
+                background: white; border: 1px solid #d6d3d1; padding: 4px; border-radius: 6px; 
+            }
+            QPushButton {
+                background-color: white; border: 1px solid #d6d3d1; border-radius: 6px; padding: 6px 12px; font-weight: 600; color: #57534e;
+            }
+            QPushButton:hover { background-color: #fafaf9; border-color: #a8a29e; }
+        """)
+        header_shadow = QGraphicsDropShadowEffect()
+        header_shadow.setBlurRadius(12)
+        header_shadow.setColor(QColor(0,0,0,30))
+        header_shadow.setOffset(0, 2)
+        toolbar_frame.setGraphicsEffect(header_shadow)
+        
+        toolbar = QHBoxLayout(toolbar_frame)
+        toolbar.setContentsMargins(16, 12, 16, 12)
         
         # Document Selector
-        toolbar.addWidget(QLabel("Add Document:"))
+        toolbar.addWidget(QLabel("Select Text:"))
         self.doc_combo = QComboBox()
         self.doc_combo.setMinimumWidth(250)
         toolbar.addWidget(self.doc_combo)
         
-        open_btn = QPushButton("Open Tab")
+        open_btn = QPushButton("Open Scroll")
+        open_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        open_btn.setStyleSheet("""
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #f59e0b, stop:1 #d97706);
+                color: white;
+                border: 1px solid #b45309;
+                font-weight: 700;
+            }
+            QPushButton:hover {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #d97706, stop:1 #f59e0b);
+            }
+        """)
         open_btn.clicked.connect(self._on_open_document)
         toolbar.addWidget(open_btn)
         
-        toolbar.addSpacing(15)
+        toolbar.addSpacing(24)
         
         # Method Selector
-        toolbar.addWidget(QLabel("Method:"))
+        toolbar.addWidget(QLabel("Cipher:"))
         self.method_combo = QComboBox()
         self.method_combo.addItems(list(self.calculators.keys()))
         self.method_combo.setCurrentText(self.current_calculator.name)
@@ -81,7 +156,7 @@ class TextAnalysisWindow(QMainWindow):
         toolbar.addWidget(self.method_combo)
         
         # Options
-        self.holy_view_chk = QCheckBox("Holy Book View")
+        self.holy_view_chk = QCheckBox("Holy Scansion")
         self.holy_view_chk.toggled.connect(self._on_view_mode_toggled)
         toolbar.addWidget(self.holy_view_chk)
         
@@ -90,37 +165,83 @@ class TextAnalysisWindow(QMainWindow):
         self.strict_verse_chk.toggled.connect(self._on_options_changed)
         toolbar.addWidget(self.strict_verse_chk)
         
-        self.include_nums_chk = QCheckBox("Include Numbers")
+        self.include_nums_chk = QCheckBox("Include Numerals")
         self.include_nums_chk.stateChanged.connect(self._on_options_changed)
         toolbar.addWidget(self.include_nums_chk)
         
-        self.teach_btn = QPushButton("Teach Parser")
+        self.teach_btn = QPushButton("Train Scribe")
+        self.teach_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.teach_btn.setEnabled(False) # Enable if tab active
+        self.teach_btn.setStyleSheet("""
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #8b5cf6, stop:1 #7c3aed);
+                color: white;
+                border: 1px solid #6d28d9;
+                font-weight: 700;
+            }
+            QPushButton:hover {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #7c3aed, stop:1 #8b5cf6);
+            }
+            QPushButton:disabled {
+                background: #e5e5e5;
+                color: #a3a3a3;
+                border-color: #d4d4d4;
+            }
+        """)
         self.teach_btn.clicked.connect(self._open_teacher)
         toolbar.addWidget(self.teach_btn)
         
         toolbar.addStretch()
-        main_layout.addLayout(toolbar)
+        main_layout.addWidget(toolbar_frame)
         
-        # --- Main Splitter ---
+        # --- Main Content Area (Splitter) ---
+        # We wrap the splitter in nothing or just let it float?
+        # Splitter handles often look bad on transparent backgrounds. 
+        # But the children (TabWidgets) will be the Floating Panels.
+        
         splitter = QSplitter(Qt.Orientation.Horizontal)
+        splitter.setHandleWidth(8)
         
-        # Left: Tabs for Documents
+        # Left: Tabs for Documents (Floating Panel 1)
+        # We need to wrap QTabWidget in a styled QFrame to give it the card look?
+        # Or style QTabWidget directly. Styling QTabWidget pane is easier.
+        
         self.doc_tabs = QTabWidget()
         self.doc_tabs.setTabsClosable(True)
         self.doc_tabs.tabCloseRequested.connect(self._on_tab_close)
         self.doc_tabs.currentChanged.connect(self._on_tab_changed)
+        self.doc_tabs.setStyleSheet("""
+            QTabWidget::pane {
+                border: 1px solid #d4c4a8;
+                border-radius: 12px;
+                background: rgba(255, 255, 255, 0.95);
+                top: -1px; /* Overlap tab bottom border */
+            }
+            QTabBar::tab {
+                background: rgba(240, 237, 230, 0.8);
+                border: 1px solid #e7e5e4;
+                padding: 8px 16px;
+                margin-right: 4px;
+                border-top-left-radius: 8px;
+                border-top-right-radius: 8px;
+                color: #57534e;
+            }
+            QTabBar::tab:selected {
+                background: white;
+                border-color: #d4c4a8;
+                border-bottom-color: white;
+                font-weight: bold;
+                color: #0f172a;
+            }
+        """)
         
         splitter.addWidget(self.doc_tabs)
         
-        # Right: Tools (Tabs)
-        right_widget = QWidget()
-        right_layout = QVBoxLayout(right_widget)
-        right_layout.setContentsMargins(0, 0, 0, 0)
-        
+        # Right: Tools (Floating Panel 2)
         self.tools_tabs = QTabWidget()
+        self.tools_tabs.setStyleSheet(self.doc_tabs.styleSheet()) # Shared style
         
-        # Search Tab
+        # Search Tab -> Scriptural Inquiry
         self.search_panel = SearchPanel()
         self.search_panel.search_requested.connect(self._on_search)
         self.search_panel.result_selected.connect(self._on_search_result_selected)
@@ -129,20 +250,21 @@ class TextAnalysisWindow(QMainWindow):
         self.search_panel.export_requested.connect(self._on_export_results)
         self.search_panel.smart_filter_requested.connect(self._on_smart_filter)
         self.search_panel.send_to_tablet_requested.connect(self._on_send_search_to_emerald)
-        self.tools_tabs.addTab(self.search_panel, "Search")
+        self.tools_tabs.addTab(self.search_panel, "Scriptural Inquiry")
         
-        # Stats Tab
+        # Stats Tab -> Numerological Frequency
         self.stats_panel = StatsPanel()
-        self.tools_tabs.addTab(self.stats_panel, "Stats")
+        self.tools_tabs.addTab(self.stats_panel, "Numerological Frequency")
         
-        right_layout.addWidget(self.tools_tabs)
-        splitter.addWidget(right_widget)
+        splitter.addWidget(self.tools_tabs)
         
         splitter.setSizes([800, 400])
         main_layout.addWidget(splitter, 1)
         
-        # Status Bar
-        self.status = QLabel("Ready")
+        # Status Bar (Integrated into window or floating?)
+        # Let's keep a simple label at bottom, maybe less obtrusive
+        self.status = QLabel("Ready for Exegesis")
+        self.status.setStyleSheet("color: #78716c; font-style: italic; margin-left: 8px;")
         main_layout.addWidget(self.status)
         
     def _load_documents(self):
@@ -150,15 +272,13 @@ class TextAnalysisWindow(QMainWindow):
             with document_service_context() as service:
                 docs = service.get_all_documents()
                 self.doc_combo.clear()
-                self.doc_combo.addItem("-- Select Document to Open --", None)
+                self.doc_combo.addItem("-- Select Sacred Text --", None)
                 for d in docs:
                     collection = (d.collection or "").lower()
-                    # User requested limitation: Only show Holy Books
-                    # Removed tags check as they are deprecated/problematic
                     if "holy" in collection:
                         self.doc_combo.addItem(f"{d.title}", d.id)
         except Exception as e:
-            self.status.setText(f"Error loading docs: {e}")
+            self.status.setText(f"Error loading texts: {e}")
             
     def _on_open_document(self):
         doc_id = self.doc_combo.currentData()
@@ -196,10 +316,10 @@ class TextAnalysisWindow(QMainWindow):
             
             index = self.doc_tabs.addTab(tab, document.title)
             self.doc_tabs.setCurrentIndex(index)
-            self.status.setText(f"Opened: {document.title}")
+            self.status.setText(f"Opened Scroll: {document.title}")
             
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to open document: {e}")
+            QMessageBox.critical(self, "Error", f"Failed to open scroll: {e}")
             
     def _on_tab_close(self, index):
         self.doc_tabs.removeTab(index)
@@ -238,11 +358,6 @@ class TextAnalysisWindow(QMainWindow):
             self._update_stats_for_tab(current)
 
     def _on_view_mode_toggled(self, checked):
-        # Apply to current tab or all tabs? 
-        # Requirement says "Tab per document", view mode could be per tab or global.
-        # User toggles toolbar checkbox -> applies to ACTIVE tab usually, or all?
-        # Let's apply to ACTIVE tab for flexibility, but wait, the toolbar is global.
-        # Let's apply to ALL tabs to keep it consistent with the global toolbar state.
         for i in range(self.doc_tabs.count()):
             tab = self.doc_tabs.widget(i)
             if isinstance(tab, DocumentTab):
@@ -279,8 +394,6 @@ class TextAnalysisWindow(QMainWindow):
             matches = self.analysis_service.find_value_matches(
                 text, val, self.current_calculator, include_nums, max_words
             )
-            # Augment with doc info
-            # Format: (text, start, end, doc_title, tab_index)
             for m_text, start, end in matches:
                 all_matches.append((m_text, start, end, tab.document.title, index))
                 
@@ -290,45 +403,37 @@ class TextAnalysisWindow(QMainWindow):
         current_idx = self.doc_tabs.currentIndex()
         self.search_panel.set_active_tab(current_idx)
         
-        # Highlight matches in CURRENT tab only to avoid confusion / perf cost
-        # Or highlight all if global?
-        # Let's highlight current tab results
+        # Highlight matches in CURRENT tab only
         self.doc_tabs.currentWidget().clear_highlights()
         if not is_global and tabs_to_search:
             ranges = [(m[1], m[2]) for m in all_matches]
             self.doc_tabs.currentWidget().highlight_ranges(ranges)
             
     def _on_search_result_selected(self, start, end, tab_index):
-        # Switch to tab
         if tab_index >= 0 and tab_index < self.doc_tabs.count():
             self.doc_tabs.setCurrentIndex(tab_index)
             # Ensure text mode
-            self.holy_view_chk.setChecked(False) # triggers signal to switch view mode
+            self.holy_view_chk.setChecked(False) 
             
             tab = self.doc_tabs.widget(tab_index)
             if isinstance(tab, DocumentTab):
-                tab.set_view_mode(False) # Force local Update
+                tab.set_view_mode(False) 
                 tab.doc_viewer.select_range(start, end)
                 
     def _on_clear_search(self):
         self.search_panel.clear_results()
-        # Clear highlights in all tabs
         for i in range(self.doc_tabs.count()):
             tab = self.doc_tabs.widget(i)
             if isinstance(tab, DocumentTab):
                 tab.clear_highlights()
 
     def _on_export_results(self):
-        # We need the matches. The search panel has them? No, it just has display items.
-        # We should probably re-run search or store last results.
-        # Storing last results in SearchPanel is cleaner but accessing private data is meh.
-        # Let's re-run search. Fast scan is cheap.
         val_str = self.search_panel.value_input.text()
         if not val_str.isdigit():
             QMessageBox.warning(self, "Invalid Value", "Please enter a numeric value to search first.")
             return
             
-        path, _ = QFileDialog.getSaveFileName(self, "Export Results", "search_results.txt", "Text Files (*.txt);;CSV Files (*.csv)")
+        path, _ = QFileDialog.getSaveFileName(self, "Export Inquiry", "exegesis_results.txt", "Text Files (*.txt);;CSV Files (*.csv)")
         if not path:
             return
             
@@ -336,7 +441,6 @@ class TextAnalysisWindow(QMainWindow):
         is_global = self.search_panel.global_chk.isChecked()
         max_words = 9999
         
-        # Re-run logic (copy-paste from _on_search essentially, should refactor if time permits)
         tabs_to_search = []
         if is_global:
             for i in range(self.doc_tabs.count()):
@@ -352,8 +456,8 @@ class TextAnalysisWindow(QMainWindow):
         
         try:
             with open(path, 'w', encoding='utf-8') as f:
-                f.write(f"Search Results for Value: {val}\n")
-                f.write(f"Calculator: {self.current_calculator.name}\n")
+                f.write(f"Exegesis Inquiry for Value: {val}\n")
+                f.write(f"Cipher: {self.current_calculator.name}\n")
                 f.write("-" * 40 + "\n")
                 
                 count = 0
@@ -374,10 +478,9 @@ class TextAnalysisWindow(QMainWindow):
             QMessageBox.critical(self, "Error", f"Export failed: {e}")
 
     def _on_smart_filter(self):
-        # We need the full match list from the search panel
         matches = self.search_panel.all_matches
         if not matches:
-            QMessageBox.information(self, "Info", "No matches to filter. Run a search first.")
+            QMessageBox.information(self, "Info", "No matches to filter. Run an inquiry first.")
             return
             
         dlg = SmartFilterDialog(matches, self)
@@ -396,7 +499,6 @@ class TextAnalysisWindow(QMainWindow):
             allow_inline=not self.strict_verse_chk.isChecked(),
             parent=self
         )
-        # On save, refresh current tab
         dlg.verses_saved.connect(current.refresh_verse_list)
         dlg.show()
         
@@ -408,10 +510,9 @@ class TextAnalysisWindow(QMainWindow):
         for v in verses:
             self._save_record(v['text'], None, silent=True)
             count += 1
-        QMessageBox.information(self, "Saved", f"Saved {count} records.")
+        QMessageBox.information(self, "Saved", f"Saved {count} records to Karnak.")
 
     def _on_save_matches(self):
-        # Re-run search mostly
         val_str = self.search_panel.value_input.text()
         if not val_str.isdigit(): return
         val = int(val_str)
@@ -440,48 +541,36 @@ class TextAnalysisWindow(QMainWindow):
                 self._save_record(m_text, None, silent=True)
                 count += 1
         
-        QMessageBox.information(self, "Saved", f"Saved {count} matches.")
+        QMessageBox.information(self, "Saved", f"Saved {count} matches to Karnak.")
 
     def _on_save_text_selection(self, text):
-        """Save manually selected text."""
         self._save_record(text, "Selection")
 
     def _on_open_quadset(self, value: int):
-        """Open the Quadset Analysis window with the given value."""
-        # Clean way: Use window manager if we had a ref, or rely on TQ pillar
-        # For now, simplistic lazy import and instantiation as TQHub does
         from pillars.tq.ui.quadset_analysis_window import QuadsetAnalysisWindow
-        
-        # We need a window manager. Assuming self.parent() or shared one?
-        # TextAnalysisWindow is typically instantiated by WindowManager.
-        # But we don't hold a ref to it unless passed.
-        # Let's import the global/shared one if possible or just instantiate QAW standalone.
-        # Ideally we use the existing window manager.
         from shared.ui import WindowManager
-        wm = WindowManager() # It's a singleton pattern usually? Or we need the instance.
-        # Checking WindowManager implementation... usually it's passed around.
-        # If we can't get it easily, we can just instantiate QAW and show it.
-        # But better to use WM.
         
-        win = wm.open_window("quadset_analysis_param", QuadsetAnalysisWindow, window_manager=wm)
-        if win:
-            win.input_field.setText(str(value))
-            win.raise_()
-            win.activateWindow()
+        # Attempt to use specific window manager if available, else instantiate local?
+        # Since we don't have easy access to the singleton instance if not passed,
+        # we rely on the passed 'window_manager' if valid.
+        
+        if self.window_manager:
+            win = self.window_manager.open_window("quadset_analysis_param", QuadsetAnalysisWindow, window_manager=self.window_manager)
+            if win:
+                win.input_field.setText(str(value))
+                win.raise_()
+                win.activateWindow()
+        else:
+            # Fallback (shouldn't happen in standard flow)
+            pass
 
     def _save_record(self, text, default_note=None, silent=False):
         try:
             val = self.analysis_service.calculate_text(text, self.current_calculator, self.include_nums_chk.isChecked())
             notes = default_note or ""
             if not silent:
-                notes, ok = QInputDialog.getMultiLineText(self, "Save", f"Save: {text} = {val}", notes)
+                notes, ok = QInputDialog.getMultiLineText(self, "Save to Karnak", f"Save: {text} = {val}", notes)
                 if not ok: return
-            
-            # Source should rely on current document?
-            # If search results, we lose exact document context in this helper unless passed.
-            # Simplified: Use current active tab as source, or "Search Result" if MDI ambiguity?
-            # Ideally each match should carry source info.
-            # For now, use "Gematria Tool Match".
             
             self.calc_service.save_calculation(
                 text=text,
@@ -489,30 +578,23 @@ class TextAnalysisWindow(QMainWindow):
                 calculator=self.current_calculator,
                 breakdown=[],
                 notes=notes,
-                source="Analysis Tool"
+                source="Exegesis Tool"
             )
         except Exception as e:
             if not silent:
                 QMessageBox.critical(self, "Error", str(e))
 
     def _on_send_search_to_emerald(self, matches):
-        """Send search results to Emerald Tablet."""
         if not self.window_manager or not matches:
              return
              
         from pillars.correspondences.ui.correspondence_hub import CorrespondenceHub
-        
-        # Prepare Data
-        # Format: (text, start, end, doc_title, tab_index)
-        # We want: Text, Document, Value??
-        # Value is search target?
         
         target_val = self.search_panel.value_input.text()
         
         columns = ["Text", "Document", "Start", "End", "Target Value"]
         rows = []
         for m in matches:
-            # m: (text, start, end, doc_title, tab_index)
             rows.append([m[0], m[3], str(m[1]), str(m[2]), target_val])
             
         data = {
@@ -521,7 +603,6 @@ class TextAnalysisWindow(QMainWindow):
             "styles": {}
         }
         
-        # Open Hub
         hub = self.window_manager.open_window(
             "emerald_tablet",
             CorrespondenceHub,
@@ -530,6 +611,6 @@ class TextAnalysisWindow(QMainWindow):
         )
         
         if hasattr(hub, "receive_import"):
-            name = f"Search_Results_{target_val}"
+            name = f"Inquiry_{target_val}"
             hub.receive_import(name, data)
             QMessageBox.information(self, "Sent", f"Sent {len(rows)} matches to Emerald Tablet.")

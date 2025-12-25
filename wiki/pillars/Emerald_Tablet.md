@@ -45,6 +45,13 @@ The **Emerald Tablet** is the **Grid of Equivalences**. It is a full-featured sp
 *   **Architectural Role**: Handmaiden Utility
 *   **The Purpose**: Handles border style calculations for cells (style, width, color per side).
 
+### **[table_service.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/correspondences/services/table_service.py)**
+*   **Architectural Role**: Service (The Steward)
+*   **The Purpose**: Mediates between the UI and the Repository for CRUD operations.
+*   **Key Logic**:
+    *   `create_table`: Instantiates new tables with proper defaults.
+    *   `save_content`: Persists JSON content to the database via `TableRepository`.
+
 ## The Presentation Layer (UI)
 
 ### **[correspondence_hub.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/correspondences/ui/correspondence_hub.py)**

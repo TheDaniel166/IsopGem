@@ -39,6 +39,26 @@ The **Document Manager** is the **Scribe of the Akaschic Record**. It is respons
     *   **Learning**: Adjusts rules based on Magus feedback during the "Teaching" phase.
 *   **Dependencies**: `VerseRuleRepository`, `VerseEditLogRepository`.
 
+### **[etymology_service.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/document_manager/services/etymology_service.py)**
+*   **Architectural Role**: Service (The Linguist)
+*   **The Purpose**: Fetches word origins, auto-detecting the script language.
+*   **Key Logic**:
+    *   **Heuristic Detection**: Identifies Hebrew, Greek, or Latin script blocks.
+    *   **Routing**: Sends Hebrew to Sefaria/Wiktionary, Greek to Wiktionary Ancient Greek, and English to `ety-python`.
+
+### **[notebook_service.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/document_manager/services/notebook_service.py)**
+*   **Architectural Role**: Sovereign Service (The Scribe)
+*   **The Purpose**: Manages the hierarchical organization of user content.
+*   **Structure**: `Notebook` -> `Section` -> `Page` (Document).
+*   **Key Logic**: Eager loading of sections for performant tree views.
+
+### **[spell_service.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/document_manager/services/spell_service.py)**
+*   **Architectural Role**: Service (The Editor)
+*   **The Purpose**: Wraps `pyenchant` to provide spell-checking and suggestions.
+*   **Key Logic**:
+    *   **Custom Dictionary**: Persists user-added words to `~/.isopgem/custom_dictionary.txt`.
+    *   **Session Ignore**: Temporarily ignores words for the current runtime.
+
 ## The Presentation Layer (UI)
 
 ### **[mindscape_window.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/document_manager/ui/mindscape_window.py)**

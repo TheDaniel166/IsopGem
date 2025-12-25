@@ -293,21 +293,21 @@ class GematriaCalculatorWindow(QMainWindow):
         self.calc_button.setStyleSheet("""
             QPushButton {
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:0, 
-                    stop:0 #2563eb, stop:1 #1d4ed8);
+                    stop:0 #8b5cf6, stop:1 #7c3aed);
                 color: white;
                 font-size: 15pt;
                 font-weight: 800;
                 border-radius: 16px;
-                border: 1px solid #1e3a8a;
+                border: 1px solid #6d28d9;
             }
             QPushButton:hover {
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:0, 
-                    stop:0 #1d4ed8, stop:1 #2563eb);
-                border-color: #3b82f6;
-                margin: -2px; /* Slight expansion feel */
+                    stop:0 #7c3aed, stop:1 #8b5cf6);
+                border-color: #5b21b6;
+                margin: -2px; /* Subtle pop */
             }
             QPushButton:pressed {
-                background-color: #1e40af;
+                background-color: #5b21b6;
                 padding-top: 4px;
                 margin: 0px;
             }

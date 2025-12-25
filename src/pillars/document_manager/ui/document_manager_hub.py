@@ -70,7 +70,7 @@ class DocumentManagerHub(QWidget):
         # Tools grid
         tools = [
             ("📝", "New Document", "Create a new rich text document", "#3b82f6", self._open_document_editor),
-            ("📚", "Library", "Browse and manage your documents", "#10b981", self._open_document_library),
+            ("📚", "The Akaschic Record", "Browse and manage your documents", "#10b981", self._open_document_library),
             ("🔍", "Search", "Full-text search across all documents", "#8b5cf6", self._open_document_search),
             ("🧠", "Mindscape", "The Living Graph - visual connections", "#06b6d4", self._open_mindscape),
             ("🛠️", "Database Admin", "Stats, maintenance, and cleanup", "#f59e0b", self._open_database_manager),

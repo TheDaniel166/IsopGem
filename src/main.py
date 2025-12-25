@@ -149,6 +149,7 @@ class IsopGemMainWindow(QMainWindow):
             ("🏛️", "Adyton", "Inner sanctuary"),
             ("💎", "Emerald", "Correspondences"),
             ("⏳", "Time", "Time Mechanics"),
+            ("📚", "Manual", "Akaschic Archive"),
         ]
         
         for i, (icon, name, tooltip) in enumerate(nav_items):
@@ -246,6 +247,12 @@ class IsopGemMainWindow(QMainWindow):
     
     def _on_nav_click(self, index: int):
         """Handle navigation button click."""
+        # Special case for Manual (Akaschic Archive)
+        if index == len(self.nav_buttons) - 1:
+             # Open Help but don't switch tab
+            self._update_header_title(index)
+            return
+            
         self.tabs.setCurrentIndex(index)
         for i, btn in enumerate(self.nav_buttons):
             self._update_nav_button_style(btn, i == index)
@@ -293,7 +300,32 @@ class IsopGemMainWindow(QMainWindow):
             "🏛️ Adyton Sanctuary",
             "💎 Emerald Tablet",
             "⏳ Time Mechanics",
+            "📚 Akaschic Archive",
         ]
+        
+        # If index is for Manual (last item), don't change title or tab, just open help
+        if index == len(self.nav_buttons) - 1:
+            # Revert selection in sidebar visual (optional, or keep it selected)
+            # For now, let's keep the previous tab active in the view
+            
+            # Open Help Window
+            if not hasattr(self, '_help_window') or not self._help_window.isVisible():
+                from shared.ui.help_window import HelpWindow
+                self._help_window = self.window_manager.open_window(
+                    window_type="akaschic_archive",
+                    window_class=HelpWindow,
+                    allow_multiple=False
+                )
+            else:
+                self._help_window.raise_()
+                self._help_window.activateWindow()
+                
+            # Restore sidebar selection to current tab
+            current_tab = self.tabs.currentIndex()
+            self._update_nav_button_style(self.nav_buttons[index], False) # Unselect manual
+            self._update_nav_button_style(self.nav_buttons[current_tab], True) # Reselect current
+            return
+
         if 0 <= index < len(titles):
             self.header_title.setText(titles[index])
     

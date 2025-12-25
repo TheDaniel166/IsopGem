@@ -33,7 +33,8 @@ class DocumentRepository:
             Document.title,
             Document.file_type,
             Document.collection,
-            Document.author
+            Document.author,
+            Document.updated_at
         ).all()
         
         logger.debug("DocumentRepository: converting to DTOs ...")
@@ -44,7 +45,8 @@ class DocumentRepository:
                 title=row.title,
                 file_type=row.file_type,
                 collection=row.collection,
-                author=row.author
+                author=row.author,
+                updated_at=row.updated_at
             )
             for row in results
         ]

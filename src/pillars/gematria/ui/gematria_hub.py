@@ -8,9 +8,9 @@ from PyQt6.QtGui import QFont, QColor
 from shared.ui import WindowManager
 from .gematria_calculator_window import GematriaCalculatorWindow
 from .saved_calculations_window import SavedCalculationsWindow
-from .batch_calculator_window import BatchCalculatorWindow
+from .batch_calculator_window import GreatHarvestWindow
 from .database_tools_window import DatabaseToolsWindow
-from .text_analysis_window import TextAnalysisWindow
+from .text_analysis_window import ExegesisWindow
 from .methods_reference_window import MethodsReferenceWindow
 from .els_search_window import ELSSearchWindow
 from .acrostics_window import AcrosticsWindow
@@ -110,9 +110,9 @@ class GematriaHub(QWidget):
         tools = [
             ("🔢", "Logos Abacus", "Interactive gematria calculator", "#3b82f6", self._open_calculator),
             ("💾", "Records of Karnak", "Browse saved calculations", "#10b981", self._open_saved_calculations),
-            ("📊", "Batch", "Process multiple entries", "#8b5cf6", self._open_batch_calculator),
-            ("📝", "Text Analysis", "Analyze passages & texts", "#ec4899", self._open_text_analysis),
-            ("🔮", "TQ Text Sequencer", "Hidden letter sequences", "#7C3AED", self._open_els_search),
+            ("🌾", "The Great Harvest", "Sow and reap calculations", "#8b5cf6", self._open_batch_calculator),
+            ("🕯️", "The Exegesis", "Scriptural Inquiry & Analysis", "#ec4899", self._open_text_analysis),
+            ("🔮", "The Resonant Chain", "Hidden letter sequences", "#7C3AED", self._open_els_search),
             ("🗝️", "Acrostic Discovery", "Find hidden messages in text", "#f43f5e", self._open_acrostics),
             ("⚖️", "Chiastic TQ Finder", "Find symmetrical Gematria patterns", "#E11D48", self._open_chiasmus),
             ("🗄️", "Database", "Manage calculation data", "#f97316", self._open_database_tools),
@@ -331,7 +331,7 @@ class GematriaHub(QWidget):
         # Open through window manager
         self.window_manager.open_window(
             window_type="batch_calculator",
-            window_class=BatchCalculatorWindow,
+            window_class=GreatHarvestWindow,
             allow_multiple=False,  # Only one batch calculator at a time
             calculators=calculators,
             window_manager=self.window_manager
@@ -392,7 +392,7 @@ class GematriaHub(QWidget):
         # Open through window manager
         self.window_manager.open_window(
             window_type="text_analysis",
-            window_class=TextAnalysisWindow,
+            window_class=ExegesisWindow,
             allow_multiple=False,  # Only one text analysis window at a time
             calculators=calculators,
             window_manager=self.window_manager

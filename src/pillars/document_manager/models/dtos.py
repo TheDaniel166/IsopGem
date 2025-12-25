@@ -2,6 +2,8 @@
 from dataclasses import dataclass
 from typing import Optional
 
+from datetime import datetime
+
 @dataclass
 class DocumentMetadataDTO:
     """Lightweight representation of document metadata."""
@@ -10,3 +12,4 @@ class DocumentMetadataDTO:
     file_type: str
     collection: Optional[str]
     author: Optional[str]
+    updated_at: Optional[datetime]

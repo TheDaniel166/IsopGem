@@ -7,8 +7,17 @@ The **Time Mechanics** pillar is the **Sovereign Domain of Cycles**. While the A
 
 ## The Core Logic (Services)
 
+### **[tzolkin_service.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/time_mechanics/services/tzolkin_service.py)**
+*   **Architectural Role**: Sovereign Service (The Timekeeper)
+*   **The Purpose**: Manages the 260-day harmonic Tzolkin cycle, converting Gregorian dates to Kins, Tones, and Signs.
+*   **Key Logic**:
+    *   **The Epoch**: Anchored to Jan 12, 2020 (Kin 1).
+    *   **Calculation**: Computes the Kin index (0-259) based on days elapsed since Epoch.
+    *   **Ditrune Mapping**: Retrieves the binary/ternary "Ditrune" pattern for the Kin from the harmonic grid.
+    *   **Conrune**: Calculates the "Anti-Self" (oppositional force) by inverting the Ditrune (1<->2).
+*   **Dependencies**: `time_mechanics/Tzolkin Cycle.csv` (Grid Data).
+
 ### **(Pending)**
-*   **TzolkinService**: Will implement the logic defined in `Tzolkin_Protocol.md`, converting dates to Ditrunes and analyzing harmonic resonance.
 *   **CalendarService**: Will handle conversion between Gregorian, Julian, Thelemic, and other esoteric calendars.
 
 ## The Presentation Layer (UI)

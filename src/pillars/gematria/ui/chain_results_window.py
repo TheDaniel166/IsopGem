@@ -20,8 +20,9 @@ class ChainResultsWindow(QMainWindow):
     
     result_selected = pyqtSignal(list)  # Emits positions for highlighting
     
-    def __init__(self, summary: ChainSearchSummary, parent=None):
-        super().__init__(parent)
+    def __init__(self, summary: ChainSearchSummary, window_manager=None, parent=None):
+        super().__init__(None) # Independent window
+        self.window_manager = window_manager
         self._summary = summary
         self._filtered_results: List[ChainResult] = list(summary.results)
         self._calc = TQGematriaCalculator()
@@ -166,16 +167,59 @@ class ChainResultsWindow(QMainWindow):
         btn_layout = QHBoxLayout()
         
         self._btn_export = QPushButton("📄 Export to Editor")
+        self._btn_export.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._btn_export.setStyleSheet("""
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #10b981, stop:1 #059669);
+                color: white;
+                border: 1px solid #059669;
+                border-radius: 6px;
+                padding: 8px 16px;
+                font-weight: 600;
+            }
+            QPushButton:hover {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #059669, stop:1 #047857);
+            }
+        """)
         self._btn_export.clicked.connect(self._on_export)
         btn_layout.addWidget(self._btn_export)
         
         self._btn_stats = QPushButton("📊 Statistics")
+        self._btn_stats.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._btn_stats.setStyleSheet("""
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #f59e0b, stop:1 #d97706);
+                color: white;
+                border: 1px solid #d97706;
+                border-radius: 6px;
+                padding: 8px 16px;
+                font-weight: 600;
+            }
+            QPushButton:hover {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #d97706, stop:1 #b45309);
+            }
+        """)
         self._btn_stats.clicked.connect(self._on_show_statistics)
         btn_layout.addWidget(self._btn_stats)
         
         btn_layout.addStretch()
         
         self._btn_close = QPushButton("Close")
+        self._btn_close.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._btn_close.setStyleSheet("""
+            QPushButton {
+                background: #f1f5f9;
+                color: #475569;
+                border: 1px solid #cbd5e1;
+                border-radius: 6px;
+                padding: 8px 16px;
+                font-weight: 600;
+            }
+            QPushButton:hover {
+                background: #e2e8f0;
+                color: #334155;
+            }
+        """)
         self._btn_close.clicked.connect(self.close)
         btn_layout.addWidget(self._btn_close)
         
@@ -235,7 +279,7 @@ class ChainResultsWindow(QMainWindow):
         # Reset to first page on filter/sort change
         self._current_page = 0
         self._populate_table()
-    
+        
     def _populate_table(self):
         """Fill table with current page of results using pre-cached row data."""
         # Calculate pagination
@@ -288,8 +332,67 @@ class ChainResultsWindow(QMainWindow):
     
     def _on_export(self):
         """Export results to Document Editor."""
-        # TODO: Implement export
-        pass
+        if not self.window_manager:
+            from PyQt6.QtWidgets import QMessageBox
+            QMessageBox.warning(self, "Error", "Window Manager not available.")
+            return
+
+        # Generate HTML report
+        html = f"""
+        <h1>🔗 Chain Search Report</h1>
+        <h2>Term: {self._term}</h2>
+        <p><b>Found:</b> {len(self._filtered_results)} paths</p>
+        <hr>
+        <table border='1' cellspacing='0' cellpadding='5' style='border-collapse: collapse; width: 100%;'>
+            <thead>
+                <tr style='background-color: #f2f2f2;'>
+                    <th>Start</th>
+                    <th>Length</th>
+                    <th>Total Gem</th>
+                    <th>Path Steps & Intervening Intervals</th>
+                </tr>
+            </thead>
+            <tbody>
+        """
+        
+        for result in self._filtered_results:
+            path_desc = ""
+            for i, step in enumerate(result.steps):
+                path_desc += f"<b>{step.letter}</b>" 
+                if i < len(result.steps) - 1:
+                    next_step = result.steps[i+1]
+                    interval = abs(next_step.position - step.position)
+                    path_desc += f" --({interval})--> "
+            
+            start_pos = result.steps[0].position if result.steps else 0
+            
+            html += f"""
+            <tr>
+                <td>{start_pos}</td>
+                <td>{result.total_length}</td>
+                <td>{result.total_gematria}</td>
+                <td>{path_desc}</td>
+            </tr>
+            """
+            
+        html += """
+            </tbody>
+        </table>
+        """
+
+        from pillars.document_manager.ui.document_editor_window import DocumentEditorWindow
+        
+        # Use window manager to open window
+        editor_window = self.window_manager.open_window(
+            window_type="document_editor",
+            window_class=DocumentEditorWindow,
+            allow_multiple=True
+        )
+        
+        editor_window.setWindowTitle(f"chain Report - {self._term}")
+        editor_window.editor.set_html(html)
+        editor_window.is_modified = True
+        editor_window.show()
     
     def _on_show_statistics(self):
         """Show statistical analysis dialog."""

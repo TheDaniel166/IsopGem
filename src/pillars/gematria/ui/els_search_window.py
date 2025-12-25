@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import (
     QLabel, QLineEdit, QSpinBox, QPushButton, QComboBox, QRadioButton,
     QGroupBox, QTableWidget, QTableWidgetItem, QHeaderView, QTextEdit,
     QFileDialog, QMessageBox, QButtonGroup, QFrame, QScrollArea, QTabWidget,
-    QCheckBox
+    QCheckBox, QGraphicsDropShadowEffect
 )
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QColor
@@ -70,7 +70,7 @@ class ELSSearchWindow(QMainWindow):
         self._position_map = []
         self._current_results: List[ELSResult] = []
         
-        self.setWindowTitle("🔮 TQ Text Sequencer")
+        self.setWindowTitle("🔮 The Resonant Chain")
         self.setMinimumSize(1200, 700)
         self.resize(1400, 800)
         
@@ -79,7 +79,18 @@ class ELSSearchWindow(QMainWindow):
     def _setup_ui(self):
         """Build the 3-pane interface."""
         central = QWidget()
+        central.setObjectName("CentralContainer")
         self.setCentralWidget(central)
+        
+        # Level 0: Background
+        import os
+        bg_path = os.path.abspath("src/assets/patterns/tq_bg_pattern.png")
+        central.setStyleSheet(f"""
+            QWidget#CentralContainer {{
+                border-image: url("{bg_path}") 0 0 0 0 stretch stretch;
+                background-color: #fdfbf7;
+            }}
+        """)
         
         main_layout = QVBoxLayout(central)
         main_layout.setContentsMargins(10, 10, 10, 10)
@@ -105,11 +116,11 @@ class ELSSearchWindow(QMainWindow):
         splitter.setStretchFactor(1, 1)  # Center stretches
         splitter.setStretchFactor(2, 0)  # Right fixed
         
-        main_layout.addWidget(splitter)
+        main_layout.addWidget(splitter, 1)
         
         # Status bar
-        self._status_label = QLabel("Load a text to begin")
-        main_layout.addWidget(self._status_label)
+        self.statusBar().showMessage("Load a text to begin")
+        self.statusBar().setStyleSheet("color: #64748b; font-style: italic;")
     
     def _create_left_pane(self) -> QWidget:
         """Create left control pane with tabs."""
@@ -117,6 +128,20 @@ class ELSSearchWindow(QMainWindow):
         pane.setMaximumWidth(300)
         layout = QVBoxLayout(pane)
         layout.setContentsMargins(5, 5, 5, 5)
+        
+        # Style as floating card
+        pane.setStyleSheet("""
+            QWidget {
+                background: rgba(255, 255, 255, 0.9);
+                border: 1px solid #d4c4a8;
+                border-radius: 16px;
+            }
+        """)
+        shadow = QGraphicsDropShadowEffect()
+        shadow.setBlurRadius(15)
+        shadow.setColor(QColor(0, 0, 0, 30))
+        shadow.setOffset(0, 4)
+        pane.setGraphicsEffect(shadow)
         
         # Create tab widget
         tabs = QTabWidget()
@@ -136,26 +161,56 @@ class ELSSearchWindow(QMainWindow):
         
         btn_layout = QHBoxLayout()
         self._btn_load = QPushButton("📁 File")
-        self._btn_load.setStyleSheet(_button_style())
+        self._btn_load.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._btn_load.setStyleSheet("""
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #f59e0b, stop:1 #d97706);
+                color: white;
+                border: 1px solid #b45309;
+                border-radius: 6px;
+                padding: 6px 12px;
+                font-weight: 700;
+            }
+            QPushButton:hover { 
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #d97706, stop:1 #f59e0b);
+            }
+        """)
         self._btn_load.clicked.connect(self._on_load_document)
         btn_layout.addWidget(self._btn_load)
         
         self._btn_paste = QPushButton("📋 Paste")
-        self._btn_paste.setStyleSheet(_button_style())
+        self._btn_paste.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._btn_paste.setStyleSheet("""
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #f59e0b, stop:1 #d97706);
+                color: white;
+                border: 1px solid #b45309;
+                border-radius: 6px;
+                padding: 6px 12px;
+                font-weight: 700;
+            }
+            QPushButton:hover { 
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #d97706, stop:1 #f59e0b);
+            }
+        """)
         self._btn_paste.clicked.connect(self._on_paste_text)
         btn_layout.addWidget(self._btn_paste)
         source_layout.addLayout(btn_layout)
         
         self._btn_database = QPushButton("📚 Load from Database")
+        self._btn_database.setCursor(Qt.CursorShape.PointingHandCursor)
         self._btn_database.setStyleSheet("""
             QPushButton {
-                background-color: #7C3AED;
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #f59e0b, stop:1 #d97706);
                 color: white;
+                border: 1px solid #b45309;
                 border-radius: 6px;
                 padding: 8px 16px;
-                font-weight: bold;
+                font-weight: 700;
             }
-            QPushButton:hover { background-color: #6D28D9; }
+            QPushButton:hover { 
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #d97706, stop:1 #f59e0b);
+            }
         """)
         self._btn_database.clicked.connect(self._on_load_from_database)
         source_layout.addWidget(self._btn_database)
@@ -189,7 +244,20 @@ class ELSSearchWindow(QMainWindow):
         source_layout.addLayout(custom_layout)
         
         self._btn_apply_grid = QPushButton("Apply Grid")
-        self._btn_apply_grid.setStyleSheet(_button_style())
+        self._btn_apply_grid.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._btn_apply_grid.setStyleSheet("""
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #8b5cf6, stop:1 #7c3aed);
+                color: white;
+                border: 1px solid #6d28d9;
+                border-radius: 6px;
+                padding: 6px 12px;
+                font-weight: 700;
+            }
+            QPushButton:hover { 
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #7c3aed, stop:1 #8b5cf6);
+            }
+        """)
         self._btn_apply_grid.clicked.connect(self._on_apply_grid)
         source_layout.addWidget(self._btn_apply_grid)
         
@@ -279,15 +347,20 @@ class ELSSearchWindow(QMainWindow):
         search_layout.addLayout(dir_layout)
         
         self._btn_search = QPushButton("🔍 Search")
+        self._btn_search.setCursor(Qt.CursorShape.PointingHandCursor)
         self._btn_search.setStyleSheet("""
             QPushButton {
-                background-color: #7C3AED;
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #8b5cf6, stop:1 #7c3aed);
                 color: white;
-                padding: 10px;
+                border: 1px solid #6d28d9;
                 border-radius: 6px;
-                font-weight: bold;
+                padding: 10px;
+                font-weight: 700;
+                font-size: 11pt;
             }
-            QPushButton:hover { background-color: #6D28D9; }
+            QPushButton:hover { 
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #7c3aed, stop:1 #8b5cf6);
+            }
         """)
         self._btn_search.clicked.connect(self._on_search)
         search_layout.addWidget(self._btn_search)
@@ -298,10 +371,26 @@ class ELSSearchWindow(QMainWindow):
         layout.addWidget(tabs)
         
         # Zoom controls (always visible below tabs)
-        zoom_group = QGroupBox("🔍 Zoom")
+        zoom_group = QFrame()
         zoom_layout = QHBoxLayout(zoom_group)
+        zoom_layout.setContentsMargins(0, 10, 0, 0)
         
         btn_zoom_out = QPushButton("−")
+        btn_zoom_out.setCursor(Qt.CursorShape.PointingHandCursor)
+        btn_zoom_out.setStyleSheet("""
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #475569, stop:1 #334155);
+                color: white;
+                border: 1px solid #1e293b;
+                border-radius: 6px;
+                padding: 6px 12px;
+                font-weight: 700;
+                min-width: 30px;
+            }
+            QPushButton:hover { 
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #334155, stop:1 #475569);
+            }
+        """)
         btn_zoom_out.clicked.connect(lambda: self._grid_view.zoom_out())
         zoom_layout.addWidget(btn_zoom_out)
         
@@ -309,10 +398,39 @@ class ELSSearchWindow(QMainWindow):
         zoom_layout.addWidget(self._zoom_label)
         
         btn_zoom_in = QPushButton("+")
+        btn_zoom_in.setCursor(Qt.CursorShape.PointingHandCursor)
+        btn_zoom_in.setStyleSheet("""
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #475569, stop:1 #334155);
+                color: white;
+                border: 1px solid #1e293b;
+                border-radius: 6px;
+                padding: 6px 12px;
+                font-weight: 700;
+                min-width: 30px;
+            }
+            QPushButton:hover { 
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #334155, stop:1 #475569);
+            }
+        """)
         btn_zoom_in.clicked.connect(lambda: self._grid_view.zoom_in())
         zoom_layout.addWidget(btn_zoom_in)
         
         btn_zoom_reset = QPushButton("Reset")
+        btn_zoom_reset.setCursor(Qt.CursorShape.PointingHandCursor)
+        btn_zoom_reset.setStyleSheet("""
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #475569, stop:1 #334155);
+                color: white;
+                border: 1px solid #1e293b;
+                border-radius: 6px;
+                padding: 6px 12px;
+                font-weight: 700;
+            }
+            QPushButton:hover { 
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #334155, stop:1 #475569);
+            }
+        """)
         btn_zoom_reset.clicked.connect(lambda: self._grid_view.zoom_reset())
         zoom_layout.addWidget(btn_zoom_reset)
         
@@ -325,6 +443,20 @@ class ELSSearchWindow(QMainWindow):
         pane = QWidget()
         pane.setMaximumWidth(400)
         layout = QVBoxLayout(pane)
+        
+        # Style as floating card
+        pane.setStyleSheet("""
+            QWidget {
+                background: rgba(255, 255, 255, 0.9);
+                border: 1px solid #d4c4a8;
+                border-radius: 16px;
+            }
+        """)
+        shadow = QGraphicsDropShadowEffect()
+        shadow.setBlurRadius(15)
+        shadow.setColor(QColor(0, 0, 0, 30))
+        shadow.setOffset(0, 4)
+        pane.setGraphicsEffect(shadow)
         
         layout.addWidget(QLabel("📊 Search Results"))
         
@@ -376,12 +508,38 @@ class ELSSearchWindow(QMainWindow):
         # Action buttons
         btn_layout = QHBoxLayout()
         self._btn_export = QPushButton("Export")
-        self._btn_export.setStyleSheet(_button_style())
+        self._btn_export.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._btn_export.setStyleSheet("""
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #10b981, stop:1 #059669);
+                color: white;
+                border: 1px solid #047857;
+                border-radius: 6px;
+                padding: 8px 16px;
+                font-weight: 700;
+            }
+            QPushButton:hover { 
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #059669, stop:1 #10b981);
+            }
+        """)
         self._btn_export.clicked.connect(self._on_export)
         btn_layout.addWidget(self._btn_export)
         
         self._btn_clear = QPushButton("Clear")
-        self._btn_clear.setStyleSheet(_button_style())
+        self._btn_clear.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._btn_clear.setStyleSheet("""
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #ef4444, stop:1 #b91c1c);
+                color: white;
+                border: 1px solid #b91c1c;
+                border-radius: 6px;
+                padding: 8px 16px;
+                font-weight: 700;
+            }
+            QPushButton:hover { 
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #b91c1c, stop:1 #ef4444);
+            }
+        """)
         self._btn_clear.clicked.connect(self._on_clear)
         btn_layout.addWidget(self._btn_clear)
         layout.addLayout(btn_layout)
@@ -523,7 +681,9 @@ class ELSSearchWindow(QMainWindow):
             self._cols_spin.setValue(initial_cols)
             self._grid_view.set_grid(self._stripped_text, initial_cols)
         
-        self._status_label.setText(f"Loaded: {source} ({letter_count:,} letters)")
+            self._grid_view.set_grid(self._stripped_text, initial_cols)
+        
+        self.statusBar().showMessage(f"Loaded: {source} ({letter_count:,} letters)")
         logger.info(f"Loaded text: {letter_count} letters from {source}")
     
     def _on_factor_selected(self, index: int):
@@ -538,8 +698,10 @@ class ELSSearchWindow(QMainWindow):
         cols = self._cols_spin.value()
         if self._stripped_text:
             self._grid_view.clear_highlights()
+        if self._stripped_text:
+            self._grid_view.clear_highlights()
             self._grid_view.set_grid(self._stripped_text, cols)
-            self._status_label.setText(f"Grid: {cols} columns")
+            self.statusBar().showMessage(f"Grid: {cols} columns")
     
     def _on_search(self):
         """Execute ELS or sequence search."""
@@ -578,28 +740,25 @@ class ELSSearchWindow(QMainWindow):
             # Chain search - opens separate results window
             reverse = self._chain_reverse_check.isChecked()
             chain_summary = self._service.search_chain(self._stripped_text, term, reverse=reverse)
+            
             direction_str = "reverse" if reverse else "forward"
-            self._status_label.setText(f"Found {len(chain_summary.results)} chain paths ({direction_str}) for '{term}'")
+            self.statusBar().showMessage(f"Found {len(chain_summary.results)} chain paths ({direction_str}) for '{term}'")
             
             if chain_summary.results:
                 from .chain_results_window import ChainResultsWindow
-                self._chain_window = ChainResultsWindow(chain_summary, parent=self)
-                self._chain_window.result_selected.connect(self._on_chain_result_selected)
-                self._chain_window.show()
+                # Pass window manager for export functionality
+                self._chain_results_window = ChainResultsWindow(chain_summary, window_manager=self.window_manager)
+                self._chain_results_window.result_selected.connect(self._on_chain_result_selected)
+                self._chain_results_window.show()
             return  # Don't continue to normal results display
-        else:
-            # Default to exact
-            skip = self._exact_skip_spin.value()
-            summary = self._service.search_els(
-                self._stripped_text, term, skip=skip, direction=direction
-            )
         
         self._all_results = summary.results
+        self._current_results = summary.results
         self._current_results = summary.results
         self._gematria_filter.clear()  # Clear filter on new search
         self._display_results()
         
-        self._status_label.setText(f"Found {len(self._current_results)} matches for '{term}'")
+        self.statusBar().showMessage(f"Found {len(self._current_results)} matches for '{term}'")
     
     def _apply_gematria_filter(self):
         """Filter displayed results by gematria value."""
@@ -733,14 +892,19 @@ class ELSSearchWindow(QMainWindow):
         if self.window_manager:
             from pillars.document_manager.ui.document_editor_window import DocumentEditorWindow
             
-            # Create window and set content
-            editor_window = DocumentEditorWindow(parent=self.window_manager.parent)
+            # Use window manager to open window (prevents garbage collection)
+            editor_window = self.window_manager.open_window(
+                window_type="document_editor",
+                window_class=DocumentEditorWindow,
+                allow_multiple=True
+            )
+            
             editor_window.setWindowTitle(f"ELS Report - {term}")
             editor_window.editor.set_html(html_content)
             editor_window.is_modified = True  # Mark as needing save
             editor_window.show()
             
-            self._status_label.setText("Exported to Document Editor")
+            self.statusBar().showMessage("Exported to Document Editor")
         else:
             QMessageBox.warning(self, "Error", "Window manager not available")
     
