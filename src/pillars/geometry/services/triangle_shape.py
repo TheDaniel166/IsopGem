@@ -445,70 +445,103 @@ class RightTriangleShape(GeometricShape):
         area = self.properties['area'].value
         perimeter = self.properties['perimeter'].value
 
-        # Solver loop (run twice to propagate derived values)
-        for _ in range(2):
-            # 1. Base + Height known?
-            if base and height:
-                hyp = math.sqrt(base**2 + height**2)
-                area = (base * height) / 2
-                perimeter = base + height + hyp
+        # Deterministic Solver (DAG) for Right Triangle (2-DoF)
+        # We need exactly two independent properties to solve.
+        # Since 'base' and 'height' define the triangle uniquely, we try to derive them.
 
-            # 2. Base + Area -> Height
-            if base and area and not height:
-                height = (2 * area) / base
-            # 3. Height + Area -> Base
-            if height and area and not base:
-                base = (2 * area) / height
-            
-            # 4. Base + Hypotenuse -> Height
-            if base and hyp and not height:
-                if hyp > base:
-                    height = math.sqrt(hyp**2 - base**2)
-            # 5. Height + Hypotenuse -> Base
-            if height and hyp and not base:
-                if hyp > height:
-                    base = math.sqrt(hyp**2 - height**2)
+        solved_base = base
+        solved_height = height
 
-            # 6. Area + Hypotenuse -> Base/Height (a+b known from c and A)
-            if area and hyp and (not base or not height):
-                # (a+b)^2 = c^2 + 4A
-                sum_ab_sq = hyp**2 + 4 * area
-                diff_ab_sq = hyp**2 - 4 * area
-                if diff_ab_sq >= 0:
-                    sum_ab = math.sqrt(sum_ab_sq)
-                    diff_ab = math.sqrt(diff_ab_sq)
-                    # a = (sum + diff)/2, b = (sum - diff)/2
-                    base = (sum_ab + diff_ab) / 2
-                    height = (sum_ab - diff_ab) / 2
-
-            # 7. Perimeter + Base -> Height (P = a + b + c -> c = P - a - b -> c^2 = (P-a-b)^2 -> a^2+b^2 = ...)
-            # b = ((P-a)^2 - a^2) / (2*(P-a))
-            if perimeter and base and not height:
-                K = perimeter - base
-                if K > 0 and K**2 > base**2:
-                     height = (K**2 - base**2) / (2 * K)
-            
-            # 8. Perimeter + Height -> Base
-            if perimeter and height and not base:
-                K = perimeter - height
-                if K > 0 and K**2 > height**2:
-                     base = (K**2 - height**2) / (2 * K)
-        
-        # Update state if solved
+        # 1. Base + Height known?
         if base and height:
-            self.properties['base'].value = base
-            self.properties['height'].value = height
+            pass # Already solved
+
+        # 2. Base + Area -> Height
+        elif base and area:
+            solved_height = (2 * area) / base
+
+        # 3. Height + Area -> Base
+        elif height and area:
+            solved_base = (2 * area) / height
+
+        # 4. Base + Hypotenuse -> Height
+        elif base and hyp:
+            if hyp <= base:
+                return False # Impossible geometry
+            solved_height = math.sqrt(hyp**2 - base**2)
+
+        # 5. Height + Hypotenuse -> Base
+        elif height and hyp:
+            if hyp <= height:
+                return False # Impossible geometry
+            solved_base = math.sqrt(hyp**2 - height**2)
+
+        # 6. Area + Hypotenuse -> Base & Height (Quadratic)
+        # (a+b)^2 = c^2 + 4A
+        # (a-b)^2 = c^2 - 4A  (must be >= 0)
+        elif area and hyp:
+            sum_sq = hyp**2 + 4 * area
+            diff_sq = hyp**2 - 4 * area
+            if diff_sq < 0:
+                return False # Impossible geometry (hypotenuse too short for area)
+            
+            sum_ab = math.sqrt(sum_sq)
+            diff_ab = math.sqrt(diff_sq)
+            
+            # This yields two solutions: set Base > Height by convention if undefined
+            # or if ambiguous, we just pick one valid pair.
+            # a = (S + D) / 2
+            # b = (S - D) / 2
+            solved_base = (sum_ab + diff_ab) / 2
+            solved_height = (sum_ab - diff_ab) / 2
+
+        # 7. Perimeter + Base -> Height
+        # P = a + b + c  => c = P - a - b
+        # c^2 = a^2 + b^2
+        # (P - a - b)^2 = a^2 + b^2
+        # (K - b)^2 = a^2 + b^2   where K = P - a
+        # K^2 - 2Kb + b^2 = a^2 + b^2
+        # K^2 - a^2 = 2Kb
+        # b = (K^2 - a^2) / 2K
+        elif perimeter and base:
+            K = perimeter - base
+            if K <= 0 or K**2 <= base**2:
+                return False # Impossible geometry
+            solved_height = (K**2 - base**2) / (2 * K)
+
+        # 8. Perimeter + Height -> Base
+        elif perimeter and height:
+            K = perimeter - height
+            if K <= 0 or K**2 <= height**2:
+                return False # Impossible geometry
+            solved_base = (K**2 - height**2) / (2 * K)
+
+        # If we couldn't resolve base and height, we can't solve the triangle
+        if solved_base is None or solved_height is None:
+            # We updated the single property but couldn't solve the rest.
+            # This is valid (waiting for more input).
+            return True
+            
+        # Final validation
+        if solved_base <= 0 or solved_height <= 0:
+            return False
+
+        # Apply results
+        self.properties['base'].value = solved_base
+        self.properties['height'].value = solved_height
         
-        if base is not None and height is not None:
-            hypotenuse = math.sqrt(base**2 + height**2)
-            self.properties['hypotenuse'].value = hypotenuse
-            self.properties['perimeter'].value = base + height + hypotenuse
-            self.properties['area'].value = (base * height) / 2
-            solution = _triangle_solution_from_sides(base, height, hypotenuse)
-            self.properties['inradius'].value = solution.inradius
-            self.properties['circumradius'].value = solution.circumradius
-            self.properties['incircle_circumference'].value = _circumference_from_radius(solution.inradius)
-            self.properties['circumcircle_circumference'].value = _circumference_from_radius(solution.circumradius)
+        # Consistent recalculation of derived attributes
+        final_hyp = math.sqrt(solved_base**2 + solved_height**2)
+        self.properties['hypotenuse'].value = final_hyp
+        self.properties['perimeter'].value = solved_base + solved_height + final_hyp
+        self.properties['area'].value = (solved_base * solved_height) / 2
+        
+        # Calculate inradius/circumradius
+        solution = _triangle_solution_from_sides(solved_base, solved_height, final_hyp)
+        self.properties['inradius'].value = solution.inradius
+        self.properties['circumradius'].value = solution.circumradius
+        self.properties['incircle_circumference'].value = _circumference_from_radius(solution.inradius)
+        self.properties['circumcircle_circumference'].value = _circumference_from_radius(solution.circumradius)
         
         return True
     
@@ -604,60 +637,132 @@ class IsoscelesTriangleShape(GeometricShape):
         }
 
     def calculate_from_property(self, property_key: str, value: float) -> bool:
-        if property_key not in {'base', 'leg', 'height'}:
-            return False
+        # Allow calculating from any valid property that provides geometric info
         if value <= 0:
             return False
-        previous = self.properties[property_key].value
-        self.properties[property_key].value = value
+
+        # Set the property
+        if property_key in self.properties:
+            previous = self.properties[property_key].value
+            self.properties[property_key].value = value
+        else:
+            return False
+
         if not self._resolve_geometry():
             self.properties[property_key].value = previous
             return False
+            
         return True
 
     def _resolve_geometry(self) -> bool:
         base = self.properties['base'].value
         leg = self.properties['leg'].value
         height = self.properties['height'].value
+        area = self.properties['area'].value
+        perimeter = self.properties['perimeter'].value
 
-        solved = False
+        solved_base = base
+        solved_leg = leg
+        solved_height = height
+
+        # 1. Base + Leg
         if base and leg:
             if base >= 2 * leg:
-                self._clear_solution()
                 return False
-            half_base = base / 2
-            leg_sq = leg * leg
-            new_height_sq = leg_sq - half_base * half_base
-            if new_height_sq <= 0:
-                self._clear_solution()
-                return False
-            self.properties['height'].value = math.sqrt(new_height_sq)
-            solved = True
+            solved_height = math.sqrt(leg**2 - (base/2)**2)
+
+        # 2. Base + Height
         elif base and height:
-            half_base = base / 2
-            leg_val = math.sqrt(half_base * half_base + height * height)
-            self.properties['leg'].value = leg_val
-            solved = True
+            solved_leg = math.sqrt((base/2)**2 + height**2)
+
+        # 3. Leg + Height
         elif leg and height:
-            under = leg * leg - height * height
-            if under <= 0:
-                self._clear_solution()
+            if leg <= height:
                 return False
-            base_val = 2 * math.sqrt(under)
-            self.properties['base'].value = base_val
-            solved = True
-        else:
-            self._clear_solution(clear_dimensions=False)
+            solved_base = 2 * math.sqrt(leg**2 - height**2)
+
+        # 4. Area + Base -> Height
+        elif area and base:
+            solved_height = (2 * area) / base
+            solved_leg = math.sqrt((base/2)**2 + solved_height**2)
+
+        # 5. Area + Height -> Base
+        elif area and height:
+            solved_base = (2 * area) / height
+            solved_leg = math.sqrt((solved_base/2)**2 + height**2)
+
+        # 6. Perimeter + Base -> Leg
+        # P = b + 2L => 2L = P - b => L = (P - b) / 2
+        elif perimeter and base:
+            if perimeter <= base:
+                return False
+            solved_leg = (perimeter - base) / 2
+            # Check triangle inequality: 2L > b (already covered by P > 2b check implicitly?)
+            # P = b + 2L -> if P > b, then 2L > 0.
+            # Triangle inequality: b < 2L. So P - 2L < 2L -> P < 4L?
+            # Actually: b < L + L -> b < 2L.
+            # P = b + 2L. So P - 2L < 2L => P < 4L.
+            # Also b > 0.
+            if 2 * solved_leg <= base:
+                return False # Degenerate or impossible
+            solved_height = math.sqrt(solved_leg**2 - (base/2)**2)
+
+        # 7. Perimeter + Leg -> Base
+        # P = b + 2L => b = P - 2L
+        elif perimeter and leg:
+            solved_base = perimeter - 2 * leg
+            if solved_base <= 0:
+                return False
+            if solved_base >= 2 * leg:
+                return False # Height would be imaginary
+            solved_height = math.sqrt(leg**2 - (solved_base/2)**2)
+
+        # 8. Area + Leg -> Base/Height (Quartic/Bi-quadratic)
+        # A = b*h / 2  => b = 2A/h
+        # L^2 = (b/2)^2 + h^2
+        # L^2 = (A/h)^2 + h^2
+        # L^2 * h^2 = A^2 + h^4
+        # h^4 - L^2*h^2 + A^2 = 0
+        # Quadratic in x = h^2:  x^2 - L^2*x + A^2 = 0
+        elif area and leg:
+            # D = (L^2)^2 - 4(1)(A^2) = L^4 - 4A^2
+            discriminant = leg**4 - 4 * area**2
+            if discriminant < 0:
+                return False
+            
+            # Two possible squares for height
+            h2_a = (leg**2 + math.sqrt(discriminant)) / 2
+            h2_b = (leg**2 - math.sqrt(discriminant)) / 2
+            
+            # We pick the larger height (sharper triangle) by convention or need a way to pivot
+            # For now, let's pick the "standard" shape (often the wider one, smaller height? or larger base?)
+            # Actually, standard UX: if ambiguity, usually pick the one with b < h or similar?
+            # Let's pick the one where b is larger (h is smaller) -> h2_b
+            # Wait, usually people visualize isosceles as tall.
+            # Let's just pick the larger height (h2_a) for stability.
+            valid_h = math.sqrt(h2_a)
+            solved_height = valid_h
+            solved_base = (2 * area) / valid_h
+
+        if solved_base is None or solved_leg is None:
+             # Incomplete data is fine
             return True
 
-        if solved:
-            base = self.properties['base'].value
-            leg = self.properties['leg'].value
-            if base is None or leg is None:
-                self._clear_solution(clear_dimensions=False)
-                return True
-            solution = _triangle_solution_from_sides(leg, leg, base)
-            self._apply_solution(solution)
+        if solved_base <= 0 or solved_leg <= 0:
+            return False
+            
+        # Final consistency check (e.g. triangle inequality)
+        if solved_base >= 2 * solved_leg:
+             return False
+
+        # Apply
+        self.properties['base'].value = solved_base
+        self.properties['leg'].value = solved_leg
+        self.properties['height'].value = solved_height
+        
+        # Recalculate everything else
+        solution = _triangle_solution_from_sides(solved_leg, solved_leg, solved_base)
+        self._apply_solution(solution)
         return True
 
     def _apply_solution(self, solution: TriangleSolution):

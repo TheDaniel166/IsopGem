@@ -1,6 +1,6 @@
 """Geometry UI module."""
 from .geometry_hub import GeometryHub
-from .geometry_calculator_window import GeometryCalculatorWindow
+from .calculator.calculator_window import GeometryCalculatorWindow
 from .advanced_scientific_calculator_window import AdvancedScientificCalculatorWindow
 from .geometry_scene import GeometryScene
 from .geometry_view import GeometryView

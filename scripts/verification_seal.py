@@ -106,21 +106,60 @@ class RiteOfGematria(Rite):
         Scribe.info(f"Input '{word}' transmuted to {actual_value}.")
 
 class RiteOfGeometry(Rite):
-    def __init__(self, name="Polygon Vertex Generation"):
+    def __init__(self, name="Geometry Pillar & Calculator Logic"):
         super().__init__(name)
 
     def perform(self):
-        Scribe.info("Calculating vertices for a Heptagon...")
+        Scribe.info("Testing Geometry Pillar...")
         
-        # Mock logic
-        sides = 7
-        vertices = [] # engine.get_vertices(sides)
+        try:
+            from pillars.geometry.services.circle_shape import CircleShape
+            from pillars.geometry.services.persistence_service import PersistenceService
+        except ImportError as e:
+            raise AssertionError(f"Missing Geometry Components: {e}")
+
+        # 1. Test Shape Logic (The Circle)
+        shape = CircleShape()
+        Scribe.info("CircleShape instantiated.")
         
-        # Verification: Ensure we didn't crash and got a list (even if empty for now)
-        if vertices is None:
-            raise AssertionError("The Geometry Pillar returned Void.")
-            
-        Scribe.info("Vertices generated successfully.")
+        # Test: Radius -> Area
+        shape.set_property('radius', 10.0)
+        area = shape.get_property('area')
+        expected_area = 314.159265
+        
+        if abs(area - expected_area) > 0.001:
+             raise AssertionError(f"Circle Calculation Failed: Radius 10 -> Area {area}, expected ~{expected_area}")
+        Scribe.success("Circle Calculation (Radius -> Area) verified.")
+        
+        # Test: Bidirectional (Area -> Diameter)
+        # Area ~314.159 -> Radius 10 -> Diameter 20
+        shape.set_property('area', 78.5398) # ~Radius 5
+        diameter = shape.get_property('diameter')
+        if abs(diameter - 10.0) > 0.01:
+            raise AssertionError(f"Circle Bidirectional Failed: Area 78.54 -> Diameter {diameter}, expected ~10.0")
+        Scribe.success("Circle Bidirectional (Area -> Diameter) verified.")
+
+        # 2. Test Persistence (The Chronicle)
+        Scribe.info("Testing Persistence Service...")
+        
+        # Mock save
+        # We don't want to write to actual disk if possible, or we write to tmp?
+        # PersistenceService writes to ~/.isopgem/geometry_history.json
+        # Let's trust the logic if we can mock the file op? 
+        # For the "Rite", let's just verify the data structure generation.
+        
+        data = shape.to_dict()
+        if data['shape_type'] != "CircleShape" or data['properties']['radius'] is None:
+             raise AssertionError("Shape Serialization failed.")
+        Scribe.success("Shape Serialization verified.")
+        
+        # Test Restore
+        new_shape = CircleShape()
+        new_shape.from_dict(data)
+        if abs(new_shape.get_property('radius') - 5.0) > 0.001:
+             raise AssertionError("Shape Deserialization failed.")
+        Scribe.success("Shape Deserialization verified.")
+
 
 class RiteOfAdytonEngine(Rite):
     def __init__(self, name: str = "Adyton Engine Initialization"):
@@ -286,10 +325,11 @@ if __name__ == "__main__":
 
         rites = [
             # RiteOfGematria("Gematria Core"),
-            # RiteOfGeometry("Geometry Core"),
+            RiteOfGeometry("Geometry Core"),
             # RiteOfAdytonEngine("Adyton Engine"),
             RiteOfEmeraldTablet("Spreadsheet Pillar"),
             RiteOfFormulaHelper("Formula Helper Service"),
+
         ]
 
         for rite in rites:

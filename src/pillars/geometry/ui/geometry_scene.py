@@ -78,7 +78,7 @@ class GeometryScene(QGraphicsScene):
         # Measurement Customization State
         self._meas_font_size: float = 9.0
         self._meas_line_color: QColor = QColor(234, 88, 12) # Orange
-        self._meas_text_color: QColor = QColor(255, 255, 255) # White text usually on colored bg
+        self._meas_text_color: QColor = QColor(0, 0, 0) # Black default
         self._meas_use_line_color_for_text: bool = False
         self._meas_show_area: bool = True
         
@@ -88,13 +88,17 @@ class GeometryScene(QGraphicsScene):
         self.axes_visible: bool = True
         self.labels_visible: bool = True
 
+        # Format: (Background RGB, Text RGB, Axis RGB)
         self._themes = {
-            "Daylight": ((248, 250, 252), (203, 213, 225)),
-            "Midnight": ((15, 23, 42), (51, 65, 85)),
-            "Slate": ((30, 41, 59), (71, 85, 105)),
-            "Pearl": ((255, 255, 255), (209, 213, 219)),
+            "Daylight": ((248, 250, 252), (30, 41, 59), (148, 163, 184)),
+            "Midnight": ((15, 23, 42), (226, 232, 240), (71, 85, 105)),
+            "Slate": ((30, 41, 59), (241, 245, 249), (100, 116, 139)),
+            "Pearl": ((255, 255, 255), (15, 23, 42), (148, 163, 184)),
         }
         self._theme_name = "Daylight"
+        self._text_pen = QPen(QColor(30, 41, 59))
+        self._axis_pen = QPen(QColor(148, 163, 184), 0)
+        
         self.setBackgroundBrush(QColor(*self._themes[self._theme_name][0]))
         self.setSceneRect(-5, -5, 10, 10)
 
@@ -131,10 +135,22 @@ class GeometryScene(QGraphicsScene):
             item.setVisible(visible)
 
     def apply_theme(self, theme: str):
-        palette = self._themes.get(theme, self._themes["Daylight"])
+        theme_data = self._themes.get(theme, self._themes["Daylight"])
         self._theme_name = theme if theme in self._themes else "Daylight"
-        bg_rgb, _ = palette
+        
+        bg_rgb, text_rgb, axis_rgb = theme_data
+        
+        # Update Background
         self.setBackgroundBrush(QColor(*bg_rgb))
+        
+        # Update Pens
+        self._text_pen = QPen(QColor(*text_rgb))
+        self._axis_pen = QPen(QColor(*axis_rgb), 0)
+        
+        # Refresh Items
+        self._refresh_labels()
+        self._refresh_axes()
+        
         self.update()
 
     def get_current_bounds(self) -> Optional[Bounds]:
@@ -591,48 +607,149 @@ class GeometryScene(QGraphicsScene):
             line.setZValue(1)
 
     def _create_label_items(self, labels: List[LabelPrimitive]) -> List[QGraphicsSimpleTextItem]:
+        from collections import defaultdict
+        
         label_items: List[QGraphicsSimpleTextItem] = []
+        groups = defaultdict(list)
+        
+        # 1. Create items and group by quantized position
         for label in labels:
             item = QGraphicsSimpleTextItem(label.text)
-            item.setBrush(QColor(30, 41, 59))
+            item.setBrush(self._text_pen.color())
             item.setZValue(2)
             item.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations)
             font = item.font()
             font.setPointSizeF(8.0)
             item.setFont(font)
-            offset_x = -item.boundingRect().width() / 2 if label.align_center else 0
-            offset_y = -item.boundingRect().height() / 2 if label.align_center else 0
             
-            # Since ItemIgnoresTransformations is set, item coordinates are in pixels (screen space).
-            # To position correctly:
-            # 1. Set anchor in scene coordinates.
-            # 2. Translate locally by pixel offset to center the text.
-            item.setPos(label.position[0], label.position[1])
-            if label.align_center:
-                item.setTransform(QTransform().translate(offset_x, offset_y))
-            # Store index in data(0) if this primitive roughly maps to a dot visualizer index
-            # For simplicity, we assume the order of primitives matches standard indexing if not explicit
-            # But wait, primitives list might include non-dots.
-            # Ideally, Primitive dataclass should hold 'index'.
-            # For now, we will rely on the caller sending index-aware info or handle in payload.
-            # Actually, let's just make the item selectable/hoverable.
-            item.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable) 
-            # We need a way to know WHICH dot this is.
-            # HACK: The payload builder appends circles in order 1..N.
-            # We can assign an index based on call order if careful, BUT
-            # geometry_scene doesn't know the index.
-            # Solution: Let's assume the caller will handle mapping OR we add 'index' to Primitive.
-            # Let's add 'item.setData(0, primitive.metadata.get('index'))'
             if label.metadata and 'index' in label.metadata:
                 item.setData(0, label.metadata['index'])
+            item.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable)
             
-            self.addItem(item)
-            label_items.append(item)
+            # Key: quantized position for grouping
+            key = (round(label.position[0], 3), round(label.position[1], 3))
+            groups[key].append((item, label))
+
+        # 2. Process groups and stack if needed
+        for pos_key, group in groups.items():
+            total_height = sum(item.boundingRect().height() for item, _ in group)
+            # Center the entire stack
+            current_y_offset = -total_height / 2 if len(group) > 1 else 0
+            
+            for item, label in group:
+                item.setPos(label.position[0], label.position[1])
+                rect = item.boundingRect()
+                w = rect.width()
+                h = rect.height()
+                
+                off_x = -w / 2 if label.align_center else 0
+                
+                if len(group) > 1:
+                    # Stack mode: Vertical list, centered on point
+                    off_y = current_y_offset
+                    # Check if font size changed, item bounds might change.
+                    # BoundingRect is in local coords (pixels).
+                    current_y_offset += h
+                else:
+                    # Single mode: Respect align_center
+                    off_y = -h / 2 if label.align_center else 0
+                
+                item.setTransform(QTransform().translate(off_x, off_y))
+                self.addItem(item)
+                label_items.append(item)
+                
         return label_items
+
+    def update_label_layout(self, view_transform: QTransform):
+        """
+        Dynamically adjust label positions to avoid overlaps in screen space (pixels).
+        Usage: Called by the view on zoom/resize.
+        """
+        if not self._label_items:
+            return
+
+        # 1. Calculate screen positions and bounding boxes
+        # ItemIgnoresTransformations: position is scene, but size is pixels.
+        # But wait, QGraphicsScene.views()[0].mapFromScene? No, we have the transform.
+        # Project anchor point:
+        
+        # Sort by Y then X to process top-down
+        # We need a list of (item, screen_pos_y, screen_pos_x, height)
+        
+        projections = []
+        for item in self._label_items:
+            scene_pos = item.pos() # Anchor
+            screen_pos = view_transform.map(scene_pos)
+            rect = item.boundingRect() # in pixels
+            projections.append({
+                'item': item,
+                'screen_x': screen_pos.x(),
+                'screen_y': screen_pos.y(),
+                'width': rect.width(),
+                'height': rect.height(),
+                # Store original translation if needed? No, we reset transform.
+                'align_center': True # Assuming all for now or check item transform?
+            })
+
+        # Sort by screen Y
+        projections.sort(key=lambda p: (p['screen_y'], p['screen_x']))
+        
+        # Group by screen proximity
+
+
+        # Let's use a simpler group-by-screen-proximity approach
+        groups = []
+        threshold_x = 20.0 # pixels
+        threshold_y = 20.0 # pixels
+        
+        # Determine strict groups
+        sorted_p = sorted(projections, key=lambda i: (i['screen_y'], i['screen_x']))
+        
+        active_groups = [] # List of [ {'sy':..., 'sx':...} ]
+        
+        for p in sorted_p:
+            placed = False
+            for group in active_groups:
+                leader = group[0]
+                if abs(p['screen_x'] - leader['screen_x']) < threshold_x and \
+                   abs(p['screen_y'] - leader['screen_y']) < threshold_y:
+                    group.append(p)
+                    placed = True
+                    break
+            if not placed:
+                active_groups.append([p])
+
+                
+        # Now layout groups
+        for group in active_groups:
+            if not group: continue
+            
+            total_h = sum(g['height'] for g in group)
+            start_y_offset = -total_h / 2
+            
+            current_off = start_y_offset
+            for p in group:
+                item = p['item']
+                h = p['height']
+                w = p['width']
+                
+                # Apply offset to the base anchor
+                # We need to set the item's transform.
+                # Base anchor is still at scene_pos.
+                # Item draws at screen_pos.
+                
+                # Item transform is applied in item local space (pixels)
+                # Standard centering: translate(-w/2, -h/2)
+                # Stacked centering: translate(-w/2, current_off)
+                
+                # We assume align_center=True for all labels for now
+                item.setTransform(QTransform().translate(-w/2, current_off))
+                current_off += h
+
 
     def _create_axes(self, bounds: Bounds) -> List[QGraphicsItem]:
         span = max(bounds.width, bounds.height) * 0.7
-        pen = QPen(QColor(148, 163, 184), 0)
+        pen = self._axis_pen
         axes: List[QGraphicsItem] = []
         horizontal = self.addLine(-span, 0, span, 0, pen)
         vertical = self.addLine(0, -span, 0, span, pen)

@@ -46,8 +46,10 @@ class Geometry3DWindow(QMainWindow):
         self._current_payload: Optional[SolidPayload] = None
         self._calculator: Optional[Any] = None
         self._property_layout: Optional[QVBoxLayout] = None
+        self._advanced_property_layout: Optional[QVBoxLayout] = None
         self._property_inputs: Dict[str, QLineEdit] = {}
         self._property_placeholder: Optional[QLabel] = None
+        self._advanced_property_placeholder: Optional[QLabel] = None
         self._property_error_label: Optional[QLabel] = None
         self._metadata_mode = True
         self._updating_inputs = False
@@ -144,16 +146,25 @@ class Geometry3DWindow(QMainWindow):
 
         layout.addSpacing(6)
 
-        section_label = QLabel("Parameters & Metrics")
-        section_label.setStyleSheet("color: #0f172a; font-weight: 700; letter-spacing: 0.5px;" )
-        layout.addWidget(section_label)
-
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setStyleSheet("QScrollArea {border: none; background: transparent;}")
-        scroll_widget = QWidget()
-        self._property_layout = QVBoxLayout(scroll_widget)
-        self._property_layout.setContentsMargins(0, 0, 0, 0)
+        # Tabbed property sections
+        property_tabs = QTabWidget()
+        property_tabs.setDocumentMode(True)
+        property_tabs.setStyleSheet(
+            """
+            QTabWidget::pane { border: 1px solid #e2e8f0; border-radius: 10px; background: transparent; }
+            QTabBar::tab { padding: 8px 16px; margin: 2px; font-weight: 600; }
+            QTabBar::tab:selected { background: #e0e7ff; border-radius: 6px; color: #1d4ed8; }
+            QTabBar::tab:!selected { background: #f8fafc; color: #64748b; }
+            """
+        )
+        
+        # Core properties tab
+        core_scroll = QScrollArea()
+        core_scroll.setWidgetResizable(True)
+        core_scroll.setStyleSheet("QScrollArea {border: none; background: transparent;}")
+        core_widget = QWidget()
+        self._property_layout = QVBoxLayout(core_widget)
+        self._property_layout.setContentsMargins(8, 8, 8, 8)
         self._property_layout.setSpacing(10)
         placeholder = QLabel("Load a 3D solid to edit its measurements.")
         placeholder.setWordWrap(True)
@@ -161,8 +172,27 @@ class Geometry3DWindow(QMainWindow):
         self._property_layout.addWidget(placeholder)
         self._property_layout.addStretch(1)
         self._property_placeholder = placeholder
-        scroll.setWidget(scroll_widget)
-        layout.addWidget(scroll, 1)
+        core_scroll.setWidget(core_widget)
+        property_tabs.addTab(core_scroll, "Core")
+        
+        # Advanced properties tab
+        advanced_scroll = QScrollArea()
+        advanced_scroll.setWidgetResizable(True)
+        advanced_scroll.setStyleSheet("QScrollArea {border: none; background: transparent;}")
+        advanced_widget = QWidget()
+        self._advanced_property_layout = QVBoxLayout(advanced_widget)
+        self._advanced_property_layout.setContentsMargins(8, 8, 8, 8)
+        self._advanced_property_layout.setSpacing(10)
+        advanced_placeholder = QLabel("Advanced properties (physics, topology, symmetry) appear here.")
+        advanced_placeholder.setWordWrap(True)
+        advanced_placeholder.setStyleSheet("color: #94a3b8; font-style: italic; font-size: 10pt;")
+        self._advanced_property_layout.addWidget(advanced_placeholder)
+        self._advanced_property_layout.addStretch(1)
+        self._advanced_property_placeholder = advanced_placeholder
+        advanced_scroll.setWidget(advanced_widget)
+        property_tabs.addTab(advanced_scroll, "Advanced")
+        
+        layout.addWidget(property_tabs, 1)
 
         error_label = QLabel()
         error_label.setStyleSheet("color: #dc2626; font-size: 10pt;")
@@ -249,6 +279,10 @@ class Geometry3DWindow(QMainWindow):
         labels_cb.toggled.connect(self._view.set_labels_visible)
         layout.addWidget(labels_cb)
 
+        vertices_cb = self._create_checkbox("Show vertices", self._view.vertices_visible())
+        vertices_cb.toggled.connect(self._view.set_vertices_visible)
+        layout.addWidget(vertices_cb)
+
         sphere_toggles = (
             ('incircle', 'Show insphere (inradius)'),
             ('midsphere', 'Show midsphere'),
@@ -259,6 +293,31 @@ class Geometry3DWindow(QMainWindow):
             cb.toggled.connect(lambda checked, k=key: self._view.set_sphere_visible(k, checked))
             layout.addWidget(cb)
             self._sphere_checkboxes[key] = cb
+
+        # Measure tool button
+        measure_btn = QPushButton("📏 Measure Tool")
+        measure_btn.setCheckable(True)
+        measure_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        measure_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #f1f5f9;
+                border: 1px solid #cbd5e1;
+                border-radius: 8px;
+                padding: 8px 12px;
+                font-weight: 600;
+            }
+            QPushButton:checked {
+                background-color: #fef3c7;
+                border-color: #f59e0b;
+                color: #92400e;
+            }
+            QPushButton:hover {
+                background-color: #e2e8f0;
+            }
+        """)
+        measure_btn.toggled.connect(self._on_measure_mode_toggled)
+        layout.addWidget(measure_btn)
+        self._measure_button = measure_btn
 
         layout.addStretch(1)
         return tab
@@ -480,18 +539,42 @@ class Geometry3DWindow(QMainWindow):
         self._property_placeholder = None
 
     def _rebuild_property_inputs(self):
-        layout = self._property_layout
+        core_layout = self._property_layout
+        advanced_layout = self._advanced_property_layout
         calculator = self._calculator
-        if layout is None or calculator is None:
+        if core_layout is None or calculator is None:
             return
         self._metadata_mode = False
-        self._clear_layout(layout)
+        self._clear_layout(core_layout)
+        if advanced_layout is not None:
+            self._clear_layout(advanced_layout)
         self._property_inputs.clear()
+        
+        # Keys for advanced properties (define locally for reliability)
+        advanced_keys = {
+            'moment_inertia_solid', 'moment_inertia_shell',
+            'angular_defect_vertex_deg', 'total_angular_defect_deg', 'euler_characteristic',
+            'packing_density',
+            'symmetry_group_order', 'rotational_symmetry_order', 'symmetry_group_name',
+            'dual_solid_name', 'golden_ratio_factor',
+        }
+        
+        # Separate properties into Core and Advanced
         for prop in calculator.properties():
             widget = self._create_property_input(prop)
-            layout.addWidget(widget)
-        layout.addStretch(1)
+            key = prop.key
+            is_adv = key in advanced_keys
+            # Use `is not None` - QVBoxLayout's __bool__ returns False when empty!
+            if is_adv and advanced_layout is not None:
+                advanced_layout.addWidget(widget)
+            else:
+                core_layout.addWidget(widget)
+        
+        core_layout.addStretch(1)
+        if advanced_layout is not None:
+            advanced_layout.addStretch(1)
         self._property_placeholder = None
+        self._advanced_property_placeholder = None
 
     def _create_property_input(self, prop: Any) -> QWidget:
         frame = QFrame()
@@ -561,11 +644,20 @@ class Geometry3DWindow(QMainWindow):
             field = self._property_inputs.get(prop.key)
             if field is None:
                 continue
-            if prop.value is None:
-                field.clear()
-            else:
-                formatted = f"{prop.value:.{prop.precision}f}".rstrip('0').rstrip('.')
-                field.setText(formatted)
+            # Safety check: ensure Qt widget still exists
+            try:
+                if prop.value is None:
+                    field.clear()
+                elif isinstance(prop.value, str):
+                    # String values (e.g., symmetry_group_name, dual_solid_name)
+                    field.setText(prop.value)
+                else:
+                    # Numeric values
+                    formatted = f"{prop.value:.{prop.precision}f}".rstrip('0').rstrip('.')
+                    field.setText(formatted)
+            except RuntimeError:
+                # Widget was deleted, skip it
+                continue
         self._updating_inputs = False
         payload = calculator.payload()
         self._current_payload = payload
@@ -630,6 +722,13 @@ class Geometry3DWindow(QMainWindow):
 
     def _on_reset_view(self):
         self._view.reset_view()
+
+    def _on_measure_mode_toggled(self, enabled: bool):
+        self._view.set_measure_mode(enabled)
+        if enabled:
+            self._status_label.setText("Measure mode: Click two vertices to measure distance")
+        else:
+            self._update_status(self._current_payload)
 
     def _capture_snapshot(self):
         pixmap = self._view.grab()

@@ -29,6 +29,7 @@ class ArchimedeanSolidMetrics:
     edge_count: int
     vertex_count: int
     face_sides: Dict[int, int]
+    face_metrics: Dict[int, Dict[str, float]] # {sides: {'area_single': x, 'area_total': y}}
 
 
 @dataclass(frozen=True)
@@ -171,6 +172,22 @@ class ArchimedeanSolidServiceBase:
             },
             suggested_scale=edge_length,
         )
+        # Calculate granular face metrics
+        face_metrics: Dict[int, Dict[str, float]] = {}
+        # Get one face of each n-gon type to calc individual area
+        # Then multiply by count for total area
+        
+        # We need regular polygon area formula: Area = (n * s^2) / (4 * tan(pi/n))
+        # s = edge_length
+        for n_gon, count in definition.face_sides.items():
+            if n_gon < 3: continue
+            area_single = (n_gon * edge_length**2) / (4 * math.tan(math.pi / n_gon))
+            area_total = area_single * count
+            face_metrics[n_gon] = {
+                'area_single': area_single,
+                'area_total': area_total
+            }
+
         metrics = ArchimedeanSolidMetrics(
             edge_length=edge_length,
             surface_area=surface_area,
@@ -179,6 +196,7 @@ class ArchimedeanSolidServiceBase:
             edge_count=len(edges),
             vertex_count=len(vertices),
             face_sides=definition.face_sides,
+            face_metrics=face_metrics,
         )
         return ArchimedeanSolidResult(payload=payload, metrics=metrics)
 
@@ -206,17 +224,50 @@ class ArchimedeanSolidCalculatorBase:
             key: SolidProperty(name=label, key=key, unit=unit, precision=precision, editable=editable)
             for key, label, unit, precision, editable in self._PROPERTY_DEFINITIONS
         }
+        
+        # Add dynamic properties for face metrics based on definition
+        self._definition = _get_definition(self.SERVICE.DEFINITION_KEY)
+        for n_gon, count in self._definition.face_sides.items():
+            if n_gon == 3: name = "Triangle"
+            elif n_gon == 4: name = "Square"
+            elif n_gon == 5: name = "Pentagon"
+            elif n_gon == 6: name = "Hexagon"
+            elif n_gon == 8: name = "Octagon"
+            elif n_gon == 10: name = "Decagon"
+            else: name = f"{n_gon}-gon"
+            
+            # Individual Area
+            key_single = f"area_{n_gon}_single"
+            self._properties[key_single] = SolidProperty(
+                name=f"{name} Area (x1)", key=key_single, unit='units²', precision=4, editable=True
+            )
+            
+            # Total Area
+            key_total = f"area_{n_gon}_total"
+            self._properties[key_total] = SolidProperty(
+                name=f"Total {name}s Area (x{count})", key=key_total, unit='units²', precision=4, editable=True
+            )
+
         self._edge_length = edge_length if edge_length > 0 else 2.0
         self._result: ArchimedeanSolidResult | None = None
         self._apply_edge_length(self._edge_length)
 
     def properties(self) -> List[SolidProperty]:
-        return [self._properties[key] for key, *_ in self._PROPERTY_DEFINITIONS]
+        # Return properties sorted to keep face metrics at the end? Or logically grouped?
+        # Let's keep core properties first, then sorted face metrics
+        core_keys = [k for k, *_ in self._PROPERTY_DEFINITIONS]
+        dynamic_props = [p for k, p in self._properties.items() if k not in core_keys]
+        # Sort dyn props by key (area_3_.., area_4_..) to keep types together
+        dynamic_props.sort(key=lambda p: p.key)
+        
+        return [self._properties[k] for k in core_keys] + dynamic_props
 
     def set_property(self, key: str, value: float | None) -> bool:
         if value is None or value <= 0:
             return False
-        definition = _get_definition(self.SERVICE.DEFINITION_KEY)
+            
+        definition = self._definition
+        
         if key == 'edge_length':
             self._apply_edge_length(value)
             return True
@@ -230,6 +281,33 @@ class ArchimedeanSolidCalculatorBase:
             edge_length = definition.base_edge_length * scale
             self._apply_edge_length(edge_length)
             return True
+            
+        # Handle Dynamic Face Area Properties
+        if key.startswith('area_'):
+            # Parse n_gon from key "area_{n}_single" or "area_{n}_total"
+            parts = key.split('_')
+            if len(parts) >= 3 and parts[1].isdigit():
+                n_gon = int(parts[1])
+                mode = parts[2] # 'single' or 'total'
+                
+                # Formula: Area = (n * s^2) / (4 * tan(pi/n))
+                # s^2 = (Area * 4 * tan(pi/n)) / n
+                # s = sqrt(...)
+                
+                target_area_single = value
+                if mode == 'total':
+                    # Convert total to single
+                    count = definition.face_sides.get(n_gon, 1)
+                    target_area_single = value / count
+                
+                # Solve for edge length
+                tan_factor = math.tan(math.pi / n_gon)
+                s_sq = (target_area_single * 4 * tan_factor) / n_gon
+                if s_sq > 0:
+                    new_edge_length = math.sqrt(s_sq)
+                    self._apply_edge_length(new_edge_length)
+                    return True
+                    
         return False
 
     def clear(self):
@@ -255,6 +333,8 @@ class ArchimedeanSolidCalculatorBase:
         self._edge_length = edge_length
         result = self.SERVICE.build(edge_length=edge_length)
         self._result = result
+        
+        # Update core properties
         values = {
             'edge_length': result.metrics.edge_length,
             'surface_area': result.metrics.surface_area,
@@ -263,8 +343,19 @@ class ArchimedeanSolidCalculatorBase:
             'edge_count': float(result.metrics.edge_count),
             'vertex_count': float(result.metrics.vertex_count),
         }
-        for key, prop in self._properties.items():
-            prop.value = values.get(key)
+        for k in values:
+            if k in self._properties:
+                self._properties[k].value = values[k]
+                
+        # Update dynamic face properties
+        if result.metrics.face_metrics:
+            for n_gon, data in result.metrics.face_metrics.items():
+                key_single = f"area_{n_gon}_single"
+                key_total = f"area_{n_gon}_total"
+                if key_single in self._properties:
+                    self._properties[key_single].value = data['area_single']
+                if key_total in self._properties:
+                    self._properties[key_total].value = data['area_total']
 
 
 class CuboctahedronSolidService(ArchimedeanSolidServiceBase):

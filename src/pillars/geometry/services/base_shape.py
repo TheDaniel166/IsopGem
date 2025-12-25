@@ -141,3 +141,26 @@ class GeometricShape(ABC):
         """Clear all property values."""
         for prop in self.properties.values():
             prop.value = None
+
+    def to_dict(self) -> Dict:
+        """Serialize shape state to dictionary."""
+        return {
+            "shape_type": self.__class__.__name__,
+            "properties": {k: p.value for k, p in self.properties.items() if p.value is not None}
+        }
+
+    def from_dict(self, data: Dict):
+        """Restore shape state from dictionary."""
+        props = data.get("properties", {})
+        # We need to be careful about order of setting properties to ensure calculation triggers correctly
+        # OR just set values directly if we assume the saved state is valid.
+        # Since we want to display the shape, we should set values directly to properties.
+        # BUT, triggering calculation is safer to ensure consistency if some derived values were missing.
+        # Ideally, we find the "input" properties and set them.
+        
+        # Strategy: Set all values provided in data directly to property.value
+        # This assumes the saved data is a consistent snapshot.
+        for k, v in props.items():
+            if k in self.properties:
+                self.properties[k].value = v
+

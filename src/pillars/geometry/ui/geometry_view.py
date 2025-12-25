@@ -42,7 +42,19 @@ class GeometryView(QGraphicsView):
         self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
         self.setResizeAnchor(QGraphicsView.ViewportAnchor.AnchorViewCenter)
         self.setDragMode(QGraphicsView.DragMode.NoDrag)
-        self.setBackgroundBrush(scene.backgroundBrush())
+        self.setDragMode(QGraphicsView.DragMode.NoDrag)
+        self.setDragMode(QGraphicsView.DragMode.NoDrag)
+        # Do not set background brush on View, let Scene handle it.
+        # self.setBackgroundBrush(scene.backgroundBrush())
+
+        
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        # Also update on resize if needed (though resize doesn't change transform usually, but fits might)
+        scene = self.scene()
+        if hasattr(scene, "update_label_layout"):
+            scene.update_label_layout(self.transform())
+
 
     # ------------------------------------------------------------------
     # Zoom helpers
@@ -81,6 +93,11 @@ class GeometryView(QGraphicsView):
         new_scale = current_scale * factor
         if 0.01 <= new_scale <= 100.0:
             self.scale(factor, factor)
+            # Update label layout on zoom
+            scene = self.scene()
+            if hasattr(scene, "update_label_layout"):
+                scene.update_label_layout(self.transform())
+
 
     def fit_to_bounds(self, bounds: Optional[Bounds]):
         if bounds is None:

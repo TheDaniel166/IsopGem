@@ -146,6 +146,8 @@ from ..services import (
     SnubAntiprismSolidCalculator,
     GyroelongatedSquarePrismSolidService,
     GyroelongatedSquarePrismSolidCalculator,
+    GeneralPyramidSolidService,
+    GeneralPyramidSolidCalculator,
 )
 
 from .esoteric_definitions import ESOTERIC_DEFINITIONS
@@ -527,9 +529,9 @@ CATEGORY_DEFINITIONS: List[dict] = [
             },
             {
                 'name': 'General n-gonal Pyramid Solver',
-                'summary': 'Coming soon: arbitrary base polygon with apex control',
-                'status': 'Coming Soon',
-                'factory': None,
+                'summary': 'Configurable pyramid supporting any base polygon (n ≥ 3) with dynamic apex.',
+                'type': 'solid_viewer',
+                'solid_id': 'general_pyramid',
             },
         ],
         menu=[
@@ -907,9 +909,9 @@ CATEGORY_DEFINITIONS: List[dict] = [
         ],
     ),
     _category(
-        name="Other Solids",
-        icon="⚪",
-        tagline="Cylinders, cones, and torus forms",
+        name="Curves & Surfaces",
+        icon="🌐",
+        tagline="Sphere, Cylinder, Cone, Torus",
         shapes=[
             {
                 'name': 'Sphere',
@@ -1269,6 +1271,12 @@ SOLID_VIEWER_CONFIG: Dict[str, dict] = {
         'summary': 'A customizable right prism with an n-gonal regular base.',
         'builder': GeneralPrismSolidService.build_dynamic,
         'calculator': GeneralPrismSolidCalculator,
+    },
+    'general_pyramid': {
+        'title': 'General Pyramid',
+        'summary': 'A customizable right pyramid with an n-gonal regular base.',
+        'builder': GeneralPyramidSolidService.build_dynamic,
+        'calculator': GeneralPyramidSolidCalculator,
     },
     'general_antiprism': {
         'title': 'General Antiprism',

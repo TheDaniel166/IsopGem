@@ -151,6 +151,10 @@ from .general_prismatic_solids import (
     GeneralAntiprismSolidService,
     GeneralAntiprismSolidCalculator,
 )
+from .general_pyramid_solids import (
+    GeneralPyramidSolidService,
+    GeneralPyramidSolidCalculator,
+)
 from .complex_prismatic_solids import (
     SnubAntiprismSolidService,
     SnubAntiprismSolidCalculator,
@@ -313,6 +317,8 @@ __all__ = [
     'GeneralPrismSolidCalculator',
     'GeneralAntiprismSolidService',
     'GeneralAntiprismSolidCalculator',
+    'GeneralPyramidSolidService',
+    'GeneralPyramidSolidCalculator',
     'SnubAntiprismSolidService',
     'SnubAntiprismSolidCalculator',
     'GyroelongatedSquarePrismSolidService',
