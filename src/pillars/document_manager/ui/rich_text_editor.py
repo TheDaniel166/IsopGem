@@ -11,7 +11,8 @@ from PyQt6.QtCore import Qt, pyqtSignal, QSize, QMimeData, QUrl, QMarginsF, QSiz
 from PyQt6.QtGui import (
     QFont, QAction, QColor, QTextCharFormat,
     QTextCursor, QTextListFormat, QTextBlockFormat,
-    QActionGroup, QBrush, QDesktopServices, QPageSize, QPageLayout, QKeySequence
+    QActionGroup, QBrush, QDesktopServices, QPageSize, QPageLayout, QKeySequence,
+    QTextDocument
 )
 import qtawesome as qta
 from PyQt6.QtPrintSupport import QPrinter, QPrintDialog, QPrintPreviewDialog
@@ -2176,6 +2177,7 @@ class RichTextEditor(QWidget):
         self.editor.clear()
 
     def find_text(self, text: str) -> bool:
+        """Find first occurrence of text and select it."""
         if not text:
             return False
         self.editor.moveCursor(QTextCursor.MoveOperation.Start)
@@ -2184,6 +2186,109 @@ class RichTextEditor(QWidget):
             self.editor.setFocus()
             return True
         return False
+    
+    def find_all_matches(self, text: str) -> int:
+        """Count all matches and position cursor at first. Returns match count."""
+        if not text:
+            self._search_term = None
+            self._match_count = 0
+            self._current_match = 0
+            return 0
+        
+        self._search_term = text
+        self._match_count = 0
+        self._current_match = 0
+        
+        # Count all matches by iterating through document
+        cursor = self.editor.textCursor()
+        cursor.movePosition(QTextCursor.MoveOperation.Start)
+        self.editor.setTextCursor(cursor)
+        
+        # Count matches
+        while self.editor.find(text):
+            self._match_count += 1
+        
+        # Move back to start and find first match
+        if self._match_count > 0:
+            cursor.movePosition(QTextCursor.MoveOperation.Start)
+            self.editor.setTextCursor(cursor)
+            self.editor.find(text)
+            self._current_match = 1
+            self.editor.setFocus()
+            # Center the view on the match
+            self._center_cursor_in_view()
+        
+        return self._match_count
+    
+    def _center_cursor_in_view(self):
+        """Scroll the viewport to center the cursor vertically."""
+        cursor_rect = self.editor.cursorRect()
+        viewport_height = self.editor.viewport().height()
+        # Calculate scroll position to center the cursor
+        scrollbar = self.editor.verticalScrollBar()
+        current_scroll = scrollbar.value()
+        cursor_y = cursor_rect.top()
+        # Center: move cursor to middle of viewport
+        target_scroll = current_scroll + cursor_y - (viewport_height // 2)
+        scrollbar.setValue(max(0, target_scroll))
+    
+    def find_next(self) -> bool:
+        """Navigate to next match. Returns True if found."""
+        if not hasattr(self, '_search_term') or not self._search_term:
+            return False
+        
+        found = self.editor.find(self._search_term)
+        if found:
+            self._current_match = min(self._current_match + 1, self._match_count)
+            self._center_cursor_in_view()
+            return True
+        else:
+            # Wrap to start
+            cursor = self.editor.textCursor()
+            cursor.movePosition(QTextCursor.MoveOperation.Start)
+            self.editor.setTextCursor(cursor)
+            found = self.editor.find(self._search_term)
+            if found:
+                self._current_match = 1
+                self._center_cursor_in_view()
+                return True
+        return False
+    
+    def find_previous(self) -> bool:
+        """Navigate to previous match. Returns True if found."""
+        if not hasattr(self, '_search_term') or not self._search_term:
+            return False
+        
+        # QTextEdit.find() only goes forward, so use FindBackward flag
+        found = self.editor.find(self._search_term, QTextDocument.FindFlag.FindBackward)
+        if found:
+            self._current_match = max(self._current_match - 1, 1)
+            self._center_cursor_in_view()
+            return True
+        else:
+            # Wrap to end
+            cursor = self.editor.textCursor()
+            cursor.movePosition(QTextCursor.MoveOperation.End)
+            self.editor.setTextCursor(cursor)
+            found = self.editor.find(self._search_term, QTextDocument.FindFlag.FindBackward)
+            if found:
+                self._current_match = self._match_count
+                self._center_cursor_in_view()
+                return True
+        return False
+    
+    def get_match_info(self) -> tuple:
+        """Get current match position info. Returns (current, total)."""
+        current = getattr(self, '_current_match', 0)
+        total = getattr(self, '_match_count', 0)
+        return (current, total)
+    
+    def clear_search(self):
+        """Clear search state."""
+        self._search_term = None
+        self._match_count = 0
+        self._current_match = 0
+
     def new_document(self):
         """Clear the editor for a new document."""
         if self.editor.document().isModified():

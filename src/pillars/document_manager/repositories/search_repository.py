@@ -138,6 +138,8 @@ class DocumentSearchRepository:
         Returns:
             List of dictionaries containing document info (id, title, etc.)
         """
+        import re
+        
         with self.ix.searcher() as searcher:
             parser = MultifieldParser(["title", "content", "author"], schema=self.schema)
             query = parser.parse(query_str)
@@ -146,19 +148,29 @@ class DocumentSearchRepository:
             results.fragmenter.maxchars = 300
             results.fragmenter.surround = 50
             
+            # Extract base search terms for hit counting (strip wildcards)
+            base_terms = re.sub(r'[*?]', '', query_str).strip().lower()
+            
             # Return list of dicts, service will map back to DB objects if needed
             # or UI can use these directly for display
-            return [
-                {
+            output = []
+            for r in results:
+                # Count total hits in full content + title
+                full_text = (r.get('content') or '') + ' ' + (r.get('title') or '')
+                # Case-insensitive count of search term
+                hit_count = len(re.findall(re.escape(base_terms), full_text, re.IGNORECASE))
+                
+                output.append({
                     'id': int(r['id']),
                     'title': r['title'],
                     'file_type': r['file_type'],
                     'collection': r.get('collection') or '',
                     'created_at': r['created_at'],
-                    'highlights': r.highlights("content") or r.highlights("title") or ""
-                }
-                for r in results
-            ]
+                    'highlights': r.highlights("content") or r.highlights("title") or "",
+                    'hit_count': hit_count
+                })
+            
+            return output
 
     def rebuild_index(self, documents: List[Document]):
         """

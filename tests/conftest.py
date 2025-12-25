@@ -16,3 +16,11 @@ def pytest_configure() -> None:
     src_path = repo_root / "src"
     if src_path.exists():
         sys.path.insert(0, str(src_path))
+import sys
+from pathlib import Path
+
+ROOT_DIR = Path(__file__).resolve().parents[1]
+SRC_DIR = ROOT_DIR / "src"
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
+collect_ignore = ['_legacy']

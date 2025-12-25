@@ -98,8 +98,8 @@ class DocumentLibrary(QMainWindow):
         self.panel.setObjectName("FloatingPanel")
         self.panel.setStyleSheet("""
             QFrame#FloatingPanel {
-                background-color: #ffffff;
-                border: 1px solid #cbd5e1;
+                background-color: #f1f5f9; /* Marble - The harshness of Pure White is banished */
+                border: 1px solid #cbd5e1; /* Ash */
                 border-radius: 24px;
             }
         """)
@@ -161,79 +161,126 @@ class DocumentLibrary(QMainWindow):
         self.search_input.returnPressed.connect(self._search_documents)
         top_layout.addWidget(self.search_input, 2) # Give search more space
         
-        # Button Styles
-        btn_style_base = """
+        # ═══════════════════════════════════════════════════════════════════════
+        # The Catalyst Styles (Visual Liturgy v2.2 §10)
+        # ═══════════════════════════════════════════════════════════════════════
+        
+        # The Seeker (Gold) — Reveals hidden knowledge
+        style_seeker = """
             QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #f59e0b, stop:1 #d97706);
+                border: 1px solid #b45309;
+                color: #0f172a; /* Void text for clarity */
+                font-size: 11pt;
+                font-weight: 700;
+                border-radius: 8px;
+                padding: 0 20px;
+                min-height: 48px;
+            }
+            QPushButton:hover {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #fbbf24, stop:1 #f59e0b);
+            }
+            QPushButton:focus {
+                outline: none;
+                border: 2px solid #3b82f6; /* Azure focus ring */
+            }
+            QPushButton:pressed {
+                background: #d97706;
+            }
+            QPushButton:disabled {
+                background-color: #fef3c7;
+                border: 1px solid #fcd34d;
+                color: #92400e;
+            }
+        """
+        
+        # The Destroyer (Crimson) — Purges and banishes
+        style_destroyer = """
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #ef4444, stop:1 #b91c1c);
+                border: 1px solid #991b1b;
+                color: white;
                 font-size: 11pt;
                 font-weight: 600;
                 border-radius: 8px;
                 padding: 0 20px;
                 min-height: 48px;
+            }
+            QPushButton:hover {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #f87171, stop:1 #ef4444);
+            }
+            QPushButton:focus {
+                outline: none;
+                border: 2px solid #3b82f6;
+            }
+            QPushButton:pressed {
+                background: #b91c1c;
+            }
+            QPushButton:disabled {
+                background-color: #fee2e2;
+                border: 1px solid #fca5a5;
+                color: #991b1b;
+            }
+        """
+        
+        # The Navigator (Void Slate) — Traverses and refreshes
+        style_navigator = """
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #64748b, stop:1 #475569);
+                border: 1px solid #334155;
                 color: white;
-            }
-        """
-        
-        # Seeker (Gold)
-        style_seeker = btn_style_base + """
-            QPushButton {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #f59e0b, stop:1 #d97706);
-                border: 1px solid #b45309;
-            }
-            QPushButton:hover {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #d97706, stop:1 #f59e0b);
-            }
-        """
-        
-        # Destroyer (Crimson)
-        style_destroyer = btn_style_base + """
-            QPushButton {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #ef4444, stop:1 #b91c1c);
-                border: 1px solid #7f1d1d;
-            }
-            QPushButton:hover {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #b91c1c, stop:1 #ef4444);
-            }
-        """
-        
-        # Standard/Ghost
-        style_ghost = """
-            QPushButton {
-                background: transparent;
-                color: #475569;
                 font-size: 11pt;
                 font-weight: 600;
-                border: 1px solid #cbd5e1;
                 border-radius: 8px;
+                padding: 0 20px;
                 min-height: 48px;
-                padding: 0 16px;
             }
             QPushButton:hover {
-                background-color: #f1f5f9;
-                color: #0f172a;
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #94a3b8, stop:1 #64748b);
+            }
+            QPushButton:focus {
+                outline: none;
+                border: 2px solid #3b82f6;
+            }
+            QPushButton:pressed {
+                background: #475569;
+            }
+            QPushButton:disabled {
+                background-color: #e2e8f0;
+                border: 1px solid #cbd5e1;
+                color: #64748b;
             }
         """
 
+        # ═══════════════════════════════════════════════════════════════════════
+        # The Catalyst Buttons
+        # ═══════════════════════════════════════════════════════════════════════
+        
         self.btn_import = QPushButton("Import Document")
+        self.btn_import.setObjectName("SeekerButton")
         self.btn_import.setStyleSheet(style_seeker)
         self.btn_import.clicked.connect(self._import_document)
         top_layout.addWidget(self.btn_import)
         
         self.btn_batch = QPushButton("Batch Import")
+        self.btn_batch.setObjectName("SeekerButton")
         self.btn_batch.setStyleSheet(style_seeker)
         self.btn_batch.clicked.connect(self._show_batch_menu)
         top_layout.addWidget(self.btn_batch)
         
         self.btn_delete = QPushButton("Delete")
+        self.btn_delete.setObjectName("DestroyerButton")
         self.btn_delete.setStyleSheet(style_destroyer)
         self.btn_delete.clicked.connect(self._delete_document)
-        # top_layout.addWidget(self.btn_delete) # Moved to context or separate area to reduce clutter? kept here for now
         
         self.btn_refresh = QPushButton("Refresh")
-        self.btn_refresh.setStyleSheet(style_ghost)
+        self.btn_refresh.setObjectName("NavigatorButton")
+        self.btn_refresh.setStyleSheet(style_navigator)
         self.btn_refresh.clicked.connect(self._load_documents)
         top_layout.addWidget(self.btn_refresh)
         
         self.btn_purge = QPushButton("Purge")
+        self.btn_purge.setObjectName("DestroyerButton")
         self.btn_purge.setStyleSheet(style_destroyer)
         self.btn_purge.clicked.connect(self._purge_database)
         

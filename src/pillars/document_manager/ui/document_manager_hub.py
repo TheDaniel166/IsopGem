@@ -219,18 +219,19 @@ class DocumentManagerHub(QWidget):
 
 
 
-    def _open_document_from_library(self, doc, search_term=None, restored_html=None):
+    def _open_document_from_library(self, doc, search_term=None, restored_html=None, read_only=False):
         """Open a document from the library in the editor."""
         window = self.window_manager.open_window(
             "document_editor",
             DocumentEditorWindow
         )
         if isinstance(window, DocumentEditorWindow):
-            window.load_document_model(doc, search_term, restored_html)
+            window.load_document_model(doc, search_term, restored_html, read_only)
 
     def _on_library_document_opened(self, doc, restored_html):
         """Handle document_opened signal from library (doc, restored_html)."""
-        self._open_document_from_library(doc, None, restored_html)
+        # From library = edit mode (read_only=False)
+        self._open_document_from_library(doc, None, restored_html, read_only=False)
 
     def _open_document_by_id(self, doc_id, search_term=None):
         """Open a document by ID in the editor."""
@@ -246,8 +247,8 @@ class DocumentManagerHub(QWidget):
                 if result:
                     doc, restored_html = result
                     logger.debug(f"Document loaded: '{doc.title}', html_len={len(restored_html)}")
-                    # Open the document with restored HTML
-                    self._open_document_from_library(doc, search_term, restored_html)
+                    # Open the document from search = read-only mode
+                    self._open_document_from_library(doc, search_term, restored_html, read_only=True)
                 else:
                     # Document not found in DB - might be stale search index
                     from PyQt6.QtWidgets import QMessageBox

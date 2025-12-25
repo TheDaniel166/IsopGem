@@ -2,9 +2,9 @@
 import os
 from pathlib import Path
 from PyQt6.QtWidgets import (
-    QMainWindow, QVBoxLayout, QWidget, QFileDialog, 
+    QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QFileDialog, 
     QMessageBox, QMenuBar, QDialog, QListWidget, 
-    QLineEdit, QDialogButtonBox, QListWidgetItem
+    QLineEdit, QDialogButtonBox, QListWidgetItem, QPushButton, QLabel, QFrame
 )
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QAction, QKeySequence
@@ -36,6 +36,133 @@ class DocumentEditorWindow(QMainWindow):
         
         layout = QVBoxLayout(central_widget)
         layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        
+        # ═══════════════════════════════════════════════════════════════════════
+        # Match Navigator Bar (hidden by default)
+        # ═══════════════════════════════════════════════════════════════════════
+        self.match_nav_bar = QFrame()
+        self.match_nav_bar.setObjectName("MatchNavBar")
+        self.match_nav_bar.setStyleSheet("""
+            QFrame#MatchNavBar {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #fef3c7, stop:1 #fcd34d);
+                border-bottom: 2px solid #f59e0b;
+                padding: 8px 16px;
+            }
+        """)
+        self.match_nav_bar.hide()
+        
+        nav_layout = QHBoxLayout(self.match_nav_bar)
+        nav_layout.setContentsMargins(16, 8, 16, 8)
+        nav_layout.setSpacing(12)
+        
+        self.nav_search_label = QLabel("")
+        self.nav_search_label.setStyleSheet("font-weight: bold; color: #92400e; font-size: 11pt;")
+        nav_layout.addWidget(self.nav_search_label)
+        
+        self.nav_counter_label = QLabel("0 of 0")
+        self.nav_counter_label.setStyleSheet("color: #78350f; font-size: 11pt;")
+        nav_layout.addWidget(self.nav_counter_label)
+        
+        nav_layout.addStretch()
+        
+        # Navigator style (Void Slate)
+        nav_btn_style = """
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #64748b, stop:1 #475569);
+                border: 1px solid #334155;
+                color: white;
+                font-size: 10pt;
+                font-weight: 600;
+                border-radius: 6px;
+                padding: 6px 14px;
+            }
+            QPushButton:hover {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #94a3b8, stop:1 #64748b);
+            }
+            QPushButton:pressed {
+                background: #475569;
+            }
+        """
+        
+        self.btn_prev_match = QPushButton("◀ Prev")
+        self.btn_prev_match.setStyleSheet(nav_btn_style)
+        self.btn_prev_match.setShortcut("Shift+F3")
+        self.btn_prev_match.clicked.connect(self._on_prev_match)
+        nav_layout.addWidget(self.btn_prev_match)
+        
+        self.btn_next_match = QPushButton("Next ▶")
+        self.btn_next_match.setStyleSheet(nav_btn_style)
+        self.btn_next_match.setShortcut("F3")
+        self.btn_next_match.clicked.connect(self._on_next_match)
+        nav_layout.addWidget(self.btn_next_match)
+        
+        btn_close_nav = QPushButton("✕")
+        btn_close_nav.setStyleSheet("""
+            QPushButton {
+                background: transparent;
+                border: none;
+                color: #92400e;
+                font-size: 14pt;
+                font-weight: bold;
+                padding: 4px 8px;
+            }
+            QPushButton:hover {
+                color: #dc2626;
+            }
+        """)
+        btn_close_nav.clicked.connect(self._hide_match_navigator)
+        nav_layout.addWidget(btn_close_nav)
+        
+        layout.addWidget(self.match_nav_bar)
+        
+        # ═══════════════════════════════════════════════════════════════════════
+        # Mode Toggle Bar (View/Edit mode indicator)
+        # ═══════════════════════════════════════════════════════════════════════
+        self.is_read_only = False
+        
+        self.mode_bar = QFrame()
+        self.mode_bar.setObjectName("ModeBar")
+        self.mode_bar.hide()  # Only shown when document loaded in read-only
+        
+        mode_layout = QHBoxLayout(self.mode_bar)
+        mode_layout.setContentsMargins(16, 8, 16, 8)
+        mode_layout.setSpacing(12)
+        
+        self.mode_icon_label = QLabel("🔒")
+        self.mode_icon_label.setStyleSheet("font-size: 16pt;")
+        mode_layout.addWidget(self.mode_icon_label)
+        
+        self.mode_text_label = QLabel("View Mode")
+        self.mode_text_label.setStyleSheet("font-weight: bold; font-size: 11pt;")
+        mode_layout.addWidget(self.mode_text_label)
+        
+        mode_layout.addStretch()
+        
+        self.btn_toggle_mode = QPushButton("✏️ Enable Editing")
+        self.btn_toggle_mode.setStyleSheet("""
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #3b82f6, stop:1 #2563eb);
+                border: 1px solid #1d4ed8;
+                color: white;
+                font-size: 10pt;
+                font-weight: 600;
+                border-radius: 6px;
+                padding: 6px 14px;
+            }
+            QPushButton:hover {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #60a5fa, stop:1 #3b82f6);
+            }
+            QPushButton:pressed {
+                background: #2563eb;
+            }
+        """)
+        self.btn_toggle_mode.clicked.connect(self._toggle_edit_mode)
+        mode_layout.addWidget(self.btn_toggle_mode)
+        
+        self._update_mode_bar_style()
+        layout.addWidget(self.mode_bar)
         
         # Rich Text Editor
         self.editor = RichTextEditor()
@@ -161,13 +288,14 @@ class DocumentEditorWindow(QMainWindow):
             
         self.setWindowTitle(title)
 
-    def load_document_model(self, doc, search_term=None, restored_html=None):
+    def load_document_model(self, doc, search_term=None, restored_html=None, read_only=False):
         """Load a document from the database model.
         
         Args:
             doc: Document model object
             search_term: Optional search term to highlight
             restored_html: Optional pre-restored HTML with images (from get_document_with_images)
+            read_only: If True, open in read-only view mode
         """
         if not self._check_unsaved_changes():
             return
@@ -192,11 +320,120 @@ class DocumentEditorWindow(QMainWindow):
         self.is_modified = False
         self._update_title()
         
-        # Highlight search term if provided
+        # Show Match Navigator if search term provided
         if search_term:
-            self.editor.find_text(search_term)
+            match_count = self.editor.find_all_matches(search_term)
+            if match_count > 0:
+                self.nav_search_label.setText(f'"{search_term}"')
+                self._update_match_counter()
+                self.match_nav_bar.show()
+            else:
+                self.match_nav_bar.hide()
+        else:
+            self.match_nav_bar.hide()
+        
+        # Apply read-only mode if requested
+        if read_only:
+            self._set_read_only_mode(True)
+        else:
+            self._set_read_only_mode(False)
+            self.mode_bar.hide()
+    
+    def _set_read_only_mode(self, read_only: bool):
+        """Set the editor to read-only or edit mode."""
+        self.is_read_only = read_only
+        self.editor.editor.setReadOnly(read_only)
+        
+        if read_only:
+            self.mode_icon_label.setText("🔒")
+            self.mode_text_label.setText("View Mode")
+            self.btn_toggle_mode.setText("✏️ Enable Editing")
+            self.mode_bar.setStyleSheet("""
+                QFrame#ModeBar {
+                    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                        stop:0 #e0e7ff, stop:1 #c7d2fe);
+                    border-bottom: 2px solid #6366f1;
+                }
+            """)
+            self.mode_text_label.setStyleSheet("font-weight: bold; font-size: 11pt; color: #3730a3;")
+        else:
+            self.mode_icon_label.setText("✏️")
+            self.mode_text_label.setText("Edit Mode")
+            self.btn_toggle_mode.setText("🔒 View Only")
+            self.mode_bar.setStyleSheet("""
+                QFrame#ModeBar {
+                    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                        stop:0 #dcfce7, stop:1 #bbf7d0);
+                    border-bottom: 2px solid #22c55e;
+                }
+            """)
+            self.mode_text_label.setStyleSheet("font-weight: bold; font-size: 11pt; color: #166534;")
+        
+        self.mode_bar.show()
+        self._update_mode_bar_style()
+    
+    def _toggle_edit_mode(self):
+        """Toggle between read-only and edit modes."""
+        self._set_read_only_mode(not self.is_read_only)
+    
+    def _update_mode_bar_style(self):
+        """Update mode bar button style based on current mode."""
+        if self.is_read_only:
+            self.btn_toggle_mode.setStyleSheet("""
+                QPushButton {
+                    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #3b82f6, stop:1 #2563eb);
+                    border: 1px solid #1d4ed8;
+                    color: white;
+                    font-size: 10pt;
+                    font-weight: 600;
+                    border-radius: 6px;
+                    padding: 6px 14px;
+                }
+                QPushButton:hover {
+                    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #60a5fa, stop:1 #3b82f6);
+                }
+            """)
+        else:
+            self.btn_toggle_mode.setStyleSheet("""
+                QPushButton {
+                    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #64748b, stop:1 #475569);
+                    border: 1px solid #334155;
+                    color: white;
+                    font-size: 10pt;
+                    font-weight: 600;
+                    border-radius: 6px;
+                    padding: 6px 14px;
+                }
+                QPushButton:hover {
+                    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #94a3b8, stop:1 #64748b);
+                }
+            """)
+    
+    def _on_prev_match(self):
+        """Navigate to previous match."""
+        self.editor.find_previous()
+        self._update_match_counter()
+    
+    def _on_next_match(self):
+        """Navigate to next match."""
+        self.editor.find_next()
+        self._update_match_counter()
+    
+    def _update_match_counter(self):
+        """Update the match counter label."""
+        current, total = self.editor.get_match_info()
+        self.nav_counter_label.setText(f"{current} of {total}")
+    
+    def _hide_match_navigator(self):
+        """Hide the match navigator and clear search."""
+        self.match_nav_bar.hide()
+        self.editor.clear_search()
 
     def _check_unsaved_changes(self):
+        # In read-only mode, no changes are possible - skip dialog
+        if self.is_read_only:
+            return True
+            
         if self.is_modified:
             reply = QMessageBox.question(
                 self, 

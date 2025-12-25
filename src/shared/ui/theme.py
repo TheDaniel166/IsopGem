@@ -1,38 +1,69 @@
-"""Modern UI theme and styling for IsopGem application."""
+"""Modern UI theme and styling for IsopGem application.
 
-# Color palette
+Aligned with Visual Liturgy v2.2 - "The Codex of IsopGem"
+"""
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# The Alchemical Spectrum (Visual Liturgy §2)
+# ═══════════════════════════════════════════════════════════════════════════════
+
 COLORS = {
-    # Primary colors
-    'primary': '#2563eb',  # Blue
-    'primary_hover': '#1d4ed8',
-    'primary_pressed': '#1e40af',
-    'primary_light': '#dbeafe',
+    # ─────────────────────────────────────────────────────────────────────────
+    # The Structure (Tones)
+    # ─────────────────────────────────────────────────────────────────────────
+    'void': '#0f172a',           # The Unknown - Headers, High-contrast text
+    'stone': '#334155',          # The Physical - Body text, Scrollbar handles
+    'marble': '#f1f5f9',         # The Tablet - Panel Backgrounds (Soft, non-reflective)
+    'light': '#ffffff',          # The Illumination - Input Fields (Where intent is inscribed)
+    'ash': '#cbd5e1',            # The Boundary - Borders, Dividers
+    'cloud': '#f8fafc',          # The Substrate - Background behind panels
     
-    # Accent colors
-    'accent': '#10b981',  # Green
+    # ─────────────────────────────────────────────────────────────────────────
+    # The Catalysts (Semantic Button Colors)
+    # ─────────────────────────────────────────────────────────────────────────
+    'magus': '#8b5cf6',          # Mystic Violet - Transmute / Execute
+    'magus_hover': '#a78bfa',
+    'seeker': '#f59e0b',         # Alchemical Gold - Uncover / Reveal
+    'seeker_hover': '#fbbf24',
+    'scribe': '#10b981',         # Emerald - Preserve / Etch
+    'scribe_hover': '#34d399',
+    'destroyer': '#ef4444',      # Crimson - Purge / Banish
+    'destroyer_hover': '#f87171',
+    'navigator': '#64748b',      # Void Slate - Traverse
+    'navigator_hover': '#94a3b8',
+    
+    # ─────────────────────────────────────────────────────────────────────────
+    # Focus & Status
+    # ─────────────────────────────────────────────────────────────────────────
+    'focus': '#3b82f6',          # Azure - Focus ring color
+    'success': '#10b981',        # Emerald
+    'warning': '#f59e0b',        # Gold
+    'error': '#ef4444',          # Crimson
+    'info': '#3b82f6',           # Azure
+    
+    # ─────────────────────────────────────────────────────────────────────────
+    # Legacy Aliases (for backward compatibility)
+    # ─────────────────────────────────────────────────────────────────────────
+    'primary': '#8b5cf6',        # Magus Violet
+    'primary_hover': '#7c3aed',
+    'primary_pressed': '#6d28d9',
+    'primary_light': '#ede9fe',
+    
+    'accent': '#10b981',         # Scribe Emerald
     'accent_hover': '#059669',
     'accent_pressed': '#047857',
     
-    # Neutral colors
-    'background': '#ffffff',
-    'background_alt': '#f9fafb',
-    'surface': '#ffffff',
-    'surface_hover': '#f3f4f6',
+    'background': '#f8fafc',     # Cloud (Substrate)
+    'background_alt': '#f1f5f9', # Marble
+    'surface': '#f1f5f9',        # Marble (panels, cards)
+    'surface_hover': '#e2e8f0',
     
-    # Text colors
-    'text_primary': '#111827',
-    'text_secondary': '#6b7280',
-    'text_disabled': '#9ca3af',
+    'text_primary': '#0f172a',   # Void
+    'text_secondary': '#475569', # Stone
+    'text_disabled': '#94a3b8',  # Mist
     
-    # Border colors
-    'border': '#e5e7eb',
-    'border_focus': '#3b82f6',
-    
-    # Status colors
-    'success': '#10b981',
-    'warning': '#f59e0b',
-    'error': '#ef4444',
-    'info': '#3b82f6',
+    'border': '#cbd5e1',         # Ash
+    'border_focus': '#3b82f6',   # Azure
 }
 
 
@@ -419,18 +450,18 @@ def apply_light_theme(app):
     app.setStyle("Fusion")
 
     palette = QPalette()
-    palette.setColor(QPalette.ColorRole.Window, QColor("#ffffff"))
-    palette.setColor(QPalette.ColorRole.WindowText, QColor("#111827"))
-    palette.setColor(QPalette.ColorRole.Base, QColor("#ffffff"))
-    palette.setColor(QPalette.ColorRole.AlternateBase, QColor("#f9fafb"))
-    palette.setColor(QPalette.ColorRole.ToolTipBase, QColor("#111827"))
-    palette.setColor(QPalette.ColorRole.ToolTipText, QColor("#ffffff"))
-    palette.setColor(QPalette.ColorRole.Text, QColor("#111827"))
-    palette.setColor(QPalette.ColorRole.Button, QColor("#f3f4f6"))
-    palette.setColor(QPalette.ColorRole.ButtonText, QColor("#111827"))
-    palette.setColor(QPalette.ColorRole.BrightText, QColor("#ef4444"))
-    palette.setColor(QPalette.ColorRole.Link, QColor("#2563eb"))
-    palette.setColor(QPalette.ColorRole.Highlight, QColor("#2563eb"))
+    palette.setColor(QPalette.ColorRole.Window, QColor("#f1f5f9"))       # Marble
+    palette.setColor(QPalette.ColorRole.WindowText, QColor("#0f172a"))   # Void
+    palette.setColor(QPalette.ColorRole.Base, QColor("#f1f5f9"))         # Marble
+    palette.setColor(QPalette.ColorRole.AlternateBase, QColor("#f8fafc")) # Cloud
+    palette.setColor(QPalette.ColorRole.ToolTipBase, QColor("#0f172a"))  # Void
+    palette.setColor(QPalette.ColorRole.ToolTipText, QColor("#f8fafc"))  # Cloud
+    palette.setColor(QPalette.ColorRole.Text, QColor("#0f172a"))         # Void
+    palette.setColor(QPalette.ColorRole.Button, QColor("#f1f5f9"))       # Marble
+    palette.setColor(QPalette.ColorRole.ButtonText, QColor("#0f172a"))   # Void
+    palette.setColor(QPalette.ColorRole.BrightText, QColor("#ef4444"))   # Destroyer Crimson
+    palette.setColor(QPalette.ColorRole.Link, QColor("#8b5cf6"))         # Magus Violet
+    palette.setColor(QPalette.ColorRole.Highlight, QColor("#8b5cf6"))    # Magus Violet
     palette.setColor(QPalette.ColorRole.HighlightedText, QColor("#ffffff"))
 
     app.setPalette(palette)
