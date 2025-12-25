@@ -37,3 +37,8 @@ geographiclib==2.0
 # Testing
 pytest>=9.0.1
 scipy>=1.10.0
+ety
+beautifulsoup4>=4.12.0
+
+# Spell checking
+pyenchant>=3.2.0

@@ -10,6 +10,7 @@ from PyQt6.QtGui import (
     QTextFrameFormat
 )
 from PyQt6.QtCore import Qt
+import qtawesome as qta
 
 class TableDialog(QDialog):
     """Dialog for inserting a new table."""
@@ -44,10 +45,9 @@ class TableDialog(QDialog):
         form.addRow("Border Width:", self.border_spin)
         
         self.border_style_combo = QComboBox()
-        # QTextDocument only renders solid (or no) borders; keep UI honest.
         self.border_style_combo.addItems([
-            "None",
-            "Solid"
+            "None", "Solid", "Dotted", "Dashed", "Double",
+            "Dot-Dash", "Dot-Dot-Dash", "Groove", "Ridge", "Inset", "Outset"
         ])
         self.border_style_combo.setCurrentText("Solid")
         form.addRow("Border Style:", self.border_style_combo)
@@ -100,13 +100,22 @@ class TablePropertiesDialog(QDialog):
         
         self.border_style_combo = QComboBox()
         self.border_style_combo.addItems([
-            "None",
-            "Solid"
+            "None", "Solid", "Dotted", "Dashed", "Double",
+            "Dot-Dash", "Dot-Dot-Dash", "Groove", "Ridge", "Inset", "Outset"
         ])
         # Get current border style (clamped to supported values)
         current_style = self._get_border_style_name(self.fmt.borderStyle())
         self.border_style_combo.setCurrentText(current_style)
         form.addRow("Border Style:", self.border_style_combo)
+        
+        # Border Color
+        from PyQt6.QtGui import QColor, QBrush
+        from PyQt6.QtCore import Qt
+        self.border_color = self.fmt.borderBrush().color() if self.fmt.borderBrush().style() != Qt.BrushStyle.NoBrush else QColor(Qt.GlobalColor.black)
+        self.color_button = QPushButton("Choose Color")
+        self._update_color_button()
+        self.color_button.clicked.connect(self._pick_border_color)
+        form.addRow("Border Color:", self.color_button)
         
         self.cell_spacing_spin = QDoubleSpinBox()
         self.cell_spacing_spin.setRange(0, 20)
@@ -132,7 +141,16 @@ class TablePropertiesDialog(QDialog):
         """Convert border style enum to name."""
         style_map = {
             QTextFrameFormat.BorderStyle.BorderStyle_None: "None",
-            QTextFrameFormat.BorderStyle.BorderStyle_Solid: "Solid"
+            QTextFrameFormat.BorderStyle.BorderStyle_Solid: "Solid",
+            QTextFrameFormat.BorderStyle.BorderStyle_Dotted: "Dotted",
+            QTextFrameFormat.BorderStyle.BorderStyle_Dashed: "Dashed",
+            QTextFrameFormat.BorderStyle.BorderStyle_Double: "Double",
+            QTextFrameFormat.BorderStyle.BorderStyle_DotDash: "Dot-Dash",
+            QTextFrameFormat.BorderStyle.BorderStyle_DotDotDash: "Dot-Dot-Dash",
+            QTextFrameFormat.BorderStyle.BorderStyle_Groove: "Groove",
+            QTextFrameFormat.BorderStyle.BorderStyle_Ridge: "Ridge",
+            QTextFrameFormat.BorderStyle.BorderStyle_Inset: "Inset",
+            QTextFrameFormat.BorderStyle.BorderStyle_Outset: "Outset"
         }
         return style_map.get(style, "Solid")
     
@@ -140,14 +158,42 @@ class TablePropertiesDialog(QDialog):
         """Convert border style name to enum."""
         style_map = {
             "None": QTextFrameFormat.BorderStyle.BorderStyle_None,
-            "Solid": QTextFrameFormat.BorderStyle.BorderStyle_Solid
+            "Solid": QTextFrameFormat.BorderStyle.BorderStyle_Solid,
+            "Dotted": QTextFrameFormat.BorderStyle.BorderStyle_Dotted,
+            "Dashed": QTextFrameFormat.BorderStyle.BorderStyle_Dashed,
+            "Double": QTextFrameFormat.BorderStyle.BorderStyle_Double,
+            "Dot-Dash": QTextFrameFormat.BorderStyle.BorderStyle_DotDash,
+            "Dot-Dot-Dash": QTextFrameFormat.BorderStyle.BorderStyle_DotDotDash,
+            "Groove": QTextFrameFormat.BorderStyle.BorderStyle_Groove,
+            "Ridge": QTextFrameFormat.BorderStyle.BorderStyle_Ridge,
+            "Inset": QTextFrameFormat.BorderStyle.BorderStyle_Inset,
+            "Outset": QTextFrameFormat.BorderStyle.BorderStyle_Outset
         }
         return style_map.get(name, QTextFrameFormat.BorderStyle.BorderStyle_Solid)
+    
+    def _update_color_button(self):
+        """Update color button style to show current color."""
+        self.color_button.setStyleSheet(
+            f"background-color: {self.border_color.name()}; "
+            f"color: {'white' if self.border_color.lightness() < 128 else 'black'};"
+        )
+    
+    def _pick_border_color(self):
+        """Pick border color using non-native dialog."""
+        dialog = QColorDialog(self.border_color, self)
+        dialog.setWindowTitle("Select Border Color")
+        dialog.setOptions(QColorDialog.ColorDialogOption.DontUseNativeDialog)
+        if dialog.exec():
+            self.border_color = dialog.currentColor()
+            self._update_color_button()
         
     def apply_to_format(self, fmt: QTextTableFormat):
+        from PyQt6.QtGui import QBrush
+        from PyQt6.QtCore import Qt
         fmt.setWidth(QTextLength(QTextLength.Type.PercentageLength, self.width_spin.value()))
         fmt.setBorder(self.border_spin.value())
         fmt.setBorderStyle(self._get_border_style_enum(self.border_style_combo.currentText()))
+        fmt.setBorderBrush(QBrush(self.border_color, Qt.BrushStyle.SolidPattern))
         fmt.setCellSpacing(self.cell_spacing_spin.value())
         fmt.setCellPadding(self.cell_padding_spin.value())
 
@@ -164,7 +210,8 @@ class CellBorderDialog(QDialog):
         form = QFormLayout()
         
         # Border styles for each side
-        border_styles = ["None", "Solid"]  # QTextDocument renders only solid/none
+        border_styles = ["None", "Solid", "Dotted", "Dashed", "Double",
+                        "Dot-Dash", "Dot-Dot-Dash", "Groove", "Ridge", "Inset", "Outset"]
         
         # Border Color
         from PyQt6.QtCore import Qt
@@ -247,27 +294,46 @@ class CellBorderDialog(QDialog):
         layout.addWidget(buttons)
     
     def _pick_border_color(self):
-        """Pick border color."""
+        """Pick border color using non-native dialog."""
         from PyQt6.QtGui import QColor
-        from PyQt6.QtCore import Qt
-        color = QColorDialog.getColor(self.border_color, self, "Select Border Color")
-        if color.isValid():
-            self.border_color = color
-            self.color_button.setStyleSheet(f"background-color: {color.name()}; color: {'white' if color.lightness() < 128 else 'black'};")
+        dialog = QColorDialog(self.border_color, self)
+        dialog.setWindowTitle("Select Border Color")
+        dialog.setOptions(QColorDialog.ColorDialogOption.DontUseNativeDialog)
+        if dialog.exec():
+            self.border_color = dialog.currentColor()
+            self.color_button.setStyleSheet(f"background-color: {self.border_color.name()}; color: {'white' if self.border_color.lightness() < 128 else 'black'};")
     
     def _get_border_style_name(self, style: QTextFrameFormat.BorderStyle) -> str:
-        """Convert border style enum to name (limited to supported set)."""
+        """Convert border style enum to name."""
         style_map = {
             QTextFrameFormat.BorderStyle.BorderStyle_None: "None",
-            QTextFrameFormat.BorderStyle.BorderStyle_Solid: "Solid"
+            QTextFrameFormat.BorderStyle.BorderStyle_Solid: "Solid",
+            QTextFrameFormat.BorderStyle.BorderStyle_Dotted: "Dotted",
+            QTextFrameFormat.BorderStyle.BorderStyle_Dashed: "Dashed",
+            QTextFrameFormat.BorderStyle.BorderStyle_Double: "Double",
+            QTextFrameFormat.BorderStyle.BorderStyle_DotDash: "Dot-Dash",
+            QTextFrameFormat.BorderStyle.BorderStyle_DotDotDash: "Dot-Dot-Dash",
+            QTextFrameFormat.BorderStyle.BorderStyle_Groove: "Groove",
+            QTextFrameFormat.BorderStyle.BorderStyle_Ridge: "Ridge",
+            QTextFrameFormat.BorderStyle.BorderStyle_Inset: "Inset",
+            QTextFrameFormat.BorderStyle.BorderStyle_Outset: "Outset"
         }
         return style_map.get(style, "Solid")
     
     def _get_border_style_enum(self, name: str) -> QTextFrameFormat.BorderStyle:
-        """Convert border style name to enum (supported set only)."""
+        """Convert border style name to enum."""
         style_map = {
             "None": QTextFrameFormat.BorderStyle.BorderStyle_None,
-            "Solid": QTextFrameFormat.BorderStyle.BorderStyle_Solid
+            "Solid": QTextFrameFormat.BorderStyle.BorderStyle_Solid,
+            "Dotted": QTextFrameFormat.BorderStyle.BorderStyle_Dotted,
+            "Dashed": QTextFrameFormat.BorderStyle.BorderStyle_Dashed,
+            "Double": QTextFrameFormat.BorderStyle.BorderStyle_Double,
+            "Dot-Dash": QTextFrameFormat.BorderStyle.BorderStyle_DotDash,
+            "Dot-Dot-Dash": QTextFrameFormat.BorderStyle.BorderStyle_DotDotDash,
+            "Groove": QTextFrameFormat.BorderStyle.BorderStyle_Groove,
+            "Ridge": QTextFrameFormat.BorderStyle.BorderStyle_Ridge,
+            "Inset": QTextFrameFormat.BorderStyle.BorderStyle_Inset,
+            "Outset": QTextFrameFormat.BorderStyle.BorderStyle_Outset
         }
         return style_map.get(name, QTextFrameFormat.BorderStyle.BorderStyle_Solid)
     
@@ -452,6 +518,8 @@ class TableFeature:
         """Create and configure the toolbar button for tables."""
         btn = QToolButton()
         btn.setText("Table")
+        btn.setIcon(qta.icon("fa5s.table", color="#1e293b"))
+        btn.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
         btn.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
         
         self.menu.aboutToShow.connect(self._update_menu_state)
@@ -464,6 +532,7 @@ class TableFeature:
         # Insert Table
         action_insert = QAction("Insert Table...", self.parent)
         action_insert.triggered.connect(lambda: self.insert_table())
+        action_insert.setIcon(qta.icon("fa5s.plus-square", color="#1e293b"))
         self.menu.addAction(action_insert)
         
         self.menu.addSeparator()
@@ -506,6 +575,7 @@ class TableFeature:
         
         self.actions['del_col'] = QAction("Delete Column", self.parent)
         self.actions['del_col'].triggered.connect(self._delete_col)
+        self.actions['del_col'].setIcon(qta.icon("fa5s.minus", color="#d94848"))
         self.menu.addAction(self.actions['del_col'])
         
         self.actions['del_table'] = QAction("Delete Table", self.parent)
@@ -517,6 +587,7 @@ class TableFeature:
         # Merge/Split
         self.actions['merge'] = QAction("Merge Cells", self.parent)
         self.actions['merge'].triggered.connect(self._merge_cells)
+        self.actions['merge'].setIcon(qta.icon("fa5s.object-group", color="#1e293b"))
         self.menu.addAction(self.actions['merge'])
         
         self.actions['split'] = QAction("Split Cells", self.parent)
@@ -635,7 +706,16 @@ class TableFeature:
         """Convert border style name to enum."""
         style_map = {
             "None": QTextFrameFormat.BorderStyle.BorderStyle_None,
-            "Solid": QTextFrameFormat.BorderStyle.BorderStyle_Solid
+            "Solid": QTextFrameFormat.BorderStyle.BorderStyle_Solid,
+            "Dotted": QTextFrameFormat.BorderStyle.BorderStyle_Dotted,
+            "Dashed": QTextFrameFormat.BorderStyle.BorderStyle_Dashed,
+            "Double": QTextFrameFormat.BorderStyle.BorderStyle_Double,
+            "Dot-Dash": QTextFrameFormat.BorderStyle.BorderStyle_DotDash,
+            "Dot-Dot-Dash": QTextFrameFormat.BorderStyle.BorderStyle_DotDotDash,
+            "Groove": QTextFrameFormat.BorderStyle.BorderStyle_Groove,
+            "Ridge": QTextFrameFormat.BorderStyle.BorderStyle_Ridge,
+            "Inset": QTextFrameFormat.BorderStyle.BorderStyle_Inset,
+            "Outset": QTextFrameFormat.BorderStyle.BorderStyle_Outset
         }
         return style_map.get(name, QTextFrameFormat.BorderStyle.BorderStyle_Solid)
 

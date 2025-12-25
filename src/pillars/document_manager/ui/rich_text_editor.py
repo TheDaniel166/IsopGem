@@ -5,27 +5,111 @@ from PyQt6.QtWidgets import (
     QColorDialog, QMenu, QToolButton, QDialog,
     QLabel, QDialogButtonBox, QFormLayout, QDoubleSpinBox, QMessageBox,
     QSlider, QLineEdit, QStatusBar, QFileDialog, QGridLayout,
-    QScrollArea, QFrame, QGroupBox, QPushButton, QTabWidget
+    QScrollArea, QFrame, QGroupBox, QPushButton, QTabWidget, QSplitter
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QSize, QMimeData, QUrl, QMarginsF, QSizeF
 from PyQt6.QtGui import (
-    QFont, QAction, QIcon, QColor, QTextCharFormat,
+    QFont, QAction, QColor, QTextCharFormat,
     QTextCursor, QTextListFormat, QTextBlockFormat,
-    QActionGroup, QBrush, QDesktopServices, QPageSize, QPageLayout
+    QActionGroup, QBrush, QDesktopServices, QPageSize, QPageLayout, QKeySequence
 )
+import qtawesome as qta
 from PyQt6.QtPrintSupport import QPrinter, QPrintDialog, QPrintPreviewDialog
+
+# Feature modules
 from .table_features import TableFeature
 from .image_features import ImageFeature
 from .list_features import ListFeature
 from .search_features import SearchReplaceFeature
 from .shape_features import ShapeFeature
 from .ribbon_widget import RibbonWidget
+from .etymology_feature import EtymologyFeature
+from .spell_feature import SpellFeature
+
+# Dialog modules (extracted for modularity)
+from .dialogs import (
+    HyperlinkDialog, HorizontalRuleDialog, PageSetupDialog,
+    SpecialCharactersDialog, ExportPdfDialog
+)
+
+# Page settings and constants
+from .editor_constants import PageSettings, DEFAULT_PAGE_SETTINGS
+
+# Shared UI
 from shared.ui import VirtualKeyboard, get_shared_virtual_keyboard
+
 
 class SafeTextEdit(QTextEdit):
     """
     A hardened QTextEdit that protects against 'Paste Attacks' (Mars Seal).
+    Also supports visual page break indicators.
     """
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._show_page_breaks = True
+        self._page_settings = DEFAULT_PAGE_SETTINGS
+    
+    @property
+    def page_height(self) -> int:
+        """Get page height from settings."""
+        return self._page_settings.content_height_pixels
+    
+    @property
+    def show_page_breaks(self) -> bool:
+        return self._show_page_breaks
+    
+    @show_page_breaks.setter
+    def show_page_breaks(self, value: bool):
+        self._show_page_breaks = value
+        self.viewport().update()
+    
+    def paintEvent(self, event):
+        """Paint the text, then overlay page break lines."""
+        # Let the base class paint the text first
+        super().paintEvent(event)
+        
+        if not self._show_page_breaks:
+            return
+        
+        # Paint page break lines
+        from PyQt6.QtGui import QPainter, QPen
+        
+        painter = QPainter(self.viewport())
+        
+        # Dashed line style
+        pen = QPen(QColor("#94a3b8"))  # Light gray
+        pen.setStyle(Qt.PenStyle.DashLine)
+        pen.setWidth(1)
+        painter.setPen(pen)
+        
+        # Get scroll position
+        scroll_y = self.verticalScrollBar().value()
+        viewport_height = self.viewport().height()
+        
+        # Calculate which page breaks are visible
+        doc_height = self.document().size().height()
+        
+        page = 1
+        while page * self.page_height < doc_height:
+            # Y position of this page break (in document coordinates)
+            break_y = page * self.page_height
+            
+            # Convert to viewport coordinates
+            viewport_y = break_y - scroll_y
+            
+            # Only draw if visible
+            if -10 < viewport_y < viewport_height + 10:
+                # Draw the line
+                painter.drawLine(10, int(viewport_y), self.viewport().width() - 10, int(viewport_y))
+                
+                # Draw page number label
+                painter.drawText(15, int(viewport_y) - 5, f"─ Page {page + 1} ─")
+            
+            page += 1
+        
+        painter.end()
+    
     def loadResource(self, type_id: int, url: QUrl):
         """
         Handle custom resource loading, specifically for docimg:// scheme.
@@ -106,470 +190,14 @@ class SafeTextEdit(QTextEdit):
         super().insertFromMimeData(source)
 
 
-class HyperlinkDialog(QDialog):
-    """Dialog for inserting or editing a hyperlink."""
-    
-    def __init__(self, selected_text: str = "", parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("Insert Hyperlink")
-        self.setMinimumWidth(400)
-        self._setup_ui(selected_text)
-    
-    def _setup_ui(self, selected_text: str):
-        layout = QVBoxLayout(self)
-        form = QFormLayout()
-        
-        self.text_input = QLineEdit()
-        self.text_input.setText(selected_text)
-        self.text_input.setPlaceholderText("Display text (optional)")
-        form.addRow("Text to display:", self.text_input)
-        
-        self.url_input = QLineEdit()
-        self.url_input.setPlaceholderText("https://example.com")
-        form.addRow("URL:", self.url_input)
-        
-        layout.addLayout(form)
-        
-        # Hint label
-        hint = QLabel("Tip: Select text first to use it as the display text.")
-        hint.setStyleSheet("color: #666; font-size: 11px;")
-        layout.addWidget(hint)
-        
-        buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok |
-            QDialogButtonBox.StandardButton.Cancel
-        )
-        buttons.accepted.connect(self.accept)
-        buttons.rejected.connect(self.reject)
-        layout.addWidget(buttons)
-        
-        # Focus on URL input
-        self.url_input.setFocus()
 
 
-class HorizontalRuleDialog(QDialog):
-    """Dialog for customizing horizontal rule options."""
-    
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("Insert Horizontal Line")
-        self.setMinimumWidth(350)
-        self.line_color = QColor("#cccccc")
-        self._setup_ui()
-    
-    def _setup_ui(self):
-        layout = QVBoxLayout(self)
-        form = QFormLayout()
-        
-        # Line thickness
-        self.thickness_spin = QSpinBox()
-        self.thickness_spin.setRange(1, 20)
-        self.thickness_spin.setValue(1)
-        self.thickness_spin.setSuffix(" px")
-        form.addRow("Thickness:", self.thickness_spin)
-        
-        # Line width
-        self.width_spin = QSpinBox()
-        self.width_spin.setRange(10, 100)
-        self.width_spin.setValue(100)
-        self.width_spin.setSuffix("%")
-        form.addRow("Width:", self.width_spin)
-        
-        # Line style
-        self.style_combo = QComboBox()
-        self.style_combo.addItems(["Solid", "Dashed", "Dotted", "Double"])
-        form.addRow("Style:", self.style_combo)
-        
-        # Line color
-        self.color_button = QToolButton()
-        self.color_button.setText("Choose Color")
-        self.color_button.setStyleSheet(f"background-color: {self.line_color.name()}; min-width: 100px;")
-        self.color_button.clicked.connect(self._pick_color)
-        form.addRow("Color:", self.color_button)
-        
-        # Alignment
-        self.align_combo = QComboBox()
-        self.align_combo.addItems(["Center", "Left", "Right"])
-        form.addRow("Alignment:", self.align_combo)
-        
-        # Margins
-        margin_widget = QWidget()
-        margin_layout = QHBoxLayout(margin_widget)
-        margin_layout.setContentsMargins(0, 0, 0, 0)
-        
-        self.margin_top_spin = QSpinBox()
-        self.margin_top_spin.setRange(0, 100)
-        self.margin_top_spin.setValue(10)
-        self.margin_top_spin.setSuffix(" px")
-        margin_layout.addWidget(QLabel("Top:"))
-        margin_layout.addWidget(self.margin_top_spin)
-        
-        self.margin_bottom_spin = QSpinBox()
-        self.margin_bottom_spin.setRange(0, 100)
-        self.margin_bottom_spin.setValue(10)
-        self.margin_bottom_spin.setSuffix(" px")
-        margin_layout.addWidget(QLabel("Bottom:"))
-        margin_layout.addWidget(self.margin_bottom_spin)
-        
-        form.addRow("Margins:", margin_widget)
-        
-        layout.addLayout(form)
-        
-        # Preview using a QFrame which respects styling
-        layout.addWidget(QLabel("Preview:"))
-        self.preview_frame = QWidget()
-        self.preview_frame.setMinimumHeight(50)
-        self.preview_frame.setStyleSheet("background: white; border: 1px solid #ddd;")
-        preview_layout = QVBoxLayout(self.preview_frame)
-        preview_layout.setContentsMargins(10, 10, 10, 10)
-        
-        self.preview_line = QWidget()
-        self.preview_line.setFixedHeight(1)
-        preview_layout.addWidget(self.preview_line, 0, Qt.AlignmentFlag.AlignCenter)
-        
-        layout.addWidget(self.preview_frame)
-        self._update_preview()
-        
-        # Connect signals for live preview
-        self.thickness_spin.valueChanged.connect(self._update_preview)
-        self.width_spin.valueChanged.connect(self._update_preview)
-        self.style_combo.currentTextChanged.connect(self._update_preview)
-        self.align_combo.currentTextChanged.connect(self._update_preview)
-        
-        buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok |
-            QDialogButtonBox.StandardButton.Cancel
-        )
-        buttons.accepted.connect(self.accept)
-        buttons.rejected.connect(self.reject)
-        layout.addWidget(buttons)
-    
-    def _pick_color(self):
-        dialog = QColorDialog(self.line_color, self)
-        dialog.setWindowTitle("Line Color")
-        dialog.setOptions(QColorDialog.ColorDialogOption.DontUseNativeDialog)
-        if dialog.exec():
-            self.line_color = dialog.currentColor()
-            self.color_button.setStyleSheet(f"background-color: {self.line_color.name()}; min-width: 100px;")
-            self._update_preview()
-    
-    def _update_preview(self):
-        """Update the preview line widget."""
-        color = self.line_color.name()
-        thickness = self.thickness_spin.value()
-        style = self.style_combo.currentText().lower()
-        width_pct = self.width_spin.value()
-        align = self.align_combo.currentText()
-        
-        # Calculate actual width based on preview container
-        container_width = self.preview_frame.width() - 20  # minus padding
-        if container_width < 100:
-            container_width = 300  # default before shown
-        line_width = int(container_width * width_pct / 100)
-        
-        # For double, use border-style: double which needs more height
-        if style == "double":
-            thickness = max(3, thickness)
-        
-        # Build border style for QWidget
-        border_style = f"{thickness}px {style} {color}"
-        
-        self.preview_line.setFixedHeight(thickness if style != "double" else thickness)
-        self.preview_line.setFixedWidth(line_width)
-        self.preview_line.setStyleSheet(f"background: transparent; border-top: {border_style}; border-bottom: none; border-left: none; border-right: none;")
-        
-        # Update alignment
-        preview_layout = self.preview_frame.layout()
-        if align == "Left":
-            preview_layout.setAlignment(self.preview_line, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-        elif align == "Right":
-            preview_layout.setAlignment(self.preview_line, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-        else:
-            preview_layout.setAlignment(self.preview_line, Qt.AlignmentFlag.AlignCenter)
-    
-    def _get_border_style(self) -> str:
-        style_map = {
-            "Solid": "solid",
-            "Dashed": "dashed",
-            "Dotted": "dotted",
-            "Double": "double"
-        }
-        return style_map.get(self.style_combo.currentText(), "solid")
-    
-    def _get_alignment(self) -> str:
-        align_map = {
-            "Center": "center",
-            "Left": "left",
-            "Right": "right"
-        }
-        return align_map.get(self.align_combo.currentText(), "center")
-    
-    def get_html(self) -> str:
-        """Generate HTML for the horizontal rule using a table (better QTextEdit support)."""
-        color = self.line_color.name()
-        thickness = self.thickness_spin.value()
-        width = self.width_spin.value()
-        margin_top = self.margin_top_spin.value()
-        margin_bottom = self.margin_bottom_spin.value()
-        align = self._get_alignment()
-        style = self._get_border_style()
-        
-        # Use a table-based approach for better QTextEdit compatibility
-        align_attr = 'align="center"' if align == "center" else f'align="{align}"'
-        
-        # For dashed/dotted, we use multiple small cells to simulate
-        if style == "dashed":
-            # Create dashed effect with repeating colored/transparent pattern
-            dash_cells = ''.join([f'<td style="background-color:{color}; width:8px;"></td><td style="width:4px;"></td>' for _ in range(40)])
-            return f'''<table {align_attr} width="{width}%" cellspacing="0" cellpadding="0" border="0" style="margin-top:{margin_top}px; margin-bottom:{margin_bottom}px; border-collapse:collapse;">
-                <tr style="height:{thickness}px; line-height:{thickness}px; font-size:1px;">{dash_cells}</tr>
-            </table>'''
-        elif style == "dotted":
-            # Create dotted effect with small squares
-            dot_cells = ''.join([f'<td style="background-color:{color}; width:{max(2,thickness)}px;"></td><td style="width:{max(2,thickness)}px;"></td>' for _ in range(60)])
-            return f'''<table {align_attr} width="{width}%" cellspacing="0" cellpadding="0" border="0" style="margin-top:{margin_top}px; margin-bottom:{margin_bottom}px; border-collapse:collapse;">
-                <tr style="height:{max(2,thickness)}px; line-height:{max(2,thickness)}px; font-size:1px;">{dot_cells}</tr>
-            </table>'''
-        elif style == "double":
-            # Create double line with border-top and border-bottom on a single cell
-            gap = max(2, thickness)
-            return f'''<table {align_attr} width="{width}%" cellspacing="0" cellpadding="0" border="0" style="margin-top:{margin_top}px; margin-bottom:{margin_bottom}px; border-collapse:collapse;">
-                <tr><td style="border-top:{thickness}px solid {color}; border-bottom:{thickness}px solid {color}; height:{gap}px; line-height:{gap}px; font-size:1px;"></td></tr>
-            </table>'''
-        else:
-            # Solid line - use border-top on a minimal height cell
-            return f'''<table {align_attr} width="{width}%" cellspacing="0" cellpadding="0" border="0" style="margin-top:{margin_top}px; margin-bottom:{margin_bottom}px; border-collapse:collapse;">
-                <tr><td style="border-top:{thickness}px solid {color}; height:0; line-height:0; font-size:1px; padding:0;"></td></tr>
-            </table>'''
-
-
-class PageSetupDialog(QDialog):
-    """Dialog for page setup options."""
-    
-    PAGE_SIZES = [
-        ("Letter (8.5 x 11 in)", QPageSize.PageSizeId.Letter),
-        ("Legal (8.5 x 14 in)", QPageSize.PageSizeId.Legal),
-        ("A4 (210 x 297 mm)", QPageSize.PageSizeId.A4),
-        ("A3 (297 x 420 mm)", QPageSize.PageSizeId.A3),
-        ("A5 (148 x 210 mm)", QPageSize.PageSizeId.A5),
-        ("B5 (176 x 250 mm)", QPageSize.PageSizeId.B5),
-        ("Executive (7.25 x 10.5 in)", QPageSize.PageSizeId.Executive),
-        ("Tabloid (11 x 17 in)", QPageSize.PageSizeId.Tabloid),
-    ]
-    
-    # Margin presets: (name, left, top, right, bottom) in mm
-    MARGIN_PRESETS = [
-        ("Normal (1 inch)", 25.4, 25.4, 25.4, 25.4),
-        ("Narrow (0.5 inch)", 12.7, 12.7, 12.7, 12.7),
-        ("Moderate", 19.1, 25.4, 19.1, 25.4),
-        ("Wide", 50.8, 25.4, 50.8, 25.4),
-    ]
-    
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("Page Setup")
-        self.setMinimumWidth(350)
-        self._setup_ui()
-    
-    def _setup_ui(self):
-        layout = QVBoxLayout(self)
-        
-        size_group = QGroupBox("Paper")
-        size_layout = QFormLayout()
-        
-        self.size_combo = QComboBox()
-        for name, _ in self.PAGE_SIZES:
-            self.size_combo.addItem(name)
-        self.size_combo.setCurrentIndex(2)
-        size_layout.addRow("Paper size:", self.size_combo)
-        
-        self.orientation_combo = QComboBox()
-        self.orientation_combo.addItems(["Portrait", "Landscape"])
-        size_layout.addRow("Orientation:", self.orientation_combo)
-        
-        self.margins_combo = QComboBox()
-        for name, *_ in self.MARGIN_PRESETS:
-            self.margins_combo.addItem(name)
-        size_layout.addRow("Margins:", self.margins_combo)
-        
-        size_group.setLayout(size_layout)
-        layout.addWidget(size_group)
-        
-        buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok |
-            QDialogButtonBox.StandardButton.Cancel
-        )
-        buttons.accepted.connect(self.accept)
-        buttons.rejected.connect(self.reject)
-        layout.addWidget(buttons)
-    
-    def get_page_size(self) -> QPageSize:
-        idx = self.size_combo.currentIndex()
-        _, size_id = self.PAGE_SIZES[idx]
-        return QPageSize(size_id)
-    
-    def get_orientation(self) -> QPageLayout.Orientation:
-        if self.orientation_combo.currentText() == "Landscape":
-            return QPageLayout.Orientation.Landscape
-        return QPageLayout.Orientation.Portrait
-    
-    def get_margins(self) -> QMarginsF:
-        idx = self.margins_combo.currentIndex()
-        _, left, top, right, bottom = self.MARGIN_PRESETS[idx]
-        return QMarginsF(left, top, right, bottom)
-
-
-class SpecialCharactersDialog(QDialog):
-    """Dialog for inserting special characters and symbols."""
-    
-    CATEGORIES = {
-        "Common": "© ® ™ § ¶ † ‡ • ° ± × ÷ ≠ ≤ ≥ ≈ ∞ √ ← → ↑ ↓ ↔",
-        "Currency": "$ € £ ¥ ¢ ₹ ₽ ₿ ₩ ₪ ฿",
-        "Greek": "Α Β Γ Δ Ε Ζ Η Θ Ι Κ Λ Μ Ν Ξ Ο Π Ρ Σ Τ Υ Φ Χ Ψ Ω α β γ δ ε ζ η θ ι κ λ μ ν ξ ο π ρ σ τ υ φ χ ψ ω",
-        "Math": "+ − × ÷ = ≠ < > ≤ ≥ ± ∞ √ ∑ ∏ ∫ ∂ ∇ ∈ ∉ ⊂ ⊃ ∪ ∩ ∧ ∨ ¬",
-        "Fractions": "½ ⅓ ⅔ ¼ ¾ ⅕ ⅖ ⅗ ⅘ ⅙ ⅚ ⅛ ⅜ ⅝ ⅞",
-        "Super/Sub": "⁰ ¹ ² ³ ⁴ ⁵ ⁶ ⁷ ⁸ ⁹ ⁺ ⁻ ⁿ ₀ ₁ ₂ ₃ ₄ ₅ ₆ ₇ ₈ ₉",
-        "Arrows": "← → ↑ ↓ ↔ ↕ ⇐ ⇒ ⇑ ⇓ ⇔ ➔ ➜ ➡ ➢",
-        "Shapes": "■ □ ▢ ▲ △ ▼ ▽ ◆ ◇ ○ ● ◐ ◑ ★ ☆",
-        "Zodiac": "♈ ♉ ♊ ♋ ♌ ♍ ♎ ♏ ♐ ♑ ♒ ♓",
-        "Planets": "☉ ☽ ☿ ♀ ♁ ♂ ♃ ♄ ♅ ♆",
-        "Music": "♩ ♪ ♫ ♬ ♭ ♮ ♯",
-        "Cards": "♠ ♡ ♢ ♣ ♤ ♥ ♦ ♧",
-        "Misc": "☀ ☁ ☂ ☃ ☄ ★ ☆ ☎ ☐ ☑ ☒ ☮ ☯ ☸ ☹ ☺ ☻ ☼ ☽ ☾ ♀ ♂",
-    }
-    
-    char_selected = pyqtSignal(str)
-    
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("Special Characters")
-        self.setMinimumSize(450, 350)
-        self._setup_ui()
-    
-    def _setup_ui(self):
-        layout = QVBoxLayout(self)
-        
-        self.tabs = QTabWidget()
-        
-        for category, chars in self.CATEGORIES.items():
-            scroll = QScrollArea()
-            scroll.setWidgetResizable(True)
-            
-            container = QWidget()
-            grid = QGridLayout(container)
-            grid.setSpacing(2)
-            
-            char_list = chars.split()
-            cols = 10
-            for i, char in enumerate(char_list):
-                btn = QPushButton(char)
-                btn.setFixedSize(32, 32)
-                btn.setFont(QFont("Segoe UI Symbol", 12))
-                btn.clicked.connect(lambda checked, c=char: self._on_char_clicked(c))
-                grid.addWidget(btn, i // cols, i % cols)
-            
-            scroll.setWidget(container)
-            self.tabs.addTab(scroll, category)
-        
-        layout.addWidget(self.tabs)
-        
-        self.selected_label = QLabel("Click a character to insert")
-        layout.addWidget(self.selected_label)
-        
-        close_btn = QPushButton("Close")
-        close_btn.clicked.connect(self.close)
-        layout.addWidget(close_btn)
-    
-    def _on_char_clicked(self, char: str):
-        self.selected_label.setText(f"Inserted: {char}")
-        self.char_selected.emit(char)
-
-
-class ExportPdfDialog(QDialog):
-    """Dialog for PDF export options."""
-    
-    PAGE_SIZES = PageSetupDialog.PAGE_SIZES
-    MARGIN_PRESETS = PageSetupDialog.MARGIN_PRESETS
-    
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("Export to PDF")
-        self.setMinimumWidth(400)
-        self._setup_ui()
-    
-    def _setup_ui(self):
-        layout = QVBoxLayout(self)
-        
-        file_group = QGroupBox("Output File")
-        file_layout = QHBoxLayout()
-        
-        self.file_input = QLineEdit()
-        self.file_input.setPlaceholderText("Select output file...")
-        file_layout.addWidget(self.file_input)
-        
-        browse_btn = QPushButton("Browse...")
-        browse_btn.clicked.connect(self._browse_file)
-        file_layout.addWidget(browse_btn)
-        
-        file_group.setLayout(file_layout)
-        layout.addWidget(file_group)
-        
-        page_group = QGroupBox("Page Setup")
-        page_layout = QFormLayout()
-        
-        self.size_combo = QComboBox()
-        for name, _ in self.PAGE_SIZES:
-            self.size_combo.addItem(name)
-        self.size_combo.setCurrentIndex(2)
-        page_layout.addRow("Paper size:", self.size_combo)
-        
-        self.orientation_combo = QComboBox()
-        self.orientation_combo.addItems(["Portrait", "Landscape"])
-        page_layout.addRow("Orientation:", self.orientation_combo)
-        
-        self.margins_combo = QComboBox()
-        for name, *_ in self.MARGIN_PRESETS:
-            self.margins_combo.addItem(name)
-        page_layout.addRow("Margins:", self.margins_combo)
-        
-        page_group.setLayout(page_layout)
-        layout.addWidget(page_group)
-        
-        buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok |
-            QDialogButtonBox.StandardButton.Cancel
-        )
-        buttons.button(QDialogButtonBox.StandardButton.Ok).setText("Export")
-        buttons.accepted.connect(self.accept)
-        buttons.rejected.connect(self.reject)
-        layout.addWidget(buttons)
-    
-    def _browse_file(self):
-        path, _ = QFileDialog.getSaveFileName(
-            self, "Export PDF", "", "PDF Files (*.pdf)"
-        )
-        if path:
-            if not path.endswith('.pdf'):
-                path += '.pdf'
-            self.file_input.setText(path)
-    
-    def get_file_path(self) -> str:
-        return self.file_input.text()
-    
-    def get_page_size(self) -> QPageSize:
-        idx = self.size_combo.currentIndex()
-        _, size_id = self.PAGE_SIZES[idx]
-        return QPageSize(size_id)
-    
-    def get_orientation(self) -> QPageLayout.Orientation:
-        if self.orientation_combo.currentText() == "Landscape":
-            return QPageLayout.Orientation.Landscape
-        return QPageLayout.Orientation.Portrait
-    
-    def get_margins(self) -> QMarginsF:
-        idx = self.margins_combo.currentIndex()
-        _, left, top, right, bottom = self.MARGIN_PRESETS[idx]
-        return QMarginsF(left, top, right, bottom)
+# Dialog classes have been moved to ui/dialogs/ for modularity:
+# - HyperlinkDialog
+# - HorizontalRuleDialog  
+# - PageSetupDialog
+# - SpecialCharactersDialog
+# - ExportPdfDialog
 
 
 class RichTextEditor(QWidget):
@@ -659,6 +287,13 @@ class RichTextEditor(QWidget):
         self.editor.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.editor.customContextMenuRequested.connect(self._show_context_menu)
         
+        # Initialize Etymology Feature (panel created but NOT added to layout - lives as floating widget)
+        self.etymology_feature = EtymologyFeature(self)
+        
+        # Initialize Spell Check Feature
+        self.spell_feature = SpellFeature(self)
+        
+        # Add editor directly to layout (no splitter - simpler and cleaner)
         layout.addWidget(self.editor)
         
         if show_ui:
@@ -712,6 +347,11 @@ class RichTextEditor(QWidget):
             self.word_count_label = QLabel("Words: 0 | Characters: 0")
             self.status_bar.addWidget(self.word_count_label)
             
+            # Page count label
+            self.page_count_label = QLabel("Page 1 of 1")
+            self.page_count_label.setStyleSheet("margin-left: 10px;")
+            self.status_bar.addWidget(self.page_count_label)
+            
             # Spacer
             self.status_bar.addWidget(QLabel(""), 1)  # Stretch
             
@@ -752,14 +392,22 @@ class RichTextEditor(QWidget):
             self.status_bar.addPermanentWidget(zoom_widget)
             layout.addWidget(self.status_bar)
             
-            # Connect text changed to update word count
+            # Connect text changed to update word count and page count
             self.editor.textChanged.connect(self._update_word_count)
+            self.editor.textChanged.connect(self._update_page_count)
+            self.editor.cursorPositionChanged.connect(self._update_current_page)
         
         # Keybindings (Available even with show_ui=False)
         self.action_find = QAction("Find", self)
         self.action_find.setShortcut("Ctrl+F")
         self.action_find.triggered.connect(self.search_feature.show_search_dialog)
         self.addAction(self.action_find)
+        
+        # Spell check shortcut (F7)
+        self.action_spell_check = QAction("Spelling", self)
+        self.action_spell_check.setShortcut("F7")
+        self.action_spell_check.triggered.connect(self.spell_feature.show_dialog)
+        self.addAction(self.action_spell_check)
         
         if show_ui:
             # Initialize Ribbon Content (must be after action_find is created)
@@ -809,16 +457,24 @@ class RichTextEditor(QWidget):
 
     def _show_context_menu(self, pos):
         """Show context menu with table options if applicable."""
-        cursor = self.editor.cursorForPosition(pos)
-        self.editor.setTextCursor(cursor)
+        # Only move cursor if there's no selection - preserve selection for Cut/Copy/Delete
+        current_cursor = self.editor.textCursor()
+        if not current_cursor.hasSelection():
+            cursor = self.editor.cursorForPosition(pos)
+            self.editor.setTextCursor(cursor)
         
         menu = self.editor.createStandardContextMenu()
         
         if menu is not None:
+            # Spell check suggestions first (at top of menu)
+            if hasattr(self, 'spell_feature'):
+                self.spell_feature.extend_context_menu(menu, pos)
             if hasattr(self, 'table_feature'):
                 self.table_feature.extend_context_menu(menu)
             if hasattr(self, 'image_feature'):
                 self.image_feature.extend_context_menu(menu)
+            if hasattr(self, 'etymology_feature'):
+                self.etymology_feature.extend_context_menu(menu)
             menu.exec(self.editor.mapToGlobal(pos))
 
     def _init_features(self):
@@ -882,42 +538,63 @@ class RichTextEditor(QWidget):
     def _init_ribbon(self):
         """Populate the ribbon with tabs and groups."""
         
-        # === TAB: HOME ===
-        tab_home = self.ribbon.add_ribbon_tab("Home")
-        
-        # Group: Clipboard
-        grp_clip = tab_home.add_group("Clipboard")
-        
+        # === Define Core Actions First ===
         self.action_undo = QAction("Undo", self)
         self.action_undo.setShortcut("Ctrl+Z")
+        self.action_undo.setIcon(qta.icon("fa5s.undo", color="#1e293b"))
         self.action_undo.triggered.connect(self.editor.undo)
-        grp_clip.add_action(self.action_undo)
         
         self.action_redo = QAction("Redo", self)
         self.action_redo.setShortcut("Ctrl+Y")
+        self.action_redo.setIcon(qta.icon("fa5s.redo", color="#1e293b"))
         self.action_redo.triggered.connect(self.editor.redo)
-        grp_clip.add_action(self.action_redo)
 
-        # Group: Styles (New)
-        grp_style = tab_home.add_group("Styles")
-        self.style_combo = QComboBox()
-        self.style_combo.addItems(list(self.styles.keys()))
-        self.style_combo.currentTextChanged.connect(self._apply_style)
-        self.style_combo.setMinimumWidth(120)
-        grp_style.add_widget(self.style_combo)
-
-        # Group: Font
-        grp_font = tab_home.add_group("Font")
+        # === Application Button (File) ===
+        file_menu = self.ribbon.add_file_menu()
+        file_menu.addAction("New", self.new_document)
+        file_menu.addAction("Open...", self.open_document)
+        file_menu.addAction("Save As...", self.save_document)
         
-        # Font Row 1: Combo boxes
-        font_box = QWidget()
-        font_layout = QHBoxLayout(font_box)
-        font_layout.setContentsMargins(0,0,0,0)
+        # === Quick Access Toolbar ===
+        self.ribbon.add_quick_access_button(self.action_undo)
+        self.ribbon.add_quick_access_button(self.action_redo)
+
+        # =========================================================================
+        # TAB: HOME
+        # =========================================================================
+        tab_home = self.ribbon.add_ribbon_tab("Home")
+        
+        # --- Group: Clipboard ---
+        grp_clip = tab_home.add_group("Clipboard")
+        
+        # Paste
+        action_paste = QAction("Paste", self)
+        action_paste.setShortcut("Ctrl+V")
+        action_paste.setIcon(qta.icon("fa5s.paste", color="#1e293b"))
+        action_paste.triggered.connect(self.editor.paste)
+        grp_clip.add_action(action_paste, Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
+        
+        # Cut (small)
+        action_cut = QAction("Cut", self)
+        action_cut.setShortcut("Ctrl+X")
+        action_cut.setIcon(qta.icon("fa5s.cut", color="#1e293b"))
+        action_cut.triggered.connect(self.editor.cut)
+        grp_clip.add_action(action_cut)
+        
+        # Copy (small)
+        action_copy = QAction("Copy", self)
+        action_copy.setShortcut("Ctrl+C")
+        action_copy.setIcon(qta.icon("fa5s.copy", color="#1e293b"))
+        action_copy.triggered.connect(self.editor.copy)
+        grp_clip.add_action(action_copy)
+        
+        # --- Group: Typeface ---
+        grp_face = tab_home.add_group("Typeface")
         
         self.font_combo = QFontComboBox()
         self.font_combo.setMaximumWidth(150)
         self.font_combo.currentFontChanged.connect(self.editor.setCurrentFont)
-        font_layout.addWidget(self.font_combo)
+        grp_face.add_widget(self.font_combo)
         
         self.size_combo = QComboBox()
         self.size_combo.setEditable(True)
@@ -926,184 +603,237 @@ class RichTextEditor(QWidget):
         self.size_combo.addItems([str(s) for s in sizes])
         self.size_combo.setCurrentText("12")
         self.size_combo.textActivated.connect(self._set_font_size)
-        font_layout.addWidget(self.size_combo)
-        
-        grp_font.add_widget(font_box)
-        
-        # Font Row 2: Buttons (Bold, Italic, Underline)
-        self.action_bold = QAction("B", self)
-        self.action_bold.setCheckable(True)
-        self.action_bold.setShortcut("Ctrl+B")
-        self.action_bold.triggered.connect(self._toggle_bold)
-        self.action_bold.setFont(QFont("serif", weight=QFont.Weight.Bold))
-        grp_font.add_action(self.action_bold, Qt.ToolButtonStyle.ToolButtonTextOnly) # Compact
-        
-        self.action_italic = QAction("I", self)
-        self.action_italic.setCheckable(True)
-        self.action_italic.setShortcut("Ctrl+I")
-        self.action_italic.triggered.connect(self.editor.setFontItalic)
-        self.action_italic.setFont(QFont("serif", italic=True))
-        grp_font.add_action(self.action_italic, Qt.ToolButtonStyle.ToolButtonTextOnly)
+        grp_face.add_widget(self.size_combo)
 
-        self.action_underline = QAction("U", self)
-        self.action_underline.setCheckable(True)
-        self.action_underline.setShortcut("Ctrl+U")
-        self.action_underline.triggered.connect(self.editor.setFontUnderline)
-        grp_font.add_action(self.action_underline, Qt.ToolButtonStyle.ToolButtonTextOnly)
+        # --- Group: Basic Formatting ---
+        # --- Group: Basic Formatting ---
+        grp_basic = tab_home.add_group("Basic")
         
+        # Helper to create buttons (using add_action directly where possible for layout)
+        # Bold
+        self.btn_bold = QToolButton()
+        self.btn_bold.setIcon(qta.icon("fa5s.bold", color="#1e293b"))
+        self.btn_bold.setToolTip("Bold (Ctrl+B)")
+        self.btn_bold.setCheckable(True)
+        self.btn_bold.setShortcut("Ctrl+B")
+        self.btn_bold.clicked.connect(self._toggle_bold)
+        grp_basic.add_widget(self.btn_bold)
+        
+        # Italic
+        self.btn_italic = QToolButton()
+        self.btn_italic.setIcon(qta.icon("fa5s.italic", color="#1e293b"))
+        self.btn_italic.setToolTip("Italic (Ctrl+I)")
+        self.btn_italic.setCheckable(True)
+        self.btn_italic.setShortcut("Ctrl+I")
+        self.btn_italic.clicked.connect(self.editor.setFontItalic)
+        grp_basic.add_widget(self.btn_italic)
+
+        # Underline
+        self.btn_underline = QToolButton()
+        self.btn_underline.setIcon(qta.icon("fa5s.underline", color="#1e293b"))
+        self.btn_underline.setToolTip("Underline (Ctrl+U)")
+        self.btn_underline.setCheckable(True)
+        self.btn_underline.setShortcut("Ctrl+U")
+        self.btn_underline.clicked.connect(self.editor.setFontUnderline)
+        grp_basic.add_widget(self.btn_underline)
+        
+        # --- Group: Advanced Formatting ---
+        grp_adv = tab_home.add_group("Advanced")
+
         # Strikethrough
-        self.action_strike = QAction("S", self)
-        self.action_strike.setCheckable(True)
-        self.action_strike.setToolTip("Strikethrough")
-        self.action_strike.triggered.connect(self._toggle_strikethrough)
-        # Fallback icon or text if theme icon missing? Text S with strike is hard in plain text
-        # Using theme icon
-        self.action_strike.setIcon(QIcon.fromTheme("format-text-strikethrough"))
-        if self.action_strike.icon().isNull():
-            self.action_strike.setText("S̶") 
-        grp_font.add_action(self.action_strike)
+        self.btn_strike = QToolButton()
+        self.btn_strike.setCheckable(True)
+        self.btn_strike.setToolTip("Strikethrough")
+        self.btn_strike.clicked.connect(self._toggle_strikethrough)
+        self.btn_strike.setIcon(qta.icon("fa5s.strikethrough", color="#1e293b"))
+        grp_adv.add_widget(self.btn_strike)
 
         # Subscript
-        self.action_sub = QAction("Sub", self)
+        self.action_sub = QAction("", self)
         self.action_sub.setCheckable(True)
         self.action_sub.setToolTip("Subscript")
         self.action_sub.triggered.connect(self._toggle_subscript)
-        self.action_sub.setIcon(QIcon.fromTheme("format-text-subscript"))
-        if self.action_sub.icon().isNull():
-             self.action_sub.setText("X₂")
-        grp_font.add_action(self.action_sub)
+        self.action_sub.setIcon(qta.icon("fa5s.subscript", color="#1e293b"))
+        grp_adv.add_action(self.action_sub, Qt.ToolButtonStyle.ToolButtonIconOnly)
 
         # Superscript
-        self.action_super = QAction("Sup", self)
+        self.action_super = QAction("", self)
         self.action_super.setCheckable(True)
         self.action_super.setToolTip("Superscript")
         self.action_super.triggered.connect(self._toggle_superscript)
-        self.action_super.setIcon(QIcon.fromTheme("format-text-superscript"))
-        if self.action_super.icon().isNull():
-             self.action_super.setText("X²")
-        grp_font.add_action(self.action_super)
+        self.action_super.setIcon(qta.icon("fa5s.superscript", color="#1e293b"))
+        grp_adv.add_action(self.action_super, Qt.ToolButtonStyle.ToolButtonIconOnly)
         
         # Clear Formatting
-        self.action_clear = QAction("Clear", self)
+        self.action_clear = QAction("", self)
         self.action_clear.setToolTip("Clear Formatting")
         self.action_clear.triggered.connect(self._clear_formatting)
-        self.action_clear.setIcon(QIcon.fromTheme("format-text-clear")) # or edit-clear
-        if self.action_clear.icon().isNull():
-             self.action_clear.setText("oslash")
-        grp_font.add_action(self.action_clear)
+        self.action_clear.setIcon(qta.icon("fa5s.eraser", color="#d94848")) # Red eraser
+        grp_adv.add_action(self.action_clear, Qt.ToolButtonStyle.ToolButtonIconOnly)
+        
+        # --- Group: Colors ---
+        grp_color = tab_home.add_group("Colors")
         
         # Colors
         btn_color = QToolButton()
-        btn_color.setIcon(QIcon()) # Placeholder for now or text
+        btn_color.setIcon(qta.icon("fa5s.palette", color="#2563eb")) 
         btn_color.setText("Color")
         btn_color.setToolTip("Text Color")
         btn_color.clicked.connect(self._pick_color)
-        grp_font.add_widget(btn_color)
+        grp_color.add_widget(btn_color)
         
         btn_highlight = QToolButton()
+        btn_highlight.setIcon(qta.icon("fa5s.highlighter", color="#ca8a04"))
         btn_highlight.setText("High")
         btn_highlight.setToolTip("Highlight")
         btn_highlight.clicked.connect(self._pick_highlight)
-        grp_font.add_widget(btn_highlight)
+        grp_color.add_widget(btn_highlight)
         
-        btn_clear = QToolButton()
-        btn_clear.setText("No Color")
-        btn_clear.setToolTip("Clear Highlight")
-        btn_clear.clicked.connect(self._clear_highlight)
-        grp_font.add_widget(btn_clear)
+        btn_clear_bg = QToolButton()
+        btn_clear_bg.setIcon(qta.icon("fa5s.ban", color="#94a3b8"))
+        btn_clear_bg.setText("X")
+        btn_clear_bg.setToolTip("No Highlight")
+        btn_clear_bg.clicked.connect(self._clear_highlight)
+        grp_color.add_widget(btn_clear_bg)
         
-        # Group: Paragraph
+        # --- Group: Paragraph ---
         grp_para = tab_home.add_group("Paragraph")
         
-        # Alignment Group (Exclusive)
+        # Alignment
         align_group = QActionGroup(self)
         
-        self.action_align_left = QAction("Left", self)
+        self.action_align_left = QAction("", self)
+        self.action_align_left.setToolTip("Align Left")
         self.action_align_left.setCheckable(True)
+        self.action_align_left.setIcon(qta.icon("fa5s.align-left", color="#1e293b"))
         self.action_align_left.triggered.connect(lambda: self.editor.setAlignment(Qt.AlignmentFlag.AlignLeft))
         align_group.addAction(self.action_align_left)
-        grp_para.add_action(self.action_align_left, Qt.ToolButtonStyle.ToolButtonTextOnly)
-        
-        self.action_align_center = QAction("Center", self)
+        grp_para.add_action(self.action_align_left, Qt.ToolButtonStyle.ToolButtonIconOnly)
+
+        self.action_align_center = QAction("", self)
+        self.action_align_center.setToolTip("Align Center")
         self.action_align_center.setCheckable(True)
+        self.action_align_center.setIcon(qta.icon("fa5s.align-center", color="#1e293b"))
         self.action_align_center.triggered.connect(lambda: self.editor.setAlignment(Qt.AlignmentFlag.AlignCenter))
         align_group.addAction(self.action_align_center)
-        grp_para.add_action(self.action_align_center, Qt.ToolButtonStyle.ToolButtonTextOnly)
+        grp_para.add_action(self.action_align_center, Qt.ToolButtonStyle.ToolButtonIconOnly)
         
-        self.action_align_right = QAction("Right", self)
+        self.action_align_right = QAction("", self)
+        self.action_align_right.setToolTip("Align Right")
         self.action_align_right.setCheckable(True)
+        self.action_align_right.setIcon(qta.icon("fa5s.align-right", color="#1e293b"))
         self.action_align_right.triggered.connect(lambda: self.editor.setAlignment(Qt.AlignmentFlag.AlignRight))
         align_group.addAction(self.action_align_right)
-        grp_para.add_action(self.action_align_right, Qt.ToolButtonStyle.ToolButtonTextOnly)
+        grp_para.add_action(self.action_align_right, Qt.ToolButtonStyle.ToolButtonIconOnly)
         
-        self.action_align_justify = QAction("Justify", self)
+        self.action_align_justify = QAction("", self)
+        self.action_align_justify.setToolTip("Justify")
         self.action_align_justify.setCheckable(True)
+        self.action_align_justify.setIcon(qta.icon("fa5s.align-justify", color="#1e293b"))
         self.action_align_justify.triggered.connect(lambda: self.editor.setAlignment(Qt.AlignmentFlag.AlignJustify))
         align_group.addAction(self.action_align_justify)
-        grp_para.add_action(self.action_align_justify, Qt.ToolButtonStyle.ToolButtonTextOnly)
+        grp_para.add_action(self.action_align_justify, Qt.ToolButtonStyle.ToolButtonIconOnly)
         
+        # --- Group: Lists ---
+        grp_lists = tab_home.add_group("Lists")
         
-        grp_para.add_separator()
+        # Bullet List Button with Dropdown
+        from pillars.document_manager.ui.list_features import LIST_STYLES, BULLET_STYLES, NUMBER_STYLES
         
-        # Lists & Indentation
-        self.list_feature = ListFeature(self.editor, self)
+        self.bullet_btn = QToolButton()
+        self.bullet_btn.setIcon(qta.icon("fa5s.list-ul", color="#1e293b"))
+        self.bullet_btn.setToolTip("Bullet List")
+        self.bullet_btn.setPopupMode(QToolButton.ToolButtonPopupMode.MenuButtonPopup)
+        self.bullet_btn.clicked.connect(lambda: self._toggle_list(QTextListFormat.Style.ListDisc))
         
-        self.action_list_bullet = QAction("• List", self)
-        self.action_list_bullet.triggered.connect(lambda: self.list_feature.toggle_list(QTextListFormat.Style.ListDisc))
-        grp_para.add_action(self.action_list_bullet, Qt.ToolButtonStyle.ToolButtonTextOnly)
+        bullet_menu = QMenu(self)
+        for name in BULLET_STYLES:
+            act = bullet_menu.addAction(name)
+            style = LIST_STYLES[name]
+            act.triggered.connect(lambda checked, s=style: self._toggle_list(s))
+        self.bullet_btn.setMenu(bullet_menu)
+        grp_lists.add_widget(self.bullet_btn)
         
-        self.action_list_number = QAction("1. List", self)
-        self.action_list_number.triggered.connect(lambda: self.list_feature.toggle_list(QTextListFormat.Style.ListDecimal))
-        grp_para.add_action(self.action_list_number, Qt.ToolButtonStyle.ToolButtonTextOnly)
+        # Number List Button with Dropdown
+        self.number_btn = QToolButton()
+        self.number_btn.setIcon(qta.icon("fa5s.list-ol", color="#1e293b"))
+        self.number_btn.setToolTip("Numbered List")
+        self.number_btn.setPopupMode(QToolButton.ToolButtonPopupMode.MenuButtonPopup)
+        self.number_btn.clicked.connect(lambda: self._toggle_list(QTextListFormat.Style.ListDecimal))
         
-        grp_para.add_separator()
+        number_menu = QMenu(self)
+        for name in NUMBER_STYLES:
+            act = number_menu.addAction(name)
+            style = LIST_STYLES[name]
+            act.triggered.connect(lambda checked, s=style: self._toggle_list(s))
+        number_menu.addSeparator()
+        act_start = number_menu.addAction("Set Start Number...")
+        act_start.triggered.connect(lambda: self.list_feature.show_start_number_dialog())
+        self.number_btn.setMenu(number_menu)
+        grp_lists.add_widget(self.number_btn)
         
-        self.action_outdent = QAction("<< Out", self)
-        self.action_outdent.setToolTip("Decrease Indent")
-        self.action_outdent.triggered.connect(self.list_feature.outdent)
-        grp_para.add_action(self.action_outdent, Qt.ToolButtonStyle.ToolButtonTextOnly)
+        # Checklist Button
+        act_checklist = QAction(qta.icon("fa5s.check-square", color="#1e293b"), "Checklist", self)
+        act_checklist.setToolTip("Toggle Checklist")
+        act_checklist.triggered.connect(lambda: self.list_feature.toggle_checklist())
+        grp_lists.add_action(act_checklist, Qt.ToolButtonStyle.ToolButtonIconOnly)
         
-        self.action_indent = QAction("In >>", self)
-        self.action_indent.setToolTip("Increase Indent")
-        self.action_indent.triggered.connect(self.list_feature.indent)
-        grp_para.add_action(self.action_indent, Qt.ToolButtonStyle.ToolButtonTextOnly)
+        # Indent/Outdent
+        act_indent = QAction(qta.icon("fa5s.indent", color="#1e293b"), "Increase Indent", self)
+        act_indent.triggered.connect(lambda: self.list_feature.indent())
+        grp_lists.add_action(act_indent, Qt.ToolButtonStyle.ToolButtonIconOnly)
         
-        grp_para.add_separator()
+        act_outdent = QAction(qta.icon("fa5s.outdent", color="#1e293b"), "Decrease Indent", self)
+        act_outdent.triggered.connect(lambda: self.list_feature.outdent())
+        grp_lists.add_action(act_outdent, Qt.ToolButtonStyle.ToolButtonIconOnly)
         
-        # Line Spacing dropdown
-        self.spacing_combo = QComboBox()
-        self.spacing_combo.addItems(["1.0", "1.15", "1.5", "2.0", "2.5", "3.0"])
-        self.spacing_combo.setCurrentText("1.0")
-        self.spacing_combo.setToolTip("Line Spacing")
-        self.spacing_combo.currentTextChanged.connect(self._set_line_spacing)
-        self.spacing_combo.setMaximumWidth(60)
-        grp_para.add_widget(self.spacing_combo)
+        # Remove List
+        act_remove_list = QAction(qta.icon("fa5s.times-circle", color="#dc2626"), "Remove List", self)
+        act_remove_list.triggered.connect(lambda: self.list_feature.remove_list())
+        grp_lists.add_action(act_remove_list, Qt.ToolButtonStyle.ToolButtonIconOnly)
         
-        # Text Direction (RTL/LTR)
-        self.action_rtl = QAction("RTL", self)
-        self.action_rtl.setCheckable(True)
-        self.action_rtl.setToolTip("Right-to-Left (Hebrew, Arabic)")
-        self.action_rtl.triggered.connect(self._toggle_text_direction)
-        grp_para.add_action(self.action_rtl, Qt.ToolButtonStyle.ToolButtonTextOnly)
+        # --- Group: Styles (Gallery) ---
+        grp_style = tab_home.add_group("Styles")
+        self.style_gallery = grp_style.add_gallery(min_width=200)
         
-        # Group: Edit
-        grp_edit = tab_home.add_group("Edit")
-        # Reuse the action defined in setup_ui which has the shortcut
-        grp_edit.add_action(self.action_find, Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
+        for name in self.styles.keys():
+            # Select specific icons for different styles
+            if name == "Title":
+                icon = qta.icon("fa5s.heading", color="#1e293b", scale_factor=1.2)
+            elif name.startswith("Heading"):
+                # Use hashtag as a distinct symbol for headers (markdown style)
+                icon = qta.icon("fa5s.hashtag", color="#2563eb") # Blue for headers
+            elif name == "Code":
+                icon = qta.icon("fa5s.code", color="#d94848") # Red for code
+            else:
+                icon = qta.icon("fa5s.paragraph", color="#64748b")
+                
+            self.style_gallery.add_item(name, icon, lambda checked, s=name: self._apply_style(s))
 
+        # =========================================================================
+        # TAB: INSERT
+        # =========================================================================
         # === TAB: INSERT ===
         tab_insert = self.ribbon.add_ribbon_tab("Insert")
+        
+        # Group: Pages
+        grp_pages = tab_insert.add_group("Pages")
+        action_break = QAction("Page Break", self)
+        action_break.setToolTip("Insert Page Break (Ctrl+Enter)")
+        action_break.setShortcut("Ctrl+Return")
+        action_break.triggered.connect(self._insert_page_break)
+        action_break.setIcon(qta.icon("fa5s.unlink", color="#1e293b"))
+        grp_pages.add_action(action_break, Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
         
         # Group: Tables
         grp_tables = tab_insert.add_group("Tables")
         self.table_feature = TableFeature(self.editor, self)
-        # Adding the toolbar button from the feature
-        # We need to extract the action or just add the widget
         grp_tables.add_widget(self.table_feature.create_toolbar_button())
         
         # Group: Illustrations
         grp_illus = tab_insert.add_group("Illustrations")
         self.image_feature = ImageFeature(self.editor, self)
+        # Assuming image_feature checks for icon internally, if not we rely on text
         grp_illus.add_action(self.image_feature.create_toolbar_action(), Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
         
         # Shapes
@@ -1114,8 +844,9 @@ class RichTextEditor(QWidget):
         grp_sym = tab_insert.add_group("Symbols")
         
         action_kb = QAction("Keyboard", self)
-        action_kb.setToolTip("Open Virtual Keyboard (Hebrew, Greek, Esoteric)")
+        action_kb.setToolTip("Open Virtual Keyboard")
         action_kb.triggered.connect(self._show_virtual_keyboard)
+        action_kb.setIcon(qta.icon("fa5s.keyboard", color="#1e293b"))
         grp_sym.add_action(action_kb, Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
         
         # Group: Links
@@ -1125,20 +856,23 @@ class RichTextEditor(QWidget):
         action_hyperlink.setToolTip("Insert Hyperlink (Ctrl+K)")
         action_hyperlink.setShortcut("Ctrl+K")
         action_hyperlink.triggered.connect(self._insert_hyperlink)
+        action_hyperlink.setIcon(qta.icon("fa5s.link", color="#1e293b"))
         grp_links.add_action(action_hyperlink, Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
-        self.addAction(action_hyperlink)  # Enable shortcut
+        self.addAction(action_hyperlink)
         
         # Group: Elements
         grp_elements = tab_insert.add_group("Elements")
         
-        action_hr = QAction("Horizontal Line", self)
+        action_hr = QAction("Horiz. Rule", self)
         action_hr.setToolTip("Insert Horizontal Rule")
         action_hr.triggered.connect(self._insert_horizontal_rule)
+        action_hr.setIcon(qta.icon("fa5s.minus", color="#1e293b"))
         grp_elements.add_action(action_hr, Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
         
-        action_special = QAction("Special Char", self)
+        action_special = QAction("Symbol", self)
         action_special.setToolTip("Insert Special Characters")
         action_special.triggered.connect(self._show_special_characters)
+        action_special.setIcon(qta.icon("fa5s.copyright", color="#1e293b"))
         grp_elements.add_action(action_special, Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
         
         # === TAB: PAGE LAYOUT ===
@@ -1150,29 +884,773 @@ class RichTextEditor(QWidget):
         action_page_setup = QAction("Page Setup", self)
         action_page_setup.setToolTip("Set page size, orientation, margins")
         action_page_setup.triggered.connect(self._show_page_setup)
+        action_page_setup.setIcon(qta.icon("fa5s.cog", color="#1e293b"))
         grp_page.add_action(action_page_setup, Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
         
-        # Group: Export
-        grp_export = tab_page.add_group("Export")
+        # Group: Page View
+        grp_view = tab_page.add_group("View")
         
-        action_pdf = QAction("Export PDF", self)
-        action_pdf.setToolTip("Export document to PDF (Ctrl+Shift+E)")
-        action_pdf.setShortcut("Ctrl+Shift+E")
-        action_pdf.triggered.connect(self._export_pdf)
-        grp_export.add_action(action_pdf, Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
-        self.addAction(action_pdf)
+        self.action_page_breaks = QAction("Page Breaks", self)
+        self.action_page_breaks.setToolTip("Show/Hide Page Break Lines")
+        self.action_page_breaks.setIcon(qta.icon("fa5s.grip-lines", color="#1e293b"))
+        self.action_page_breaks.setCheckable(True)
+        self.action_page_breaks.setChecked(True)  # Default: show page breaks
+        self.action_page_breaks.triggered.connect(self._toggle_page_breaks)
+        grp_view.add_action(self.action_page_breaks, Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
+
+        # =========================================================================
+        # TAB: REFERENCE
+        # =========================================================================
+        tab_ref = self.ribbon.add_ribbon_tab("Reference")
         
-        action_print = QAction("Print", self)
-        action_print.setToolTip("Print document (Ctrl+P)")
-        action_print.setShortcut("Ctrl+P")
-        action_print.triggered.connect(self._print_document)
-        grp_export.add_action(action_print, Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
-        self.addAction(action_print)
+        # Group: Language
+        grp_lang = tab_ref.add_group("Language")
         
-        action_preview = QAction("Print Preview", self)
-        action_preview.setToolTip("Preview before printing")
-        action_preview.triggered.connect(self._print_preview)
-        grp_export.add_action(action_preview, Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
+        # Use existing etymology_feature instance (created in _setup_ui)
+        grp_lang.add_action(self.etymology_feature.create_action(self), Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
+
+        # Group: Proofing
+        grp_proof = tab_ref.add_group("Proofing")
+        
+        # Spell Check button
+        grp_proof.add_action(self.spell_feature.create_ribbon_action(self), Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
+        
+        # Spell Check toggle
+        grp_proof.add_action(self.spell_feature.create_toggle_action(self), Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+
+        # =========================================================================
+        # CONTEXT CATEGORIES
+        # =========================================================================
+        
+        # === CONTEXT CATEGORY: Table Tools ===
+        self.ctx_table = self.ribbon.add_context_category("Table Tools", Qt.GlobalColor.darkYellow)
+        
+        # Layout Group - Insert/Delete
+        grp_tbl_layout = self.ctx_table.add_group("Layout")
+        
+        act_ins_row = QAction(qta.icon("fa5s.plus", color="#1e293b"), "Insert Row", self)
+        act_ins_row.triggered.connect(lambda: self.table_feature._insert_row_below() if hasattr(self, 'table_feature') else None)
+        grp_tbl_layout.add_action(act_ins_row, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        
+        act_ins_col = QAction(qta.icon("fa5s.plus", color="#1e293b"), "Insert Col", self)
+        act_ins_col.triggered.connect(lambda: self.table_feature._insert_col_right() if hasattr(self, 'table_feature') else None)
+        grp_tbl_layout.add_action(act_ins_col, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        
+        grp_tbl_layout.add_separator()
+        
+        act_del_row = QAction(qta.icon("fa5s.minus", color="#dc2626"), "Delete Row", self)
+        act_del_row.triggered.connect(lambda: self.table_feature._delete_row() if hasattr(self, 'table_feature') else None)
+        grp_tbl_layout.add_action(act_del_row, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        
+        act_del_col = QAction(qta.icon("fa5s.minus", color="#dc2626"), "Delete Col", self)
+        act_del_col.triggered.connect(lambda: self.table_feature._delete_col() if hasattr(self, 'table_feature') else None)
+        grp_tbl_layout.add_action(act_del_col, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        
+        act_del_table = QAction(qta.icon("fa5s.trash", color="#dc2626"), "Delete Table", self)
+        act_del_table.triggered.connect(lambda: self.table_feature._delete_table() if hasattr(self, 'table_feature') else None)
+        grp_tbl_layout.add_action(act_del_table, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        
+        # Merge/Split Group
+        grp_tbl_merge = self.ctx_table.add_group("Merge")
+        
+        act_merge = QAction(qta.icon("fa5s.object-group", color="#1e293b"), "Merge Cells", self)
+        act_merge.triggered.connect(lambda: self.table_feature._merge_cells() if hasattr(self, 'table_feature') else None)
+        grp_tbl_merge.add_action(act_merge, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        
+        act_split = QAction(qta.icon("fa5s.object-ungroup", color="#1e293b"), "Split Cells", self)
+        act_split.triggered.connect(lambda: self.table_feature._split_cells() if hasattr(self, 'table_feature') else None)
+        grp_tbl_merge.add_action(act_split, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        
+        act_distribute = QAction(qta.icon("fa5s.arrows-alt-h", color="#1e293b"), "Distribute", self)
+        act_distribute.triggered.connect(lambda: self.table_feature._distribute_columns() if hasattr(self, 'table_feature') else None)
+        grp_tbl_merge.add_action(act_distribute, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        
+        # Style Group
+        grp_tbl_style = self.ctx_table.add_group("Style")
+        
+        act_cell_bg = QAction(qta.icon("fa5s.fill-drip", color="#1e293b"), "Cell Color", self)
+        act_cell_bg.triggered.connect(lambda: self.table_feature._set_cell_background() if hasattr(self, 'table_feature') else None)
+        grp_tbl_style.add_action(act_cell_bg, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        
+        act_cell_border = QAction(qta.icon("fa5s.border-style", color="#1e293b"), "Borders", self)
+        act_cell_border.triggered.connect(lambda: self.table_feature._edit_cell_borders() if hasattr(self, 'table_feature') else None)
+        grp_tbl_style.add_action(act_cell_border, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        
+        act_cell_props = QAction(qta.icon("fa5s.sliders-h", color="#1e293b"), "Cell Props", self)
+        act_cell_props.triggered.connect(lambda: self.table_feature._edit_cell_properties() if hasattr(self, 'table_feature') else None)
+        grp_tbl_style.add_action(act_cell_props, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        
+        act_table_props = QAction(qta.icon("fa5s.cog", color="#1e293b"), "Table Props", self)
+        act_table_props.triggered.connect(lambda: self.table_feature._edit_table_properties() if hasattr(self, 'table_feature') else None)
+        grp_tbl_style.add_action(act_table_props, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+
+        # === CONTEXT CATEGORY: Image Tools ===
+        self.ctx_image = self.ribbon.add_context_category("Image Tools", Qt.GlobalColor.magenta)
+        
+        # Adjust Group - Size, Crop
+        grp_img_adj = self.ctx_image.add_group("Adjust")
+        
+        act_props = QAction(qta.icon("fa5s.expand-alt", color="#1e293b"), "Size", self)
+        act_props.triggered.connect(lambda: self._edit_image_size())
+        grp_img_adj.add_action(act_props, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        
+        act_crop = QAction(qta.icon("fa5s.crop", color="#1e293b"), "Crop", self)
+        act_crop.triggered.connect(lambda: self._crop_image())
+        grp_img_adj.add_action(act_crop, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        
+        # Transform Group
+        grp_img_transform = self.ctx_image.add_group("Transform")
+        
+        act_align_left = QAction(qta.icon("fa5s.align-left", color="#1e293b"), "Left", self)
+        act_align_left.triggered.connect(lambda: self._align_image(Qt.AlignmentFlag.AlignLeft))
+        grp_img_transform.add_action(act_align_left, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        
+        act_align_center = QAction(qta.icon("fa5s.align-center", color="#1e293b"), "Center", self)
+        act_align_center.triggered.connect(lambda: self._align_image(Qt.AlignmentFlag.AlignHCenter))
+        grp_img_transform.add_action(act_align_center, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        
+        act_align_right = QAction(qta.icon("fa5s.align-right", color="#1e293b"), "Right", self)
+        act_align_right.triggered.connect(lambda: self._align_image(Qt.AlignmentFlag.AlignRight))
+        grp_img_transform.add_action(act_align_right, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        
+        # Manage Group
+        grp_img_manage = self.ctx_image.add_group("Manage")
+        
+        act_replace = QAction(qta.icon("fa5s.exchange-alt", color="#1e293b"), "Replace", self)
+        act_replace.triggered.connect(lambda: self._replace_image())
+        grp_img_manage.add_action(act_replace, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        
+        act_delete = QAction(qta.icon("fa5s.trash", color="#dc2626"), "Delete", self)
+        act_delete.triggered.connect(lambda: self._delete_selected_image())
+        grp_img_manage.add_action(act_delete, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        
+        # Color Effects Group
+        grp_img_color = self.ctx_image.add_group("Color")
+        
+        act_grayscale = QAction(qta.icon("fa5s.adjust", color="#1e293b"), "Grayscale", self)
+        act_grayscale.triggered.connect(lambda: self._apply_image_filter("Grayscale"))
+        grp_img_color.add_action(act_grayscale, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        
+        act_sepia = QAction(qta.icon("fa5s.sun", color="#b45309"), "Sepia", self)
+        act_sepia.triggered.connect(lambda: self._apply_image_filter("Sepia"))
+        grp_img_color.add_action(act_sepia, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        
+        act_warm = QAction(qta.icon("fa5s.fire", color="#f97316"), "Warm", self)
+        act_warm.triggered.connect(lambda: self._apply_image_filter("Warm"))
+        grp_img_color.add_action(act_warm, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        
+        act_cool = QAction(qta.icon("fa5s.snowflake", color="#0ea5e9"), "Cool", self)
+        act_cool.triggered.connect(lambda: self._apply_image_filter("Cool"))
+        grp_img_color.add_action(act_cool, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        
+        act_vintage = QAction(qta.icon("fa5s.film", color="#78716c"), "Vintage", self)
+        act_vintage.triggered.connect(lambda: self._apply_image_filter("Vintage"))
+        grp_img_color.add_action(act_vintage, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        
+        act_invert = QAction(qta.icon("fa5s.exchange-alt", color="#1e293b"), "Invert", self)
+        act_invert.triggered.connect(lambda: self._apply_image_filter("Invert"))
+        grp_img_color.add_action(act_invert, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        
+        # Artistic Effects Group
+        grp_img_art = self.ctx_image.add_group("Artistic")
+        
+        act_blur = QAction(qta.icon("fa5s.water", color="#1e293b"), "Blur", self)
+        act_blur.triggered.connect(lambda: self._apply_image_filter("Blur"))
+        grp_img_art.add_action(act_blur, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        
+        act_sharpen = QAction(qta.icon("fa5s.search-plus", color="#1e293b"), "Sharpen", self)
+        act_sharpen.triggered.connect(lambda: self._apply_image_filter("Sharpen"))
+        grp_img_art.add_action(act_sharpen, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        
+        act_emboss = QAction(qta.icon("fa5s.stamp", color="#1e293b"), "Emboss", self)
+        act_emboss.triggered.connect(lambda: self._apply_image_filter("Emboss"))
+        grp_img_art.add_action(act_emboss, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        
+        act_edge = QAction(qta.icon("fa5s.border-style", color="#1e293b"), "Edges", self)
+        act_edge.triggered.connect(lambda: self._apply_image_filter("Find Edges"))
+        grp_img_art.add_action(act_edge, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        
+        act_auto = QAction(qta.icon("fa5s.magic", color="#1e293b"), "Auto", self)
+        act_auto.triggered.connect(lambda: self._apply_image_filter("Auto Contrast"))
+        grp_img_art.add_action(act_auto, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        
+        # Rotate Group
+        grp_img_rotate = self.ctx_image.add_group("Rotate")
+        
+        act_rot_left = QAction(qta.icon("fa5s.undo", color="#1e293b"), "↶ 90°", self)
+        act_rot_left.triggered.connect(lambda: self._rotate_image(-90))
+        grp_img_rotate.add_action(act_rot_left, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        
+        act_rot_right = QAction(qta.icon("fa5s.redo", color="#1e293b"), "↷ 90°", self)
+        act_rot_right.triggered.connect(lambda: self._rotate_image(90))
+        grp_img_rotate.add_action(act_rot_right, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        
+        # Connect cursor/selection change to context switches
+        self.editor.cursorPositionChanged.connect(self._update_context_tabs)
+        
+    def _update_context_tabs(self):
+        """Show/Hide context tabs based on cursor position."""
+        cursor = self.editor.textCursor()
+        
+        # Check Table
+        if cursor.currentTable():
+            self.ribbon.show_context_category(self.ctx_table)
+        else:
+            self.ribbon.hide_context_category(self.ctx_table)
+            
+        # Check Image (naive check, usually relies on format)
+        img_format = cursor.charFormat().toImageFormat()
+        if img_format.isValid():
+            self.ribbon.show_context_category(self.ctx_image)
+        else:
+            self.ribbon.hide_context_category(self.ctx_image)
+
+    def _get_image_cursor(self) -> QTextCursor:
+        """Get a cursor positioned to select the current image, or None."""
+        from PyQt6.QtGui import QTextCursor
+        cursor = self.editor.textCursor()
+        
+        # Check if cursor is on or near an image
+        fmt_before = cursor.charFormat()
+        if fmt_before.isImageFormat():
+            cursor.movePosition(QTextCursor.MoveOperation.Left, QTextCursor.MoveMode.KeepAnchor)
+            return cursor
+            
+        cursor_after = QTextCursor(cursor)
+        cursor_after.movePosition(QTextCursor.MoveOperation.Right)
+        fmt_after = cursor_after.charFormat()
+        if fmt_after.isImageFormat():
+            cursor.movePosition(QTextCursor.MoveOperation.Right, QTextCursor.MoveMode.KeepAnchor)
+            return cursor
+            
+        return None
+
+    def _edit_image_size(self):
+        """Open a dialog to resize the selected image."""
+        from PyQt6.QtWidgets import QDialog, QVBoxLayout, QFormLayout, QSpinBox, QDialogButtonBox, QCheckBox
+        from PyQt6.QtGui import QTextImageFormat
+        
+        cursor = self.editor.textCursor()
+        
+        # Find the image format
+        fmt = cursor.charFormat()
+        if not fmt.isImageFormat():
+            # Try character after
+            test_cursor = QTextCursor(cursor)
+            test_cursor.movePosition(QTextCursor.MoveOperation.Right)
+            fmt = test_cursor.charFormat()
+            if not fmt.isImageFormat():
+                return
+        
+        img_fmt = fmt.toImageFormat()
+        current_w = int(img_fmt.width()) if img_fmt.width() > 0 else 100
+        current_h = int(img_fmt.height()) if img_fmt.height() > 0 else 100
+        
+        # Create resize dialog
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Image Size")
+        dialog.setMinimumWidth(250)
+        
+        layout = QVBoxLayout(dialog)
+        form = QFormLayout()
+        
+        width_spin = QSpinBox()
+        width_spin.setRange(10, 4000)
+        width_spin.setValue(current_w)
+        width_spin.setSuffix(" px")
+        form.addRow("Width:", width_spin)
+        
+        height_spin = QSpinBox()
+        height_spin.setRange(10, 4000)
+        height_spin.setValue(current_h)
+        height_spin.setSuffix(" px")
+        form.addRow("Height:", height_spin)
+        
+        lock_aspect = QCheckBox("Lock aspect ratio")
+        lock_aspect.setChecked(True)
+        form.addRow(lock_aspect)
+        
+        aspect_ratio = current_w / current_h if current_h > 0 else 1.0
+        
+        def on_width_changed(val):
+            if lock_aspect.isChecked():
+                height_spin.blockSignals(True)
+                height_spin.setValue(int(val / aspect_ratio))
+                height_spin.blockSignals(False)
+        
+        def on_height_changed(val):
+            if lock_aspect.isChecked():
+                width_spin.blockSignals(True)
+                width_spin.setValue(int(val * aspect_ratio))
+                width_spin.blockSignals(False)
+        
+        width_spin.valueChanged.connect(on_width_changed)
+        height_spin.valueChanged.connect(on_height_changed)
+        
+        layout.addLayout(form)
+        
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok |
+            QDialogButtonBox.StandardButton.Cancel
+        )
+        buttons.accepted.connect(dialog.accept)
+        buttons.rejected.connect(dialog.reject)
+        layout.addWidget(buttons)
+        
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            new_w = width_spin.value()
+            new_h = height_spin.value()
+            
+            # Apply new size - need to select the image and update its format
+            edit_cursor = self.editor.textCursor()
+            f = edit_cursor.charFormat()
+            if not f.isImageFormat():
+                edit_cursor.movePosition(QTextCursor.MoveOperation.Right, QTextCursor.MoveMode.KeepAnchor)
+                f = edit_cursor.charFormat()
+            else:
+                edit_cursor.movePosition(QTextCursor.MoveOperation.Left, QTextCursor.MoveMode.KeepAnchor)
+            
+            if f.isImageFormat():
+                new_fmt = f.toImageFormat()
+                new_fmt.setWidth(new_w)
+                new_fmt.setHeight(new_h)
+                edit_cursor.setCharFormat(new_fmt)
+
+    def _align_image(self, alignment):
+        """Align the image block to the specified alignment."""
+        cursor = self._get_image_cursor()
+        if cursor:
+            block_fmt = cursor.blockFormat()
+            block_fmt.setAlignment(alignment)
+            cursor.mergeBlockFormat(block_fmt)
+
+    def _delete_selected_image(self):
+        """Delete the currently selected image."""
+        cursor = self._get_image_cursor()
+        if cursor:
+            cursor.removeSelectedText()
+
+    def _replace_image(self):
+        """Replace the current image with a new one."""
+        cursor = self._get_image_cursor()
+        if cursor:
+            # Delete the old image first
+            cursor.removeSelectedText()
+            # Then insert a new one using the image feature
+            if hasattr(self, 'image_feature'):
+                self.image_feature.insert_image()
+
+    def _get_current_image_data(self):
+        """Get the current image as PIL Image, cursor, and format."""
+        try:
+            from PIL import Image
+            from io import BytesIO
+        except ImportError:
+            return None, None, None
+        
+        from PyQt6.QtGui import QTextDocument, QTextCursor
+        from PyQt6.QtCore import QUrl, QBuffer, QIODevice
+        
+        cursor = self.editor.textCursor()
+        fmt = cursor.charFormat()
+        
+        if not fmt.isImageFormat():
+            test_cursor = QTextCursor(cursor)
+            test_cursor.movePosition(QTextCursor.MoveOperation.Right)
+            fmt = test_cursor.charFormat()
+            if not fmt.isImageFormat():
+                return None, None, None
+        
+        img_fmt = fmt.toImageFormat()
+        img_name = img_fmt.name()
+        
+        # Load the image from the document's resources
+        doc = self.editor.document()
+        resource = doc.resource(QTextDocument.ResourceType.ImageResource, QUrl(img_name))
+        
+        if resource.isNull():
+            # Try loading from file path
+            try:
+                pil_img = Image.open(img_name)
+                return pil_img, cursor, img_fmt
+            except:
+                return None, None, None
+        
+        # Convert QImage to PIL
+        qimg = resource
+        if hasattr(qimg, 'toImage'):
+            qimg = qimg.toImage()
+        
+        # Convert to bytes
+        buffer = QBuffer()
+        buffer.open(QIODevice.OpenModeFlag.WriteOnly)
+        from PyQt6.QtGui import QImage
+        if isinstance(qimg, QImage):
+            qimg.save(buffer, "PNG")
+            pil_img = Image.open(BytesIO(buffer.data()))
+            return pil_img, cursor, img_fmt
+        
+        return None, None, None
+
+    def _save_and_insert_image(self, pil_img, old_fmt):
+        """Save PIL image and replace the old image in the document."""
+        import uuid
+        import os
+        from io import BytesIO
+        from PyQt6.QtGui import QImage, QTextImageFormat, QTextDocument
+        from PyQt6.QtCore import QUrl
+        
+        # Convert PIL to QImage
+        if pil_img.mode != "RGBA":
+            pil_img = pil_img.convert("RGBA")
+        data = pil_img.tobytes("raw", "RGBA")
+        qimg = QImage(data, pil_img.width, pil_img.height, QImage.Format.Format_RGBA8888)
+        
+        # Save to file
+        temp_dir = os.path.join(os.getcwd(), "saved_documents", ".cache_images")
+        os.makedirs(temp_dir, exist_ok=True)
+        temp_path = os.path.join(temp_dir, f"{uuid.uuid4().hex}.png")
+        
+        buf = BytesIO()
+        pil_img.save(buf, format="PNG")
+        with open(temp_path, "wb") as f:
+            f.write(buf.getvalue())
+        
+        # Add as resource
+        image_id = f"image://edited/{uuid.uuid4().hex}.png"
+        self.editor.document().addResource(
+            QTextDocument.ResourceType.ImageResource, 
+            QUrl(image_id), 
+            qimg
+        )
+        
+        # Delete old image and insert new one
+        cursor = self._get_image_cursor()
+        if cursor:
+            cursor.removeSelectedText()
+            
+            new_fmt = QTextImageFormat()
+            new_fmt.setName(temp_path)
+            new_fmt.setWidth(old_fmt.width() if old_fmt.width() > 0 else pil_img.width)
+            new_fmt.setHeight(old_fmt.height() if old_fmt.height() > 0 else pil_img.height)
+            cursor.insertImage(new_fmt)
+
+    def _apply_image_filter(self, filter_name: str):
+        """Apply a filter to the current image."""
+        try:
+            from PIL import Image, ImageFilter, ImageOps, ImageEnhance
+        except ImportError:
+            return
+        
+        pil_img, cursor, img_fmt = self._get_current_image_data()
+        if pil_img is None:
+            return
+        
+        # Ensure RGBA
+        if pil_img.mode != "RGBA":
+            pil_img = pil_img.convert("RGBA")
+        
+        r, g, b, a = pil_img.split()
+        
+        if filter_name == "Grayscale":
+            gray = pil_img.convert("L")
+            pil_img = Image.merge("RGBA", (gray, gray, gray, a))
+        
+        elif filter_name == "Sepia":
+            # Sepia transformation
+            def sepia_pixel(r, g, b):
+                tr = int(0.393 * r + 0.769 * g + 0.189 * b)
+                tg = int(0.349 * r + 0.686 * g + 0.168 * b)
+                tb = int(0.272 * r + 0.534 * g + 0.131 * b)
+                return min(255, tr), min(255, tg), min(255, tb)
+            
+            pixels = list(zip(r.getdata(), g.getdata(), b.getdata()))
+            new_r, new_g, new_b = [], [], []
+            for pr, pg, pb in pixels:
+                sr, sg, sb = sepia_pixel(pr, pg, pb)
+                new_r.append(sr)
+                new_g.append(sg)
+                new_b.append(sb)
+            
+            r.putdata(new_r)
+            g.putdata(new_g)
+            b.putdata(new_b)
+            pil_img = Image.merge("RGBA", (r, g, b, a))
+        
+        elif filter_name == "Warm":
+            # Shift colors warmer (more red, less blue)
+            def shift_channel(channel, shift):
+                return channel.point(lambda x: max(0, min(255, x + shift)))
+            r = shift_channel(r, 20)
+            b = shift_channel(b, -20)
+            pil_img = Image.merge("RGBA", (r, g, b, a))
+        
+        elif filter_name == "Cool":
+            # Shift colors cooler (more blue, less red)
+            def shift_channel(channel, shift):
+                return channel.point(lambda x: max(0, min(255, x + shift)))
+            r = shift_channel(r, -20)
+            b = shift_channel(b, 20)
+            pil_img = Image.merge("RGBA", (r, g, b, a))
+        
+        elif filter_name == "Vintage":
+            # Reduce saturation, add warm tint, slight contrast boost
+            pil_img = ImageEnhance.Color(pil_img).enhance(0.7)
+            r, g, b, a = pil_img.split()
+            def shift_channel(channel, shift):
+                return channel.point(lambda x: max(0, min(255, x + shift)))
+            r = shift_channel(r, 15)
+            g = shift_channel(g, 5)
+            b = shift_channel(b, -10)
+            pil_img = Image.merge("RGBA", (r, g, b, a))
+            pil_img = ImageEnhance.Contrast(pil_img).enhance(1.1)
+        
+        elif filter_name == "Invert":
+            rgb = Image.merge("RGB", (r, g, b))
+            rgb = ImageOps.invert(rgb)
+            r, g, b = rgb.split()
+            pil_img = Image.merge("RGBA", (r, g, b, a))
+        
+        elif filter_name == "Blur":
+            pil_img = pil_img.filter(ImageFilter.GaussianBlur(radius=2))
+        
+        elif filter_name == "Sharpen":
+            pil_img = pil_img.filter(ImageFilter.SHARPEN)
+        
+        elif filter_name == "Emboss":
+            pil_img = pil_img.filter(ImageFilter.EMBOSS)
+        
+        elif filter_name == "Find Edges":
+            pil_img = pil_img.filter(ImageFilter.FIND_EDGES)
+        
+        elif filter_name == "Auto Contrast":
+            rgb = Image.merge("RGB", (r, g, b))
+            rgb = ImageOps.autocontrast(rgb)
+            r, g, b = rgb.split()
+            pil_img = Image.merge("RGBA", (r, g, b, a))
+        
+        self._save_and_insert_image(pil_img, img_fmt)
+
+    def _rotate_image(self, degrees: int):
+        """Rotate the current image by the specified degrees."""
+        try:
+            from PIL import Image
+        except ImportError:
+            return
+        
+        pil_img, cursor, img_fmt = self._get_current_image_data()
+        if pil_img is None:
+            return
+        
+        pil_img = pil_img.rotate(-degrees, expand=True)  # Negative for clockwise
+        
+        # Swap width/height for 90 degree rotations
+        new_fmt = img_fmt
+        if abs(degrees) == 90:
+            old_w = img_fmt.width()
+            old_h = img_fmt.height()
+            new_fmt.setWidth(old_h)
+            new_fmt.setHeight(old_w)
+        
+        self._save_and_insert_image(pil_img, new_fmt)
+
+    def _crop_image(self):
+        """Open a crop dialog to crop the current image."""
+        from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QFormLayout, 
+                                      QSpinBox, QDialogButtonBox, QLabel, QGroupBox)
+        from PyQt6.QtGui import QPixmap, QImage
+        from PyQt6.QtCore import Qt
+        
+        try:
+            from PIL import Image
+        except ImportError:
+            return
+        
+        pil_img, cursor, img_fmt = self._get_current_image_data()
+        if pil_img is None:
+            return
+        
+        img_w, img_h = pil_img.size
+        
+        # Create crop dialog
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Crop Image")
+        dialog.setMinimumWidth(400)
+        
+        layout = QVBoxLayout(dialog)
+        
+        # Preview label
+        preview_label = QLabel()
+        preview_label.setFixedSize(300, 200)
+        preview_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        preview_label.setStyleSheet("border: 1px solid #ccc; background: #f0f0f0;")
+        
+        # Convert PIL to QPixmap for preview
+        if pil_img.mode != "RGBA":
+            pil_img = pil_img.convert("RGBA")
+        data = pil_img.tobytes("raw", "RGBA")
+        qimg = QImage(data, pil_img.width, pil_img.height, QImage.Format.Format_RGBA8888)
+        pix = QPixmap.fromImage(qimg)
+        scaled_pix = pix.scaled(280, 180, Qt.AspectRatioMode.KeepAspectRatio, 
+                                 Qt.TransformationMode.SmoothTransformation)
+        preview_label.setPixmap(scaled_pix)
+        layout.addWidget(preview_label)
+        
+        # Size info
+        info_label = QLabel(f"Original size: {img_w} × {img_h} px")
+        layout.addWidget(info_label)
+        
+        # Crop region inputs
+        crop_group = QGroupBox("Crop Region")
+        crop_layout = QHBoxLayout(crop_group)
+        
+        form1 = QFormLayout()
+        x_spin = QSpinBox()
+        x_spin.setRange(0, img_w - 1)
+        x_spin.setValue(0)
+        x_spin.setSuffix(" px")
+        form1.addRow("X:", x_spin)
+        
+        y_spin = QSpinBox()
+        y_spin.setRange(0, img_h - 1)
+        y_spin.setValue(0)
+        y_spin.setSuffix(" px")
+        form1.addRow("Y:", y_spin)
+        crop_layout.addLayout(form1)
+        
+        form2 = QFormLayout()
+        w_spin = QSpinBox()
+        w_spin.setRange(1, img_w)
+        w_spin.setValue(img_w)
+        w_spin.setSuffix(" px")
+        form2.addRow("Width:", w_spin)
+        
+        h_spin = QSpinBox()
+        h_spin.setRange(1, img_h)
+        h_spin.setValue(img_h)
+        h_spin.setSuffix(" px")
+        form2.addRow("Height:", h_spin)
+        crop_layout.addLayout(form2)
+        
+        layout.addWidget(crop_group)
+        
+        # Clamp width/height when X/Y changes
+        def update_w_range():
+            max_w = img_w - x_spin.value()
+            w_spin.setMaximum(max_w)
+            if w_spin.value() > max_w:
+                w_spin.setValue(max_w)
+        
+        def update_h_range():
+            max_h = img_h - y_spin.value()
+            h_spin.setMaximum(max_h)
+            if h_spin.value() > max_h:
+                h_spin.setValue(max_h)
+        
+        x_spin.valueChanged.connect(update_w_range)
+        y_spin.valueChanged.connect(update_h_range)
+        
+        # OK/Cancel buttons
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok |
+            QDialogButtonBox.StandardButton.Cancel
+        )
+        buttons.accepted.connect(dialog.accept)
+        buttons.rejected.connect(dialog.reject)
+        layout.addWidget(buttons)
+        
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            x = x_spin.value()
+            y = y_spin.value()
+            w = w_spin.value()
+            h = h_spin.value()
+            
+            # Apply crop
+            cropped = pil_img.crop((x, y, x + w, y + h))
+            
+            # Update format dimensions
+            img_fmt.setWidth(w)
+            img_fmt.setHeight(h)
+            
+            self._save_and_insert_image(cropped, img_fmt)
+
+    def insert_hyperlink(self):
+        """Open dialog to insert a hyperlink."""
+        if not hasattr(self, '_insert_hyperlink_dialog'):
+             # Lazy load or just use dialog directly if imported
+             pass
+        
+        # Determine selection
+        cursor = self.editor.textCursor()
+        text = cursor.selectedText()
+        
+        dlg = HyperlinkDialog(text, self)
+        if dlg.exec() == QDialog.DialogCode.Accepted:
+            url, display_text = dlg.get_data()
+            if url:
+                self.editor.insertHtml(f'<a href="{url}">{display_text}</a>')
+
+    def page_setup(self):
+        """Open page setup dialog."""
+        dlg = PageSetupDialog(self)
+        if dlg.exec() == QDialog.DialogCode.Accepted:
+            # Apply settings (Mock implementation as SafeTextEdit is a Widget, not a full document layout engine)
+            # In a real app we'd set document root frame margins or print settings
+            pass
+
+    def insert_horizontal_rule(self):
+        """Insert a horizontal rule."""
+        cursor = self.editor.textCursor()
+        cursor.insertHtml("<hr>")
+        cursor.insertBlock()
+    
+    def _pick_color(self):
+        """Pick text color."""
+        color = QColorDialog.getColor(self.editor.textColor(), self, "Select Text Color")
+        if color.isValid():
+            self.editor.setTextColor(color)
+            
+    def _pick_highlight(self):
+        """Pick highlight color."""
+        color = QColorDialog.getColor(self.editor.textBackgroundColor(), self, "Select Highlight Color")
+        if color.isValid():
+            self.editor.setTextBackgroundColor(color)
+            
+    def _clear_highlight(self):
+        """Clear text background color."""
+        self.editor.setTextBackgroundColor(QColor(Qt.GlobalColor.transparent))
+
+    def _set_line_spacing(self, value_str):
+        """Set paragraph line spacing."""
+        try:
+            spacing = float(value_str)
+            block_fmt = QTextBlockFormat()
+            block_fmt.setLineHeight(spacing * 100, 1) # 1 = ProportionalHeight
+            cursor = self.editor.textCursor()
+            cursor.mergeBlockFormat(block_fmt)
+        except ValueError:
+            pass
+
+    def _toggle_text_direction(self):
+        """Toggle between LTR and RTL."""
+        is_rtl = self.editor.layoutDirection() == Qt.LayoutDirection.RightToLeft
+        new_dir = Qt.LayoutDirection.LeftToRight if is_rtl else Qt.LayoutDirection.RightToLeft
+        self.editor.setLayoutDirection(new_dir)
+        # Also set alignment for convenience?
+        # self.editor.setAlignment(Qt.AlignmentFlag.AlignRight if not is_rtl else Qt.AlignmentFlag.AlignLeft)
+
+    def _toggle_list(self, style):
+        """Wrapper for list feature."""
+        if hasattr(self, 'list_feature'):
+            self.list_feature.toggle_list(style)
+
+    def _insert_page_break(self):
+        """Insert a page break marker."""
+        # HTML/RTF page breaks are tricky. We use a CSS break-after or special char.
+        # For visual purpose in editor:
+        cursor = self.editor.textCursor()
+        cursor.insertHtml('<br><hr style="border-top: 1px dashed #ccc;"/><br>')
+
 
     def _set_font_size(self, size_str):
         try:
@@ -1398,6 +1876,47 @@ class RichTextEditor(QWidget):
             f"Words: {word_count:,} | Characters: {char_count:,} | Paragraphs: {para_count:,}"
         )
 
+    def _update_page_count(self):
+        """Update total page count based on document size."""
+        if not hasattr(self, 'page_count_label'):
+            return
+        
+        # Calculate pages based on document height vs page height
+        doc = self.editor.document()
+        doc_height = doc.size().height()
+        
+        # Get page height from editor settings
+        page_height = self.editor.page_height
+        
+        self._total_pages = max(1, int(doc_height / page_height) + (1 if doc_height % page_height > 50 else 0))
+        self._update_page_label()
+    
+    def _update_current_page(self):
+        """Update current page based on cursor position."""
+        if not hasattr(self, 'page_count_label'):
+            return
+        
+        cursor = self.editor.textCursor()
+        cursor_rect = self.editor.cursorRect(cursor)
+        
+        # Calculate which "page" the cursor is on using editor settings
+        page_height = self.editor.page_height
+        cursor_y = cursor_rect.top() + self.editor.verticalScrollBar().value()
+        
+        self._current_page = max(1, min(int(cursor_y / page_height) + 1, getattr(self, '_total_pages', 1)))
+        self._update_page_label()
+    
+    def _update_page_label(self):
+        """Update the page label text."""
+        if hasattr(self, 'page_count_label'):
+            current = getattr(self, '_current_page', 1)
+            total = getattr(self, '_total_pages', 1)
+            self.page_count_label.setText(f"Page {current} of {total}")
+
+    def _toggle_page_breaks(self, checked: bool):
+        """Toggle visibility of page break lines."""
+        self.editor.show_page_breaks = checked
+
     def _set_line_spacing(self, spacing_str: str):
         """Set line spacing for the current paragraph."""
         try:
@@ -1562,10 +2081,14 @@ class RichTextEditor(QWidget):
         # Block signals to prevent triggering changes while updating UI
         self.font_combo.blockSignals(True)
         self.size_combo.blockSignals(True)
-        self.action_bold.blockSignals(True)
-        self.action_italic.blockSignals(True)
-        self.action_underline.blockSignals(True)
-        self.action_strike.blockSignals(True)
+        
+        # New QToolButtons for styling
+        if hasattr(self, 'btn_bold'): self.btn_bold.blockSignals(True)
+        if hasattr(self, 'btn_italic'): self.btn_italic.blockSignals(True)
+        if hasattr(self, 'btn_underline'): self.btn_underline.blockSignals(True)
+        if hasattr(self, 'btn_strike'): self.btn_strike.blockSignals(True)
+        
+        # QActions
         self.action_sub.blockSignals(True)
         self.action_super.blockSignals(True)
         self.action_align_left.blockSignals(True)
@@ -1573,19 +2096,31 @@ class RichTextEditor(QWidget):
         self.action_align_right.blockSignals(True)
         self.action_align_justify.blockSignals(True)
         
+        # Update Font & Size
         self.font_combo.setCurrentFont(fmt.font())
-        self.size_combo.setCurrentText(str(int(fmt.fontPointSize())))
+        try:
+            current_size = int(fmt.fontPointSize())
+            if current_size <= 0: current_size = 12 # Default fallback
+            self.size_combo.setCurrentText(str(current_size))
+        except:
+            pass
         
-        self.action_bold.setChecked(fmt.fontWeight() == QFont.Weight.Bold)
-        self.action_italic.setChecked(fmt.fontItalic())
-        self.action_underline.setChecked(fmt.fontUnderline())
-        self.action_strike.setChecked(fmt.fontStrikeOut())
+        # Update Styles
+        if hasattr(self, 'btn_bold'): 
+            self.btn_bold.setChecked(fmt.fontWeight() == QFont.Weight.Bold)
+        if hasattr(self, 'btn_italic'):
+            self.btn_italic.setChecked(fmt.fontItalic())
+        if hasattr(self, 'btn_underline'):
+            self.btn_underline.setChecked(fmt.fontUnderline())
+        if hasattr(self, 'btn_strike'):
+            self.btn_strike.setChecked(fmt.fontStrikeOut())
         
+        # Update Sub/Super
         v_align = fmt.verticalAlignment()
         self.action_sub.setChecked(v_align == QTextCharFormat.VerticalAlignment.AlignSubScript)
         self.action_super.setChecked(v_align == QTextCharFormat.VerticalAlignment.AlignSuperScript)
         
-        # Alignment
+        # Update Alignment
         align = self.editor.alignment()
         if align & Qt.AlignmentFlag.AlignLeft:
             self.action_align_left.setChecked(True)
@@ -1596,12 +2131,15 @@ class RichTextEditor(QWidget):
         elif align & Qt.AlignmentFlag.AlignJustify:
             self.action_align_justify.setChecked(True)
         
+        # Unblock signals
         self.font_combo.blockSignals(False)
         self.size_combo.blockSignals(False)
-        self.action_bold.blockSignals(False)
-        self.action_italic.blockSignals(False)
-        self.action_underline.blockSignals(False)
-        self.action_strike.blockSignals(False)
+        
+        if hasattr(self, 'btn_bold'): self.btn_bold.blockSignals(False)
+        if hasattr(self, 'btn_italic'): self.btn_italic.blockSignals(False)
+        if hasattr(self, 'btn_underline'): self.btn_underline.blockSignals(False)
+        if hasattr(self, 'btn_strike'): self.btn_strike.blockSignals(False)
+        
         self.action_sub.blockSignals(False)
         self.action_super.blockSignals(False)
         self.action_align_left.blockSignals(False)
@@ -1623,6 +2161,16 @@ class RichTextEditor(QWidget):
         
     def set_text(self, text: str):
         self.editor.setPlainText(text)
+
+    def set_markdown(self, markdown: str):
+        """Set the editor content from Markdown."""
+        self.editor.setMarkdown(markdown)
+        # Ensure LTR is maintained
+        self.editor.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
+
+    def get_markdown(self) -> str:
+        """Get the editor content as Markdown."""
+        return self.editor.document().toMarkdown()
         
     def clear(self):
         self.editor.clear()
@@ -1636,3 +2184,67 @@ class RichTextEditor(QWidget):
             self.editor.setFocus()
             return True
         return False
+    def new_document(self):
+        """Clear the editor for a new document."""
+        if self.editor.document().isModified():
+            ans = QMessageBox.question(
+                self, "Unsaved Changes",
+                "You have unsaved changes. Are you sure you want to clear the document?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+            if ans != QMessageBox.StandardButton.Yes:
+                return
+        self.editor.clear()
+
+    def open_document(self):
+        """Open a file (Markdown, HTML, Text)."""
+        file_path, _ = QFileDialog.getOpenFileName(
+            self, "Open Document", "",
+            "Markdown (*.md);;HTML (*.html *.htm);;Text (*.txt);;All Files (*)"
+        )
+        if not file_path:
+            return
+
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+
+            if file_path.endswith('.md'):
+                self.editor.setMarkdown(content)
+            elif file_path.endswith(('.html', '.htm')):
+                self.editor.setHtml(content)
+            else:
+                self.editor.setPlainText(content)
+                
+            self.editor.document().setModified(False)
+            
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Could not open file:\n{e}")
+
+    def save_document(self):
+        """Save the document (Markdown, HTML, Text)."""
+        file_path, filter_used = QFileDialog.getSaveFileName(
+            self, "Save Document", "",
+            "Markdown (*.md);;HTML (*.html);;Text (*.txt)"
+        )
+        if not file_path:
+            return
+
+        try:
+            if file_path.endswith('.md'):
+                # Convert to Markdown
+                # Note: Qt's toMarkdown features are basic but standard compliant.
+                content = self.editor.document().toMarkdown()
+            elif file_path.endswith('.html'):
+                content = self.editor.toHtml()
+            else:
+                content = self.editor.toPlainText()
+
+            with open(file_path, 'w', encoding='utf-8') as f:
+                f.write(content)
+                
+            self.editor.document().setModified(False)
+            QMessageBox.information(self, "Saved", f"Document saved to {os.path.basename(file_path)}")
+            
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Could not save file:\n{e}")

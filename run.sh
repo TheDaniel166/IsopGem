@@ -7,6 +7,8 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 # Activate virtual environment if it exists
 if [ -d "$SCRIPT_DIR/.venv" ]; then
     source "$SCRIPT_DIR/.venv/bin/activate"
+    # Make pip and python available in this session
+    export PATH="$SCRIPT_DIR/.venv/bin:$PATH"
 fi
 
 # Set Qt platform

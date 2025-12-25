@@ -6,6 +6,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QObject
 from PyQt6.QtGui import QAction, QColor, QIcon, QPainter, QPixmap
+import qtawesome as qta
 
 from .shape_item import (
     RectShapeItem, EllipseShapeItem, TriangleShapeItem,
@@ -317,6 +318,7 @@ class ShapePropertiesDialog(QDialog):
         layout.addWidget(colors_group)
         
         # Buttons
+        from PyQt6.QtWidgets import QDialogButtonBox
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | 
             QDialogButtonBox.StandardButton.Cancel
@@ -329,22 +331,29 @@ class ShapePropertiesDialog(QDialog):
         """Update button to show color."""
         btn.setStyleSheet(f"background-color: {color.name()}; border: 1px solid #ccc;")
     
+    def _pick_color(self, current: QColor, title: str) -> QColor:
+        """Show non-native color picker."""
+        dialog = QColorDialog(current, self)
+        dialog.setWindowTitle(title)
+        dialog.setOptions(
+            QColorDialog.ColorDialogOption.ShowAlphaChannel |
+            QColorDialog.ColorDialogOption.DontUseNativeDialog
+        )
+        if dialog.exec():
+            return dialog.currentColor()
+        return None
+    
     def _choose_fill_color(self):
         """Open color picker for fill."""
-        color = QColorDialog.getColor(
-            self.shape.fill_color, self, "Choose Fill Color",
-            QColorDialog.ColorDialogOption.ShowAlphaChannel
-        )
-        if color.isValid():
+        color = self._pick_color(self.shape.fill_color, "Choose Fill Color")
+        if color:
             self.shape.fill_color = color
             self._update_color_button(self.btn_fill, color)
     
     def _choose_stroke_color(self):
         """Open color picker for stroke."""
-        color = QColorDialog.getColor(
-            self.shape.stroke_color, self, "Choose Stroke Color"
-        )
-        if color.isValid():
+        color = self._pick_color(self.shape.stroke_color, "Choose Stroke Color")
+        if color:
             self.shape.stroke_color = color
             self._update_color_button(self.btn_stroke, color)
     
@@ -404,6 +413,8 @@ class ShapeFeature(QObject):
         """Create a toolbar button with shape menu."""
         btn = QToolButton()
         btn.setText("Shapes")
+        btn.setIcon(qta.icon("fa5s.shapes", color="#1e293b"))
+        btn.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
         btn.setToolTip("Insert a shape")
         btn.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
         

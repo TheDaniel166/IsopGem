@@ -11,6 +11,7 @@ from PyQt6.QtGui import (
     QPixmap, QImage, QTextDocument
 )
 from PyQt6.QtCore import Qt, QBuffer, QByteArray, QIODevice, QUrl, QRect, QPoint, pyqtSignal, QSize, QObject, QThread
+import qtawesome as qta
 import os
 import uuid
 
@@ -835,9 +836,11 @@ class ImageFeature:
         self.action_insert = QAction("Edit && Insert Image...", self.parent)
         self.action_insert.setToolTip("Open image editor before inserting")
         self.action_insert.triggered.connect(self.insert_image)
+        self.action_insert.setIcon(qta.icon("fa5s.image", color="#1e293b"))
         
         self.action_props = QAction("Image Properties...", self.parent)
         self.action_props.triggered.connect(self._edit_image_properties)
+        self.action_props.setIcon(qta.icon("fa5s.sliders-h", color="#1e293b"))
 
     def create_toolbar_action(self) -> QAction:
         """Return the insert image action for the toolbar."""

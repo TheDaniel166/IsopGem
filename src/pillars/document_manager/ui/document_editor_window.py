@@ -230,7 +230,7 @@ class DocumentEditorWindow(QMainWindow):
             self,
             "Open Document",
             str(self.save_dir),
-            "HTML Files (*.html);;Text Files (*.txt);;All Files (*)"
+            "Markdown (*.md);;HTML Files (*.html);;Text Files (*.txt);;All Files (*)"
         )
         
         if file_path:
@@ -241,6 +241,8 @@ class DocumentEditorWindow(QMainWindow):
                     
                 if path.suffix == '.html':
                     self.editor.set_html(content)
+                elif path.suffix == '.md':
+                    self.editor.set_markdown(content)
                 else:
                     self.editor.set_text(content)
                     
@@ -278,7 +280,13 @@ class DocumentEditorWindow(QMainWindow):
             return self.save_as_document()
             
         try:
-            content = self.editor.get_html()
+            if self.current_file.suffix == '.md':
+                content = self.editor.get_markdown()
+            elif self.current_file.suffix == '.html':
+                content = self.editor.get_html()
+            else:
+                content = self.editor.get_text()
+
             with open(self.current_file, 'w', encoding='utf-8') as f:
                 f.write(content)
                 
@@ -290,17 +298,22 @@ class DocumentEditorWindow(QMainWindow):
             return False
 
     def save_as_document(self):
-        file_path, _ = QFileDialog.getSaveFileName(
+        file_path, filter_used = QFileDialog.getSaveFileName(
             self,
             "Save Document As",
             str(self.save_dir),
-            "HTML Files (*.html);;All Files (*)"
+            "Markdown (*.md);;HTML Files (*.html);;All Files (*)"
         )
         
         if file_path:
             # Ensure extension
-            if not file_path.endswith('.html'):
-                file_path += '.html'
+            valid_exts = ['.html', '.md']
+            if not any(file_path.endswith(ext) for ext in valid_exts):
+                # Default to whatever matches the filter or just md if unsure
+                if "Markdown" in filter_used:
+                    file_path += '.md'
+                else:
+                    file_path += '.html'
                 
             self.current_file = Path(file_path)
             return self.save_document()
