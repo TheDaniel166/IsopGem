@@ -3,7 +3,7 @@ from PyQt6 import sip
 from PyQt6.QtWidgets import (
     QDialog, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, 
     QButtonGroup, QGridLayout, QLabel, QLineEdit, QTextEdit, QLayoutItem,
-    QFrame
+    QFrame, QGraphicsDropShadowEffect
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QSize
 from PyQt6.QtGui import QFont, QColor, QPalette
@@ -34,10 +34,9 @@ class VirtualKeyboard(QDialog):
         self.setWindowFlags(
             Qt.WindowType.Tool | 
             Qt.WindowType.WindowStaysOnTopHint |
-            Qt.WindowType.CustomizeWindowHint |
-            Qt.WindowType.WindowTitleHint |
-            Qt.WindowType.WindowCloseButtonHint
+            Qt.WindowType.FramelessWindowHint  # Visual Liturgy: Custom "Floating Temple"
         )
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground) # For shadows
         
         self._setup_ui()
     
@@ -45,165 +44,225 @@ class VirtualKeyboard(QDialog):
         """Set up the keyboard interface."""
         self.setObjectName("keyboardRoot")
         
-        # Modern Dark Theme (Slate/Zinc Palette)
+        # Visual Liturgy v2.2 - Dark Mode Implementation
+        # The Tablet (Void Slate), The Vessel (Stone), The Magus (Violet), The Seeker (Gold)
         self.setStyleSheet(
             """
-            #keyboardRoot {
-                background-color: #0f172a; /* Slate 900 */
-                border: 1px solid #334155; /* Slate 700 */
-                border-radius: 16px;
-            }
-            QLabel#titleLabel {
-                color: #f1f5f9; /* Slate 100 */
-                font-family: 'Segoe UI', system-ui, sans-serif;
-                font-size: 16pt;
-                font-weight: 700;
-            }
-            QLabel#subtitleLabel {
-                color: #94a3b8; /* Slate 400 */
-                font-size: 10pt;
-                font-family: 'Segoe UI', system-ui, sans-serif;
+            /* The Tablet (Window Container) */
+            QFrame#MainTablet {
+                background-color: #0f172a; /* Void Slate */
+                border: 1px solid #334155; /* Dark Ash */
+                border-radius: 24px;
             }
             
-            /* Layout Toggle Group */
+            /* Typography */
+            QLabel#titleLabel {
+                color: #f8fafc; /* Cloud */
+                font-family: 'Inter', 'Segoe UI', sans-serif;
+                font-size: 14pt; /* The Header */
+                font-weight: 800;
+            }
+            QLabel#subtitleLabel {
+                color: #94a3b8; /* Mist */
+                font-size: 10pt; /* The Whisper */
+                font-family: 'Inter', 'Segoe UI', sans-serif;
+                font-weight: 500;
+            }
+            
+            /* Layout Toggle - "The Segmented Control" */
             QFrame#toggleContainer {
-                background-color: #1e293b; /* Slate 800 */
-                border-radius: 8px;
-                padding: 4px;
+                background-color: #1e293b; /* Stone */
+                border: 1px solid #334155;
+                border-radius: 12px;
+                padding: 2px;
             }
             QPushButton.layoutToggle {
                 background-color: transparent;
                 color: #94a3b8;
                 border: none;
-                border-radius: 6px;
-                padding: 8px 16px;
+                border-radius: 10px;
+                padding: 6px 12px;
                 font-weight: 600;
-                font-size: 10pt;
+                font-family: 'Inter', sans-serif;
             }
             QPushButton.layoutToggle:checked {
-                background-color: #38bdf8; /* Sky 400 */
-                color: #0f172a;
+                background-color: #334155; /* Active state - lighter stone */
+                color: #f8fafc;
+                border: 1px solid #475569;
             }
             QPushButton.layoutToggle:hover:!checked {
-                background-color: #334155; /* Slate 700 */
                 color: #e2e8f0;
             }
             
-            /* Keys */
+            /* Keys - "The Vessel" / "Stone" */
             QPushButton.keyButton {
-                background-color: #1e293b; /* Slate 800 */
-                color: #e2e8f0; /* Slate 200 */
-                border: 1px solid #334155; /* Slate 700 */
+                background-color: #1e293b; /* Stone */
+                color: #f8fafc; /* Cloud */
+                border: 1px solid #334155; /* Ash */
                 border-bottom: 3px solid #0f172a; /* Tactile depth */
-                border-radius: 8px;
+                border-radius: 12px;
                 font-weight: 500;
-                font-family: 'Segoe UI', 'David', 'SBL Greek', sans-serif;
+                font-size: 14pt; /* The Command */
             }
             QPushButton.keyButton:hover {
-                background-color: #334155; /* Slate 700 */
+                background-color: #334155; /* Lighter Stone */
                 border-color: #475569;
-                margin-top: -1px; /* Lift effect */
+                margin-top: -1px;
                 border-bottom-width: 4px;
             }
             QPushButton.keyButton:pressed {
                 background-color: #0f172a;
+                border-top: 2px solid #020617;
+                border-bottom-width: 1px;
+                margin-top: 2px;
+            }
+            
+            /* Control Keys - "The Navigator" (Shift/Lock) */
+            QPushButton.controlButton {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #64748b, stop:1 #475569); /* Void Slate Gradient */
+                color: white;
                 border: 1px solid #334155;
+                border-bottom: 3px solid #1e293b;
+                border-radius: 12px;
+                font-weight: 600;
+                font-family: 'Inter', sans-serif;
+            }
+            QPushButton.controlButton:hover {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #94a3b8, stop:1 #64748b);
+            }
+            QPushButton.controlButton:checked {
+                /* "The Seeker" - Active/Locked State */
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #fbbf24, stop:1 #f59e0b);
+                color: #020617;
+                border: 1px solid #d97706;
+            }
+            QPushButton.controlButton:pressed {
+                background: #475569;
                 margin-top: 2px;
                 border-bottom-width: 1px;
             }
             
-            /* Control Keys */
-            QPushButton.controlButton {
-                background-color: #334155; /* Slate 700 */
-                color: #f8fafc;
-                border: 1px solid #475569;
-                border-bottom: 3px solid #1e293b;
-                border-radius: 8px;
-                font-weight: 600;
-            }
-            QPushButton.controlButton:checked {
-                background-color: #f59e0b; /* Amber 500 for Lock */
-                color: #000;
-                border-color: #d97706;
-            }
-            QPushButton.controlButton:pressed {
-                margin-top: 2px;
-                border-bottom-width: 1px;
-            }
+            /* Backspace - "The Destroyer" */
             QPushButton.backspaceButton {
-                background-color: #ef4444; /* Red 500 */
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #ef4444, stop:1 #b91c1c); /* Crimson */
                 color: white;
-                border: 1px solid #dc2626;
-                border-bottom: 3px solid #991b1b;
-                border-radius: 8px;
-                font-weight: 900;
+                border: 1px solid #991b1b;
+                border-bottom: 3px solid #7f1d1d;
+                border-radius: 12px;
+                font-weight: 700;
+            }
+            QPushButton.backspaceButton:hover {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #f87171, stop:1 #ef4444);
             }
             QPushButton.backspaceButton:pressed {
+                background: #b91c1c;
                 margin-top: 2px;
                 border-bottom-width: 1px;
+            }
+
+            /* Close Button - "The Exit" */
+            QPushButton#closeButton {
+                background: #334155; /* Visible background (Stone) */
+                color: #f8fafc; /* Cloud */
+                border: 1px solid #475569;
+                border-radius: 16px;
+                font-weight: 900;
+                font-size: 14px;
+            }
+            QPushButton#closeButton:hover {
+                background: #ef4444; /* Crimson */
+                color: white;
+                border: 1px solid #b91c1c;
             }
             """
         )
 
         main_layout = QVBoxLayout(self)
-        main_layout.setSpacing(16)
-        main_layout.setContentsMargins(20, 20, 20, 20)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        
+        # The Tablet Frame (Holds existing content)
+        self.tablet_frame = QFrame()
+        self.tablet_frame.setObjectName("MainTablet")
+        
+        # Add Drop Shadow (The Floating Temple)
+        shadow = QGraphicsDropShadowEffect(self)
+        shadow.setBlurRadius(25)
+        shadow.setXOffset(0)
+        shadow.setYOffset(8)
+        shadow.setColor(QColor(0, 0, 0, 40)) # 15%ish opacity
+        self.tablet_frame.setGraphicsEffect(shadow)
+        
+        main_layout.addWidget(self.tablet_frame)
+        
+        # Tablet Layout
+        tablet_layout = QVBoxLayout(self.tablet_frame)
+        tablet_layout.setSpacing(20)
+        tablet_layout.setContentsMargins(24, 24, 24, 24)
 
-        # Header Section
+        # Header Section (Spread layout: Toggles Left, Close Right)
         header = QHBoxLayout()
-        titles = QVBoxLayout()
-        title = QLabel("Virtual Keyboard")
-        title.setObjectName("titleLabel")
-        subtitle = QLabel("Select a layout to begin")
-        subtitle.setObjectName("subtitleLabel")
-        titles.addWidget(title)
-        titles.addWidget(subtitle)
-        header.addLayout(titles)
-        header.addStretch()
-        main_layout.addLayout(header)
-
+        
         # Layout Switcher (Segmented Control style)
         self.toggle_container = QFrame()
         self.toggle_container.setObjectName("toggleContainer")
         toggle_layout = QHBoxLayout(self.toggle_container)
-        toggle_layout.setContentsMargins(4, 4, 4, 4)
-        toggle_layout.setSpacing(4)
+        toggle_layout.setContentsMargins(2, 2, 2, 2)
+        toggle_layout.setSpacing(0) 
         
         self.layout_group = QButtonGroup(self)
         self.layout_buttons = {}
         
-        # Create buttons dynamically from generic definitions + Esoteric
-        # We manually order them for UX consistency: Hebrew, Greek, Special, Esoteric
-        layout_order = ["hebrew", "greek", "special", "esoteric"]
+        # Updated Order v2.4
+        layout_order = ["hebrew", "greek", "trigrammaton", "astronomicon", "special", "esoteric"]
         
         for layout_id in layout_order:
             if layout_id not in LAYOUTS: continue
             
             layout_def = LAYOUTS[layout_id]
-            btn = QPushButton(layout_def.display_name)
+            # Shorten display names if needed for space
+            display = layout_def.display_name
+            if layout_id == "trigrammaton": display = "Trigram"
+            if layout_id == "astronomicon": display = "Astro"
+            
+            btn = QPushButton(display)
             btn.setCheckable(True)
             btn.setProperty("class", "layoutToggle")
+            btn.setCursor(Qt.CursorShape.PointingHandCursor)
             btn.clicked.connect(lambda checked, lid=layout_id: self._switch_layout(lid))
             
             self.layout_group.addButton(btn)
             self.layout_buttons[layout_id] = btn
             toggle_layout.addWidget(btn)
             
-        main_layout.addWidget(self.toggle_container)
+        header.addWidget(self.toggle_container)
+        header.addStretch() # Push Close button to right
+        
+        # Add a small spacer before close button
+        header.addSpacing(16)
+
+        # Close Button (The EXIT)
+        close_btn = QPushButton("✕")
+        close_btn.setObjectName("closeButton")
+        close_btn.setFixedSize(32, 32)
+        close_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        close_btn.clicked.connect(self.close)
+        header.addWidget(close_btn)
+
+        tablet_layout.addLayout(header)
 
         # Keyboard Grid
         self.keyboard_container = QWidget()
         self.keyboard_layout = QGridLayout(self.keyboard_container)
-        self.keyboard_layout.setSpacing(8)
-        self.keyboard_layout.setContentsMargins(0, 0, 0, 0)
-        main_layout.addWidget(self.keyboard_container)
+        self.keyboard_layout.setSpacing(6) # Tighter spacing
+        self.keyboard_layout.setContentsMargins(0, 4, 0, 0)
+        tablet_layout.addWidget(self.keyboard_container)
 
         # Initial State
         self._switch_layout("hebrew")
         self.layout_buttons["hebrew"].setChecked(True)
         
-        # Resize logic
-        self.setFixedSize(760, 400)
+        # Resize logic - Compact Mode (Wider for more tabs)
+        self.setFixedSize(680, 360) 
 
     def set_target_input(self, input_field: QLineEdit):
         self.target_input = input_field
@@ -242,11 +301,6 @@ class VirtualKeyboard(QDialog):
             
         self._render_keyboard(layout_def)
         
-        # Update subtitle
-        sub = self.findChild(QLabel, "subtitleLabel")
-        if sub:
-            sub.setText(f"Active Layout: {layout_def.display_name}")
-
     def _render_keyboard(self, layout: KeyboardLayout):
         """Render the keys for the given layout definition."""
         # Clear existing
@@ -262,7 +316,8 @@ class VirtualKeyboard(QDialog):
         for r_idx, row in enumerate(layout.rows):
             for c_idx, char in enumerate(row):
                 display_char = self._get_display_char(char, layout)
-                btn = self._create_key_button(display_char, display_char)
+                # Pass layout to create_key_button to access font family
+                btn = self._create_key_button(display_char, display_char, layout)
                 self.keyboard_layout.addWidget(btn, r_idx, c_idx)
                 
         # Render Control Row (Shift, Space, Backspace)
@@ -309,18 +364,28 @@ class VirtualKeyboard(QDialog):
             return char.upper()
         return char
 
-    def _create_key_button(self, label: str, value: str) -> QPushButton:
+    def _create_key_button(self, label: str, value: str, layout: KeyboardLayout = None) -> QPushButton:
         btn = QPushButton(label)
-        btn.setMinimumSize(52, 52) # Bigger targets
+        btn.setMinimumSize(42, 42) # Compact Mode (The Pebble)
         btn.setSizePolicy(
             btn.sizePolicy().horizontalPolicy(), 
             btn.sizePolicy().verticalPolicy()
         )
         
-        # Dynamic font sizing
-        font = QFont("Segoe UI", 14)
+        # Dynamic font sizing and family
+        font_family = "Inter"
+        font_size = 12
+        if layout and layout.font_family:
+            font_family = layout.font_family
+            font_size = 16 # Magickal fonts often need to be bigger
+            
+            # Force via Stylesheet to override any global theme issues
+            btn.setStyleSheet(f"font-family: '{font_family}'; font-size: {font_size}pt;")
+            
+        font = QFont(font_family, font_size)
+        font.setWeight(QFont.Weight.Medium)
         if len(label) > 1: # Icons or special chars
-            font.setPointSize(12)
+            font.setPointSize(10)
         btn.setFont(font)
         
         btn.setProperty("class", "keyButton")
@@ -340,11 +405,31 @@ class VirtualKeyboard(QDialog):
     def _on_char_clicked(self, char: str):
         self.character_typed.emit(char)
         
+        # Determine if we need to apply a custom font
+        layout = LAYOUTS.get(self.current_layout_name)
+        font_family = layout.font_family if layout else None
+        
         if self.target_editor:
-            self.target_editor.insertPlainText(char)
+            if font_family:
+                # Use HTML to apply font specifically to this character
+                # Note: We append the char in a span
+                self.target_editor.insertHtml(f"<span style='font-family: {font_family}; font-size: 16pt;'>{char}</span>")
+            else:
+                self.target_editor.insertPlainText(char)
+                
             self.target_editor.ensureCursorVisible()
             self.target_editor.setFocus()
+            
         elif self.target_input:
+            # QLineEdit does not support mixed fonts (Rich Text).
+            # We must set the font for the whole widget if the user wants to see these chars.
+            if font_family:
+                 # Check if we should switch the font
+                 current_font = self.target_input.font()
+                 if current_font.family() != font_family:
+                     new_font = QFont(font_family, 14) # Slightly larger for readability
+                     self.target_input.setFont(new_font)
+            
             self.target_input.insert(char)
             self.target_input.setFocus()
             
@@ -362,6 +447,52 @@ class VirtualKeyboard(QDialog):
         elif self.target_input:
             self.target_input.backspace()
             self.target_input.setFocus()
+
+    def showEvent(self, event):
+        """Auto-position the keyboard when shown."""
+        super().showEvent(event)
+        self._position_window()
+        
+    def _position_window(self):
+        """Position the keyboard intelligently relative to the target field."""
+        target = self.target_input or self.target_editor
+        
+        if not target:
+            # Fallback to screen center bottom if no specific target
+            screen = self.screen().availableGeometry()
+            x = screen.x() + (screen.width() - self.width()) // 2
+            y = screen.y() + screen.height() - self.height() - 40
+            self.move(x, y)
+            return
+
+        # Get target global position and geometry
+        # Fixed: Removed buggy Qt.QPoint call.
+        pos_point = target.mapToGlobal(target.rect().topLeft())
+        
+        screen_geo = self.screen().availableGeometry()
+        
+        # Default: Spawn to the RIGHT
+        spacing = 20
+        x = pos_point.x() + target.width() + spacing
+        # Align tops
+        y = pos_point.y() 
+        
+        # Check Right Boundary
+        if x + self.width() > screen_geo.right():
+            # Not enough space on right, try LEFT
+            x = pos_point.x() - self.width() - spacing
+        
+        # Check Left Boundary (if it failed right and went left, could it go off-screen?)
+        if x < screen_geo.left():
+            # If both sides fail, fallback to Bottom Center of screen (User preference safety)
+            x = screen_geo.center().x() - (self.width() // 2)
+            y = screen_geo.bottom() - self.height() - 20
+        else:
+            # Vertical adjustment if it falls off bottom
+            if y + self.height() > screen_geo.bottom():
+                y = screen_geo.bottom() - self.height() - 20
+                
+        self.move(x, y)
 
 _shared_virtual_keyboard: Optional[VirtualKeyboard] = None
 

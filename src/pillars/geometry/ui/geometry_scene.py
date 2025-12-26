@@ -68,6 +68,10 @@ class GeometryScene(QGraphicsScene):
     
     measurementChanged = pyqtSignal(dict)
     dot_clicked = pyqtSignal(int, Qt.KeyboardModifier, Qt.MouseButton) # index, modifiers, button
+    mouse_moved = pyqtSignal(QPointF) # Emitted on mouse move
+    dot_hovered = pyqtSignal(int)      # Emitted when hovering over a dot
+    dot_hover_leave = pyqtSignal(int)  # Emitted when leaving a dot
+    canvas_clicked = pyqtSignal()      # Emitted when clicking empty space
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -80,6 +84,10 @@ class GeometryScene(QGraphicsScene):
         self._current_view_scale: float = 1.0
         self._base_label_font_size: float = 8.0
         self._min_label_scale: float = 0.5  # Hide labels below 50% zoom level
+
+        # Drawing Preview State
+        self._preview_line_item: Optional[QGraphicsItem] = None
+        self._hovered_dot_index: Optional[int] = None
 
         # Measurement Customization State
         self._meas_font_size: float = 9.0
@@ -384,28 +392,124 @@ class GeometryScene(QGraphicsScene):
             # Check for dot index in data(0)
             dot_index = item.data(0)
             logger.debug("Scene item found. data(0)=%s, type=%s", dot_index, type(item))
-            if dot_index is not None:
+            if dot_index is not None and dot_index != -999: # Ignore hover glow
                 modifiers = event.modifiers()
                 button = event.button()
                 logger.debug("Emitting dot_clicked index=%s modifiers=%s button=%s", dot_index, modifiers, button)
                 self.dot_clicked.emit(dot_index, modifiers, button)
+            if event.button() == Qt.MouseButton.LeftButton:
+                 # Hit an item but it's not a dot (e.g. line, grid). Treat as canvas click for cleanup.
+                 # ONLY if the item doesn't handle clicks itself? 
+                 # For now, our lines don't handle clicks.
+                 pass
+            elif event.button() == Qt.MouseButton.RightButton:
+                 logger.debug("Clicked non-dot item, treating as canvas click")
+                 self.canvas_clicked.emit()
         else:
             logger.debug("Scene click found no item")
+            if event.button() == Qt.MouseButton.RightButton:
+                self.canvas_clicked.emit()
         
         # Call super() after our logic so default Qt behavior still works (e.g., item selection)
         super().mousePressEvent(event)
+
+    def set_start_dot_highlight(self, index: Optional[int], color: QColor = None):
+        """Highlight the active drawing start dot (Drawing Anchor)."""
+        # Unique ID for start highlight: -998
+        for item in self.items():
+            if item.data(0) == -998:
+                self.removeItem(item)
+                break
+        
+        if index is None:
+            return
+
+        # Find dot pos
+        target_pos = None
+        target_radius = 0.5
+        for item in self.items():
+            if item.data(0) == index and isinstance(item, QGraphicsEllipseItem):
+                target_pos = item.rect().center()
+                target_radius = item.rect().width() / 2
+                break
+        
+        if target_pos:
+            # Add a ring (maybe distinct from hover)
+            # Use provided color or default
+            ring_color = color if color else QColor("#3b82f6")
+            
+            glow = self.addEllipse(
+                target_pos.x() - target_radius * 1.8,
+                target_pos.y() - target_radius * 1.8,
+                target_radius * 3.6,
+                target_radius * 3.6,
+                QPen(ring_color, 0),
+                QBrush(Qt.BrushStyle.NoBrush) # Ring only? Or light fill?
+            )
+            # Use a slightly thicker pen for anchor
+            pen = QPen(ring_color, 0)
+            pen.setWidthF(0.1) # World units. 2px cosmetic?
+            pen.setCosmetic(True)
+            pen.setWidth(2)
+            glow.setPen(pen)
+            
+            glow.setZValue(1.45) # Above hover, below preview
+            glow.setData(0, -998)
+
+    def mouseMoveEvent(self, event: QGraphicsSceneMouseEvent):
+        pos = event.scenePos()
+        self.mouse_moved.emit(pos)
+
+        # Hit testing for hover
+        view_transform = QTransform()
+        if self.views():
+            view_transform = self.views()[0].transform()
+            
+        item = self.itemAt(pos, view_transform)
+        dot_index = item.data(0) if item else None
+
+        if dot_index != self._hovered_dot_index:
+            if self._hovered_dot_index is not None:
+                self.dot_hover_leave.emit(self._hovered_dot_index)
+            
+            if dot_index is not None:
+                self.dot_hovered.emit(dot_index)
+            
+            self._hovered_dot_index = dot_index
+
+        super().mouseMoveEvent(event)
+
+    def set_preview_line(self, start: QPointF, end: QPointF, visible: bool = True, color: QColor = None):
+        """Update or create a temporary preview line for drawing."""
+        if not visible:
+            if self._preview_line_item:
+                self.removeItem(self._preview_line_item)
+                self._preview_line_item = None
+            return
+
+        line_pen = QPen(color if color else QColor("#94a3b8"), 2)
+        line_pen.setStyle(Qt.PenStyle.DashLine)
+        line_pen.setCosmetic(True)
+
+        if self._preview_line_item:
+            try:
+                self.removeItem(self._preview_line_item) # Simple remove/add to avoid line update complexity
+            except RuntimeError:
+                # Item already deleted (C++ side), just clear reference
+                pass
+            self._preview_line_item = None
+        
+        self._preview_line_item = self.addLine(start.x(), start.y(), end.x(), end.y(), line_pen)
+        self._preview_line_item.setZValue(1.5) # Above lines, below dots/labels
+
 
     def add_connection_line(self, start_pos: Tuple[float, float], end_pos: Tuple[float, float], pen: QPen):
         """Add a persistent connection line to the scene."""
         logger.debug("Adding connection line start=%s end=%s", start_pos, end_pos)
         line_item = self.addLine(start_pos[0], start_pos[1], end_pos[0], end_pos[1], pen)
         line_item.setZValue(0.5) # Below dots (dots are at Z=2)
-        # Dots are Z? CirclePrimitive doesn't set Z? Default is 0. labels are Z=2.
-        # We should set dots to Z=1.
         
     def set_dot_z_index(self, z: float):
-        # Helper to set z value for all dots?
-        # Better: Set Z in _create_circle_items.
         pass
 
     def highlight_dots(self, indices: List[int], color: QColor):
@@ -421,6 +525,49 @@ class GeometryScene(QGraphicsScene):
                 if hasattr(item, 'setBrush'):
                     item.setBrush(brush)
                     item.setPen(pen)
+
+    def set_hover_target(self, index: Optional[int]):
+        """Highlight a specific dot as a hover target (e.g. for snapping)."""
+        # Create or update a temporary highlight item
+        # We could use a specific list similar to _temp_items but for hover
+        for item in self.items():
+            if item.data(0) == -999: # Magic number for hover highlight
+                self.removeItem(item)
+                break
+        
+        if index is None:
+            return
+
+        # Find the dot position
+        # We don't have direct index->pos map efficiently besides iterating items or query payload
+        # Iterating items is okay for < 2000 items
+        target_pos = None
+        target_radius = 0.5
+        for item in self.items():
+            if item.data(0) == index and isinstance(item, QGraphicsEllipseItem):
+                rect = item.rect()
+                target_pos = item.pos() + rect.center() if not item.pos().isNull() else rect.center()
+                # actually item pos is usually one corner if rect is local?
+                # QGraphicsEllipseItem: setRect(x,y,w,h). pos() is usually (0,0) unless moved.
+                # In _add_circle we do addEllipse(cx-r, cy-r, ...).
+                # So the item is at (0,0) but its rect is centered at (cx, cy).
+                # Wait, addEllipse returns an item. The item geometry is defined by the rect passed.
+                target_pos = item.rect().center()
+                target_radius = item.rect().width() / 2
+                break
+        
+        if target_pos:
+            # Add a glow ring
+            glow = self.addEllipse(
+                target_pos.x() - target_radius * 1.5,
+                target_pos.y() - target_radius * 1.5,
+                target_radius * 3,
+                target_radius * 3,
+                QPen(QColor("#f59e0b"), 0), # Amber glow
+                QBrush(QColor(245, 158, 11, 100))
+            )
+            glow.setZValue(1.4) # Below preview line
+            glow.setData(0, -999) # Mark as hover item
 
     def set_dot_color(self, color: QColor):
         """Set the fill color for all dot items (EllipseItems)."""
@@ -467,11 +614,12 @@ class GeometryScene(QGraphicsScene):
         self.clear()
         self.blockSignals(False)
         self._label_items.clear()
-        self._label_items.clear()
         self._axes_items.clear()
         self._vertex_highlight_items.clear()
         self._temp_items.clear()  # Also clear temp items on rebuild
         self._label_primitives = []
+        self._preview_line_item = None  # Prevent dangling pointer crash
+        self._hovered_dot_index = None
 
         if not self._payload or not self._payload.primitives:
             self.setSceneRect(-5, -5, 10, 10)
@@ -687,45 +835,35 @@ class GeometryScene(QGraphicsScene):
         if not should_show:
             for item in self._label_items:
                 item.setVisible(False)
-            logger.debug("Labels hidden: scale=%.2f, threshold=%.2f, toggle=%s", 
-                         scale, self._min_label_scale, self.labels_visible)
             return
         
-        # Adaptive font sizing: larger font when zoomed out
-        adaptive_font_size = max(6.0, min(12.0, self._base_label_font_size / scale))
+        # Fixed font size for consistency (8pt)
+        # We do NOT want labels to grow when we zoom out.
+        fixed_font_size = self._base_label_font_size
         
         projections = []
         for item in self._label_items:
             scene_pos = item.pos() # Anchor
             screen_pos = view_transform.map(scene_pos)
-            rect = item.boundingRect() # in pixels
+            # Hide items initially, we will unhide only leaders
+            item.setVisible(False)
+            
             projections.append({
                 'item': item,
                 'screen_x': screen_pos.x(),
                 'screen_y': screen_pos.y(),
-                'width': rect.width(),
-                'height': rect.height(),
-                # Store original translation if needed? No, we reset transform.
-                'align_center': True # Assuming all for now or check item transform?
             })
 
-        # Sort by screen Y
+        # Sort by screen Y then X
         projections.sort(key=lambda p: (p['screen_y'], p['screen_x']))
         
-        # Group by screen proximity
-
-
-        # Let's use a simpler group-by-screen-proximity approach
-        groups = []
-        threshold_x = 20.0 # pixels
-        threshold_y = 20.0 # pixels
+        # Group by screen proximity (Cluster)
+        threshold_x = 24.0 # pixels
+        threshold_y = 16.0 # pixels
         
-        # Determine strict groups
-        sorted_p = sorted(projections, key=lambda i: (i['screen_y'], i['screen_x']))
+        active_groups = [] # List of [ {'item':...} ]
         
-        active_groups = [] # List of [ {'sy':..., 'sx':...} ]
-        
-        for p in sorted_p:
+        for p in projections:
             placed = False
             for group in active_groups:
                 leader = group[0]
@@ -736,36 +874,40 @@ class GeometryScene(QGraphicsScene):
                     break
             if not placed:
                 active_groups.append([p])
-
                 
-        # Now layout groups with adaptive font sizing
+        # Layout: Show ONLY the leader of each group to prevent overlap clutter
         for group in active_groups:
             if not group: continue
             
-            # Apply adaptive font size to all items in group
-            for p in group:
-                item = p['item']
-                font = item.font()
-                font.setPointSizeF(adaptive_font_size)
-                item.setFont(font)
-                item.setVisible(True)
+            # The leader is the first item (lowest sorting order usually)
+            # Or we could pick the one with "smallest index" if we tracked that.
+            # Currently projections are sorted by screen pos.
             
-            # Recalculate heights after font change
-            total_h = sum(p['item'].boundingRect().height() for p in group)
-            start_y_offset = -total_h / 2
+            # Show ONLY the leader
+            leader = group[0]
+            item = leader['item']
             
-            current_off = start_y_offset
-            for p in group:
-                item = p['item']
-                rect = item.boundingRect()
-                h = rect.height()
-                w = rect.width()
-                
-                item.setTransform(QTransform().translate(-w/2, current_off))
-                current_off += h
-        
-        logger.debug("Label layout updated: scale=%.2f, font=%.1fpt, visible=%s", 
-                     scale, adaptive_font_size, should_show)
+            font = item.font()
+            font.setPointSizeF(fixed_font_size)
+            item.setFont(font)
+            item.setVisible(True)
+            
+            # Reset transform (clear any previous stacking offset)
+            item.setTransform(QTransform())
+            
+            # Center the leader on its point
+            rect = item.boundingRect()
+            w = rect.width()
+            h = rect.height()
+            
+            # We want to center the label roughly on the point, or slightly above
+            # item.setPos has set logic, we adjust offset
+            # QGraphicsSimpleTextItem origin is top-left.
+            # We translate to center it.
+            item.setTransform(QTransform().translate(-w/2, -h/2))
+
+        logger.debug("Label layout updated: scale=%.2f, visible_groups=%d", 
+                     scale, len(active_groups))
 
 
     def _create_axes(self, bounds: Bounds) -> List[QGraphicsItem]:

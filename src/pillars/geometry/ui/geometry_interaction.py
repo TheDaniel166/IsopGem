@@ -139,6 +139,12 @@ class GeometryInteractionManager(QObject):
             self.current_draw_start = index
             self.draw_start_changed.emit(index)
 
+    def cancel_drawing_chain(self):
+        """Reset the current drawing chain (e.g. stop preview)."""
+        if self.current_draw_start is not None:
+            self.current_draw_start = None
+            self.draw_start_changed.emit(None)
+
     def clear(self):
         self.groups.clear()
         self.connections.clear()
@@ -383,9 +389,24 @@ class ConnectionToolBar(QFrame):
         layout.setContentsMargins(16, 8, 16, 8)
         layout.setSpacing(12)
         
+        # Global Tooltip Style for this toolbar
+        self.setStyleSheet("""
+            QFrame { background-color: #f8fafc; border-bottom: 1px solid #e2e8f0; }
+            QToolTip { 
+                background-color: #1e293b; 
+                color: #f8fafc; 
+                border: 1px solid #cbd5e1; 
+                border-radius: 4px;
+                padding: 4px;
+            }
+        """)
+        
         # Draw Mode Toggle (Navigator Style)
-        self.draw_btn = QPushButton("Inscribe Lines")
+        # Using ✎ for clear "Draw/Inscribe" meaning
+        self.draw_btn = QPushButton("✎") 
+        self.draw_btn.setToolTip("Inscribe Lines (Draw Mode)")
         self.draw_btn.setCheckable(True)
+        self.draw_btn.setFixedSize(56, 56) # Increased size
         self.draw_btn.clicked.connect(self._toggle_draw_mode)
         self.draw_btn.setStyleSheet(
             """
@@ -394,8 +415,9 @@ class ConnectionToolBar(QFrame):
                 border: 1px solid #334155;
                 color: white;
                 font-weight: 600;
+                font-size: 28pt; /* Increased icon size */
                 border-radius: 12px;
-                padding: 6px 12px;
+                padding-bottom: 6px; /* Adjust baseline */
             }
             QPushButton:hover {
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #94a3b8, stop:1 #64748b);
@@ -409,8 +431,11 @@ class ConnectionToolBar(QFrame):
         layout.addWidget(self.draw_btn)
         
         # Select Mode Toggle
-        self.select_btn = QPushButton("Select Points")
+        # Using ✥ for "Select/Target" meaning
+        self.select_btn = QPushButton("✥")
+        self.select_btn.setToolTip("Select Points (Rubber Band)")
         self.select_btn.setCheckable(True)
+        self.select_btn.setFixedSize(56, 56) # Increased size
         self.select_btn.clicked.connect(self._toggle_select_mode)
         self.select_btn.setStyleSheet(
             """
@@ -419,8 +444,9 @@ class ConnectionToolBar(QFrame):
                 border: 1px solid #334155;
                 color: white;
                 font-weight: 600;
+                font-size: 28pt; /* Increased icon size */
                 border-radius: 12px;
-                padding: 6px 12px;
+                padding-bottom: 6px;
             }
             QPushButton:hover {
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #94a3b8, stop:1 #64748b);

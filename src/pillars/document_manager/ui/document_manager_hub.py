@@ -12,10 +12,12 @@ from .document_library import DocumentLibrary
 from .document_search_window import DocumentSearchWindow
 from .mindscape_window import MindscapeWindow
 from .database_manager import DatabaseManagerWindow
+from .font_manager_window import FontManagerWindow
 
 
 class DocumentManagerHub(QWidget):
     """Hub widget for Document Manager pillar - displays available tools."""
+    
     
     def __init__(self, window_manager: WindowManager):
         """
@@ -26,6 +28,9 @@ class DocumentManagerHub(QWidget):
         """
         super().__init__()
         self.window_manager = window_manager
+        self.library_window = None
+        self.db_window = None
+        self.font_window = None
         self._setup_ui()
     
     def _setup_ui(self):
@@ -69,11 +74,12 @@ class DocumentManagerHub(QWidget):
 
         # Tools grid
         tools = [
-            ("📝", "New Document", "Create a new rich text document", "#3b82f6", self._open_document_editor),
+            ("📝", "Thoth's Scribe", "Create a new rich text document", "#3b82f6", self._open_document_editor),
             ("📚", "The Akaschic Record", "Browse and manage your documents", "#10b981", self._open_document_library),
             ("🔍", "Search", "Full-text search across all documents", "#8b5cf6", self._open_document_search),
             ("🧠", "Mindscape", "The Living Graph - visual connections", "#06b6d4", self._open_mindscape),
             ("🛠️", "Database Admin", "Stats, maintenance, and cleanup", "#f59e0b", self._open_database_manager),
+            ("🔤", "Font Manager", "Inspect Magickal Fonts", "#ec4899", self._open_font_manager),
         ]
 
         grid = QGridLayout()
@@ -217,6 +223,13 @@ class DocumentManagerHub(QWidget):
             allow_multiple=False
         )
 
+    def _open_font_manager(self):
+        """Open the font manager window."""
+        self.window_manager.open_window(
+            "font_manager",
+            FontManagerWindow,
+            allow_multiple=False
+        )
 
 
     def _open_document_from_library(self, doc, search_term=None, restored_html=None, read_only=False):

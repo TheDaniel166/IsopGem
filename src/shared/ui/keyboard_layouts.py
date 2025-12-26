@@ -13,6 +13,14 @@ class KeyboardLayout:
     rows: List[List[str]]
     has_shift: bool = False
     is_esoteric: bool = False
+    font_family: str = None # Optional custom font
+
+# Reusable English Rows
+ENGLISH_ROWS = [
+    ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'],
+    ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l'],
+    ['z', 'x', 'c', 'v', 'b', 'n', 'm']
+]
 
 # Layout Definitions
 HEBREW_LAYOUT = KeyboardLayout(
@@ -34,6 +42,22 @@ GREEK_LAYOUT = KeyboardLayout(
         ['ζ', 'χ', 'ψ', 'ω', 'β', 'ν', 'μ'],
     ],
     has_shift=True
+)
+
+TRIGRAMMATON_LAYOUT = KeyboardLayout(
+    name="trigrammaton",
+    display_name="Trigrammaton",
+    rows=ENGLISH_ROWS,
+    has_shift=True,
+    font_family="Trigrammaton"
+)
+
+ASTRONOMICON_LAYOUT = KeyboardLayout(
+    name="astronomicon",
+    display_name="Astronomicon",
+    rows=ENGLISH_ROWS,
+    has_shift=True,
+    font_family="Astronomicon"
 )
 
 SPECIAL_LAYOUT = KeyboardLayout(
@@ -63,6 +87,8 @@ ESOTERIC_LAYOUT = KeyboardLayout(
 LAYOUTS: Dict[str, KeyboardLayout] = {
     "hebrew": HEBREW_LAYOUT,
     "greek": GREEK_LAYOUT,
+    "trigrammaton": TRIGRAMMATON_LAYOUT,
+    "astronomicon": ASTRONOMICON_LAYOUT,
     "special": SPECIAL_LAYOUT,
     "esoteric": ESOTERIC_LAYOUT
 }

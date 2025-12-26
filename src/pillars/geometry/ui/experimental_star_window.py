@@ -1,182 +1,80 @@
 """Visualizer for Generalized (Experimental) Star Numbers."""
 from __future__ import annotations
 
-import math
 from typing import List, Optional, Tuple
 
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QFrame, QLabel, QPushButton,
-    QSpinBox, QDoubleSpinBox, QCheckBox, QMainWindow, QSizePolicy, QGraphicsView
+    QCheckBox, QDoubleSpinBox, QFrame, QLabel, QPushButton,
+    QSpinBox, QVBoxLayout, QWidget
 )
-from PyQt6.QtCore import Qt, QThreadPool, QRunnable, QObject, pyqtSignal
-from PyQt6.QtGui import QPen, QColor
+from PyQt6.QtCore import Qt, QRunnable
 from shared.ui import WindowManager
 from ..services import (
     generalized_star_number_value,
     generalized_star_number_points,
 )
-from .geometry_scene import GeometryScene
-from .geometry_view import GeometryView
-from .geometry_interaction import GeometryInteractionManager, GroupManagementPanel, ConnectionToolBar
+from .base_figurate_window import BaseFigurateWindow, RenderSignals
 from .primitives import Bounds, CirclePrimitive, GeometryScenePayload, LabelPrimitive, PenStyle, BrushStyle
 
 
-class ExperimentalStarWindow(QMainWindow):
+class ExperimentalStarWindow(BaseFigurateWindow):
     """Interactive viewer for Generalized Star Numbers (P-grams).
     
     Allows creating stars with any number of points (P >= 3).
     """
 
-    HEAVY_THRESHOLD = 2000  # offload when dot count exceeds this
-
     def __init__(self, window_manager: Optional[WindowManager] = None, parent=None):
-        super().__init__(parent)
-        self.window_manager = window_manager
-
-        self.scene = GeometryScene()
-        self.view = GeometryView(self.scene)
-        self.thread_pool = QThreadPool.globalInstance()
-        self._rendering = False
-        self._controls_frame: Optional[QFrame] = None
-        self._render_button: Optional[QPushButton] = None
-
+        super().__init__(window_manager, parent)
         self.setWindowTitle("Experimental Star Number Visualizer")
-        self.setMinimumSize(1100, 720)
-        self.setStyleSheet("background-color: #f8fafc;")
 
         self.points_spin: Optional[QSpinBox] = None
         self.index_spin: Optional[QSpinBox] = None
         self.spacing_spin: Optional[QDoubleSpinBox] = None
         self.labels_toggle: Optional[QCheckBox] = None
-        self.grid_toggle: Optional[QCheckBox] = None
-        self.axes_toggle: Optional[QCheckBox] = None
         self.count_label: Optional[QLabel] = None
         self.value_label: Optional[QLabel] = None
 
-        # Interaction
-        self.interaction_manager = GeometryInteractionManager(self)
-        self.interaction_manager.groups_changed.connect(self._refresh_highlights)
-        self.interaction_manager.connection_added.connect(self._on_connection_added)
-        self.interaction_manager.connections_cleared.connect(self._refresh_connections)
-        self.interaction_manager.mode_changed.connect(self._update_view_mode)
-        self.interaction_manager.draw_start_changed.connect(self._refresh_highlights)
-        self.scene.dot_clicked.connect(self._handle_dot_click)
-
-        self._current_points = [] # Store for connection line lookups
+        self._current_points = []
 
         self._setup_ui()
         self._render()
-        
-        # Connect view selection signal
-        self.view.dots_selected.connect(self._on_dots_selected)
-
-    def _update_view_mode(self, mode: str):
-        if mode == "draw":
-            self.view.setDragMode(QGraphicsView.DragMode.NoDrag)
-            self.view.setCursor(Qt.CursorShape.CrossCursor)
-            self.view.set_selection_mode(False)
-        elif mode == "select":
-            self.view.setDragMode(QGraphicsView.DragMode.NoDrag)
-            self.view.set_selection_mode(True)
-        else:
-            self.view.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
-            self.view.setCursor(Qt.CursorShape.ArrowCursor)
-            self.view.set_selection_mode(False)
-    
-    def _on_dots_selected(self, indices: list):
-        """Handle rubber-band selection of dots."""
-        for idx in indices:
-            self.interaction_manager.toggle_dot_in_group(idx)
-
-    def _refresh_highlights(self, _=None):
-        self._render_interactions()
-
-    def _refresh_connections(self):
-        self._render()
-
-    def _on_connection_added(self, conn):
-        points = self._current_points
-        if not points or conn.start_index > len(points) or conn.end_index > len(points):
-            return
-        
-        p1 = points[conn.start_index - 1]
-        p2 = points[conn.end_index - 1]
-        qt_pen = QPen(conn.color, conn.width)
-        qt_pen.setCapStyle(Qt.PenCapStyle.RoundCap)
-        self.scene.add_connection_line(p1, p2, qt_pen)
-
-    def _handle_dot_click(self, index: int, modifiers: Qt.KeyboardModifier, button: Qt.MouseButton):
-        if self.interaction_manager.drawing_active and button == Qt.MouseButton.LeftButton:
-            self.interaction_manager.process_draw_click(index)
-        elif button == Qt.MouseButton.RightButton:
-            self.interaction_manager.toggle_dot_in_group(index)
-
-    def _render_interactions(self):
-        for name, group in self.interaction_manager.groups.items():
-            self.scene.highlight_dots(list(group.indices), group.color)
-        
-        start = self.interaction_manager.current_draw_start
-        if start is not None:
-             self.scene.highlight_dots([start], self.interaction_manager.pen_color)
 
     def _setup_ui(self):
-        central = QWidget()
-        self.setCentralWidget(central)
-
-        layout = QHBoxLayout(central)
-        layout.setContentsMargins(14, 14, 14, 14)
-        layout.setSpacing(12)
-
         controls = self._build_controls()
-        layout.addWidget(controls)
-
-        viewport_frame = QFrame()
-        viewport_frame.setStyleSheet("background-color: white; border: 1px solid #e2e8f0; border-radius: 14px;")
-        viewport_layout = QVBoxLayout(viewport_frame)
-        viewport_layout.setContentsMargins(0, 0, 0, 0)
-        viewport_layout.setSpacing(0)
-
-        # Interaction Toolbar
-        conn_bar = ConnectionToolBar(self.interaction_manager)
-        conn_bar.dot_color_changed.connect(self.scene.set_dot_color)
-        conn_bar.text_color_changed.connect(self.scene.set_text_color)
-        viewport_layout.addWidget(conn_bar)
-
-        toolbar = self._build_view_toolbar()
-        viewport_layout.addWidget(toolbar)
-        viewport_layout.addWidget(self.view, 1)
-
-        layout.addWidget(viewport_frame, 1)
-
-        # Right sidebar for groups
-        group_panel = GroupManagementPanel(self.interaction_manager)
-        group_panel.setFixedWidth(260)
-        layout.addWidget(group_panel)
+        self._setup_ui_skeleton(controls)
 
     def _build_controls(self) -> QWidget:
         frame = QFrame()
         self._controls_frame = frame
+        frame.setObjectName("FloatingPanel")
         frame.setFixedWidth(320)
-        frame.setStyleSheet("background-color: white; border: 1px solid #e2e8f0; border-radius: 14px;")
+        frame.setStyleSheet("""
+            QFrame#FloatingPanel {
+                background-color: #f1f5f9; 
+                border-right: 1px solid #cbd5e1;
+                border: 1px solid #cbd5e1; 
+                border-radius: 24px;
+            }
+        """)
 
         layout = QVBoxLayout(frame)
-        layout.setContentsMargins(18, 18, 18, 18)
-        layout.setSpacing(12)
+        layout.setContentsMargins(24, 32, 24, 32)
+        layout.setSpacing(16)
 
-        title = QLabel("Experimental Star Numbers")
-        title.setStyleSheet("color: #0f172a; font-size: 16pt; font-weight: 800;")
+        title = QLabel("Stellar Matrix")
+        title.setStyleSheet("font-family: 'Inter'; font-size: 20pt; font-weight: 800; color: #0f172a;")
         layout.addWidget(title)
 
-        subtitle = QLabel("Create star figures with any number of points (P-grams).")
+        subtitle = QLabel("Summon star figures with arbitrary points (P-grams).")
         subtitle.setWordWrap(True)
-        subtitle.setStyleSheet("color: #475569; font-size: 10.5pt;")
+        subtitle.setStyleSheet("color: #334155; font-size: 11pt;")
         layout.addWidget(subtitle)
 
         layout.addSpacing(4)
 
         # Star Points (P)
         p_label = QLabel("Star Points (P)")
-        p_label.setStyleSheet("color: #475569; font-weight: 600;")
+        p_label.setStyleSheet("color: #334155; font-weight: 700; font-size: 11pt;")
         layout.addWidget(p_label)
 
         self.points_spin = QSpinBox()
@@ -187,8 +85,8 @@ class ExperimentalStarWindow(QMainWindow):
         layout.addWidget(self.points_spin)
 
         # Index (N)
-        n_label = QLabel("Index (N)")
-        n_label.setStyleSheet("color: #475569; font-weight: 600;")
+        n_label = QLabel("Iteration (N)")
+        n_label.setStyleSheet("color: #334155; font-weight: 700; font-size: 11pt;")
         layout.addWidget(n_label)
 
         self.index_spin = QSpinBox()
@@ -199,8 +97,8 @@ class ExperimentalStarWindow(QMainWindow):
         layout.addWidget(self.index_spin)
 
         # Spacing
-        spacing_label = QLabel("Dot spacing")
-        spacing_label.setStyleSheet("color: #475569; font-weight: 600;")
+        spacing_label = QLabel("Grid Lattice")
+        spacing_label.setStyleSheet("color: #334155; font-weight: 700; font-size: 11pt;")
         layout.addWidget(spacing_label)
 
         self.spacing_spin = QDoubleSpinBox()
@@ -212,26 +110,28 @@ class ExperimentalStarWindow(QMainWindow):
         self.spacing_spin.valueChanged.connect(self._render)
         layout.addWidget(self.spacing_spin)
 
-        layout.addSpacing(6)
+        layout.addSpacing(8)
 
         # Toggles
-        self.labels_toggle = QCheckBox("Show numbered labels")
+        self.labels_toggle = QCheckBox("Show Sigils")
+        self.labels_toggle.setStyleSheet("QCheckBox { color: #334155; font-size: 11pt; }")
         self.labels_toggle.setChecked(True)
         self.labels_toggle.stateChanged.connect(self._toggle_labels)
         layout.addWidget(self.labels_toggle)
 
-        layout.addSpacing(10)
+        layout.addSpacing(16)
         self.count_label = QLabel("")
-        self.count_label.setStyleSheet("color: #0f172a; font-weight: 700; font-size: 12pt;")
+        self.count_label.setStyleSheet("color: #0f172a; font-weight: 800; font-size: 14pt;")
         layout.addWidget(self.count_label)
 
         self.value_label = QLabel("")
-        self.value_label.setStyleSheet("color: #475569; font-size: 10.5pt;")
+        self.value_label.setStyleSheet("color: #334155; font-size: 11pt; font-style: italic;")
         self.value_label.setWordWrap(True)
         layout.addWidget(self.value_label)
 
         # Action button
-        render_btn = QPushButton("Render Star")
+        render_btn = QPushButton("Manifest Star")
+        render_btn.setObjectName("MagusButton")
         render_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         render_btn.setStyleSheet(self._primary_button_style())
         render_btn.clicked.connect(self._render)
@@ -240,46 +140,6 @@ class ExperimentalStarWindow(QMainWindow):
 
         layout.addStretch(1)
         return frame
-
-    def _build_view_toolbar(self) -> QWidget:
-        bar = QFrame()
-        bar.setStyleSheet("background-color: #f8fafc; border-bottom: 1px solid #e2e8f0;")
-        layout = QHBoxLayout(bar)
-        layout.setContentsMargins(12, 8, 12, 8)
-        layout.setSpacing(8)
-
-        title = QLabel("Dot layout")
-        title.setStyleSheet("color: #0f172a; font-weight: 700;")
-        layout.addWidget(title)
-        layout.addStretch(1)
-
-        fit_btn = QPushButton("Fit to view")
-        fit_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        fit_btn.setStyleSheet(self._ghost_button_style())
-        fit_btn.clicked.connect(self.view.fit_scene)
-        layout.addWidget(fit_btn)
-
-        zoom_in_btn = QPushButton("+")
-        zoom_in_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        zoom_in_btn.setStyleSheet(self._ghost_button_style())
-        zoom_in_btn.setToolTip("Zoom In")
-        zoom_in_btn.clicked.connect(lambda: self.view.zoom(1.2))
-        layout.addWidget(zoom_in_btn)
-
-        zoom_out_btn = QPushButton("-")
-        zoom_out_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        zoom_out_btn.setStyleSheet(self._ghost_button_style())
-        zoom_out_btn.setToolTip("Zoom Out")
-        zoom_out_btn.clicked.connect(lambda: self.view.zoom(1/1.2))
-        layout.addWidget(zoom_out_btn)
-
-        reset_btn = QPushButton("Reset view")
-        reset_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        reset_btn.setStyleSheet(self._ghost_button_style())
-        reset_btn.clicked.connect(self.view.reset_view)
-        layout.addWidget(reset_btn)
-
-        return bar
 
     def _render(self):
         points_count = self.points_spin.value() if self.points_spin else 5
@@ -319,15 +179,7 @@ class ExperimentalStarWindow(QMainWindow):
         self._update_summary(value, self.points_spin.value() if self.points_spin else 0)
         self.scene.set_payload(payload)
         self.view.fit_scene()
-
-    def _set_busy(self, busy: bool):
-        self._rendering = busy
-        self.setCursor(Qt.CursorShape.BusyCursor if busy else Qt.CursorShape.ArrowCursor)
-        if self._controls_frame:
-            self._controls_frame.setDisabled(busy)
-        if self._render_button:
-            self._render_button.setText("Rendering..." if busy else "Render Star")
-            self._render_button.setDisabled(busy)
+        self._refresh_highlights()
 
     @staticmethod
     def _build_payload_static(points: List[Tuple[float, float]], sides: int, spacing: float, index: int) -> GeometryScenePayload:
@@ -346,7 +198,6 @@ class ExperimentalStarWindow(QMainWindow):
                 brush=brush,
                 metadata={"index": idx}
             ))
-            # Always include labels in payload - scene controls visibility
             labels.append(LabelPrimitive(text=str(idx), position=(x, y), align_center=True, metadata={"index": idx}))
 
         bounds = _bounds_from_points(points, margin=dot_radius * 3)
@@ -366,32 +217,6 @@ class ExperimentalStarWindow(QMainWindow):
         if self.labels_toggle:
             self.scene.set_labels_visible(self.labels_toggle.isChecked())
 
-    def _toggle_labels(self, state: int):
-        self.scene.set_labels_visible(state == 2)
-
-    def _spin_style(self) -> str:
-        return (
-            "QSpinBox, QDoubleSpinBox {padding: 8px 10px; font-size: 11pt; border: 1px solid #cbd5e1; border-radius: 8px;}"
-            "QSpinBox:focus, QDoubleSpinBox:focus {border-color: #9333ea;}"
-        )
-
-    def _primary_button_style(self) -> str:
-        return (
-            "QPushButton {background-color: #9333ea; color: white; border: none; padding: 10px 14px; border-radius: 10px; font-weight: 700;}"
-            "QPushButton:hover {background-color: #7e22ce;}"
-            "QPushButton:pressed {background-color: #6b21a8;}"
-        )
-
-    def _ghost_button_style(self) -> str:
-        return (
-            "QPushButton {background-color: #e2e8f0; color: #0f172a; border: none; padding: 8px 12px; border-radius: 8px; font-weight: 600;}"
-            "QPushButton:hover {background-color: #cbd5e1;}"
-        )
-
-
-class _StarRenderSignals(QObject):
-    finished = pyqtSignal(object)  # (payload, points, value, error)
-
 
 class _StarRenderRunnable(QRunnable):
     def __init__(self, points_count: int, index: int, spacing: float):
@@ -399,15 +224,15 @@ class _StarRenderRunnable(QRunnable):
         self.points_count = points_count
         self.index = index
         self.spacing = spacing
-        self.signals = _StarRenderSignals()
+        self.signals = RenderSignals()
 
-    def run(self):  # pragma: no cover - background thread
+    def run(self):
         try:
             value = generalized_star_number_value(self.points_count, self.index)
             points = generalized_star_number_points(self.points_count, self.index, spacing=self.spacing)
             payload = ExperimentalStarWindow._build_payload_static(points, self.points_count, self.spacing, self.index)
             self.signals.finished.emit((payload, points, value, None))
-        except Exception as exc:  # pragma: no cover - defensive
+        except Exception as exc:
             self.signals.finished.emit((None, [], 0, str(exc)))
 
 

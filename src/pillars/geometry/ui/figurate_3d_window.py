@@ -4,16 +4,14 @@ Displays tetrahedral, pyramidal, octahedral, and cubic numbers using isometric p
 """
 from __future__ import annotations
 
-import math
 from typing import List, Optional, Tuple
 
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QSpinBox, 
-    QComboBox, QCheckBox, QFrame, QDoubleSpinBox, QGraphicsView
+    QCheckBox, QComboBox, QDoubleSpinBox, QFrame, QLabel, QSpinBox, 
+    QVBoxLayout, QWidget, QGraphicsView
 )
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QPen, QColor
-
+from shared.ui import WindowManager
 from ..services.figurate_3d import (
     tetrahedral_number, tetrahedral_points,
     square_pyramidal_number, square_pyramidal_points,
@@ -23,12 +21,11 @@ from ..services.figurate_3d import (
     stellated_octahedron_number, stellated_octahedron_points,
     icosahedral_number, icosahedral_points,
     dodecahedral_number, dodecahedral_points,
-    project_points_isometric, get_layer_for_point, project_dynamic
+    project_dynamic
 )
-from .geometry_scene import GeometryScene, GeometryScenePayload
-from .geometry_view import GeometryView
+from .base_figurate_window import BaseFigurateWindow
+from .geometry_scene import GeometryScenePayload
 from .primitives import CirclePrimitive, LabelPrimitive, Bounds, PenStyle, BrushStyle
-from .geometry_interaction import GeometryInteractionManager, GroupManagementPanel, ConnectionToolBar
 
 
 # Layer color palette (for z-depth visualization)
@@ -44,20 +41,7 @@ LAYER_COLORS = [
 ]
 
 
-def _bounds_from_points(points: List[Tuple[float, float]], margin: float = 0.5) -> Bounds:
-    if not points:
-        return Bounds(-5, -5, 10, 10)
-    xs = [p[0] for p in points]
-    ys = [p[1] for p in points]
-    return Bounds(
-        min_x=min(xs) - margin,
-        max_x=max(xs) + margin,
-        min_y=min(ys) - margin,
-        max_y=max(ys) + margin
-    )
-
-
-class Figurate3DWindow(QWidget):
+class Figurate3DWindow(BaseFigurateWindow):
     """Window for visualizing 3D figurate numbers."""
 
     SHAPE_TYPES = [
@@ -71,33 +55,23 @@ class Figurate3DWindow(QWidget):
         ("Centered Dodecahedral", "dodecahedral"),
     ]
 
-    def __init__(self, window_manager=None, parent=None):
-        super().__init__(parent)
-        self.window_manager = window_manager
+    def __init__(self, window_manager: Optional[WindowManager] = None, parent=None):
+        super().__init__(window_manager, parent)
         self.setWindowTitle("3D Figurate Numbers")
         self.setMinimumSize(900, 700)
 
-        # Scene and view
-        self.scene = GeometryScene()
-        self.scene.grid_visible = False
-        self.scene.axes_visible = False
-        self.view = GeometryView(self.scene, self)
-
-        # State
+        # State specific to 3D
         self._current_points_3d: List[Tuple[float, float, float]] = []
         self._current_points_2d: List[Tuple[float, float]] = []
-        self._refreshing: bool = False
+        self._current_points = [] # Alias for base class
         
         # Camera State
         self.camera_yaw: float = 45.0
-        self.camera_pitch: float = 35.264  # Standard isometric pitch
-        self._last_mouse_pos: Optional[QPoint] = None
+        self.camera_pitch: float = 35.264
+        self._last_mouse_pos = None
         self._rotating: bool = False
         
-        # Interaction Manager
-        self.interaction_manager = GeometryInteractionManager(self)
-
-        # Widgets
+        # Controls
         self.shape_combo: Optional[QComboBox] = None
         self.index_spin: Optional[QSpinBox] = None
         self.spacing_spin: Optional[QDoubleSpinBox] = None
@@ -106,156 +80,20 @@ class Figurate3DWindow(QWidget):
         self.count_label: Optional[QLabel] = None
         self.value_label: Optional[QLabel] = None
 
-        # Interaction
-        self.interaction_manager.groups_changed.connect(self._refresh_highlights)
-        self.interaction_manager.connection_added.connect(self._on_connection_added)
-        self.interaction_manager.connections_cleared.connect(self._refresh_connections)
-        self.interaction_manager.mode_changed.connect(self._update_view_mode)
-        self.interaction_manager.draw_start_changed.connect(self._refresh_highlights)
-        self.scene.dot_clicked.connect(self._handle_dot_click)
-
         self._setup_ui()
         self._render()
         
-        # Connect view selection signal
-        self.view.dots_selected.connect(self._on_dots_selected)
-        
-        # Install event filter for 3D rotation
+        # Install event filter for 3D rotation on the viewport
         self.view.viewport().installEventFilter(self)
 
-    def eventFilter(self, source, event):
-        if source is self.view.viewport():
-            if event.type() == event.Type.MouseButtonPress:
-                if event.button() == Qt.MouseButton.RightButton:
-                    self._rotating = True
-                    self._last_mouse_pos = event.pos()
-                    self.view.setCursor(Qt.CursorShape.ClosedHandCursor)
-                    return True  # Consume event
-            elif event.type() == event.Type.MouseButtonRelease:
-                if event.button() == Qt.MouseButton.RightButton:
-                    self._rotating = False
-                    self._last_mouse_pos = None
-                    self.view.setCursor(Qt.CursorShape.ArrowCursor)
-                    return True
-            elif event.type() == event.Type.MouseMove:
-                if self._rotating and self._last_mouse_pos:
-                    delta = event.pos() - self._last_mouse_pos
-                    self._last_mouse_pos = event.pos()
-                    
-                    # Update angles
-                    self.camera_yaw += delta.x() * 0.5
-                    self.camera_pitch += delta.y() * 0.5
-                    self.camera_pitch = max(-90.0, min(90.0, self.camera_pitch))
-                    
-                    self._update_positions()
-                    return True
-
-        return super().eventFilter(source, event)
-
-    def _update_positions(self):
-        """Re-project 3D points using current camera angles and update scene."""
-        if not self._current_points_3d:
-            return
-            
-        # Project using current angles
-        self._current_points_2d = project_dynamic(
-            self._current_points_3d, self.camera_yaw, self.camera_pitch
-        )
-        
-        # We need to rebuild the payload efficiently or just update positions?
-        # Rebuilding is safer to ensure Z-order is correct (if we sorted by depth)
-        
-        shape_type = self.SHAPE_TYPES[self.shape_combo.currentIndex()][1] if self.shape_combo else "tetrahedral"
-        spacing = self.spacing_spin.value() if self.spacing_spin else 1.0
-        use_layer_colors = self.layer_colors_toggle.isChecked() if self.layer_colors_toggle else True
-        
-        payload = self._build_payload(
-            self._current_points_3d, 
-            self._current_points_2d,
-            spacing,
-            use_layer_colors
-        )
-        self.scene.set_payload(payload)
-        self._refresh_highlights()
-
-    def _update_view_mode(self, mode: str):
-        if mode == "draw":
-            self.view.setDragMode(QGraphicsView.DragMode.NoDrag)
-            self.view.setCursor(Qt.CursorShape.CrossCursor)
-            self.view.set_selection_mode(False)
-        elif mode == "select":
-            self.view.setDragMode(QGraphicsView.DragMode.NoDrag)
-            self.view.set_selection_mode(True)
-        else:
-            self.view.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
-            self.view.setCursor(Qt.CursorShape.ArrowCursor)
-            self.view.set_selection_mode(False)
-    
-    def _on_dots_selected(self, indices: list):
-        """Handle rubber-band selection - batch add to avoid signal spam."""
-        self._refreshing = True
-        try:
-            for idx in indices:
-                self.interaction_manager.toggle_dot_in_group(idx)
-        finally:
-            self._refreshing = False
-        self._refresh_highlights()
-
-    def _refresh_highlights(self, _=None):
-        # Disconnect signals to prevent recursion
-        try:
-            self.interaction_manager.groups_changed.disconnect(self._refresh_highlights)
-        except TypeError:
-            pass
-        try:
-            self.interaction_manager.draw_start_changed.disconnect(self._refresh_highlights)
-        except TypeError:
-            pass
-
-        try:
-            self._render_interactions()
-        finally:
-            self.interaction_manager.groups_changed.connect(self._refresh_highlights)
-            self.interaction_manager.draw_start_changed.connect(self._refresh_highlights)
-
-    def _refresh_connections(self):
-        self._render()
-
-    def _on_connection_added(self, conn):
-        points = self._current_points_2d
-        if not points or conn.start_index > len(points) or conn.end_index > len(points):
-            return
-        
-        p1 = points[conn.start_index - 1]
-        p2 = points[conn.end_index - 1]
-        qt_pen = QPen(conn.color, conn.width)
-        qt_pen.setCosmetic(True)
-        self.scene.add_connection_line(p1, p2, qt_pen)
-
-    def _handle_dot_click(self, index: int, modifiers, button):
-        print(f"[DEBUG] 3D Window: Dot clicked: {index}, Button: {button}, DrawMode: {self.interaction_manager.drawing_active}")
-        
-        if button == Qt.MouseButton.RightButton:
-            print(f"[DEBUG] 3D Window: Toggling group membership for {index}")
-            self.interaction_manager.toggle_dot_in_group(index)
-            self._refresh_highlights()
-            return
-        
-        if button == Qt.MouseButton.LeftButton and self.interaction_manager.drawing_active:
-            conn = self.interaction_manager.process_draw_click(index)
-            if conn:
-                self._on_connection_added(conn)
-            self._refresh_highlights()
-
     def _setup_ui(self):
-        main_layout = QHBoxLayout(self)
-        main_layout.setContentsMargins(0, 0, 0, 0)
-        main_layout.setSpacing(0)
+        controls = self._build_controls()
+        self._setup_ui_skeleton(controls)
 
-        # Controls (The Tablet)
+    def _build_controls(self) -> QWidget:
         controls = QFrame()
         controls.setObjectName("FloatingPanel")
-        controls.setFixedWidth(280)  # Slightly wider for 15pt inputs
+        controls.setFixedWidth(280)
         controls.setStyleSheet("""
             QFrame#FloatingPanel {
                 background-color: #f1f5f9; 
@@ -266,9 +104,9 @@ class Figurate3DWindow(QWidget):
         """)
         ctrl_layout = QVBoxLayout(controls)
         ctrl_layout.setContentsMargins(24, 32, 24, 32)
-        ctrl_layout.setSpacing(16)  # The 8px Grid (multipule)
+        ctrl_layout.setSpacing(16)
 
-        # Title (The Header)
+        # Title
         title = QLabel("Figurate 3D")
         title.setStyleSheet("font-family: 'Inter'; font-size: 22pt; font-weight: 800; color: #0f172a;")
         ctrl_layout.addWidget(title)
@@ -342,53 +180,41 @@ class Figurate3DWindow(QWidget):
         ctrl_layout.addWidget(self.value_label)
 
         ctrl_layout.addStretch()
-        main_layout.addWidget(controls)
+        return controls
 
-        # Center: Viewport with toolbar
-        viewport_frame = QFrame()
-        viewport_layout = QVBoxLayout(viewport_frame)
-        viewport_layout.setContentsMargins(0, 0, 0, 0)
-        viewport_layout.setSpacing(0)
-
-        # Toolbar
-        self.conn_bar = ConnectionToolBar(self.interaction_manager, self)
-        self.conn_bar.dot_color_changed.connect(self.scene.set_dot_color)
-        self.conn_bar.text_color_changed.connect(self.scene.set_text_color)
-        viewport_layout.addWidget(self.conn_bar)
-        viewport_layout.addWidget(self.view)
-        main_layout.addWidget(viewport_frame)
-
-        # Right: Group panel (The Tablet)
-        right_panel = QWidget()
-        right_panel.setObjectName("FloatingPanelRight")
-        right_panel.setFixedWidth(240)
-        right_panel.setStyleSheet("""
-            QWidget#FloatingPanelRight {
-                background-color: #f1f5f9; 
-                border-left: 1px solid #cbd5e1;
-            }
-        """)
-        right_layout = QVBoxLayout(right_panel)
-        right_layout.setContentsMargins(12, 12, 12, 12)
-
-        self.group_panel = GroupManagementPanel(self.interaction_manager, self)
-        right_layout.addWidget(self.group_panel)
-        right_layout.addStretch()
-
-        main_layout.addWidget(right_panel)
+    def eventFilter(self, source, event):
+        if source is self.view.viewport():
+            if event.type() == event.Type.MouseButtonPress:
+                if event.button() == Qt.MouseButton.RightButton:
+                    self._rotating = True
+                    self._last_mouse_pos = event.pos()
+                    self.view.setCursor(Qt.CursorShape.ClosedHandCursor)
+                    return True
+            elif event.type() == event.Type.MouseButtonRelease:
+                if event.button() == Qt.MouseButton.RightButton:
+                    self._rotating = False
+                    self._last_mouse_pos = None
+                    self.view.setCursor(Qt.CursorShape.ArrowCursor)
+                    return True
+            elif event.type() == event.Type.MouseMove:
+                if self._rotating and self._last_mouse_pos:
+                    delta = event.pos() - self._last_mouse_pos
+                    self._last_mouse_pos = event.pos()
+                    
+                    self.camera_yaw += delta.x() * 0.5
+                    self.camera_pitch += delta.y() * 0.5
+                    self.camera_pitch = max(-90.0, min(90.0, self.camera_pitch))
+                    
+                    self._update_positions()
+                    return True
+        return super().eventFilter(source, event)
 
     def _render(self, _=None):
-        # Clear interaction state without triggering re-render
-        self.interaction_manager.blockSignals(True)
-        self.interaction_manager.clear()
-        self.interaction_manager.blockSignals(False)
-        
         shape_type = self.SHAPE_TYPES[self.shape_combo.currentIndex()][1] if self.shape_combo else "tetrahedral"
         n = self.index_spin.value() if self.index_spin else 4
         spacing = self.spacing_spin.value() if self.spacing_spin else 1.0
-        use_layer_colors = self.layer_colors_toggle.isChecked() if self.layer_colors_toggle else True
 
-        # Generate 3D points
+        # Note: 3D generation is fast enough to do on main thread for reasonable N
         if shape_type == "tetrahedral":
             self._current_points_3d = tetrahedral_points(n, spacing)
             value = tetrahedral_number(n)
@@ -417,26 +243,33 @@ class Figurate3DWindow(QWidget):
             self._current_points_3d = []
             value = 0
 
-        # Project to 2D
+        self._update_summary(value, len(self._current_points_3d), shape_type)
+        self._update_positions()
+
+    def _update_positions(self):
+        """Re-project 3D points using current camera angles and update scene."""
+        if not self._current_points_3d:
+            return
+            
         self._current_points_2d = project_dynamic(
             self._current_points_3d, self.camera_yaw, self.camera_pitch
         )
-
-        # Build payload
+        self._current_points = self._current_points_2d # Sync for base class interactions
+        
+        spacing = self.spacing_spin.value() if self.spacing_spin else 1.0
+        use_layer_colors = self.layer_colors_toggle.isChecked() if self.layer_colors_toggle else True
+        
         payload = self._build_payload(
-            self._current_points_3d,
+            self._current_points_3d, 
             self._current_points_2d,
             spacing,
             use_layer_colors
         )
         self.scene.set_payload(payload)
-        self.view.fit_scene()
-
-        # Update summary
-        self._update_summary(value, len(self._current_points_2d), shape_type)
-
-        if self.labels_toggle:
-            self.scene.set_labels_visible(self.labels_toggle.isChecked())
+        
+        # We manually call highlight refresh because scene payload reset clears standard highlights,
+        # but interaction manager still holds state.
+        self._refresh_highlights()
 
     def _build_payload(
         self,
@@ -450,7 +283,6 @@ class Figurate3DWindow(QWidget):
         primitives = []
         labels = []
 
-        # Determine z-range for layer coloring
         if points_3d:
             z_values = sorted(set(round(p[2] / spacing) for p in points_3d))
             z_to_layer = {z: i for i, z in enumerate(z_values)}
@@ -501,47 +333,18 @@ class Figurate3DWindow(QWidget):
             }
             self.value_label.setText(f"{names.get(shape_type, 'Figurate')} Number: {value}")
 
-    def _toggle_labels(self, state: int):
-        self.scene.set_labels_visible(state == 2)
 
-    def _render_interactions(self):
-        """Update highlight colors for groups without full re-render."""
-        for name, group in self.interaction_manager.groups.items():
-            self.scene.highlight_dots(list(group.indices), group.color)
-        
-        # Highlight active draw start
-        start = self.interaction_manager.current_draw_start
-        if start is not None:
-            self.scene.highlight_dots([start], self.interaction_manager.pen_color)
-
-    def _spin_style(self) -> str:
-        return (
-            "QSpinBox, QDoubleSpinBox {"
-            "    min-height: 54px;"
-            "    padding: 0px 16px;"
-            "    font-size: 15pt;"
-            "    border: 2px solid #e2e8f0;"
-            "    border-radius: 12px;"
-            "    background-color: #ffffff;"
-            "    color: #0f172a;"
-            "}"
-            "QSpinBox:focus, QDoubleSpinBox:focus { border: 2px solid #3b82f6; }"
-        )
-
-    def _combo_style(self) -> str:
-        return (
-            "QComboBox {"
-            "    min-height: 54px;"
-            "    padding: 0px 16px;"
-            "    font-size: 15pt;"
-            "    border: 2px solid #e2e8f0;"
-            "    border-radius: 12px;"
-            "    background-color: #ffffff;"
-            "    color: #0f172a;"
-            "}"
-            "QComboBox::drop-down { border: none; }"
-            "QComboBox:focus { border: 2px solid #3b82f6; }"
-        )
+def _bounds_from_points(points: List[Tuple[float, float]], margin: float = 0.5) -> Bounds:
+    if not points:
+        return Bounds(-5, -5, 10, 10)
+    xs = [p[0] for p in points]
+    ys = [p[1] for p in points]
+    return Bounds(
+        min_x=min(xs) - margin,
+        max_x=max(xs) + margin,
+        min_y=min(ys) - margin,
+        max_y=max(ys) + margin
+    )
 
 
 __all__ = ["Figurate3DWindow"]
