@@ -192,8 +192,8 @@ class RegularPyramidFrustumSolidCalculatorBase:
         ('slant_height', 'Slant Height', 'units', 4, True),
         ('base_area', 'Base Area', 'units²', 4, True),
         ('top_area', 'Top Area', 'units²', 4, True),
-        ('lateral_area', 'Lateral Area', 'units²', 4, False),
-        ('surface_area', 'Surface Area', 'units²', 4, False),
+        ('lateral_area', 'Lateral Area', 'units²', 4, True),
+        ('surface_area', 'Surface Area', 'units²', 4, True),
         ('volume', 'Volume', 'units³', 4, True),
         ('base_apothem', 'Base Apothem', 'units', 4, False),
         ('top_apothem', 'Top Apothem', 'units', 4, False),
@@ -243,6 +243,38 @@ class RegularPyramidFrustumSolidCalculatorBase:
             top_edge = _edge_from_area(self.SIDES, value)
             self._apply_dimensions(self._base_edge, top_edge, self._height)
             return True
+        if key == 'lateral_area':
+            # L = 0.5 * (P_base + P_top) * slant_height
+            # slant_height = 2*L / (P_base + P_top)
+            # height = sqrt(slant_height^2 - delta_apothem^2)
+            p_base = self.SIDES * self._base_edge
+            p_top = self.SIDES * self._top_edge
+            peri_sum = p_base + p_top
+            if peri_sum <= 0: return False
+            
+            slant_height = (2.0 * value) / peri_sum
+            
+            base_apothem = _apothem(self.SIDES, self._base_edge)
+            top_apothem = _apothem(self.SIDES, self._top_edge)
+            delta = abs(base_apothem - top_apothem)
+            
+            if slant_height < delta: return False
+            
+            height = math.sqrt(slant_height**2 - delta**2)
+            self._apply_dimensions(self._base_edge, self._top_edge, height)
+            return True
+            
+        if key == 'surface_area':
+            # S = Base + Top + Lateral
+            # L = S - Base - Top
+            base_area = _area(self.SIDES, self._base_edge)
+            top_area = _area(self.SIDES, self._top_edge)
+            area_sum = base_area + top_area
+            if value <= area_sum: return False
+            
+            lateral_area = value - area_sum
+            return self.set_property('lateral_area', lateral_area)
+
         if key == 'volume':
             base_area = _area(self.SIDES, self._base_edge)
             top_area = _area(self.SIDES, self._top_edge)

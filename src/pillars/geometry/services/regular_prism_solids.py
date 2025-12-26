@@ -160,8 +160,8 @@ class RegularPrismSolidCalculatorBase:
         ('base_apothem', 'Base Apothem', 'units', 4, True),
         ('base_area', 'Base Area', 'units²', 4, True),
         ('base_perimeter', 'Base Perimeter', 'units', 4, False),
-        ('lateral_area', 'Lateral Area', 'units²', 4, False),
-        ('surface_area', 'Surface Area', 'units²', 4, False),
+        ('lateral_area', 'Lateral Area', 'units²', 4, True),
+        ('surface_area', 'Surface Area', 'units²', 4, True),
         ('volume', 'Volume', 'units³', 4, True),
         ('base_circumradius', 'Base Circumradius', 'units', 4, False),
     )
@@ -203,6 +203,46 @@ class RegularPrismSolidCalculatorBase:
             height = value / base_area
             self._apply_dimensions(self._base_edge, height)
             return True
+            
+        if key == 'lateral_area':
+            # L = P * h = (n * s) * h
+            # If s is valid > 0, solve for h: h = L / (n*s)
+            # If h is valid > 0 (and we want to assume s?), typically we assume s is fixed if h not explicitly targeted? 
+            # Pattern: prioritize solving for height if s is set.
+            perimeter = self.SIDES * self._base_edge
+            if perimeter > 0:
+                height = value / perimeter
+                self._apply_dimensions(self._base_edge, height)
+                return True
+            # Fallback: if s is 0/invalid but h is set?
+            # s = L / (n * h)
+            if self._height > 0:
+                base_edge = value / (self.SIDES * self._height)
+                self._apply_dimensions(base_edge, self._height)
+                return True
+            
+        if key == 'surface_area':
+            # S = 2B + L = 2*_area(s) + (n*s)*h
+            # Prioritize solving for h if s is set (linear)
+            base_area = _area(self.SIDES, self._base_edge)
+            if value <= 2 * base_area: return False
+            lateral_area = value - 2 * base_area
+            
+            # Solve L for h
+            perimeter = self.SIDES * self._base_edge
+            if perimeter > 0:
+                height = lateral_area / perimeter
+                self._apply_dimensions(self._base_edge, height)
+                return True
+                
+            # If s is unknown/0? Solve quadratic?
+            # S = 2 * (n * s^2 / 4 tan) + n * s * h
+            # A s^2 + B s - C = 0
+            # A = n / (2 tan(pi/n))
+            # B = n * h
+            # C = SurfaceArea
+            # Not implementing quadratic solving for s yet unless requested, keeping it simple (solve for h).
+            
         return False
 
     def clear(self):

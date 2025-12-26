@@ -14,6 +14,7 @@ from .solid_property import SolidProperty
 class CylinderMetrics:
     radius: float
     height: float
+    circumference: float # [NEW]
     base_area: float
     lateral_area: float
     surface_area: float
@@ -93,9 +94,11 @@ class CylinderSolidService:
     def _compute_metrics(r: float, h: float) -> CylinderMetrics:
         base_area = math.pi * (r ** 2)
         lateral_area = 2 * math.pi * r * h
+        circumference = 2 * math.pi * r
         return CylinderMetrics(
             radius=r,
             height=h,
+            circumference=circumference,
             base_area=base_area,
             lateral_area=lateral_area,
             surface_area=2 * base_area + lateral_area,
@@ -110,7 +113,10 @@ class CylinderSolidCalculator:
         self._properties = {
             'radius': SolidProperty('Radius (r)', 'radius', 'units', radius),
             'height': SolidProperty('Height (h)', 'height', 'units', height),
-            'surface_area': SolidProperty('Surface Area (A)', 'surface_area', 'units²', 0.0, editable=False),
+            'circumference': SolidProperty('Circumference (C)', 'circumference', 'units', 0.0, editable=True),
+            'base_area': SolidProperty('Base Area (B)', 'base_area', 'units²', 0.0, editable=True),
+            'lateral_area': SolidProperty('Lateral Area (L)', 'lateral_area', 'units²', 0.0, editable=True),
+            'surface_area': SolidProperty('Surface Area (A)', 'surface_area', 'units²', 0.0, editable=True),
             'volume': SolidProperty('Volume (V)', 'volume', 'units³', 0.0, editable=True),
         }
         self._result: Optional[CylinderResult] = None
@@ -127,15 +133,65 @@ class CylinderSolidCalculator:
         if not prop:
             return False
             
-        if key == 'volume':
-            # Solve for radius keeping height constant
-            h = self._properties['height'].value
-            if h and h > 0:
-                self._properties['radius'].value = math.sqrt(value / (math.pi * h))
-                self._recalculate()
-                return True
-        else:
-            prop.value = value
+        r = self._properties['radius'].value
+        h = self._properties['height'].value
+        
+        if key == 'radius':
+            r = value
+        elif key == 'height':
+            h = value
+        elif key == 'circumference':
+            r = value / (2 * math.pi)
+        elif key == 'base_area':
+            r = math.sqrt(value / math.pi)
+        elif key == 'lateral_area':
+            # L = 2*pi*r*h. Solve for h (keep r) or r (keep h)?
+            # Prioritize solving for height if r is set.
+            if r and r > 0:
+                h = value / (2 * math.pi * r)
+            elif h and h > 0:
+                r = value / (2 * math.pi * h)
+        elif key == 'surface_area':
+            # A = 2*pi*r*(r+h). 
+            # Solve for r (quadratic) or h (linear).
+            # If h is known/fixed, solve for r?
+            # Let's solve for r if h is 0 or we just want to scale r.
+            # But usually changing Surface Area implies scaling the whole object or changing one dim.
+            
+            # Try solving for h if r is valid
+            if r and r > 0:
+                # A = 2*pi*r^2 + 2*pi*r*h
+                # 2*pi*r*h = A - 2*pi*r^2
+                # h = (A - 2*pi*r^2) / (2*pi*r)
+                numerator = value - 2 * math.pi * r**2
+                if numerator > 0:
+                    h = numerator / (2 * math.pi * r)
+                else:
+                    return False
+            else:
+                # Solve for r (assuming h is fixed? or h scales?)
+                # 2*pi*r^2 + 2*pi*h*r - A = 0
+                # Quadratic: a=2pi, b=2pi*h, c=-A
+                a = 2 * math.pi
+                b = 2 * math.pi * h
+                c = -value
+                
+                delta = b**2 - 4*a*c
+                if delta >= 0:
+                    r = (-b + math.sqrt(delta)) / (2 * a)
+                else:
+                    return False
+
+        elif key == 'volume':
+            # Solve for height keeping radius constant
+            if r and r > 0:
+                h = value / (math.pi * r**2)
+            elif h and h > 0:
+                 r = math.sqrt(value / (math.pi * h))
+        
+        if r is not None and h is not None and r > 0 and h > 0:
+            self._properties['radius'].value = r
+            self._properties['height'].value = h
             self._recalculate()
             return True
             
@@ -148,6 +204,9 @@ class CylinderSolidCalculator:
             return
             
         metrics = CylinderSolidService._compute_metrics(r, h)
+        self._properties['circumference'].value = metrics.circumference
+        self._properties['base_area'].value = metrics.base_area
+        self._properties['lateral_area'].value = metrics.lateral_area
         self._properties['surface_area'].value = metrics.surface_area
         self._properties['volume'].value = metrics.volume
         
@@ -165,4 +224,7 @@ class CylinderSolidCalculator:
         if not self._result:
             return {}
         return dict(self._result.payload.metadata)
+
+    def metrics(self) -> Optional[CylinderMetrics]:
+        return self._result.metrics if self._result else None
 

@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QFrame, QLabel, QPushButton,
     QSpinBox, QDoubleSpinBox, QCheckBox, QMainWindow, QSizePolicy, QGraphicsView
 )
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QThreadPool, QRunnable, QObject, pyqtSignal
 from PyQt6.QtGui import QPen, QColor
 from shared.ui import WindowManager
 from ..services import (
@@ -27,12 +27,18 @@ class ExperimentalStarWindow(QMainWindow):
     Allows creating stars with any number of points (P >= 3).
     """
 
+    HEAVY_THRESHOLD = 2000  # offload when dot count exceeds this
+
     def __init__(self, window_manager: Optional[WindowManager] = None, parent=None):
         super().__init__(parent)
         self.window_manager = window_manager
 
         self.scene = GeometryScene()
         self.view = GeometryView(self.scene)
+        self.thread_pool = QThreadPool.globalInstance()
+        self._rendering = False
+        self._controls_frame: Optional[QFrame] = None
+        self._render_button: Optional[QPushButton] = None
 
         self.setWindowTitle("Experimental Star Number Visualizer")
         self.setMinimumSize(1100, 720)
@@ -149,6 +155,7 @@ class ExperimentalStarWindow(QMainWindow):
 
     def _build_controls(self) -> QWidget:
         frame = QFrame()
+        self._controls_frame = frame
         frame.setFixedWidth(320)
         frame.setStyleSheet("background-color: white; border: 1px solid #e2e8f0; border-radius: 14px;")
 
@@ -228,6 +235,7 @@ class ExperimentalStarWindow(QMainWindow):
         render_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         render_btn.setStyleSheet(self._primary_button_style())
         render_btn.clicked.connect(self._render)
+        self._render_button = render_btn
         layout.addWidget(render_btn)
 
         layout.addStretch(1)
@@ -279,23 +287,56 @@ class ExperimentalStarWindow(QMainWindow):
         spacing = self.spacing_spin.value() if self.spacing_spin else 1.0
 
         value = generalized_star_number_value(points_count, index)
-        points = generalized_star_number_points(points_count, index, spacing=spacing)
 
-        self._update_summary(value, points_count)
-        payload = self._build_payload(points, points_count, spacing, index)
+        if value >= self.HEAVY_THRESHOLD:
+            self._start_async_render(points_count, index, spacing)
+            return
+
+        points = generalized_star_number_points(points_count, index, spacing=spacing)
+        payload = self._build_payload_static(points, points_count, spacing, index)
+        self._apply_render_result(payload, points, value)
+
+    def _start_async_render(self, points_count: int, index: int, spacing: float):
+        if self._rendering:
+            return
+        self._set_busy(True)
+        worker = _StarRenderRunnable(points_count, index, spacing)
+        worker.signals.finished.connect(self._on_async_finished)
+        self.thread_pool.start(worker)
+
+    def _on_async_finished(self, payload_points_value_error):
+        payload, points, value, error = payload_points_value_error
+        self._apply_render_result(payload, points, value, error)
+        self._set_busy(False)
+
+    def _apply_render_result(self, payload: GeometryScenePayload, points: List[Tuple[float, float]], value: int, error: Optional[str] = None):
+        if error:
+            if self.value_label:
+                self.value_label.setText(f"Error: {error}")
+            return
+
+        self._current_points = points
+        self._update_summary(value, self.points_spin.value() if self.points_spin else 0)
         self.scene.set_payload(payload)
         self.view.fit_scene()
 
-    def _build_payload(self, points: List[Tuple[float, float]], sides: int, spacing: float, index: int) -> GeometryScenePayload:
+    def _set_busy(self, busy: bool):
+        self._rendering = busy
+        self.setCursor(Qt.CursorShape.BusyCursor if busy else Qt.CursorShape.ArrowCursor)
+        if self._controls_frame:
+            self._controls_frame.setDisabled(busy)
+        if self._render_button:
+            self._render_button.setText("Rendering..." if busy else "Render Star")
+            self._render_button.setDisabled(busy)
+
+    @staticmethod
+    def _build_payload_static(points: List[Tuple[float, float]], sides: int, spacing: float, index: int) -> GeometryScenePayload:
         dot_radius = max(0.06, spacing * 0.18)
         pen = PenStyle(color=(147, 51, 234, 255), width=1.2) # Purple for Experimental
         brush = BrushStyle(color=(216, 180, 254, 220), enabled=True)
 
         primitives: List = []
         labels: List[LabelPrimitive] = []
-
-        # Store points for interaction
-        self._current_points = points
 
         for idx, (x, y) in enumerate(points, start=1):
             primitives.append(CirclePrimitive(
@@ -346,6 +387,28 @@ class ExperimentalStarWindow(QMainWindow):
             "QPushButton {background-color: #e2e8f0; color: #0f172a; border: none; padding: 8px 12px; border-radius: 8px; font-weight: 600;}"
             "QPushButton:hover {background-color: #cbd5e1;}"
         )
+
+
+class _StarRenderSignals(QObject):
+    finished = pyqtSignal(object)  # (payload, points, value, error)
+
+
+class _StarRenderRunnable(QRunnable):
+    def __init__(self, points_count: int, index: int, spacing: float):
+        super().__init__()
+        self.points_count = points_count
+        self.index = index
+        self.spacing = spacing
+        self.signals = _StarRenderSignals()
+
+    def run(self):  # pragma: no cover - background thread
+        try:
+            value = generalized_star_number_value(self.points_count, self.index)
+            points = generalized_star_number_points(self.points_count, self.index, spacing=self.spacing)
+            payload = ExperimentalStarWindow._build_payload_static(points, self.points_count, self.spacing, self.index)
+            self.signals.finished.emit((payload, points, value, None))
+        except Exception as exc:  # pragma: no cover - defensive
+            self.signals.finished.emit((None, [], 0, str(exc)))
 
 
 def _bounds_from_points(points: List[Tuple[float, float]], margin: float) -> Optional[Bounds]:

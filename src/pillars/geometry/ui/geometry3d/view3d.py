@@ -9,6 +9,7 @@ from PyQt6.QtCore import QPoint, QPointF, QRectF, Qt, pyqtSignal
 from PyQt6.QtGui import (
     QColor,
     QFont,
+    QBrush,
     QMatrix4x4,
     QMouseEvent,
     QPaintEvent,
@@ -63,6 +64,7 @@ class Geometry3DView(QWidget):
         }
         self._show_labels = True
         self._show_vertices = True
+        self._show_dual = False
         
         # Measurement mode
         self._measure_mode = False
@@ -109,6 +111,13 @@ class Geometry3DView(QWidget):
 
     def vertices_visible(self) -> bool:
         return self._show_vertices
+
+    def set_dual_visible(self, visible: bool):
+        self._show_dual = visible
+        self.update()
+
+    def dual_visible(self) -> bool:
+        return self._show_dual
 
     def set_measure_mode(self, enabled: bool):
         self._measure_mode = enabled
@@ -311,6 +320,9 @@ class Geometry3DView(QWidget):
         self._draw_labels(painter, payload, matrix, scale, pan_offset)
         if self._show_axes:
             self._draw_axes(painter)
+            
+        if self._show_dual and payload.dual:
+            self._draw_dual(painter, payload.dual, matrix, scale, pan_offset)
 
     def wheelEvent(self, a0: QWheelEvent | None):  # pragma: no cover - GUI hook
         if a0 is None:
@@ -467,6 +479,42 @@ class Geometry3DView(QWidget):
             painter.setBrush(Qt.BrushStyle.NoBrush)
             painter.drawEllipse(center, pixel_radius, pixel_radius)
 
+    def _draw_dual(self, painter: QPainter, dual_payload: SolidPayload, matrix: QMatrix4x4, scale: float, pan_offset: QPointF):
+        """Draw the dual solid as a ghost overlay."""
+        if not dual_payload.vertices:
+            return
+            
+        screen_points = self._project_vertices(dual_payload, matrix, scale, pan_offset)
+        
+        # Draw Faces (Translucent Ghost)
+        painter.setPen(Qt.PenStyle.NoPen)
+        # Use a fixed ghost color (e.g., Cyan or Purple)
+        ghost_color = QColor(255, 255, 255, 30) # Very faint white/glassy
+        painter.setBrush(QBrush(ghost_color))
+        
+        if dual_payload.faces:
+            # Simple painter's alg isn't strictly needed for ghost overlay if it's additive/alpha
+            # But let's just draw them.
+            for face_indices in dual_payload.faces:
+                poly = [screen_points[i] for i in face_indices if i < len(screen_points)]
+                if len(poly) < 3: continue
+                painter.drawPolygon([p.toPoint() for p in poly])
+
+        # Draw Edges (Distinct style)
+        pen = QPen(QColor(255, 255, 255, 120), 1.0, Qt.PenStyle.DotLine)
+        painter.setPen(pen)
+        for edge in dual_payload.edges:
+            if len(edge) != 2: continue
+            i, j = edge
+            if i < len(screen_points) and j < len(screen_points):
+                painter.drawLine(screen_points[i], screen_points[j])
+                
+        # Draw Vertices (Small dots)
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setBrush(QColor(255, 255, 255, 180))
+        for pt in screen_points:
+            painter.drawEllipse(pt, 2, 2)
+
     def _draw_labels(
         self,
         painter: QPainter,
@@ -564,13 +612,22 @@ class Geometry3DView(QWidget):
                 painter.drawText(center_point + QPointF(10, -10), "C")
 
         # Draw Mesh Vertices
+        # Optimization: If too many vertices, only draw selected/hovered to avoid clutter
+        show_all_vertices = len(screen_points) <= 200
+        
         for i, point in enumerate(screen_points):
+            is_selected = i in self._selected_vertex_indices
+            is_hovered = i == self._hovered_vertex_index
+            
+            if not show_all_vertices and not is_selected and not is_hovered:
+                continue
+
             # Highlight selected vertices
-            if i in self._selected_vertex_indices:
+            if is_selected:
                 painter.setPen(QPen(QColor(255, 215, 0), 2.0))  # Gold
                 painter.setBrush(QColor(255, 215, 0, 180))
                 radius = 8
-            elif i == self._hovered_vertex_index:
+            elif is_hovered:
                 painter.setPen(QPen(QColor(255, 255, 255), 2.0))
                 painter.setBrush(QColor(255, 255, 255, 150))
                 radius = 7
@@ -581,7 +638,7 @@ class Geometry3DView(QWidget):
             
             painter.drawEllipse(point, radius, radius)
             
-            if i in self._selected_vertex_indices or i == self._hovered_vertex_index:
+            if is_selected or is_hovered:
                 painter.setPen(QColor(255, 255, 255))
                 font = painter.font()
                 font.setPointSize(9)

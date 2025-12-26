@@ -283,6 +283,10 @@ class Geometry3DWindow(QMainWindow):
         vertices_cb.toggled.connect(self._view.set_vertices_visible)
         layout.addWidget(vertices_cb)
 
+        dual_cb = self._create_checkbox("Show Dual Solid (Ghost)", self._view.dual_visible())
+        dual_cb.toggled.connect(self._view.set_dual_visible)
+        layout.addWidget(dual_cb)
+
         sphere_toggles = (
             ('incircle', 'Show insphere (inradius)'),
             ('midsphere', 'Show midsphere'),

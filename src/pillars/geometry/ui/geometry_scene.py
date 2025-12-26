@@ -1,5 +1,6 @@
 """Central QGraphicsScene implementation for the geometry pillar."""
 from __future__ import annotations
+import logging
 import math
 from typing import List, Optional, Tuple
 
@@ -18,6 +19,9 @@ from .primitives import (
     Primitive,
     BooleanPrimitive
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 
@@ -63,7 +67,6 @@ class GeometryScene(QGraphicsScene):
     """Shared graphics scene that can render any supported geometry shape."""
     
     measurementChanged = pyqtSignal(dict)
-    measurementChanged = pyqtSignal(dict)
     dot_clicked = pyqtSignal(int, Qt.KeyboardModifier, Qt.MouseButton) # index, modifiers, button
 
     def __init__(self, parent=None):
@@ -74,6 +77,9 @@ class GeometryScene(QGraphicsScene):
         self._vertex_highlight_items: List[QGraphicsItem] = []
         self._label_primitives: List[LabelPrimitive] = []
         self._temp_items: List[QGraphicsItem] = []
+        self._current_view_scale: float = 1.0
+        self._base_label_font_size: float = 8.0
+        self._min_label_scale: float = 0.5  # Hide labels below 50% zoom level
 
         # Measurement Customization State
         self._meas_font_size: float = 9.0
@@ -125,6 +131,9 @@ class GeometryScene(QGraphicsScene):
         if self.labels_visible != visible:
             self.labels_visible = visible
             self._refresh_labels()
+            # Trigger adaptive update if we have a view
+            if self.views():
+                self.update_label_layout(self.views()[0].transform())
 
     def set_vertex_highlights_visible(self, visible: bool):
         """Toggle visibility of vertex highlight dots."""
@@ -363,7 +372,7 @@ class GeometryScene(QGraphicsScene):
         # Process our custom click logic BEFORE calling super(), otherwise 
         # items with ItemIsSelectable will accept Left Clicks and prevent our logic.
         pos = event.scenePos()
-        print(f"[DEBUG] Scene: Click at {pos}")
+        logger.debug("Scene click at %s", pos)
         
         # We must pass the view transform to itemAt for ItemIgnoresTransformations to work correctly!
         view_transform = QTransform()
@@ -374,21 +383,21 @@ class GeometryScene(QGraphicsScene):
         if item:
             # Check for dot index in data(0)
             dot_index = item.data(0)
-            print(f"[DEBUG] Scene: Item found. Data(0)={dot_index}, Type={type(item)}")
+            logger.debug("Scene item found. data(0)=%s, type=%s", dot_index, type(item))
             if dot_index is not None:
                 modifiers = event.modifiers()
                 button = event.button()
-                print(f"[DEBUG] Scene: Emitting dot_clicked(index={dot_index}, modifiers={modifiers}, button={button})")
+                logger.debug("Emitting dot_clicked index=%s modifiers=%s button=%s", dot_index, modifiers, button)
                 self.dot_clicked.emit(dot_index, modifiers, button)
         else:
-            print("[DEBUG] Scene: No item found at click position.")
+            logger.debug("Scene click found no item")
         
         # Call super() after our logic so default Qt behavior still works (e.g., item selection)
         super().mousePressEvent(event)
 
     def add_connection_line(self, start_pos: Tuple[float, float], end_pos: Tuple[float, float], pen: QPen):
         """Add a persistent connection line to the scene."""
-        print(f"[DEBUG] Scene: Adding connection line from {start_pos} to {end_pos}")
+        logger.debug("Adding connection line start=%s end=%s", start_pos, end_pos)
         line_item = self.addLine(start_pos[0], start_pos[1], end_pos[0], end_pos[1], pen)
         line_item.setZValue(0.5) # Below dots (dots are at Z=2)
         # Dots are Z? CirclePrimitive doesn't set Z? Default is 0. labels are Z=2.
@@ -662,19 +671,28 @@ class GeometryScene(QGraphicsScene):
 
     def update_label_layout(self, view_transform: QTransform):
         """
-        Dynamically adjust label positions to avoid overlaps in screen space (pixels).
+        Dynamically adjust label visibility and size based on zoom level.
         Usage: Called by the view on zoom/resize.
         """
         if not self._label_items:
             return
 
-        # 1. Calculate screen positions and bounding boxes
-        # ItemIgnoresTransformations: position is scene, but size is pixels.
-        # But wait, QGraphicsScene.views()[0].mapFromScene? No, we have the transform.
-        # Project anchor point:
+        # Extract current scale from transform
+        scale = view_transform.m11()  # Assume uniform scaling
+        self._current_view_scale = scale
         
-        # Sort by Y then X to process top-down
-        # We need a list of (item, screen_pos_y, screen_pos_x, height)
+        # Adaptive visibility: hide labels when zoomed out too far or toggle is off
+        should_show = scale >= self._min_label_scale and self.labels_visible
+        
+        if not should_show:
+            for item in self._label_items:
+                item.setVisible(False)
+            logger.debug("Labels hidden: scale=%.2f, threshold=%.2f, toggle=%s", 
+                         scale, self._min_label_scale, self.labels_visible)
+            return
+        
+        # Adaptive font sizing: larger font when zoomed out
+        adaptive_font_size = max(6.0, min(12.0, self._base_label_font_size / scale))
         
         projections = []
         for item in self._label_items:
@@ -720,31 +738,34 @@ class GeometryScene(QGraphicsScene):
                 active_groups.append([p])
 
                 
-        # Now layout groups
+        # Now layout groups with adaptive font sizing
         for group in active_groups:
             if not group: continue
             
-            total_h = sum(g['height'] for g in group)
+            # Apply adaptive font size to all items in group
+            for p in group:
+                item = p['item']
+                font = item.font()
+                font.setPointSizeF(adaptive_font_size)
+                item.setFont(font)
+                item.setVisible(True)
+            
+            # Recalculate heights after font change
+            total_h = sum(p['item'].boundingRect().height() for p in group)
             start_y_offset = -total_h / 2
             
             current_off = start_y_offset
             for p in group:
                 item = p['item']
-                h = p['height']
-                w = p['width']
+                rect = item.boundingRect()
+                h = rect.height()
+                w = rect.width()
                 
-                # Apply offset to the base anchor
-                # We need to set the item's transform.
-                # Base anchor is still at scene_pos.
-                # Item draws at screen_pos.
-                
-                # Item transform is applied in item local space (pixels)
-                # Standard centering: translate(-w/2, -h/2)
-                # Stacked centering: translate(-w/2, current_off)
-                
-                # We assume align_center=True for all labels for now
                 item.setTransform(QTransform().translate(-w/2, current_off))
                 current_off += h
+        
+        logger.debug("Label layout updated: scale=%.2f, font=%.1fpt, visible=%s", 
+                     scale, adaptive_font_size, should_show)
 
 
     def _create_axes(self, bounds: Bounds) -> List[QGraphicsItem]:
@@ -763,8 +784,9 @@ class GeometryScene(QGraphicsScene):
         if self.labels_visible:
             if not self._label_items and self._label_primitives:
                 self._label_items = self._create_label_items(self._label_primitives)
-            for item in self._label_items:
-                item.setVisible(True)
+            # Don't force visibility here - let update_label_layout handle zoom-adaptive hiding
+            # Only mark them as potentially visible if labels toggle is on
+            pass
         else:
             for item in self._label_items:
                 item.setVisible(False)

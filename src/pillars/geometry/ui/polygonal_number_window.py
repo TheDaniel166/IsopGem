@@ -19,7 +19,7 @@ from PyQt6.QtWidgets import (
     QSizePolicy,
     QGraphicsView,
 )
-from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtCore import Qt, QTimer, QThreadPool, QRunnable, QObject, pyqtSignal
 from PyQt6.QtGui import QPen, QColor
 from shared.ui import WindowManager
 from ..services import (
@@ -43,12 +43,18 @@ Color = Tuple[int, int, int, int]
 class PolygonalNumberWindow(QMainWindow):
     """Interactive viewer for figurate numbers built from dots."""
 
+    HEAVY_THRESHOLD = 2000  # dot count above which we offload rendering to a worker
+
     def __init__(self, window_manager: Optional[WindowManager] = None, parent=None):
         super().__init__(parent)
         self.window_manager = window_manager
 
         self.scene = GeometryScene()
         self.view = GeometryView(self.scene)
+        self.thread_pool = QThreadPool.globalInstance()
+        self._rendering = False
+        self._controls_frame: Optional[QFrame] = None
+        self._render_button: Optional[QPushButton] = None
 
         self.setWindowTitle("Polygonal Number Visualizer")
         self.setMinimumSize(1100, 720)
@@ -203,6 +209,7 @@ class PolygonalNumberWindow(QMainWindow):
 
     def _build_controls(self) -> QWidget:
         frame = QFrame()
+        self._controls_frame = frame
         frame.setFixedWidth(320)
         frame.setStyleSheet("background-color: white; border: 1px solid #e2e8f0; border-radius: 14px;")
 
@@ -296,6 +303,7 @@ class PolygonalNumberWindow(QMainWindow):
         render_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         render_btn.setStyleSheet(self._primary_button_style())
         render_btn.clicked.connect(self._render)
+        self._render_button = render_btn
         layout.addWidget(render_btn)
 
         layout.addStretch(1)
@@ -359,17 +367,53 @@ class PolygonalNumberWindow(QMainWindow):
 
         if is_star:
             value = star_number_value(index)
-            points = star_number_points(index, spacing=spacing)
         else:
             value = centered_polygonal_value(sides, index) if centered else polygonal_number_value(sides, index)
-            points = polygonal_number_points(sides, index, spacing=spacing, centered=centered)
 
+        # Offload heavy renders to a worker to keep the UI responsive.
+        if value >= self.HEAVY_THRESHOLD:
+            self._start_async_render(sides, index, spacing, mode)
+            return
+
+        points = star_number_points(index, spacing=spacing) if is_star else polygonal_number_points(sides, index, spacing=spacing, centered=centered)
+        payload = self._build_payload_static(points, sides, spacing, index, centered or is_star)
+        self._apply_render_result(payload, points, value, mode, None)
+
+    def _start_async_render(self, sides: int, index: int, spacing: float, mode: str):
+        if self._rendering:
+            return
+        self._set_busy(True)
+        worker = _FigurateRenderRunnable(sides, index, spacing, mode)
+        worker.signals.finished.connect(self._on_async_finished)
+        self.thread_pool.start(worker)
+
+    def _on_async_finished(self, payload_points_value_mode_error):
+        payload, points, value, mode, error = payload_points_value_mode_error
+        self._apply_render_result(payload, points, value, mode, error)
+        self._set_busy(False)
+
+    def _apply_render_result(self, payload: GeometryScenePayload, points: List[Tuple[float, float]], value: int, mode: str, error: Optional[str]):
+        if error:
+            if self.value_label:
+                self.value_label.setText(f"Error: {error}")
+            return
+
+        self._current_points = points
         self._update_summary(value, mode)
-        payload = self._build_payload(points, sides, spacing, index, centered or is_star)
         self.scene.set_payload(payload)
         self.view.fit_scene()
 
-    def _build_payload(self, points: List[Tuple[float, float]], sides: int, spacing: float, index: int, centered: bool) -> GeometryScenePayload:
+    def _set_busy(self, busy: bool):
+        self._rendering = busy
+        self.setCursor(Qt.CursorShape.BusyCursor if busy else Qt.CursorShape.ArrowCursor)
+        if self._controls_frame:
+            self._controls_frame.setDisabled(busy)
+        if self._render_button:
+            self._render_button.setText("Rendering..." if busy else "Render pattern")
+            self._render_button.setDisabled(busy)
+
+    @staticmethod
+    def _build_payload_static(points: List[Tuple[float, float]], sides: int, spacing: float, index: int, centered: bool) -> GeometryScenePayload:
         dot_radius = max(0.06, spacing * 0.18)
         pen = PenStyle(color=(37, 99, 235, 255), width=1.2)
         brush = BrushStyle(color=(191, 219, 254, 220), enabled=True)
@@ -383,8 +427,6 @@ class PolygonalNumberWindow(QMainWindow):
             max_r = spacing
 
         # Outline removed as per user request
-
-        self._current_points = points # Store for interaction lookups
 
         for idx, (x, y) in enumerate(points, start=1):
             primitives.append(CirclePrimitive(
@@ -451,6 +493,41 @@ class PolygonalNumberWindow(QMainWindow):
             "QPushButton {background-color: #e2e8f0; color: #0f172a; border: none; padding: 8px 12px; border-radius: 8px; font-weight: 600;}"
             "QPushButton:hover {background-color: #cbd5e1;}"
         )
+
+
+    # ----------------------------------------------------------------------
+    # Async rendering helpers
+    # ----------------------------------------------------------------------
+
+
+    class _RenderSignals(QObject):
+        finished = pyqtSignal(object)  # (payload, points, value, mode, error)
+
+
+    class _FigurateRenderRunnable(QRunnable):
+        def __init__(self, sides: int, index: int, spacing: float, mode: str):
+            super().__init__()
+            self.sides = sides
+            self.index = index
+            self.spacing = spacing
+            self.mode = mode
+            self.signals = _RenderSignals()
+
+        def run(self):  # pragma: no cover - background thread
+            try:
+                is_star = self.mode == "star"
+                centered = self.mode == "centered"
+                if is_star:
+                    value = star_number_value(self.index)
+                    points = star_number_points(self.index, spacing=self.spacing)
+                else:
+                    value = centered_polygonal_value(self.sides, self.index) if centered else polygonal_number_value(self.sides, self.index)
+                    points = polygonal_number_points(self.sides, self.index, spacing=self.spacing, centered=centered)
+
+                payload = PolygonalNumberWindow._build_payload_static(points, self.sides, self.spacing, self.index, centered or is_star)
+                self.signals.finished.emit((payload, points, value, self.mode, None))
+            except Exception as exc:  # pragma: no cover - defensive
+                self.signals.finished.emit((None, [], 0, self.mode, str(exc)))
 
 
 # ----------------------------------------------------------------------

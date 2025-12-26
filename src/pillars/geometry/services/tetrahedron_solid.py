@@ -275,6 +275,8 @@ class TetrahedronSolidService:
 
         metrics = _compute_metrics(edge_length)
         vertices = _scale_vertices(edge_length)
+        from .geometry_visuals import compute_dual_payload
+
         metadata = {
             # Core
             'edge_length': metrics.edge_length,
@@ -325,6 +327,7 @@ class TetrahedronSolidService:
             metadata=metadata,
             suggested_scale=edge_length,
         )
+        payload.dual = compute_dual_payload(payload)
         return TetrahedronSolidResult(payload=payload, metrics=metrics)
 
     @staticmethod

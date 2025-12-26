@@ -164,25 +164,58 @@ class GroupManagementPanel(QWidget):
     def _setup_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(12)
         
         header_row = QHBoxLayout()
-        label = QLabel("Dot Groups")
-        label.setStyleSheet("font-weight: 700; color: #475569;")
+        label = QLabel("Dot Ensembles")
+        label.setStyleSheet("font-family: 'Inter'; font-size: 16pt; font-weight: 800; color: #0f172a;")
         header_row.addWidget(label)
         
         add_btn = QToolButton()
         add_btn.setText("+")
         add_btn.setToolTip("Create new group")
+        add_btn.setFixedSize(32, 32)
         add_btn.clicked.connect(self._create_group_prompt)
+        add_btn.setStyleSheet("""
+            QToolButton {
+                background-color: #f1f5f9;
+                border: 1px solid #cbd5e1;
+                border-radius: 8px;
+                color: #334155;
+                font-weight: bold;
+                font-size: 14pt;
+            }
+            QToolButton:hover {
+                background-color: #e2e8f0;
+                color: #0f172a;
+            }
+            QToolButton:pressed {
+                background-color: #cbd5e1;
+            }
+        """)
         header_row.addWidget(add_btn)
         
         layout.addLayout(header_row)
         
         self.list_widget = QListWidget()
         self.list_widget.setStyleSheet(
-            "QListWidget {border: 1px solid #cbd5e1; border-radius: 6px; background: white;}"
-            "QListWidget::item {padding: 4px;}"
-            "QListWidget::item:selected {background: #eff6ff; color: #1e40af;}"
+            "QListWidget {"
+            "    border: 2px solid #e2e8f0;"
+            "    border-radius: 12px;"
+            "    background: #ffffff;"
+            "    padding: 8px;"
+            "}"
+            "QListWidget::item {"
+            "    padding: 8px;"
+            "    border-radius: 6px;"
+            "    color: #334155;"
+            "    font-weight: 600;"
+            "}"
+            "QListWidget::item:selected {"
+            "    background: #f1f5f9;"
+            "    color: #0f172a;"
+            "    border: 1px solid #cbd5e1;"
+            "}"
         )
         self.list_widget.currentItemChanged.connect(self._on_selection_change)
         self.list_widget.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
@@ -190,8 +223,8 @@ class GroupManagementPanel(QWidget):
         layout.addWidget(self.list_widget)
         
         # Dots in Group section
-        dots_header = QLabel("Dots in Group")
-        dots_header.setStyleSheet("font-weight: 600; color: #64748b; margin-top: 8px;")
+        dots_header = QLabel("Constituents")
+        dots_header.setStyleSheet("font-family: 'Inter'; font-size: 11pt; font-weight: 700; color: #64748b; margin-top: 8px;")
         layout.addWidget(dots_header)
         
         self.dots_list = QListWidget()
@@ -202,9 +235,22 @@ class GroupManagementPanel(QWidget):
         self.dots_list.setResizeMode(QListWidget.ResizeMode.Adjust)
         self.dots_list.setSpacing(4)
         self.dots_list.setStyleSheet(
-            "QListWidget {border: 1px solid #cbd5e1; border-radius: 6px; background: white;}"
-            "QListWidget::item {padding: 4px 8px; border-radius: 4px; background: #eff6ff;}"
-            "QListWidget::item:selected {background: #3b82f6; color: white;}"
+            "QListWidget {"
+            "    border: 2px solid #e2e8f0;"
+            "    border-radius: 12px;"
+            "    background: #ffffff;"
+            "    padding: 8px;"
+            "}"
+            "QListWidget::item {"
+            "    padding: 4px 8px;"
+            "    border-radius: 4px;"
+            "    background: #f1f5f9;"
+            "    color: #334155;"
+            "}"
+            "QListWidget::item:selected {"
+            "    background: #3b82f6;"
+            "    color: white;"
+            "}"
         )
         self.dots_list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.dots_list.customContextMenuRequested.connect(self._show_dots_context_menu)
@@ -212,7 +258,7 @@ class GroupManagementPanel(QWidget):
         layout.addWidget(self.dots_list)
         
         hint = QLabel("Right Click dots to add/remove from active group.")
-        hint.setStyleSheet("color: #64748b; font-size: 9pt; font-style: italic;")
+        hint.setStyleSheet("color: #94a3b8; font-size: 9pt; font-style: italic;")
         hint.setWordWrap(True)
         layout.addWidget(hint)
 
@@ -334,72 +380,121 @@ class ConnectionToolBar(QFrame):
 
     def _setup_ui(self):
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(8, 4, 8, 4)
+        layout.setContentsMargins(16, 8, 16, 8)
+        layout.setSpacing(12)
         
-        # Draw Mode Toggle
-        self.draw_btn = QPushButton("Draw Lines")
+        # Draw Mode Toggle (Navigator Style)
+        self.draw_btn = QPushButton("Inscribe Lines")
         self.draw_btn.setCheckable(True)
         self.draw_btn.clicked.connect(self._toggle_draw_mode)
         self.draw_btn.setStyleSheet(
             """
-            QPushButton {background: #e2e8f0; border-radius: 6px; padding: 4px 8px; color: #475569;}
-            QPushButton:checked {background: #3b82f6; color: white;}
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #64748b, stop:1 #475569);
+                border: 1px solid #334155;
+                color: white;
+                font-weight: 600;
+                border-radius: 12px;
+                padding: 6px 12px;
+            }
+            QPushButton:hover {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #94a3b8, stop:1 #64748b);
+            }
+            QPushButton:checked {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #8b5cf6, stop:1 #7c3aed); /* Magus when active */
+                border: 1px solid #6d28d9;
+            }
             """
         )
         layout.addWidget(self.draw_btn)
         
         # Select Mode Toggle
-        self.select_btn = QPushButton("Select Dots")
+        self.select_btn = QPushButton("Select Points")
         self.select_btn.setCheckable(True)
         self.select_btn.clicked.connect(self._toggle_select_mode)
         self.select_btn.setStyleSheet(
             """
-            QPushButton {background: #e2e8f0; border-radius: 6px; padding: 4px 8px; color: #475569;}
-            QPushButton:checked {background: #22c55e; color: white;}
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #64748b, stop:1 #475569);
+                border: 1px solid #334155;
+                color: white;
+                font-weight: 600;
+                border-radius: 12px;
+                padding: 6px 12px;
+            }
+            QPushButton:hover {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #94a3b8, stop:1 #64748b);
+            }
+            QPushButton:checked {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #f59e0b, stop:1 #d97706); /* Seeker when active */
+                border: 1px solid #b45309;
+                color: #0f172a;
+            }
             """
         )
         layout.addWidget(self.select_btn)
         
-        layout.addSpacing(10)
+        layout.addSpacing(16)
         
         # Color
         self.color_btn = QPushButton()
-        self.color_btn.setFixedSize(24, 24)
-        self.color_btn.setStyleSheet(f"background-color: {self.manager.pen_color.name()}; border-radius: 12px; border: 2px solid white;")
+        self.color_btn.setFixedSize(32, 32)
+        self.color_btn.setStyleSheet(f"background-color: {self.manager.pen_color.name()}; border-radius: 16px; border: 2px solid #e2e8f0;")
         self.color_btn.clicked.connect(self._pick_color)
-        layout.addWidget(QLabel("Color:"))
+        
+        color_lbl = QLabel("Tincture:")
+        color_lbl.setStyleSheet("color: #475569; font-weight: 600;")
+        layout.addWidget(color_lbl)
         layout.addWidget(self.color_btn)
         
         # Width
-        layout.addSpacing(10)
-        layout.addWidget(QLabel("Width:"))
+        layout.addSpacing(16)
+        width_lbl = QLabel("Stroke:")
+        width_lbl.setStyleSheet("color: #475569; font-weight: 600;")
+        layout.addWidget(width_lbl)
+        
         self.width_spin = QDoubleSpinBox()
-        self.width_spin.setRange(0.10, 1.0)
-        self.width_spin.setValue(0.3) # Default as requested
+        self.width_spin.setRange(0.10, 2.0)
+        self.width_spin.setValue(0.3)
         self.width_spin.setSingleStep(0.1)
         self.width_spin.setDecimals(2)
         self.width_spin.valueChanged.connect(self._update_width)
+        self.width_spin.setStyleSheet("""
+            QDoubleSpinBox {
+                padding: 4px;
+                border: 1px solid #cbd5e1;
+                border-radius: 6px;
+                background: white;
+            }
+        """)
+        
         layout.addWidget(self.width_spin)
         
-        # Separator
-        layout.addSpacing(20)
+        # Separator needs to be visual or just spacing
+        layout.addSpacing(32)
         
         # Dot Color
         self.dot_color_btn = QPushButton()
-        self.dot_color_btn.setFixedSize(24, 24)
+        self.dot_color_btn.setFixedSize(32, 32)
         self._dot_color = QColor("#3b82f6") # Default blue
-        self.dot_color_btn.setStyleSheet(f"background-color: {self._dot_color.name()}; border-radius: 12px; border: 2px solid #cbd5e1;")
+        self.dot_color_btn.setStyleSheet(f"background-color: {self._dot_color.name()}; border-radius: 16px; border: 2px solid #e2e8f0;")
         self.dot_color_btn.clicked.connect(self._pick_dot_color)
-        layout.addWidget(QLabel("Dots:"))
+        
+        dot_lbl = QLabel("Dot:")
+        dot_lbl.setStyleSheet("color: #475569; font-weight: 600;")
+        layout.addWidget(dot_lbl)
         layout.addWidget(self.dot_color_btn)
         
         # Text Color
         self.text_color_btn = QPushButton()
-        self.text_color_btn.setFixedSize(24, 24)
+        self.text_color_btn.setFixedSize(32, 32)
         self._text_color = QColor("#1e3a5f") # Default dark blue
-        self.text_color_btn.setStyleSheet(f"background-color: {self._text_color.name()}; border-radius: 12px; border: 2px solid #cbd5e1;")
+        self.text_color_btn.setStyleSheet(f"background-color: {self._text_color.name()}; border-radius: 16px; border: 2px solid #e2e8f0;")
         self.text_color_btn.clicked.connect(self._pick_text_color)
-        layout.addWidget(QLabel("Text:"))
+        
+        text_lbl = QLabel("Sigil:")
+        text_lbl.setStyleSheet("color: #475569; font-weight: 600;")
+        layout.addWidget(text_lbl)
         layout.addWidget(self.text_color_btn)
         
         layout.addStretch()

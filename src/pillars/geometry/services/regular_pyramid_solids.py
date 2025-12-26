@@ -163,8 +163,8 @@ class RegularPyramidSolidCalculatorBase:
         ('slant_height', 'Slant Height', 'units', 4, True),
         ('base_apothem', 'Base Apothem', 'units', 4, True),
         ('base_area', 'Base Area', 'units²', 4, True),
-        ('lateral_area', 'Lateral Area', 'units²', 4, False),
-        ('surface_area', 'Surface Area', 'units²', 4, False),
+        ('lateral_area', 'Lateral Area', 'units²', 4, True),
+        ('surface_area', 'Surface Area', 'units²', 4, True),
         ('volume', 'Volume', 'units³', 4, True),
         ('lateral_edge', 'Lateral Edge', 'units', 4, False),
         ('base_perimeter', 'Base Perimeter', 'units', 4, False),
@@ -212,6 +212,38 @@ class RegularPyramidSolidCalculatorBase:
             if base_area <= 0:
                 return False
             height = (3.0 * value) / base_area
+            self._apply_dimensions(self._base_edge, height)
+            return True
+            
+        if key == 'lateral_area':
+            # L = 0.5 * P * s_height
+            # P = n * base_edge
+            # s_height = 2*L / P
+            perimeter = self.SIDES * self._base_edge
+            if perimeter <= 0: return False
+            slant_height = (2.0 * value) / perimeter
+            
+            # Now solve for height from slant_height
+            # s^2 = h^2 + a^2 => h = sqrt(s^2 - a^2)
+            apothem = _apothem(self.SIDES, self._base_edge)
+            if slant_height < apothem: return False
+            height = math.sqrt(slant_height**2 - apothem**2)
+            self._apply_dimensions(self._base_edge, height)
+            return True
+            
+        if key == 'surface_area':
+            # S = BaseArea + LateralArea
+            # L = S - BaseArea
+            base_area = _base_area(self.SIDES, self._base_edge)
+            if value <= base_area: return False
+            lateral_area = value - base_area
+            
+            # Now solve for height via L logic above
+            perimeter = self.SIDES * self._base_edge
+            slant_height = (2.0 * lateral_area) / perimeter
+            apothem = _apothem(self.SIDES, self._base_edge)
+            if slant_height < apothem: return False
+            height = math.sqrt(slant_height**2 - apothem**2)
             self._apply_dimensions(self._base_edge, height)
             return True
         return False

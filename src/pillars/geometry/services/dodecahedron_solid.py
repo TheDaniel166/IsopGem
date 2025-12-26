@@ -343,6 +343,8 @@ class DodecahedronSolidService:
         if edge_length <= 0:
             raise ValueError("Edge length must be positive")
         metrics = _compute_metrics(edge_length)
+        from .geometry_visuals import compute_dual_payload
+        
         payload = SolidPayload(
             vertices=_scale_vertices(edge_length),
             edges=list(_EDGES),
@@ -390,6 +392,7 @@ class DodecahedronSolidService:
             },
             suggested_scale=edge_length,
         )
+        payload.dual = compute_dual_payload(payload)
         return DodecahedronSolidResult(payload=payload, metrics=metrics)
 
     @staticmethod

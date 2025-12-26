@@ -42,8 +42,6 @@ class GeometryView(QGraphicsView):
         self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
         self.setResizeAnchor(QGraphicsView.ViewportAnchor.AnchorViewCenter)
         self.setDragMode(QGraphicsView.DragMode.NoDrag)
-        self.setDragMode(QGraphicsView.DragMode.NoDrag)
-        self.setDragMode(QGraphicsView.DragMode.NoDrag)
         # Do not set background brush on View, let Scene handle it.
         # self.setBackgroundBrush(scene.backgroundBrush())
 
@@ -79,6 +77,9 @@ class GeometryView(QGraphicsView):
 
     def reset_view(self):
         self.resetTransform()
+        scene = self.scene()
+        if hasattr(scene, "update_label_layout"):
+            scene.update_label_layout(self.transform())
 
     def fit_scene(self):
         scene = self.scene()
@@ -110,6 +111,11 @@ class GeometryView(QGraphicsView):
         if rect.width() == 0 or rect.height() == 0:
             rect = QRectF(-1, -1, 2, 2)
         self.fitInView(rect, Qt.AspectRatioMode.KeepAspectRatio)
+        
+        # Update label layout after fit operation
+        scene = self.scene()
+        if hasattr(scene, "update_label_layout"):
+            scene.update_label_layout(self.transform())
 
 
     # ------------------------------------------------------------------

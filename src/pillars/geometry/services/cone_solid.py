@@ -15,6 +15,7 @@ class ConeMetrics:
     radius: float
     height: float
     slant_height: float
+    base_circumference: float
     base_area: float
     lateral_area: float
     surface_area: float
@@ -84,10 +85,12 @@ class ConeSolidService:
         slant = math.sqrt(r**2 + h**2)
         base_area = math.pi * (r ** 2)
         lateral_area = math.pi * r * slant
+        circumference = 2 * math.pi * r
         return ConeMetrics(
             radius=r,
             height=h,
             slant_height=slant,
+            base_circumference=circumference,
             base_area=base_area,
             lateral_area=lateral_area,
             surface_area=base_area + lateral_area,
@@ -103,7 +106,10 @@ class ConeSolidCalculator:
             'radius': SolidProperty('Radius (r)', 'radius', 'units', radius),
             'height': SolidProperty('Height (h)', 'height', 'units', height),
             'slant_height': SolidProperty('Slant Height (s)', 'slant_height', 'units', 0.0, editable=True),
-            'surface_area': SolidProperty('Surface Area (A)', 'surface_area', 'units²', 0.0, editable=False),
+            'base_circumference': SolidProperty('Base Circumference (C)', 'base_circumference', 'units', 0.0, editable=True),
+            'base_area': SolidProperty('Base Area (B)', 'base_area', 'units²', 0.0, editable=True),
+            'lateral_area': SolidProperty('Lateral Area (L)', 'lateral_area', 'units²', 0.0, editable=True),
+            'surface_area': SolidProperty('Surface Area (A)', 'surface_area', 'units²', 0.0, editable=True),
             'volume': SolidProperty('Volume (V)', 'volume', 'units³', 0.0, editable=True),
         }
         self._result: Optional[ConeResult] = None
@@ -130,6 +136,56 @@ class ConeSolidCalculator:
         elif key == 'slant_height':
             # Solve for height keeping radius constant
             h = math.sqrt(max(0, value**2 - r**2))
+        elif key == 'base_circumference':
+            r = value / (2 * math.pi)
+        elif key == 'base_area':
+            r = math.sqrt(value / math.pi)
+        elif key == 'lateral_area':
+            # L = pi * r * s. 
+            # If r is fixed/known, solve for s, then h.
+            if r and r > 0:
+                s = value / (math.pi * r)
+                if s > r:
+                    h = math.sqrt(s**2 - r**2)
+                else: 
+                     return False
+            elif h and h > 0:
+                # L = pi * r * sqrt(r^2 + h^2)
+                # L^2 = pi^2 * r^2 * (r^2 + h^2)
+                # pi^2*r^4 + pi^2*h^2*r^2 - L^2 = 0
+                # Quadratic in X = r^2.
+                # a = pi^2, b = pi^2*h^2, c = -L^2
+                a_q = math.pi**2
+                b_q = math.pi**2 * h**2
+                c_q = -value**2
+                
+                delta = b_q**2 - 4*a_q*c_q
+                if delta >= 0:
+                    r_sq = (-b_q + math.sqrt(delta)) / (2 * a_q)
+                    if r_sq > 0:
+                        r = math.sqrt(r_sq)
+                    else:
+                        return False
+                else:
+                    return False
+        
+        elif key == 'surface_area':
+            # A = pi*r*(r+s) => A/pi = r^2 + r*s => r*s = (A/pi) - r^2
+            # s = (A/(pi*r)) - r
+            # h = sqrt(s^2 - r^2)
+            
+            # Prioritize solving for h if r is valid
+            if r and r > 0:
+                term = value / (math.pi * r)
+                s = term - r
+                if s > r:
+                    h = math.sqrt(s**2 - r**2)
+                else:
+                    return False
+            else:
+                # Harder to solve for r if h is fixed?
+                return False
+
         elif key == 'volume':
             # Solve for height keeping radius constant
             h = (3 * value) / (math.pi * r**2)
@@ -147,6 +203,9 @@ class ConeSolidCalculator:
             
         metrics = ConeSolidService._compute_metrics(r, h)
         self._properties['slant_height'].value = metrics.slant_height
+        self._properties['base_circumference'].value = metrics.base_circumference
+        self._properties['base_area'].value = metrics.base_area
+        self._properties['lateral_area'].value = metrics.lateral_area
         self._properties['surface_area'].value = metrics.surface_area
         self._properties['volume'].value = metrics.volume
         
@@ -164,4 +223,7 @@ class ConeSolidCalculator:
         if not self._result:
             return {}
         return dict(self._result.payload.metadata)
+
+    def metrics(self) -> Optional[ConeMetrics]:
+        return self._result.metrics if self._result else None
 

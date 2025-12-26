@@ -294,6 +294,8 @@ class CubeSolidService:
         if edge_length <= 0:
             raise ValueError("Edge length must be positive")
         metrics = _compute_metrics(edge_length)
+        from .geometry_visuals import compute_dual_payload
+        
         payload = SolidPayload(
             vertices=_scale_vertices(edge_length),
             edges=list(_EDGES),
@@ -343,6 +345,29 @@ class CubeSolidService:
             },
             suggested_scale=edge_length,
         )
+        
+        # Determine dual scale?
+        # For reciprocal duals (canonical): dual_edge ~ 1/edge.
+        # But for visualization, we usually want them to intersect nicely (e.g. sharing midsphere).
+        # Our `compute_dual_payload` uses simple centroids.
+        # Centroids of cube faces form an Octahedron.
+        # Radius of centroids = base inradius.
+        # Inradius of Cube = a/2.
+        # Circumradius of Dual Octahedron = a/2.
+        # Inradius of Dual Octahedron = (a/2) / sqrt(3) ???
+        # If they share the midsphere (canonical duality), the edges are tangent to midsphere.
+        # Our centroid method produces a dual vertices at distance = Inradius.
+        # So the Dual is "inside". This avoids collision.
+        # Let's keep scale=1.0 for now, meaning it's the "Polar Dual wrt Inscribed Sphere"?
+        # No, it's the dual formed by centers of faces.
+        # For Cube (size a), faces at +/- a/2. Centroids at (+/- a/2, 0, 0) etc.
+        # Vertices of dual are at dist a/2.
+        # Circumsphere of dual = Insphere of primal.
+        # This makes the dual STRICTLY INSIDE the primal.
+        # Visually good for "ghost".
+        
+        payload.dual = compute_dual_payload(payload)
+        
         return CubeSolidResult(payload=payload, metrics=metrics)
 
     @staticmethod

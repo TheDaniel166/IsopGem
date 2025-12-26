@@ -252,23 +252,31 @@ class Figurate3DWindow(QWidget):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
 
-        # Left: Controls
+        # Controls (The Tablet)
         controls = QFrame()
-        controls.setFixedWidth(240)
-        controls.setStyleSheet("background-color: #f8fafc; border-right: 1px solid #e2e8f0;")
+        controls.setObjectName("FloatingPanel")
+        controls.setFixedWidth(280)  # Slightly wider for 15pt inputs
+        controls.setStyleSheet("""
+            QFrame#FloatingPanel {
+                background-color: #f1f5f9; 
+                border-right: 1px solid #cbd5e1;
+                border-top-right-radius: 24px;
+                border-bottom-right-radius: 24px;
+            }
+        """)
         ctrl_layout = QVBoxLayout(controls)
-        ctrl_layout.setContentsMargins(16, 16, 16, 16)
-        ctrl_layout.setSpacing(8)
+        ctrl_layout.setContentsMargins(24, 32, 24, 32)
+        ctrl_layout.setSpacing(16)  # The 8px Grid (multipule)
 
-        # Title
-        title = QLabel("3D Figurate Numbers")
-        title.setStyleSheet("font-size: 14pt; font-weight: 700; color: #0f172a;")
+        # Title (The Header)
+        title = QLabel("Figurate 3D")
+        title.setStyleSheet("font-family: 'Inter'; font-size: 22pt; font-weight: 800; color: #0f172a;")
         ctrl_layout.addWidget(title)
-        ctrl_layout.addSpacing(8)
+        ctrl_layout.addSpacing(16)
 
         # Shape selector
-        shape_label = QLabel("Shape Type")
-        shape_label.setStyleSheet("color: #475569; font-weight: 600;")
+        shape_label = QLabel("Shape Manifestation")
+        shape_label.setStyleSheet("color: #334155; font-weight: 700; font-size: 11pt;")
         ctrl_layout.addWidget(shape_label)
 
         self.shape_combo = QComboBox()
@@ -278,11 +286,11 @@ class Figurate3DWindow(QWidget):
         self.shape_combo.currentIndexChanged.connect(self._render)
         ctrl_layout.addWidget(self.shape_combo)
 
-        ctrl_layout.addSpacing(6)
+        ctrl_layout.addSpacing(8)
 
         # Index
-        index_label = QLabel("Index (n)")
-        index_label.setStyleSheet("color: #475569; font-weight: 600;")
+        index_label = QLabel("Iteration (n)")
+        index_label.setStyleSheet("color: #334155; font-weight: 700; font-size: 11pt;")
         ctrl_layout.addWidget(index_label)
 
         self.index_spin = QSpinBox()
@@ -292,11 +300,11 @@ class Figurate3DWindow(QWidget):
         self.index_spin.valueChanged.connect(self._render)
         ctrl_layout.addWidget(self.index_spin)
 
-        ctrl_layout.addSpacing(6)
+        ctrl_layout.addSpacing(8)
 
         # Spacing
-        spacing_label = QLabel("Dot spacing")
-        spacing_label.setStyleSheet("color: #475569; font-weight: 600;")
+        spacing_label = QLabel("Grid Lattice")
+        spacing_label.setStyleSheet("color: #334155; font-weight: 700; font-size: 11pt;")
         ctrl_layout.addWidget(spacing_label)
 
         self.spacing_spin = QDoubleSpinBox()
@@ -308,27 +316,29 @@ class Figurate3DWindow(QWidget):
         self.spacing_spin.valueChanged.connect(self._render)
         ctrl_layout.addWidget(self.spacing_spin)
 
-        ctrl_layout.addSpacing(6)
-
         # Toggles
-        self.labels_toggle = QCheckBox("Show numbered labels")
+        ctrl_layout.addSpacing(16)
+        
+        self.labels_toggle = QCheckBox("Show Sigils (Labels)")
+        self.labels_toggle.setStyleSheet("QCheckBox { color: #334155; font-size: 11pt; }")
         self.labels_toggle.setChecked(True)
         self.labels_toggle.stateChanged.connect(self._toggle_labels)
         ctrl_layout.addWidget(self.labels_toggle)
 
-        self.layer_colors_toggle = QCheckBox("Color by layer (depth)")
+        self.layer_colors_toggle = QCheckBox("Depth Spectra")
+        self.layer_colors_toggle.setStyleSheet("QCheckBox { color: #334155; font-size: 11pt; }")
         self.layer_colors_toggle.setChecked(True)
         self.layer_colors_toggle.stateChanged.connect(self._render)
         ctrl_layout.addWidget(self.layer_colors_toggle)
 
         # Summary
-        ctrl_layout.addSpacing(10)
+        ctrl_layout.addSpacing(24)
         self.count_label = QLabel("")
-        self.count_label.setStyleSheet("color: #0f172a; font-weight: 700; font-size: 12pt;")
+        self.count_label.setStyleSheet("color: #0f172a; font-weight: 800; font-size: 14pt;")
         ctrl_layout.addWidget(self.count_label)
 
         self.value_label = QLabel("")
-        self.value_label.setStyleSheet("color: #475569; font-size: 10pt;")
+        self.value_label.setStyleSheet("color: #334155; font-size: 11pt; font-style: italic;")
         ctrl_layout.addWidget(self.value_label)
 
         ctrl_layout.addStretch()
@@ -348,10 +358,16 @@ class Figurate3DWindow(QWidget):
         viewport_layout.addWidget(self.view)
         main_layout.addWidget(viewport_frame)
 
-        # Right: Group panel
+        # Right: Group panel (The Tablet)
         right_panel = QWidget()
-        right_panel.setFixedWidth(200)
-        right_panel.setStyleSheet("background-color: #f8fafc; border-left: 1px solid #e2e8f0;")
+        right_panel.setObjectName("FloatingPanelRight")
+        right_panel.setFixedWidth(240)
+        right_panel.setStyleSheet("""
+            QWidget#FloatingPanelRight {
+                background-color: #f1f5f9; 
+                border-left: 1px solid #cbd5e1;
+            }
+        """)
         right_layout = QVBoxLayout(right_panel)
         right_layout.setContentsMargins(12, 12, 12, 12)
 
@@ -500,14 +516,31 @@ class Figurate3DWindow(QWidget):
 
     def _spin_style(self) -> str:
         return (
-            "QSpinBox, QDoubleSpinBox {padding: 8px 10px; font-size: 11pt; border: 1px solid #cbd5e1; border-radius: 8px;}"
-            "QSpinBox:focus, QDoubleSpinBox:focus {border-color: #3b82f6;}"
+            "QSpinBox, QDoubleSpinBox {"
+            "    min-height: 54px;"
+            "    padding: 0px 16px;"
+            "    font-size: 15pt;"
+            "    border: 2px solid #e2e8f0;"
+            "    border-radius: 12px;"
+            "    background-color: #ffffff;"
+            "    color: #0f172a;"
+            "}"
+            "QSpinBox:focus, QDoubleSpinBox:focus { border: 2px solid #3b82f6; }"
         )
 
     def _combo_style(self) -> str:
         return (
-            "QComboBox {padding: 8px 10px; font-size: 11pt; border: 1px solid #cbd5e1; border-radius: 8px;}"
-            "QComboBox:focus {border-color: #3b82f6;}"
+            "QComboBox {"
+            "    min-height: 54px;"
+            "    padding: 0px 16px;"
+            "    font-size: 15pt;"
+            "    border: 2px solid #e2e8f0;"
+            "    border-radius: 12px;"
+            "    background-color: #ffffff;"
+            "    color: #0f172a;"
+            "}"
+            "QComboBox::drop-down { border: none; }"
+            "QComboBox:focus { border: 2px solid #3b82f6; }"
         )
 
 

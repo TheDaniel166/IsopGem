@@ -177,8 +177,8 @@ class RegularAntiprismSolidCalculatorBase:
         ('lateral_edge_length', 'Lateral Edge', 'units', 4, True),
         ('base_area', 'Base Area', 'units²', 4, False),
         ('base_perimeter', 'Base Perimeter', 'units', 4, False),
-        ('lateral_area', 'Lateral Area', 'units²', 4, False),
-        ('surface_area', 'Surface Area', 'units²', 4, False),
+        ('lateral_area', 'Lateral Area', 'units²', 4, True),
+        ('surface_area', 'Surface Area', 'units²', 4, True),
         ('volume', 'Volume', 'units³', 4, True),
     )
 
@@ -213,6 +213,34 @@ class RegularAntiprismSolidCalculatorBase:
                 return False
             self._apply_dimensions(self._base_edge, height)
             return True
+        if key == 'lateral_area':
+            # L = n * s * sqrt(e^2 - s^2/4)
+            # L = n * s * h_tri
+            # h_tri = L / (n * s)
+            # h_tri^2 = e^2 - s^2/4 = h^2 + k^2 - s^2/4
+            # h = sqrt(h_tri^2 - k^2 + s^2/4)
+            n = self.SIDES
+            s = self._base_edge
+            if s <= 0: return False
+            
+            h_tri = value / (n * s)
+            k = _lateral_chord_length(n, s)
+            
+            term = h_tri**2 - k**2 + (s**2 / 4.0)
+            if term <= 0: return False
+            
+            height = math.sqrt(term)
+            self._apply_dimensions(s, height)
+            return True
+            
+        if key == 'surface_area':
+            # S = 2*Base + L
+            base_area = _regular_polygon_area(self.SIDES, self._base_edge)
+            if value <= 2 * base_area: return False
+            lateral_area = value - 2 * base_area
+            # Delegate to logic above
+            return self.set_property('lateral_area', lateral_area)
+
         if key == 'volume':
             factor = _volume_factor(self.SIDES, self._base_edge)
             if factor <= 0:

@@ -36,6 +36,7 @@ class SolidPayload:
         metadata: Optional[dict] = None,
         face_colors: Optional[List[Optional[Tuple[int, int, int, int]]]] = None,
         suggested_scale: Optional[float] = None,
+        dual: Optional['SolidPayload'] = None,
     ) -> None:
         self.vertices = list(vertices) if vertices is not None else []
         self.edges = list(edges) if edges is not None else []
@@ -44,6 +45,7 @@ class SolidPayload:
         self.metadata = dict(metadata) if metadata is not None else {}
         self.face_colors = list(face_colors) if face_colors is not None else []
         self.suggested_scale = suggested_scale
+        self.dual = dual
 
     def bounds(self) -> Optional[Tuple[Vec3, Vec3]]:
         if not self.vertices:
