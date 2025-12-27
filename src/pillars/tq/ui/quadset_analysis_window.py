@@ -1,18 +1,22 @@
-"""Quadset Analysis tool window."""
+
 from PyQt6.QtWidgets import (
     QMainWindow, QVBoxLayout, QHBoxLayout, QLabel,
     QLineEdit, QGroupBox, QTabWidget, QWidget,
     QTextEdit, QScrollArea, QGridLayout, QFrame,
-    QSizePolicy, QMenu, QTableWidget, QTableWidgetItem, QHeaderView
+    QSizePolicy, QMenu, QTableWidget, QTableWidgetItem, QHeaderView,
+    QStackedWidget, QListWidget, QListWidgetItem, QGraphicsDropShadowEffect,
+    QComboBox
 )
-from PyQt6.QtCore import Qt, QPointF, QSize
-from PyQt6.QtGui import QFont, QPainter, QPen, QColor, QAction, QTextCursor
+from PyQt6.QtCore import Qt, QPointF, QSize, QRect
+from PyQt6.QtGui import QFont, QPainter, QPen, QColor, QAction, QTextCursor, QPixmap, QBrush
 
 from ..services.quadset_engine import QuadsetEngine
 from ..models import QuadsetResult, QuadsetMember
 from shared.ui import WindowManager
 from shared.database import get_db_session
 from pillars.gematria.models.calculation_entity import CalculationEntity
+from shared.ui.theme import COLORS, get_card_style, get_app_stylesheet
+
 
 
 def get_super(x):
@@ -66,16 +70,17 @@ class QuadsetGlyph(QWidget):
         total = len(digits)
         height = self.height()
         width = self.width()
-        width = self.width()
-        MAX_LINE_WIDTH = 120
-        line_length = min(width * 0.8, MAX_LINE_WIDTH) 
+        
+        # INCREASED visual dominance
+        MAX_LINE_WIDTH = 250 
+        line_length = min(width * 0.9, MAX_LINE_WIDTH) 
         margin_x = (width - line_length) / 2
         
         # Tighter vertical spacing
         # Reduce max line height to 12, min to 4
         # Denominator adjust for tighter packing
-        line_height = max(min(height / (total + 0.5), 18), 6)
-        base_pen = QPen(QColor("#111827"), 2, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap)
+        line_height = max(min(height / (total + 0.5), 24), 8) # slightly larger max
+        base_pen = QPen(QColor(COLORS['text_primary']), 2, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap)
 
         for idx, digit in enumerate(reversed(digits)):
             y = height - ((idx + 0.5) * line_height)
@@ -112,16 +117,10 @@ class QuadsetGlyph(QWidget):
 class PropertyCard(QFrame):
     """A card entry for displaying a specific property."""
     
-    def __init__(self, title: str, content: str = "", parent=None, context_menu_handler=None):
+    def __init__(self, title: str, content: str = "", parent=None, link_handler=None):
         super().__init__(parent)
         self.setObjectName("propertyCard")
-        self.setStyleSheet("""
-            QFrame#propertyCard {
-                background-color: white;
-                border: 1px solid #e2e8f0;
-                border-radius: 8px;
-            }
-        """)
+        self.setStyleSheet(get_card_style() + f"background-color: {COLORS['surface']};")
         
         layout = QVBoxLayout(self)
         layout.setContentsMargins(16, 16, 16, 16)
@@ -131,11 +130,16 @@ class PropertyCard(QFrame):
         self.title_label.setStyleSheet("color: #64748b; font-size: 10pt; font-weight: 600; text-transform: uppercase;")
         layout.addWidget(self.title_label)
         
-        self.content_edit = CardTextEdit("", context_menu_handler=context_menu_handler)
-        self.content_edit.setPlainText(content)
-        self.content_edit.setReadOnly(True)
-        self.content_edit.setStyleSheet("""
-            QTextEdit {
+        self.content_label = QLabel(content)
+        self.content_label.setWordWrap(True)
+        self.content_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse | Qt.TextInteractionFlag.LinksAccessibleByMouse)
+        self.content_label.setOpenExternalLinks(False) # We handle internally
+        
+        if link_handler:
+            self.content_label.linkActivated.connect(link_handler)
+            
+        self.content_label.setStyleSheet("""
+            QLabel {
                 color: #0f172a; 
                 font-size: 11pt; 
                 font-family: 'Segoe UI', sans-serif;
@@ -143,33 +147,39 @@ class PropertyCard(QFrame):
                 border: none;
             }
         """)
-        # Adjust height based on content approx (optional, but helpful to not be too huge default)
-        # For now let layout handle it, but maybe minimum height
-        self.content_edit.setFrameStyle(QFrame.Shape.NoFrame)
-        self.content_edit.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        # Fit height logic or simpler:
-        # Just use it. The card will expand in the VBox of the scrollarea.
-        # But QTextEdit might be greedy. We want it to adapt.
-        # A simple fix is to use QLabel for short text, but user complained about "all factors".
-        # Let's use a dynamic approach or just a read-only text edit with a reasonable max/min height.
-        # Actually, standard Label with WordWrap should grow. 
-        # IF the text is super long, it might be pushing off screen?
-        # The user said "not showing ALL", implying cut off. 
-        # If I use TextEdit, it needs to be careful not to trap scroll if nested.
         
-        # New approach for this component:
-        self.content_edit.setFixedHeight(int(min(self.content_edit.document().size().height() + 10, 200)) if len(content) > 100 else 40)
-        self.content_edit.textChanged.connect(self._adjust_height)
-
-        layout.addWidget(self.content_edit)
-
-    def _adjust_height(self):
-        doc_height = self.content_edit.document().size().height()
-        self.content_edit.setFixedHeight(int(min(max(doc_height + 10, 40), 250)))
+        layout.addWidget(self.content_label)
 
     def set_content(self, text: str):
-        self.content_edit.setPlainText(text)
-        self._adjust_height()
+        self.content_label.setText(text)
+
+
+class SubstrateWidget(QWidget):
+    """Widget that paints a background image scaled to fill the entire widget."""
+    
+    def __init__(self, image_path: str, parent=None):
+        super().__init__(parent)
+        self._pixmap = QPixmap(image_path)
+        self._bg_color = QColor(COLORS['background'])
+    
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
+        
+        # Fill with background color first
+        painter.fillRect(self.rect(), self._bg_color)
+        
+        # Scale pixmap to fill widget (aspect fill)
+        if not self._pixmap.isNull():
+            scaled = self._pixmap.scaled(
+                self.size(),
+                Qt.AspectRatioMode.KeepAspectRatioByExpanding,
+                Qt.TransformationMode.SmoothTransformation
+            )
+            # Center the scaled pixmap
+            x = (self.width() - scaled.width()) // 2
+            y = (self.height() - scaled.height()) // 2
+            painter.drawPixmap(x, y, scaled)
 
 
 class QuadsetAnalysisWindow(QMainWindow):
@@ -187,88 +197,159 @@ class QuadsetAnalysisWindow(QMainWindow):
         self._setup_ui()
         
     def _setup_ui(self):
-        """Set up the user interface."""
+        """Set up the user interface with vertical sidebar navigation."""
         self.setWindowTitle("Quadset Analysis")
-        self.setMinimumSize(900, 700)
+        self.setMinimumSize(1200, 850)
         
-        central = QWidget()
+        # Level 0: The Substrate (Thematic background for Quadset Analysis)
+        import os
+        base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+        bg_path = os.path.join(base_path, "assets", "textures", "quadset_substrate.png")
+        
+        central = SubstrateWidget(bg_path)
         self.setCentralWidget(central)
 
-        # Main layout
-        layout = QVBoxLayout(central)
-        layout.setSpacing(20)
-        layout.setContentsMargins(30, 30, 30, 30)
+        # Main Layout (Horizontal split)
+        main_layout = QHBoxLayout(central)
+        main_layout.setSpacing(0)
+        main_layout.setContentsMargins(0, 0, 0, 0)
         
-        # Title
+        # 1. Sidebar (Navigation)
+        self.sidebar = QListWidget()
+        self.sidebar.setFixedWidth(240)
+        self.sidebar.setFrameShape(QFrame.Shape.NoFrame)
+        self.sidebar.setStyleSheet(f"""
+            QListWidget {{
+                background-color: {COLORS['surface']};
+                border-right: 1px solid {COLORS['border']};
+                outline: none;
+                padding-top: 20px;
+            }}
+            QListWidget::item {{
+                height: 60px;
+                padding-left: 16px;
+                color: {COLORS['text_secondary']};
+                border-left: 4px solid transparent;
+            }}
+            QListWidget::item:selected {{
+                color: {COLORS['text_primary']};
+                background-color: {COLORS['background_alt']};
+                border-left: 4px solid {COLORS['primary']};
+                font-weight: bold;
+            }}
+            QListWidget::item:hover:!selected {{
+                background-color: {COLORS['surface_hover']};
+            }}
+        """)
+        
+        # 2. Content Area
+        content_container = QWidget()
+        content_container.setStyleSheet("background-color: transparent;")
+        content_layout = QVBoxLayout(content_container)
+        content_layout.setContentsMargins(40, 40, 40, 40)
+        content_layout.setSpacing(24)
+        
+        # Title & Input (Global Header)
+        header_layout = QVBoxLayout()
+        header_layout.setSpacing(16)
+        
         title_label = QLabel("Quadset Analysis")
-        title_font = QFont()
-        title_font.setPointSize(24)
-        title_font.setBold(True)
-        title_label.setFont(title_font)
-        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(title_label)
+        title_label.setStyleSheet(f"""
+            color: {COLORS['text_primary']};
+            font-size: 32pt;
+            font-weight: 700;
+            letter-spacing: -1px;
+        """)
+        header_layout.addWidget(title_label)
         
         # Input Section
-        input_layout = QHBoxLayout()
-        input_label = QLabel("Input Decimal:")
-        input_label.setStyleSheet("font-size: 14pt; font-weight: bold;")
+        input_frame = QFrame()
+        input_frame.setStyleSheet(f"""
+            QFrame {{
+                background-color: {COLORS['surface']};
+                border: 1px solid {COLORS['border']};
+                border-radius: 8px;
+            }}
+        """)
+        input_layout = QHBoxLayout(input_frame)
+        input_layout.setContentsMargins(16, 12, 16, 12)
+        
+        input_label = QLabel("Input:")
+        input_label.setStyleSheet(f"font-size: 14pt; font-weight: 600; color: {COLORS['text_secondary']};")
         
         self.input_field = QLineEdit()
-        self.input_field.setPlaceholderText("Enter a number...")
-        self.input_field.setStyleSheet("font-size: 14pt; padding: 8px;")
+        self.input_field.setPlaceholderText("Enter decimal...")
+        self.input_field.setStyleSheet(f"""
+            QLineEdit {{
+                font-size: 16pt; 
+                padding: 4px;
+                background: transparent;
+                border: none;
+                color: {COLORS['text_primary']};
+            }}
+        """)
         self.input_field.textChanged.connect(self._on_input_changed)
         
         input_layout.addWidget(input_label)
         input_layout.addWidget(self.input_field)
-        layout.addLayout(input_layout)
+        header_layout.addWidget(input_frame)
         
-        # Tabs Section
-        self.tabs = QTabWidget()
-        self.tabs.setStyleSheet("""
-            QTabWidget::pane {
-                border: 1px solid #e5e7eb;
-                border-radius: 4px;
-                background: white;
-            }
-            QTabBar::tab {
-                background: #f3f4f6;
-                border: 1px solid #e5e7eb;
-                padding: 10px 20px;
-                margin-right: 2px;
-                border-top-left-radius: 4px;
-                border-top-right-radius: 4px;
-                font-size: 11pt;
-            }
-            QTabBar::tab:selected {
-                background: white;
-                border-bottom-color: white;
-                font-weight: bold;
-                color: #2563eb;
-            }
-        """)
+        content_layout.addLayout(header_layout)
         
-        # Create tabs
+        # Stacked Pages
+        self.stack = QStackedWidget()
         self.tab_overview = self._create_overview_tab()
         self.tab_original = self._create_detail_tab("Original")
         self.tab_conrune = self._create_detail_tab("Conrune")
-        self.tab_reversal = self._create_detail_tab("Reversal")
-        self.tab_conrune_rev = self._create_detail_tab("Conrune of Reversal")
-        self.tab_upper_diff = self._create_detail_tab("Upper Difference")
-        self.tab_lower_diff = self._create_detail_tab("Lower Difference")
+        self.tab_reversal = self._create_detail_tab("Reune")
+        self.tab_conrune_rev = self._create_detail_tab("ConReune")
+        self.tab_upper_diff = self._create_detail_tab("A - B")
+        self.tab_lower_diff = self._create_detail_tab("C - D")
         self.tab_advanced = self._create_advanced_tab()
         self.tab_gematria = self._create_gematria_tab()
         
-        self.tabs.addTab(self.tab_overview, "Quadset Overview")
-        self.tabs.addTab(self.tab_original, "Original")
-        self.tabs.addTab(self.tab_conrune, "Conrune")
-        self.tabs.addTab(self.tab_reversal, "Reversal")
-        self.tabs.addTab(self.tab_conrune_rev, "Conrune Reversal")
-        self.tabs.addTab(self.tab_upper_diff, "Upper Diff")
-        self.tabs.addTab(self.tab_lower_diff, "Lower Diff")
-        self.tabs.addTab(self.tab_advanced, "Advanced")
-        self.tabs.addTab(self.tab_gematria, "Gematria") # Add Gematria tab
+        self.pages = [
+            self.tab_overview,
+            self.tab_original, self.tab_conrune, self.tab_reversal, self.tab_conrune_rev,
+            self.tab_upper_diff, self.tab_lower_diff,
+            self.tab_advanced, self.tab_gematria
+        ]
         
-        layout.addWidget(self.tabs)
+        for page in self.pages:
+            self.stack.addWidget(page)
+            
+        content_layout.addWidget(self.stack)
+        
+        # Populate Sidebar
+        self.nav_items = [
+            "Overview",
+            "Original", "Conrune", "Reune", "ConReune",
+            "A - B", "C - D",
+            "Advanced", "Gematria"
+        ]
+        self.sidebar.addItems(self.nav_items)
+        self.sidebar.item(0).setSelected(True)
+        self.sidebar.currentRowChanged.connect(self.stack.setCurrentIndex)
+        
+        main_layout.addWidget(self.sidebar)
+        main_layout.addWidget(content_container)
+
+    def _update_sidebar_labels(self, result: QuadsetResult):
+        """Update sidebar items with calculated values."""
+        members = [
+            result.original, result.conrune, result.reversal, result.conrune_reversal,
+            result.upper_diff, result.lower_diff
+        ]
+        roles = [
+            "Original", "Conrune", "Reune", "ConReune",
+            "A - B", "C - D"
+        ]
+        for i, member in enumerate(members):
+            item = self.sidebar.item(i + 1)
+            if member and member.decimal is not None:
+                item.setText(f"{member.decimal}\n{roles[i]}")
+            else:
+                item.setText(roles[i])
         
     def _create_overview_tab(self) -> QWidget:
         """Create the overview tab with the 2x2 grid and differences."""
@@ -287,10 +368,10 @@ class QuadsetAnalysisWindow(QMainWindow):
         grid.setSpacing(20)
         
         # Create the 4 panels
-        self.panel_original = self._create_panel("Original (Upper Left)")
-        self.panel_conrune = self._create_panel("Conrune (Upper Right)")
-        self.panel_reversal = self._create_panel("Reversal (Lower Left)")
-        self.panel_conrune_rev = self._create_panel("Conrune of Reversal (Lower Right)")
+        self.panel_original = self._create_panel("ORIGINAL")
+        self.panel_conrune = self._create_panel("CONRUNE")
+        self.panel_reversal = self._create_panel("REUNE")
+        self.panel_conrune_rev = self._create_panel("CONREUNE")
         
         # Add to grid
         grid.addWidget(self.panel_original, 0, 0)
@@ -304,8 +385,8 @@ class QuadsetAnalysisWindow(QMainWindow):
         diff_layout = QHBoxLayout()
         diff_layout.setSpacing(20)
         
-        self.panel_upper_diff = self._create_panel("Upper Difference (|Orig - Conrune|)")
-        self.panel_lower_diff = self._create_panel("Lower Difference (|Rev - Conrune Rev|)")
+        self.panel_upper_diff = self._create_panel("A - B")
+        self.panel_lower_diff = self._create_panel("C - D")
         
         diff_layout.addWidget(self.panel_upper_diff)
         diff_layout.addWidget(self.panel_lower_diff)
@@ -317,63 +398,90 @@ class QuadsetAnalysisWindow(QMainWindow):
         
         return scroll
 
-    def _create_panel(self, title: str) -> QGroupBox:
-        """Create a standardized panel for the grid."""
-        group = QGroupBox(title)
-        group.setStyleSheet("""
-            QGroupBox {
-                font-weight: bold;
-                font-size: 12pt;
-                border: 2px solid #e5e7eb;
-                border-radius: 8px;
-                margin-top: 12px;
-                background-color: #f9fafb;
-            }
-            QGroupBox::title {
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px;
-            }
+    def _create_panel(self, title: str) -> QFrame:
+        """Create a standardized panel using 'The Canvas' layout with centered text and tint."""
+        group = QFrame()
+        # Custom tinted surface color
+        tint_color = "#1e293b" # Slate-800, standard surface
+        # Let's try a slightly lighter/bluer tint for 'professional' look? 
+        # Actually sticking to surface is safer for consistency, but maybe opacity?
+        # User asked for different tint. Let's try a subtle gradient or just the border.
+        # I'll use a slightly different background color.
+        
+        group.setStyleSheet(f"""
+            QFrame {{
+                background-color: {COLORS['surface']}; 
+                border: 1px solid {COLORS['border']};
+                border-radius: 12px;
+            }}
         """)
         
-        layout = QVBoxLayout()
+        # Add shadow
+        shadow = QGraphicsDropShadowEffect()
+        shadow.setBlurRadius(24)
+        shadow.setOffset(0, 8)
+        shadow.setColor(QColor(0, 0, 0, 40))
+        group.setGraphicsEffect(shadow)
         
-        # Decimal Value Label
-        dec_label = QLabel("Decimal:")
-        dec_label.setStyleSheet("color: #6b7280; font-size: 10pt;")
-        layout.addWidget(dec_label)
+        layout = QVBoxLayout(group)
+        layout.setSpacing(16)
+        layout.setContentsMargins(20, 24, 20, 24)
         
-        val_label = QLabel("-")
-        val_label.setObjectName("decimal_val")
-        val_label.setStyleSheet("font-size: 24pt; font-weight: bold; color: #111827;")
-        val_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(val_label)
+        # 1. Title (Top)
+        title_lbl = QLabel(title)
+        title_lbl.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum)
+        title_lbl.setStyleSheet(f"font-weight: 800; font-size: 11pt; color: {COLORS['text_secondary']}; text-transform: uppercase; letter-spacing: 1.5px;")
+        title_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter) # Centered
+        layout.addWidget(title_lbl)
         
-        # Separator
-        line = QFrame()
-        line.setFrameShape(QFrame.Shape.HLine)
-        line.setFrameShadow(QFrame.Shadow.Sunken)
-        layout.addWidget(line)
-        
-        # Ternary Value Label
-        tern_label = QLabel("Ternary:")
-        tern_label.setStyleSheet("color: #6b7280; font-size: 10pt;")
-        layout.addWidget(tern_label)
-
-        t_val_label = QLabel("-")
-        t_val_label.setObjectName("ternary_val")
-        t_val_label.setStyleSheet("font-size: 18pt; font-family: monospace; color: #2563eb;")
-        t_val_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        layout.addWidget(t_val_label)
-
+        # 2. Glyph (Center - The Star)
         glyph = QuadsetGlyph()
         glyph.setObjectName("ternary_glyph")
+        glyph.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        glyph.setMinimumHeight(120)
         layout.addWidget(glyph)
         
-        group.setLayout(layout)
+        # 3. Footer (Bottom - Just Values)
+        # Use a grid or horizontal layout where items are centered
+        footer_layout = QHBoxLayout()
+        footer_layout.setSpacing(0) 
+        
+        # Decimal Wrapper (Left Half)
+        dec_wrapper = QFrame()
+        dec_layout_inner = QVBoxLayout(dec_wrapper)
+        dec_layout_inner.setContentsMargins(0,0,0,0)
+        
+        dec_val = QLabel("-")
+        dec_val.setObjectName("decimal_val")
+        dec_val.setStyleSheet(f"font-size: 32pt; font-weight: 700; color: {COLORS['text_primary']};")
+        dec_val.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        dec_layout_inner.addWidget(dec_val)
+        
+        footer_layout.addWidget(dec_wrapper)
+        
+        # Ternary Wrapper (Right Half)
+        tern_wrapper = QFrame()
+        tern_layout_inner = QVBoxLayout(tern_wrapper)
+        tern_layout_inner.setContentsMargins(0,0,0,0)
+
+        tern_val = QLabel("-")
+        tern_val.setObjectName("ternary_val")
+        tern_val.setStyleSheet(f"font-size: 18pt; font-family: 'Courier New', monospace; font-weight: bold; color: {COLORS['primary']};")
+        tern_val.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        tern_layout_inner.addWidget(tern_val)
+        
+        footer_layout.addWidget(tern_wrapper)
+        
+        layout.addLayout(footer_layout)
+        
+        # Force Glyph to take all available space
+        layout.setStretch(0, 0)
+        layout.setStretch(1, 1) # Glyph
+        layout.setStretch(2, 0)
+        
         return group
 
-    def _update_panel(self, panel: QGroupBox, member: QuadsetMember):
+    def _update_panel(self, panel: QWidget, member: QuadsetMember):
         """Update the values in a panel."""
         dec_lbl = panel.findChild(QLabel, "decimal_val")
         tern_lbl = panel.findChild(QLabel, "ternary_val")
@@ -387,73 +495,105 @@ class QuadsetAnalysisWindow(QMainWindow):
             glyph.set_ternary(member.ternary)
 
     def _create_detail_tab(self, title: str) -> QWidget:
-        """Create a tab widget for number details."""
-        tab = QWidget()
-        layout = QVBoxLayout(tab)
-        layout.setSpacing(15)
-        layout.setContentsMargins(20, 20, 20, 20)
-        
-        # Header Section (Values)
-        header_group = QGroupBox(f"{title} Values")
-        header_layout = QVBoxLayout()
-        
-        # Decimal Display
-        dec_layout = QHBoxLayout()
-        dec_label = QLabel("Decimal:")
-        dec_label.setStyleSheet("font-size: 12pt; color: #6b7280;")
-        dec_val = QLabel("-")
-        dec_val.setObjectName("decimal_val")
-        dec_val.setStyleSheet("font-size: 24pt; font-weight: bold; color: #111827;")
-        dec_layout.addWidget(dec_label)
-        dec_layout.addWidget(dec_val)
-        dec_layout.addStretch()
-        header_layout.addLayout(dec_layout)
-        
-        # Ternary Display
-        tern_layout = QHBoxLayout()
-        tern_label = QLabel("Ternary:")
-        tern_label.setStyleSheet("font-size: 12pt; color: #6b7280;")
-        tern_val = QLabel("-")
-        tern_val.setObjectName("ternary_val")
-        tern_val.setStyleSheet("font-size: 18pt; font-family: monospace; color: #2563eb;")
-        tern_layout.addWidget(tern_label)
-        tern_layout.addWidget(tern_val)
-        tern_layout.addStretch()
-        header_layout.addLayout(tern_layout)
-
-        glyph = QuadsetGlyph()
-        glyph.setObjectName("ternary_glyph")
-        header_layout.addWidget(glyph)
-        
-        header_group.setLayout(header_layout)
-        layout.addWidget(header_group)
-        
-        # Properties Section
-        props_label = QLabel("Number Properties")
-        props_label.setStyleSheet("font-size: 12pt; font-weight: bold; margin-top: 10px;")
-        layout.addWidget(props_label)
-        
-        # Scroll Area for Cards
+        """Create a tab widget for number details with Hero Card style (Adaptive Layout)."""
+        # Main Tab Wrapper (Scroll Area)
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.Shape.NoFrame)
         scroll.setStyleSheet("background-color: transparent;")
         
+        # Content Widget
+        content = QWidget()
+        layout = QVBoxLayout(content)
+        layout.setSpacing(12)
+        layout.setContentsMargins(40, 10, 40, 10)
+        
+        # 1. Hero Card
+        hero_card = QFrame()
+        hero_card.setStyleSheet(f"""
+            QFrame {{
+                background-color: {COLORS['surface']}; 
+                border: 1px solid {COLORS['border']};
+                border-radius: 12px;
+            }}
+        """)
+        shadow = QGraphicsDropShadowEffect()
+        shadow.setBlurRadius(24)
+        shadow.setOffset(0, 8)
+        shadow.setColor(QColor(0, 0, 0, 40))
+        hero_card.setGraphicsEffect(shadow)
+        
+        hero_layout = QVBoxLayout(hero_card)
+        hero_layout.setSpacing(12)
+        hero_layout.setContentsMargins(20, 16, 20, 16)
+        
+        # Title
+        title_lbl = QLabel(title.upper())
+        title_lbl.setStyleSheet(f"font-weight: 800; font-size: 12pt; color: {COLORS['text_secondary']}; letter-spacing: 2px;")
+        title_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        hero_layout.addWidget(title_lbl)
+
+        # Glyph
+        glyph = QuadsetGlyph()
+        glyph.setObjectName("ternary_glyph")
+        glyph.setMinimumHeight(100) 
+        hero_layout.addWidget(glyph)
+
+        # Footer (Values)
+        footer_layout = QHBoxLayout()
+        footer_layout.setSpacing(0)
+        
+        # Decimal Wrapper
+        dec_wrapper = QFrame()
+        dec_layout_inner = QVBoxLayout(dec_wrapper)
+        dec_layout_inner.setContentsMargins(0,0,0,0)
+        
+        dec_val = QLabel("-")
+        dec_val.setObjectName("decimal_val")
+        dec_val.setStyleSheet(f"font-size: 32pt; font-weight: 700; color: {COLORS['text_primary']};")
+        dec_val.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        dec_layout_inner.addWidget(dec_val)
+        
+        footer_layout.addWidget(dec_wrapper)
+        
+        # Ternary Wrapper
+        tern_wrapper = QFrame()
+        tern_layout_inner = QVBoxLayout(tern_wrapper)
+        tern_layout_inner.setContentsMargins(0,0,0,0)
+
+        tern_val = QLabel("-")
+        tern_val.setObjectName("ternary_val")
+        tern_val.setStyleSheet(f"font-size: 16pt; font-family: 'Courier New', monospace; font-weight: bold; color: {COLORS['primary']};")
+        tern_val.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        tern_layout_inner.addWidget(tern_val)
+        
+        footer_layout.addWidget(tern_wrapper)
+        
+        hero_layout.addLayout(footer_layout)
+        hero_layout.setStretch(1, 1) # Glyph grows
+        
+        layout.addWidget(hero_card)
+        
+        # 2. Properties Section
+        props_label = QLabel("PROPERTIES")
+        props_label.setStyleSheet(f"font-weight: 700; font-size: 11pt; color: {COLORS['text_secondary']}; letter-spacing: 1px; margin-top: 10px;")
+        layout.addWidget(props_label)
+        
+        # Properties Container (Adaptive)
         cards_container = QWidget()
         cards_container.setObjectName("cardsContainer")
-        # Store for retrieval
         cards_layout = QVBoxLayout(cards_container)
         cards_layout.setSpacing(12)
         cards_layout.setContentsMargins(0, 0, 0, 0)
-        cards_layout.addStretch() # Push up
         
-        scroll.setWidget(cards_container)
-        layout.addWidget(scroll)
+        layout.addWidget(cards_container)
+        layout.addStretch()
         
-        return tab
+        scroll.setWidget(content)
+        return scroll
 
     def _create_advanced_tab(self) -> QWidget:
-        """Create the advanced tab with quadset summary info."""
+        """Create the advanced tab with quadset summary info using tinted cards."""
         # Main Tab Wrapper (Scroll Area)
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
@@ -463,199 +603,219 @@ class QuadsetAnalysisWindow(QMainWindow):
         # Content Widget
         content = QWidget()
         layout = QVBoxLayout(content)
-        layout.setSpacing(15)
-        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(24)
+        layout.setContentsMargins(40, 20, 40, 20)
 
-        sum_box = QGroupBox("Quadset Totals")
-        sum_layout = QHBoxLayout()
-        sum_label = QLabel("Quadset Sum:")
-        sum_label.setStyleSheet("font-size: 12pt; color: #6b7280;")
-        sum_value = QLabel("-")
-        sum_value.setObjectName("advanced_sum")
-        sum_value.setStyleSheet("font-size: 24pt; font-weight: bold; color: #111827;")
-        sum_layout.addWidget(sum_label)
-        sum_layout.addWidget(sum_value)
-        sum_layout.addStretch()
-        sum_box.setLayout(sum_layout)
-        layout.addWidget(sum_box)
+        # Helper to create a card
+        def create_card():
+            card = QFrame()
+            card.setStyleSheet(f"""
+                QFrame {{
+                    background-color: {COLORS['surface']}; 
+                    border: 1px solid {COLORS['border']};
+                    border-radius: 12px;
+                }}
+            """)
+            shadow = QGraphicsDropShadowEffect()
+            shadow.setBlurRadius(24)
+            shadow.setOffset(0, 8)
+            shadow.setColor(QColor(0, 0, 0, 40))
+            card.setGraphicsEffect(shadow)
+            return card
 
-        septad_box = QGroupBox("Septad")
-        septad_layout = QHBoxLayout()
-        septad_label = QLabel("Septad Total:")
-        septad_label.setStyleSheet("font-size: 12pt; color: #6b7280;")
-        septad_value = QLabel("-")
-        septad_value.setObjectName("advanced_septad")
-        septad_value.setStyleSheet("font-size: 20pt; font-weight: bold; color: #0f172a;")
-        septad_layout.addWidget(septad_label)
-        septad_layout.addWidget(septad_value)
-        septad_layout.addStretch()
-        septad_box.setLayout(septad_layout)
-        layout.addWidget(septad_box)
-
-        # Transgram Section (Manual Frame instead of GroupBox to fix layout)
-        trans_header = QLabel("Differential Transgram")
-        trans_header.setStyleSheet("font-size: 12pt; font-weight: bold; margin-top: 10px; color: #111827;")
-        layout.addWidget(trans_header)
-
-        trans_frame = QFrame()
-        trans_frame.setStyleSheet("""
-            QFrame {
-                background-color: #f9fafb;
-                border: 1px solid #e5e7eb;
-                border-radius: 6px;
-            }
-        """)
-        trans_layout = QVBoxLayout(trans_frame)
-        trans_layout.setSpacing(12) 
-        trans_layout.setContentsMargins(16, 16, 16, 16)
+        # 1. Totals Card
+        totals_card = create_card()
+        totals_layout = QVBoxLayout(totals_card)
+        totals_layout.setContentsMargins(24, 24, 24, 24)
+        totals_layout.setSpacing(16)
         
-        # Row 1: Differentials
+        totals_header = QLabel("QUADSET TOTALS")
+        totals_header.setStyleSheet(f"font-weight: 800; font-size: 11pt; color: {COLORS['text_secondary']}; letter-spacing: 2px;")
+        totals_header.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        totals_layout.addWidget(totals_header)
+        
+        # Grid for Sum/Septad
+        t_grid = QHBoxLayout()
+        
+        # Sum
+        sum_container = QVBoxLayout()
+        sum_lbl = QLabel("SUM")
+        sum_lbl.setStyleSheet(f"color: {COLORS['text_secondary']}; font-size: 10pt; font-weight: bold;")
+        sum_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        sum_val = QLabel("-")
+        sum_val.setObjectName("advanced_sum")
+        sum_val.setStyleSheet(f"font-size: 28pt; font-weight: 700; color: {COLORS['text_primary']};")
+        sum_val.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        sum_container.addWidget(sum_lbl)
+        sum_container.addWidget(sum_val)
+        
+        # Septad
+        sept_container = QVBoxLayout()
+        sept_lbl = QLabel("SEPTAD")
+        sept_lbl.setStyleSheet(f"color: {COLORS['text_secondary']}; font-size: 10pt; font-weight: bold;")
+        sept_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        sept_val = QLabel("-")
+        sept_val.setObjectName("advanced_septad")
+        sept_val.setStyleSheet(f"font-size: 28pt; font-weight: 700; color: {COLORS['text_primary']};")
+        sept_val.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        sept_container.addWidget(sept_lbl)
+        sept_container.addWidget(sept_val)
+        
+        t_grid.addLayout(sum_container)
+        t_grid.addLayout(sept_container)
+        totals_layout.addLayout(t_grid)
+        layout.addWidget(totals_card)
+
+        # 2. Transgram Card
+        trans_card = create_card()
+        trans_layout = QVBoxLayout(trans_card)
+        trans_layout.setContentsMargins(24, 24, 24, 24)
+        trans_layout.setSpacing(20)
+        
+        trans_header = QLabel("DIFFERENTIAL TRANSGRAM")
+        trans_header.setStyleSheet(f"font-weight: 800; font-size: 11pt; color: {COLORS['text_secondary']}; letter-spacing: 2px;")
+        trans_header.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        trans_layout.addWidget(trans_header)
+        
+        # Diffs Row
         diff_row = QHBoxLayout()
         
         # Upper
-        upper_frame = QFrame()
-        upper_frame.setStyleSheet("border: none; background: transparent;")
-        upper_layout = QVBoxLayout(upper_frame)
-        upper_layout.setContentsMargins(0,0,0,0)
-        upper_layout.addWidget(QLabel("Upper Differential:"))
-        uv = QLabel("-")
-        uv.setObjectName("advanced_upper_diff")
-        uv.setStyleSheet("font-size: 14pt; font-weight: bold; border: none;")
-        upper_layout.addWidget(uv)
+        ud_layout = QVBoxLayout()
+        ud_lbl = QLabel("A - B")
+        ud_lbl.setStyleSheet(f"color: {COLORS['text_secondary']}; font-size: 10pt;")
+        ud_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        ud_val = QLabel("-")
+        ud_val.setObjectName("advanced_upper_diff")
+        ud_val.setStyleSheet(f"font-size: 18pt; font-weight: bold; color: {COLORS['text_primary']};")
+        ud_val.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        ud_layout.addWidget(ud_lbl)
+        ud_layout.addWidget(ud_val)
         
         # Lower
-        lower_frame = QFrame()
-        lower_frame.setStyleSheet("border: none; background: transparent;")
-        lower_layout = QVBoxLayout(lower_frame)
-        lower_layout.setContentsMargins(0,0,0,0)
-        lower_layout.addWidget(QLabel("Lower Differential:"))
-        lv = QLabel("-")
-        lv.setObjectName("advanced_lower_diff")
-        lv.setStyleSheet("font-size: 14pt; font-weight: bold; border: none;")
-        lower_layout.addWidget(lv)
+        ld_layout = QVBoxLayout()
+        ld_lbl = QLabel("C - D")
+        ld_lbl.setStyleSheet(f"color: {COLORS['text_secondary']}; font-size: 10pt;")
+        ld_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        ld_val = QLabel("-")
+        ld_val.setObjectName("advanced_lower_diff")
+        ld_val.setStyleSheet(f"font-size: 18pt; font-weight: bold; color: {COLORS['text_primary']};")
+        ld_val.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        ld_layout.addWidget(ld_lbl)
+        ld_layout.addWidget(ld_val)
         
-        diff_row.addWidget(upper_frame)
-        diff_row.addSpacing(40)
-        diff_row.addWidget(lower_frame)
-        diff_row.addStretch()
-        
+        diff_row.addLayout(ud_layout)
+        diff_row.addLayout(ld_layout)
         trans_layout.addLayout(diff_row)
         
-        # Separator
-        line = QFrame()
-        line.setFrameShape(QFrame.Shape.HLine)
-        line.setFrameShadow(QFrame.Shadow.Sunken)
-        line.setStyleSheet("border: none; background: #e5e7eb; max-height: 1px;")
-        trans_layout.addWidget(line)
-
-        # Row 2: Transgram Ternary
-        t_label = QLabel("Transgram (Ternary):")
-        t_label.setStyleSheet("font-size: 11pt; color: #6b7280; border: none;")
-        t_val = QLabel("-")
-        t_val.setObjectName("advanced_transgram")
-        t_val.setStyleSheet("font-size: 16pt; font-family: monospace; color: #2563eb; border: none;")
+        # Transgram Result
+        tg_layout = QVBoxLayout()
+        tg_layout.setSpacing(8)
         
-        trans_layout.addWidget(t_label)
-        trans_layout.addWidget(t_val)
+        tg_lbl = QLabel("TRANSGRAM VALUE")
+        tg_lbl.setStyleSheet(f"color: {COLORS['text_secondary']}; font-size: 10pt; font-weight: bold; margin-top: 10px;")
+        tg_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        tg_dec = QLabel("-")
+        tg_dec.setObjectName("advanced_transgram_dec")
+        tg_dec.setStyleSheet(f"font-size: 32pt; font-weight: 700; color: {COLORS['text_primary']};")
+        tg_dec.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        tg_tern = QLabel("-")
+        tg_tern.setObjectName("advanced_transgram")
+        tg_tern.setStyleSheet(f"font-size: 20pt; font-family: 'Courier New', monospace; font-weight: bold; color: {COLORS['primary']};")
+        tg_tern.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        tg_layout.addWidget(tg_lbl)
+        tg_layout.addWidget(tg_dec)
+        tg_layout.addWidget(tg_tern)
+        trans_layout.addLayout(tg_layout)
+        
+        layout.addWidget(trans_card)
 
-        # Row 3: Transgram Decimal
-        d_label = QLabel("Transgram (Decimal):")
-        d_label.setStyleSheet("font-size: 11pt; color: #6b7280; border: none;")
-        d_val = QLabel("-")
-        d_val.setObjectName("advanced_transgram_dec")
-        d_val.setStyleSheet("font-size: 14pt; font-weight: bold; color: #111827; border: none;")
-
-        trans_layout.addWidget(d_label)
-        trans_layout.addWidget(d_val)
-
-        layout.addWidget(trans_frame)
-
-        patterns_box = QGroupBox("Pattern Summary")
-        patterns_layout = QVBoxLayout()
+        # 3. Pattern Summary Card
+        pat_card = create_card()
+        pat_layout = QVBoxLayout(pat_card)
+        pat_layout.setContentsMargins(24, 24, 24, 24)
+        
+        pat_header = QLabel("PATTERN SUMMARY")
+        pat_header.setStyleSheet(f"font-weight: 800; font-size: 11pt; color: {COLORS['text_secondary']}; letter-spacing: 2px;")
+        pat_header.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        pat_layout.addWidget(pat_header)
+        
+        # Use simple label for pattern if it fits, or text edit if long. 
+        # Existing used QTextEdit. Let's stick to QTextEdit but styled minimally matching the theme.
         patterns_text = QTextEdit()
         patterns_text.setObjectName("advanced_patterns")
         patterns_text.setReadOnly(True)
-        patterns_text.setStyleSheet("""
-            QTextEdit {
+        patterns_text.setStyleSheet(f"""
+            QTextEdit {{
                 font-family: 'Courier New', monospace;
                 font-size: 11pt;
-                background-color: #f8fafc;
-                border: 1px solid #e5e7eb;
+                background-color: {COLORS['background_alt']};
+                border: 1px solid {COLORS['border']};
                 border-radius: 6px;
                 padding: 12px;
-            }
+                color: {COLORS['text_primary']};
+            }}
         """)
-        patterns_layout.addWidget(patterns_text)
-        patterns_box.setLayout(patterns_layout)
-        layout.addWidget(patterns_box)
+        pat_layout.addWidget(patterns_text)
+        
+        layout.addWidget(pat_card)
 
         layout.addStretch()
         
         scroll.setWidget(content)
         return scroll
 
-    def _handle_geometry_menu(self, event, text_edit):
-        """Handle context menu for geometry properties."""
-        cursor = text_edit.cursorForPosition(event.pos())
-        text_edit.setTextCursor(cursor) # Move cursor to click
-        line_text = cursor.block().text().strip()
-        
-        # Parse: "• {Type} (Index: {N})"
-        if not line_text.startswith("• "):
+    def _handle_link_activation(self, link: str):
+        """Handle execution of geometry visualization links."""
+        if link.startswith("geo3d:"):
+            # 3D Figurate: geo3d:shape_type:index
+            try:
+                _, shape_type, index_str = link.split(":")
+                index = int(index_str)
+                self._open_figurate_3d_window(shape_type, index)
+            except ValueError:
+                print(f"Invalid 3D geometry link: {link}")
             return
             
-        import re
-        match = re.search(r"• (.*?) \(Index: (\d+)\)", line_text)
-        if not match:
+        if not link.startswith("geo:"):
             return
             
-        full_name = match.group(1)
-        index_str = match.group(2)
         try:
+            _, mode, sides_str, index_str = link.split(":")
+            sides = int(sides_str)
             index = int(index_str)
+            self._open_geometry_window(sides, index, mode)
         except ValueError:
+            print(f"Invalid geometry link: {link}")
+
+    def _open_figurate_3d_window(self, shape_type: str, index: int):
+        """Open the 3D figurate visualizer with pre-filled values."""
+        from pillars.geometry.ui.figurate_3d_window import Figurate3DWindow
+        
+        if not self.window_manager:
+            print("No window manager found, cannot open visualizer")
             return
 
-        # Determine mode and sides
-        mode = "polygonal"
-        sides = 3
+        win_id = "figurate_3d_window_shared"
+        win = self.window_manager.open_window(win_id, Figurate3DWindow, window_manager=self.window_manager)
         
-        if "Star Number" in full_name:
-            mode = "star"
-            sides = 12 # Not strictly used by visualizer for Star but good default
-        elif "Centered" in full_name:
-            mode = "centered"
-            # Map name to sides
-            name_lower = full_name.lower()
-            if "triangle" in name_lower: sides = 3
-            elif "square" in name_lower: sides = 4
-            elif "pentagonal" in name_lower: sides = 5
-            elif "hexagonal" in name_lower: sides = 6
-            elif "heptagonal" in name_lower: sides = 7
-            elif "octagonal" in name_lower: sides = 8
-            elif "nonagonal" in name_lower: sides = 9
-            elif "decagonal" in name_lower: sides = 10
-            elif "hendecagonal" in name_lower: sides = 11
-            elif "dodecagonal" in name_lower: sides = 12
-        else:
-            mode = "polygonal"
-            name_lower = full_name.lower()
-            if "triangle" in name_lower: sides = 3
-            elif "square" in name_lower: sides = 4
-            elif "pentagonal" in name_lower: sides = 5
-            elif "hexagonal" in name_lower: sides = 6
-            elif "heptagonal" in name_lower: sides = 7
-            elif "octagonal" in name_lower: sides = 8
-            elif "nonagonal" in name_lower: sides = 9
-            elif "decagonal" in name_lower: sides = 10
-            elif "hendecagonal" in name_lower: sides = 11
-            elif "dodecagonal" in name_lower: sides = 12
-
-        menu = QMenu(self)
-        action = QAction(f"Visualize {full_name}...", self)
-        action.triggered.connect(lambda: self._open_geometry_window(sides, index, mode))
-        menu.addAction(action)
-        menu.exec(event.globalPos())
+        if win:
+            # Map shape_type to combo index
+            shape_map = {
+                "tetrahedral": 0,
+                "pyramidal": 1,
+                "octahedral": 2,
+                "cubic": 3,
+            }
+            combo_idx = shape_map.get(shape_type.lower(), 0)
+            
+            if win.shape_combo:
+                win.shape_combo.setCurrentIndex(combo_idx)
+            if win.index_spin:
+                win.index_spin.setValue(index)
 
     def _open_geometry_window(self, sides: int, index: int, mode: str):
         """Open the geometry visualizer with pre-filled values."""
@@ -686,7 +846,7 @@ class QuadsetAnalysisWindow(QMainWindow):
             win.activateWindow()
 
 
-    def _update_tab(self, tab: QWidget, member: QuadsetMember):
+    def _update_detail_tab(self, tab: QWidget, member: QuadsetMember):
         """Update a tab with a member's values and properties."""
         # Update Header Values
         dec_lbl = tab.findChild(QLabel, "decimal_val")
@@ -760,67 +920,306 @@ class QuadsetAnalysisWindow(QMainWindow):
         polys = props.get('polygonal_info', [])
         centered = props.get('centered_polygonal_info', [])
         if polys or centered:
+            import re
             poly_text = ""
             if polys:
-                poly_text += "Polygonal:\n" + "\n".join([f"• {p}" for p in polys])
+                poly_text += "<b>Polygonal:</b><br>" 
+                for p in polys:
+                    # Parse: "{Name} (Index: {N})"
+                    match = re.search(r"(.*?) \(Index: (\d+)\)", p)
+                    if match:
+                        full_name = match.group(1)
+                        index = match.group(2)
+                        # Determine sides
+                        mode = "polygonal"
+                        sides = 3
+                        # Helper for sides
+                        name_lower = full_name.lower()
+                        if "triangle" in name_lower: sides = 3
+                        elif "square" in name_lower: sides = 4
+                        elif "pentagonal" in name_lower: sides = 5
+                        elif "hexagonal" in name_lower: sides = 6
+                        elif "heptagonal" in name_lower: sides = 7
+                        elif "octagonal" in name_lower: sides = 8
+                        elif "nonagonal" in name_lower: sides = 9
+                        elif "decagonal" in name_lower: sides = 10
+                        elif "hendecagonal" in name_lower: sides = 11
+                        elif "dodecagonal" in name_lower: sides = 12
+                        
+                        link = f"geo:{mode}:{sides}:{index}"
+                        poly_text += f"<a href='{link}' style='text-decoration:none; color:#3b82f6;'>• {p}</a><br>"
+                    else:
+                        poly_text += f"• {p}<br>"
+
             if centered:
-                if poly_text: poly_text += "\n\n"
-                poly_text += "Centered:\n" + "\n".join([f"• {c}" for c in centered])
-            layout.addWidget(PropertyCard("Geometric Properties", poly_text, context_menu_handler=self._handle_geometry_menu))
-            
-        # 5. Digits Card
-        d_sum = props.get('digit_sum', 0)
-        layout.addWidget(PropertyCard("Digit Sum", str(d_sum)))
+                if poly_text: poly_text += "<br>"
+                poly_text += "<b>Centered:</b><br>"
+                for c in centered:
+                    match = re.search(r"(.*?) \(Index: (\d+)\)", c)
+                    if match:
+                        full_name = match.group(1)
+                        index = match.group(2)
+                        mode = "centered"
+                        sides = 3
+                        if "star" in full_name.lower(): mode = "star"; sides = 12 
+                        
+                        # Helper for sides (simplified repetition)
+                        name_lower = full_name.lower()
+                        if "triangle" in name_lower: sides = 3
+                        elif "square" in name_lower: sides = 4
+                        elif "pentagonal" in name_lower: sides = 5
+                        elif "hexagonal" in name_lower: sides = 6
+                        elif "heptagonal" in name_lower: sides = 7
+                        elif "octagonal" in name_lower: sides = 8
+                        elif "nonagonal" in name_lower: sides = 9
+                        elif "decagonal" in name_lower: sides = 10
+                        elif "hendecagonal" in name_lower: sides = 11
+                        elif "dodecagonal" in name_lower: sides = 12
+                        
+                        link = f"geo:{mode}:{sides}:{index}"
+                        poly_text += f"<a href='{link}' style='text-decoration:none; color:#3b82f6;'>• {c}</a><br>"
+                    else:
+                        poly_text += f"• {c}<br>"
+                        
+            layout.addWidget(PropertyCard("Geometric Properties", poly_text, link_handler=self._handle_link_activation))
+
+        # 5. 3D Figurate Numbers Card
+        figurate_3d = props.get('figurate_3d_info', [])
+        if figurate_3d:
+            import re
+            fig3d_text = ""
+            for f in figurate_3d:
+                # Parse: "{Type} (Index: {N})"
+                match = re.search(r"(.*?) \(Index: (\d+)\)", f)
+                if match:
+                    full_name = match.group(1)
+                    index = match.group(2)
+                    # Map name to shape_type
+                    shape_type = "tetrahedral"  # default
+                    name_lower = full_name.lower()
+                    if "tetrahedral" in name_lower:
+                        shape_type = "tetrahedral"
+                    elif "pyramidal" in name_lower or "square pyramidal" in name_lower:
+                        shape_type = "pyramidal"
+                    elif "octahedral" in name_lower:
+                        shape_type = "octahedral"
+                    elif "cubic" in name_lower:
+                        shape_type = "cubic"
+                    
+                    link = f"geo3d:{shape_type}:{index}"
+                    fig3d_text += f"<a href='{link}' style='text-decoration:none; color:#3b82f6;'>• {f}</a><br>"
+                else:
+                    fig3d_text += f"• {f}<br>"
+            layout.addWidget(PropertyCard("3D Figurate Numbers", fig3d_text, link_handler=self._handle_link_activation))
+
+        # 6. Pronic Card (if applicable)
+        if props.get('is_pronic'):
+            pronic_idx = props.get('pronic_index', -1)
+            pronic_text = f"{pronic_idx} × {pronic_idx + 1} = {pronic_idx * (pronic_idx + 1)}"
+            layout.addWidget(PropertyCard("Pronic Number", f"Index: {pronic_idx}<br>{pronic_text}"))
+
+        # 7. Happy/Sad Number Card
+        is_happy = props.get('is_happy', False)
+        happy_iters = props.get('happy_iterations', -1)
+        happy_chain = props.get('happy_chain', [])
         
+        # Format chain as: n → n → n → ...
+        chain_str = " → ".join(str(x) for x in happy_chain)
+        
+        if is_happy:
+            happy_text = f"😊 <b>Happy Number</b><br>Reached 1 in {happy_iters} iterations<br><br><b>Chain:</b><br>{chain_str}"
+            layout.addWidget(PropertyCard("Happy Number", happy_text))
+        else:
+            # Show the chain leading into the cycle
+            happy_text = f"😢 <b>Sad Number</b><br>Enters a cycle and never reaches 1<br><br><b>Chain:</b><br>{chain_str}<br>(cycle detected)"
+            layout.addWidget(PropertyCard("Sad Number", happy_text))
+            
         layout.addStretch()
         
     def _create_gematria_tab(self) -> QWidget:
-        """Create the Gematria Database tab with sub-tabs for each number."""
+        """Create the Gematria Database tab with vertical side tabs for each number."""
         tab = QWidget()
         layout = QVBoxLayout(tab)
-        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setContentsMargins(40, 20, 40, 20)
         
-        # Sub-tabs for each number type
-        self.gem_tabs = QTabWidget()
+        # Tablet Container
+        tablet = QFrame()
+        tablet.setStyleSheet(f"""
+            QFrame {{
+                background-color: {COLORS['surface']}; 
+                border: 1px solid {COLORS['border']};
+                border-radius: 12px;
+            }}
+        """)
+        shadow = QGraphicsDropShadowEffect()
+        shadow.setBlurRadius(24)
+        shadow.setOffset(0, 8)
+        shadow.setColor(QColor(0, 0, 0, 40))
+        tablet.setGraphicsEffect(shadow)
         
-        # We need keys: 'original', 'conrune', 'reverse', 'reciprocal', 'upper_diff', 'lower_diff'
-        # Let's verify standard keys. QuadsetResult has members.
-        # We will create tabs dynamically or statically?
-        # Ideally statically so we can access them.
+        tablet_layout = QVBoxLayout(tablet)
+        tablet_layout.setSpacing(16)
+        tablet_layout.setContentsMargins(20, 24, 20, 24)
         
-        self.gem_tables = {} # Map 'key' -> QTableWidget
+        # Title
+        title_lbl = QLabel("GEMATRIA DATABASE")
+        title_lbl.setStyleSheet(f"font-weight: 800; font-size: 14pt; color: {COLORS['text_secondary']}; letter-spacing: 2px;")
+        title_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        tablet_layout.addWidget(title_lbl)
         
-        keys = [
-            ("Original", "original"),
-            ("Conrune", "conrune"),
-            ("Reverse", "reverse"),
-            ("Reciprocal", "reciprocal"),
-            ("Upper Diff", "upper_diff"),
-            ("Lower Diff", "lower_diff")
+        # Horizontal layout for side tabs + content
+        content_layout = QHBoxLayout()
+        content_layout.setSpacing(0)
+        
+        # Side navigation list
+        self.gem_sidebar = QListWidget()
+        self.gem_sidebar.setFixedWidth(140)
+        self.gem_sidebar.setFrameShape(QFrame.Shape.NoFrame)
+        self.gem_sidebar.setStyleSheet(f"""
+            QListWidget {{
+                background-color: {COLORS['background_alt']};
+                border-right: 1px solid {COLORS['border']};
+                outline: none;
+                padding-top: 8px;
+            }}
+            QListWidget::item {{
+                height: 48px;
+                padding-left: 12px;
+                color: {COLORS['text_secondary']};
+                border-left: 3px solid transparent;
+            }}
+            QListWidget::item:selected {{
+                color: {COLORS['text_primary']};
+                background-color: {COLORS['surface']};
+                border-left: 3px solid {COLORS['primary']};
+                font-weight: bold;
+            }}
+            QListWidget::item:hover:!selected {{
+                background-color: {COLORS['surface_hover']};
+            }}
+        """)
+        
+        # Stacked widget for content pages
+        self.gem_stack = QStackedWidget()
+        self.gem_stack.setStyleSheet(f"background-color: {COLORS['background_alt']};")
+        
+        # Define keys - labels will be updated dynamically with actual values
+        self.gem_keys = [
+            ("original", "Original"),
+            ("conrune", "Conrune"),
+            ("reverse", "Reune"),
+            ("reciprocal", "ConReune"),
+            ("upper_diff", "A - B"),
+            ("lower_diff", "C - D")
         ]
         
-        for label, key in keys:
-             sub_tab = QWidget()
-             sub_layout = QVBoxLayout(sub_tab)
-             sub_layout.setContentsMargins(0, 0, 0, 0)
-             
-             table = QTableWidget()
-             table.setColumnCount(4)
-             table.setHorizontalHeaderLabels(["Word", "Method", "Tags", "Notes"])
-             table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
-             table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
-             table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
-             table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)
-             table.setAlternatingRowColors(True)
-             table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
-             table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-             table.setWordWrap(True)
-             
-             sub_layout.addWidget(table)
-             self.gem_tabs.addTab(sub_tab, label)
-             self.gem_tables[key] = table
-             
-        layout.addWidget(self.gem_tabs)
+        self.gem_tables = {}
+        self.gem_list_items = {}  # Store list items for dynamic label updates
+        
+        for key, default_label in self.gem_keys:
+            # Add item to sidebar
+            item = QListWidgetItem(default_label)
+            item.setData(Qt.ItemDataRole.UserRole, key)
+            self.gem_sidebar.addItem(item)
+            self.gem_list_items[key] = item
+            
+            # Create page with filters and table
+            page = QWidget()
+            page_layout = QVBoxLayout(page)
+            page_layout.setContentsMargins(12, 12, 12, 12)
+            page_layout.setSpacing(8)
+            
+            # Filter row
+            filter_row = QHBoxLayout()
+            filter_row.setSpacing(12)
+            
+            # Language filter
+            lang_label = QLabel("Language:")
+            lang_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-weight: 600;")
+            filter_row.addWidget(lang_label)
+            
+            lang_combo = QComboBox()
+            lang_combo.addItem("All Languages", "")
+            lang_combo.setMinimumWidth(140)
+            lang_combo.setStyleSheet(f"""
+                QComboBox {{
+                    background-color: {COLORS['surface']};
+                    border: 1px solid {COLORS['border']};
+                    border-radius: 6px;
+                    padding: 6px 10px;
+                }}
+                QComboBox:focus {{
+                    border-color: {COLORS['primary']};
+                }}
+            """)
+            filter_row.addWidget(lang_combo)
+            
+            # Method filter
+            method_label = QLabel("Method:")
+            method_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-weight: 600;")
+            filter_row.addWidget(method_label)
+            
+            method_combo = QComboBox()
+            method_combo.addItem("All Methods", "")
+            method_combo.setMinimumWidth(160)
+            method_combo.setStyleSheet(lang_combo.styleSheet())
+            filter_row.addWidget(method_combo)
+            
+            filter_row.addStretch()
+            page_layout.addLayout(filter_row)
+            
+            table = QTableWidget()
+            table.setColumnCount(4)
+            table.setHorizontalHeaderLabels(["Word", "Method", "Tags", "Notes"])
+            table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+            table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
+            table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
+            table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)
+            table.setAlternatingRowColors(True)
+            table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+            table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+            table.setWordWrap(True)
+            table.setSortingEnabled(True)
+            table.setStyleSheet(f"""
+                QTableWidget {{
+                    background-color: transparent;
+                    gridline-color: {COLORS['border']};
+                    border: none;
+                }}
+                QHeaderView::section {{
+                    background-color: {COLORS['surface']};
+                    color: {COLORS['text_secondary']};
+                    border: none;
+                    padding: 4px;
+                }}
+            """)
+            
+            # Connect filters to table filtering
+            lang_combo.currentIndexChanged.connect(
+                lambda _, t=table, lc=lang_combo, mc=method_combo: self._apply_gematria_filters(t, lc, mc)
+            )
+            method_combo.currentIndexChanged.connect(
+                lambda _, t=table, lc=lang_combo, mc=method_combo: self._apply_gematria_filters(t, lc, mc)
+            )
+            
+            page_layout.addWidget(table)
+            self.gem_stack.addWidget(page)
+            self.gem_tables[key] = table
+            
+            # Store combo references for dynamic population
+            if not hasattr(self, 'gem_filter_combos'):
+                self.gem_filter_combos = {}
+            self.gem_filter_combos[key] = {'language': lang_combo, 'method': method_combo}
+        
+        # Connect sidebar selection to stack
+        self.gem_sidebar.currentRowChanged.connect(self.gem_stack.setCurrentIndex)
+        self.gem_sidebar.setCurrentRow(0)
+        
+        content_layout.addWidget(self.gem_sidebar)
+        content_layout.addWidget(self.gem_stack, 1)
+        
+        tablet_layout.addLayout(content_layout)
+        layout.addWidget(tablet)
         return tab
 
     def _update_gematria_tab(self, result: QuadsetResult):
@@ -843,19 +1242,31 @@ class QuadsetAnalysisWindow(QMainWindow):
         tasks.append(("lower_diff", result.lower_diff.decimal))
         
         for key, value in tasks:
+            # Update sidebar label to show actual number
+            if hasattr(self, 'gem_list_items') and key in self.gem_list_items:
+                self.gem_list_items[key].setText(str(value))
+            
+            # Populate the table
             table = self.gem_tables.get(key)
             if table:
-                self._populate_gematria_table(table, value)
+                self._populate_gematria_table(table, value, key)
 
-    def _populate_gematria_table(self, table: QTableWidget, value: int):
+    def _populate_gematria_table(self, table: QTableWidget, value: int, key: str = ""):
         """Fetch rows from DB where value matches and populate table."""
         table.setRowCount(0)
         
+        # Track unique languages and methods for filter population
+        languages = set()
+        methods = set()
+        
         try:
             with get_db_session() as db:
-                # Query CalculationEntity
-                # We want entries where value == value
                 entries = db.query(CalculationEntity).filter(CalculationEntity.value == value).limit(100).all()
+                
+                # Need 5 columns: Word, Method, Tags, Notes, Language (hidden)
+                table.setColumnCount(5)
+                table.setHorizontalHeaderLabels(["Word", "Method", "Tags", "Notes", "Language"])
+                table.setColumnHidden(4, True)  # Hide language column
                 
                 table.setRowCount(len(entries))
                 for row, entry in enumerate(entries):
@@ -863,10 +1274,9 @@ class QuadsetAnalysisWindow(QMainWindow):
                     table.setItem(row, 0, QTableWidgetItem(entry.text))
                     # Method
                     table.setItem(row, 1, QTableWidgetItem(entry.method))
+                    methods.add(entry.method)
                     # Tags
                     tags_str = entry.tags
-                    # Clean up json string display if needed, or just show raw string if user wants quick view
-                    # Usually tags is '["tag1", "tag2"]'
                     try:
                         import json
                         tags_list = json.loads(tags_str)
@@ -880,12 +1290,70 @@ class QuadsetAnalysisWindow(QMainWindow):
                     table.setItem(row, 2, QTableWidgetItem(tags_display))
                     # Notes
                     table.setItem(row, 3, QTableWidgetItem(entry.notes))
+                    # Language (hidden column for filtering) - extract from language field
+                    # Handle both "Hebrew" and "Hebrew (Standard)" formats
+                    lang_raw = entry.language or ""
+                    if "(" in lang_raw:
+                        lang_parsed = lang_raw.split("(")[0].strip()
+                    else:
+                        lang_parsed = lang_raw.strip()
+                    table.setItem(row, 4, QTableWidgetItem(lang_parsed))
+                    languages.add(lang_parsed)
+                    
+                    # Track method separately
+                    methods.add(entry.method)
                 
                 table.resizeRowsToContents()
+                
+                # Update filter combo boxes
+                if hasattr(self, 'gem_filter_combos') and key in self.gem_filter_combos:
+                    combos = self.gem_filter_combos[key]
+                    
+                    # Update language combo
+                    lang_combo = combos['language']
+                    lang_combo.blockSignals(True)
+                    lang_combo.clear()
+                    lang_combo.addItem("All Languages", "")
+                    for lang in sorted(languages):
+                        if lang:
+                            lang_combo.addItem(lang, lang)
+                    lang_combo.blockSignals(False)
+                    
+                    # Update method combo
+                    method_combo = combos['method']
+                    method_combo.blockSignals(True)
+                    method_combo.clear()
+                    method_combo.addItem("All Methods", "")
+                    for method in sorted(methods):
+                        if method:
+                            method_combo.addItem(method, method)
+                    method_combo.blockSignals(False)
                     
         except Exception as e:
             print(f"Error fetching gematria for {value}: {e}")
             pass # Fail gracefully
+
+    def _apply_gematria_filters(self, table: QTableWidget, lang_combo: QComboBox, method_combo: QComboBox):
+        """Filter table rows based on language and method selections."""
+        selected_lang = lang_combo.currentData() or ""
+        selected_method = method_combo.currentData() or ""
+        
+        for row in range(table.rowCount()):
+            should_show = True
+            
+            # Check language (column 4, hidden)
+            if selected_lang:
+                lang_item = table.item(row, 4)
+                if lang_item and lang_item.text() != selected_lang:
+                    should_show = False
+            
+            # Check method (column 1)
+            if should_show and selected_method:
+                method_item = table.item(row, 1)
+                if method_item and method_item.text() != selected_method:
+                    should_show = False
+            
+            table.setRowHidden(row, not should_show)
 
     def _update_advanced_tab(self, result: QuadsetResult):
         """Update the advanced tab values from the result object."""
@@ -960,26 +1428,58 @@ class QuadsetAnalysisWindow(QMainWindow):
             pass
 
     def _display_results(self, result: QuadsetResult):
-        """Distribute the QuadsetResult to the UI components."""
-        # 1. Update Grid Panels
+        """Display the results in the UI."""
+        # Update Outline/Overview Panels
         self._update_panel(self.panel_original, result.original)
         self._update_panel(self.panel_conrune, result.conrune)
         self._update_panel(self.panel_reversal, result.reversal)
         self._update_panel(self.panel_conrune_rev, result.conrune_reversal)
+        
         self._update_panel(self.panel_upper_diff, result.upper_diff)
         self._update_panel(self.panel_lower_diff, result.lower_diff)
+
+        # Update Detail Tabs
+        self._update_detail_tab(self.tab_original, result.original)
+        self._update_detail_tab(self.tab_conrune, result.conrune)
+        self._update_detail_tab(self.tab_reversal, result.reversal)
+        self._update_detail_tab(self.tab_conrune_rev, result.conrune_reversal)
+        self._update_detail_tab(self.tab_upper_diff, result.upper_diff)
+        self._update_detail_tab(self.tab_lower_diff, result.lower_diff)
         
-        # 2. Update Detail Tabs
-        self._update_tab(self.tab_original, result.original)
-        self._update_tab(self.tab_conrune, result.conrune)
-        self._update_tab(self.tab_reversal, result.reversal)
-        self._update_tab(self.tab_conrune_rev, result.conrune_reversal)
-        self._update_tab(self.tab_upper_diff, result.upper_diff)
-        self._update_tab(self.tab_lower_diff, result.lower_diff)
-        
-        # 3. Update Advanced Tab
+        # Update Advanced Tab
         self._update_advanced_tab(result)
+        
+        # Update Gematria Tab
+        if result.original and result.original.decimal:
+             self._update_gematria_tab(result)
 
-        # 4. Update Gematria Tab
-        self._update_gematria_tab(result)
+        # Update Sidebar
+        self._update_sidebar_labels(result)
 
+    def _clear_all(self):
+        """Clear all outputs."""
+        # Reset panels
+        empty_member = QuadsetMember(name="Empty", decimal=0, ternary="", properties={})
+        empty_result = QuadsetResult(
+            original=empty_member, conrune=empty_member,
+            reversal=empty_member, conrune_reversal=empty_member,
+            upper_diff=empty_member, lower_diff=empty_member,
+            transgram=empty_member,
+            quadset_sum=0, septad_total=0,
+            pattern_summary=""
+        )
+        
+        self._display_results(empty_result)
+        
+        # Clear sidebar manually to remove numbers
+        roles = [
+            "Original", "Conrune", "Reune", "ConReune",
+            "A - B", "C - D"
+        ]
+        for i, role in enumerate(roles):
+            self.sidebar.item(i + 1).setText(role)
+            
+        # Clear Gematria
+        if hasattr(self, "gem_tables"):
+            for key in self.gem_tables:
+                self.gem_tables[key].setRowCount(0)

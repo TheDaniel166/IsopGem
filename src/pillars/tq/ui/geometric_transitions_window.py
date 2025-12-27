@@ -11,7 +11,6 @@ from PyQt6.QtWidgets import (
     QApplication,
     QFrame,
     QGridLayout,
-    QGroupBox,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -21,9 +20,12 @@ from PyQt6.QtWidgets import (
     QSpinBox,
     QTableWidget,
     QTableWidgetItem,
-    QTabWidget,
+    QListWidget,
+    QListWidgetItem,
+    QStackedWidget,
     QVBoxLayout,
     QWidget,
+    QGraphicsDropShadowEffect,
 )
 
 from ..services.geometric_transition_service import (
@@ -31,6 +33,8 @@ from ..services.geometric_transition_service import (
     Transition,
     Vertex,
 )
+from .quadset_analysis_window import SubstrateWidget
+from shared.ui.theme import COLORS
 
 
 class GeometricCanvas(QWidget):
@@ -141,7 +145,10 @@ class GeometricTransitionsWindow(QMainWindow):
         self.max_skip_spin: QSpinBox
         self.value_inputs: List[QLineEdit] = []
         self.canvas = GeometricCanvas()
-        self.tabs = QTabWidget()
+        # Vertical tab pattern: sidebar + stack
+        self.results_sidebar = QListWidget()
+        self.results_stack = QStackedWidget()
+        self.results_pages: List[QWidget] = []
         self.copy_btn: QPushButton | None = None
         self.special_combo: QComboBox | None = None
         self.special_table: QTableWidget | None = None
@@ -157,12 +164,17 @@ class GeometricTransitionsWindow(QMainWindow):
         self.setWindowTitle("Geometric Transitions")
         self.setMinimumSize(1200, 700)
 
-        central = QWidget()
+        # Level 0: The Substrate
+        import os
+        base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+        bg_path = os.path.join(base_path, "assets", "textures", "quadset_substrate.png")
+        
+        central = SubstrateWidget(bg_path)
         self.setCentralWidget(central)
 
         root_layout = QHBoxLayout(central)
-        root_layout.setSpacing(16)
-        root_layout.setContentsMargins(20, 20, 20, 20)
+        root_layout.setSpacing(20)
+        root_layout.setContentsMargins(24, 24, 24, 24)
 
         controls = self._build_left_controls()
         canvas_group = self._build_canvas_section()
@@ -172,14 +184,44 @@ class GeometricTransitionsWindow(QMainWindow):
         root_layout.addWidget(canvas_group, 3)
         root_layout.addWidget(results, 4)
 
+    def _create_card(self, title: str = "") -> QFrame:
+        """Create a styled card container with drop shadow."""
+        card = QFrame()
+        card.setStyleSheet(f"""
+            QFrame {{
+                background-color: {COLORS['surface']};
+                border: 1px solid {COLORS['border']};
+                border-radius: 12px;
+            }}
+        """)
+        
+        shadow = QGraphicsDropShadowEffect()
+        shadow.setBlurRadius(24)
+        shadow.setOffset(0, 8)
+        shadow.setColor(QColor(0, 0, 0, 40))
+        card.setGraphicsEffect(shadow)
+        
+        return card
+
     def _build_left_controls(self) -> QWidget:
-        group = QGroupBox("Configuration")
-        layout = QVBoxLayout(group)
-        layout.setSpacing(12)
+        card = self._create_card()
+        layout = QVBoxLayout(card)
+        layout.setSpacing(16)
+        layout.setContentsMargins(24, 24, 24, 24)
+
+        # Header
+        header = QLabel("CONFIGURATION")
+        header.setStyleSheet(f"""
+            font-weight: 800; 
+            font-size: 11pt; 
+            color: {COLORS['text_secondary']}; 
+            letter-spacing: 2px;
+        """)
+        layout.addWidget(header)
 
         # Shape selector
         shape_label = QLabel("Polygon")
-        shape_label.setStyleSheet("font-weight: bold;")
+        shape_label.setStyleSheet(f"font-weight: 600; color: {COLORS['text_secondary']};")
         layout.addWidget(shape_label)
 
         self.shape_combo = QComboBox()
@@ -193,7 +235,7 @@ class GeometricTransitionsWindow(QMainWindow):
 
         # Max skip spinner
         skip_label = QLabel("Max Skip Group")
-        skip_label.setStyleSheet("font-weight: bold;")
+        skip_label.setStyleSheet(f"font-weight: 600; color: {COLORS['text_secondary']};")
         layout.addWidget(skip_label)
 
         self.max_skip_spin = QSpinBox()
@@ -204,7 +246,7 @@ class GeometricTransitionsWindow(QMainWindow):
 
         # Values input area inside scroll
         values_label = QLabel("Vertex Values")
-        values_label.setStyleSheet("font-weight: bold;")
+        values_label.setStyleSheet(f"font-weight: 600; color: {COLORS['text_secondary']};")
         layout.addWidget(values_label)
 
         self.values_container = QWidget()
@@ -213,60 +255,137 @@ class GeometricTransitionsWindow(QMainWindow):
         values_scroll = QScrollArea()
         values_scroll.setWidgetResizable(True)
         values_scroll.setWidget(self.values_container)
-        values_scroll.setMinimumHeight(240)
+        values_scroll.setMinimumHeight(200)
+        values_scroll.setStyleSheet(f"background-color: {COLORS['background_alt']}; border-radius: 6px;")
         layout.addWidget(values_scroll)
 
         # Buttons
         buttons_layout = QHBoxLayout()
         generate_btn = QPushButton("Generate")
-        generate_btn.setStyleSheet("background-color: #2563eb; color: white;")
+        generate_btn.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {COLORS['magus']};
+                color: white;
+                padding: 10px 20px;
+                border-radius: 6px;
+                font-weight: 600;
+            }}
+            QPushButton:hover {{
+                background-color: {COLORS['magus_hover']};
+            }}
+        """)
         generate_btn.clicked.connect(self._handle_generate)
         buttons_layout.addWidget(generate_btn)
 
         clear_btn = QPushButton("Clear")
+        clear_btn.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {COLORS['navigator']};
+                color: white;
+                padding: 10px 20px;
+                border-radius: 6px;
+                font-weight: 600;
+            }}
+            QPushButton:hover {{
+                background-color: {COLORS['navigator_hover']};
+            }}
+        """)
         clear_btn.clicked.connect(self._handle_clear)
         buttons_layout.addWidget(clear_btn)
         layout.addLayout(buttons_layout)
 
         layout.addStretch(1)
-        return group
+        return card
 
     def _build_canvas_section(self) -> QWidget:
-        group = QGroupBox("Visualization")
-        layout = QVBoxLayout(group)
-        layout.addWidget(self.canvas)
-        return group
+        # Canvas displayed directly without card wrapper
+        self.canvas.setStyleSheet(f"""
+            background-color: {COLORS['surface']};
+            border: 1px solid {COLORS['border']};
+            border-radius: 8px;
+        """)
+        return self.canvas
 
     def _build_results_section(self) -> QWidget:
-        group = QGroupBox("Skip Groups")
-        layout = QVBoxLayout(group)
-        controls_layout = QHBoxLayout()
-        self.copy_btn = QPushButton("Copy Results Table")
-        self.copy_btn.setFixedHeight(32)
-        self.copy_btn.setStyleSheet(
-            """
-            QPushButton {
-                background-color: #2563eb;
+        card = self._create_card()
+        layout = QVBoxLayout(card)
+        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setSpacing(12)
+        
+        # Header row with title and copy button
+        header_layout = QHBoxLayout()
+        header = QLabel("SKIP GROUPS")
+        header.setStyleSheet(f"""
+            font-weight: 800; 
+            font-size: 11pt; 
+            color: {COLORS['text_secondary']}; 
+            letter-spacing: 2px;
+        """)
+        header_layout.addWidget(header)
+        header_layout.addStretch()
+        
+        self.copy_btn = QPushButton("Copy")
+        self.copy_btn.setFixedHeight(28)
+        self.copy_btn.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {COLORS['scribe']};
                 color: #ffffff;
                 font-weight: bold;
-                border-radius: 6px;
-                padding: 6px 12px;
-            }
-            QPushButton:disabled {
-                background-color: #9ca3af;
-                color: #f3f4f6;
-            }
-            """
-        )
+                border-radius: 4px;
+                padding: 4px 12px;
+                font-size: 10pt;
+            }}
+            QPushButton:hover {{
+                background-color: {COLORS['scribe_hover']};
+            }}
+            QPushButton:disabled {{
+                background-color: {COLORS['border']};
+                color: {COLORS['text_disabled']};
+            }}
+        """)
         self.copy_btn.setEnabled(False)
         self.copy_btn.clicked.connect(self._copy_results_to_clipboard)
-        controls_layout.addWidget(self.copy_btn)
-        controls_layout.addStretch()
-        layout.addLayout(controls_layout)
-        self.tabs.currentChanged.connect(self._handle_tab_changed)
-        layout.addWidget(self.tabs)
+        header_layout.addWidget(self.copy_btn)
+        layout.addLayout(header_layout)
+        
+        # Horizontal split: sidebar on left, content on right
+        content_layout = QHBoxLayout()
+        content_layout.setSpacing(12)
+        
+        # Sidebar
+        self.results_sidebar.setFixedWidth(100)
+        self.results_sidebar.setFrameShape(QFrame.Shape.NoFrame)
+        self.results_sidebar.setStyleSheet(f"""
+            QListWidget {{
+                background-color: {COLORS['background_alt']};
+                border: none;
+                border-radius: 6px;
+                outline: none;
+            }}
+            QListWidget::item {{
+                height: 36px;
+                padding: 8px;
+                color: {COLORS['text_secondary']};
+                border-left: 3px solid transparent;
+            }}
+            QListWidget::item:selected {{
+                color: {COLORS['text_primary']};
+                background-color: {COLORS['surface']};
+                border-left: 3px solid {COLORS['primary']};
+                font-weight: bold;
+            }}
+            QListWidget::item:hover:!selected {{
+                background-color: {COLORS['surface_hover']};
+            }}
+        """)
+        self.results_sidebar.currentRowChanged.connect(self._handle_tab_changed)
+        content_layout.addWidget(self.results_sidebar)
+        
+        # Stacked content
+        content_layout.addWidget(self.results_stack)
+        layout.addLayout(content_layout)
 
-        return group
+        return card
 
     # -- Actions ---------------------------------------------------------
 
@@ -330,7 +449,13 @@ class GeometricTransitionsWindow(QMainWindow):
             widget.clear()
         self.vertices = []
         self.group_data = {}
-        self.tabs.clear()
+        # Clear sidebar and stack
+        self.results_sidebar.clear()
+        while self.results_stack.count() > 0:
+            widget = self.results_stack.widget(0)
+            self.results_stack.removeWidget(widget)
+            widget.deleteLater()
+        self.results_pages.clear()
         self.canvas.set_vertices([])
         self.canvas.set_highlight(None, None)
         self.canvas.set_special_segments(None)
@@ -340,8 +465,14 @@ class GeometricTransitionsWindow(QMainWindow):
         self._remove_special_tab()
 
     def _populate_tabs(self, groups: List[Dict[str, object]]):
-        self.tabs.blockSignals(True)
-        self.tabs.clear()
+        self.results_sidebar.blockSignals(True)
+        # Clear existing
+        self.results_sidebar.clear()
+        while self.results_stack.count() > 0:
+            widget = self.results_stack.widget(0)
+            self.results_stack.removeWidget(widget)
+            widget.deleteLater()
+        self.results_pages.clear()
         self.special_tab_index = None
         self.special_combo = None
         self.special_table = None
@@ -424,9 +555,15 @@ class GeometricTransitionsWindow(QMainWindow):
             table.resizeColumnsToContents()
             tab_layout.addWidget(table)
 
-            self.tabs.addTab(tab, f"Skip {skip}")
+            # Add to sidebar and stack
+            item = QListWidgetItem(f"Skip {skip}")
+            self.results_sidebar.addItem(item)
+            self.results_stack.addWidget(tab)
+            self.results_pages.append(tab)
             tab.setProperty("skip_value", skip)
-        self.tabs.blockSignals(False)
+        self.results_sidebar.blockSignals(False)
+        if self.results_sidebar.count() > 0:
+            self.results_sidebar.setCurrentRow(0)
         # Special tab added separately after skip tabs
 
     def _ensure_special_tab(self):
@@ -475,14 +612,26 @@ class GeometricTransitionsWindow(QMainWindow):
         self.special_table.setStyleSheet("font-family: 'JetBrains Mono', monospace;")
         layout.addWidget(self.special_table)
 
-        self.special_tab_index = self.tabs.addTab(widget, "Special Patterns")
-        self.tabs.setTabToolTip(self.special_tab_index, "Named heptagon/other presets")
-        self.tabs.setCurrentIndex(self.special_tab_index)
+        # Add to sidebar and stack
+        item = QListWidgetItem("Special")
+        self.results_sidebar.addItem(item)
+        self.special_tab_index = self.results_stack.addWidget(widget)
+        self.results_pages.append(widget)
+        self.results_sidebar.setCurrentRow(self.results_sidebar.count() - 1)
         self._populate_special_table(0)
 
     def _remove_special_tab(self):
-        if self.special_tab_index is not None:
-            self.tabs.removeTab(self.special_tab_index)
+        if self.special_tab_index is not None and self.special_tab_index < self.results_stack.count():
+            widget = self.results_stack.widget(self.special_tab_index)
+            if widget:
+                self.results_stack.removeWidget(widget)
+                widget.deleteLater()
+            # Remove from sidebar
+            if self.results_sidebar.count() > 0:
+                last_item = self.results_sidebar.takeItem(self.results_sidebar.count() - 1)
+                del last_item
+            if len(self.results_pages) > self.special_tab_index:
+                self.results_pages.pop(self.special_tab_index)
         self.special_tab_index = None
         self.special_combo = None
         self.special_table = None
@@ -557,6 +706,9 @@ class GeometricTransitionsWindow(QMainWindow):
     def _handle_tab_changed(self, index: int):
         if index < 0:
             return
+        # Update stack
+        self.results_stack.setCurrentIndex(index)
+        
         if self.special_tab_index is not None and index == self.special_tab_index:
             # When viewing special patterns, disable skip highlights and reapply current star
             self.canvas.set_highlight(None, None)
@@ -569,14 +721,14 @@ class GeometricTransitionsWindow(QMainWindow):
         if self.special_tab_index is not None:
             self.canvas.set_special_segments(None)
 
-        tab = self.tabs.widget(index)
-        if not tab:
-            return
-        skip = tab.property("skip_value")
-        if skip is None:
-            self.canvas.set_highlight(None, None)
-            return
-        self.canvas.set_highlight(skip, None)
+        # Get the page widget
+        if index < len(self.results_pages):
+            tab = self.results_pages[index]
+            skip = tab.property("skip_value")
+            if skip is None:
+                self.canvas.set_highlight(None, None)
+                return
+            self.canvas.set_highlight(skip, None)
 
     def _handle_table_selection(self, skip: int, table: QTableWidget):
         items = table.selectedItems()

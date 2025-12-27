@@ -1,17 +1,19 @@
-"""Transitions tool window."""
+"""Transitions tool window - aligned with Visual Liturgy."""
+import os
 from PyQt6.QtWidgets import (
     QMainWindow, QVBoxLayout, QHBoxLayout, QLabel, 
-    QLineEdit, QGroupBox, QPushButton, QTableWidget, 
-    QTableWidgetItem, QHeaderView, QSpinBox, QMenu,
-    QGridLayout, QWidget
+    QLineEdit, QPushButton, QTableWidget, 
+    QTableWidgetItem, QHeaderView, QMenu,
+    QGridLayout, QWidget, QFrame, QGraphicsDropShadowEffect
 )
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFont, QColor, QAction
+from PyQt6.QtGui import QFont, QColor, QAction, QPixmap, QPainter
 
 from ..services.ternary_service import TernaryService
 from ..services.ternary_transition_service import TernaryTransitionService
-from .quadset_analysis_window import QuadsetAnalysisWindow
+from .quadset_analysis_window import QuadsetAnalysisWindow, SubstrateWidget
 from pillars.correspondences.ui.correspondence_hub import CorrespondenceHub
+from shared.ui.theme import COLORS, get_card_style
 
 
 class TransitionsWindow(QMainWindow):
@@ -26,92 +28,166 @@ class TransitionsWindow(QMainWindow):
         self._setup_ui()
         
     def _setup_ui(self):
-        """Set up the user interface."""
+        """Set up the user interface with Visual Liturgy styling."""
         self.setWindowTitle("Ternary Transitions")
         self.setMinimumSize(900, 700)
         
-        central = QWidget()
+        # Level 0: The Substrate (Thematic background)
+        base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+        bg_path = os.path.join(base_path, "assets", "textures", "transitions_substrate.png")
+        
+        # Fallback to quadset substrate if transitions-specific doesn't exist
+        if not os.path.exists(bg_path):
+            bg_path = os.path.join(base_path, "assets", "textures", "quadset_substrate.png")
+        
+        central = SubstrateWidget(bg_path)
         self.setCentralWidget(central)
+        
         layout = QVBoxLayout(central)
-        layout.setSpacing(20)
-        layout.setContentsMargins(30, 30, 30, 30)
+        layout.setSpacing(24)
+        layout.setContentsMargins(40, 40, 40, 40)
         
         # Title
         title_label = QLabel("Ternary Transition System")
-        title_font = QFont()
-        title_font.setPointSize(24)
-        title_font.setBold(True)
-        title_label.setFont(title_font)
+        title_label.setStyleSheet(f"""
+            color: {COLORS['text_primary']};
+            font-size: 28pt;
+            font-weight: 700;
+            letter-spacing: -1px;
+        """)
         title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(title_label)
         
         # Description
         desc = QLabel("Taoist transformation framework for ternary numbers.")
         desc.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        desc.setStyleSheet("color: #666; font-size: 12pt;")
+        desc.setStyleSheet(f"color: {COLORS['text_secondary']}; font-size: 12pt;")
         layout.addWidget(desc)
         
-        # Inputs Section
-        inputs_group = QGroupBox("Inputs")
-        inputs_layout = QGridLayout()
-        inputs_layout.setSpacing(15)
+        # Inputs Card
+        inputs_card = self._create_card()
+        inputs_layout = QGridLayout(inputs_card)
+        inputs_layout.setSpacing(16)
+        inputs_layout.setContentsMargins(24, 24, 24, 24)
+        
+        # Header
+        inputs_header = QLabel("INPUTS")
+        inputs_header.setStyleSheet(f"""
+            font-weight: 800; 
+            font-size: 11pt; 
+            color: {COLORS['text_secondary']}; 
+            letter-spacing: 2px;
+        """)
+        inputs_layout.addWidget(inputs_header, 0, 0, 1, 4)
         
         # Input A
-        inputs_layout.addWidget(QLabel("Input A (Decimal):"), 0, 0)
+        lbl_a_dec = QLabel("Input A (Decimal):")
+        lbl_a_dec.setStyleSheet(f"color: {COLORS['text_secondary']}; font-size: 11pt;")
+        inputs_layout.addWidget(lbl_a_dec, 1, 0)
+        
         self.input_a_dec = QLineEdit()
         self.input_a_dec.setPlaceholderText("Decimal...")
         self.input_a_dec.textChanged.connect(lambda t: self._on_decimal_changed(t, self.input_a_tern))
-        inputs_layout.addWidget(self.input_a_dec, 0, 1)
+        inputs_layout.addWidget(self.input_a_dec, 1, 1)
         
-        inputs_layout.addWidget(QLabel("Ternary:"), 0, 2)
+        lbl_a_tern = QLabel("Ternary:")
+        lbl_a_tern.setStyleSheet(f"color: {COLORS['text_secondary']}; font-size: 11pt;")
+        inputs_layout.addWidget(lbl_a_tern, 1, 2)
+        
         self.input_a_tern = QLineEdit()
         self.input_a_tern.setPlaceholderText("Ternary...")
         self.input_a_tern.textChanged.connect(lambda t: self._on_ternary_changed(t, self.input_a_dec))
-        inputs_layout.addWidget(self.input_a_tern, 0, 3)
+        inputs_layout.addWidget(self.input_a_tern, 1, 3)
         
         # Input B (Modifier)
-        inputs_layout.addWidget(QLabel("Input B (Decimal):"), 1, 0)
+        lbl_b_dec = QLabel("Input B (Decimal):")
+        lbl_b_dec.setStyleSheet(f"color: {COLORS['text_secondary']}; font-size: 11pt;")
+        inputs_layout.addWidget(lbl_b_dec, 2, 0)
+        
         self.input_b_dec = QLineEdit()
         self.input_b_dec.setPlaceholderText("Decimal...")
         self.input_b_dec.textChanged.connect(lambda t: self._on_decimal_changed(t, self.input_b_tern))
-        inputs_layout.addWidget(self.input_b_dec, 1, 1)
+        inputs_layout.addWidget(self.input_b_dec, 2, 1)
         
-        inputs_layout.addWidget(QLabel("Ternary:"), 1, 2)
+        lbl_b_tern = QLabel("Ternary:")
+        lbl_b_tern.setStyleSheet(f"color: {COLORS['text_secondary']}; font-size: 11pt;")
+        inputs_layout.addWidget(lbl_b_tern, 2, 2)
+        
         self.input_b_tern = QLineEdit()
         self.input_b_tern.setPlaceholderText("Ternary...")
         self.input_b_tern.textChanged.connect(lambda t: self._on_ternary_changed(t, self.input_b_dec))
-        inputs_layout.addWidget(self.input_b_tern, 1, 3)
+        inputs_layout.addWidget(self.input_b_tern, 2, 3)
         
-        inputs_group.setLayout(inputs_layout)
-        layout.addWidget(inputs_group)
+        layout.addWidget(inputs_card)
         
         # Controls
         controls_layout = QHBoxLayout()
+        controls_layout.setSpacing(16)
         
         self.calc_btn = QPushButton("Calculate Single Transition")
         self.calc_btn.clicked.connect(self._calculate_single)
-        self.calc_btn.setStyleSheet("background-color: #2563eb; color: white; padding: 8px;")
+        self.calc_btn.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {COLORS['magus']};
+                color: white;
+                padding: 10px 20px;
+                border-radius: 6px;
+                font-weight: 600;
+            }}
+            QPushButton:hover {{
+                background-color: {COLORS['magus_hover']};
+            }}
+        """)
         controls_layout.addWidget(self.calc_btn)
         
-        controls_layout.addSpacing(20)
+
         
-        controls_layout.addWidget(QLabel("Iterations:"))
-        self.iter_spin = QSpinBox()
-        self.iter_spin.setRange(1, 100)
-        self.iter_spin.setValue(10)
-        controls_layout.addWidget(self.iter_spin)
-        
-        self.seq_btn = QPushButton("Generate Sequence")
-        self.seq_btn.clicked.connect(self._generate_sequence)
-        self.seq_btn.setStyleSheet("background-color: #7c3aed; color: white; padding: 8px;")
-        controls_layout.addWidget(self.seq_btn)
-        
+        controls_layout.addStretch()
         layout.addLayout(controls_layout)
         
-        # Results Table
+        # Results Table Card
+        table_card = self._create_card()
+        table_layout = QVBoxLayout(table_card)
+        table_layout.setContentsMargins(24, 24, 24, 24)
+        
+        table_header = QLabel("RESULTS")
+        table_header.setStyleSheet(f"""
+            font-weight: 800; 
+            font-size: 11pt; 
+            color: {COLORS['text_secondary']}; 
+            letter-spacing: 2px;
+            margin-bottom: 12px;
+        """)
+        table_layout.addWidget(table_header)
+        
         self.table = QTableWidget()
         self.table.setColumnCount(5)
         self.table.setHorizontalHeaderLabels(["Step", "Current (A)", "Modifier (B)", "Result (Ternary)", "Result (Decimal)"])
+        self.table.setAlternatingRowColors(True)
+        self.table.setStyleSheet(f"""
+            QTableWidget {{
+                background-color: {COLORS['surface']};
+                border: 1px solid {COLORS['border']};
+                border-radius: 6px;
+                gridline-color: {COLORS['border']};
+                selection-background-color: {COLORS['primary_light']};
+            }}
+            QTableWidget::item {{
+                padding: 8px;
+            }}
+            QTableWidget::item:alternate {{
+                background-color: {COLORS['background_alt']};
+            }}
+            QHeaderView::section {{
+                background-color: {COLORS['background_alt']};
+                padding: 10px 8px;
+                border: none;
+                border-bottom: 2px solid {COLORS['border']};
+                font-weight: 600;
+                color: {COLORS['text_primary']};
+            }}
+        """)
+        
         header = self.table.horizontalHeader()
         if header:
             header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
@@ -120,19 +196,29 @@ class TransitionsWindow(QMainWindow):
         self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.table.customContextMenuRequested.connect(self._show_context_menu)
         
-        layout.addWidget(self.table)
+        table_layout.addWidget(self.table)
+        layout.addWidget(table_card)
         
-        # Legend/Info
-        info_group = QGroupBox("Philosophical Key")
-        info_layout = QHBoxLayout()
+
         
-        for digit, info in self.transition_service.PHILOSOPHY.items():
-            lbl = QLabel(f"<b>{digit}</b>: {info['meaning']} - {info['force']}")
-            lbl.setStyleSheet("background-color: #f3f4f6; padding: 5px; border-radius: 4px;")
-            info_layout.addWidget(lbl)
-            
-        info_group.setLayout(info_layout)
-        layout.addWidget(info_group)
+    def _create_card(self) -> QFrame:
+        """Create a styled card container with drop shadow."""
+        card = QFrame()
+        card.setStyleSheet(f"""
+            QFrame {{
+                background-color: {COLORS['surface']};
+                border: 1px solid {COLORS['border']};
+                border-radius: 12px;
+            }}
+        """)
+        
+        shadow = QGraphicsDropShadowEffect()
+        shadow.setBlurRadius(24)
+        shadow.setOffset(0, 8)
+        shadow.setColor(QColor(0, 0, 0, 40))
+        card.setGraphicsEffect(shadow)
+        
+        return card
         
     def _show_context_menu(self, position):
         """Show context menu for table items."""
@@ -260,24 +346,7 @@ class TransitionsWindow(QMainWindow):
         self.table.setRowCount(1)
         self._set_row(0, 1, t1, t2, result, dec_res)
 
-    def _generate_sequence(self):
-        """Generate transition sequence."""
-        t1 = self.input_a_tern.text()
-        t2 = self.input_b_tern.text()
-        iterations = self.iter_spin.value()
-        
-        if not t1 or not t2:
-            return
-            
-        sequence = self.transition_service.generate_sequence(t1, t2, iterations)
-        
-        self.table.setRowCount(len(sequence))
-        for i, (curr, mod, res) in enumerate(sequence):
-            try:
-                dec_res = self.ternary_service.ternary_to_decimal(res)
-            except ValueError:
-                dec_res = 0
-            self._set_row(i, i+1, curr, mod, res, dec_res)
+
 
     def _set_row(self, row, step, t1, t2, res, dec_res):
         """Helper to set table row data."""

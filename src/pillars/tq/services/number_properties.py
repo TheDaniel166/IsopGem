@@ -92,6 +92,62 @@ class NumberPropertiesService:
         return sum(int(d) for d in str(abs(n)))
 
     @staticmethod
+    def _sum_of_digit_squares(n: int) -> int:
+        """Calculate sum of squares of digits."""
+        return sum(int(d) ** 2 for d in str(abs(n)))
+
+    @staticmethod
+    def is_happy(n: int) -> bool:
+        """
+        Check if number is a Happy number.
+        A Happy number reaches 1 after repeated sum of digit squares.
+        """
+        if n < 1:
+            return False
+        seen = set()
+        current = n
+        while current != 1 and current not in seen:
+            seen.add(current)
+            current = NumberPropertiesService._sum_of_digit_squares(current)
+        return current == 1
+
+    @staticmethod
+    def get_happy_iterations(n: int) -> int:
+        """
+        Get the number of iterations to reach 1 for a Happy number.
+        Returns -1 if the number is Sad (enters a cycle).
+        """
+        if n < 1:
+            return -1
+        seen = set()
+        current = n
+        iterations = 0
+        while current != 1 and current not in seen:
+            seen.add(current)
+            current = NumberPropertiesService._sum_of_digit_squares(current)
+            iterations += 1
+        if current == 1:
+            return iterations
+        return -1  # Sad number (entered a cycle)
+
+    @staticmethod
+    def get_happy_chain(n: int) -> list:
+        """
+        Get the chain of numbers from n until reaching 1 or entering a cycle.
+        Returns a list of numbers in the sequence.
+        """
+        if n < 1:
+            return []
+        seen = set()
+        chain = [n]
+        current = n
+        while current != 1 and current not in seen:
+            seen.add(current)
+            current = NumberPropertiesService._sum_of_digit_squares(current)
+            chain.append(current)
+        return chain
+
+    @staticmethod
     def get_prime_ordinal(n: int) -> int:
         """
         Get the 1-based index of a prime number.
@@ -192,6 +248,83 @@ class NumberPropertiesService:
         return results
 
     @staticmethod
+    def is_pronic(n: int) -> bool:
+        """Check if n is a pronic number (n = k*(k+1) for some k)."""
+        if n < 0:
+            return False
+        if n == 0:
+            return True  # 0 = 0*1
+        # Solve k^2 + k - n = 0 using quadratic formula
+        # k = (-1 + sqrt(1 + 4n)) / 2
+        discriminant = 1 + 4 * n
+        sqrt_disc = int(math.isqrt(discriminant))
+        if sqrt_disc * sqrt_disc != discriminant:
+            return False
+        k = (-1 + sqrt_disc) // 2
+        return k * (k + 1) == n
+
+    @staticmethod
+    def get_pronic_index(n: int) -> int:
+        """Get the index k if n is pronic (n = k*(k+1)), else return -1."""
+        if n < 0:
+            return -1
+        if n == 0:
+            return 0
+        discriminant = 1 + 4 * n
+        sqrt_disc = int(math.isqrt(discriminant))
+        if sqrt_disc * sqrt_disc != discriminant:
+            return -1
+        k = (-1 + sqrt_disc) // 2
+        if k * (k + 1) == n:
+            return k
+        return -1
+
+    @staticmethod
+    def get_figurate_3d_info(n: int) -> List[str]:
+        """Check for 3D figurate numbers: tetrahedral, square pyramidal, octahedral, cubic."""
+        if n < 1:
+            return []
+            
+        results = []
+        
+        # Tetrahedral: T(k) = k(k+1)(k+2)/6
+        max_k = int((6 * n) ** (1/3)) + 2
+        for k in range(1, max_k + 1):
+            val = k * (k + 1) * (k + 2) // 6
+            if val == n:
+                results.append(f"Tetrahedral (Index: {k})")
+                break
+            if val > n:
+                break
+        
+        # Square Pyramidal: P(k) = k(k+1)(2k+1)/6
+        for k in range(1, max_k + 1):
+            val = k * (k + 1) * (2 * k + 1) // 6
+            if val == n:
+                results.append(f"Square Pyramidal (Index: {k})")
+                break
+            if val > n:
+                break
+        
+        # Octahedral: O(k) = k(2k^2 + 1)/3
+        for k in range(1, max_k + 1):
+            val = k * (2 * k * k + 1) // 3
+            if val == n:
+                results.append(f"Octahedral (Index: {k})")
+                break
+            if val > n:
+                break
+        
+        # Cubic (perfect cube): C(k) = k^3
+        cube_root = int(round(n ** (1/3)))
+        for k in [cube_root - 1, cube_root, cube_root + 1]:
+            if k > 0 and k ** 3 == n:
+                results.append(f"Cubic (Index: {k})")
+                break
+                
+        return results
+
+    @staticmethod
     def get_properties(n: int) -> Dict:
         """Get a dictionary of all properties."""
         factors = NumberPropertiesService.get_factors(n)
@@ -216,6 +349,11 @@ class NumberPropertiesService:
             "is_square": NumberPropertiesService.is_square(n),
             "is_cube": NumberPropertiesService.is_cube(n),
             "is_fibonacci": NumberPropertiesService.is_fibonacci(n),
+            "is_pronic": NumberPropertiesService.is_pronic(n),
+            "pronic_index": NumberPropertiesService.get_pronic_index(n),
+            "is_happy": NumberPropertiesService.is_happy(n),
+            "happy_iterations": NumberPropertiesService.get_happy_iterations(n),
+            "happy_chain": NumberPropertiesService.get_happy_chain(n),
             "digit_sum": NumberPropertiesService.digit_sum(n),
             "factors": factors,
             "sum_factors": sum_factors,
@@ -224,6 +362,7 @@ class NumberPropertiesService:
             "abundance_diff": abundance_diff,
             "prime_factors": NumberPropertiesService.get_prime_factorization(n),
             "polygonal_info": NumberPropertiesService.get_polygonal_info(n),
-            "centered_polygonal_info": NumberPropertiesService.get_centered_polygonal_info(n)
+            "centered_polygonal_info": NumberPropertiesService.get_centered_polygonal_info(n),
+            "figurate_3d_info": NumberPropertiesService.get_figurate_3d_info(n)
         }
         return props
