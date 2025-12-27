@@ -1,4 +1,5 @@
 """Reusable Rich Text Editor widget with Ribbon UI."""
+from typing import Optional, Any, Union, List, Tuple, Dict, Generator
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QTextEdit, 
     QComboBox, QFontComboBox, QSpinBox,
@@ -7,7 +8,7 @@ from PyQt6.QtWidgets import (
     QSlider, QLineEdit, QStatusBar, QFileDialog, QGridLayout,
     QScrollArea, QFrame, QGroupBox, QPushButton, QTabWidget, QSplitter
 )
-from PyQt6.QtCore import Qt, pyqtSignal, QSize, QMimeData, QUrl, QMarginsF, QSizeF
+from PyQt6.QtCore import Qt, pyqtSignal, QSize, QMimeData, QUrl, QMarginsF, QSizeF, QPoint
 from PyQt6.QtGui import (
     QFont, QAction, QColor, QTextCharFormat,
     QTextCursor, QTextListFormat, QTextBlockFormat,
@@ -46,7 +47,7 @@ class SafeTextEdit(QTextEdit):
     Also supports visual page break indicators.
     """
     
-    def __init__(self, parent=None):
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self._show_page_breaks = True
         self._page_settings = DEFAULT_PAGE_SETTINGS
@@ -65,7 +66,7 @@ class SafeTextEdit(QTextEdit):
         self._show_page_breaks = value
         self.viewport().update()
     
-    def paintEvent(self, event):
+    def paintEvent(self, event: Any) -> None:
         """Paint the text, then overlay page break lines."""
         # Let the base class paint the text first
         super().paintEvent(event)
@@ -111,7 +112,7 @@ class SafeTextEdit(QTextEdit):
         
         painter.end()
     
-    def loadResource(self, type_id: int, url: QUrl):
+    def loadResource(self, type_id: int, url: QUrl) -> Any:
         """
         Handle custom resource loading, specifically for docimg:// scheme.
         """
@@ -165,7 +166,7 @@ class SafeTextEdit(QTextEdit):
                 
         return super().loadResource(type_id, url)
 
-    def insertFromMimeData(self, source: QMimeData):
+    def insertFromMimeData(self, source: QMimeData) -> None:
         """
         Override paste behavior to protect against freezing.
         """
@@ -212,7 +213,7 @@ class RichTextEditor(QWidget):
     # Signal emitted when [[ is typed
     wiki_link_requested = pyqtSignal()
     
-    def __init__(self, parent=None, placeholder_text="Start typing...", show_ui=True):
+    def __init__(self, parent: Optional[QWidget] = None, placeholder_text: str = "Start typing...", show_ui: bool = True) -> None:
         super().__init__(parent)
         self.virtual_keyboard: VirtualKeyboard | None = None
         
@@ -235,7 +236,7 @@ class RichTextEditor(QWidget):
         # Force LTR by default to prevent auto-detection issues
         self.editor.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
         
-    def _setup_ui(self, placeholder_text, show_ui):
+    def _setup_ui(self, placeholder_text: str, show_ui: bool) -> None:
         """Initialize the UI components."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -414,7 +415,7 @@ class RichTextEditor(QWidget):
             # Initialize Ribbon Content (must be after action_find is created)
             self._init_ribbon()
 
-    def insertFromMimeData(self, source):
+    def insertFromMimeData(self, source: QMimeData) -> None:
         """
         Override paste behavior to protect against 'Paste Attacks' (Mars Seal).
         Warns user if pasting massive content that could freeze the UI.
@@ -441,7 +442,7 @@ class RichTextEditor(QWidget):
         # Standard Qt behavior if safe or approved
         super().insertFromMimeData(source) # type: ignore
 
-    def _check_wiki_link_trigger(self):
+    def _check_wiki_link_trigger(self) -> None:
         """Check if the user just typed '[['."""
         cursor = self.editor.textCursor()
         position = cursor.position()
@@ -456,7 +457,7 @@ class RichTextEditor(QWidget):
         if text == "[[":
             self.wiki_link_requested.emit()
 
-    def _show_context_menu(self, pos):
+    def _show_context_menu(self, pos: QPoint) -> None:
         """Show context menu with table options if applicable."""
         # Only move cursor if there's no selection - preserve selection for Cut/Copy/Delete
         current_cursor = self.editor.textCursor()
@@ -478,7 +479,7 @@ class RichTextEditor(QWidget):
                 self.etymology_feature.extend_context_menu(menu)
             menu.exec(self.editor.mapToGlobal(pos))
 
-    def _init_features(self):
+    def _init_features(self) -> None:
         """Initialize features that don't require the Ribbon UI."""
         # Lists - always needed
         self.list_feature = ListFeature(self.editor, self)
@@ -491,52 +492,52 @@ class RichTextEditor(QWidget):
         if not hasattr(self, 'image_feature') and 'ImageFeature' in globals():
             self.image_feature = ImageFeature(self.editor, self)
 
-    def show_search(self):
+    def show_search(self) -> None:
         """Public API for Global Ribbon."""
         # Initialize if strictly needed or assume _init_features did it
         if not hasattr(self, 'search_feature'):
              self.search_feature = SearchReplaceFeature(self.editor, self)
         self.search_feature.show_search_dialog()
 
-    def toggle_list(self, style):
+    def toggle_list(self, style: QTextListFormat.Style) -> None:
         """Public API for Global Ribbon."""
         if hasattr(self, 'list_feature'):
             self.list_feature.toggle_list(style)
 
-    def set_alignment(self, align):
+    def set_alignment(self, align: Qt.AlignmentFlag) -> None:
         """Public API for Global Ribbon."""
         self.editor.setAlignment(align)
 
-    def insert_table(self, rows=3, cols=3):
+    def insert_table(self, rows: int = 3, cols: int = 3) -> None:
         """Public API for Global Ribbon."""
         if hasattr(self, 'table_feature'):
              self.table_feature.insert_table(rows, cols)
 
-    def insert_image(self):
+    def insert_image(self) -> None:
         """Public API for Global Ribbon."""
         if hasattr(self, 'image_feature'):
             self.image_feature.insert_image()
 
-    def set_highlight(self, color):
+    def set_highlight(self, color: QColor) -> None:
         """Public API for Global Ribbon."""
         fmt = QTextCharFormat()
         fmt.setBackground(color)
         self.editor.mergeCurrentCharFormat(fmt)
     
-    def clear_formatting(self):
+    def clear_formatting(self) -> None:
         """Public API"""
         self._clear_formatting()
 
-    def toggle_strikethrough(self):
+    def toggle_strikethrough(self) -> None:
         self._toggle_strikethrough()
 
-    def toggle_subscript(self):
+    def toggle_subscript(self) -> None:
         self._toggle_subscript()
 
-    def toggle_superscript(self):
+    def toggle_superscript(self) -> None:
         self._toggle_superscript()
 
-    def _init_ribbon(self):
+    def _init_ribbon(self) -> None:
         """Populate the ribbon with tabs and groups."""
         
         # === Define Core Actions First ===
@@ -594,12 +595,14 @@ class RichTextEditor(QWidget):
         
         self.font_combo = QFontComboBox()
         self.font_combo.setMaximumWidth(150)
+        self.font_combo.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.font_combo.currentFontChanged.connect(self.editor.setCurrentFont)
         grp_face.add_widget(self.font_combo)
         
         self.size_combo = QComboBox()
         self.size_combo.setEditable(True)
         self.size_combo.setMaximumWidth(60)
+        self.size_combo.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         sizes = [8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72]
         self.size_combo.addItems([str(s) for s in sizes])
         self.size_combo.setCurrentText("12")
@@ -617,6 +620,7 @@ class RichTextEditor(QWidget):
         self.btn_bold.setToolTip("Bold (Ctrl+B)")
         self.btn_bold.setCheckable(True)
         self.btn_bold.setShortcut("Ctrl+B")
+        self.btn_bold.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.btn_bold.clicked.connect(self._toggle_bold)
         grp_basic.add_widget(self.btn_bold)
         
@@ -626,6 +630,7 @@ class RichTextEditor(QWidget):
         self.btn_italic.setToolTip("Italic (Ctrl+I)")
         self.btn_italic.setCheckable(True)
         self.btn_italic.setShortcut("Ctrl+I")
+        self.btn_italic.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.btn_italic.clicked.connect(self.editor.setFontItalic)
         grp_basic.add_widget(self.btn_italic)
 
@@ -635,6 +640,7 @@ class RichTextEditor(QWidget):
         self.btn_underline.setToolTip("Underline (Ctrl+U)")
         self.btn_underline.setCheckable(True)
         self.btn_underline.setShortcut("Ctrl+U")
+        self.btn_underline.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.btn_underline.clicked.connect(self.editor.setFontUnderline)
         grp_basic.add_widget(self.btn_underline)
         
@@ -645,6 +651,7 @@ class RichTextEditor(QWidget):
         self.btn_strike = QToolButton()
         self.btn_strike.setCheckable(True)
         self.btn_strike.setToolTip("Strikethrough")
+        self.btn_strike.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.btn_strike.clicked.connect(self._toggle_strikethrough)
         self.btn_strike.setIcon(qta.icon("fa5s.strikethrough", color="#1e293b"))
         grp_adv.add_widget(self.btn_strike)
@@ -680,6 +687,7 @@ class RichTextEditor(QWidget):
         btn_color.setIcon(qta.icon("fa5s.palette", color="#2563eb")) 
         btn_color.setText("Color")
         btn_color.setToolTip("Text Color")
+        btn_color.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         btn_color.clicked.connect(self._pick_color)
         grp_color.add_widget(btn_color)
         
@@ -687,6 +695,7 @@ class RichTextEditor(QWidget):
         btn_highlight.setIcon(qta.icon("fa5s.highlighter", color="#ca8a04"))
         btn_highlight.setText("High")
         btn_highlight.setToolTip("Highlight")
+        btn_highlight.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         btn_highlight.clicked.connect(self._pick_highlight)
         grp_color.add_widget(btn_highlight)
         
@@ -694,6 +703,7 @@ class RichTextEditor(QWidget):
         btn_clear_bg.setIcon(qta.icon("fa5s.ban", color="#94a3b8"))
         btn_clear_bg.setText("X")
         btn_clear_bg.setToolTip("No Highlight")
+        btn_clear_bg.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         btn_clear_bg.clicked.connect(self._clear_highlight)
         grp_color.add_widget(btn_clear_bg)
         
@@ -745,6 +755,7 @@ class RichTextEditor(QWidget):
         self.bullet_btn.setIcon(qta.icon("fa5s.list-ul", color="#1e293b"))
         self.bullet_btn.setToolTip("Bullet List")
         self.bullet_btn.setPopupMode(QToolButton.ToolButtonPopupMode.MenuButtonPopup)
+        self.bullet_btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.bullet_btn.clicked.connect(lambda: self._toggle_list(QTextListFormat.Style.ListDisc))
         
         bullet_menu = QMenu(self)
@@ -760,6 +771,7 @@ class RichTextEditor(QWidget):
         self.number_btn.setIcon(qta.icon("fa5s.list-ol", color="#1e293b"))
         self.number_btn.setToolTip("Numbered List")
         self.number_btn.setPopupMode(QToolButton.ToolButtonPopupMode.MenuButtonPopup)
+        self.number_btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.number_btn.clicked.connect(lambda: self._toggle_list(QTextListFormat.Style.ListDecimal))
         
         number_menu = QMenu(self)
@@ -1089,7 +1101,7 @@ class RichTextEditor(QWidget):
         # Connect cursor/selection change to context switches
         self.editor.cursorPositionChanged.connect(self._update_context_tabs)
         
-    def _update_context_tabs(self):
+    def _update_context_tabs(self) -> None:
         """Show/Hide context tabs based on cursor position."""
         cursor = self.editor.textCursor()
         
@@ -1126,7 +1138,7 @@ class RichTextEditor(QWidget):
             
         return None
 
-    def _edit_image_size(self):
+    def _edit_image_size(self) -> None:
         """Open a dialog to resize the selected image."""
         from PyQt6.QtWidgets import QDialog, QVBoxLayout, QFormLayout, QSpinBox, QDialogButtonBox, QCheckBox
         from PyQt6.QtGui import QTextImageFormat
@@ -1217,7 +1229,7 @@ class RichTextEditor(QWidget):
                 new_fmt.setHeight(new_h)
                 edit_cursor.setCharFormat(new_fmt)
 
-    def _align_image(self, alignment):
+    def _align_image(self, alignment: Qt.AlignmentFlag) -> None:
         """Align the image block to the specified alignment."""
         cursor = self._get_image_cursor()
         if cursor:
@@ -1225,13 +1237,13 @@ class RichTextEditor(QWidget):
             block_fmt.setAlignment(alignment)
             cursor.mergeBlockFormat(block_fmt)
 
-    def _delete_selected_image(self):
+    def _delete_selected_image(self) -> None:
         """Delete the currently selected image."""
         cursor = self._get_image_cursor()
         if cursor:
             cursor.removeSelectedText()
 
-    def _replace_image(self):
+    def _replace_image(self) -> None:
         """Replace the current image with a new one."""
         cursor = self._get_image_cursor()
         if cursor:
@@ -1241,7 +1253,7 @@ class RichTextEditor(QWidget):
             if hasattr(self, 'image_feature'):
                 self.image_feature.insert_image()
 
-    def _get_current_image_data(self):
+    def _get_current_image_data(self) -> Tuple[Optional[Any], Optional[QTextCursor], Optional[Any]]:
         """Get the current image as PIL Image, cursor, and format."""
         try:
             from PIL import Image
@@ -1293,7 +1305,7 @@ class RichTextEditor(QWidget):
         
         return None, None, None
 
-    def _save_and_insert_image(self, pil_img, old_fmt):
+    def _save_and_insert_image(self, pil_img: Any, old_fmt: Any) -> None:
         """Save PIL image and replace the old image in the document."""
         import uuid
         import os
@@ -1432,7 +1444,7 @@ class RichTextEditor(QWidget):
         
         self._save_and_insert_image(pil_img, img_fmt)
 
-    def _rotate_image(self, degrees: int):
+    def _rotate_image(self, degrees: int) -> None:
         """Rotate the current image by the specified degrees."""
         try:
             from PIL import Image
@@ -1455,7 +1467,7 @@ class RichTextEditor(QWidget):
         
         self._save_and_insert_image(pil_img, new_fmt)
 
-    def _crop_image(self):
+    def _crop_image(self) -> None:
         """Open a crop dialog to crop the current image."""
         from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QFormLayout, 
                                       QSpinBox, QDialogButtonBox, QLabel, QGroupBox)
@@ -1575,7 +1587,7 @@ class RichTextEditor(QWidget):
             
             self._save_and_insert_image(cropped, img_fmt)
 
-    def insert_hyperlink(self):
+    def insert_hyperlink(self) -> None:
         """Open dialog to insert a hyperlink."""
         if not hasattr(self, '_insert_hyperlink_dialog'):
              # Lazy load or just use dialog directly if imported
@@ -1591,7 +1603,7 @@ class RichTextEditor(QWidget):
             if url:
                 self.editor.insertHtml(f'<a href="{url}">{display_text}</a>')
 
-    def page_setup(self):
+    def page_setup(self) -> None:
         """Open page setup dialog."""
         dlg = PageSetupDialog(self)
         if dlg.exec() == QDialog.DialogCode.Accepted:
@@ -1599,29 +1611,31 @@ class RichTextEditor(QWidget):
             # In a real app we'd set document root frame margins or print settings
             pass
 
-    def insert_horizontal_rule(self):
+    def insert_horizontal_rule(self) -> None:
         """Insert a horizontal rule."""
         cursor = self.editor.textCursor()
         cursor.insertHtml("<hr>")
         cursor.insertBlock()
+        self.editor.setFocus()
     
-    def _pick_color(self):
+    def _pick_color(self) -> None:
         """Pick text color."""
         color = QColorDialog.getColor(self.editor.textColor(), self, "Select Text Color")
         if color.isValid():
             self.editor.setTextColor(color)
             
-    def _pick_highlight(self):
+    def _pick_highlight(self) -> None:
         """Pick highlight color."""
         color = QColorDialog.getColor(self.editor.textBackgroundColor(), self, "Select Highlight Color")
         if color.isValid():
             self.editor.setTextBackgroundColor(color)
             
-    def _clear_highlight(self):
+    def _clear_highlight(self) -> None:
         """Clear text background color."""
         self.editor.setTextBackgroundColor(QColor(Qt.GlobalColor.transparent))
+        self.editor.setFocus()
 
-    def _set_line_spacing(self, value_str):
+    def _set_line_spacing(self, value_str: str) -> None:
         """Set paragraph line spacing."""
         try:
             spacing = float(value_str)
@@ -1629,51 +1643,58 @@ class RichTextEditor(QWidget):
             block_fmt.setLineHeight(spacing * 100, 1) # 1 = ProportionalHeight
             cursor = self.editor.textCursor()
             cursor.mergeBlockFormat(block_fmt)
+            self.editor.setFocus()
         except ValueError:
             pass
 
-    def _toggle_text_direction(self):
+    def _toggle_text_direction(self) -> None:
         """Toggle between LTR and RTL."""
         is_rtl = self.editor.layoutDirection() == Qt.LayoutDirection.RightToLeft
         new_dir = Qt.LayoutDirection.LeftToRight if is_rtl else Qt.LayoutDirection.RightToLeft
         self.editor.setLayoutDirection(new_dir)
+        self.editor.setFocus()
         # Also set alignment for convenience?
         # self.editor.setAlignment(Qt.AlignmentFlag.AlignRight if not is_rtl else Qt.AlignmentFlag.AlignLeft)
 
-    def _toggle_list(self, style):
+    def _toggle_list(self, style: QTextListFormat.Style) -> None:
         """Wrapper for list feature."""
         if hasattr(self, 'list_feature'):
             self.list_feature.toggle_list(style)
+        self.editor.setFocus()
 
-    def _insert_page_break(self):
+    def _insert_page_break(self) -> None:
         """Insert a page break marker."""
         # HTML/RTF page breaks are tricky. We use a CSS break-after or special char.
         # For visual purpose in editor:
         cursor = self.editor.textCursor()
         cursor.insertHtml('<br><hr style="border-top: 1px dashed #ccc;"/><br>')
+        self.editor.setFocus()
 
 
-    def _set_font_size(self, size_str):
+    def _set_font_size(self, size_str: str) -> None:
         try:
             size = float(size_str)
             self.editor.setFontPointSize(size)
         except ValueError:
             pass
+        self.editor.setFocus()
 
-    def _toggle_bold(self):
+    def _toggle_bold(self) -> None:
         font_weight = self.editor.fontWeight()
         if font_weight == QFont.Weight.Bold:
             self.editor.setFontWeight(QFont.Weight.Normal)
         else:
             self.editor.setFontWeight(QFont.Weight.Bold)
+        self.editor.setFocus()
 
-    def _toggle_strikethrough(self):
+    def _toggle_strikethrough(self) -> None:
         """Toggle strikethrough formatting."""
         fmt = self.editor.currentCharFormat()
         fmt.setFontStrikeOut(not fmt.fontStrikeOut())
         self.editor.mergeCurrentCharFormat(fmt)
+        self.editor.setFocus()
 
-    def _toggle_subscript(self):
+    def _toggle_subscript(self) -> None:
         """Toggle subscript, exclusive with superscript."""
         fmt = self.editor.currentCharFormat()
         if fmt.verticalAlignment() == QTextCharFormat.VerticalAlignment.AlignSubScript:
@@ -1681,8 +1702,9 @@ class RichTextEditor(QWidget):
         else:
             fmt.setVerticalAlignment(QTextCharFormat.VerticalAlignment.AlignSubScript)
         self.editor.mergeCurrentCharFormat(fmt)
+        self.editor.setFocus()
 
-    def _toggle_superscript(self):
+    def _toggle_superscript(self) -> None:
         """Toggle superscript, exclusive with subscript."""
         fmt = self.editor.currentCharFormat()
         if fmt.verticalAlignment() == QTextCharFormat.VerticalAlignment.AlignSuperScript:
@@ -1690,8 +1712,9 @@ class RichTextEditor(QWidget):
         else:
             fmt.setVerticalAlignment(QTextCharFormat.VerticalAlignment.AlignSuperScript)
         self.editor.mergeCurrentCharFormat(fmt)
+        self.editor.setFocus()
 
-    def _clear_formatting(self):
+    def _clear_formatting(self) -> None:
         """
         Reset character formatting to default for the current selection, 
         preserves block formatting.
@@ -1724,7 +1747,7 @@ class RichTextEditor(QWidget):
             self.editor.setFocus()
 
 
-    def _pick_color(self):
+    def _pick_color(self) -> None:
         """
         Open a color picker to set the text color.
         Uses non-native dialog to avoid linux platform integration issues.
@@ -1756,7 +1779,7 @@ class RichTextEditor(QWidget):
                 self.editor.mergeCurrentCharFormat(new_fmt)
                 self.editor.setFocus()
 
-    def _apply_style(self, style_name):
+    def _apply_style(self, style_name: str) -> None:
         """Apply a semantic style to the current selection/block."""
         if style_name not in self.styles:
             return
@@ -1800,12 +1823,13 @@ class RichTextEditor(QWidget):
         self.editor.blockSignals(True)
         cursor.insertHtml(html)
         self.editor.blockSignals(False)
+        self.editor.setFocus()
         
         # Update combo boxes manually to reflect the change visually in toolbar
         self.size_combo.setCurrentText(str(style["size"]))
         self.font_combo.setCurrentFont(QFont(style["family"]))
 
-    def _pick_highlight(self):
+    def _pick_highlight(self) -> None:
         cursor = self.editor.textCursor()
         fmt = cursor.charFormat()
         current_bg = fmt.background().color()
@@ -1825,7 +1849,7 @@ class RichTextEditor(QWidget):
                 self.editor.mergeCurrentCharFormat(new_fmt)
                 self.editor.setFocus()
 
-    def _clear_highlight(self):
+    def _clear_highlight(self) -> None:
         """Clear the background highlight."""
         self.editor.setTextBackgroundColor(QColor(Qt.GlobalColor.transparent))
 
@@ -1862,7 +1886,7 @@ class RichTextEditor(QWidget):
             elif steps < 0:
                 self.editor.zoomOut(-steps)
 
-    def _update_word_count(self):
+    def _update_word_count(self) -> None:
         """Update the word and character count in status bar."""
         text = self.editor.toPlainText()
         char_count = len(text)
@@ -1877,7 +1901,7 @@ class RichTextEditor(QWidget):
             f"Words: {word_count:,} | Characters: {char_count:,} | Paragraphs: {para_count:,}"
         )
 
-    def _update_page_count(self):
+    def _update_page_count(self) -> None:
         """Update total page count based on document size."""
         if not hasattr(self, 'page_count_label'):
             return
@@ -1892,7 +1916,7 @@ class RichTextEditor(QWidget):
         self._total_pages = max(1, int(doc_height / page_height) + (1 if doc_height % page_height > 50 else 0))
         self._update_page_label()
     
-    def _update_current_page(self):
+    def _update_current_page(self) -> None:
         """Update current page based on cursor position."""
         if not hasattr(self, 'page_count_label'):
             return
@@ -1907,7 +1931,7 @@ class RichTextEditor(QWidget):
         self._current_page = max(1, min(int(cursor_y / page_height) + 1, getattr(self, '_total_pages', 1)))
         self._update_page_label()
     
-    def _update_page_label(self):
+    def _update_page_label(self) -> None:
         """Update the page label text."""
         if hasattr(self, 'page_count_label'):
             current = getattr(self, '_current_page', 1)
@@ -1918,7 +1942,7 @@ class RichTextEditor(QWidget):
         """Toggle visibility of page break lines."""
         self.editor.show_page_breaks = checked
 
-    def _set_line_spacing(self, spacing_str: str):
+    def _set_line_spacing(self, spacing_str: str) -> None:
         """Set line spacing for the current paragraph."""
         try:
             spacing = float(spacing_str)
@@ -1934,7 +1958,7 @@ class RichTextEditor(QWidget):
         block_fmt.setLineHeight(spacing * 100, QTextBlockFormat.LineHeightTypes.ProportionalHeight.value)
         cursor.setBlockFormat(block_fmt)
 
-    def _toggle_text_direction(self):
+    def _toggle_text_direction(self) -> None:
         """Toggle between LTR and RTL text direction."""
         cursor = self.editor.textCursor()
         block_fmt = cursor.blockFormat()
@@ -1949,7 +1973,7 @@ class RichTextEditor(QWidget):
         
         cursor.setBlockFormat(block_fmt)
 
-    def _insert_hyperlink(self):
+    def _insert_hyperlink(self) -> None:
         """Insert a hyperlink at the current cursor position."""
         cursor = self.editor.textCursor()
         selected_text = cursor.selectedText() if cursor.hasSelection() else ""
@@ -1968,7 +1992,7 @@ class RichTextEditor(QWidget):
                 html = f'<a href="{url}">{display_text}</a>'
                 cursor.insertHtml(html)
 
-    def _insert_horizontal_rule(self):
+    def _insert_horizontal_rule(self) -> None:
         """Insert a horizontal rule at the current cursor position."""
         dialog = HorizontalRuleDialog(self)
         if dialog.exec():
@@ -1976,7 +2000,7 @@ class RichTextEditor(QWidget):
             # Insert the HR - no need for insertBlock as HR is a block element
             cursor.insertHtml(dialog.get_html())
 
-    def _show_special_characters(self):
+    def _show_special_characters(self) -> None:
         """Show the special characters dialog."""
         if not hasattr(self, '_special_chars_dialog') or self._special_chars_dialog is None:
             self._special_chars_dialog = SpecialCharactersDialog(self)
@@ -1990,7 +2014,7 @@ class RichTextEditor(QWidget):
         cursor.insertText(char)
         self.editor.setFocus()
 
-    def _show_page_setup(self):
+    def _show_page_setup(self) -> None:
         """Show page setup dialog."""
         dialog = PageSetupDialog(self)
         if dialog.exec():
@@ -2000,7 +2024,7 @@ class RichTextEditor(QWidget):
             self._page_margins = dialog.get_margins()
             QMessageBox.information(self, "Page Setup", "Page settings saved for printing/export.")
 
-    def _export_pdf(self):
+    def _export_pdf(self) -> None:
         """Export document to PDF."""
         dialog = ExportPdfDialog(self)
         if dialog.exec():
@@ -2027,7 +2051,7 @@ class RichTextEditor(QWidget):
             
             QMessageBox.information(self, "Export PDF", f"Document exported to:\n{file_path}")
 
-    def _print_document(self):
+    def _print_document(self) -> None:
         """Print the document."""
         printer = QPrinter(QPrinter.PrinterMode.HighResolution)
         
@@ -2045,7 +2069,7 @@ class RichTextEditor(QWidget):
         if dialog.exec() == QPrintDialog.DialogCode.Accepted:
             self.editor.document().print(printer)
 
-    def _print_preview(self):
+    def _print_preview(self) -> None:
         """Show print preview dialog."""
         printer = QPrinter(QPrinter.PrinterMode.HighResolution)
         
@@ -2067,14 +2091,14 @@ class RichTextEditor(QWidget):
 
 
 
-    def _show_virtual_keyboard(self):
+    def _show_virtual_keyboard(self) -> None:
         self.virtual_keyboard = get_shared_virtual_keyboard(self)
         self.virtual_keyboard.set_target_editor(self.editor)
         self.virtual_keyboard.show()
         self.virtual_keyboard.raise_()
         self.virtual_keyboard.activateWindow()
 
-    def _update_format_widgets(self, fmt):
+    def _update_format_widgets(self, fmt: QTextCharFormat) -> None:
         """Update the ribbon widgets based on the current text format."""
         if not hasattr(self, 'font_combo'):
             return
@@ -2152,7 +2176,7 @@ class RichTextEditor(QWidget):
     def get_html(self) -> str:
         return self.editor.toHtml()
         
-    def set_html(self, html: str):
+    def set_html(self, html: str) -> None:
         self.editor.setHtml(html)
         # Ensure LTR is maintained after setting content
         self.editor.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
@@ -2160,7 +2184,7 @@ class RichTextEditor(QWidget):
     def get_text(self) -> str:
         return self.editor.toPlainText()
         
-    def set_text(self, text: str):
+    def set_text(self, text: str) -> None:
         self.editor.setPlainText(text)
 
     def set_markdown(self, markdown: str):
@@ -2173,7 +2197,7 @@ class RichTextEditor(QWidget):
         """Get the editor content as Markdown."""
         return self.editor.document().toMarkdown()
         
-    def clear(self):
+    def clear(self) -> None:
         self.editor.clear()
 
     def find_text(self, text: str) -> bool:
@@ -2220,7 +2244,7 @@ class RichTextEditor(QWidget):
         
         return self._match_count
     
-    def _center_cursor_in_view(self):
+    def _center_cursor_in_view(self) -> None:
         """Scroll the viewport to center the cursor vertically."""
         cursor_rect = self.editor.cursorRect()
         viewport_height = self.editor.viewport().height()
@@ -2277,19 +2301,19 @@ class RichTextEditor(QWidget):
                 return True
         return False
     
-    def get_match_info(self) -> tuple:
+    def get_match_info(self) -> Tuple[int, int]:
         """Get current match position info. Returns (current, total)."""
         current = getattr(self, '_current_match', 0)
         total = getattr(self, '_match_count', 0)
         return (current, total)
     
-    def clear_search(self):
+    def clear_search(self) -> None:
         """Clear search state."""
         self._search_term = None
         self._match_count = 0
         self._current_match = 0
 
-    def new_document(self):
+    def new_document(self) -> None:
         """Clear the editor for a new document."""
         if self.editor.document().isModified():
             ans = QMessageBox.question(
@@ -2301,7 +2325,7 @@ class RichTextEditor(QWidget):
                 return
         self.editor.clear()
 
-    def open_document(self):
+    def open_document(self) -> None:
         """Open a file (Markdown, HTML, Text)."""
         file_path, _ = QFileDialog.getOpenFileName(
             self, "Open Document", "",
@@ -2326,7 +2350,7 @@ class RichTextEditor(QWidget):
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Could not open file:\n{e}")
 
-    def save_document(self):
+    def save_document(self) -> None:
         """Save the document (Markdown, HTML, Text)."""
         file_path, filter_used = QFileDialog.getSaveFileName(
             self, "Save Document", "",

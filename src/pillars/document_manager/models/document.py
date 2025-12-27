@@ -8,6 +8,7 @@ from shared.database import Base
 class DocumentImage(Base):
     """Separate storage for document images to avoid bloating raw_content."""
     __tablename__ = "document_images"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     document_id = Column(Integer, ForeignKey("documents.id", ondelete="CASCADE"), index=True)
@@ -28,6 +29,7 @@ class DocumentImage(Base):
 class DocumentLink(Base):
     """Association table for linking documents (Zettelkasten/Wiki-links)."""
     __tablename__ = "document_links"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     source_id = Column(Integer, ForeignKey("documents.id"), index=True)
@@ -36,6 +38,7 @@ class DocumentLink(Base):
 
 class Document(Base):
     __tablename__ = "documents"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, index=True)

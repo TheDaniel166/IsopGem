@@ -4,4 +4,5 @@
 # Usage: ./pip.sh freeze
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-"$SCRIPT_DIR/.venv/bin/python" -m pip "$@"
+PARENT_DIR="$(dirname "$SCRIPT_DIR")"
+"$PARENT_DIR/.venv/bin/python" -m pip "$@"

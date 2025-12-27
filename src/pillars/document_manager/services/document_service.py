@@ -1,7 +1,7 @@
 """Service layer for Document Manager."""
 from sqlalchemy.orm import Session
 from pathlib import Path
-from typing import Optional, List, Tuple
+from typing import Optional, List, Tuple, Dict, Any, Generator
 from contextlib import contextmanager
 import time
 import logging
@@ -18,6 +18,7 @@ from pillars.document_manager.utils.image_utils import (
     has_embedded_images
 )
 from pillars.document_manager.models.document import Document, DocumentImage
+from pillars.document_manager.models.document_verse import DocumentVerse
 from pillars.document_manager.models.dtos import DocumentMetadataDTO
 from sqlalchemy import func
 
@@ -32,7 +33,7 @@ class DocumentService:
         self.image_repo = ImageRepository(db)
         self.search_repo = DocumentSearchRepository()
 
-    def _update_links(self, doc: Document):
+    def _update_links(self, doc: Document) -> None:
         """Parse content for [[WikiLinks]] and update relationships."""
         # Check for None explicitly to avoid Pylance errors with SQLAlchemy columns
         if doc.content is None:
@@ -127,7 +128,7 @@ class DocumentService:
         logger.debug("DocumentService: imported '%s' in %.1f ms", path.name, duration)
         return doc
 
-    def search_documents(self, query: str, limit: Optional[int] = None):
+    def search_documents(self, query: str, limit: Optional[int] = None) -> List[Document]:
         # Search using Whoosh
         start = time.perf_counter()
         results = self.search_repo.search(query, limit=limit)
@@ -160,11 +161,11 @@ class DocumentService:
         )
         return ordered_docs
 
-    def search_documents_with_highlights(self, query: str, limit: Optional[int] = None):
+    def search_documents_with_highlights(self, query: str, limit: Optional[int] = None) -> List[Dict[str, Any]]:
         """Search documents and return results with highlights."""
         return self.search_repo.search(query, limit=limit)
 
-    def get_all_documents(self):
+    def get_all_documents(self) -> List[Document]:
         return self.repo.get_all()
     
     def get_all_documents_metadata(self) -> List[DocumentMetadataDTO]:
@@ -178,7 +179,7 @@ class DocumentService:
         )
         return docs
     
-    def get_document(self, doc_id: int):
+    def get_document(self, doc_id: int) -> Optional[Document]:
         return self.repo.get(doc_id)
     
     def get_document_with_images(self, doc_id: int, restore_images: bool = False) -> Optional[Tuple[Document, str]]:
@@ -228,7 +229,7 @@ class DocumentService:
             return data, img.mime_type
         return None
     
-    def update_document(self, doc_id: int, **kwargs):
+    def update_document(self, doc_id: int, **kwargs: Any) -> Optional[Document]:
         """
         Update document fields.
         Args:
@@ -273,7 +274,7 @@ class DocumentService:
         )
         return doc
 
-    def update_documents(self, doc_ids: list[int], **kwargs):
+    def update_documents(self, doc_ids: List[int], **kwargs: Any) -> List[Document]:
         """
         Update multiple documents efficiently.
         Args:
@@ -300,7 +301,7 @@ class DocumentService:
         )
         return updated_docs
 
-    def delete_document(self, doc_id: int):
+    def delete_document(self, doc_id: int) -> bool:
         start = time.perf_counter()
         success = self.repo.delete(doc_id)
         if success:
@@ -313,7 +314,7 @@ class DocumentService:
         )
         return success
     
-    def delete_all_documents(self):
+    def delete_all_documents(self) -> int:
         """Delete all documents from database and search index."""
         start = time.perf_counter()
         count = self.repo.delete_all()
@@ -325,7 +326,7 @@ class DocumentService:
         )
         return count
 
-    def rebuild_search_index(self):
+    def rebuild_search_index(self) -> None:
         """Rebuild the search index from the database."""
         start = time.perf_counter()
         docs = self.repo.get_all()
@@ -336,7 +337,7 @@ class DocumentService:
             (time.perf_counter() - start) * 1000,
         )
 
-    def get_database_stats(self) -> dict:
+    def get_database_stats(self) -> Dict[str, Any]:
         """Get database statistics."""
         doc_count = self.db.query(func.count(Document.id)).scalar()
         img_count = self.db.query(func.count(DocumentImage.id)).scalar()
@@ -350,7 +351,7 @@ class DocumentService:
             "image_storage_mb": round(img_size_bytes / (1024 * 1024), 2)
         }
 
-    def cleanup_orphans(self, dry_run: bool = True) -> dict:
+    def cleanup_orphans(self, dry_run: bool = True) -> Dict[str, Any]:
         """
         Find and delete orphan images (stored in DB but not used in any document).
         
@@ -412,10 +413,10 @@ class DocumentService:
     # ------------------------------------------------------------------
     # Verse helpers (used by the Holy Book teacher backend)
     # ------------------------------------------------------------------
-    def get_document_verses(self, doc_id: int, include_ignored: bool = True):
+    def get_document_verses(self, doc_id: int, include_ignored: bool = True) -> List[DocumentVerse]:
         return self.verse_repo.get_by_document(doc_id, include_ignored=include_ignored)
 
-    def replace_document_verses(self, doc_id: int, verses: List[dict]):
+    def replace_document_verses(self, doc_id: int, verses: List[Dict[str, Any]]) -> List[DocumentVerse]:
         return self.verse_repo.replace_document_verses(doc_id, verses)
 
     def delete_document_verses(self, doc_id: int) -> int:
@@ -423,7 +424,7 @@ class DocumentService:
 
 
 @contextmanager
-def document_service_context():
+def document_service_context() -> Generator[DocumentService, None, None]:
     """Yield a DocumentService backed by a managed DB session."""
     start = time.perf_counter()
     with get_db_session() as db:

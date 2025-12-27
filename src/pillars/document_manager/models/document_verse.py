@@ -25,6 +25,7 @@ class DocumentVerse(Base):
     __table_args__ = (
         Index("ix_document_verses_document", "document_id", "verse_number"),
         Index("ix_document_verses_offsets", "document_id", "start_offset", "end_offset"),
+        {'extend_existing': True}
     )
 
     id = Column(Integer, primary_key=True, index=True)
@@ -60,6 +61,7 @@ class VerseRule(Base):
     __table_args__ = (
         Index("ix_verse_rules_scope", "scope_type", "scope_value"),
         Index("ix_verse_rules_priority", "priority", "enabled"),
+        {'extend_existing': True}
     )
 
     id = Column(Integer, primary_key=True, index=True)
@@ -87,6 +89,7 @@ class VerseEditLog(Base):
     __tablename__ = "verse_edit_log"
     __table_args__ = (
         Index("ix_verse_edit_log_document", "document_id", "created_at"),
+        {'extend_existing': True}
     )
 
     id = Column(Integer, primary_key=True, index=True)

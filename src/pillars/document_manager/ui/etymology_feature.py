@@ -9,8 +9,8 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QAction, QTextCursor
-
-from ..services.etymology_service import get_etymology_service
+from typing import Optional, Any, Dict, Callable
+from ..services.etymology_service import get_etymology_service as _get_etymology_service
 from shared.ui.virtual_keyboard import VirtualKeyboard
 
 
@@ -18,12 +18,13 @@ class EtymologyWorker(QThread):
     """Background thread to fetch data without freezing the UI."""
     finished = pyqtSignal(dict)
 
-    def __init__(self, word):
+    def __init__(self, word: str) -> None:
         super().__init__()
         self.word = word
 
-    def run(self):
-        service = get_etymology_service()
+    def run(self) -> None:
+        """Fetch etymology data from the service."""
+        service = _get_etymology_service()
         result = service.get_word_origin(self.word)
         self.finished.emit(result)
 
@@ -31,7 +32,7 @@ class EtymologyWorker(QThread):
 class ResearchDialog(QDialog):
     """Dialog for Etymology Research - modal-less so user can keep editing."""
     
-    def __init__(self, parent=None):
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.setWindowTitle("Research & Etymology")
         self.setMinimumSize(450, 500)
@@ -41,7 +42,8 @@ class ResearchDialog(QDialog):
         # Make it non-modal so user can continue editing
         self.setModal(False)
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
+        """Initialize and layout visual components."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(10, 10, 10, 10)
         layout.setSpacing(8)
@@ -99,7 +101,7 @@ class ResearchDialog(QDialog):
         self.btn_copy.clicked.connect(self._copy_to_clipboard)
         layout.addWidget(self.btn_copy)
 
-    def _toggle_keyboard(self):
+    def _toggle_keyboard(self) -> None:
         """Toggle the virtual keyboard visibility."""
         self._keyboard_visible = not self._keyboard_visible
         if self._keyboard_visible:
@@ -109,7 +111,8 @@ class ResearchDialog(QDialog):
             self.keyboard.hide()
             self.btn_keyboard.setIcon(qta.icon("fa5s.keyboard", color="#1e293b"))
 
-    def _copy_to_clipboard(self):
+    def _copy_to_clipboard(self) -> None:
+        """Copy current browser text to system clipboard."""
         """Copy the results to clipboard as plain text."""
         from PyQt6.QtWidgets import QApplication
         
@@ -119,17 +122,19 @@ class ResearchDialog(QDialog):
             clipboard.setText(text)
             self.lbl_status.setText("Copied to clipboard!")
 
-    def _on_search(self):
+    def _on_search(self) -> None:
         """Handle search from input field."""
         word = self.input_field.text().strip()
         if word and hasattr(self, '_search_callback'):
             self._search_callback(word)
 
-    def set_search_callback(self, callback):
+    def set_search_callback(self, callback: Callable[[str], None]) -> None:
+        """Set the function to be called when a search is triggered."""
         """Set callback for when user searches from the dialog."""
         self._search_callback = callback
 
-    def show_loading(self, word):
+    def show_loading(self, word: str) -> None:
+        """Display loading state for a specific word."""
         """Show loading state."""
         self.input_field.setText(word)
         self.lbl_status.setText(f"Searching origins for: <b>{word}</b>...")
@@ -138,7 +143,8 @@ class ResearchDialog(QDialog):
         self.raise_()
         self.activateWindow()
 
-    def show_result(self, result):
+    def show_result(self, result: Dict[str, Any]) -> None:
+        """Update browser with research findings."""
         """Display the research result."""
         source = result.get('source', 'Unknown')
         origin_html = result.get('origin', '')
@@ -162,30 +168,30 @@ class ResearchDialog(QDialog):
 class EtymologyFeature:
     """Feature controller connecting the Editor and Research Dialog."""
     
-    def __init__(self, main_editor):
+    def __init__(self, main_editor: Any) -> None:
         self.main = main_editor
         self.editor = main_editor.editor
         # Create dialog (it won't show until called)
         self._dialog = None
         self._worker = None
         
-    def _get_dialog(self):
+    def _get_dialog(self) -> ResearchDialog:
         """Lazily create or return the research dialog."""
         if self._dialog is None:
             self._dialog = ResearchDialog(parent=self.main)
             self._dialog.set_search_callback(self._do_research)
         return self._dialog
         
-    def create_action(self, parent):
-        """Creates the Ribbon Action."""
+    def create_action(self, parent: QWidget) -> QAction:
+        """Construct the primary Ribbon action for this feature."""
         action = QAction("Word Origin", parent)
         action.setToolTip("Research selected word (Etymology)")
         action.setIcon(qta.icon("fa5s.book-open", color="#1e293b"))
         action.triggered.connect(self.research_selection)
         return action
 
-    def research_selection(self):
-        """Triggered by Ribbon or Context Menu."""
+    def research_selection(self) -> None:
+        """Commence etymology research based on current editor selection."""
         cursor = self.editor.textCursor()
         selected_text = cursor.selectedText().strip()
         
@@ -206,7 +212,8 @@ class EtymologyFeature:
 
         self._do_research(selected_text)
 
-    def _do_research(self, word: str):
+    def _do_research(self, word: str) -> None:
+        """Initiate background thread for etymology lookup."""
         """Perform the actual research lookup."""
         if not word:
             return
@@ -218,7 +225,9 @@ class EtymologyFeature:
         self._worker.finished.connect(dialog.show_result)
         self._worker.start()
 
-    def extend_context_menu(self, menu: QMenu):
+    def extend_context_menu(self, menu: QMenu, pos: Any = None) -> None:
+        """Add etymology lookup option to the editor context menu."""
+        # pos is unused but required by current API calls in RTE
         """Add research option to right-click menu."""
         cursor = self.editor.textCursor()
         text = cursor.selectedText().strip()

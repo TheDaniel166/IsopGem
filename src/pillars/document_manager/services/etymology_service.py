@@ -466,7 +466,8 @@ class EtymologyService:
 _etymology_service = None
 
 
-def get_etymology_service():
+def get_etymology_service() -> EtymologyService:
+    """Get the global singleton instance of the EtymologyService."""
     global _etymology_service
     if _etymology_service is None:
         _etymology_service = EtymologyService()

@@ -1,5 +1,5 @@
-"""Document Editor Window."""
 import os
+from typing import Optional, Any
 from pathlib import Path
 from PyQt6.QtWidgets import (
     QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QFileDialog, 
@@ -7,15 +7,16 @@ from PyQt6.QtWidgets import (
     QLineEdit, QDialogButtonBox, QListWidgetItem, QPushButton, QLabel, QFrame
 )
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QAction, QKeySequence
+from PyQt6.QtGui import QAction, QKeySequence, QCloseEvent
 from PyQt6.QtPrintSupport import QPrinter
 from .rich_text_editor import RichTextEditor
 from pillars.document_manager.services.document_service import document_service_context
+from pillars.document_manager.models.document import Document
 
 class DocumentEditorWindow(QMainWindow):
     """Window for editing documents using the RichTextEditor."""
     
-    def __init__(self, parent=None):
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.setWindowTitle("Document Editor")
         self.resize(1000, 800)
@@ -173,7 +174,7 @@ class DocumentEditorWindow(QMainWindow):
         self._init_file_menu()
         self._update_title()
 
-    def _show_wiki_link_selector(self):
+    def _show_wiki_link_selector(self) -> None:
         """Show a dialog to select a document to link."""
         try:
             with document_service_context() as service:
@@ -228,12 +229,12 @@ class DocumentEditorWindow(QMainWindow):
                 doc = selected_items[0].data(Qt.ItemDataRole.UserRole)
                 self._insert_wiki_link(doc)
 
-    def _insert_wiki_link(self, doc):
+    def _insert_wiki_link(self, doc: Document) -> None:
         """Insert the wiki link into the editor."""
         # The editor cursor is currently after '[[', so we just append the title and ']]'
         self.editor.editor.insertPlainText(f"{doc.title}]]")
 
-    def _init_file_menu(self):
+    def _init_file_menu(self) -> None:
         menubar = self.menuBar()
         file_menu = menubar.addMenu("File")
         
@@ -269,12 +270,12 @@ class DocumentEditorWindow(QMainWindow):
         export_pdf_action.triggered.connect(self.export_pdf)
         file_menu.addAction(export_pdf_action)
 
-    def _on_text_changed(self):
+    def _on_text_changed(self) -> None:
         if not self.is_modified:
             self.is_modified = True
             self._update_title()
 
-    def _update_title(self):
+    def _update_title(self) -> None:
         title = "Document Editor"
         if self.current_file:
             title += f" - {self.current_file.name}"
@@ -288,7 +289,7 @@ class DocumentEditorWindow(QMainWindow):
             
         self.setWindowTitle(title)
 
-    def load_document_model(self, doc, search_term=None, restored_html=None, read_only=False):
+    def load_document_model(self, doc: Document, search_term: Optional[str] = None, restored_html: Optional[str] = None, read_only: bool = False) -> None:
         """Load a document from the database model.
         
         Args:
@@ -339,7 +340,7 @@ class DocumentEditorWindow(QMainWindow):
             self._set_read_only_mode(False)
             self.mode_bar.hide()
     
-    def _set_read_only_mode(self, read_only: bool):
+    def _set_read_only_mode(self, read_only: bool) -> None:
         """Set the editor to read-only or edit mode."""
         self.is_read_only = read_only
         self.editor.editor.setReadOnly(read_only)
@@ -372,11 +373,11 @@ class DocumentEditorWindow(QMainWindow):
         self.mode_bar.show()
         self._update_mode_bar_style()
     
-    def _toggle_edit_mode(self):
+    def _toggle_edit_mode(self) -> None:
         """Toggle between read-only and edit modes."""
         self._set_read_only_mode(not self.is_read_only)
     
-    def _update_mode_bar_style(self):
+    def _update_mode_bar_style(self) -> None:
         """Update mode bar button style based on current mode."""
         if self.is_read_only:
             self.btn_toggle_mode.setStyleSheet("""
@@ -409,27 +410,27 @@ class DocumentEditorWindow(QMainWindow):
                 }
             """)
     
-    def _on_prev_match(self):
+    def _on_prev_match(self) -> None:
         """Navigate to previous match."""
         self.editor.find_previous()
         self._update_match_counter()
     
-    def _on_next_match(self):
+    def _on_next_match(self) -> None:
         """Navigate to next match."""
         self.editor.find_next()
         self._update_match_counter()
     
-    def _update_match_counter(self):
+    def _update_match_counter(self) -> None:
         """Update the match counter label."""
         current, total = self.editor.get_match_info()
         self.nav_counter_label.setText(f"{current} of {total}")
     
-    def _hide_match_navigator(self):
+    def _hide_match_navigator(self) -> None:
         """Hide the match navigator and clear search."""
         self.match_nav_bar.hide()
         self.editor.clear_search()
 
-    def _check_unsaved_changes(self):
+    def _check_unsaved_changes(self) -> bool:
         # In read-only mode, no changes are possible - skip dialog
         if self.is_read_only:
             return True
@@ -450,7 +451,7 @@ class DocumentEditorWindow(QMainWindow):
                 return False
         return True
 
-    def new_document(self):
+    def new_document(self) -> None:
         if not self._check_unsaved_changes():
             return
             
@@ -459,7 +460,7 @@ class DocumentEditorWindow(QMainWindow):
         self.is_modified = False
         self._update_title()
 
-    def open_document(self):
+    def open_document(self) -> None:
         if not self._check_unsaved_changes():
             return
             
@@ -489,7 +490,7 @@ class DocumentEditorWindow(QMainWindow):
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Could not open file: {str(e)}")
 
-    def save_document(self):
+    def save_document(self) -> bool:
         if self.current_doc_model:
             try:
                 with document_service_context() as service:
@@ -534,7 +535,7 @@ class DocumentEditorWindow(QMainWindow):
             QMessageBox.critical(self, "Error", f"Could not save file: {str(e)}")
             return False
 
-    def save_as_document(self):
+    def save_as_document(self) -> bool:
         file_path, filter_used = QFileDialog.getSaveFileName(
             self,
             "Save Document As",
@@ -556,7 +557,7 @@ class DocumentEditorWindow(QMainWindow):
             return self.save_document()
         return False
 
-    def export_pdf(self):
+    def export_pdf(self) -> None:
         """Export the current document to PDF."""
         file_path, _ = QFileDialog.getSaveFileName(
             self,
@@ -581,7 +582,7 @@ class DocumentEditorWindow(QMainWindow):
             except Exception as e:
                 QMessageBox.critical(self, "Export Error", f"Failed to export PDF: {str(e)}")
 
-    def closeEvent(self, event):
+    def closeEvent(self, event: QCloseEvent) -> None:
         if not self._check_unsaved_changes():
             event.ignore()
         else:
