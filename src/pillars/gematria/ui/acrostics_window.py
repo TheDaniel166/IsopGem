@@ -133,7 +133,7 @@ class AcrosticsWindow(QWidget):
                 self.load_document_text(doc_id)
 
     def load_document_text(self, doc_id):
-        from pillars.document_manager.repositories.document_repository import DocumentRepository
+        from shared.repositories.document_manager.document_repository import DocumentRepository
         from shared.database import get_db
         
         try:

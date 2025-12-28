@@ -13,8 +13,8 @@ from typing import Dict, List, Optional
 
 from PyQt6.QtGui import QColor
 
-from pillars.tq.services.ternary_service import TernaryService
-from pillars.tq.services.baphomet_color_service import BaphometColorService
+from shared.services.tq.ternary_service import TernaryService
+from shared.services.tq.baphomet_color_service import BaphometColorService
 from pillars.adyton.constants import (
     WALL_WIDTH_UNITS,
     FRUSTUM_FACE_TOP,

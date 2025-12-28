@@ -15,7 +15,7 @@ from typing import List, Optional
 from ..services import CalculationService
 from ..models import CalculationRecord
 from shared.ui import VirtualKeyboard, get_shared_virtual_keyboard
-from pillars.document_manager.ui.rich_text_editor import RichTextEditor
+from shared.ui.rich_text_editor import RichTextEditor
 
 class NumericTableWidgetItem(QTableWidgetItem):
     """Table item that sorts numerically."""
@@ -29,7 +29,7 @@ class NumericTableWidgetItem(QTableWidgetItem):
 class SavedCalculationsWindow(QMainWindow):
     """Window for browsing and managing saved calculations."""
     
-    def __init__(self, window_manager=None, parent=None):
+    def __init__(self, window_manager=None, parent=None, initial_value=None, **kwargs):
         """Initialize the saved calculations browser."""
         super().__init__(parent)
         self.window_manager = window_manager
@@ -43,6 +43,10 @@ class SavedCalculationsWindow(QMainWindow):
         
         self._setup_ui()
         self._reset_results_view()
+        
+        if initial_value is not None:
+            self.value_input.setText(str(initial_value))
+            self._search()
     
     def _setup_ui(self):
         """Set up the user interface."""

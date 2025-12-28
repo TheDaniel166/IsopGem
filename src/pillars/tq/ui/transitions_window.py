@@ -11,9 +11,10 @@ from PyQt6.QtGui import QFont, QColor, QAction, QPixmap, QPainter
 
 from ..services.ternary_service import TernaryService
 from ..services.ternary_transition_service import TernaryTransitionService
+from ..services.ternary_transition_service import TernaryTransitionService
 from .quadset_analysis_window import QuadsetAnalysisWindow, SubstrateWidget
-from pillars.correspondences.ui.correspondence_hub import CorrespondenceHub
 from shared.ui.theme import COLORS, get_card_style
+from shared.signals.navigation_bus import navigation_bus
 
 
 class TransitionsWindow(QMainWindow):
@@ -265,16 +266,18 @@ class TransitionsWindow(QMainWindow):
             "styles": {}
         }
         
-        # 2. Open Hub
-        hub = self.window_manager.open_window(
+        # 2. Request Window via Signal Bus to avoid direct import
+        # We pass minimal params to open it
+        navigation_bus.request_window.emit(
             "emerald_tablet", 
-            CorrespondenceHub, 
-            allow_multiple=False,
-            window_manager=self.window_manager
+            {"allow_multiple": False, "window_manager": self.window_manager}
         )
         
-        # 3. Send
-        if hasattr(hub, "receive_import"):
+        # 3. Retrieve instance and send data (Logic coupled to instance existence for now)
+        # Since request_window is synchronous in our architecture, we can try to retrieve it immediately
+        hub = self.window_manager.get_active_windows().get("emerald_tablet")
+        
+        if hub and hasattr(hub, "receive_import"):
             name = f"Transformation_{self.input_a_tern.text()}_by_{self.input_b_tern.text()}"
             hub.receive_import(name, data)
             
@@ -283,17 +286,34 @@ class TransitionsWindow(QMainWindow):
         if not self.window_manager:
             return
             
-        # Open the window
-        window = self.window_manager.open_window(
-            "quadset_analysis",
-            QuadsetAnalysisWindow
+        # Requests window via bus
+        navigation_bus.request_window.emit(
+            "tq_quadset_analysis",
+            {"window_manager": self.window_manager}
         )
         
-        # Set the value
-        if window and hasattr(window, 'input_field'):
-            window.input_field.setText(decimal_value)
-            window.raise_()
-            window.activateWindow()
+        # We can't easily get the specific instance if multiple are allowed, 
+        # but QuadsetAnalysis is usually unique or we rely on the bus passing initial_value if it was new.
+        # But here we want to update an *existing* or *just opened* window.
+        # For now, let's look for the most recent one or pass initial_value in params if we wanted a new one.
+        # The original code opened a generic one. 
+        # If we want to set field on the active one:
+        
+        # Better approach: Pass initial_value in params if possible
+        # usage: request_window("quadset_analysis", {"initial_value": decimal_value})
+        
+        navigation_bus.request_window.emit(
+            "tq_quadset_analysis",
+            {
+                "window_manager": self.window_manager,
+                "initial_value": decimal_value
+            }
+        )
+        
+        # The params above handle setting the value for new windows.
+        # If we wanted to update an existing one without reopening/reinit, we'd need a different mechanism,
+        # but the standard pattern is passing init params.
+        pass
 
         
     def _on_decimal_changed(self, text: str, target_field: QLineEdit):

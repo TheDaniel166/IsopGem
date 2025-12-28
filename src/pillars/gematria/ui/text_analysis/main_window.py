@@ -16,8 +16,8 @@ from pathlib import Path
 from ...services.base_calculator import GematriaCalculator
 from ...services import CalculationService
 from ...services.text_analysis_service import TextAnalysisService
-from pillars.document_manager.services.document_service import document_service_context
-from pillars.document_manager.models.document import Document
+from shared.services.document_manager.document_service import document_service_context
+from shared.models.document_manager.document import Document
 
 # Components
 from .search_panel import SearchPanel
@@ -551,19 +551,13 @@ class ExegesisWindow(QMainWindow):
         self._save_record(text, "Selection")
 
     def _on_open_quadset(self, value: int):
-        from pillars.tq.ui.quadset_analysis_window import QuadsetAnalysisWindow
-        from shared.ui import WindowManager
-        
-        # Attempt to use specific window manager if available, else instantiate local?
-        # Since we don't have easy access to the singleton instance if not passed,
-        # we rely on the passed 'window_manager' if valid.
+        from shared.signals.navigation_bus import navigation_bus
         
         if self.window_manager:
-            win = self.window_manager.open_window("quadset_analysis_param", QuadsetAnalysisWindow, window_manager=self.window_manager)
-            if win:
-                win.input_field.setText(str(value))
-                win.raise_()
-                win.activateWindow()
+            navigation_bus.request_window.emit(
+                "tq_quadset_analysis", 
+                {"window_manager": self.window_manager, "initial_value": value}
+            )
         else:
             # Fallback (shouldn't happen in standard flow)
             pass
@@ -592,7 +586,7 @@ class ExegesisWindow(QMainWindow):
         if not self.window_manager or not matches:
              return
              
-        from pillars.correspondences.ui.correspondence_hub import CorrespondenceHub
+        from shared.signals.navigation_bus import navigation_bus
         
         target_val = self.search_panel.value_input.text()
         
@@ -607,12 +601,12 @@ class ExegesisWindow(QMainWindow):
             "styles": {}
         }
         
-        hub = self.window_manager.open_window(
+        navigation_bus.request_window.emit(
             "emerald_tablet",
-            CorrespondenceHub,
-            allow_multiple=False,
-            window_manager=self.window_manager
+            {"allow_multiple": False, "window_manager": self.window_manager}
         )
+        
+        hub = self.window_manager.get_active_windows().get("emerald_tablet")
         
         if hasattr(hub, "receive_import"):
             name = f"Inquiry_{target_val}"

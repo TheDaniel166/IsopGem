@@ -26,7 +26,7 @@ from ..services import (
 )
 from ..models import AstrologyEvent, ChartRequest, GeoLocation
 from ..ui.chart_picker_dialog import ChartPickerDialog
-from pillars.time_mechanics.services.thelemic_calendar_service import ThelemicCalendarService
+from shared.services.time.thelemic_calendar_service import ThelemicCalendarService
 
 
 # Classic 7 planets (lowercase to match OpenAstro output)
@@ -525,82 +525,45 @@ class DifferentialNatalWindow(QWidget):
     
     def _send_to_quadset(self) -> None:
         """Send total Difference to Quadset Analysis."""
-        if not self.window_manager:
-            QMessageBox.warning(self, "Unavailable", "Window manager not available.")
-            return
+        from shared.signals.navigation_bus import navigation_bus
         
-        from pillars.tq.ui.quadset_analysis_window import QuadsetAnalysisWindow
-        
-        window = self.window_manager.open_window(
+        navigation_bus.request_window.emit(
             "tq_quadset_analysis",
-            QuadsetAnalysisWindow,
-            allow_multiple=False,
-            window_manager=self.window_manager,
+            {
+                "window_manager": self.window_manager,
+                "initial_value": self._total_difference,
+                "allow_multiple": False
+            }
         )
-        if window and hasattr(window, "input_field"):
-            window.input_field.setText(str(self._total_difference))
-            window.raise_()
-            window.activateWindow()
     
     def _lookup_in_database(self) -> None:
         """Look up total Difference in the Saved Calculations database."""
-        if not self.window_manager:
-            QMessageBox.warning(self, "Unavailable", "Window manager not available.")
-            return
+        from shared.signals.navigation_bus import navigation_bus
         
-        from pillars.gematria.ui.saved_calculations_window import SavedCalculationsWindow
-        
-        window = self.window_manager.open_window(
-            "saved_calculations",
-            SavedCalculationsWindow,
-            allow_multiple=False,
-            window_manager=self.window_manager,
+        navigation_bus.request_window.emit(
+            "gematria_saved_calculations",
+            {
+                "window_manager": self.window_manager,
+                "initial_value": self._total_difference,
+                "allow_multiple": False
+            }
         )
-        if window:
-            value_field = getattr(window, "value_input", None)
-            if value_field is not None:
-                value_field.setText(str(self._total_difference))
-            
-            search_method = getattr(window, "_search", None)
-            if callable(search_method):
-                search_method()
-                
-            window.raise_()
-            window.activateWindow()
     
     def _send_to_heptagon(self) -> None:
         """Send 7 planetary Differences to Geometric Transitions as a Heptagon."""
-        if not self.window_manager:
-            QMessageBox.warning(self, "Unavailable", "Window manager not available.")
-            return
-        
         if len(self._planet_differences) != 7:
             QMessageBox.warning(self, "Incomplete Data", "Need all 7 planetary values.")
             return
         
-        from pillars.tq.ui.geometric_transitions_window import GeometricTransitionsWindow
+        from shared.signals.navigation_bus import navigation_bus
         
-        window = self.window_manager.open_window(
+        # We pass initial_values directly. The window constructor handles auto-sizing (7 sides).
+        navigation_bus.request_window.emit(
             "tq_geometric_transitions",
-            GeometricTransitionsWindow,
-            allow_multiple=False,
-            window_manager=self.window_manager,
+            {
+                "window_manager": self.window_manager,
+                "initial_values": self._planet_differences,
+                "allow_multiple": False
+            }
         )
-        
-        if window:
-            # Set to Heptagon (7 sides)
-            for i in range(window.shape_combo.count()):
-                if window.shape_combo.itemData(i) == 7:
-                    window.shape_combo.setCurrentIndex(i)
-                    break
-            
-            # Populate the 7 value inputs
-            window._refresh_value_inputs()
-            for i, val in enumerate(self._planet_differences):
-                if i < len(window.value_inputs):
-                    window.value_inputs[i].setText(str(val))
-            
-            # Raise the window so user can click Generate
-            window.raise_()
-            window.activateWindow()
 

@@ -6,9 +6,9 @@ import re
 import math
 from typing import Any, Dict, Callable, NamedTuple, List, Optional, Set, Tuple
 from enum import Enum, auto
-from pillars.gematria.services.calculation_service import CalculationService
-from pillars.gematria.services.base_calculator import GematriaCalculator
-from pillars.gematria.services import (
+# from pillars.gematria.services.calculation_service import CalculationService # Removed unused dependency
+from shared.services.gematria.base_calculator import GematriaCalculator
+from shared.services.gematria import (
     HebrewGematriaCalculator, HebrewSofitCalculator, HebrewLetterValueCalculator,
     HebrewOrdinalCalculator, HebrewSmallValueCalculator, HebrewAtBashCalculator,
     HebrewAlbamCalculator, HebrewKolelCalculator, HebrewSquareCalculator,
@@ -370,7 +370,7 @@ class FormulaEngine:
     """
     def __init__(self, data_context: Dict[str, Any]):
         self.context = data_context
-        self.calc_service = CalculationService()
+        # self.calc_service = CalculationService() # Removed unused dependency
 
     def evaluate(self, content: str, visited: Optional[Set[Tuple[int, int]]] = None) -> Any:
         """Evaluate a formula string, tracking the current dependency stack to avoid cycles."""

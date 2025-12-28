@@ -2,11 +2,17 @@
 
 This module manages the lifecycle of tool windows across all pillars,
 including opening, closing, positioning, and tracking active windows.
+
+The WindowManager also listens to the NavigationBus for decoupled window
+requests, performing lazy imports to preserve pillar sovereignty.
 """
-from typing import Dict, Optional, Type
+from typing import Dict, Optional, Type, Any
 import logging
+import importlib
 from PyQt6.QtWidgets import QWidget, QMainWindow, QApplication
 from PyQt6.QtCore import Qt, QTimer
+# Import signal bus and registry
+from shared.signals.navigation_bus import navigation_bus, get_window_info
 
 
 logger = logging.getLogger(__name__)
@@ -25,6 +31,9 @@ class WindowManager:
         self.parent = parent
         self._active_windows: Dict[str, QWidget] = {}
         self._window_counters: Dict[str, int] = {}  # Track instance counts per window type
+        
+        # Subscribe to navigation requests
+        navigation_bus.request_window.connect(self._on_navigation_request)
     
     def open_window(
         self, 
@@ -239,3 +248,55 @@ class WindowManager:
         
         # Small delay to ensure proper timing after tab changes
         QTimer.singleShot(50, do_raise)
+
+    def _on_navigation_request(self, window_key: str, params: Dict[str, Any]):
+        """
+        Handle navigation requests from the signal bus.
+        
+        Performs lazy import of the requested window class to prevent
+        circular imports and preserve pillar sovereignty.
+        
+        Args:
+            window_key: Identifier from WINDOW_REGISTRY
+            params: Parameters to pass to the window constructor
+        """
+        try:
+            # Look up window info
+            info = get_window_info(window_key)
+            module_name = info["module"]
+            class_name = info["class"]
+            allow_multiple = info.get("allow_multiple", True)
+            
+            # Lazy Import
+            try:
+                module = importlib.import_module(module_name)
+                window_class = getattr(module, class_name)
+            except (ImportError, AttributeError) as e:
+                logger.error(f"Failed to load window '{window_key}': {e}")
+                return
+
+            # Open the window
+            # We filter params? Or pass all? 
+            # Most windows accept specific args. Some might just take **kwargs.
+            # Ideally, the registry might specify param mapping, but for now we rely on
+            # windows accepting **kwargs or specific matching args.
+            
+            # Note: We pass window_manager=self if the class expects it.
+            # Many of our hubs/windows take 'window_manager' as arg.
+            # We can inspect the constructor or just try passing it if we want to be robust,
+            # but standard pattern is explicit args.
+            
+            # Let's inject window_manager into params if not present, as most navigation targets need it.
+            if "window_manager" not in params:
+                 params["window_manager"] = self
+
+            # Open
+            self.open_window(
+                window_type=window_key,
+                window_class=window_class,
+                allow_multiple=allow_multiple,
+                **params
+            )
+            
+        except Exception as e:
+            logger.exception(f"Error handling navigation request for '{window_key}': {e}")

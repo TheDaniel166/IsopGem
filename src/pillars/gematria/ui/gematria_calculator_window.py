@@ -13,12 +13,8 @@ from ..services import CalculationService
 from shared.ui import VirtualKeyboard, get_shared_virtual_keyboard
 from shared.ui.window_manager import WindowManager # Should be available via parent typically, but importing for type hint if needed
 from .components import ResultsDashboard
-# We need to import CorrespondenceHub to check type or use it
-from pillars.correspondences.ui.correspondence_hub import CorrespondenceHub
-from pillars.tq.ui.quadset_analysis_window import QuadsetAnalysisWindow
-from pillars.document_manager.ui.document_editor_window import DocumentEditorWindow
-from pillars.document_manager.ui.mindscape_window import MindscapeWindow
-from pillars.document_manager.services.notebook_service import notebook_service_context
+from shared.signals.navigation_bus import navigation_bus
+from shared.services.document_manager.notebook_service import notebook_service_context
 
 
 class GematriaCalculatorWindow(QMainWindow):
@@ -619,7 +615,6 @@ class GematriaCalculatorWindow(QMainWindow):
         # Open Hub
         hub = self.window_manager.open_window(
             "emerald_tablet", 
-            CorrespondenceHub, 
             allow_multiple=False,
             window_manager=self.window_manager
         )
@@ -652,19 +647,18 @@ class GematriaCalculatorWindow(QMainWindow):
 
     def _send_to_quadset(self, value: int):
         """Send current results to Quadset Analysis."""
-        if not self.window_manager: return
-        win = self.window_manager.open_window("quadset_analysis", QuadsetAnalysisWindow, window_manager=self.window_manager)
-        if win:
-            # Quadset window has an ‘input_field’ attribute (QLineEdit)
-            if hasattr(win, "input_field"):
-                win.input_field.setText(str(value))
-            win.raise_()
-            win.activateWindow()
+        navigation_bus.request_window.emit(
+            "tq_quadset_analysis",
+            {
+                "window_manager": self.window_manager,
+                "initial_value": value
+            }
+        )
 
     def _send_to_rtf_editor(self, value: int):
         """Send results to RTF Editor."""
         if not self.window_manager: return
-        win = self.window_manager.open_window("document_editor", DocumentEditorWindow)
+        win = self.window_manager.open_window("document_editor")
         if win:
             # Format high-quality summary
             res_str = f"""
@@ -685,7 +679,7 @@ class GematriaCalculatorWindow(QMainWindow):
 
     # --- MindScape Transitions ---
 
-    def _find_active_mindscape(self) -> Optional[MindscapeWindow]:
+    def _find_active_mindscape(self) -> Optional[QMainWindow]:
         """Locate the active Mindscape window via the Window Manager."""
         if not self.window_manager: return None
         # WindowManager usually tracks windows by key
@@ -742,7 +736,7 @@ class GematriaCalculatorWindow(QMainWindow):
             if ok and choice:
                 doc_id = page_map[choice]
                 # Open/Get Mindscape
-                ms = self.window_manager.open_window("mindscape", MindscapeWindow)
+                ms = self.window_manager.open_window("mindscape")
                 if ms:
                     ms.page.load_node(doc_id)
                     self._ms_add_note(ms.page, self.current_value)
@@ -777,7 +771,7 @@ class GematriaCalculatorWindow(QMainWindow):
             new_page = service.create_page(sec_id, title)
             
             # Open and insert
-            ms = self.window_manager.open_window("mindscape", MindscapeWindow)
+            ms = self.window_manager.open_window("mindscape")
             if ms:
                 ms.tree.load_tree() # Refresh tree to show new page
                 ms.page.load_node(new_page.id)

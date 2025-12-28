@@ -14,7 +14,7 @@ from PyQt6.QtGui import (
     QTextCharFormat, QColor, QTextDocument
 )
 
-from ..services.spell_service import get_spell_service
+from shared.services.document_manager.spell_service import get_spell_service
 import logging
 
 logger = logging.getLogger(__name__)

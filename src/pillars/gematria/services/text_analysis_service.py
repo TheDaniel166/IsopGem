@@ -162,7 +162,7 @@ class TextAnalysisService:
         Returns a dictionary with 'verses', 'source', etc.
         """
         from ..utils.verse_parser import parse_verses
-        from pillars.document_manager.services.verse_teacher_service import verse_teacher_service_context
+        from shared.services.document_manager.verse_teacher_service import verse_teacher_service_context
         import logging
 
         metadata = None

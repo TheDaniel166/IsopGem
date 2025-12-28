@@ -718,17 +718,17 @@ class ZodiacalCircleWindow(QWidget):
             QMessageBox.information(self, "No Data", "Please select a degree first.")
             return
         
-        # Import here to avoid circular imports
-        from pillars.correspondences.ui.correspondence_hub import CorrespondenceHub
+        from shared.signals.navigation_bus import navigation_bus
         
-        hub = self.window_manager.open_window(
-            "emerald_tablet",
-            CorrespondenceHub,
-            allow_multiple=False,
-            window_manager=self.window_manager
+        navigation_bus.request_window.emit(
+            "emerald_tablet", 
+            {"allow_multiple": False, "window_manager": self.window_manager}
         )
         
-        if hasattr(hub, "receive_import"):
+        # Retrieve the singleton instance
+        hub = self.window_manager.get_active_windows().get("emerald_tablet")
+        
+        if hub and hasattr(hub, "receive_import"):
             hub.receive_import("Zodiacal Circle Export", data)
             QMessageBox.information(self, "Sent", "Data sent to Emerald Tablet.")
     
@@ -755,13 +755,19 @@ class ZodiacalCircleWindow(QWidget):
         
         text_content = "\n".join(lines)
         
-        # Open Document Editor directly
-        from pillars.document_manager.ui.document_editor_window import DocumentEditorWindow
+        from shared.signals.navigation_bus import navigation_bus
         
-        window = self.window_manager.open_window(
-            "document_editor",
-            DocumentEditorWindow
+        # Request new document editor
+        navigation_bus.request_window.emit(
+            "document_editor", 
+            {"allow_multiple": True, "window_manager": self.window_manager}
         )
+        
+        # Attempt to retrieve the newly created window
+        # Logic: document_editor_{count}
+        count = self.window_manager._window_counters.get("document_editor", 0)
+        win_id = f"document_editor_{count}"
+        window = self.window_manager.get_window(win_id)
         
         if window and hasattr(window, "set_html"):
             # Convert markdown to simple HTML
@@ -771,7 +777,8 @@ class ZodiacalCircleWindow(QWidget):
         elif window:
             QMessageBox.information(self, "Note", "Document Editor opened. Paste data manually.")
         else:
-            QMessageBox.warning(self, "Error", "Could not open Document Editor.")
+            # Fallback if window retrieval fails
+            pass
     
     def _on_date_go(self) -> None:
         """Jump to a specific date on the circle."""

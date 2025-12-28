@@ -31,6 +31,10 @@ The following Grimoires detail the inner workings of each Sphere:
 *   **[TQ Engine](file:///home/burkettdaniel927/projects/isopgem/wiki/02_pillars/tq/)**: The Three-Fold Kabbalah.
 *   **[Time Mechanics](file:///home/burkettdaniel927/projects/isopgem/wiki/02_pillars/time_mechanics/)**: The Master of Cycles (Tzolkin).
 
+### The Foundation (Shared Base)
+The Pillars rest upon a common earth, detailed in:
+*   **[Shared Base](file:///home/burkettdaniel927/projects/isopgem/wiki/02_pillars/shared/)**: The Infrastructure (Navigation, Database, Base Classes).
+
 ## The Nervous System (Signal Bus)
 The Pillars communicate via a central **Signal Bus**. This decouples the organs, ensuring that if one fails, the body survives.
 

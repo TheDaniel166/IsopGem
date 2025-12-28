@@ -680,7 +680,7 @@ class GreatHarvestWindow(QMainWindow):
         if not self.window_manager or not self.imported_data:
             return
 
-        from pillars.correspondences.ui.correspondence_hub import CorrespondenceHub
+        from shared.signals.navigation_bus import navigation_bus
 
         # Prepare Data
         columns = ["Word", "Tags", "Notes"]
@@ -698,12 +698,14 @@ class GreatHarvestWindow(QMainWindow):
         }
         
         # Open Hub
-        hub = self.window_manager.open_window(
-            "emerald_tablet",
-            CorrespondenceHub,
-            allow_multiple=False,
-            window_manager=self.window_manager
+        # Request Window via Signal Bus
+        navigation_bus.request_window.emit(
+            "emerald_tablet", 
+            {"allow_multiple": False, "window_manager": self.window_manager}
         )
+        
+        # Verify it opened (synchronously in this architecture for now)
+        hub = self.window_manager.get_active_windows().get("emerald_tablet")
         
         if hasattr(hub, "receive_import"):
             name = f"Harvest_{datetime.now().strftime('%Y%m%d_%H%M')}"

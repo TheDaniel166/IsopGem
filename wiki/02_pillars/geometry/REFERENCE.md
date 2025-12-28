@@ -1947,45 +1947,7 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 
 ---
 
-**File:** `src/pillars/geometry/services/solid_geometry.py`
 
-**Role:** `[Muscle] (Service)`
-
-**Purpose:** Utility math helpers for solid geometry computations.
-
-**Input (Ingests):**
-* Pure data structure or utility module.
-
-**Output (Emits):**
-* Data primitives or DTOs.
-
-**Dependencies (It Needs):**
-* `__future__.annotations`
-* `math`
-* `typing.Iterable`
-* `typing.List`
-* `typing.Sequence`
-* `typing.Tuple`
-
-**Consumers (Who Needs It):**
-* None detected.
-
-**Key Interactions:**
-**Exposes:** `vec_add()` - *Functional interface.*
-**Exposes:** `vec_sub()` - *Functional interface.*
-**Exposes:** `vec_scale()` - *Functional interface.*
-**Exposes:** `vec_dot()` - *Functional interface.*
-**Exposes:** `vec_cross()` - *Functional interface.*
-**Exposes:** `vec_length()` - *Functional interface.*
-**Exposes:** `vec_normalize()` - *Functional interface.*
-**Exposes:** `polygon_area()` - *Functional interface.*
-**Exposes:** `face_normal()` - *Functional interface.*
-**Exposes:** `plane_distance_from_origin()` - *Functional interface.*
-**Exposes:** `compute_surface_area()` - *Functional interface.*
-**Exposes:** `compute_volume()` - *Functional interface.*
-**Exposes:** `edges_from_faces()` - *Functional interface.*
-**Exposes:** `face_centroid()` - *Functional interface.*
-**Exposes:** `angle_around_axis()` - *Functional interface.*
 
 
 ---

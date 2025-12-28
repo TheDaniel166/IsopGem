@@ -35,6 +35,7 @@ from ..services.geometric_transition_service import (
 )
 from .quadset_analysis_window import SubstrateWidget
 from shared.ui.theme import COLORS
+from shared.signals.navigation_bus import navigation_bus
 
 
 class GeometricCanvas(QWidget):
@@ -133,7 +134,7 @@ class GeometricTransitionsWindow(QMainWindow):
 
     RESULT_COLUMN_INDEX = 5
 
-    def __init__(self, window_manager=None, parent: Optional[QWidget] = None):
+    def __init__(self, window_manager=None, parent: Optional[QWidget] = None, initial_values: Optional[List[int]] = None, **kwargs):
         super().__init__(parent)
         self.window_manager = window_manager
         self.service = GeometricTransitionService()
@@ -157,6 +158,22 @@ class GeometricTransitionsWindow(QMainWindow):
 
         self._setup_ui()
         self._refresh_value_inputs()
+        
+        if initial_values:
+            # Auto-select shape based on length using itemData
+            count = len(initial_values)
+            for i in range(self.shape_combo.count()):
+                if self.shape_combo.itemData(i) == count:
+                    self.shape_combo.setCurrentIndex(i)
+                    break
+            
+            # Refresh happens via signal, but let's force populate
+            # We wait for signal or do it manually? 
+            # Signal is synchronous usually.
+            
+            for i, val in enumerate(initial_values):
+                if i < len(self.value_inputs):
+                    self.value_inputs[i].setText(str(val))
 
     # -- UI setup --------------------------------------------------------
 
@@ -887,44 +904,25 @@ class GeometricTransitionsWindow(QMainWindow):
         return int(round(value))
 
     def _send_value_to_quadset(self, value: float):
-        if not self.window_manager:
-            return
-        from .quadset_analysis_window import QuadsetAnalysisWindow
-
         rounded_value = self._round_cross_pillar_value(value)
-        window = self.window_manager.open_window(
-            "quadset_analysis",
-            QuadsetAnalysisWindow,
+        navigation_bus.request_window.emit(
+            "tq_quadset_analysis",
+            {
+                "window_manager": self.window_manager,
+                "initial_value": rounded_value
+            }
         )
-        if not window:
-            return
-        input_widget = getattr(window, "input_field", None)
-        if input_widget is not None:
-            input_widget.setText(str(rounded_value))
-            window.raise_()
-            window.activateWindow()
 
     def _lookup_value_in_database(self, value: float):
-        if not self.window_manager:
-            return
-        from pillars.gematria.ui.saved_calculations_window import SavedCalculationsWindow
-
         rounded_value = self._round_cross_pillar_value(value)
-        window = self.window_manager.open_window(
-            "saved_calculations",
-            SavedCalculationsWindow,
-            allow_multiple=False,
+        navigation_bus.request_window.emit(
+            "gematria_saved_calculations",
+            {
+                "window_manager": self.window_manager,
+                "initial_value": rounded_value,
+                "allow_multiple": False 
+            }
         )
-        if not window:
-            return
-        value_field = getattr(window, "value_input", None)
-        if value_field is not None:
-            value_field.setText(str(rounded_value))
-        search_method = getattr(window, "_search", None)
-        if callable(search_method):
-            search_method()
-        window.raise_()
-        window.activateWindow()
 
     def _copy_results_to_clipboard(self):
         if not self.group_data and not self.special_patterns:

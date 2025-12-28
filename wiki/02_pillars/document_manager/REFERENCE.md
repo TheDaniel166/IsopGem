@@ -452,100 +452,12 @@ This manifest dissects the Akaschic Archive, mapping the lifecycle of rich-text 
 
 ---
 
-**File:** `src/pillars/document_manager/services/document_service.py`
 
-**Role:** `[Muscle] (Service)`
-
-**Purpose:** Service layer for Document Manager.
-
-**Input (Ingests):**
-* `db`
-
-**Output (Emits):**
-* Data primitives or DTOs.
-
-**Dependencies (It Needs):**
-* `contextlib.contextmanager`
-* `logging`
-* `pathlib.Path`
-* `pillars.document_manager.models.document.DocumentImage`
-* `pillars.document_manager.models.document.Document`
-* `pillars.document_manager.models.document_verse.DocumentVerse`
-* `pillars.document_manager.models.dtos.DocumentMetadataDTO`
-* `pillars.document_manager.repositories.document_repository.DocumentRepository`
-* `pillars.document_manager.repositories.document_verse_repository.DocumentVerseRepository`
-* `pillars.document_manager.r
-
-**Consumers (Who Needs It):**
-* `scripts/debug_doc_collections.py`
-* `scripts/debug_doc_tags.py`
-* `src/pillars/document_manager/ui/database_manager.py`
-* `src/pillars/document_manager/ui/document_editor_window.py`
-* `src/pillars/document_manager/ui/document_library.py`
-* `src/pillars/document_manager/ui/document_manager_hub.py`
-* `src/pillars/document_manager/ui/document_search_window.py`
-* `src/pillars/document_manager/ui/rich_text_editor.py`
-* `src/pillars/gematria/ui/els_search_window.py`
-* `src/pillars/gematria/ui/text_analysis/main_window.py`
-* `tests/document/test_document_service.py`
-* `tests/verify_database_manager.py`
-
-**Key Interactions:**
-**Exposes:** `document_service_context()` - *Yield a DocumentService backed by a managed DB session.*
-**Exposes:** `import_document()` - *Import a document from a file path.*
-**Exposes:** `search_documents()` - *Functional interface.*
-**Exposes:** `search_documents_with_highlights()` - *Search documents and return results with highlights.*
-**Exposes:** `get_all_documents()` - *Functional interface.*
-**Exposes:** `get_all_documents_metadata()` - *Get all documents without loading heavy content fields.*
-**Exposes:** `get_document()` - *Functional interface.*
-**Exposes:** `get_document_with_images()` - *Get a document with images. *
-**Exposes:** `get_image()` - *Get an image by ID.*
-**Exposes:** `update_document()` - *Update document fields.*
-**Exposes:** `update_documents()` - *Update multiple documents efficiently.*
-**Exposes:** `delete_document()` - *Functional interface.*
-**Exposes:** `delete_all_documents()` - *Delete all documents from database and search index.*
-**Exposes:** `rebuild_search_index()` - *Rebuild the search index from the database.*
-**Exposes:** `get_database_stats()` - *Get database statistics.*
-**Exposes:** `cleanup_orphans()` - *Find and delete orphan images (stored in DB but not used in any document).*
-**Exposes:** `get_document_verses()` - *Functional interface.*
-**Exposes:** `replace_document_verses()` - *Functional interface.*
-**Exposes:** `delete_document_verses()` - *Functional interface.*
-**Exposes:** `store_image()` - *Functional interface.*
-**Exposes:** `fetch_image()` - *Functional interface.*
-**Exposes:** `store_image()` - *Functional interface.*
 
 
 ---
 
-**File:** `src/pillars/document_manager/services/etymology_service.py`
 
-**Role:** `[Muscle] (Service)`
-
-**Purpose:** Etymology Service for Document Manager Pillar.
-
-**Input (Ingests):**
-* Pure data structure or utility module.
-
-**Output (Emits):**
-* Data primitives or DTOs.
-
-**Dependencies (It Needs):**
-* `bs4.BeautifulSoup`
-* `ety`
-* `functools.lru_cache`
-* `logging`
-* `re`
-* `requests`
-* `typing.Dict`
-* `typing.Optional`
-
-**Consumers (Who Needs It):**
-* None detected.
-
-**Key Interactions:**
-**Exposes:** `get_etymology_service()` - *Get the global singleton instance of the EtymologyService.*
-**Exposes:** `get_word_origin()` - *Get the origin of a word. Auto-detects script and routes accordingly.*
-**Exposes:** `clean_html_text()` - *Functional interface.*
 
 
 ---
@@ -598,44 +510,7 @@ This manifest dissects the Akaschic Archive, mapping the lifecycle of rich-text 
 
 ---
 
-**File:** `src/pillars/document_manager/services/spell_service.py`
 
-**Role:** `[Muscle] (Service)`
-
-**Purpose:** Spell Check Service for Document Manager Pillar.
-
-**Input (Ingests):**
-* `language`
-
-**Output (Emits):**
-* Data primitives or DTOs.
-
-**Dependencies (It Needs):**
-* `enchant.checker.SpellChecker`
-* `enchant`
-* `logging`
-* `os`
-* `pathlib.Path`
-* `re`
-* `typing.List`
-* `typing.Optional`
-* `typing.Set`
-
-**Consumers (Who Needs It):**
-* None detected.
-
-**Key Interactions:**
-**Exposes:** `get_spell_service()` - *Get or create the singleton SpellService instance.*
-**Exposes:** `is_enabled()` - *Check if spell checking is available and enabled.*
-**Exposes:** `check()` - *Check if a word is spelled correctly.*
-**Exposes:** `suggest()` - *Get spelling suggestions for a word.*
-**Exposes:** `add_to_dictionary()` - *Add a word to the custom dictionary (persistent).*
-**Exposes:** `ignore()` - *Ignore a word for this session only.*
-**Exposes:** `ignore_all()` - *Ignore all occurrences of a word for this session.*
-**Exposes:** `clear_session_ignores()` - *Clear the session ignore list.*
-**Exposes:** `get_misspelled_words()` - *Get all misspelled words in text with their positions.*
-**Exposes:** `get_available_languages()` - *Get list of available dictionary languages.*
-**Exposes:** `set_language()` - *Change the spell check language.*
 
 
 ---

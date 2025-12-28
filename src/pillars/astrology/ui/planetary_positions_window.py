@@ -37,7 +37,7 @@ from ..services import OpenAstroNotAvailableError, OpenAstroService
 from ..utils import AstrologyPreferences, DefaultLocation
 from ..utils.conversions import to_zodiacal_string
 from shared.ui.window_manager import WindowManager
-from pillars.correspondences.ui.correspondence_hub import CorrespondenceHub
+from shared.ui.window_manager import WindowManager
 
 
 PLANET_CHOICES: Sequence[str] = (
@@ -493,13 +493,15 @@ class PlanetaryPositionsWindow(QMainWindow):
             }
         }
 
-        # Open Hub and Send
-        hub = self.window_manager.open_window(
+        # Open Hub and Send via NavigationBus
+        from shared.signals.navigation_bus import navigation_bus
+        
+        navigation_bus.request_window.emit(
             "emerald_tablet", 
-            CorrespondenceHub, 
-            allow_multiple=False,
-            window_manager=self.window_manager
+            {"allow_multiple": False, "window_manager": self.window_manager}
         )
+        
+        hub = self.window_manager.get_active_windows().get("emerald_tablet")
         
         if hasattr(hub, "receive_import"):
             hub.receive_import(export_data["name"], export_data["data"])

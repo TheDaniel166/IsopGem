@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QAction, QTextCursor
 from typing import Optional, Any, Dict, Callable
-from ..services.etymology_service import get_etymology_service as _get_etymology_service
+from shared.services.document_manager.etymology_service import get_etymology_service as _get_etymology_service
 from shared.ui.virtual_keyboard import VirtualKeyboard
 
 

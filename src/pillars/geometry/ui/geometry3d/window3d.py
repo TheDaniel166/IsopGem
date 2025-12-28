@@ -24,6 +24,7 @@ from PyQt6.QtGui import QAction, QDoubleValidator
 
 from ...shared.solid_payload import SolidPayload
 from shared.ui import WindowManager
+from shared.signals.navigation_bus import navigation_bus
 from .view3d import Geometry3DView
 
 
@@ -856,41 +857,22 @@ class Geometry3DWindow(QMainWindow):
         return int(round(value))
 
     def _send_value_to_quadset(self, value: float):
-        if not self.window_manager:
-            return
         rounded_value = self._round_cross_pillar_value(value)
-        from pillars.tq.ui.quadset_analysis_window import QuadsetAnalysisWindow
-
-        window = self.window_manager.open_window(
-            "quadset_analysis",
-            QuadsetAnalysisWindow,
+        navigation_bus.request_window.emit(
+            "tq_quadset_analysis",
+            {
+                "window_manager": self.window_manager,
+                "initial_value": rounded_value
+            }
         )
-        if not window:
-            return
-        input_widget = getattr(window, "input_field", None)
-        if input_widget is not None:
-            input_widget.setText(str(rounded_value))
-            window.raise_()
-            window.activateWindow()
 
     def _lookup_value_in_database(self, value: float):
-        if not self.window_manager:
-            return
         rounded_value = self._round_cross_pillar_value(value)
-        from pillars.gematria.ui.saved_calculations_window import SavedCalculationsWindow
-
-        window = self.window_manager.open_window(
-            "saved_calculations",
-            SavedCalculationsWindow,
-            allow_multiple=False,
+        navigation_bus.request_window.emit(
+            "gematria_saved_calculations",
+            {
+                "window_manager": self.window_manager,
+                "initial_value": rounded_value,
+                "allow_multiple": False 
+            }
         )
-        if not window:
-            return
-        value_field = getattr(window, "value_input", None)
-        if value_field is not None:
-            value_field.setText(str(rounded_value))
-        search_method = getattr(window, "_search", None)
-        if callable(search_method):
-            search_method()
-        window.raise_()
-        window.activateWindow()

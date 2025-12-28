@@ -16,7 +16,7 @@ from .shape_overlay import ShapeOverlay
 from typing import Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .rich_text_editor import RichTextEditor
+    from .editor import RichTextEditor
 
 
 class ShapeButton(QPushButton):

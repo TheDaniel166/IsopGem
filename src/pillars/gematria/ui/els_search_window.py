@@ -600,7 +600,7 @@ class ELSSearchWindow(QMainWindow):
     def _on_load_from_database(self):
         """Load text from Document Manager database."""
         from PyQt6.QtWidgets import QDialog, QDialogButtonBox, QListWidget, QListWidgetItem
-        from pillars.document_manager.services.document_service import document_service_context
+        from shared.services.document_manager.document_service import document_service_context
         
         # Fetch documents from database
         try:
@@ -890,19 +890,23 @@ class ELSSearchWindow(QMainWindow):
         
         # Open in Document Editor
         if self.window_manager:
-            from pillars.document_manager.ui.document_editor_window import DocumentEditorWindow
+            from shared.signals.navigation_bus import navigation_bus
             
-            # Use window manager to open window (prevents garbage collection)
-            editor_window = self.window_manager.open_window(
-                window_type="document_editor",
-                window_class=DocumentEditorWindow,
-                allow_multiple=True
+            navigation_bus.request_window.emit(
+                "document_editor",
+                {"allow_multiple": True, "window_manager": self.window_manager}
             )
             
-            editor_window.setWindowTitle(f"ELS Report - {term}")
-            editor_window.editor.set_html(html_content)
-            editor_window.is_modified = True  # Mark as needing save
-            editor_window.show()
+            # Find the window instance
+            count = self.window_manager._window_counters.get("document_editor", 0)
+            win_id = f"document_editor_{count}"
+            editor_window = self.window_manager.get_window(win_id)
+            
+            if editor_window and hasattr(editor_window, 'editor'):
+                editor_window.setWindowTitle(f"ELS Report - {term}")
+                editor_window.editor.set_html(html_content)
+                editor_window.is_modified = True  # Mark as needing save
+                editor_window.show()
             
             self.statusBar().showMessage("Exported to Document Editor")
         else:

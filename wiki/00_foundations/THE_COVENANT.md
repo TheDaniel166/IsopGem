@@ -412,7 +412,14 @@ If a new Pillar is born, it **MUST** contain these five organs. A Pillar without
 5. **`utils/` (The Tools):**  
    * Helper functions specific *only* to this pillar.
 
-#### **2.3 The Ritual of Genesis (Adding a New Pillar)**
+#### **2.3 The Infrastructure (Shared Base)**
+While Pillars are sovereign, they stand upon a common foundation. The `shared/` directory contains:
+*   **Database:** The connection engine and session factory.
+*   **Navigation Bus:** The central nervous system for inter-pillar communication.
+*   **Base Classes:** Shared abstract base classes (e.g., `GematriaCalculator`) to ensure polymorphic consistency without direct coupling.
+*   **Window Manager:** The diplomatic envoy that launches and tracks Sovereign Windows.
+
+#### **2.4 The Ritual of Genesis (Adding a New Pillar)**
 
 When the Magus decrees the creation of a new domain (e.g., `pillars/tarot`), we follow this strict Rite of Creation:
 
@@ -424,13 +431,13 @@ When the Magus decrees the creation of a new domain (e.g., `pillars/tarot`), we 
    * We update `wiki/SYSTEM_MAP.md` to officially recognize the new Sovereign Territory.  
 4. **The Dependency Check:** We verify that the new Pillar utilizes `shared.database` and `shared.ui.theme`, ensuring it visually and structurally integrates with the existing Temple.
 
-#### **2.4 The Law of Sovereignty (Inter-Pillar Relations)**
+#### **2.5 The Law of Sovereignty (Inter-Pillar Relations)**
 
 * **The Iron Rule:** `pillars/astrology` must **never** directly import from `pillars/tq`.  
   1. *Why?* Direct imports create "Entanglement" (Coupling). If TQ changes, Astrology breaks. This is unacceptable.  
 * **The Bridge (Communication Protocol):** If the *Tarot* Pillar needs the position of Venus from the *Astrology* Pillar:  
-  1. **The Signal Bus:** The Tarot Service fires a Signal: `request_planet_position(date, "Venus")`.  
-  2. **The Listener:** The Astrology Service (listening on the Bus) catches the signal, computes the value, and returns it.  
+  1. **The Signal Bus:** The Tarot Service fires a Signal: `navigation_bus.request_window.emit()`.  
+  2. **The Listener:** The Window Manager (listening on the Bus) catches the signal and launches the requested Sovereign.  
   3. **The Result:** The Pillars touched, but never held hands. They remain decoupled.
 
 ### **3\. The Law of the Seal (The Rite of the Seven Planets)**

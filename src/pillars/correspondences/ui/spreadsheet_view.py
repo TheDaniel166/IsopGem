@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt, QAbstractTableModel, QModelIndex, pyqtSignal, QEvent, QItemSelectionModel, QPoint, QRect, QSize, QTimer
 from PyQt6.QtGui import QTextDocument, QAbstractTextDocumentLayout, QPalette, QColor, QAction, QUndoStack, QPen, QFont, QKeyEvent, QKeySequence, QBrush, QPainter, QStandardItemModel, QStandardItem, QMouseEvent, QTextOption
-from pillars.document_manager.ui.rich_text_editor import RichTextEditor
+from shared.ui.rich_text_editor import RichTextEditor
 import json
 import re
 import os

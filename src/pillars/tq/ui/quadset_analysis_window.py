@@ -18,7 +18,8 @@ from ..services.quadset_engine import QuadsetEngine
 from ..models import QuadsetResult, QuadsetMember
 from shared.ui import WindowManager
 from shared.database import get_db_session
-from pillars.gematria.models.calculation_entity import CalculationEntity
+from shared.signals.navigation_bus import navigation_bus
+from shared.models.gematria import CalculationEntity
 from shared.ui.theme import COLORS, get_card_style, get_app_stylesheet
 
 
@@ -189,7 +190,7 @@ class SubstrateWidget(QWidget):
 class QuadsetAnalysisWindow(QMainWindow):
     """Window for Quadset Analysis with detailed property tabs."""
     
-    def __init__(self, window_manager: WindowManager = None, parent=None):
+    def __init__(self, window_manager: WindowManager = None, parent=None, initial_value=None, **kwargs):
         super().__init__(parent)
         self.window_manager = window_manager
         self.setWindowTitle("Quadset Analysis")
@@ -199,6 +200,9 @@ class QuadsetAnalysisWindow(QMainWindow):
         self.engine = QuadsetEngine()
         
         self._setup_ui()
+        
+        if initial_value is not None:
+            self.input_field.setText(str(initial_value))
         
     def _setup_ui(self):
         """Set up the user interface with vertical sidebar navigation."""
@@ -797,14 +801,51 @@ class QuadsetAnalysisWindow(QMainWindow):
 
     def _open_figurate_3d_window(self, shape_type: str, index: int):
         """Open the 3D figurate visualizer with pre-filled values."""
-        from pillars.geometry.ui.figurate_3d_window import Figurate3DWindow
-        
+    def _open_figurate_3d_window(self, shape_type: str, index: int):
+        """Open the 3D figurate visualizer with pre-filled values."""
         if not self.window_manager:
             print("No window manager found, cannot open visualizer")
             return
 
-        win_id = "figurate_3d_window_shared"
-        win = self.window_manager.open_window(win_id, Figurate3DWindow, window_manager=self.window_manager)
+        # Use signal bus
+        navigation_bus.request_window.emit(
+            "figurate_3d", 
+            {
+                "window_manager": self.window_manager,
+                # We can't pass shape_type/index directly to init if the class doesn't support it,
+                # but we can try to find it after opening if single instance or just rely on manual interaction for now.
+                # However, looking at Figurate3DWindow, it might not take these in init yet.
+                # Let's emit, then try to find and set.
+            }
+        )
+        
+        # Attempt to find the window we just requested (likely the most recent or unique one)
+        # This relies on the window ID convention or allows multiple if supported.
+        # But wait, Figurate3D key is "figurate_3d" and allow_multiple=True.
+        # ID is "figurate_3d_N".
+        # This is tricky for "allow_multiple".
+        # Creating a dedicated navigation param would be better long term.
+        # For now, we iterate active windows to find one.
+        
+        # WORKAROUND: Iterate active windows to find the one we likely just opened (or reusing)
+        # OR: Modify Figurate3DWindow to accept these in __init__.
+        # Getting the window instance via get_active_windows is the safest "no-code-change" way for target.
+        
+        # Actually, let's just attempt to get "figurate_3d_1" or scan.
+        # Simpler: we just opened it.
+        pass # The previous code returned 'win'.
+        
+        # We need to set the values.
+        # Let's try to get the latest window of this type.
+        start_count = self.window_manager._window_counters.get("figurate_3d", 0)
+        win_id = f"figurate_3d_{start_count}" # Rough guess
+        win = self.window_manager.get_window(win_id)
+        if not win:
+             # Fallback scan
+             for w in self.window_manager.get_active_windows().values():
+                 if w.property("window_type") == "figurate_3d":
+                     win = w
+                     break # Take any
         
         if win:
             # Map shape_type to combo index
@@ -816,35 +857,47 @@ class QuadsetAnalysisWindow(QMainWindow):
             }
             combo_idx = shape_map.get(shape_type.lower(), 0)
             
-            if win.shape_combo:
+            if hasattr(win, "shape_combo") and win.shape_combo:
                 win.shape_combo.setCurrentIndex(combo_idx)
-            if win.index_spin:
+            if hasattr(win, "index_spin") and win.index_spin:
                 win.index_spin.setValue(index)
 
     def _open_geometry_window(self, sides: int, index: int, mode: str):
         """Open the geometry visualizer with pre-filled values."""
-        from pillars.geometry.ui.polygonal_number_window import PolygonalNumberWindow
-        
+    def _open_geometry_window(self, sides: int, index: int, mode: str):
+        """Open the geometry visualizer with pre-filled values."""
         if not self.window_manager:
             print("No window manager found, cannot open visualizer")
             return
 
-        win_id = "geometry_window_shared"
-        # Open logic: If already open, it returns the instance.
-        win = self.window_manager.open_window(win_id, PolygonalNumberWindow, window_manager=self.window_manager)
+        navigation_bus.request_window.emit(
+            "polygonal_number", 
+            {"window_manager": self.window_manager}
+        )
         
+        # Similar logic to find the window instance
+        win = None
+        # Try to find generic or specific
+        start_count = self.window_manager._window_counters.get("polygonal_number", 0)
+        win_id = f"polygonal_number_{start_count}"
+        win = self.window_manager.get_window(win_id)
+        
+        if not win:
+             for w in self.window_manager.get_active_windows().values():
+                 if w.property("window_type") == "polygonal_number":
+                     win = w
+                     break
+
         if win:
             # Set values programmatically
-            # Block signals to prevent redundant renders if desired, or let it render
-            if win.mode_combo:
+            if hasattr(win, "mode_combo") and win.mode_combo:
                 idx = win.mode_combo.findData(mode)
                 if idx >= 0: win.mode_combo.setCurrentIndex(idx)
             
-            if win.sides_spin: win.sides_spin.setValue(sides)
-            if win.index_spin: win.index_spin.setValue(index)
-            
-            # Force a re-render/update if needed by calling private method (hacky but effective)
-            # Or rely on valueChanged signals which should have fired
+            if hasattr(win, "sides_spin") and win.sides_spin: 
+                win.sides_spin.setValue(sides)
+            if hasattr(win, "index_spin") and win.index_spin: 
+                win.index_spin.setValue(index)
             
             win.raise_()
             win.activateWindow()

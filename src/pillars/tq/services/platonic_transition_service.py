@@ -5,13 +5,13 @@ import math
 from dataclasses import dataclass
 from typing import Callable, Dict, List, Optional, Sequence, Tuple, cast
 
-from pillars.geometry.services.archimedean_solids import CuboctahedronSolidService
-from pillars.geometry.services.cube_solid import CubeSolidService
-from pillars.geometry.services.dodecahedron_solid import DodecahedronSolidService
-from pillars.geometry.services.icosahedron_solid import IcosahedronSolidService
-from pillars.geometry.services.octahedron_solid import OctahedronSolidService
-from pillars.geometry.services.tetrahedron_solid import TetrahedronSolidService
-from pillars.geometry.shared.solid_payload import SolidPayload
+from shared.services.geometry.archimedean import CuboctahedronSolidService
+from shared.services.geometry.cube import CubeSolidService
+from shared.services.geometry.dodecahedron import DodecahedronSolidService
+from shared.services.geometry.icosahedron import IcosahedronSolidService
+from shared.services.geometry.octahedron import OctahedronSolidService
+from shared.services.geometry.tetrahedron import TetrahedronSolidService
+from shared.services.geometry.solid_payload import SolidPayload
 
 from .ternary_service import TernaryService
 from .ternary_transition_service import TernaryTransitionService

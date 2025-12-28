@@ -324,17 +324,10 @@ class WallAnalyticsWindow(QMainWindow):
         if not self.window_manager:
             return
 
-        from pillars.tq.ui.quadset_analysis_window import QuadsetAnalysisWindow
-
-        window = self.window_manager.open_window(
-            "quadset_analysis",
-            QuadsetAnalysisWindow,
+        from shared.signals.navigation_bus import navigation_bus
+        
+        # Open via NavigationBus with initial value
+        navigation_bus.request_window.emit(
+            "tq_quadset_analysis",
+            {"window_manager": self.window_manager, "initial_value": value}
         )
-        if not window:
-            return
-
-        input_widget = getattr(window, "input_field", None)
-        if input_widget is not None:
-            input_widget.setText(str(value))
-            window.raise_()
-            window.activateWindow()

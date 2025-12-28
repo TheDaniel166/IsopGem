@@ -6,8 +6,8 @@ from pathlib import Path
 from typing import Dict, List, Tuple
 from PyQt6.QtGui import QColor
 
-from pillars.tq.services.ternary_service import TernaryService
-from pillars.tq.services.baphomet_color_service import BaphometColorService
+from shared.services.tq.ternary_service import TernaryService
+from shared.services.tq.baphomet_color_service import BaphometColorService
 from pillars.adyton.models.kamea_cell import KameaCell
 
 class KameaColorService:

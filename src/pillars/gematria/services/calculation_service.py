@@ -5,7 +5,7 @@ from datetime import datetime
 
 from ..models import CalculationRecord
 from ..repositories import CalculationRepository
-from .base_calculator import GematriaCalculator
+from shared.services.gematria.base_calculator import GematriaCalculator
 
 
 class CalculationService:

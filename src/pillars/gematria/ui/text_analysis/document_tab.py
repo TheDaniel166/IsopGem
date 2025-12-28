@@ -11,7 +11,7 @@ from typing import Optional
 
 from .document_viewer import DocumentViewer
 from .verse_list import VerseList
-from pillars.document_manager.models.document import Document
+from shared.models.document_manager.document import Document
 from ...services.text_analysis_service import TextAnalysisService
 
 class DocumentTab(QWidget):

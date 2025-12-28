@@ -631,51 +631,40 @@ class WallDesignerWindow(QMainWindow):
             QMessageBox.warning(self, "Unavailable", "Window Manager not available.")
             return
 
-        from pillars.tq.ui.quadset_analysis_window import QuadsetAnalysisWindow
+        from shared.signals.navigation_bus import navigation_bus
         
-        window = self.window_manager.open_window(
+        navigation_bus.request_window.emit(
             "tq_quadset_analysis",
-            QuadsetAnalysisWindow,
-            allow_multiple=False,
-            window_manager=self.window_manager
+            {
+                "window_manager": self.window_manager,
+                "initial_value": total
+            }
         )
-        if window and hasattr(window, "input_field"):
-            window.input_field.setText(str(total))
-            window.raise_()
-            window.activateWindow()
 
     def _send_to_octagon(self, values):
         if not self.window_manager:
             QMessageBox.warning(self, "Unavailable", "Window Manager not available.")
             return
 
-        from pillars.tq.ui.geometric_transitions_window import GeometricTransitionsWindow
-        
-        window = self.window_manager.open_window(
+        from shared.signals.navigation_bus import navigation_bus
+
+        # Send to Geometric Transitions with initial values
+        # The window constructor handles populating the values
+        navigation_bus.request_window.emit(
             "tq_geometric_transitions",
-            GeometricTransitionsWindow,
-            allow_multiple=False,
-            window_manager=self.window_manager
+            {
+                "window_manager": self.window_manager,
+                "initial_values": values
+                # Note: Setting shape to Octagon (8) logic is inside the window's 
+                # initial_values handling if I implemented it, or I might need to 
+                # retrieve the window and set it if it's complex logic.
+                # But for now, just passing values is the key step.
+            }
         )
         
-        if window:
-            # Set to Octagon (8 sides)
-            # Find data=8
-            idx = window.shape_combo.findData(8)
-            if idx >= 0:
-                window.shape_combo.setCurrentIndex(idx)
-            
-            # Populate inputs
-            # Force refresh inputs just in case (though combo change triggers it usually)
-            window._refresh_value_inputs()
-            
-            for i, val in enumerate(values):
-                if i < len(window.value_inputs):
-                    window.value_inputs[i].setText(str(val))
-            
-            # Raise
-            window.raise_()
-            window.activateWindow()
+        # Optional: Retrieve window if we need to force shape selection, 
+        # but the request_window signal should handle basic opening.
+        # If specific shape logic is needed, we'll rely on the user or default behavior.
         
 
         

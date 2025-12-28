@@ -31,7 +31,7 @@ try:
 except Exception:
     from PyQt6.QtGui import QShortcut  # type: ignore
 
-from pillars.document_manager.services.verse_teacher_service import verse_teacher_service_context
+from shared.services.document_manager.verse_teacher_service import verse_teacher_service_context
 from pathlib import Path
 import os
 import logging

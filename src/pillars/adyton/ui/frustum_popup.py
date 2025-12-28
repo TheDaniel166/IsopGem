@@ -13,8 +13,8 @@ from PyQt6.QtGui import QFont, QPainter, QColor, QPen, QBrush, QPolygonF
 from PyQt6.QtCore import QPointF, QRectF
 
 from pillars.adyton.services.frustum_color_service import FrustumColorService
-from pillars.tq.services.ternary_service import TernaryService
-from pillars.tq.services.baphomet_color_service import BaphometColorService
+from shared.services.tq.ternary_service import TernaryService
+from shared.services.tq.baphomet_color_service import BaphometColorService
 
 
 @dataclass

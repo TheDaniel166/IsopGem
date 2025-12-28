@@ -380,19 +380,31 @@ class ChainResultsWindow(QMainWindow):
         </table>
         """
 
-        from pillars.document_manager.ui.document_editor_window import DocumentEditorWindow
+        from shared.signals.navigation_bus import navigation_bus
         
-        # Use window manager to open window
-        editor_window = self.window_manager.open_window(
-            window_type="document_editor",
-            window_class=DocumentEditorWindow,
-            allow_multiple=True
+        # Requests editor via bus
+        navigation_bus.request_window.emit(
+            "document_editor", 
+            {"allow_multiple": True, "window_manager": self.window_manager}
         )
         
-        editor_window.setWindowTitle(f"chain Report - {self._term}")
-        editor_window.editor.set_html(html)
-        editor_window.is_modified = True
-        editor_window.show()
+        # Finding the window we just opened is tricky with allow_multiple=True
+        # because the ID is generated.
+        # However, for document editor, we usually want to passing content via params 
+        # is cleaner if the target supports it. 
+        # But DocumentEditorWindow constructor signature: __init__(self, window_manager=None, parent=None)
+        # So we have to find it.
+        
+        # Strategy: Get the most highly numbered document_editor window
+        count = self.window_manager._window_counters.get("document_editor", 0)
+        win_id = f"document_editor_{count}"
+        editor_window = self.window_manager.get_window(win_id)
+        
+        if editor_window and hasattr(editor_window, 'editor'):
+            editor_window.setWindowTitle(f"chain Report - {self._term}")
+            editor_window.editor.set_html(html)
+            editor_window.is_modified = True
+            editor_window.show()
     
     def _on_show_statistics(self):
         """Show statistical analysis dialog."""

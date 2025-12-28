@@ -3,7 +3,7 @@ import re
 import logging
 from typing import Set, Optional
 from sqlalchemy.orm import Session
-from pillars.document_manager.repositories.document_repository import DocumentRepository
+from shared.repositories.document_manager.document_repository import DocumentRepository
 from shared.database import get_db
 
 logger = logging.getLogger(__name__)

@@ -294,38 +294,7 @@ This manifest dissects the "Muscle" and "Skin" of the Gematria pillar, mapping t
 
 ---
 
-**File:** `src/pillars/gematria/services/base_calculator.py`
 
-**Role:** `[Muscle] (Service)`
-
-**Purpose:** Base class for gematria calculators following DRY principles.
-
-**Input (Ingests):**
-* Pure data structure or utility module.
-
-**Output (Emits):**
-* Data primitives or DTOs.
-
-**Dependencies (It Needs):**
-* `abc.ABC`
-* `abc.abstractmethod`
-* `typing.Dict`
-* `typing.List`
-* `typing.Tuple`
-* `unicodedata`
-
-**Consumers (Who Needs It):**
-* `scripts/verify_gematria_send.py`
-* `scripts/verify_text_analysis_send.py`
-* `src/pillars/correspondences/services/formula_engine.py`
-* `tests/gematria/test_calculation_service.py`
-
-**Key Interactions:**
-**Exposes:** `name()` - *Return the name of this gematria system.*
-**Exposes:** `normalize_text()` - *Normalize text by removing diacritical marks and accents.*
-**Exposes:** `calculate()` - *Calculate the gematria value of the given text.*
-**Exposes:** `get_letter_value()` - *Get the gematria value of a single character.*
-**Exposes:** `get_breakdown()` - *Get a breakdown of each character's value in the text.*
 
 
 ---
@@ -484,90 +453,12 @@ This manifest dissects the "Muscle" and "Skin" of the Gematria pillar, mapping t
 
 ---
 
-**File:** `src/pillars/gematria/services/greek_calculator.py`
 
-**Role:** `[Muscle] (Service)`
-
-**Purpose:** Greek isopsephy calculator implementation.
-
-**Input (Ingests):**
-* Pure data structure or utility module.
-
-**Output (Emits):**
-* Data primitives or DTOs.
-
-**Dependencies (It Needs):**
-* `base_calculator.GematriaCalculator`
-* `typing.Dict`
-
-**Consumers (Who Needs It):**
-* `src/pillars/gematria/ui/chiastic_window.py`
-
-**Key Interactions:**
-**Exposes:** `name()` - *Return the name of this gematria system.*
-**Exposes:** `name()` - *Return the name of this gematria system.*
-**Exposes:** `name()` - *Return the name of this gematria system.*
-**Exposes:** `name()` - *Return the name of this gematria system.*
-**Exposes:** `name()` - *Return the name of this gematria system.*
-**Exposes:** `calculate()` - *Calculate isopsephy value + number of letters (Kolel).*
-**Exposes:** `name()` - *Return the name of this gematria system.*
-**Exposes:** `calculate()` - *Calculate sum of squared letter values.*
-**Exposes:** `name()` - *Return the name of this gematria system.*
-**Exposes:** `calculate()` - *Calculate sum of cubed letter values.*
-**Exposes:** `name()` - *Return the name of this gematria system.*
-**Exposes:** `calculate()` - *Calculate sum of triangular numbers for each letter.*
-**Exposes:** `name()` - *Return the name of this gematria system.*
-**Exposes:** `calculate()` - *Calculate sum of digit sums for each letter value.*
-**Exposes:** `name()` - *Return the name of this gematria system.*
-**Exposes:** `calculate()` - *Calculate sum of squared ordinal values.*
-**Exposes:** `name()` - *Return the name of this gematria system.*
-**Exposes:** `name()` - *Return the name of this gematria system.*
-**Exposes:** `name()` - *Return the name of this gematria system.*
-**Exposes:** `name()` - *Return the name of this gematria system.*
 
 
 ---
 
-**File:** `src/pillars/gematria/services/hebrew_calculator.py`
 
-**Role:** `[Muscle] (Service)`
-
-**Purpose:** Hebrew gematria calculator implementation.
-
-**Input (Ingests):**
-* Pure data structure or utility module.
-
-**Output (Emits):**
-* Data primitives or DTOs.
-
-**Dependencies (It Needs):**
-* `base_calculator.GematriaCalculator`
-* `typing.Dict`
-
-**Consumers (Who Needs It):**
-* `src/pillars/gematria/ui/chiastic_window.py`
-
-**Key Interactions:**
-**Exposes:** `name()` - *Return the name of this gematria system.*
-**Exposes:** `name()` - *Return the name of this gematria system.*
-**Exposes:** `name()` - *Return the name of this gematria system.*
-**Exposes:** `name()` - *Return the name of this gematria system.*
-**Exposes:** `name()` - *Return the name of this gematria system.*
-**Exposes:** `name()` - *Return the name of this gematria system.*
-**Exposes:** `name()` - *Return the name of this gematria system.*
-**Exposes:** `calculate()` - *Calculate gematria value + number of letters (Kolel).*
-**Exposes:** `name()` - *Return the name of this gematria system.*
-**Exposes:** `calculate()` - *Calculate sum of squared letter values.*
-**Exposes:** `name()` - *Return the name of this gematria system.*
-**Exposes:** `calculate()` - *Calculate sum of cubed letter values.*
-**Exposes:** `name()` - *Return the name of this gematria system.*
-**Exposes:** `calculate()` - *Calculate sum of triangular numbers for each letter.*
-**Exposes:** `name()` - *Return the name of this gematria system.*
-**Exposes:** `calculate()` - *Calculate sum of digit sums for each letter value.*
-**Exposes:** `name()` - *Return the name of this gematria system.*
-**Exposes:** `calculate()` - *Calculate sum of squared ordinal values.*
-**Exposes:** `name()` - *Return the name of this gematria system.*
-**Exposes:** `name()` - *Return the name of this gematria system.*
 
 
 ---
@@ -636,35 +527,7 @@ This manifest dissects the "Muscle" and "Skin" of the Gematria pillar, mapping t
 
 ---
 
-**File:** `src/pillars/gematria/services/tq_calculator.py`
 
-**Role:** `[Muscle] (Service)`
-
-**Purpose:** TQ (Trigrammaton Qabbalah) English gematria calculator implementation.
-
-**Input (Ingests):**
-* Pure data structure or utility module.
-
-**Output (Emits):**
-* Data primitives or DTOs.
-
-**Dependencies (It Needs):**
-* `base_calculator.GematriaCalculator`
-* `typing.Dict`
-
-**Consumers (Who Needs It):**
-* `src/pillars/gematria/ui/chiastic_window.py`
-
-**Key Interactions:**
-**Exposes:** `name()` - *Return the name of this gematria system.*
-**Exposes:** `name()` - *Return the name of this gematria system.*
-**Exposes:** `calculate()` - *Calculate TQ value and reduce to single digit.*
-**Exposes:** `name()` - *Return the name of this gematria system.*
-**Exposes:** `calculate()` - *Calculate sum of squared TQ letter values.*
-**Exposes:** `name()` - *Return the name of this gematria system.*
-**Exposes:** `calculate()` - *Calculate sum of triangular numbers for each letter.*
-**Exposes:** `name()` - *Return the name of this gematria system.*
-**Exposes:** `calculate()` - *Multiply each letter's TQ value by its position in the word, then sum.*
 
 
 ---

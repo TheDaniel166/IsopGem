@@ -41,7 +41,7 @@ class DocumentSelectorDialog(QDialog):
         self.load_docs()
         
     def load_docs(self):
-        from pillars.document_manager.repositories.document_repository import DocumentRepository
+        from shared.repositories.document_manager.document_repository import DocumentRepository
         from shared.database import get_db
         
         db = next(get_db())
