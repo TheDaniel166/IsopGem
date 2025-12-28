@@ -20,6 +20,16 @@ class TrigramItem(QGraphicsItem):
     Style: 'SOLID' (Anchor) or 'FLUID' (Flux).
     """
     def __init__(self, trigram_str="000", size=60, color=QColor("#333"), style='SOLID'):
+        """
+          init   logic.
+        
+        Args:
+            trigram_str: Description of trigram_str.
+            size: Description of size.
+            color: Description of color.
+            style: Description of style.
+        
+        """
         super().__init__()
         self.trigram = trigram_str
         self.size = size
@@ -27,9 +37,24 @@ class TrigramItem(QGraphicsItem):
         self.style = style # 'SOLID', 'FLUID', 'FIRE', 'MIST'
         
     def boundingRect(self) -> QRectF:
+        """
+        Boundingrect logic.
+        
+        Returns:
+            Result of boundingRect operation.
+        """
         return QRectF(-self.size/2, -self.size/2, self.size, self.size)
         
     def paint(self, painter: QPainter, option, widget):
+        """
+        Paint logic.
+        
+        Args:
+            painter: Description of painter.
+            option: Description of option.
+            widget: Description of widget.
+        
+        """
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         
         pen = QPen(self.color, 4 if self.style in ['SOLID', 'CRYSTAL'] else 2)
@@ -76,6 +101,14 @@ class TrigramItem(QGraphicsItem):
             painter.setPen(p)
 
     def update_trigram(self, new_val, new_style):
+        """
+        Update trigram logic.
+        
+        Args:
+            new_val: Description of new_val.
+            new_style: Description of new_style.
+        
+        """
         self.trigram = new_val
         self.style = new_style
         self.update()
@@ -86,6 +119,10 @@ class PillarGauge(QGraphicsItem):
     Shows the Upper and Lower Trigrams with distinct styles based on Column Type.
     """
     def __init__(self):
+        """
+          init   logic.
+        
+        """
         super().__init__()
         self.size = 200
         self.col_type = "ODD" # ODD, EVEN, MYSTIC
@@ -93,9 +130,22 @@ class PillarGauge(QGraphicsItem):
         self.lower_t = "000"
         
     def boundingRect(self):
+        """
+        Boundingrect logic.
+        
+        """
         return QRectF(-self.size/2, -self.size/2, self.size, self.size)
         
     def update_state(self, upper, lower, tone):
+        """
+        Update state logic.
+        
+        Args:
+            upper: Description of upper.
+            lower: Description of lower.
+            tone: Description of tone.
+        
+        """
         self.upper_t = upper
         self.lower_t = lower
         
@@ -108,6 +158,15 @@ class PillarGauge(QGraphicsItem):
         self.update()
         
     def paint(self, painter, option, widget):
+        """
+        Paint logic.
+        
+        Args:
+            painter: Description of painter.
+            option: Description of option.
+            widget: Description of widget.
+        
+        """
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         
         # Background Circle
@@ -207,15 +266,44 @@ class PillarGauge(QGraphicsItem):
                 pass
 
 class OrbItem(QGraphicsItem):
+    """
+    Orb Item class definition.
+    
+    Attributes:
+        color: Description of color.
+        radius: Description of radius.
+    
+    """
     def __init__(self, color, radius=10):
+        """
+          init   logic.
+        
+        Args:
+            color: Description of color.
+            radius: Description of radius.
+        
+        """
         super().__init__()
         self.color = QColor(color)
         self.radius = radius
         
     def boundingRect(self):
+        """
+        Boundingrect logic.
+        
+        """
         return QRectF(-self.radius*2, -self.radius*2, self.radius*4, self.radius*4)
                       
     def paint(self, painter, option, widget):
+        """
+        Paint logic.
+        
+        Args:
+            painter: Description of painter.
+            option: Description of option.
+            widget: Description of widget.
+        
+        """
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         c = QColor(self.color)
         # Glow
@@ -232,7 +320,24 @@ class OrbItem(QGraphicsItem):
         painter.drawEllipse(QPointF(0,0), self.radius/2, self.radius/2)
 
 class DynamisScene(QGraphicsScene):
+    """
+    Dynamis Scene class definition.
+    
+    Attributes:
+        track_radius: Description of track_radius.
+        pillar_gauge: Description of pillar_gauge.
+        self_orb: Description of self_orb.
+        conrune_orb: Description of conrune_orb.
+    
+    """
     def __init__(self, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.setSceneRect(-400, -400, 800, 800)
         self.setBackgroundBrush(QColor("#0f172a"))
@@ -254,6 +359,14 @@ class DynamisScene(QGraphicsScene):
         # Represents +168 Charge (Top) vs -168 Charge (Bottom)
         # We want a subtle gradient.
         
+        """
+        Drawbackground logic.
+        
+        Args:
+            painter: Description of painter.
+            rect: Description of rect.
+        
+        """
         scene_rect = self.sceneRect()
         
         # Gradient from Top (-400) to Bottom (+400)
@@ -289,6 +402,14 @@ class DynamisScene(QGraphicsScene):
         painter.fillRect(bot_rect, grad_bot)
         
     def drawForeground(self, painter, rect):
+        """
+        Drawforeground logic.
+        
+        Args:
+            painter: Description of painter.
+            rect: Description of rect.
+        
+        """
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         
         # Draw Ouroboros Track
@@ -309,7 +430,32 @@ class DynamisScene(QGraphicsScene):
         painter.drawLine(p1, p2)
 
 class TzolkinDynamisWindow(QWidget):
+    """
+    Tzolkin Dynamis Window class definition.
+    
+    Attributes:
+        service: Description of service.
+        current_kin: Description of current_kin.
+        layout: Description of layout.
+        lbl_day: Description of lbl_day.
+        slider: Description of slider.
+        btn_play: Description of btn_play.
+        scene: Description of scene.
+        view: Description of view.
+        self_trigram: Description of self_trigram.
+        conrune_trigram: Description of conrune_trigram.
+        timer: Description of timer.
+        is_playing: Description of is_playing.
+    
+    """
     def __init__(self, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.setWindowTitle("Tzolkin Dynamis: The Constitution of Time")
         self.resize(1000, 900)
@@ -368,10 +514,21 @@ class TzolkinDynamisWindow(QWidget):
         self.update_positions()
 
     def on_slider_change(self, val):
+        """
+        Handle slider change logic.
+        
+        Args:
+            val: Description of val.
+        
+        """
         self.current_kin = val
         self.update_positions()
         
     def toggle_animation(self):
+        """
+        Toggle animation logic.
+        
+        """
         if self.is_playing:
             self.timer.stop()
             self.btn_play.setText("▶ Cycle")
@@ -381,11 +538,19 @@ class TzolkinDynamisWindow(QWidget):
         self.is_playing = not self.is_playing
 
     def advance_frame(self):
+        """
+        Advance frame logic.
+        
+        """
         k = self.current_kin + 1
         if k > 260: k = 1
         self.slider.setValue(k)
 
     def update_positions(self):
+        """
+        Update positions logic.
+        
+        """
         kin = self.current_kin
         
         # Calculate Angle (Kin 1 @ -90 deg)

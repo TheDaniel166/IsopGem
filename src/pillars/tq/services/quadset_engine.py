@@ -12,6 +12,10 @@ class QuadsetEngine:
     """Orchestrates Quadset calculations."""
 
     def __init__(self):
+        """
+          init   logic.
+        
+        """
         self.ternary_service = TernaryService()
         self.transition_service = TernaryTransitionService()
         self.pattern_analyzer = PatternAnalyzer()

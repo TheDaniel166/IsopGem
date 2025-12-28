@@ -29,6 +29,14 @@ class BaseFigurateWindow(QMainWindow):
     HEAVY_THRESHOLD = 2000
 
     def __init__(self, window_manager: Optional[WindowManager] = None, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            window_manager: Description of window_manager.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.window_manager = window_manager
 

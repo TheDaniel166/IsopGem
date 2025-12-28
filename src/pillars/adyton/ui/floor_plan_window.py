@@ -16,6 +16,13 @@ class FloorPlanViewport(AdytonGLViewport):
     """Specialized GL Viewport for the Floor Plan."""
     def __init__(self, parent=None):
         # We don't want the full prism, so we'll customize scene_objects later
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         
         # Manifest floor and central throne
@@ -35,6 +42,13 @@ class FloorPlanViewport(AdytonGLViewport):
 class FloorPlanWindow(QWidget):
     """Window container for the Floor Plan visualization."""
     def __init__(self, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.setWindowTitle("Adyton Floor Plan - The Foundation of 185")
         self.resize(800, 800)

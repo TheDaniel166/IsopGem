@@ -19,6 +19,13 @@ class TzolkinCalculatorWindow(QWidget):
     """
     
     def __init__(self, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.setWindowTitle("Tzolkin Calculator")
         self.resize(1600, 1000)

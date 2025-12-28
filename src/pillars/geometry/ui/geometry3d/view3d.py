@@ -32,6 +32,10 @@ from ...services.measurement_utils import (
 
 @dataclass
 class CameraState:
+    """
+    Camera State class definition.
+    
+    """
     distance: float = 4.0
     yaw_deg: float = 30.0
     pitch_deg: float = 25.0
@@ -39,6 +43,12 @@ class CameraState:
     pan_y: float = 0.0
 
     def rotation_matrix(self) -> QMatrix4x4:
+        """
+        Rotation matrix logic.
+        
+        Returns:
+            Result of rotation_matrix operation.
+        """
         matrix = QMatrix4x4()
         matrix.rotate(self.pitch_deg, 1.0, 0.0, 0.0)
         matrix.rotate(self.yaw_deg, 0.0, 1.0, 0.0)
@@ -49,6 +59,13 @@ class Geometry3DView(QWidget):
     """Lightweight software-rendered 3D viewport."""
 
     def __init__(self, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.setMouseTracking(True)
         self._payload: Optional[SolidPayload] = None
@@ -78,48 +95,126 @@ class Geometry3DView(QWidget):
     # Public API
     # ------------------------------------------------------------------
     def set_payload(self, payload: Optional[SolidPayload]):
+        """
+        Configure payload logic.
+        
+        Args:
+            payload: Description of payload.
+        
+        """
         self._payload = payload
         self._payload_scale = max(1e-6, getattr(payload, 'suggested_scale', 1.0) or 1.0)
         self.update()
 
     def reset_view(self):
+        """
+        Reset view logic.
+        
+        """
         self._camera = CameraState()
         self.update()
 
     def set_camera_angles(self, yaw_deg: float, pitch_deg: float):
+        """
+        Configure camera angles logic.
+        
+        Args:
+            yaw_deg: Description of yaw_deg.
+            pitch_deg: Description of pitch_deg.
+        
+        """
         self._camera.yaw_deg = yaw_deg
         self._camera.pitch_deg = max(-89.0, min(89.0, pitch_deg))
         self.update()
 
     def set_axes_visible(self, visible: bool):
+        """
+        Configure axes visible logic.
+        
+        Args:
+            visible: Description of visible.
+        
+        """
         self._show_axes = visible
         self.update()
 
     def axes_visible(self) -> bool:
+        """
+        Axes visible logic.
+        
+        Returns:
+            Result of axes_visible operation.
+        """
         return self._show_axes
 
     def set_labels_visible(self, visible: bool):
+        """
+        Configure labels visible logic.
+        
+        Args:
+            visible: Description of visible.
+        
+        """
         self._show_labels = visible
         self.update()
 
     def labels_visible(self) -> bool:
+        """
+        Labels visible logic.
+        
+        Returns:
+            Result of labels_visible operation.
+        """
         return self._show_labels
 
     def set_vertices_visible(self, visible: bool):
+        """
+        Configure vertices visible logic.
+        
+        Args:
+            visible: Description of visible.
+        
+        """
         self._show_vertices = visible
         self.update()
 
     def vertices_visible(self) -> bool:
+        """
+        Vertices visible logic.
+        
+        Returns:
+            Result of vertices_visible operation.
+        """
         return self._show_vertices
 
     def set_dual_visible(self, visible: bool):
+        """
+        Configure dual visible logic.
+        
+        Args:
+            visible: Description of visible.
+        
+        """
         self._show_dual = visible
         self.update()
 
     def dual_visible(self) -> bool:
+        """
+        Dual visible logic.
+        
+        Returns:
+            Result of dual_visible operation.
+        """
         return self._show_dual
 
     def set_measure_mode(self, enabled: bool):
+        """
+        Configure measure mode logic.
+        
+        Args:
+            enabled: Description of enabled.
+        
+        """
         self._measure_mode = enabled
         self._selected_vertex_indices.clear()
         self._apex_vertex_index = None
@@ -128,15 +223,31 @@ class Geometry3DView(QWidget):
         self.update()
 
     def measure_mode(self) -> bool:
+        """
+        Measure mode logic.
+        
+        Returns:
+            Result of measure_mode operation.
+        """
         return self._measure_mode
 
     def clear_measurement(self):
+        """
+        Clear measurement logic.
+        
+        """
         self._selected_vertex_indices.clear()
         self._apex_vertex_index = None
         self._loop_closed = False
         self.update()
 
     def selected_vertices(self) -> List[int]:
+        """
+        Selected vertices logic.
+        
+        Returns:
+            Result of selected_vertices operation.
+        """
         return list(self._selected_vertex_indices)
 
     # Signal emitted when measurement is complete (vertex1, vertex2, distance)
@@ -144,22 +255,51 @@ class Geometry3DView(QWidget):
 
 
     def set_sphere_visible(self, kind: str, visible: bool):
+        """
+        Configure sphere visible logic.
+        
+        Args:
+            kind: Description of kind.
+            visible: Description of visible.
+        
+        """
         if kind in self._sphere_visibility:
             self._sphere_visibility[kind] = visible
             self.update()
 
     def sphere_visible(self, kind: str) -> bool:
+        """
+        Sphere visible logic.
+        
+        Args:
+            kind: Description of kind.
+        
+        Returns:
+            Result of sphere_visible operation.
+        """
         return self._sphere_visibility.get(kind, False)
 
     def zoom_in(self):
+        """
+        Zoom in logic.
+        
+        """
         self._camera.distance = max(1.0, self._camera.distance * 0.85)
         self.update()
 
     def zoom_out(self):
+        """
+        Zoom out logic.
+        
+        """
         self._camera.distance = min(100.0, self._camera.distance / 0.85)
         self.update()
 
     def fit_scene(self):
+        """
+        Fit scene logic.
+        
+        """
         if not self._payload or not self._payload.vertices:
             self.reset_view()
             return
@@ -183,6 +323,13 @@ class Geometry3DView(QWidget):
     # QWidget overrides
     # ------------------------------------------------------------------
     def paintEvent(self, a0: QPaintEvent | None):  # pragma: no cover - GUI hook
+        """
+        Paintevent logic.
+        
+        Args:
+            a0: Description of a0.
+        
+        """
         painter = QPainter(self)
         painter.fillRect(self.rect(), QColor(15, 23, 42))
 
@@ -325,6 +472,13 @@ class Geometry3DView(QWidget):
             self._draw_dual(painter, payload.dual, matrix, scale, pan_offset)
 
     def wheelEvent(self, a0: QWheelEvent | None):  # pragma: no cover - GUI hook
+        """
+        Wheelevent logic.
+        
+        Args:
+            a0: Description of a0.
+        
+        """
         if a0 is None:
             return
         event = a0
@@ -333,6 +487,13 @@ class Geometry3DView(QWidget):
         self.update()
 
     def mousePressEvent(self, a0: QMouseEvent | None):  # pragma: no cover - GUI hook
+        """
+        Mousepressevent logic.
+        
+        Args:
+            a0: Description of a0.
+        
+        """
         if a0 is None:
             return
         event = a0
@@ -398,6 +559,13 @@ class Geometry3DView(QWidget):
             self._interaction_mode = 'pan'
 
     def mouseMoveEvent(self, a0: QMouseEvent | None):  # pragma: no cover - GUI hook
+        """
+        Mousemoveevent logic.
+        
+        Args:
+            a0: Description of a0.
+        
+        """
         if a0 is None:
             return
         event = a0
@@ -425,6 +593,13 @@ class Geometry3DView(QWidget):
         self.update()
 
     def mouseReleaseEvent(self, a0: QMouseEvent | None):  # pragma: no cover - GUI hook
+        """
+        Mousereleaseevent logic.
+        
+        Args:
+            a0: Description of a0.
+        
+        """
         self._interaction_mode = None
         self._last_mouse_pos = None
 
@@ -658,9 +833,27 @@ class Geometry3DView(QWidget):
         num_verts = len(self._selected_vertex_indices)
         
         def get_pt_3d(idx):
+            """
+            Retrieve pt 3d logic.
+            
+            Args:
+                idx: Description of idx.
+            
+            Returns:
+                Result of get_pt_3d operation.
+            """
             return (0.0, 0.0, 0.0) if idx == -1 else payload.vertices[idx]
             
         def get_pt_screen(idx):
+             """
+             Retrieve pt screen logic.
+             
+             Args:
+                 idx: Description of idx.
+             
+             Returns:
+                 Result of get_pt_screen operation.
+             """
              return self._center_screen_point if idx == -1 else screen_points[idx]
         
         # Draw lines between consecutive vertices

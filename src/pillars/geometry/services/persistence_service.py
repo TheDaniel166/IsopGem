@@ -119,5 +119,9 @@ class PersistenceService:
 
     @staticmethod
     def clear_history():
+        """
+        Clear history logic.
+        
+        """
         with open(HISTORY_FILE, 'w') as f:
             json.dump([], f)

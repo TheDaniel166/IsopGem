@@ -11,19 +11,53 @@ from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from ...services.smart_filter_service import SmartFilterService
 
 class FilterWorker(QThread):
+    """
+    Filter Worker class definition.
+    
+    Attributes:
+        matches: Description of matches.
+    
+    """
     finished = pyqtSignal(list)
     
     def __init__(self, matches):
+        """
+          init   logic.
+        
+        Args:
+            matches: Description of matches.
+        
+        """
         super().__init__()
         self.matches = matches
         
     def run(self):
+        """
+        Execute logic.
+        
+        """
         service = SmartFilterService()
         valid = service.filter_phrases(self.matches)
         self.finished.emit(valid)
 
 class SmartFilterDialog(QDialog):
+    """
+    Smart Filter Dialog class definition.
+    
+    Attributes:
+        raw_matches: Description of raw_matches.
+        filtered_matches: Description of filtered_matches.
+    
+    """
     def __init__(self, matches, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            matches: Description of matches.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.raw_matches = matches
         self.filtered_matches = []

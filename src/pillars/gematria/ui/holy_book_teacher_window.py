@@ -50,6 +50,18 @@ class HolyBookTeacherWindow(QMainWindow):
         allow_inline: bool = True,
         parent=None,
     ) -> None:
+        """
+          init   logic.
+        
+        Args:
+            document_id: Description of document_id.
+            document_title: Description of document_title.
+            allow_inline: Description of allow_inline.
+            parent: Description of parent.
+        
+        Returns:
+            Result of __init__ operation.
+        """
         super().__init__(parent)
         self.document_id = document_id
         self.document_title = document_title or "Document"
@@ -706,6 +718,16 @@ class VerseEditorDialog(QDialog):
     """Standalone dialog for editing a verse and invoking common tools from HolyBookTeacherWindow."""
 
     def __init__(self, verse: Dict[str, Any], row: int, teacher: HolyBookTeacherWindow, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            verse: Description of verse.
+            row: Description of row.
+            teacher: Description of teacher.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.verse = verse
         self.row = row

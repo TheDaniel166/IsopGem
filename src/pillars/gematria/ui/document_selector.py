@@ -9,6 +9,13 @@ from PyQt6.QtCore import Qt
 class DocumentSelectorDialog(QDialog):
     """Simple dialog to select a document from the repository."""
     def __init__(self, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.setWindowTitle("Select Document")
         self.resize(500, 400)
@@ -41,6 +48,10 @@ class DocumentSelectorDialog(QDialog):
         self.load_docs()
         
     def load_docs(self):
+        """
+        Load docs logic.
+        
+        """
         from shared.repositories.document_manager.document_repository import DocumentRepository
         from shared.database import get_db
         
@@ -52,6 +63,13 @@ class DocumentSelectorDialog(QDialog):
         self.update_list(self.docs)
         
     def update_list(self, docs):
+        """
+        Update list logic.
+        
+        Args:
+            docs: Description of docs.
+        
+        """
         self.list_widget.clear()
         for doc in docs:
             # Use title and collection in display
@@ -61,6 +79,13 @@ class DocumentSelectorDialog(QDialog):
             self.list_widget.addItem(item)
             
     def filter_list(self, text):
+        """
+        Filter list logic.
+        
+        Args:
+            text: Description of text.
+        
+        """
         text = text.lower()
         filtered = [
             d for d in self.docs 
@@ -69,6 +94,12 @@ class DocumentSelectorDialog(QDialog):
         self.update_list(filtered)
         
     def get_selected_doc_id(self):
+        """
+        Retrieve selected doc id logic.
+        
+        Returns:
+            Result of get_selected_doc_id operation.
+        """
         current_item = self.list_widget.currentItem()
         if current_item:
             return current_item.data(Qt.ItemDataRole.UserRole)

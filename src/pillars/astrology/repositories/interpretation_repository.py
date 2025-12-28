@@ -14,6 +14,13 @@ class InterpretationRepository:
     """Manages access to interpretation texts stored in JSON files."""
 
     def __init__(self, data_dir: Optional[Path] = None):
+        """
+          init   logic.
+        
+        Args:
+            data_dir: Description of data_dir.
+        
+        """
         if data_dir is None:
             # Default to src/pillars/astrology/data/interpretations
             current_file = Path(__file__)

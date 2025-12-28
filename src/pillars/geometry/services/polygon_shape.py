@@ -32,6 +32,12 @@ class RegularPolygonShape(GeometricShape):
     @property
     def name(self) -> str:
         # Special names for common polygons
+        """
+        Name logic.
+        
+        Returns:
+            Result of name operation.
+        """
         names = {
             3: "Equilateral Triangle",
             4: "Square",
@@ -47,6 +53,12 @@ class RegularPolygonShape(GeometricShape):
     
     @property
     def description(self) -> str:
+        """
+        Description logic.
+        
+        Returns:
+            Result of description operation.
+        """
         return f"A regular polygon with {self.num_sides} equal sides and angles"
     
     def _init_properties(self):

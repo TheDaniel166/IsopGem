@@ -18,6 +18,15 @@ class BaseEditorDialog(QDialog):
     """
     
     def __init__(self, title: str, parent=None, min_width: int = 350):
+        """
+          init   logic.
+        
+        Args:
+            title: Description of title.
+            parent: Description of parent.
+            min_width: Description of min_width.
+        
+        """
         super().__init__(parent)
         self.setWindowTitle(title)
         self.setMinimumWidth(min_width)

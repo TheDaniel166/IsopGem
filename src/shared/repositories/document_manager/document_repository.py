@@ -9,16 +9,54 @@ import logging
 logger = logging.getLogger(__name__)
 
 class DocumentRepository:
+    """
+    Document Repository class definition.
+    
+    Attributes:
+        db: Description of db.
+    
+    """
     def __init__(self, db: Session):
+        """
+          init   logic.
+        
+        Args:
+            db: Description of db.
+        
+        """
         self.db = db
 
     def get(self, doc_id: int) -> Optional[Document]:
+        """
+        Retrieve logic.
+        
+        Args:
+            doc_id: Description of doc_id.
+        
+        Returns:
+            Result of get operation.
+        """
         return self.db.query(Document).filter(Document.id == doc_id).first()
 
     def get_by_ids(self, doc_ids: List[int]) -> List[Document]:
+        """
+        Retrieve by ids logic.
+        
+        Args:
+            doc_ids: Description of doc_ids.
+        
+        Returns:
+            Result of get_by_ids operation.
+        """
         return self.db.query(Document).filter(Document.id.in_(doc_ids)).all()
 
     def get_all(self) -> List[Document]:
+        """
+        Retrieve all logic.
+        
+        Returns:
+            Result of get_all operation.
+        """
         return self.db.query(Document).all()
 
     def get_all_metadata(self) -> List[DocumentMetadataDTO]:
@@ -60,6 +98,15 @@ class DocumentRepository:
 
     def search(self, query: str) -> List[Document]:
         # Basic SQL LIKE search. For advanced search, we'd use Whoosh or Full Text Search.
+        """
+        Search logic.
+        
+        Args:
+            query: Description of query.
+        
+        Returns:
+            Result of search operation.
+        """
         return self.db.query(Document).filter(
             (Document.title.ilike(f"%{query}%")) | 
             (Document.content.ilike(f"%{query}%"))
@@ -81,6 +128,21 @@ class DocumentRepository:
         author: Optional[str] = None,
         collection: Optional[str] = None,
     ) -> Document:
+        """
+        Create logic.
+        
+        Args:
+            title: Description of title.
+            content: Description of content.
+            file_type: Description of file_type.
+            file_path: Description of file_path.
+            raw_content: Description of raw_content.
+            author: Description of author.
+            collection: Description of collection.
+        
+        Returns:
+            Result of create operation.
+        """
         db_doc = Document(
             title=title,
             content=content,
@@ -96,6 +158,15 @@ class DocumentRepository:
         return db_doc
 
     def update(self, doc_id: int, **kwargs) -> Optional[Document]:
+        """
+        Update logic.
+        
+        Args:
+            doc_id: Description of doc_id.
+        
+        Returns:
+            Result of update operation.
+        """
         doc = self.get(doc_id)
         if doc:
             for key, value in kwargs.items():
@@ -105,6 +176,15 @@ class DocumentRepository:
         return doc
 
     def delete(self, doc_id: int) -> bool:
+        """
+        Remove logic.
+        
+        Args:
+            doc_id: Description of doc_id.
+        
+        Returns:
+            Result of delete operation.
+        """
         doc = self.get(doc_id)
         if doc:
             self.db.delete(doc)

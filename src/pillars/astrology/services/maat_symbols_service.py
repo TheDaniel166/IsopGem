@@ -48,6 +48,10 @@ class MaatSymbolsService:
     """Service for looking up Maat symbols by degree."""
     
     def __init__(self):
+        """
+          init   logic.
+        
+        """
         self._symbols: Dict[int, MaatSymbol] = {}
         self._load_symbols()
     

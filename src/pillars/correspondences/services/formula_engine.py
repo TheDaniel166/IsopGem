@@ -45,12 +45,20 @@ _CIPHER_REGISTRY: Dict[str, GematriaCalculator] = {
 }
 
 class ArgumentMetadata(NamedTuple):
+    """
+    Argument Metadata class definition.
+    
+    """
     name: str          # e.g. "text", "number1"
     description: str   # e.g. "The text to analyze"
     type_hint: str     # "str", "number", "range", "gematria_cipher"
     is_optional: bool = False
 
 class FormulaMetadata(NamedTuple):
+    """
+    Formula Metadata class definition.
+    
+    """
     name: str
     description: str
     syntax: str
@@ -71,6 +79,13 @@ class FormulaRegistry:
                  arguments: List[ArgumentMetadata] = [], is_variadic: bool = False):
         """Decorator to register a function with metadata."""
         def decorator(func):
+            """
+            Decorator logic.
+            
+            Args:
+                func: Description of func.
+            
+            """
             upper_name = name.upper()
             cls._REGISTRY[upper_name] = func
             cls._METADATA[upper_name] = FormulaMetadata(
@@ -86,10 +101,28 @@ class FormulaRegistry:
 
     @classmethod
     def get(cls, name: str) -> Callable:
+        """
+        Retrieve logic.
+        
+        Args:
+            name: Description of name.
+        
+        Returns:
+            Result of get operation.
+        """
         return cls._REGISTRY.get(name.upper())
 
     @classmethod
     def get_metadata(cls, name: str) -> Optional[FormulaMetadata]:
+        """
+        Retrieve metadata logic.
+        
+        Args:
+            name: Description of name.
+        
+        Returns:
+            Result of get_metadata operation.
+        """
         return cls._METADATA.get(name.upper())
 
     @classmethod
@@ -105,6 +138,10 @@ class FormulaRegistry:
 # --- Parser Architecture ---
 
 class TokenType(Enum):
+    """
+    Token Type class definition.
+    
+    """
     NUMBER = auto()
     STRING = auto()
     ID = auto()     # Cell ref or Function name
@@ -116,6 +153,10 @@ class TokenType(Enum):
     EOF = auto()
 
 class Token(NamedTuple):
+    """
+    Token class definition.
+    
+    """
     type: TokenType
     value: str
     def __repr__(self):
@@ -124,6 +165,10 @@ class Token(NamedTuple):
 class Tokenizer:
     # Regex for tokens
     # Note: Operators include ':', comparison ops
+    """
+    Tokenizer class definition.
+    
+    """
     token_spec = [
         ('NUMBER',   r'\d+(\.\d*)?|\.\d+'),
         ('STRING',   r'"[^"]*"|\'[^\']*\''),
@@ -139,6 +184,16 @@ class Tokenizer:
 
     @staticmethod
     def tokenize(text: str, preserve_whitespace: bool = False) -> List[Token]:
+        """
+        Tokenize logic.
+        
+        Args:
+            text: Description of text.
+            preserve_whitespace: Description of preserve_whitespace.
+        
+        Returns:
+            Result of tokenize operation.
+        """
         tokens = []
         for mo in Tokenizer.token_re.finditer(text):
             kind = mo.lastgroup
@@ -184,13 +239,38 @@ class Tokenizer:
         return tokens
 
 class Parser:
+    """
+    Parser class definition.
+    
+    Attributes:
+        engine: Description of engine.
+        tokens: Description of tokens.
+        pos: Description of pos.
+        current_token: Description of current_token.
+    
+    """
     def __init__(self, engine, tokens: List[Token]):
+        """
+          init   logic.
+        
+        Args:
+            engine: Description of engine.
+            tokens: Description of tokens.
+        
+        """
         self.engine = engine
         self.tokens = tokens
         self.pos = 0
         self.current_token = self.tokens[0]
 
     def eat(self, token_type: TokenType):
+        """
+        Eat logic.
+        
+        Args:
+            token_type: Description of token_type.
+        
+        """
         if self.current_token.type == token_type:
             self.pos += 1
             if self.pos < len(self.tokens):
@@ -199,6 +279,10 @@ class Parser:
             raise ValueError(f"Expected {token_type}, got {self.current_token.type}")
 
     def parse(self):
+        """
+        Parse logic.
+        
+        """
         result = self.expr()
         if self.current_token.type != TokenType.EOF:
              # If we have leftovers (like '1 2'), that's an error in strict mode, 
@@ -233,6 +317,10 @@ class Parser:
         return node
         
     def concatenation(self):
+        """
+        Concatenation logic.
+        
+        """
         node = self.additive()
         while self.current_token.type == TokenType.OP and self.current_token.value == '&':
             self.eat(TokenType.OP)
@@ -241,6 +329,10 @@ class Parser:
         return node
 
     def additive(self):
+        """
+        Additive logic.
+        
+        """
         node = self.multiplicative()
         while self.current_token.type == TokenType.OP and self.current_token.value in ('+', '-'):
             op = self.current_token.value
@@ -251,6 +343,10 @@ class Parser:
         return node
 
     def multiplicative(self):
+        """
+        Multiplicative logic.
+        
+        """
         node = self.power()
         while self.current_token.type == TokenType.OP and self.current_token.value in ('*', '/'):
             op = self.current_token.value
@@ -261,6 +357,10 @@ class Parser:
         return node
 
     def power(self):
+        """
+        Power logic.
+        
+        """
         node = self.atom()
         while self.current_token.type == TokenType.OP and self.current_token.value == '^':
             self.eat(TokenType.OP)
@@ -269,6 +369,10 @@ class Parser:
         return node
 
     def atom(self):
+        """
+        Atom logic.
+        
+        """
         token = self.current_token
         
         if token.type == TokenType.NUMBER:
@@ -369,6 +473,13 @@ class FormulaEngine:
     Uses Recursive Descent Parsing.
     """
     def __init__(self, data_context: Dict[str, Any]):
+        """
+          init   logic.
+        
+        Args:
+            data_context: Description of data_context.
+        
+        """
         self.context = data_context
         # self.calc_service = CalculationService() # Removed unused dependency
 
@@ -456,6 +567,15 @@ class FormulaEngine:
 ])
 def func_gematria(engine: FormulaEngine, text: Any, cipher: str = "English (TQ)"):
     # TODO: Align GEMATRIA(ABC) with SUM expectation (currently returns 27, Seal expects 6)
+    """
+    Func gematria logic.
+    
+    Args:
+        engine: Description of engine.
+        text: Description of text.
+        cipher: Description of cipher.
+    
+    """
     if not text: return 0
     text_str = str(text)
     cipher_key = str(cipher).upper()
@@ -468,8 +588,22 @@ def func_gematria(engine: FormulaEngine, text: Any, cipher: str = "English (TQ)"
     ArgumentMetadata("number2", "Value (opt)", "number", True)
 ], is_variadic=True)
 def func_sum(engine: FormulaEngine, *args):
+    """
+    Func sum logic.
+    
+    Args:
+        engine: Description of engine.
+    
+    """
     total = 0
     def add(item):
+        """
+        Add logic.
+        
+        Args:
+            item: Description of item.
+        
+        """
         nonlocal total
         if isinstance(item, list):
             for i in item: add(i)
@@ -483,8 +617,22 @@ def func_sum(engine: FormulaEngine, *args):
     ArgumentMetadata("number1", "Value", "number")
 ], is_variadic=True)
 def func_average(engine: FormulaEngine, *args):
+    """
+    Func average logic.
+    
+    Args:
+        engine: Description of engine.
+    
+    """
     values = []
     def collect(item):
+        """
+        Collect logic.
+        
+        Args:
+            item: Description of item.
+        
+        """
         if isinstance(item, list):
             for i in item: collect(i)
         else:
@@ -497,8 +645,22 @@ def func_average(engine: FormulaEngine, *args):
     ArgumentMetadata("val1", "Value", "any")
 ], is_variadic=True)
 def func_count(engine: FormulaEngine, *args):
+    """
+    Func count logic.
+    
+    Args:
+        engine: Description of engine.
+    
+    """
     count = 0
     def check(item):
+        """
+        Check logic.
+        
+        Args:
+            item: Description of item.
+        
+        """
         nonlocal count
         if isinstance(item, list):
             for i in item: check(i)
@@ -514,8 +676,22 @@ def func_count(engine: FormulaEngine, *args):
     ArgumentMetadata("val1", "Value", "number")
 ], is_variadic=True)
 def func_min(engine: FormulaEngine, *args):
+    """
+    Func min logic.
+    
+    Args:
+        engine: Description of engine.
+    
+    """
     values = []
     def collect(item):
+        """
+        Collect logic.
+        
+        Args:
+            item: Description of item.
+        
+        """
         if isinstance(item, list): 
             for i in item: collect(i)
         else: 
@@ -528,8 +704,22 @@ def func_min(engine: FormulaEngine, *args):
     ArgumentMetadata("val1", "Value", "number")
 ], is_variadic=True)
 def func_max(engine: FormulaEngine, *args):
+    """
+    Func max logic.
+    
+    Args:
+        engine: Description of engine.
+    
+    """
     values = []
     def collect(item):
+        """
+        Collect logic.
+        
+        Args:
+            item: Description of item.
+        
+        """
         if isinstance(item, list): 
             for i in item: collect(i)
         else: 
@@ -544,6 +734,16 @@ def func_max(engine: FormulaEngine, *args):
     ArgumentMetadata("value_if_false", "Result if False", "any")
 ])
 def func_if(engine: FormulaEngine, cond, val_true, val_false):
+    """
+    Func if logic.
+    
+    Args:
+        engine: Description of engine.
+        cond: Description of cond.
+        val_true: Description of val_true.
+        val_false: Description of val_false.
+    
+    """
     return val_true if cond else val_false
 
 @FormulaRegistry.register("CONCAT", "Join strings.", "CONCAT(txt1, ...)", "Text", [
@@ -551,8 +751,22 @@ def func_if(engine: FormulaEngine, cond, val_true, val_false):
 ], is_variadic=True)
 def func_concat(engine: FormulaEngine, *args):
     # Flatten like sum
+    """
+    Func concat logic.
+    
+    Args:
+        engine: Description of engine.
+    
+    """
     parts = []
     def collect(item):
+        """
+        Collect logic.
+        
+        Args:
+            item: Description of item.
+        
+        """
         if isinstance(item, list):
             for i in item: collect(i)
         else:
@@ -564,6 +778,14 @@ def func_concat(engine: FormulaEngine, *args):
     ArgumentMetadata("number", "Value", "number")
 ])
 def func_abs(engine: FormulaEngine, val):
+    """
+    Func abs logic.
+    
+    Args:
+        engine: Description of engine.
+        val: Description of val.
+    
+    """
     try: return abs(float(val))
     except: return "#VALUE!"
 
@@ -572,6 +794,15 @@ def func_abs(engine: FormulaEngine, val):
     ArgumentMetadata("digits", "Decimals (default 0)", "number", True)
 ])
 def func_round(engine: FormulaEngine, val, digits=0):
+    """
+    Func round logic.
+    
+    Args:
+        engine: Description of engine.
+        val: Description of val.
+        digits: Description of digits.
+    
+    """
     try: return round(float(val), int(digits))
     except: return "#VALUE!"
 
@@ -579,6 +810,14 @@ def func_round(engine: FormulaEngine, val, digits=0):
     ArgumentMetadata("number", "Value", "number")
 ])
 def func_floor(engine: FormulaEngine, val):
+    """
+    Func floor logic.
+    
+    Args:
+        engine: Description of engine.
+        val: Description of val.
+    
+    """
     try: return math.floor(float(val))
     except: return "#VALUE!"
 
@@ -586,6 +825,14 @@ def func_floor(engine: FormulaEngine, val):
     ArgumentMetadata("number", "Value", "number")
 ])
 def func_ceiling(engine: FormulaEngine, val):
+    """
+    Func ceiling logic.
+    
+    Args:
+        engine: Description of engine.
+        val: Description of val.
+    
+    """
     try: return math.ceil(float(val))
     except: return "#VALUE!"
 
@@ -593,6 +840,14 @@ def func_ceiling(engine: FormulaEngine, val):
     ArgumentMetadata("number", "Value", "number")
 ])
 def func_int(engine: FormulaEngine, val):
+    """
+    Func int logic.
+    
+    Args:
+        engine: Description of engine.
+        val: Description of val.
+    
+    """
     try: return int(float(val))
     except: return "#VALUE!"
 
@@ -600,6 +855,14 @@ def func_int(engine: FormulaEngine, val):
     ArgumentMetadata("number", "Value", "number")
 ])
 def func_sqrt(engine: FormulaEngine, val):
+    """
+    Func sqrt logic.
+    
+    Args:
+        engine: Description of engine.
+        val: Description of val.
+    
+    """
     try: return math.sqrt(float(val))
     except: return "#VALUE!"
 
@@ -608,6 +871,15 @@ def func_sqrt(engine: FormulaEngine, val):
     ArgumentMetadata("exp", "Exponent", "number")
 ])
 def func_power(engine: FormulaEngine, base, exp):
+    """
+    Func power logic.
+    
+    Args:
+        engine: Description of engine.
+        base: Description of base.
+        exp: Description of exp.
+    
+    """
     try: return math.pow(float(base), float(exp))
     except: return "#VALUE!"
 
@@ -616,50 +888,130 @@ def func_power(engine: FormulaEngine, base, exp):
     ArgumentMetadata("divisor", "Divisor", "number")
 ])
 def func_mod(engine: FormulaEngine, num, div):
+    """
+    Func mod logic.
+    
+    Args:
+        engine: Description of engine.
+        num: Description of num.
+        div: Description of div.
+    
+    """
     try: return float(num) % float(div)
     except: return "#VALUE!"
 
 @FormulaRegistry.register("PI", "Pi constant.", "PI()", "Math", [])
 def func_pi(engine: FormulaEngine):
+    """
+    Func pi logic.
+    
+    Args:
+        engine: Description of engine.
+    
+    """
     return math.pi
 
 @FormulaRegistry.register("SIN", "Sine (radians).", "SIN(rad)", "Trig", [ArgumentMetadata("angle", "Radians", "number")])
 def func_sin(engine: FormulaEngine, val):
+    """
+    Func sin logic.
+    
+    Args:
+        engine: Description of engine.
+        val: Description of val.
+    
+    """
     try: return math.sin(float(val))
     except: return "#VALUE!"
 
 @FormulaRegistry.register("COS", "Cosine (radians).", "COS(rad)", "Trig", [ArgumentMetadata("angle", "Radians", "number")])
 def func_cos(engine: FormulaEngine, val):
+    """
+    Func cos logic.
+    
+    Args:
+        engine: Description of engine.
+        val: Description of val.
+    
+    """
     try: return math.cos(float(val))
     except: return "#VALUE!"
 
 @FormulaRegistry.register("TAN", "Tangent (radians).", "TAN(rad)", "Trig", [ArgumentMetadata("angle", "Radians", "number")])
 def func_tan(engine: FormulaEngine, val):
+    """
+    Func tan logic.
+    
+    Args:
+        engine: Description of engine.
+        val: Description of val.
+    
+    """
     try: return math.tan(float(val))
     except: return "#VALUE!"
 
 @FormulaRegistry.register("ASIN", "Arc Sine.", "ASIN(num)", "Trig", [ArgumentMetadata("number", "Value", "number")])
 def func_asin(engine: FormulaEngine, val):
+    """
+    Func asin logic.
+    
+    Args:
+        engine: Description of engine.
+        val: Description of val.
+    
+    """
     try: return math.asin(float(val))
     except: return "#VALUE!"
 
 @FormulaRegistry.register("ACOS", "Arc Cosine.", "ACOS(num)", "Trig", [ArgumentMetadata("number", "Value", "number")])
 def func_acos(engine: FormulaEngine, val):
+    """
+    Func acos logic.
+    
+    Args:
+        engine: Description of engine.
+        val: Description of val.
+    
+    """
     try: return math.acos(float(val))
     except: return "#VALUE!"
 
 @FormulaRegistry.register("ATAN", "Arc Tangent.", "ATAN(num)", "Trig", [ArgumentMetadata("number", "Value", "number")])
 def func_atan(engine: FormulaEngine, val):
+    """
+    Func atan logic.
+    
+    Args:
+        engine: Description of engine.
+        val: Description of val.
+    
+    """
     try: return math.atan(float(val))
     except: return "#VALUE!"
 
 @FormulaRegistry.register("LN", "Natural Log.", "LN(num)", "Math", [ArgumentMetadata("number", "Value", "number")])
 def func_ln(engine: FormulaEngine, val):
+    """
+    Func ln logic.
+    
+    Args:
+        engine: Description of engine.
+        val: Description of val.
+    
+    """
     try: return math.log(float(val))
     except: return "#VALUE!"
 
 @FormulaRegistry.register("LOG10", "Log base 10.", "LOG10(num)", "Math", [ArgumentMetadata("number", "Value", "number")])
 def func_log10(engine: FormulaEngine, val):
+    """
+    Func log10 logic.
+    
+    Args:
+        engine: Description of engine.
+        val: Description of val.
+    
+    """
     try: return math.log10(float(val))
     except: return "#VALUE!"
 
@@ -667,18 +1019,50 @@ def func_log10(engine: FormulaEngine, val):
 
 @FormulaRegistry.register("LEN", "Length of text.", "LEN(text)", "Text", [ArgumentMetadata("text", "Text", "str")])
 def func_len(engine: FormulaEngine, text):
+    """
+    Func len logic.
+    
+    Args:
+        engine: Description of engine.
+        text: Description of text.
+    
+    """
     return len(str(text)) if text is not None else 0
 
 @FormulaRegistry.register("UPPER", "Uppercase.", "UPPER(text)", "Text", [ArgumentMetadata("text", "Text", "str")])
 def func_upper(engine: FormulaEngine, text):
+    """
+    Func upper logic.
+    
+    Args:
+        engine: Description of engine.
+        text: Description of text.
+    
+    """
     return str(text).upper() if text is not None else ""
 
 @FormulaRegistry.register("LOWER", "Lowercase.", "LOWER(text)", "Text", [ArgumentMetadata("text", "Text", "str")])
 def func_lower(engine: FormulaEngine, text):
+    """
+    Func lower logic.
+    
+    Args:
+        engine: Description of engine.
+        text: Description of text.
+    
+    """
     return str(text).lower() if text is not None else ""
 
 @FormulaRegistry.register("PROPER", "Title Case.", "PROPER(text)", "Text", [ArgumentMetadata("text", "Text", "str")])
 def func_proper(engine: FormulaEngine, text):
+    """
+    Func proper logic.
+    
+    Args:
+        engine: Description of engine.
+        text: Description of text.
+    
+    """
     return str(text).title() if text is not None else ""
 
 @FormulaRegistry.register("LEFT", "Left chars.", "LEFT(text, [n])", "Text", [
@@ -686,6 +1070,15 @@ def func_proper(engine: FormulaEngine, text):
     ArgumentMetadata("num_chars", "Count (def 1)", "number", True)
 ])
 def func_left(engine: FormulaEngine, text, n=1):
+    """
+    Func left logic.
+    
+    Args:
+        engine: Description of engine.
+        text: Description of text.
+        n: Description of n.
+    
+    """
     try:
         s = str(text) if text is not None else ""
         count = int(float(n))
@@ -697,6 +1090,15 @@ def func_left(engine: FormulaEngine, text, n=1):
     ArgumentMetadata("num_chars", "Count (def 1)", "number", True)
 ])
 def func_right(engine: FormulaEngine, text, n=1):
+    """
+    Func right logic.
+    
+    Args:
+        engine: Description of engine.
+        text: Description of text.
+        n: Description of n.
+    
+    """
     try:
         s = str(text) if text is not None else ""
         count = int(float(n))
@@ -710,6 +1112,16 @@ def func_right(engine: FormulaEngine, text, n=1):
     ArgumentMetadata("num_chars", "Count", "number")
 ])
 def func_mid(engine: FormulaEngine, text, start, n):
+    """
+    Func mid logic.
+    
+    Args:
+        engine: Description of engine.
+        text: Description of text.
+        start: Description of start.
+        n: Description of n.
+    
+    """
     try:
         s = str(text) if text is not None else ""
         st = int(float(start)) - 1 # 1-based to 0-based
@@ -720,6 +1132,14 @@ def func_mid(engine: FormulaEngine, text, start, n):
 
 @FormulaRegistry.register("TRIM", "Trim spaces.", "TRIM(text)", "Text", [ArgumentMetadata("text", "Text", "str")])
 def func_trim(engine: FormulaEngine, text):
+    """
+    Func trim logic.
+    
+    Args:
+        engine: Description of engine.
+        text: Description of text.
+    
+    """
     if text is None: return ""
     # Excel TRIM removes leading/trailing spaces AND reduces multiple internal spaces to one.
     # Standard .strip() only handles ends.
@@ -734,6 +1154,17 @@ def func_trim(engine: FormulaEngine, text):
     ArgumentMetadata("new_text", "New Text", "str")
 ])
 def func_replace(engine: FormulaEngine, old_text, start, n, new_text):
+    """
+    Func replace logic.
+    
+    Args:
+        engine: Description of engine.
+        old_text: Description of old_text.
+        start: Description of start.
+        n: Description of n.
+        new_text: Description of new_text.
+    
+    """
     try:
         s = str(old_text) if old_text is not None else ""
         st = int(float(start)) - 1
@@ -752,6 +1183,17 @@ def func_replace(engine: FormulaEngine, old_text, start, n, new_text):
     ArgumentMetadata("instance_num", "Instance (opt)", "number", True)
 ])
 def func_substitute(engine: FormulaEngine, text, old_text, new_text, instance=None):
+    """
+    Func substitute logic.
+    
+    Args:
+        engine: Description of engine.
+        text: Description of text.
+        old_text: Description of old_text.
+        new_text: Description of new_text.
+        instance: Description of instance.
+    
+    """
     try:
         s = str(text) if text is not None else ""
         old = str(old_text)
@@ -787,6 +1229,15 @@ def func_substitute(engine: FormulaEngine, text, old_text, new_text, instance=No
     ArgumentMetadata("text1", "Text", "str")
 ], is_variadic=True)
 def func_textjoin(engine: FormulaEngine, delim, ignore_empty, *args):
+    """
+    Func textjoin logic.
+    
+    Args:
+        engine: Description of engine.
+        delim: Description of delim.
+        ignore_empty: Description of ignore_empty.
+    
+    """
     d = str(delim) if delim is not None else ""
     # ignore_empty logic: check if bool or int string
     skip = False
@@ -805,6 +1256,13 @@ def func_textjoin(engine: FormulaEngine, delim, ignore_empty, *args):
     
     parts = []
     def collect(item):
+        """
+        Collect logic.
+        
+        Args:
+            item: Description of item.
+        
+        """
         if isinstance(item, list):
             for i in item: collect(i)
         else:
@@ -880,4 +1338,3 @@ class FormulaHelper:
              new_row_str = str(r_idx)
              
         return f"{abs_col}{new_col_str}{abs_row}{new_row_str}"
-

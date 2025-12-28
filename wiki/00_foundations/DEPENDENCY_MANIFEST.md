@@ -81,3 +81,7 @@ This manifest explains the specific architectural purpose (*The Why*) for every 
 ### **[SVGWrite](https://pypi.org/project/svgwrite/)**
 *   **Role**: [Artist] - Vector Manifestation.
 *   **The Why**: Renders the crisp, scalable vector charts for Astrology and Geometry.
+
+### **[QtAwesome](https://pypi.org/project/QtAwesome/)**
+*   **Role**: [Skin] - Iconography.
+*   **The Why**: Enables the use of FontAwesome and other icon fonts within PyQt6, ensuring consistent, scalable, and theme-aware iconography across the entire Visual Liturgy without managing hundreds of pixel-based image files.

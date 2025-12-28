@@ -12,6 +12,13 @@ class HorizontalRuleDialog(BaseEditorDialog):
     """Dialog for customizing horizontal rule options."""
     
     def __init__(self, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         self.line_color = QColor("#cccccc")
         super().__init__("Insert Horizontal Line", parent, min_width=350)
     

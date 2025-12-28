@@ -18,6 +18,13 @@ class ConstellationGrid(QFrame):
     A container for the grid that overlays visual asterism lines (MST).
     """
     def __init__(self, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.setStyleSheet("background-color: #222;")
         self.lattice = None
@@ -104,11 +111,25 @@ class ConstellationGrid(QFrame):
         # OR: Just let the user "See through" the cells?
         # NO.
         # BEST APPROACH: Transparent Overlay Widget using `raise_()`.
+        """
+        Paintevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        """
         super().paintEvent(event)
 
 class AsterismOverlay(QWidget):
     """Transparent overlay to draw lines on top of the grid."""
     def __init__(self, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
         self.mst_edges = []
@@ -117,10 +138,24 @@ class AsterismOverlay(QWidget):
         self.grid_spacing = 1
         
     def set_edges(self, edges):
+        """
+        Configure edges logic.
+        
+        Args:
+            edges: Description of edges.
+        
+        """
         self.mst_edges = edges
         self.update()
         
     def paintEvent(self, event):
+        """
+        Paintevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        """
         if not self.mst_edges: return
         
         painter = QPainter(self)
@@ -141,6 +176,16 @@ class AsterismOverlay(QWidget):
         sp = self.grid_spacing
         
         def get_center(r, c):
+            """
+            Retrieve center logic.
+            
+            Args:
+                r: Description of r.
+                c: Description of c.
+            
+            Returns:
+                Result of get_center operation.
+            """
             x = m + (c * (s + sp)) + (s // 2)
             y = m + (r * (s + sp)) + (s // 2)
             return x, y
@@ -157,6 +202,16 @@ class WallCell(QFrame):
     clicked = pyqtSignal(int, int)
     right_clicked = pyqtSignal(int, int, object)
     def __init__(self, row, col, size=40, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            row: Description of row.
+            col: Description of col.
+            size: Description of size.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.row = row
         self.col = col
@@ -186,6 +241,15 @@ class WallCell(QFrame):
         self.right_clicked.emit(self.row, self.col, global_pos)
 
     def set_overlay(self, group_id, tint_color, is_seed=False):
+        """
+        Configure overlay logic.
+        
+        Args:
+            group_id: Description of group_id.
+            tint_color: Description of tint_color.
+            is_seed: Description of is_seed.
+        
+        """
         self.group_id = group_id
         self.overlay_tint = tint_color
         self.is_seed = is_seed
@@ -224,6 +288,13 @@ class WallCell(QFrame):
 
 
     def mousePressEvent(self, event):
+        """
+        Mousepressevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        """
         self.clicked.emit(self.row, self.col)
         super().mousePressEvent(event)
 
@@ -232,6 +303,14 @@ class WallDesignerWindow(QMainWindow):
     A tool to design/visualize a Planetary Wall (104 Cells: 13 Columns x 8 Rows).
     """
     def __init__(self, window_manager=None, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            window_manager: Description of window_manager.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.window_manager = window_manager
         self.setWindowTitle("Adyton Constellation Map")
@@ -261,6 +340,10 @@ class WallDesignerWindow(QMainWindow):
         return {}
 
     def load_lattices(self):
+        """
+        Load lattices logic.
+        
+        """
         import json
         import os
         path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "mods", "data", "planetary_lattices.json"))
@@ -276,6 +359,10 @@ class WallDesignerWindow(QMainWindow):
             print("[ERROR] Planetary lattices file not found!")
 
     def init_ui(self):
+        """
+        Initialize ui logic.
+        
+        """
         main_widget = QWidget()
         self.setCentralWidget(main_widget)
         h_layout = QHBoxLayout(main_widget) # Main layout horizontal
@@ -340,6 +427,13 @@ class WallDesignerWindow(QMainWindow):
         
         original_resize = self.grid_frame.resizeEvent
         def on_grid_resize(event):
+            """
+            Handle grid resize logic.
+            
+            Args:
+                event: Description of event.
+            
+            """
             self.overlay.resize(event.size())
             if original_resize: original_resize(event)
         self.grid_frame.resizeEvent = on_grid_resize
@@ -420,6 +514,13 @@ class WallDesignerWindow(QMainWindow):
         h_layout.addWidget(right_panel)
 
     def on_wall_changed(self, wall_name):
+        """
+        Handle wall changed logic.
+        
+        Args:
+            wall_name: Description of wall_name.
+        
+        """
         if wall_name == "None":
             self.current_wall_lattice = None
             self.current_wall_values = None
@@ -437,6 +538,13 @@ class WallDesignerWindow(QMainWindow):
 
     def load_wall_values(self, wall_name):
         # Map Name to Filename
+        """
+        Load wall values logic.
+        
+        Args:
+            wall_name: Description of wall_name.
+        
+        """
         fname_map = {
             "Sun": "sun_wall.csv",
             "Mercury": "mercury_wall.csv",
@@ -479,6 +587,14 @@ class WallDesignerWindow(QMainWindow):
 
     def on_cell_clicked(self, row, col):
         # Inspect Mode Logic (Always Active)
+        """
+        Handle cell clicked logic.
+        
+        Args:
+            row: Description of row.
+            col: Description of col.
+        
+        """
         if not self.current_wall_lattice or not self.current_wall_values:
              return
              
@@ -669,6 +785,10 @@ class WallDesignerWindow(QMainWindow):
 
         
     def update_grid_overlay(self):
+        """
+        Update grid overlay logic.
+        
+        """
         show = self.chk_overlay.isChecked()
         grid = self.current_wall_lattice
         
@@ -869,5 +989,4 @@ class WallDesignerWindow(QMainWindow):
                 filename += ".png"
             pixmap.save(filename)
             QMessageBox.information(self, "Export Successful", f"Saved directly to:\n{filename}")
-
 

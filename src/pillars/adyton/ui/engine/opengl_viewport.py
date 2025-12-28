@@ -61,6 +61,14 @@ class AdytonGLViewport(QOpenGLWidget):
     """Depth-buffered Sanctuary viewport."""
 
     def __init__(self, parent=None, wall_index: int | None = None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+            wall_index: Description of wall_index.
+        
+        """
         super().__init__(parent)
 
         fmt = QSurfaceFormat()
@@ -92,13 +100,29 @@ class AdytonGLViewport(QOpenGLWidget):
     # GL lifecycle
     # ------------------------------------------------------------------
     def initializeGL(self):
+        """
+        Initializegl logic.
+        
+        """
         glClearColor(0.02, 0.02, 0.03, 1.0)
         glEnable(GL_DEPTH_TEST)
 
     def resizeGL(self, w: int, h: int):
+        """
+        Resizegl logic.
+        
+        Args:
+            w: Description of w.
+            h: Description of h.
+        
+        """
         glViewport(0, 0, max(1, w), max(1, h))
 
     def paintGL(self):
+        """
+        Paintgl logic.
+        
+        """
         glClear(int(GL_COLOR_BUFFER_BIT) | int(GL_DEPTH_BUFFER_BIT))
 
         aspect = self.width() / max(1.0, float(self.height()))
@@ -128,17 +152,44 @@ class AdytonGLViewport(QOpenGLWidget):
     # Input
     # ------------------------------------------------------------------
     def mousePressEvent(self, event: QMouseEvent) -> None:  # type: ignore[override]
+        """
+        Mousepressevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        Returns:
+            Result of mousePressEvent operation.
+        """
         if event is None:
             return
         self.last_pos = event.position().toPoint()
         self.mouse_pressed = True
 
     def mouseReleaseEvent(self, event: QMouseEvent) -> None:  # type: ignore[override]
+        """
+        Mousereleaseevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        Returns:
+            Result of mouseReleaseEvent operation.
+        """
         if event is None:
             return
         self.mouse_pressed = False
 
     def mouseMoveEvent(self, event: QMouseEvent) -> None:  # type: ignore[override]
+        """
+        Mousemoveevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        Returns:
+            Result of mouseMoveEvent operation.
+        """
         if event is None or not self.mouse_pressed:
             return
         pos = event.position().toPoint()
@@ -155,6 +206,15 @@ class AdytonGLViewport(QOpenGLWidget):
             self.update()
 
     def wheelEvent(self, event: QWheelEvent) -> None:  # type: ignore[override]
+        """
+        Wheelevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        Returns:
+            Result of wheelEvent operation.
+        """
         if event is None:
             return
         delta = event.angleDelta().y()

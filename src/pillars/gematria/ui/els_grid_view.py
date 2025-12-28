@@ -38,6 +38,13 @@ class ELSGridView(QGraphicsView):
     ]
     
     def __init__(self, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         
         self._scene = QGraphicsScene(self)

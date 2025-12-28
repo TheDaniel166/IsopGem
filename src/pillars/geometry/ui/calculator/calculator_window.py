@@ -25,6 +25,15 @@ class GeometryCalculatorWindow(QMainWindow):
     """
     
     def __init__(self, shape: GeometricShape, window_manager: Optional[WindowManager] = None, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            shape: Description of shape.
+            window_manager: Description of window_manager.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.window_manager = window_manager
 
@@ -188,5 +197,4 @@ class GeometryCalculatorWindow(QMainWindow):
             win.input_field.setText(str(int(value)))
             # If the window has logic to auto-calc on text change, it will trigger.
             # QuadsetAnalysisWindow has textChanged connected to _on_input_changed.
-
 

@@ -17,9 +17,20 @@ class AdytonScene:
     background_color: QColor = field(default_factory=lambda: QColor(10, 10, 15))
 
     def add_object(self, obj: Object3D):
+        """
+        Add object logic.
+        
+        Args:
+            obj: Description of obj.
+        
+        """
         self.objects.append(obj)
         
     def clear(self):
+        """
+        Clear logic.
+        
+        """
         self.objects.clear()
     
     def get_all_faces(self) -> List[Face3D]:

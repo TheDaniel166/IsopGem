@@ -32,6 +32,14 @@ class ResizeHandle(QGraphicsRectItem):
     HANDLE_SIZE = 8
     
     def __init__(self, position: HandlePosition, parent: QGraphicsItem):
+        """
+          init   logic.
+        
+        Args:
+            position: Description of position.
+            parent: Description of parent.
+        
+        """
         super().__init__(-self.HANDLE_SIZE/2, -self.HANDLE_SIZE/2, 
                          self.HANDLE_SIZE, self.HANDLE_SIZE, parent)
         self.position = position
@@ -62,6 +70,16 @@ class BaseShapeItem(QGraphicsItem):
     MIN_SIZE = 20
     
     def __init__(self, x: float, y: float, width: float, height: float):
+        """
+          init   logic.
+        
+        Args:
+            x: Description of x.
+            y: Description of y.
+            width: Description of width.
+            height: Description of height.
+        
+        """
         super().__init__()
         self._rect = QRectF(0, 0, width, height)
         self.setPos(x, y)
@@ -316,28 +334,67 @@ class BaseShapeItem(QGraphicsItem):
     
     @property
     def fill_color(self) -> QColor:
+        """
+        Fill color logic.
+        
+        Returns:
+            Result of fill_color operation.
+        """
         return self._fill_color
     
     @fill_color.setter
     def fill_color(self, color: QColor):
+        """
+        Fill color logic.
+        
+        Args:
+            color: Description of color.
+        
+        """
         self._fill_color = color
         self.update()
     
     @property
     def stroke_color(self) -> QColor:
+        """
+        Stroke color logic.
+        
+        Returns:
+            Result of stroke_color operation.
+        """
         return self._stroke_color
     
     @stroke_color.setter
     def stroke_color(self, color: QColor):
+        """
+        Stroke color logic.
+        
+        Args:
+            color: Description of color.
+        
+        """
         self._stroke_color = color
         self.update()
     
     @property
     def stroke_width(self) -> float:
+        """
+        Stroke width logic.
+        
+        Returns:
+            Result of stroke_width operation.
+        """
         return self._stroke_width
     
     @stroke_width.setter
     def stroke_width(self, width: float):
+        """
+        Stroke width logic.
+        
+        Args:
+            width: Description of width.
+        
+        """
         self._stroke_width = width
         self.update()
     
@@ -368,19 +425,51 @@ class RectShapeItem(BaseShapeItem):
     """Rectangle shape."""
     
     def __init__(self, x: float, y: float, width: float = 100, height: float = 60):
+        """
+          init   logic.
+        
+        Args:
+            x: Description of x.
+            y: Description of y.
+            width: Description of width.
+            height: Description of height.
+        
+        """
         super().__init__(x, y, width, height)
         self._corner_radius = 0
     
     @property
     def corner_radius(self) -> float:
+        """
+        Corner radius logic.
+        
+        Returns:
+            Result of corner_radius operation.
+        """
         return self._corner_radius
     
     @corner_radius.setter
     def corner_radius(self, radius: float):
+        """
+        Corner radius logic.
+        
+        Args:
+            radius: Description of radius.
+        
+        """
         self._corner_radius = max(0, radius)
         self.update()
     
     def paint(self, painter: QPainter, option: QStyleOptionGraphicsItem, widget: QWidget = None):
+        """
+        Paint logic.
+        
+        Args:
+            painter: Description of painter.
+            option: Description of option.
+            widget: Description of widget.
+        
+        """
         painter.setPen(QPen(self._stroke_color, self._stroke_width))
         painter.setBrush(QBrush(self._fill_color))
         if self._corner_radius > 0:
@@ -393,9 +482,28 @@ class EllipseShapeItem(BaseShapeItem):
     """Ellipse/Circle shape."""
     
     def __init__(self, x: float, y: float, width: float = 80, height: float = 60):
+        """
+          init   logic.
+        
+        Args:
+            x: Description of x.
+            y: Description of y.
+            width: Description of width.
+            height: Description of height.
+        
+        """
         super().__init__(x, y, width, height)
     
     def paint(self, painter: QPainter, option: QStyleOptionGraphicsItem, widget: QWidget = None):
+        """
+        Paint logic.
+        
+        Args:
+            painter: Description of painter.
+            option: Description of option.
+            widget: Description of widget.
+        
+        """
         painter.setPen(QPen(self._stroke_color, self._stroke_width))
         painter.setBrush(QBrush(self._fill_color))
         painter.drawEllipse(self._rect)
@@ -405,9 +513,28 @@ class TriangleShapeItem(BaseShapeItem):
     """Triangle shape."""
     
     def __init__(self, x: float, y: float, width: float = 80, height: float = 70):
+        """
+          init   logic.
+        
+        Args:
+            x: Description of x.
+            y: Description of y.
+            width: Description of width.
+            height: Description of height.
+        
+        """
         super().__init__(x, y, width, height)
     
     def paint(self, painter: QPainter, option: QStyleOptionGraphicsItem, widget: QWidget = None):
+        """
+        Paint logic.
+        
+        Args:
+            painter: Description of painter.
+            option: Description of option.
+            widget: Description of widget.
+        
+        """
         painter.setPen(QPen(self._stroke_color, self._stroke_width))
         painter.setBrush(QBrush(self._fill_color))
         
@@ -443,6 +570,16 @@ class LineShapeItem(BaseShapeItem):
     ROTATION_HANDLES = {HandlePosition.TOP, HandlePosition.BOTTOM, HandlePosition.LEFT, HandlePosition.RIGHT}
     
     def __init__(self, x: float, y: float, width: float = 100, height: float = 20):
+        """
+          init   logic.
+        
+        Args:
+            x: Description of x.
+            y: Description of y.
+            width: Description of width.
+            height: Description of height.
+        
+        """
         super().__init__(x, y, width, max(20, height))
         self._fill_color = QColor(0, 0, 0, 0)  # Transparent fill for lines
         self._start_style = LINE_END_NONE
@@ -463,10 +600,23 @@ class LineShapeItem(BaseShapeItem):
     
     @property
     def angle(self) -> float:
+        """
+        Angle logic.
+        
+        Returns:
+            Result of angle operation.
+        """
         return self._angle
     
     @angle.setter
     def angle(self, value: float):
+        """
+        Angle logic.
+        
+        Args:
+            value: Description of value.
+        
+        """
         self._angle = value % 360
         self.setRotation(self._angle)
     
@@ -549,20 +699,46 @@ class LineShapeItem(BaseShapeItem):
     
     @property
     def start_style(self) -> str:
+        """
+        Start style logic.
+        
+        Returns:
+            Result of start_style operation.
+        """
         return self._start_style
     
     @start_style.setter
     def start_style(self, value: str):
+        """
+        Start style logic.
+        
+        Args:
+            value: Description of value.
+        
+        """
         if value in LINE_END_STYLES:
             self._start_style = value
             self.update()
     
     @property
     def end_style(self) -> str:
+        """
+        End style logic.
+        
+        Returns:
+            Result of end_style operation.
+        """
         return self._end_style
     
     @end_style.setter
     def end_style(self, value: str):
+        """
+        End style logic.
+        
+        Args:
+            value: Description of value.
+        
+        """
         if value in LINE_END_STYLES:
             self._end_style = value
             self.update()
@@ -570,19 +746,45 @@ class LineShapeItem(BaseShapeItem):
     # Backward compatibility
     @property
     def start_arrow(self) -> bool:
+        """
+        Start arrow logic.
+        
+        Returns:
+            Result of start_arrow operation.
+        """
         return self._start_style == LINE_END_ARROW
     
     @start_arrow.setter
     def start_arrow(self, value: bool):
+        """
+        Start arrow logic.
+        
+        Args:
+            value: Description of value.
+        
+        """
         self._start_style = LINE_END_ARROW if value else LINE_END_NONE
         self.update()
     
     @property
     def end_arrow(self) -> bool:
+        """
+        End arrow logic.
+        
+        Returns:
+            Result of end_arrow operation.
+        """
         return self._end_style == LINE_END_ARROW
     
     @end_arrow.setter
     def end_arrow(self, value: bool):
+        """
+        End arrow logic.
+        
+        Args:
+            value: Description of value.
+        
+        """
         self._end_style = LINE_END_ARROW if value else LINE_END_NONE
         self.update()
     
@@ -677,6 +879,15 @@ class LineShapeItem(BaseShapeItem):
             painter.drawLine(QLineF(x, y_mid - size / 2, x, y_mid + size / 2))
     
     def paint(self, painter: QPainter, option: QStyleOptionGraphicsItem, widget: QWidget = None):
+        """
+        Paint logic.
+        
+        Args:
+            painter: Description of painter.
+            option: Description of option.
+            widget: Description of widget.
+        
+        """
         pen = QPen(self._stroke_color, self._stroke_width)
         pen.setCapStyle(Qt.PenCapStyle.RoundCap)
         pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
@@ -694,6 +905,12 @@ class LineShapeItem(BaseShapeItem):
         self._draw_end_style(painter, self._rect.width(), y_mid, self._end_style, pointing_right=True)
     
     def to_dict(self) -> dict:
+        """
+        Convert to dict logic.
+        
+        Returns:
+            Result of to_dict operation.
+        """
         data = super().to_dict()
         data["start_style"] = self._start_style
         data["end_style"] = self._end_style
@@ -705,6 +922,15 @@ class LineShapeItem(BaseShapeItem):
     
     @classmethod
     def from_dict(cls, data: dict) -> "LineShapeItem":
+        """
+        From dict logic.
+        
+        Args:
+            data: Description of data.
+        
+        Returns:
+            Result of from_dict operation.
+        """
         shape = cls(data["x"], data["y"], data["width"], data["height"])
         shape.fill_color = QColor(data.get("fill_color", "#00000000"))
         shape.stroke_color = QColor(data.get("stroke_color", "#2563eb"))
@@ -821,6 +1047,16 @@ class ArrowShapeItem(LineShapeItem):
     """Arrow shape - a line with end arrow enabled by default."""
     
     def __init__(self, x: float, y: float, width: float = 100, height: float = 20):
+        """
+          init   logic.
+        
+        Args:
+            x: Description of x.
+            y: Description of y.
+            width: Description of width.
+            height: Description of height.
+        
+        """
         super().__init__(x, y, width, height)
         self._end_style = LINE_END_ARROW  # Arrow at end by default
 
@@ -840,26 +1076,64 @@ class PolygonShapeItem(BaseShapeItem):
     
     def __init__(self, x: float, y: float, width: float = 100, height: float = 100,
                  sides: int = 5, skip: int = 1):
+        """
+          init   logic.
+        
+        Args:
+            x: Description of x.
+            y: Description of y.
+            width: Description of width.
+            height: Description of height.
+            sides: Description of sides.
+            skip: Description of skip.
+        
+        """
         self._sides = max(3, sides)
         self._skip = max(1, min(skip, (sides - 1) // 2))  # Skip must be < n/2
         super().__init__(x, y, width, height)
     
     @property
     def sides(self) -> int:
+        """
+        Sides logic.
+        
+        Returns:
+            Result of sides operation.
+        """
         return self._sides
     
     @sides.setter
     def sides(self, value: int):
+        """
+        Sides logic.
+        
+        Args:
+            value: Description of value.
+        
+        """
         self._sides = max(3, value)
         self._skip = min(self._skip, (self._sides - 1) // 2) or 1
         self.update()
     
     @property
     def skip(self) -> int:
+        """
+        Skip logic.
+        
+        Returns:
+            Result of skip operation.
+        """
         return self._skip
     
     @skip.setter
     def skip(self, value: int):
+        """
+        Skip logic.
+        
+        Args:
+            value: Description of value.
+        
+        """
         self._skip = max(1, min(value, (self._sides - 1) // 2))
         self.update()
     
@@ -896,6 +1170,15 @@ class PolygonShapeItem(BaseShapeItem):
         return vertices
     
     def paint(self, painter: QPainter, option: QStyleOptionGraphicsItem, widget: QWidget = None):
+        """
+        Paint logic.
+        
+        Args:
+            painter: Description of painter.
+            option: Description of option.
+            widget: Description of widget.
+        
+        """
         painter.setPen(QPen(self._stroke_color, self._stroke_width))
         painter.setBrush(QBrush(self._fill_color))
         
@@ -1062,4 +1345,3 @@ def create_shape_from_dict(data: dict) -> Optional[BaseShapeItem]:
     if shape_type in SHAPE_TYPES:
         return SHAPE_TYPES[shape_type].from_dict(data)
     return None
-

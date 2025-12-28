@@ -10,6 +10,10 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class ChiasmusPattern:
+    """
+    Chiasmus Pattern class definition.
+    
+    """
     center_index: Optional[int]  # None if even length center (A-B-B-A), int if odd (A-B-C-B-A)
     depth: int                  # How many layers deep (excluding center)
     left_indices: List[int]     # Indices of the left side [A, B...]
@@ -18,7 +22,15 @@ class ChiasmusPattern:
     values: List[int]           # The gematria values
 
 class ChiasmusService:
+    """
+    Chiasmus Service class definition.
+    
+    """
     def __init__(self):
+        """
+          init   logic.
+        
+        """
         pass
 
     def scan_text(self, text: str, calculator, max_depth: int = 10) -> List[ChiasmusPattern]:

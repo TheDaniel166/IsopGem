@@ -22,6 +22,12 @@ class ConrunePairFinderService:
     NEGATIVE_SYMBOL = "-"  # Represents -1 in balanced ternary
 
     def __init__(self) -> None:
+        """
+          init   logic.
+        
+        Returns:
+            Result of __init__ operation.
+        """
         self.ternary_service = TernaryService()
 
     def analyze(self, difference: int) -> Dict[str, object]:

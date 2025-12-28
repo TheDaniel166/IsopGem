@@ -15,6 +15,10 @@ from .regular_prism_solids import _area as _regular_area
 
 @dataclass(frozen=True)
 class PrismaticFrustumMetrics:
+    """
+    Prismatic Frustum Metrics class definition.
+    
+    """
     sides: int
     bottom_edge: float
     top_edge: float
@@ -35,6 +39,10 @@ class PrismaticFrustumMetrics:
 
 @dataclass(frozen=True)
 class PrismaticFrustumSolidResult:
+    """
+    Prismatic Frustum Solid Result class definition.
+    
+    """
     payload: SolidPayload
     metrics: PrismaticFrustumMetrics
 
@@ -51,6 +59,17 @@ class PrismaticFrustumSolidService:
         top_edge: float = 1.75,
         height: float = 4.0,
     ) -> PrismaticFrustumSolidResult:
+        """
+        Build logic.
+        
+        Args:
+            bottom_edge: Description of bottom_edge.
+            top_edge: Description of top_edge.
+            height: Description of height.
+        
+        Returns:
+            Result of build operation.
+        """
         if cls.SIDES < 3:
             raise ValueError('A prism base must have at least 3 sides')
         if bottom_edge <= 0 or top_edge <= 0 or height <= 0:
@@ -126,6 +145,17 @@ class PrismaticFrustumSolidService:
 
     @classmethod
     def payload(cls, bottom_edge: float = 3.0, top_edge: float = 1.75, height: float = 4.0) -> SolidPayload:
+        """
+        Payload logic.
+        
+        Args:
+            bottom_edge: Description of bottom_edge.
+            top_edge: Description of top_edge.
+            height: Description of height.
+        
+        Returns:
+            Result of payload operation.
+        """
         return cls.build(bottom_edge=bottom_edge, top_edge=top_edge, height=height).payload
 
 
@@ -187,6 +217,15 @@ class PrismaticFrustumSolidCalculator:
     )
 
     def __init__(self, bottom_edge: float = 3.0, top_edge: float = 1.75, height: float = 4.0):
+        """
+          init   logic.
+        
+        Args:
+            bottom_edge: Description of bottom_edge.
+            top_edge: Description of top_edge.
+            height: Description of height.
+        
+        """
         self._properties: Dict[str, SolidProperty] = {
             key: SolidProperty(name=label, key=key, unit=unit, precision=precision, editable=editable)
             for key, label, unit, precision, editable in self._PROPERTY_DEFINITIONS
@@ -198,9 +237,25 @@ class PrismaticFrustumSolidCalculator:
         self._apply_dimensions(self._bottom_edge, self._top_edge, self._height)
 
     def properties(self) -> List[SolidProperty]:
+        """
+        Properties logic.
+        
+        Returns:
+            Result of properties operation.
+        """
         return [self._properties[key] for key, *_ in self._PROPERTY_DEFINITIONS]
 
     def set_property(self, key: str, value: Optional[float]) -> bool:
+        """
+        Configure property logic.
+        
+        Args:
+            key: Description of key.
+            value: Description of value.
+        
+        Returns:
+            Result of set_property operation.
+        """
         if value is None or value <= 0:
             return False
         if key == 'bottom_edge':
@@ -224,6 +279,10 @@ class PrismaticFrustumSolidCalculator:
         return False
 
     def clear(self):
+        """
+        Clear logic.
+        
+        """
         self._bottom_edge = 3.0
         self._top_edge = 1.75
         self._height = 4.0
@@ -232,14 +291,32 @@ class PrismaticFrustumSolidCalculator:
         self._result = None
 
     def payload(self) -> Optional[SolidPayload]:
+        """
+        Payload logic.
+        
+        Returns:
+            Result of payload operation.
+        """
         return self._result.payload if self._result else None
 
     def metadata(self) -> Dict[str, float]:
+        """
+        Metadata logic.
+        
+        Returns:
+            Result of metadata operation.
+        """
         if not self._result:
             return {}
         return dict(self._result.payload.metadata)
 
     def metrics(self) -> Optional[PrismaticFrustumMetrics]:
+        """
+        Metrics logic.
+        
+        Returns:
+            Result of metrics operation.
+        """
         return self._result.metrics if self._result else None
 
     def _apply_dimensions(self, bottom_edge: float, top_edge: float, height: float):

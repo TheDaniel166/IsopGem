@@ -14,6 +14,13 @@ class DatabaseManagerWindow(QMainWindow):
     """Admin interface for managing the Document Database."""
     
     def __init__(self, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.setWindowTitle("Database Manager")
         self.resize(700, 500)

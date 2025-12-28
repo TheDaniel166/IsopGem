@@ -23,7 +23,23 @@ import re
 
 @event.listens_for(engine, "connect")
 def sqlite_regexp(dbapi_connection, connection_record):
+    """
+    Sqlite regexp logic.
+    
+    Args:
+        dbapi_connection: Description of dbapi_connection.
+        connection_record: Description of connection_record.
+    
+    """
     def regexp(expr, item):
+        """
+        Regexp logic.
+        
+        Args:
+            expr: Description of expr.
+            item: Description of item.
+        
+        """
         if item is None:
             return False
         try:

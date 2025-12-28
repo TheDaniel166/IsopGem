@@ -182,11 +182,11 @@ class HebrewSofitCalculator(GematriaCalculator):
 
 
 class HebrewLetterValueCalculator(GematriaCalculator):
-    """Calculator for Hebrew letter value (full spelling with finals).
+    """Computes numerical values for Hebrew letters using standard gematria.
     
     Also known as Mispar Gadol Sofit (מספר גדול סופית) - "Great Value with Finals"
     
-    This method calculates the value of each letter's spelled-out name using
+    This method computes the numerical equivalent of each letter's spelled-out name using
     final letter values. For example:
     - Aleph (א) is spelled אלף, which equals 1 + 30 + 800 (final Pe) = 831
     - Bet (ב) is spelled בית, which equals 2 + 10 + 400 = 412

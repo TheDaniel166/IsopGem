@@ -20,6 +20,12 @@ from pillars.adyton.constants import (
 
 class FloorGeometry:
     @staticmethod
+    """
+    Floor Geometry class definition.
+    
+    Attributes:
+        todo: Add public attributes.
+    """
     def build(
         ring_colors: Optional[List[QColor]] = None,
     ) -> Object3D:

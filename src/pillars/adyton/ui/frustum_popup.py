@@ -40,6 +40,20 @@ class FrustumCanvas(QWidget):
         center_color: QColor,
         parent=None,
     ):
+        """
+          init   logic.
+        
+        Args:
+            decimal_value: Description of decimal_value.
+            ternary_str: Description of ternary_str.
+            top_face: Description of top_face.
+            right_face: Description of right_face.
+            bottom_face: Description of bottom_face.
+            left_face: Description of left_face.
+            center_color: Description of center_color.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.decimal_value = decimal_value
         self.ternary_str = ternary_str
@@ -51,6 +65,13 @@ class FrustumCanvas(QWidget):
         self.setMinimumSize(280, 280)
 
     def paintEvent(self, event):
+        """
+        Paintevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        """
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
@@ -184,6 +205,17 @@ class FrustumDetailPopup(QDialog):
         decimal_value: int,
         parent=None,
     ):
+        """
+          init   logic.
+        
+        Args:
+            wall_index: Description of wall_index.
+            row: Description of row.
+            col: Description of col.
+            decimal_value: Description of decimal_value.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.wall_index = wall_index
         self.row = row
@@ -277,4 +309,3 @@ class FrustumDetailPopup(QDialog):
         )
         info.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(info)
-

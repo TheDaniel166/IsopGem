@@ -22,6 +22,16 @@ class SearchResultWidget(QWidget):
     Snippet (Gray/Monospace)
     """
     def __init__(self, title: str, path: str, snippet: str, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            title: Description of title.
+            path: Description of path.
+            snippet: Description of snippet.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         # Transparent background to allow QListWidget selection highlight to show through?
         # QListWidget typically paints selection on the item background.
@@ -59,6 +69,15 @@ class MindscapeWindow(QMainWindow):
     Splitter: [Sidebar (Search + Tree)] | [Page Editor]
     """
     def __init__(self, parent: Optional[QWidget] = None) -> None:
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        Returns:
+            Result of __init__ operation.
+        """
         super().__init__(parent)
         self.setWindowTitle("Mindscape: The Knowledge Tree")
         self.resize(1200, 800)

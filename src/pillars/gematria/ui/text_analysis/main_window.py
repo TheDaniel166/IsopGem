@@ -35,6 +35,15 @@ class ExegesisWindow(QMainWindow):
     """
     
     def __init__(self, calculators: List[GematriaCalculator], window_manager=None, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            calculators: Description of calculators.
+            window_manager: Description of window_manager.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.window_manager = window_manager
         self.calculators = {c.name: c for c in calculators}

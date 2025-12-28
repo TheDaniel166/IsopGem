@@ -26,7 +26,25 @@ logger = logging.getLogger(__name__)
 
 
 class DocumentService:
+    """
+    Document Service class definition.
+    
+    Attributes:
+        db: Description of db.
+        repo: Description of repo.
+        verse_repo: Description of verse_repo.
+        image_repo: Description of image_repo.
+        search_repo: Description of search_repo.
+    
+    """
     def __init__(self, db: Session):
+        """
+          init   logic.
+        
+        Args:
+            db: Description of db.
+        
+        """
         self.db = db
         self.repo = DocumentRepository(db)
         self.verse_repo = DocumentVerseRepository(db)
@@ -99,6 +117,16 @@ class DocumentService:
         # Extract and store images separately if raw_content has embedded images
         if raw_content and has_embedded_images(raw_content):
             def store_image(image_bytes: bytes, mime_type: str) -> int:
+                """
+                Store image logic.
+                
+                Args:
+                    image_bytes: Description of image_bytes.
+                    mime_type: Description of mime_type.
+                
+                Returns:
+                    Result of store_image operation.
+                """
                 img = self.image_repo.create(
                     document_id=doc.id,
                     data=image_bytes,
@@ -130,6 +158,16 @@ class DocumentService:
 
     def search_documents(self, query: str, limit: Optional[int] = None) -> List[Document]:
         # Search using Whoosh
+        """
+        Search documents logic.
+        
+        Args:
+            query: Description of query.
+            limit: Description of limit.
+        
+        Returns:
+            Result of search_documents operation.
+        """
         start = time.perf_counter()
         results = self.search_repo.search(query, limit=limit)
         ids = [r['id'] for r in results]
@@ -166,6 +204,12 @@ class DocumentService:
         return self.search_repo.search(query, limit=limit)
 
     def get_all_documents(self) -> List[Document]:
+        """
+        Retrieve all documents logic.
+        
+        Returns:
+            Result of get_all_documents operation.
+        """
         return self.repo.get_all()
     
     def get_all_documents_metadata(self) -> List[DocumentMetadataDTO]:
@@ -180,6 +224,15 @@ class DocumentService:
         return docs
     
     def get_document(self, doc_id: int) -> Optional[Document]:
+        """
+        Retrieve document logic.
+        
+        Args:
+            doc_id: Description of doc_id.
+        
+        Returns:
+            Result of get_document operation.
+        """
         return self.repo.get(doc_id)
     
     def get_document_with_images(self, doc_id: int, restore_images: bool = False) -> Optional[Tuple[Document, str]]:
@@ -205,6 +258,15 @@ class DocumentService:
         
         if restore_images and has_docimg_references(raw_content):
             def fetch_image(image_id: int) -> Tuple[bytes, str]:
+                """
+                Fetch image logic.
+                
+                Args:
+                    image_id: Description of image_id.
+                
+                Returns:
+                    Result of fetch_image operation.
+                """
                 img = self.image_repo.get(image_id)
                 if img:
                     data = self.image_repo.get_decompressed_data(img)
@@ -242,6 +304,16 @@ class DocumentService:
         raw_content = kwargs.get('raw_content')
         if raw_content and has_embedded_images(raw_content):
             def store_image(image_bytes: bytes, mime_type: str) -> int:
+                """
+                Store image logic.
+                
+                Args:
+                    image_bytes: Description of image_bytes.
+                    mime_type: Description of mime_type.
+                
+                Returns:
+                    Result of store_image operation.
+                """
                 img = self.image_repo.create(
                     document_id=doc_id,
                     data=image_bytes,
@@ -302,6 +374,15 @@ class DocumentService:
         return updated_docs
 
     def delete_document(self, doc_id: int) -> bool:
+        """
+        Remove document logic.
+        
+        Args:
+            doc_id: Description of doc_id.
+        
+        Returns:
+            Result of delete_document operation.
+        """
         start = time.perf_counter()
         success = self.repo.delete(doc_id)
         if success:
@@ -414,12 +495,41 @@ class DocumentService:
     # Verse helpers (used by the Holy Book teacher backend)
     # ------------------------------------------------------------------
     def get_document_verses(self, doc_id: int, include_ignored: bool = True) -> List[DocumentVerse]:
+        """
+        Retrieve document verses logic.
+        
+        Args:
+            doc_id: Description of doc_id.
+            include_ignored: Description of include_ignored.
+        
+        Returns:
+            Result of get_document_verses operation.
+        """
         return self.verse_repo.get_by_document(doc_id, include_ignored=include_ignored)
 
     def replace_document_verses(self, doc_id: int, verses: List[Dict[str, Any]]) -> List[DocumentVerse]:
+        """
+        Replace document verses logic.
+        
+        Args:
+            doc_id: Description of doc_id.
+            verses: Description of verses.
+        
+        Returns:
+            Result of replace_document_verses operation.
+        """
         return self.verse_repo.replace_document_verses(doc_id, verses)
 
     def delete_document_verses(self, doc_id: int) -> int:
+        """
+        Remove document verses logic.
+        
+        Args:
+            doc_id: Description of doc_id.
+        
+        Returns:
+            Result of delete_document_verses operation.
+        """
         return self.verse_repo.delete_by_document(doc_id)
 
 

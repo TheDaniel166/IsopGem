@@ -265,10 +265,24 @@ class VirtualKeyboard(QDialog):
         self.setFixedSize(680, 360) 
 
     def set_target_input(self, input_field: QLineEdit):
+        """
+        Configure target input logic.
+        
+        Args:
+            input_field: Description of input_field.
+        
+        """
         self.target_input = input_field
         self.target_editor = None
 
     def set_target_editor(self, editor: QTextEdit):
+        """
+        Configure target editor logic.
+        
+        Args:
+            editor: Description of editor.
+        
+        """
         self.target_editor = editor
         self.target_input = None
         

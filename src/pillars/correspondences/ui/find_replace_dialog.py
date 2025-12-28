@@ -20,6 +20,13 @@ class FindReplaceDialog(QDialog):
     navigation_requested = pyqtSignal(object) # raw_index (opaque)
 
     def __init__(self, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.setWindowTitle("Find & Replace")
         self.setWindowFlags(Qt.WindowType.Window) # Independent window behavior (stays on top if configured)
@@ -96,6 +103,12 @@ class FindReplaceDialog(QDialog):
         self.show()
 
     def get_options(self):
+        """
+        Retrieve options logic.
+        
+        Returns:
+            Result of get_options operation.
+        """
         return {
             "case_sensitive": self.chk_case.isChecked(),
             "match_entire": self.chk_entire.isChecked()

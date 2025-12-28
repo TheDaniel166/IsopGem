@@ -13,6 +13,13 @@ class ChartRepository:
     """High level CRUD helpers for astrology charts."""
 
     def __init__(self, session: Session):
+        """
+          init   logic.
+        
+        Args:
+            session: Description of session.
+        
+        """
         self._session = session
 
     # ------------------------------------------------------------------
@@ -37,6 +44,12 @@ class ChartRepository:
         categories: Sequence[str],
         tags: Sequence[str],
     ) -> AstrologyChart:
+        """
+        Create chart logic.
+        
+        Returns:
+            Result of create_chart operation.
+        """
         chart = AstrologyChart(
             name=name,
             description=description,
@@ -60,6 +73,15 @@ class ChartRepository:
         return chart
 
     def get_chart(self, chart_id: int) -> Optional[AstrologyChart]:
+        """
+        Retrieve chart logic.
+        
+        Args:
+            chart_id: Description of chart_id.
+        
+        Returns:
+            Result of get_chart operation.
+        """
         return (
             self._session.query(AstrologyChart)
             .filter(AstrologyChart.id == chart_id)
@@ -67,6 +89,15 @@ class ChartRepository:
         )
 
     def list_recent(self, limit: int = 20) -> List[AstrologyChart]:
+        """
+        List recent logic.
+        
+        Args:
+            limit: Description of limit.
+        
+        Returns:
+            Result of list_recent operation.
+        """
         return (
             self._session.query(AstrologyChart)
             .order_by(AstrologyChart.event_timestamp.desc())
@@ -82,6 +113,12 @@ class ChartRepository:
         tags: Optional[Sequence[str]] = None,
         limit: int = 50,
     ) -> List[AstrologyChart]:
+        """
+        Search logic.
+        
+        Returns:
+            Result of search operation.
+        """
         query = self._session.query(AstrologyChart)
 
         if text:

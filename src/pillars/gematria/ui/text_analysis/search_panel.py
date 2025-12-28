@@ -22,6 +22,13 @@ class SearchPanel(QWidget):
     clear_requested = pyqtSignal()
     
     def __init__(self, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.all_matches = []
         self.current_tab_index = -1
@@ -180,6 +187,13 @@ class SearchPanel(QWidget):
         self.smart_filter_requested.emit()
 
     def set_active_tab(self, index: int):
+        """
+        Configure active tab logic.
+        
+        Args:
+            index: Description of index.
+        
+        """
         self.current_tab_index = index
         self._refresh_results()
 
@@ -230,6 +244,10 @@ class SearchPanel(QWidget):
             self.results_list.addItem(item)
             
     def clear_results(self):
+        """
+        Clear results logic.
+        
+        """
         self.all_matches = []
         self.results_list.clear()
         self.info_label.setText("")
@@ -270,5 +288,4 @@ class SearchPanel(QWidget):
         if filtered:
             self.send_to_tablet_requested.emit(filtered)
             
-
 

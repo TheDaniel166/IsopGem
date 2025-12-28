@@ -21,6 +21,15 @@ class ChainResultsWindow(QMainWindow):
     result_selected = pyqtSignal(list)  # Emits positions for highlighting
     
     def __init__(self, summary: ChainSearchSummary, window_manager=None, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            summary: Description of summary.
+            window_manager: Description of window_manager.
+            parent: Description of parent.
+        
+        """
         super().__init__(None) # Independent window
         self.window_manager = window_manager
         self._summary = summary
@@ -502,4 +511,3 @@ class ChainResultsWindow(QMainWindow):
     def set_highlight_callback(self, callback: Callable[[List[int]], None]):
         """Set callback for when a result is selected."""
         self.result_selected.connect(callback)
-

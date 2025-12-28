@@ -38,6 +38,13 @@ class ZodiacalCircleWidget(QWidget):
     degree_clicked = pyqtSignal(object)
     
     def __init__(self, parent: Optional[QWidget] = None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.setMinimumSize(450, 450)
         self.setMouseTracking(True)
@@ -183,6 +190,15 @@ class ZodiacalCircleWidget(QWidget):
                 return
     
     def paintEvent(self, event) -> None:
+        """
+        Paintevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        Returns:
+            Result of paintEvent operation.
+        """
         p = QPainter(self)
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
         
@@ -599,4 +615,3 @@ class ZodiacalCircleWidget(QWidget):
                 p.setBrush(QBrush(self.c_silver))
                 p.drawEllipse(QPointF(rel_x, rel_y), 5, 5)
                 p.setBrush(Qt.BrushStyle.NoBrush)
-

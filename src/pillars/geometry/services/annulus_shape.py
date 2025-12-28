@@ -10,14 +10,32 @@ class AnnulusShape(GeometricShape):
 
     @property
     def name(self) -> str:
+        """
+        Name logic.
+        
+        Returns:
+            Result of name operation.
+        """
         return "Annulus"
 
     @property
     def description(self) -> str:
+        """
+        Description logic.
+        
+        Returns:
+            Result of description operation.
+        """
         return "Ring-shaped object, a region bounded by two concentric circles"
 
     @property
     def calculation_hint(self) -> str:
+        """
+        Calculation hint logic.
+        
+        Returns:
+            Result of calculation_hint operation.
+        """
         return "Enter Outer Radius (R) + Inner Radius (r)"
 
     def _init_properties(self):
@@ -74,6 +92,16 @@ class AnnulusShape(GeometricShape):
         }
 
     def calculate_from_property(self, property_key: str, value: float) -> bool:
+        """
+        Compute from property logic.
+        
+        Args:
+            property_key: Description of property_key.
+            value: Description of value.
+        
+        Returns:
+            Result of calculate_from_property operation.
+        """
         if value <= 0:
             return False
 
@@ -157,6 +185,12 @@ class AnnulusShape(GeometricShape):
         self.properties["radius_ratio"].value = outer / inner if inner else None
 
     def get_drawing_instructions(self) -> Dict:
+        """
+        Retrieve drawing instructions logic.
+        
+        Returns:
+            Result of get_drawing_instructions operation.
+        """
         outer = self.properties["outer_radius"].value
         inner = self.properties["inner_radius"].value
         if outer is None:
@@ -188,6 +222,12 @@ class AnnulusShape(GeometricShape):
         }
 
     def get_label_positions(self) -> List[Tuple[str, float, float]]:
+        """
+        Retrieve label positions logic.
+        
+        Returns:
+            Result of get_label_positions operation.
+        """
         labels: List[Tuple[str, float, float]] = []
         outer = self.properties["outer_radius"].value
         inner = self.properties["inner_radius"].value

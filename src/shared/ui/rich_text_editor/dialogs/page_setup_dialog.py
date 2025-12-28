@@ -30,6 +30,13 @@ class PageSetupDialog(QDialog):
     ]
     
     def __init__(self, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.setWindowTitle("Page Setup")
         self.setMinimumWidth(350)
@@ -68,16 +75,34 @@ class PageSetupDialog(QDialog):
         layout.addWidget(buttons)
     
     def get_page_size(self) -> QPageSize:
+        """
+        Retrieve page size logic.
+        
+        Returns:
+            Result of get_page_size operation.
+        """
         idx = self.size_combo.currentIndex()
         _, size_id = self.PAGE_SIZES[idx]
         return QPageSize(size_id)
     
     def get_orientation(self) -> QPageLayout.Orientation:
+        """
+        Retrieve orientation logic.
+        
+        Returns:
+            Result of get_orientation operation.
+        """
         if self.orientation_combo.currentText() == "Landscape":
             return QPageLayout.Orientation.Landscape
         return QPageLayout.Orientation.Portrait
     
     def get_margins(self) -> QMarginsF:
+        """
+        Retrieve margins logic.
+        
+        Returns:
+            Result of get_margins operation.
+        """
         idx = self.margins_combo.currentIndex()
         _, left, top, right, bottom = self.MARGIN_PRESETS[idx]
         return QMarginsF(left, top, right, bottom)

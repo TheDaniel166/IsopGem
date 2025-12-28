@@ -23,6 +23,14 @@ class PropertyCard(QFrame):
 
     
     def __init__(self, property_data: ShapeProperty, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            property_data: Description of property_data.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.property_key = property_data.key
         self.property_name = property_data.name
@@ -135,4 +143,3 @@ class PropertyCard(QFrame):
             self.quadset_analysis_requested.emit(val_int)
         except ValueError:
             pass
-

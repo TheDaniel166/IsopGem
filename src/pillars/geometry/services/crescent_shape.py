@@ -10,14 +10,32 @@ class CrescentShape(GeometricShape):
 
     @property
     def name(self) -> str:
+        """
+        Name logic.
+        
+        Returns:
+            Result of name operation.
+        """
         return "Crescent"
 
     @property
     def description(self) -> str:
+        """
+        Description logic.
+        
+        Returns:
+            Result of description operation.
+        """
         return "Lune/Crescent formed by two intersecting circles"
 
     @property
     def calculation_hint(self) -> str:
+        """
+        Calculation hint logic.
+        
+        Returns:
+            Result of calculation_hint operation.
+        """
         return "Enter 2 Radii + Shift Distance"
 
     def _init_properties(self):
@@ -68,6 +86,16 @@ class CrescentShape(GeometricShape):
         }
 
     def calculate_from_property(self, property_key: str, value: float) -> bool:
+        """
+        Compute from property logic.
+        
+        Args:
+            property_key: Description of property_key.
+            value: Description of value.
+        
+        Returns:
+            Result of calculate_from_property operation.
+        """
         if value <= 0:
             return False
 
@@ -181,6 +209,12 @@ class CrescentShape(GeometricShape):
         return outer_arc + inner_arc
 
     def get_drawing_instructions(self) -> Dict:
+        """
+        Retrieve drawing instructions logic.
+        
+        Returns:
+            Result of get_drawing_instructions operation.
+        """
         outer = self.properties["outer_radius"].value
         inner = self.properties["inner_radius"].value
         offset = self.properties["offset"].value
@@ -249,6 +283,12 @@ class CrescentShape(GeometricShape):
         }
 
     def get_label_positions(self) -> List[Tuple[str, float, float]]:
+        """
+        Retrieve label positions logic.
+        
+        Returns:
+            Result of get_label_positions operation.
+        """
         labels: List[Tuple[str, float, float]] = []
         outer = self.properties["outer_radius"].value
         inner = self.properties["inner_radius"].value

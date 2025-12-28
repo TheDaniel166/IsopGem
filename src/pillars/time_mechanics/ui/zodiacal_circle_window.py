@@ -28,6 +28,14 @@ class ZodiacalCircleWindow(QWidget):
     """
     
     def __init__(self, parent: Optional[QWidget] = None, window_manager: Optional[WindowManager] = None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+            window_manager: Description of window_manager.
+        
+        """
         super().__init__(parent)
         self.window_manager = window_manager
         self.setWindowTitle("Zodiacal Circle - Trigrammic Time Keeper")
@@ -826,6 +834,5 @@ class ZodiacalCircleWindow(QWidget):
                 self.search_result_label.setText(f"Found {len(matches)}: {dates}{more}")
         else:
             self.search_result_label.setText(f"No matches for {search_type}={value}")
-
 
 

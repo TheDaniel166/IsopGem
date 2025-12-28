@@ -22,6 +22,13 @@ class InfiniteCanvasScene(QGraphicsScene):
     Infinite scene that expands as items move.
     """
     def __init__(self, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         # Start large
         self.setSceneRect(0, 0, 5000, 5000)
@@ -39,6 +46,13 @@ class InfiniteCanvasView(QGraphicsView):
     MAX_ZOOM = 4.0  # 400%
     
     def __init__(self, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self._scene = InfiniteCanvasScene(self)
         self.setScene(self._scene)
@@ -129,6 +143,16 @@ class InfiniteCanvasView(QGraphicsView):
             super().mouseDoubleClickEvent(event)
 
     def add_note_container(self, x, y, content="", width=400):
+        """
+        Add note container logic.
+        
+        Args:
+            x: Description of x.
+            y: Description of y.
+            content: Description of content.
+            width: Description of width.
+        
+        """
         container = NoteContainerItemMovable(x, y, width, content)
         self._scene.addItem(container)
         # Connect to handler that updates scene rect
@@ -175,6 +199,10 @@ class InfiniteCanvasView(QGraphicsView):
             self.centerOn(current_center)
 
     def clear_canvas(self):
+        """
+        Clear canvas logic.
+        
+        """
         self._scene.clear()
         self._scene.setSceneRect(0, 0, 5000, 5000)
         self._insert_mode = False
@@ -313,4 +341,3 @@ class InfiniteCanvasView(QGraphicsView):
         if reset_scroll:
             self.horizontalScrollBar().setValue(0)
             self.verticalScrollBar().setValue(0)
-

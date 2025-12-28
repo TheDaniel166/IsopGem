@@ -47,6 +47,13 @@ class SolidCanvas3D(QWidget):
     _DRAG_SENSITIVITY = 0.45
 
     def __init__(self, parent: Optional[QWidget] = None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.setMinimumSize(360, 360)
         self.setMouseTracking(True)
@@ -61,6 +68,14 @@ class SolidCanvas3D(QWidget):
         self._last_drag_pos: Optional[QPointF] = None
 
     def set_geometry(self, vertices: List[SolidVertex3D], edges: List[tuple[int, int]]):
+        """
+        Configure geometry logic.
+        
+        Args:
+            vertices: Description of vertices.
+            edges: Description of edges.
+        
+        """
         self.vertices = vertices or []
         self.edges = edges or []
         self.family_segments = []
@@ -69,14 +84,35 @@ class SolidCanvas3D(QWidget):
         self.update()
 
     def set_family_segments(self, segments: Optional[List[tuple[int, int]]]):
+        """
+        Configure family segments logic.
+        
+        Args:
+            segments: Description of segments.
+        
+        """
         self.family_segments = segments or []
         self.update()
 
     def set_pattern_segments(self, segments: Optional[List[tuple[int, int]]]):
+        """
+        Configure pattern segments logic.
+        
+        Args:
+            segments: Description of segments.
+        
+        """
         self.pattern_segments = segments or []
         self.update()
 
     def set_transition(self, transition: Optional[SolidTransition3D]):
+        """
+        Configure transition logic.
+        
+        Args:
+            transition: Description of transition.
+        
+        """
         if transition is None:
             self.transition_pair = None
         else:
@@ -84,6 +120,13 @@ class SolidCanvas3D(QWidget):
         self.update()
 
     def paintEvent(self, a0: Optional[QPaintEvent]):  # noqa: N802 - Qt override
+        """
+        Paintevent logic.
+        
+        Args:
+            a0: Description of a0.
+        
+        """
         del a0
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
@@ -181,6 +224,13 @@ class SolidCanvas3D(QWidget):
             painter.drawText(point + QPointF(8, -8), vertex.label)
 
     def mousePressEvent(self, a0: Optional[QMouseEvent]):
+        """
+        Mousepressevent logic.
+        
+        Args:
+            a0: Description of a0.
+        
+        """
         if a0 is not None and a0.button() == Qt.MouseButton.LeftButton:
             self._is_dragging = True
             self._last_drag_pos = a0.position()
@@ -190,6 +240,13 @@ class SolidCanvas3D(QWidget):
         super().mousePressEvent(a0)
 
     def mouseMoveEvent(self, a0: Optional[QMouseEvent]):
+        """
+        Mousemoveevent logic.
+        
+        Args:
+            a0: Description of a0.
+        
+        """
         if self._is_dragging and self._last_drag_pos is not None and a0 is not None:
             current = a0.position()
             delta_x = current.x() - self._last_drag_pos.x()
@@ -203,6 +260,13 @@ class SolidCanvas3D(QWidget):
         super().mouseMoveEvent(a0)
 
     def mouseReleaseEvent(self, a0: Optional[QMouseEvent]):
+        """
+        Mousereleaseevent logic.
+        
+        Args:
+            a0: Description of a0.
+        
+        """
         if a0 is not None and a0.button() == Qt.MouseButton.LeftButton and self._is_dragging:
             self._is_dragging = False
             self._last_drag_pos = None
@@ -218,6 +282,10 @@ class SolidCanvas3D(QWidget):
         pitch: Optional[float] = None,
         emit_signal: bool = True,
     ):
+        """
+        Configure rotation logic.
+        
+        """
         changed = False
         if yaw is not None:
             wrapped = ((yaw + 180.0) % 360.0) - 180.0
@@ -235,6 +303,10 @@ class SolidCanvas3D(QWidget):
                 self.rotation_changed.emit(self.rotation_y, self.rotation_x)
 
     def reset_view(self):
+        """
+        Reset view logic.
+        
+        """
         self.set_rotation(yaw=self._DEFAULT_YAW, pitch=self._DEFAULT_PITCH)
 
 
@@ -244,6 +316,14 @@ class GeometricTransitions3DWindow(QMainWindow):
     RESULT_COLUMN_INDEX = 5
 
     def __init__(self, window_manager=None, parent: Optional[QWidget] = None):
+        """
+          init   logic.
+        
+        Args:
+            window_manager: Description of window_manager.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.window_manager = window_manager
         self.current_geometry: Optional[PlatonicSolidGeometry] = None

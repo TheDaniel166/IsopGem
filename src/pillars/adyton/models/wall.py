@@ -29,6 +29,18 @@ class WallGeometry:
         center_color_fn: Optional[Callable[[int, int, int], QColor]] = None,
         side_color_fn: Optional[Callable[[int, int, int, int], QColor]] = None,
     ) -> Object3D:
+        """
+        Build logic.
+        
+        Args:
+            color: Description of color.
+            wall_index: Description of wall_index.
+            center_color_fn: Description of center_color_fn.
+            side_color_fn: Description of side_color_fn.
+        
+        Returns:
+            Result of build operation.
+        """
         faces: List[Face3D] = []
 
         wall_width = WALL_WIDTH_UNITS * BLOCK_UNIT
@@ -44,6 +56,17 @@ class WallGeometry:
 
         # Helper to add a quad with CCW order for +Z normal
         def quad(v1, v2, v3, v4, col):
+            """
+            Quad logic.
+            
+            Args:
+                v1: Description of v1.
+                v2: Description of v2.
+                v3: Description of v3.
+                v4: Description of v4.
+                col: Description of col.
+            
+            """
             faces.append(Face3D([v1, v2, v3, v4], col))
 
         # --- Outer shell faces ---

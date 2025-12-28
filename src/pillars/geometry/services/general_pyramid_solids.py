@@ -19,6 +19,15 @@ class GeneralPyramidSolidService(RegularPyramidSolidServiceBase):
 
     @classmethod
     def build_dynamic(cls, sides: int = 5, base_edge: float = 2.0, height: float = 4.0):
+        """
+        Build dynamic logic.
+        
+        Args:
+            sides: Description of sides.
+            base_edge: Description of base_edge.
+            height: Description of height.
+        
+        """
         from .regular_pyramid_solids import _compute_metrics, _build_vertices, _build_edges, _build_faces
         from ..shared.solid_payload import SolidLabel, SolidPayload
 
@@ -73,6 +82,15 @@ class GeneralPyramidSolidCalculator(RegularPyramidSolidCalculatorBase):
     )
 
     def __init__(self, sides: int = 5, base_edge: float = 2.0, height: float = 4.0):
+        """
+          init   logic.
+        
+        Args:
+            sides: Description of sides.
+            base_edge: Description of base_edge.
+            height: Description of height.
+        
+        """
         self._properties: Dict[str, SolidProperty] = {
             key: SolidProperty(name=label, key=key, unit=unit, precision=precision, editable=editable)
             for key, label, unit, precision, editable in self._PROPERTY_DEFINITIONS
@@ -84,6 +102,16 @@ class GeneralPyramidSolidCalculator(RegularPyramidSolidCalculatorBase):
         self._apply_dimensions(self._base_edge, self._height, self._sides)
 
     def set_property(self, key: str, value: Optional[float]) -> bool:
+        """
+        Configure property logic.
+        
+        Args:
+            key: Description of key.
+            value: Description of value.
+        
+        Returns:
+            Result of set_property operation.
+        """
         if value is None or value <= 0:
             return False
             

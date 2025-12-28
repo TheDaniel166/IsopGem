@@ -12,6 +12,10 @@ from .solid_property import SolidProperty
 
 @dataclass(frozen=True)
 class ConeMetrics:
+    """
+    Cone Metrics class definition.
+    
+    """
     radius: float
     height: float
     slant_height: float
@@ -24,6 +28,10 @@ class ConeMetrics:
 
 @dataclass(frozen=True)
 class ConeResult:
+    """
+    Cone Result class definition.
+    
+    """
     payload: SolidPayload
     metrics: ConeMetrics
 
@@ -33,6 +41,17 @@ class ConeSolidService:
 
     @staticmethod
     def build(radius: float = 1.0, height: float = 2.0, segments: int = 32) -> ConeResult:
+        """
+        Build logic.
+        
+        Args:
+            radius: Description of radius.
+            height: Description of height.
+            segments: Description of segments.
+        
+        Returns:
+            Result of build operation.
+        """
         if radius <= 0 or height <= 0:
             raise ValueError("Radius and Height must be positive")
 
@@ -102,6 +121,14 @@ class ConeSolidCalculator:
     """Bidirectional calculator for the 3D Cone."""
 
     def __init__(self, radius: float = 1.0, height: float = 2.0):
+        """
+          init   logic.
+        
+        Args:
+            radius: Description of radius.
+            height: Description of height.
+        
+        """
         self._properties = {
             'radius': SolidProperty('Radius (r)', 'radius', 'units', radius),
             'height': SolidProperty('Height (h)', 'height', 'units', height),
@@ -116,9 +143,25 @@ class ConeSolidCalculator:
         self._recalculate()
 
     def properties(self) -> List[SolidProperty]:
+        """
+        Properties logic.
+        
+        Returns:
+            Result of properties operation.
+        """
         return list(self._properties.values())
 
     def set_property(self, key: str, value: Optional[float]) -> bool:
+        """
+        Configure property logic.
+        
+        Args:
+            key: Description of key.
+            value: Description of value.
+        
+        Returns:
+            Result of set_property operation.
+        """
         if value is not None and value <= 0:
             return False
             
@@ -212,18 +255,39 @@ class ConeSolidCalculator:
         self._result = ConeSolidService.build(r, h)
 
     def clear(self):
+        """
+        Clear logic.
+        
+        """
         for p in self._properties.values():
             p.value = None
         self._result = None
 
     def payload(self) -> Optional[SolidPayload]:
+        """
+        Payload logic.
+        
+        Returns:
+            Result of payload operation.
+        """
         return self._result.payload if self._result else None
 
     def metadata(self) -> Dict[str, float]:
+        """
+        Metadata logic.
+        
+        Returns:
+            Result of metadata operation.
+        """
         if not self._result:
             return {}
         return dict(self._result.payload.metadata)
 
     def metrics(self) -> Optional[ConeMetrics]:
+        """
+        Metrics logic.
+        
+        Returns:
+            Result of metrics operation.
+        """
         return self._result.metrics if self._result else None
-

@@ -35,6 +35,10 @@ chart_tag_links = Table(
 
 
 class AstrologyChart(Base):
+    """
+    Astrology Chart class definition.
+    
+    """
     __tablename__ = "astrology_charts"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -73,6 +77,10 @@ class AstrologyChart(Base):
 
 
 class ChartCategory(Base):
+    """
+    Chart Category class definition.
+    
+    """
     __tablename__ = "chart_categories"
 
     id = Column(Integer, primary_key=True)
@@ -86,6 +94,10 @@ class ChartCategory(Base):
 
 
 class ChartTag(Base):
+    """
+    Chart Tag class definition.
+    
+    """
     __tablename__ = "chart_tags"
 
     id = Column(Integer, primary_key=True)

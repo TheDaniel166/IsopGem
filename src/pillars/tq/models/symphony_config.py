@@ -7,6 +7,10 @@ from typing import Dict
 
 @dataclass
 class SymphonyFamily:
+    """
+    Symphony Family class definition.
+    
+    """
     id: int
     name: str
     color_hex: str

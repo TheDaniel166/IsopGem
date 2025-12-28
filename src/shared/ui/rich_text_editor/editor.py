@@ -48,6 +48,15 @@ class SafeTextEdit(QTextEdit):
     """
     
     def __init__(self, parent: Optional[QWidget] = None) -> None:
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        Returns:
+            Result of __init__ operation.
+        """
         super().__init__(parent)
         self._show_page_breaks = True
         self._page_settings = DEFAULT_PAGE_SETTINGS
@@ -59,10 +68,23 @@ class SafeTextEdit(QTextEdit):
     
     @property
     def show_page_breaks(self) -> bool:
+        """
+        Display page breaks logic.
+        
+        Returns:
+            Result of show_page_breaks operation.
+        """
         return self._show_page_breaks
     
     @show_page_breaks.setter
     def show_page_breaks(self, value: bool):
+        """
+        Display page breaks logic.
+        
+        Args:
+            value: Description of value.
+        
+        """
         self._show_page_breaks = value
         self.viewport().update()
     
@@ -211,6 +233,17 @@ class RichTextEditor(QWidget):
     wiki_link_requested = pyqtSignal()
     
     def __init__(self, parent: Optional[QWidget] = None, placeholder_text: str = "Start typing...", show_ui: bool = True) -> None:
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+            placeholder_text: Description of placeholder_text.
+            show_ui: Description of show_ui.
+        
+        Returns:
+            Result of __init__ operation.
+        """
         super().__init__(parent)
         self.virtual_keyboard: VirtualKeyboard | None = None
         
@@ -526,12 +559,30 @@ class RichTextEditor(QWidget):
         self._clear_formatting()
 
     def toggle_strikethrough(self) -> None:
+        """
+        Toggle strikethrough logic.
+        
+        Returns:
+            Result of toggle_strikethrough operation.
+        """
         self._toggle_strikethrough()
 
     def toggle_subscript(self) -> None:
+        """
+        Toggle subscript logic.
+        
+        Returns:
+            Result of toggle_subscript operation.
+        """
         self._toggle_subscript()
 
     def toggle_superscript(self) -> None:
+        """
+        Toggle superscript logic.
+        
+        Returns:
+            Result of toggle_superscript operation.
+        """
         self._toggle_superscript()
 
     def _init_ribbon(self) -> None:
@@ -1203,12 +1254,26 @@ class RichTextEditor(QWidget):
         aspect_ratio = current_w / current_h if current_h > 0 else 1.0
         
         def on_width_changed(val):
+            """
+            Handle width changed logic.
+            
+            Args:
+                val: Description of val.
+            
+            """
             if lock_aspect.isChecked():
                 height_spin.blockSignals(True)
                 height_spin.setValue(int(val / aspect_ratio))
                 height_spin.blockSignals(False)
         
         def on_height_changed(val):
+            """
+            Handle height changed logic.
+            
+            Args:
+                val: Description of val.
+            
+            """
             if lock_aspect.isChecked():
                 width_spin.blockSignals(True)
                 width_spin.setValue(int(val * aspect_ratio))
@@ -1389,6 +1454,15 @@ class RichTextEditor(QWidget):
         elif filter_name == "Sepia":
             # Sepia transformation
             def sepia_pixel(r, g, b):
+                """
+                Sepia pixel logic.
+                
+                Args:
+                    r: Description of r.
+                    g: Description of g.
+                    b: Description of b.
+                
+                """
                 tr = int(0.393 * r + 0.769 * g + 0.189 * b)
                 tg = int(0.349 * r + 0.686 * g + 0.168 * b)
                 tb = int(0.272 * r + 0.534 * g + 0.131 * b)
@@ -1410,6 +1484,14 @@ class RichTextEditor(QWidget):
         elif filter_name == "Warm":
             # Shift colors warmer (more red, less blue)
             def shift_channel(channel, shift):
+                """
+                Shift channel logic.
+                
+                Args:
+                    channel: Description of channel.
+                    shift: Description of shift.
+                
+                """
                 return channel.point(lambda x: max(0, min(255, x + shift)))
             r = shift_channel(r, 20)
             b = shift_channel(b, -20)
@@ -1418,6 +1500,14 @@ class RichTextEditor(QWidget):
         elif filter_name == "Cool":
             # Shift colors cooler (more blue, less red)
             def shift_channel(channel, shift):
+                """
+                Shift channel logic.
+                
+                Args:
+                    channel: Description of channel.
+                    shift: Description of shift.
+                
+                """
                 return channel.point(lambda x: max(0, min(255, x + shift)))
             r = shift_channel(r, -20)
             b = shift_channel(b, 20)
@@ -1428,6 +1518,14 @@ class RichTextEditor(QWidget):
             pil_img = ImageEnhance.Color(pil_img).enhance(0.7)
             r, g, b, a = pil_img.split()
             def shift_channel(channel, shift):
+                """
+                Shift channel logic.
+                
+                Args:
+                    channel: Description of channel.
+                    shift: Description of shift.
+                
+                """
                 return channel.point(lambda x: max(0, min(255, x + shift)))
             r = shift_channel(r, 15)
             g = shift_channel(g, 5)
@@ -1566,12 +1664,20 @@ class RichTextEditor(QWidget):
         
         # Clamp width/height when X/Y changes
         def update_w_range():
+            """
+            Update w range logic.
+            
+            """
             max_w = img_w - x_spin.value()
             w_spin.setMaximum(max_w)
             if w_spin.value() > max_w:
                 w_spin.setValue(max_w)
         
         def update_h_range():
+            """
+            Update h range logic.
+            
+            """
             max_h = img_h - y_spin.value()
             h_spin.setMaximum(max_h)
             if h_spin.value() > max_h:
@@ -2191,17 +2297,47 @@ class RichTextEditor(QWidget):
         
     # --- Public API ---
     def get_html(self) -> str:
+        """
+        Retrieve html logic.
+        
+        Returns:
+            Result of get_html operation.
+        """
         return self.editor.toHtml()
         
     def set_html(self, html: str) -> None:
+        """
+        Configure html logic.
+        
+        Args:
+            html: Description of html.
+        
+        Returns:
+            Result of set_html operation.
+        """
         self.editor.setHtml(html)
         # Ensure LTR is maintained after setting content
         self.editor.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
         
     def get_text(self) -> str:
+        """
+        Retrieve text logic.
+        
+        Returns:
+            Result of get_text operation.
+        """
         return self.editor.toPlainText()
         
     def set_text(self, text: str) -> None:
+        """
+        Configure text logic.
+        
+        Args:
+            text: Description of text.
+        
+        Returns:
+            Result of set_text operation.
+        """
         self.editor.setPlainText(text)
 
     def set_markdown(self, markdown: str):
@@ -2215,6 +2351,12 @@ class RichTextEditor(QWidget):
         return self.editor.document().toMarkdown()
         
     def clear(self) -> None:
+        """
+        Clear logic.
+        
+        Returns:
+            Result of clear operation.
+        """
         self.editor.clear()
 
     def find_text(self, text: str) -> bool:

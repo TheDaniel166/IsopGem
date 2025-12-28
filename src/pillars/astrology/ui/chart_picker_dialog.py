@@ -13,6 +13,14 @@ class ChartPickerDialog(QDialog):
     """Modal selector for saved charts with text, category, and tag filters."""
 
     def __init__(self, storage: ChartStorageService, parent: Optional[QWidget] = None):
+        """
+          init   logic.
+        
+        Args:
+            storage: Description of storage.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.storage = storage
         self.selected: Optional[SavedChartSummary] = None

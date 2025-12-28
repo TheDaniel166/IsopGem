@@ -163,6 +163,15 @@ class PlatonicTransitionService:
 
     @classmethod
     def generate_families(cls, geometry: PlatonicSolidGeometry) -> List[SolidFamilyGroup]:
+        """
+        Generate families logic.
+        
+        Args:
+            geometry: Description of geometry.
+        
+        Returns:
+            Result of generate_families operation.
+        """
         if not geometry.vertices:
             return []
         pair_map, bucket_distances = cls._build_distance_index(geometry.vertices)
@@ -207,6 +216,15 @@ class PlatonicTransitionService:
         cls,
         geometry: PlatonicSolidGeometry,
     ) -> List[Dict[str, object]]:
+        """
+        Generate face sequences logic.
+        
+        Args:
+            geometry: Description of geometry.
+        
+        Returns:
+            Result of generate_face_sequences operation.
+        """
         if not geometry.faces or not geometry.vertices:
             return []
         lookup = {vertex.index: vertex for vertex in geometry.vertices}

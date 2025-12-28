@@ -25,6 +25,16 @@ class KameaCellItem(QGraphicsRectItem):
     Visual representation of a single Kamea Cell.
     """
     def __init__(self, cell: KameaCell, size: float, base_color: QColor, tooltip_enabled: bool = True):
+        """
+          init   logic.
+        
+        Args:
+            cell: Description of cell.
+            size: Description of size.
+            base_color: Description of base_color.
+            tooltip_enabled: Description of tooltip_enabled.
+        
+        """
         super().__init__(0, 0, size, size)
         self.cell = cell
         self.tooltip_enabled = tooltip_enabled
@@ -112,6 +122,13 @@ class KameaCellItem(QGraphicsRectItem):
 
 
     def hoverEnterEvent(self, event):
+        """
+        Hoverenterevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        """
         self.setOpacity(1.0)
         # Glow Effect (simulated by brighter color or stroke)
         pen = QPen(QColor("#ffffff"))
@@ -132,6 +149,13 @@ class KameaCellItem(QGraphicsRectItem):
         super().hoverEnterEvent(event)
 
     def hoverLeaveEvent(self, event):
+        """
+        Hoverleaveevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        """
         if not self.is_highlighted:
             self.setOpacity(self.original_opacity)
             self.setPen(QPen(Qt.GlobalColor.transparent))
@@ -148,6 +172,13 @@ class KameaCellItem(QGraphicsRectItem):
         # We can handle this in the scene or just call the view directly if we had a ref.
         # Better: Scene handles `selectionChanged`.
         # Simplest: manually trigger.
+        """
+        Mousepressevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        """
         super().mousePressEvent(event) 
 
 class KameaGridView(QGraphicsView):
@@ -157,6 +188,14 @@ class KameaGridView(QGraphicsView):
     cell_selected = pyqtSignal(object) # Emit KameaCell
 
     def __init__(self, service: KameaGridService, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            service: Description of service.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.service = service
         self.scene = QGraphicsScene(self)

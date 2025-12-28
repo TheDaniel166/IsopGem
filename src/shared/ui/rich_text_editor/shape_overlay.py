@@ -21,6 +21,13 @@ class ShapeScene(QGraphicsScene):
     """Scene for shape items."""
     
     def __init__(self, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.setBackgroundBrush(Qt.GlobalColor.transparent)
 
@@ -38,6 +45,13 @@ class ShapeOverlay(QGraphicsView):
     shape_selected = pyqtSignal(object)  # BaseShapeItem or None
     
     def __init__(self, parent: QWidget = None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         self._scene = ShapeScene()
         super().__init__(self._scene, parent)
         

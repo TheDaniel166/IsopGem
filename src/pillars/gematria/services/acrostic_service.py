@@ -7,12 +7,34 @@ from pillars.gematria.services.corpus_dictionary_service import CorpusDictionary
 logger = logging.getLogger(__name__)
 
 class AcrosticResult:
+    """
+    Acrostic Result class definition.
+    
+    Attributes:
+        found_word: Description of found_word.
+        method: Description of method.
+        source_indices: Description of source_indices.
+        source_text_units: Description of source_text_units.
+        is_valid_word: Description of is_valid_word.
+    
+    """
     def __init__(self, 
                  found_word: str, 
                  method: str, 
                  source_indices: List[int],
                  source_text_units: List[str] = None, 
                  is_valid_word: bool = False):
+        """
+          init   logic.
+        
+        Args:
+            found_word: Description of found_word.
+            method: Description of method.
+            source_indices: Description of source_indices.
+            source_text_units: Description of source_text_units.
+            is_valid_word: Description of is_valid_word.
+        
+        """
         self.found_word = found_word
         self.method = method  # "First Letter (Line)", "Last Letter (Word)", etc.
         self.source_indices = source_indices  # Indices of lines/words used
@@ -23,7 +45,18 @@ class AcrosticResult:
         return f"<Acrostic({self.found_word}, valid={self.is_valid_word})>"
 
 class AcrosticService:
+    """
+    Acrostic Service class definition.
+    
+    Attributes:
+        dictionary_service: Description of dictionary_service.
+    
+    """
     def __init__(self):
+        """
+          init   logic.
+        
+        """
         self.dictionary_service = CorpusDictionaryService()
 
     def find_acrostics(self, 

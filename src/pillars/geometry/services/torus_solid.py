@@ -12,6 +12,10 @@ from .solid_property import SolidProperty
 
 @dataclass(frozen=True)
 class TorusMetrics:
+    """
+    Torus Metrics class definition.
+    
+    """
     major_radius: float
     minor_radius: float
     ratio: float
@@ -23,12 +27,20 @@ class TorusMetrics:
 
 @dataclass(frozen=True)
 class TorusSolidResult:
+    """
+    Torus Solid Result class definition.
+    
+    """
     payload: SolidPayload
     metrics: TorusMetrics
 
 
 @dataclass
 class TorusMeshConfig:
+    """
+    Torus Mesh Config class definition.
+    
+    """
     major_segments: int = 40
     minor_segments: int = 20
 
@@ -38,6 +50,17 @@ class TorusSolidService:
 
     @staticmethod
     def build(major_radius: float = 3.0, minor_radius: float = 1.0, config: TorusMeshConfig = None) -> TorusSolidResult:
+        """
+        Build logic.
+        
+        Args:
+            major_radius: Description of major_radius.
+            minor_radius: Description of minor_radius.
+            config: Description of config.
+        
+        Returns:
+            Result of build operation.
+        """
         if major_radius <= 0 or minor_radius <= 0:
             raise ValueError("Radii must be positive")
             
@@ -148,6 +171,14 @@ class TorusSolidCalculator:
     """Bidirectional torus calculator."""
 
     def __init__(self, major_radius: float = 3.0, minor_radius: float = 1.0):
+        """
+          init   logic.
+        
+        Args:
+            major_radius: Description of major_radius.
+            minor_radius: Description of minor_radius.
+        
+        """
         self._properties = {
             'major_radius': SolidProperty('Major Radius (R)', 'major_radius', 'units', 10.0), # Priority 10 -> Input
             'minor_radius': SolidProperty('Minor Radius (r)', 'minor_radius', 'units', 10.0),
@@ -164,9 +195,25 @@ class TorusSolidCalculator:
         self._recalculate()
 
     def properties(self) -> List[SolidProperty]:
+        """
+        Properties logic.
+        
+        Returns:
+            Result of properties operation.
+        """
         return list(self._properties.values())
 
     def set_property(self, key: str, value: Optional[float]) -> bool:
+        """
+        Configure property logic.
+        
+        Args:
+            key: Description of key.
+            value: Description of value.
+        
+        Returns:
+            Result of set_property operation.
+        """
         if value is not None and value <= 0:
             return False
             
@@ -239,17 +286,39 @@ class TorusSolidCalculator:
         self._result = TorusSolidService.build(R, r)
 
     def clear(self):
+        """
+        Clear logic.
+        
+        """
         for p in self._properties.values():
             p.value = None
         self._result = None
 
     def payload(self) -> Optional[SolidPayload]:
+        """
+        Payload logic.
+        
+        Returns:
+            Result of payload operation.
+        """
         return self._result.payload if self._result else None
 
     def metadata(self) -> Dict[str, float]:
+        """
+        Metadata logic.
+        
+        Returns:
+            Result of metadata operation.
+        """
         if not self._result:
             return {}
         return dict(self._result.payload.metadata)
 
     def metrics(self) -> Optional[TorusMetrics]:
+        """
+        Metrics logic.
+        
+        Returns:
+            Result of metrics operation.
+        """
         return self._result.metrics if self._result else None

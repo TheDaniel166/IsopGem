@@ -67,6 +67,10 @@ class ArabicPartsService:
     """Service for calculating Arabic Parts (Lots)."""
 
     def __init__(self):
+        """
+          init   logic.
+        
+        """
         self._parts = PARTS_DEFINITIONS
 
     def calculate_parts(

@@ -188,6 +188,15 @@ class DitrunalService:
         t2 = sixgram[3:6]
         
         def get_type(t):
+            """
+            Retrieve type logic.
+            
+            Args:
+                t: Description of t.
+            
+            Returns:
+                Result of get_type operation.
+            """
             zeros = t.count('0')
             if zeros == 3: return "Pure"
             if zeros == 2: return "Orbital"

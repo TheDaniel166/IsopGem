@@ -11,6 +11,14 @@ class MethodsReferenceWindow(QMainWindow):
     """Window displaying all available gematria calculation methods with their documentation."""
 
     def __init__(self, calculators: List[GematriaCalculator], parent=None):
+        """
+          init   logic.
+        
+        Args:
+            calculators: Description of calculators.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.setWindowTitle("Gemetria Methods Reference")
         self.setMinimumSize(1000, 750)
@@ -333,5 +341,12 @@ class MethodsReferenceWindow(QMainWindow):
         return "TEST"
 
     def closeEvent(self, event):  # type: ignore
+        """
+        Closeevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        """
         self.deleteLater()
         event.accept()

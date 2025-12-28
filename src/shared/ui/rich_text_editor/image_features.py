@@ -22,6 +22,10 @@ class CropPreviewLabel(QLabel):
     selection_changed = pyqtSignal(QRect)  # Emits normalized rect relative to display_rect
 
     def __init__(self, *args, **kwargs):
+        """
+          init   logic.
+        
+        """
         super().__init__(*args, **kwargs)
         self.setMouseTracking(True)
         self.rubber_band = QRubberBand(QRubberBand.Shape.Rectangle, self)
@@ -30,6 +34,13 @@ class CropPreviewLabel(QLabel):
         self.pending_selection = QRect()  # Store the pending crop selection
 
     def set_display_rect(self, rect: QRect):
+        """
+        Configure display rect logic.
+        
+        Args:
+            rect: Description of rect.
+        
+        """
         self.display_rect = rect
         # Clear selection when display rect changes (e.g., after other edits)
         self.clear_selection()
@@ -48,6 +59,13 @@ class CropPreviewLabel(QLabel):
         return self.pending_selection
 
     def mousePressEvent(self, event):  # type: ignore[override]
+        """
+        Mousepressevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        """
         if not self.display_rect.contains(event.pos()):
             return
         self.origin = event.pos()
@@ -55,11 +73,25 @@ class CropPreviewLabel(QLabel):
         self.rubber_band.show()
 
     def mouseMoveEvent(self, event):  # type: ignore[override]
+        """
+        Mousemoveevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        """
         if self.rubber_band.isVisible():
             rect = QRect(self.origin, event.pos()).normalized()
             self.rubber_band.setGeometry(rect)
 
     def mouseReleaseEvent(self, event):  # type: ignore[override]
+        """
+        Mousereleaseevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        """
         if self.rubber_band.isVisible():
             rect = self.rubber_band.geometry().normalized()
             selection = rect.intersected(self.display_rect)
@@ -78,6 +110,14 @@ class CropPreviewLabel(QLabel):
 class ImagePropertiesDialog(QDialog):
     """Dialog for quick width/height edits after insertion."""
     def __init__(self, fmt: QTextImageFormat, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            fmt: Description of fmt.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.setWindowTitle("Image Properties")
         self.fmt = fmt
@@ -108,6 +148,13 @@ class ImagePropertiesDialog(QDialog):
         layout.addWidget(buttons)
 
     def apply_to_format(self, fmt: QTextImageFormat):
+        """
+        Apply to format logic.
+        
+        Args:
+            fmt: Description of fmt.
+        
+        """
         fmt.setWidth(self.width_spin.value())
         fmt.setHeight(self.height_spin.value())
 
@@ -117,10 +164,21 @@ class ImageLoaderWorker(QObject):
     finished = pyqtSignal(object)  # Emits (Pillow Image, Error String)
 
     def __init__(self, path):
+        """
+          init   logic.
+        
+        Args:
+            path: Description of path.
+        
+        """
         super().__init__()
         self.path = path
 
     def run(self):
+        """
+        Execute logic.
+        
+        """
         try:
             from PIL import Image
             img = Image.open(self.path).convert("RGBA")
@@ -134,6 +192,13 @@ class ImageEditorDialog(QDialog):
     """Modal image editor using Pillow before insertion."""
 
     def __init__(self, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.setWindowTitle("Edit & Insert Image")
         self.orig_image = None  # Pillow Image
@@ -727,6 +792,15 @@ class ImageEditorDialog(QDialog):
         
         # Sepia matrix transformation
         def sepia_pixel(r, g, b):
+            """
+            Sepia pixel logic.
+            
+            Args:
+                r: Description of r.
+                g: Description of g.
+                b: Description of b.
+            
+            """
             tr = int(0.393 * r + 0.769 * g + 0.189 * b)
             tg = int(0.349 * r + 0.686 * g + 0.168 * b)
             tb = int(0.272 * r + 0.534 * g + 0.131 * b)
@@ -751,6 +825,14 @@ class ImageEditorDialog(QDialog):
         r, g, b, a = img.split()
         
         def shift_channel(channel, shift):
+            """
+            Shift channel logic.
+            
+            Args:
+                channel: Description of channel.
+                shift: Description of shift.
+            
+            """
             return channel.point(lambda x: max(0, min(255, x + shift)))
         
         if r_shift:
@@ -776,6 +858,13 @@ class ImageEditorDialog(QDialog):
         r, g, b, a = img.split()
         
         def fade(x):
+            """
+            Fade logic.
+            
+            Args:
+                x: Description of x.
+            
+            """
             return int(x * 0.9 + 25)
         
         r = r.point(fade)
@@ -811,12 +900,24 @@ class ImageEditorDialog(QDialog):
 
     # --- Output ---
     def get_final_qimage(self):
+        """
+        Retrieve final qimage logic.
+        
+        Returns:
+            Result of get_final_qimage operation.
+        """
         if not self.current_image:
             return None
         data = self.current_image.tobytes("raw", "RGBA")
         return QImage(data, self.current_image.width, self.current_image.height, QImage.Format.Format_RGBA8888)
 
     def get_final_bytes_png(self):
+        """
+        Retrieve final bytes png logic.
+        
+        Returns:
+            Result of get_final_bytes_png operation.
+        """
         if not self.current_image:
             return None
         from io import BytesIO
@@ -828,6 +929,14 @@ class ImageFeature:
     """Manages image operations for the RichTextEditor."""
     
     def __init__(self, editor: QTextEdit, parent: QWidget):
+        """
+          init   logic.
+        
+        Args:
+            editor: Description of editor.
+            parent: Description of parent.
+        
+        """
         self.editor = editor
         self.parent = parent
         self._init_actions()
@@ -867,6 +976,10 @@ class ImageFeature:
 
     def insert_image(self):
         # Ensure Pillow is available
+        """
+        Insert image logic.
+        
+        """
         try:
             import PIL  # noqa: F401
         except ImportError:

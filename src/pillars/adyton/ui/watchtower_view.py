@@ -22,6 +22,14 @@ class WatchtowerView(QWidget):
     """
     
     def __init__(self, loader_service: KameaLoaderService, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            loader_service: Description of loader_service.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.loader = loader_service
         # Initialize Color Service
@@ -40,6 +48,10 @@ class WatchtowerView(QWidget):
         
     def init_ui(self):
         # Main Layout (Vertical) containing Toolbar and Content Area
+        """
+        Initialize ui logic.
+        
+        """
         self.main_layout = QVBoxLayout(self)
         
         # --- Toolbar ---
@@ -123,6 +135,13 @@ class WatchtowerView(QWidget):
         self.load_tablet("Air (East)")
         
     def on_view_mode_changed(self, mode: str):
+        """
+        Handle view mode changed logic.
+        
+        Args:
+            mode: Description of mode.
+        
+        """
         self.rebuild_widgets()
 
     def _init_detail_panel(self):
@@ -156,6 +175,13 @@ class WatchtowerView(QWidget):
         layout.addStretch()
 
     def on_zoom_changed(self, value):
+        """
+        Handle zoom changed logic.
+        
+        Args:
+            value: Description of value.
+        
+        """
         self.current_scale = value
         # Adjust cell size proportional to scale (approx 85% of grid unit)
         self.current_cell_size = int(value * 0.85)
@@ -163,6 +189,13 @@ class WatchtowerView(QWidget):
 
     def load_tablet(self, tablet_name: str):
         # Determine Target Octants based on Name
+        """
+        Load tablet logic.
+        
+        Args:
+            tablet_name: Description of tablet_name.
+        
+        """
         target_octants = []
         if "Air" in tablet_name: target_octants = [1, 5]
         elif "Water" in tablet_name: target_octants = [3, 7]
@@ -176,6 +209,14 @@ class WatchtowerView(QWidget):
 
     def render_tablet(self, cells: List[KameaCell], octants: List[int]):
         # Store cells and octants
+        """
+        Render tablet logic.
+        
+        Args:
+            cells: Description of cells.
+            octants: Description of octants.
+        
+        """
         self.current_tablet_cells = cells
         self.current_octants = octants
         
@@ -199,6 +240,10 @@ class WatchtowerView(QWidget):
 
     def rebuild_widgets(self):
         # Clear previous cells
+        """
+        Rebuild widgets logic.
+        
+        """
         for child in self.tablet_container.children():
             if isinstance(child, KameaPyramidCell):
                 child.deleteLater()
@@ -213,12 +258,26 @@ class WatchtowerView(QWidget):
             
             # Helper to sort and assign groups
             def assign_groups(cells_list):
+                """
+                Assign groups logic.
+                
+                Args:
+                    cells_list: Description of cells_list.
+                
+                """
                 if not cells_list: return
                 
                 # Sort based on Algo
                 if algo == "Sunburst":
                     # Angular sort: slope = abs(y/x)
                     def key_func(c):
+                        """
+                        Key func logic.
+                        
+                        Args:
+                            c: Description of c.
+                        
+                        """
                         if c.x == 0: return 99.0
                         return abs(c.y / c.x)
                     cells_list.sort(key=key_func)
@@ -251,6 +310,13 @@ class WatchtowerView(QWidget):
 
         # Helper to create widget
         def create_widget(cell: KameaCell):
+            """
+            Create widget logic.
+            
+            Args:
+                cell: Description of cell.
+            
+            """
             widget = KameaPyramidCell(cell.ditrune, cell.decimal_value, size=self.current_cell_size, parent=self.tablet_container)
             
             # Resolve Colors (default)
@@ -389,6 +455,15 @@ class WatchtowerView(QWidget):
 
     def on_cell_clicked(self, cell: KameaCell, widget: KameaPyramidCell, wall_idx: int = -1):
         # Update Detail Panel
+        """
+        Handle cell clicked logic.
+        
+        Args:
+            cell: Description of cell.
+            widget: Description of widget.
+            wall_idx: Description of wall_idx.
+        
+        """
         self.lbl_ditrune.setText(f"Ditrune: {cell.ditrune}")
         self.lbl_decimal.setText(f"Decimal: {cell.decimal_value}")
         self.lbl_coords.setText(f"Coords: ({cell.x}, {cell.y})")
@@ -459,6 +534,15 @@ class WatchtowerView(QWidget):
         # Helper: Layout a single triangle
         # direction: 1 for Point Up (Rows go down Y), -1 for Point Down (Rows go up Y)
         def layout_triangle(widgets, start_y, direction):
+            """
+            Layout triangle logic.
+            
+            Args:
+                widgets: Description of widgets.
+                start_y: Description of start_y.
+                direction: Description of direction.
+            
+            """
             current_idx = 0
             for row_idx in range(12): # 12 rows
                 num_in_row = row_idx + 1

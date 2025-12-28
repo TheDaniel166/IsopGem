@@ -17,6 +17,14 @@ class ViewportPane(QWidget):
     """
     
     def __init__(self, view_model: GeometryViewModel, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            view_model: Description of view_model.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.view_model = view_model
         
@@ -99,4 +107,3 @@ class ViewportPane(QWidget):
         # Trigger dynamic label layout after fit (which sets initial transform)
         if hasattr(self.scene, "update_label_layout"):
             self.scene.update_label_layout(self.view.transform())
-

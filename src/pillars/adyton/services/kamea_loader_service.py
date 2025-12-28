@@ -18,6 +18,13 @@ class KameaLoaderService:
     CSV_PATH = "Docs/kamea/kamea_maut_ternary - Sheet1.csv"
 
     def __init__(self, project_root: str):
+        """
+          init   logic.
+        
+        Args:
+            project_root: Description of project_root.
+        
+        """
         self.project_root = project_root
         self._cache: Dict[Tuple[int, int], KameaCell] = {}
 

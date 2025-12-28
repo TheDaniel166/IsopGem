@@ -24,6 +24,15 @@ class ShapeCard(QFrame):
     clicked = pyqtSignal(dict)  # Emits the shape definition
     
     def __init__(self, shape_def: dict, accent_color: str, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            shape_def: Description of shape_def.
+            accent_color: Description of accent_color.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self._shape_def = shape_def
         self._accent_color = accent_color
@@ -104,6 +113,13 @@ class ShapeCard(QFrame):
         self._is_disabled = is_disabled
         
     def mousePressEvent(self, event):
+        """
+        Mousepressevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        """
         if not self._is_disabled:
             self.clicked.emit(self._shape_def)
         super().mousePressEvent(event)
@@ -136,6 +152,14 @@ class ShapePickerDialog(QDialog):
     }
     
     def __init__(self, category: dict, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            category: Description of category.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self._category = category
         self._shapes = category.get('shapes', [])

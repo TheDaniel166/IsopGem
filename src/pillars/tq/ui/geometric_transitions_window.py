@@ -42,6 +42,13 @@ class GeometricCanvas(QWidget):
     """Simple polygon renderer with optional highlighted transitions."""
 
     def __init__(self, parent: Optional[QWidget] = None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.setMinimumSize(320, 320)
         self.vertices: List[Vertex] = []
@@ -50,19 +57,48 @@ class GeometricCanvas(QWidget):
         self.special_segments: List[tuple[int, int]] = []
 
     def set_vertices(self, vertices: List[Vertex]):
+        """
+        Configure vertices logic.
+        
+        Args:
+            vertices: Description of vertices.
+        
+        """
         self.vertices = vertices
         self.update()
 
     def set_highlight(self, skip: Optional[int], transition: Optional[Transition]):
+        """
+        Configure highlight logic.
+        
+        Args:
+            skip: Description of skip.
+            transition: Description of transition.
+        
+        """
         self.highlight_skip = skip
         self.highlight_pair = transition
         self.update()
 
     def set_special_segments(self, segments: Optional[List[tuple[int, int]]]):
+        """
+        Configure special segments logic.
+        
+        Args:
+            segments: Description of segments.
+        
+        """
         self.special_segments = segments or []
         self.update()
 
     def paintEvent(self, a0):  # noqa: N802 - Qt override
+        """
+        Paintevent logic.
+        
+        Args:
+            a0: Description of a0.
+        
+        """
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         painter.fillRect(self.rect(), QColor("#ffffff"))
@@ -135,6 +171,15 @@ class GeometricTransitionsWindow(QMainWindow):
     RESULT_COLUMN_INDEX = 5
 
     def __init__(self, window_manager=None, parent: Optional[QWidget] = None, initial_values: Optional[List[int]] = None, **kwargs):
+        """
+          init   logic.
+        
+        Args:
+            window_manager: Description of window_manager.
+            parent: Description of parent.
+            initial_values: Description of initial_values.
+        
+        """
         super().__init__(parent)
         self.window_manager = window_manager
         self.service = GeometricTransitionService()

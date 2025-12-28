@@ -25,6 +25,15 @@ class MindscapePageWidget(QWidget):
     Hosts a Global Ribbon for formatting active text boxes.
     """
     def __init__(self, parent: Optional[QWidget] = None) -> None:
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        Returns:
+            Result of __init__ operation.
+        """
         super().__init__(parent)
         self.main_layout = QVBoxLayout(self)
         self.main_layout.setContentsMargins(0, 0, 0, 0)
@@ -556,6 +565,10 @@ class MindscapePageWidget(QWidget):
                     from PyQt6.QtCore import QTimer
                     def do_center():
                         # Recalculate point in case scene transform changed slightly
+                        """
+                        Do center logic.
+                        
+                        """
                         final_point = item.mapToScene(QPointF(target_local_x, target_local_y))
                         self.canvas.centerOn(final_point)
                         
@@ -581,6 +594,12 @@ class MindscapePageWidget(QWidget):
             QMessageBox.critical(self, "Save Error", str(e))
 
     def clear(self) -> None:
+        """
+        Clear logic.
+        
+        Returns:
+            Result of clear operation.
+        """
         self.current_doc_id = None
         self.canvas.clear_canvas()
         self.setEnabled(False)

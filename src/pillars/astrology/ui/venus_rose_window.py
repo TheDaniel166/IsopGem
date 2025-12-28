@@ -73,6 +73,15 @@ COLOR_GLOW_SUP = QColor(100, 200, 255, 150) # Blueish
 class PlanetItem(QGraphicsEllipseItem):
     """Visual representation of a planet."""
     def __init__(self, color: QColor, size: float, label: str):
+        """
+          init   logic.
+        
+        Args:
+            color: Description of color.
+            size: Description of size.
+            label: Description of label.
+        
+        """
         super().__init__(-size/2, -size/2, size, size)
         self.setBrush(QBrush(color))
         self.setPen(QPen(Qt.GlobalColor.white))
@@ -82,6 +91,15 @@ class PlanetItem(QGraphicsEllipseItem):
 class GlowingParticle(QGraphicsEllipseItem):
     """A glowing highlight for conjunction points."""
     def __init__(self, x, y, is_inferior=True):
+        """
+          init   logic.
+        
+        Args:
+            x: Description of x.
+            y: Description of y.
+            is_inferior: Description of is_inferior.
+        
+        """
         size = 20 if is_inferior else 15
         super().__init__(-size/2, -size/2, size, size)
         self.setPos(x, y)
@@ -95,7 +113,23 @@ class GlowingParticle(QGraphicsEllipseItem):
         self.setPen(QPen(Qt.GlobalColor.transparent))
 
 class RoseScene(QGraphicsScene):
+    """
+    Rose Scene class definition.
+    
+    Attributes:
+        sun: Description of sun.
+        earth: Description of earth.
+        venus: Description of venus.
+        trace_lines: Description of trace_lines.
+        highlights: Description of highlights.
+        use_real_physics: Description of use_real_physics.
+    
+    """
     def __init__(self):
+        """
+          init   logic.
+        
+        """
         super().__init__()
         self.setBackgroundBrush(QBrush(COLOR_SPACE))
         
@@ -191,6 +225,13 @@ class RoseScene(QGraphicsScene):
 
     def add_highlight(self, is_inferior):
         # Place highlight at current Venus position
+        """
+        Add highlight logic.
+        
+        Args:
+            is_inferior: Description of is_inferior.
+        
+        """
         h = GlowingParticle(self.venus.x(), self.venus.y(), is_inferior)
         self.addItem(h)
         self.highlights.append(h)
@@ -198,6 +239,10 @@ class RoseScene(QGraphicsScene):
             self.removeItem(self.highlights.pop(0))
             
     def clear_trace(self):
+        """
+        Clear trace logic.
+        
+        """
         for line in self.trace_lines:
             self.removeItem(line)
         self.trace_lines.clear()
@@ -207,7 +252,18 @@ class RoseScene(QGraphicsScene):
 
 
 class RoseView(QGraphicsView):
+    """
+    Rose View class definition.
+    
+    """
     def __init__(self, scene):
+        """
+          init   logic.
+        
+        Args:
+            scene: Description of scene.
+        
+        """
         super().__init__(scene)
         self.setRenderHint(QPainter.RenderHint.Antialiasing)
         self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
@@ -215,12 +271,42 @@ class RoseView(QGraphicsView):
         self.scale(0.8, 0.8)
 
     def wheelEvent(self, event: QWheelEvent):
+        """
+        Wheelevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        """
         factor = 1.1 if event.angleDelta().y() > 0 else 0.9
         self.scale(factor, factor)
 
 
 class VenusRoseWindow(QMainWindow):
+    """
+    Venus Rose Window class definition.
+    
+    Attributes:
+        current_date: Description of current_date.
+        is_real_physics: Description of is_real_physics.
+        scene: Description of scene.
+        view: Description of view.
+        label_date: Description of label_date.
+        btn_physics: Description of btn_physics.
+        timer: Description of timer.
+        table: Description of table.
+        events: Description of events.
+        step_days: Description of step_days.
+    
+    """
     def __init__(self, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.setWindowTitle("The Cytherean Rose")
         self.resize(1200, 900)
@@ -505,6 +591,15 @@ class VenusRoseWindow(QMainWindow):
         provider = EphemerisProvider.get_instance()
         
         def get_diff(t):
+            """
+            Retrieve diff logic.
+            
+            Args:
+                t: Description of t.
+            
+            Returns:
+                Result of get_diff operation.
+            """
             d = provider.get_extended_data('venus', t)
             # We need Earth's longitude too. 
             # Ideally extended_data would return it, but we can fetch separately for now
@@ -601,4 +696,3 @@ class VenusRoseWindow(QMainWindow):
         self.scene.update_positions_by_date(self.current_date, self.is_real_physics)
         self.label_date.setText(f"Date: {self.current_date.strftime('%Y-%m-%d')}")
         self._calculate_future_events()
-

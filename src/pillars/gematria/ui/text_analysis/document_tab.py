@@ -27,6 +27,15 @@ class DocumentTab(QWidget):
     teach_requested = pyqtSignal()
     
     def __init__(self, document: Document, analysis_service: TextAnalysisService, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            document: Description of document.
+            analysis_service: Description of analysis_service.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.document = document
         self.analysis_service = analysis_service
@@ -96,6 +105,13 @@ class DocumentTab(QWidget):
         self.doc_viewer.set_text(plain)
         
     def set_view_mode(self, verse_mode: bool):
+        """
+        Configure view mode logic.
+        
+        Args:
+            verse_mode: Description of verse_mode.
+        
+        """
         if verse_mode:
             self.stack.setCurrentWidget(self.verse_list)
             self.viewer_label.setText("Verse List")
@@ -105,6 +121,10 @@ class DocumentTab(QWidget):
             self.viewer_label.setText("Document Text")
             
     def refresh_verse_list(self):
+        """
+        Refresh verse list logic.
+        
+        """
         if not self.document or not self.current_calculator:
             return
             
@@ -120,6 +140,15 @@ class DocumentTab(QWidget):
         self.verse_list.render_verses(verses, self.current_calculator, self.include_numbers, f"Source: {source}")
 
     def update_settings(self, calculator, strict_parsing: bool, include_numbers: bool):
+        """
+        Update settings logic.
+        
+        Args:
+            calculator: Description of calculator.
+            strict_parsing: Description of strict_parsing.
+            include_numbers: Description of include_numbers.
+        
+        """
         self.current_calculator = calculator
         self.strict_parsing = strict_parsing
         self.include_numbers = include_numbers
@@ -129,12 +158,29 @@ class DocumentTab(QWidget):
             self.refresh_verse_list()
             
     def get_text(self) -> str:
+        """
+        Retrieve text logic.
+        
+        Returns:
+            Result of get_text operation.
+        """
         return self.doc_viewer.get_text()
         
     def highlight_ranges(self, ranges):
+        """
+        Highlight ranges logic.
+        
+        Args:
+            ranges: Description of ranges.
+        
+        """
         self.doc_viewer.highlight_ranges(ranges)
         
     def clear_highlights(self):
+        """
+        Clear highlights logic.
+        
+        """
         self.doc_viewer.clear_highlights()
         
     def _on_text_selection_changed(self):

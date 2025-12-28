@@ -22,6 +22,13 @@ class HelpWindow(QMainWindow):
     """The Akaschic Archive: Central Documentation Viewer."""
     
     def __init__(self, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.setWindowTitle("Akaschic Archive")
         self.resize(1000, 700)
@@ -131,6 +138,14 @@ class HelpWindow(QMainWindow):
         self.toc_tree.clear()
         
         def add_nodes(topics, parent_item):
+            """
+            Add nodes logic.
+            
+            Args:
+                topics: Description of topics.
+                parent_item: Description of parent_item.
+            
+            """
             for topic in topics:
                 item = QTreeWidgetItem(parent_item)
                 item.setText(0, topic.title)

@@ -11,9 +11,21 @@ from skyfield.framelib import ecliptic_frame
 import threading
 
 class EphemerisNotLoadedError(Exception):
+    """
+    Ephemeris Not Loaded Error class definition.
+    
+    """
     pass
 
 class EphemerisProvider:
+    """
+    Ephemeris Provider class definition.
+    
+    Attributes:
+        _loaded: Description of _loaded.
+        _loading_thread: Description of _loading_thread.
+    
+    """
     _instance = None
     _planets = None
     _ts = None
@@ -22,11 +34,21 @@ class EphemerisProvider:
 
     @classmethod
     def get_instance(cls):
+        """
+        Retrieve instance logic.
+        
+        Returns:
+            Result of get_instance operation.
+        """
         if cls._instance is None:
             cls._instance = EphemerisProvider()
         return cls._instance
 
     def __init__(self):
+        """
+          init   logic.
+        
+        """
         if EphemerisProvider._instance is not None:
             raise Exception("This class is a singleton!")
         
@@ -35,6 +57,12 @@ class EphemerisProvider:
         self._loading_thread.start()
 
     def is_loaded(self) -> bool:
+        """
+        Determine if loaded logic.
+        
+        Returns:
+            Result of is_loaded operation.
+        """
         return self._loaded
 
     def _load_data(self):

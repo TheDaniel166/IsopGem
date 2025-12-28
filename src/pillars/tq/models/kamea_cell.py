@@ -37,6 +37,12 @@ class KameaCell:
     
     @property
     def is_origin(self) -> bool:
+        """
+        Determine if origin logic.
+        
+        Returns:
+            Result of is_origin operation.
+        """
         return self.x == 0 and self.y == 0
 
     @property

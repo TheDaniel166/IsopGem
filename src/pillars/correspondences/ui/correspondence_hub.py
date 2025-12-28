@@ -22,10 +22,22 @@ class _ImportWorker(QObject):
     failed = pyqtSignal(str)
 
     def __init__(self, path: str, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            path: Description of path.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.path = path
 
     def run(self):
+        """
+        Execute logic.
+        
+        """
         import os
         try:
             data = IngestionService.ingest_file(self.path)
@@ -39,6 +51,13 @@ class _NewTableDialog(QDialog):
     """Collect name and grid size for a new table."""
 
     def __init__(self, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.setWindowTitle("New Tablet")
         self.setMinimumWidth(400)
@@ -133,6 +152,12 @@ class _NewTableDialog(QDialog):
         layout.addLayout(button_layout)
 
     def get_values(self):
+        """
+        Retrieve values logic.
+        
+        Returns:
+            Result of get_values operation.
+        """
         return self.name_input.text().strip(), self.rows_input.value(), self.cols_input.value()
 
 
@@ -142,6 +167,14 @@ class CorrespondenceHub(QWidget):
     The Library of Correspondences. Launches Spreadsheet Windows.
     """
     def __init__(self, window_manager, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            window_manager: Description of window_manager.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.window_manager = window_manager
         self.open_windows = []

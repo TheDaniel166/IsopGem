@@ -21,6 +21,13 @@ class ChartCanvas(QWidget):
     """Custom in-app chart renderer (no browser dependency) with 'Celestia' design."""
 
     def __init__(self, parent: Optional[QWidget] = None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.planets: List[PlanetPosition] = []
         self.houses: List[HousePosition] = []
@@ -83,6 +90,16 @@ class ChartCanvas(QWidget):
 
     def set_data(self, planets: List[PlanetPosition], houses: List[HousePosition]) -> None:
         # Whitelist of major bodies to display
+        """
+        Configure data logic.
+        
+        Args:
+            planets: Description of planets.
+            houses: Description of houses.
+        
+        Returns:
+            Result of set_data operation.
+        """
         shown_bodies = {
             "Sun", "Moon", "Mercury", "Venus", "Mars", "Jupiter",
             "Saturn", "Uranus", "Neptune", "Pluto", 
@@ -116,6 +133,15 @@ class ChartCanvas(QWidget):
         self.update()
 
     def mouseMoveEvent(self, a0: Optional[QMouseEvent]) -> None:
+        """
+        Mousemoveevent logic.
+        
+        Args:
+            a0: Description of a0.
+        
+        Returns:
+            Result of mouseMoveEvent operation.
+        """
         pos = a0.position() if a0 else QPointF()
         
         # Check Planets
@@ -161,6 +187,15 @@ class ChartCanvas(QWidget):
         return f"{sign_deg}° {signs[sign_idx]} {m}'"
 
     def paintEvent(self, event) -> None:  # type: ignore[override]
+        """
+        Paintevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        Returns:
+            Result of paintEvent operation.
+        """
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
@@ -184,6 +219,15 @@ class ChartCanvas(QWidget):
         base_cusp = self.houses[0].degree if self.houses else 0.0
 
         def angle_for(deg: float) -> float:
+            """
+            Angle for logic.
+            
+            Args:
+                deg: Description of deg.
+            
+            Returns:
+                Result of angle_for operation.
+            """
             return math.radians((base_cusp - deg) + 180.0)
 
         # 2. Houses (The Earthly Plane)

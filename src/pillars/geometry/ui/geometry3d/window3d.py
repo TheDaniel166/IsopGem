@@ -32,6 +32,14 @@ class Geometry3DWindow(QMainWindow):
     """Independent window bundling the 3D view with info and control panes."""
 
     def __init__(self, window_manager: Optional[WindowManager] = None, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            window_manager: Description of window_manager.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.setWindowTitle("Geometry 3D Viewer")
         self.setMinimumSize(1200, 720)
@@ -83,6 +91,13 @@ class Geometry3DWindow(QMainWindow):
     # Public API
     # ------------------------------------------------------------------
     def set_payload(self, payload: Optional[SolidPayload]):
+        """
+        Configure payload logic.
+        
+        Args:
+            payload: Description of payload.
+        
+        """
         self._current_payload = payload
         self._view.set_payload(payload)
         self._update_status(payload)
@@ -90,6 +105,14 @@ class Geometry3DWindow(QMainWindow):
             self._render_metadata_only(payload)
 
     def set_solid_context(self, title: Optional[str] = None, summary: Optional[str] = None):
+        """
+        Configure solid context logic.
+        
+        Args:
+            title: Description of title.
+            summary: Description of summary.
+        
+        """
         if title and self._solid_title_label:
             self._solid_title_label.setText(title)
         if summary is not None and self._solid_summary_label:
@@ -97,6 +120,13 @@ class Geometry3DWindow(QMainWindow):
             self._solid_summary_label.setText(text)
 
     def set_calculator(self, calculator: Any):
+        """
+        Configure calculator logic.
+        
+        Args:
+            calculator: Description of calculator.
+        
+        """
         self._calculator = calculator
         self._metadata_mode = False
         self._rebuild_property_inputs()

@@ -8,7 +8,22 @@ from pillars.document_manager.models.document import Document
 from pillars.document_manager.models.dtos import DocumentMetadataDTO
 
 class DocumentPropertiesDialog(QDialog):
+    """
+    Document Properties Dialog class definition.
+    
+    Attributes:
+        documents: Description of documents.
+    
+    """
     def __init__(self, documents: List[Union[Document, DocumentMetadataDTO]], parent=None):
+        """
+          init   logic.
+        
+        Args:
+            documents: Description of documents.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.documents = documents
         
@@ -26,6 +41,15 @@ class DocumentPropertiesDialog(QDialog):
         
         # Helper to determine common value
         def get_common_value(attr):
+            """
+            Retrieve common value logic.
+            
+            Args:
+                attr: Description of attr.
+            
+            Returns:
+                Result of get_common_value operation.
+            """
             values = {getattr(d, attr) or "" for d in self.documents}
             return values.pop() if len(values) == 1 else None
 
@@ -86,6 +110,16 @@ class DocumentPropertiesDialog(QDialog):
         # then it's an empty string update.
         
         def get_update_value(edit_widget, attr):
+            """
+            Retrieve update value logic.
+            
+            Args:
+                edit_widget: Description of edit_widget.
+                attr: Description of attr.
+            
+            Returns:
+                Result of get_update_value operation.
+            """
             text = edit_widget.text()
             # If user typed something, use it
             if text:

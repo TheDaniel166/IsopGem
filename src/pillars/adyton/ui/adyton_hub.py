@@ -17,6 +17,13 @@ class AdytonHub(QWidget):
     """Hub widget for Adyton pillar - displays available tools."""
     
     def __init__(self, window_manager: WindowManager):
+        """
+          init   logic.
+        
+        Args:
+            window_manager: Description of window_manager.
+        
+        """
         super().__init__()
         self.window_manager = window_manager
         self._setup_ui()
@@ -340,4 +347,3 @@ class AdytonHub(QWidget):
             FloorPlanWindow,
             allow_multiple=False,
         )
-

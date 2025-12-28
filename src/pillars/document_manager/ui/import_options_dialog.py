@@ -8,7 +8,22 @@ from PyQt6.QtWidgets import (
 )
 
 class ImportOptionsDialog(QDialog):
+    """
+    Import Options Dialog class definition.
+    
+    Attributes:
+        existing_collections: Description of existing_collections.
+    
+    """
     def __init__(self, existing_collections=None, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            existing_collections: Description of existing_collections.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.setWindowTitle("Import Options")
         self.existing_collections = existing_collections or []
@@ -39,6 +54,12 @@ class ImportOptionsDialog(QDialog):
         layout.addWidget(buttons)
 
     def get_data(self):
+        """
+        Retrieve data logic.
+        
+        Returns:
+            Result of get_data operation.
+        """
         return {
             'collection': self.collection_combo.currentText().strip() or None,
         }

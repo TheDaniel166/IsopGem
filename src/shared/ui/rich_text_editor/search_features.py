@@ -22,6 +22,13 @@ class SearchDialog(QDialog):
     navigate_requested = pyqtSignal(int, int) # position, length
 
     def __init__(self, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.setWindowTitle("Find & Replace")
         self.setWindowFlags(Qt.WindowType.Window | Qt.WindowType.WindowStaysOnTopHint) 
@@ -166,6 +173,10 @@ class SearchDialog(QDialog):
 
     def set_not_found_state(self):
         # Visually indicate text not found (e.g. red border)
+        """
+        Configure not found state logic.
+        
+        """
         self.find_input.setStyleSheet("border: 1px solid red;")
 
     def show_results(self, results: list[tuple[int, int, str]]):
@@ -197,6 +208,14 @@ class SearchReplaceFeature:
     Manages the SearchDialog and interacts with the editor cursor.
     """
     def __init__(self, editor, parent_widget=None):
+        """
+          init   logic.
+        
+        Args:
+            editor: Description of editor.
+            parent_widget: Description of parent_widget.
+        
+        """
         self.editor = editor # QTextEdit
         self.parent = parent_widget # Usually the RichTextEditor instance
         self._dialog = None
@@ -429,6 +448,5 @@ class SearchReplaceFeature:
              QMessageBox.information(self._dialog, "Replace All", f"Replaced {count} occurrences.")
              # Clear results list if any as they are now invalid
              self._dialog.show_results([])
-
 
 

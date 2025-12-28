@@ -9,6 +9,14 @@ class HyperlinkDialog(QDialog):
     """Dialog for inserting or editing a hyperlink."""
     
     def __init__(self, selected_text: str = "", parent=None):
+        """
+          init   logic.
+        
+        Args:
+            selected_text: Description of selected_text.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.setWindowTitle("Insert Hyperlink")
         self.setMinimumWidth(400)

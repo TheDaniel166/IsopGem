@@ -16,6 +16,13 @@ class ExportPdfDialog(QDialog):
     MARGIN_PRESETS = PageSetupDialog.MARGIN_PRESETS
     
     def __init__(self, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.setWindowTitle("Export to PDF")
         self.setMinimumWidth(400)
@@ -78,19 +85,43 @@ class ExportPdfDialog(QDialog):
             self.file_input.setText(path)
     
     def get_file_path(self) -> str:
+        """
+        Retrieve file path logic.
+        
+        Returns:
+            Result of get_file_path operation.
+        """
         return self.file_input.text()
     
     def get_page_size(self) -> QPageSize:
+        """
+        Retrieve page size logic.
+        
+        Returns:
+            Result of get_page_size operation.
+        """
         idx = self.size_combo.currentIndex()
         _, size_id = self.PAGE_SIZES[idx]
         return QPageSize(size_id)
     
     def get_orientation(self) -> QPageLayout.Orientation:
+        """
+        Retrieve orientation logic.
+        
+        Returns:
+            Result of get_orientation operation.
+        """
         if self.orientation_combo.currentText() == "Landscape":
             return QPageLayout.Orientation.Landscape
         return QPageLayout.Orientation.Portrait
     
     def get_margins(self) -> QMarginsF:
+        """
+        Retrieve margins logic.
+        
+        Returns:
+            Result of get_margins operation.
+        """
         idx = self.margins_combo.currentIndex()
         _, left, top, right, bottom = self.MARGIN_PRESETS[idx]
         return QMarginsF(left, top, right, bottom)

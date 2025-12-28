@@ -22,10 +22,22 @@ class SearchWorker(QThread):
     results_ready = pyqtSignal(list)
     
     def __init__(self, query, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            query: Description of query.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.query = query
         
     def run(self):
+        """
+        Execute logic.
+        
+        """
         try:
             with document_service_context() as service:
                 # Limit results to 1000 to prevent Jupiter Overload
@@ -41,6 +53,14 @@ class SortableTableWidgetItem(QTableWidgetItem):
     rather than the string representation.
     """
     def __init__(self, text, sort_key):
+        """
+          init   logic.
+        
+        Args:
+            text: Description of text.
+            sort_key: Description of sort_key.
+        
+        """
         super().__init__(text)
         self.sort_key = sort_key
 
@@ -57,6 +77,13 @@ class DocumentLibrary(QMainWindow):
     document_opened = pyqtSignal(object, str) # Emits (Document object, restored_html)
     
     def __init__(self, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.setWindowTitle("The Akaschic Record")
         self.resize(1000, 700)
@@ -543,6 +570,14 @@ class DocumentLibrary(QMainWindow):
             
             # Use closure to capture loop variable
             def toggle_col(checked, idx=col_idx):
+                """
+                Toggle col logic.
+                
+                Args:
+                    checked: Description of checked.
+                    idx: Description of idx.
+                
+                """
                 self.table.setColumnHidden(idx, not checked)
                 
             action.triggered.connect(toggle_col)

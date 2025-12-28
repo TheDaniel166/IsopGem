@@ -12,12 +12,38 @@ class DocumentVerseRepository:
     """Encapsulates CRUD operations for `DocumentVerse` rows."""
 
     def __init__(self, db: Session):
+        """
+          init   logic.
+        
+        Args:
+            db: Description of db.
+        
+        """
         self.db = db
 
     def get(self, verse_id: int) -> Optional[DocumentVerse]:
+        """
+        Retrieve logic.
+        
+        Args:
+            verse_id: Description of verse_id.
+        
+        Returns:
+            Result of get operation.
+        """
         return self.db.query(DocumentVerse).filter(DocumentVerse.id == verse_id).first()
 
     def get_by_document(self, document_id: int, include_ignored: bool = True) -> List[DocumentVerse]:
+        """
+        Retrieve by document logic.
+        
+        Args:
+            document_id: Description of document_id.
+            include_ignored: Description of include_ignored.
+        
+        Returns:
+            Result of get_by_document operation.
+        """
         query = self.db.query(DocumentVerse).filter(DocumentVerse.document_id == document_id)
         if not include_ignored:
             query = query.filter(DocumentVerse.status != "ignored")
@@ -65,12 +91,30 @@ class DocumentVerseRepository:
         return deleted
 
     def save(self, verse: DocumentVerse) -> DocumentVerse:
+        """
+        Save logic.
+        
+        Args:
+            verse: Description of verse.
+        
+        Returns:
+            Result of save operation.
+        """
         self.db.add(verse)
         self.db.commit()
         self.db.refresh(verse)
         return verse
 
     def bulk_upsert(self, verses: Iterable[DocumentVerse]) -> List[DocumentVerse]:
+        """
+        Bulk upsert logic.
+        
+        Args:
+            verses: Description of verses.
+        
+        Returns:
+            Result of bulk_upsert operation.
+        """
         verses = list(verses)
         if not verses:
             return []
@@ -81,9 +125,17 @@ class DocumentVerseRepository:
         return verses
 
     def count_for_document(self, document_id: int) -> int:
+        """
+        Count for document logic.
+        
+        Args:
+            document_id: Description of document_id.
+        
+        Returns:
+            Result of count_for_document operation.
+        """
         return (
             self.db.query(DocumentVerse)
             .filter(DocumentVerse.document_id == document_id)
             .count()
         )
-

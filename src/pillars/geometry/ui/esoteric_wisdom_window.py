@@ -20,6 +20,13 @@ class EsotericWisdomWindow(QWidget):
     """Window for browsing the Esoteric Wisdom of Sacred Geometry."""
     
     def __init__(self, window_manager: WindowManager = None, **kwargs):
+        """
+          init   logic.
+        
+        Args:
+            window_manager: Description of window_manager.
+        
+        """
         super().__init__()
         self.window_manager = window_manager
         self.service = get_esoteric_wisdom_service()

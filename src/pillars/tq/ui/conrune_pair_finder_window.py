@@ -34,6 +34,14 @@ class ConrunePairFinderWindow(QMainWindow):
     DECIMAL_COLUMN = 2
 
     def __init__(self, window_manager=None, parent: Optional[QWidget] = None):
+        """
+          init   logic.
+        
+        Args:
+            window_manager: Description of window_manager.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.window_manager = window_manager
         self.service = ConrunePairFinderService()

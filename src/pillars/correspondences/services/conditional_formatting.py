@@ -10,6 +10,10 @@ from PyQt6.QtGui import QColor
 
 @dataclass
 class ConditionalRule:
+    """
+    Conditional Rule class definition.
+    
+    """
     rule_type: str # "GT", "LT", "EQ", "CONTAINS", "BETWEEN"
     value: Any # Threshold
     format_style: Dict[str, Any] # e.g., {"bg": "#FF0000", "fg": "#FFFFFF"}
@@ -20,12 +24,27 @@ class ConditionalManager:
     Evaluates rules against cell values.
     """
     def __init__(self):
+        """
+          init   logic.
+        
+        """
         self.rules: List[ConditionalRule] = []
 
     def add_rule(self, rule: ConditionalRule):
+        """
+        Add rule logic.
+        
+        Args:
+            rule: Description of rule.
+        
+        """
         self.rules.append(rule)
 
     def clear_all_rules(self):
+        """
+        Clear all rules logic.
+        
+        """
         self.rules = []
 
     def get_style(self, row, col, value) -> Optional[Dict[str, Any]]:

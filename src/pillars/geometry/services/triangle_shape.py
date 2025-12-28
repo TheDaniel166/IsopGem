@@ -95,6 +95,10 @@ class _BaseSSSTriangleShape(GeometricShape):
     """Base class for triangle calculators driven by three sides (SSS)."""
 
     def __init__(self):
+        """
+          init   logic.
+        
+        """
         self._solution: Optional[TriangleSolution] = None
         super().__init__()
 
@@ -128,6 +132,16 @@ class _BaseSSSTriangleShape(GeometricShape):
         }
 
     def calculate_from_property(self, property_key: str, value: float) -> bool:
+        """
+        Compute from property logic.
+        
+        Args:
+            property_key: Description of property_key.
+            value: Description of value.
+        
+        Returns:
+            Result of calculate_from_property operation.
+        """
         if property_key not in {'side_a', 'side_b', 'side_c'}:
             return False
         if value <= 0:
@@ -182,6 +196,12 @@ class _BaseSSSTriangleShape(GeometricShape):
             self.properties[key].value = None
 
     def get_drawing_instructions(self) -> Dict:
+        """
+        Retrieve drawing instructions logic.
+        
+        Returns:
+            Result of get_drawing_instructions operation.
+        """
         if not self._solution:
             return {'type': 'empty'}
         return {
@@ -190,6 +210,12 @@ class _BaseSSSTriangleShape(GeometricShape):
         }
 
     def get_label_positions(self) -> List[Tuple[str, float, float]]:
+        """
+        Retrieve label positions logic.
+        
+        Returns:
+            Result of get_label_positions operation.
+        """
         if not self._solution:
             return []
         centroid = _centroid(self._solution.points)
@@ -212,10 +238,22 @@ class EquilateralTriangleShape(GeometricShape):
     
     @property
     def name(self) -> str:
+        """
+        Name logic.
+        
+        Returns:
+            Result of name operation.
+        """
         return "Equilateral Triangle"
     
     @property
     def description(self) -> str:
+        """
+        Description logic.
+        
+        Returns:
+            Result of description operation.
+        """
         return "A triangle with all three sides equal and all angles 60°"
     
     def _init_properties(self):
@@ -357,14 +395,32 @@ class RightTriangleShape(GeometricShape):
     
     @property
     def name(self) -> str:
+        """
+        Name logic.
+        
+        Returns:
+            Result of name operation.
+        """
         return "Right Triangle"
     
     @property
     def description(self) -> str:
+        """
+        Description logic.
+        
+        Returns:
+            Result of description operation.
+        """
         return "A triangle with one 90° angle"
 
     @property
     def calculation_hint(self) -> str:
+        """
+        Calculation hint logic.
+        
+        Returns:
+            Result of calculation_hint operation.
+        """
         return "Enter 2 sides, or 1 side + area"
     
     def _init_properties(self):
@@ -596,19 +652,41 @@ class IsoscelesTriangleShape(GeometricShape):
     """Isosceles triangle defined by base and equal legs."""
 
     def __init__(self):
+        """
+          init   logic.
+        
+        """
         self._solution: Optional[TriangleSolution] = None
         super().__init__()
 
     @property
     def name(self) -> str:
+        """
+        Name logic.
+        
+        Returns:
+            Result of name operation.
+        """
         return "Isosceles Triangle"
 
     @property
     def description(self) -> str:
+        """
+        Description logic.
+        
+        Returns:
+            Result of description operation.
+        """
         return "Two equal legs with base/apex metrics and sacred height"
 
     @property
     def calculation_hint(self) -> str:
+        """
+        Calculation hint logic.
+        
+        Returns:
+            Result of calculation_hint operation.
+        """
         return "Enter Base + Leg, or Base/Leg + Height"
 
     def _init_properties(self):
@@ -638,6 +716,16 @@ class IsoscelesTriangleShape(GeometricShape):
 
     def calculate_from_property(self, property_key: str, value: float) -> bool:
         # Allow calculating from any valid property that provides geometric info
+        """
+        Compute from property logic.
+        
+        Args:
+            property_key: Description of property_key.
+            value: Description of value.
+        
+        Returns:
+            Result of calculate_from_property operation.
+        """
         if value <= 0:
             return False
 
@@ -788,6 +876,12 @@ class IsoscelesTriangleShape(GeometricShape):
                 self.properties[key].value = None
 
     def get_drawing_instructions(self) -> Dict:
+        """
+        Retrieve drawing instructions logic.
+        
+        Returns:
+            Result of get_drawing_instructions operation.
+        """
         if not self._solution:
             return {'type': 'empty'}
         return {
@@ -796,6 +890,12 @@ class IsoscelesTriangleShape(GeometricShape):
         }
 
     def get_label_positions(self) -> List[Tuple[str, float, float]]:
+        """
+        Retrieve label positions logic.
+        
+        Returns:
+            Result of get_label_positions operation.
+        """
         if not self._solution:
             return []
         centroid = _centroid(self._solution.points)
@@ -813,14 +913,32 @@ class ScaleneTriangleShape(_BaseSSSTriangleShape):
 
     @property
     def name(self) -> str:
+        """
+        Name logic.
+        
+        Returns:
+            Result of name operation.
+        """
         return "Scalene Triangle"
 
     @property
     def description(self) -> str:
+        """
+        Description logic.
+        
+        Returns:
+            Result of description operation.
+        """
         return "Three unequal sides with full SSS breakdown"
 
     @property
     def calculation_hint(self) -> str:
+        """
+        Calculation hint logic.
+        
+        Returns:
+            Result of calculation_hint operation.
+        """
         return "Enter 3 sides (SSS)"
 
     def _validate_solution(self, solution: TriangleSolution) -> bool:
@@ -833,10 +951,22 @@ class AcuteTriangleShape(_BaseSSSTriangleShape):
 
     @property
     def name(self) -> str:
+        """
+        Name logic.
+        
+        Returns:
+            Result of name operation.
+        """
         return "Acute Triangle"
 
     @property
     def description(self) -> str:
+        """
+        Description logic.
+        
+        Returns:
+            Result of description operation.
+        """
         return "All interior angles are less than 90°"
 
     def _validate_solution(self, solution: TriangleSolution) -> bool:
@@ -848,10 +978,22 @@ class ObtuseTriangleShape(_BaseSSSTriangleShape):
 
     @property
     def name(self) -> str:
+        """
+        Name logic.
+        
+        Returns:
+            Result of name operation.
+        """
         return "Obtuse Triangle"
 
     @property
     def description(self) -> str:
+        """
+        Description logic.
+        
+        Returns:
+            Result of description operation.
+        """
         return "One angle greater than 90° with exterior altitude context"
 
     def _validate_solution(self, solution: TriangleSolution) -> bool:
@@ -872,10 +1014,22 @@ class HeronianTriangleShape(_BaseSSSTriangleShape):
 
     @property
     def name(self) -> str:
+        """
+        Name logic.
+        
+        Returns:
+            Result of name operation.
+        """
         return "Heronian Triangle"
 
     @property
     def description(self) -> str:
+        """
+        Description logic.
+        
+        Returns:
+            Result of description operation.
+        """
         return "Integer-sided triangle with integer area via Heron"
 
     def _apply_solution(self, solution: TriangleSolution):
@@ -890,14 +1044,32 @@ class IsoscelesRightTriangleShape(GeometricShape):
 
     @property
     def name(self) -> str:
+        """
+        Name logic.
+        
+        Returns:
+            Result of name operation.
+        """
         return "Isosceles Right Triangle (45-45-90)"
 
     @property
     def description(self) -> str:
+        """
+        Description logic.
+        
+        Returns:
+            Result of description operation.
+        """
         return "Special right triangle with √2 proportions"
 
     @property
     def calculation_hint(self) -> str:
+        """
+        Calculation hint logic.
+        
+        Returns:
+            Result of calculation_hint operation.
+        """
         return "Calculate from any field (1-DoF)"
 
     def _init_properties(self):
@@ -924,6 +1096,16 @@ class IsoscelesRightTriangleShape(GeometricShape):
         }
 
     def calculate_from_property(self, property_key: str, value: float) -> bool:
+        """
+        Compute from property logic.
+        
+        Args:
+            property_key: Description of property_key.
+            value: Description of value.
+        
+        Returns:
+            Result of calculate_from_property operation.
+        """
         if property_key not in {'leg', 'hypotenuse'}:
             return False
         if value <= 0:
@@ -949,6 +1131,12 @@ class IsoscelesRightTriangleShape(GeometricShape):
         self.properties['circumcircle_circumference'].value = _circumference_from_radius(solution.circumradius)
 
     def get_drawing_instructions(self) -> Dict:
+        """
+        Retrieve drawing instructions logic.
+        
+        Returns:
+            Result of get_drawing_instructions operation.
+        """
         leg = self.properties['leg'].value
         if leg is None:
             return {'type': 'empty'}
@@ -959,6 +1147,12 @@ class IsoscelesRightTriangleShape(GeometricShape):
         }
 
     def get_label_positions(self) -> List[Tuple[str, float, float]]:
+        """
+        Retrieve label positions logic.
+        
+        Returns:
+            Result of get_label_positions operation.
+        """
         leg = self.properties['leg'].value
         hyp = self.properties['hypotenuse'].value
         if leg is None or hyp is None:
@@ -976,14 +1170,32 @@ class ThirtySixtyNinetyTriangleShape(GeometricShape):
 
     @property
     def name(self) -> str:
+        """
+        Name logic.
+        
+        Returns:
+            Result of name operation.
+        """
         return "30-60-90 Triangle"
 
     @property
     def description(self) -> str:
+        """
+        Description logic.
+        
+        Returns:
+            Result of description operation.
+        """
         return "Special right triangle with short:long:hyp = 1:√3:2"
 
     @property
     def calculation_hint(self) -> str:
+        """
+        Calculation hint logic.
+        
+        Returns:
+            Result of calculation_hint operation.
+        """
         return "Calculate from any field (1-DoF)"
 
     def _init_properties(self):
@@ -1010,6 +1222,16 @@ class ThirtySixtyNinetyTriangleShape(GeometricShape):
         }
 
     def calculate_from_property(self, property_key: str, value: float) -> bool:
+        """
+        Compute from property logic.
+        
+        Args:
+            property_key: Description of property_key.
+            value: Description of value.
+        
+        Returns:
+            Result of calculate_from_property operation.
+        """
         if property_key not in {'short_leg', 'long_leg', 'hypotenuse'}:
             return False
         if value <= 0:
@@ -1038,6 +1260,12 @@ class ThirtySixtyNinetyTriangleShape(GeometricShape):
         self.properties['circumcircle_circumference'].value = _circumference_from_radius(solution.circumradius)
 
     def get_drawing_instructions(self) -> Dict:
+        """
+        Retrieve drawing instructions logic.
+        
+        Returns:
+            Result of get_drawing_instructions operation.
+        """
         short = self.properties['short_leg'].value
         long = self.properties['long_leg'].value
         if short is None or long is None:
@@ -1049,6 +1277,12 @@ class ThirtySixtyNinetyTriangleShape(GeometricShape):
         }
 
     def get_label_positions(self) -> List[Tuple[str, float, float]]:
+        """
+        Retrieve label positions logic.
+        
+        Returns:
+            Result of get_label_positions operation.
+        """
         short = self.properties['short_leg'].value
         long = self.properties['long_leg'].value
         area = self.properties['area'].value
@@ -1067,19 +1301,41 @@ class GoldenTriangleShape(GeometricShape):
     PHI = (1 + math.sqrt(5)) / 2
 
     def __init__(self):
+        """
+          init   logic.
+        
+        """
         self._solution: Optional[TriangleSolution] = None
         super().__init__()
 
     @property
     def name(self) -> str:
+        """
+        Name logic.
+        
+        Returns:
+            Result of name operation.
+        """
         return "Golden Triangle"
 
     @property
     def description(self) -> str:
+        """
+        Description logic.
+        
+        Returns:
+            Result of description operation.
+        """
         return "Isosceles triangle with golden ratio sides (72-72-36)"
 
     @property
     def calculation_hint(self) -> str:
+        """
+        Calculation hint logic.
+        
+        Returns:
+            Result of calculation_hint operation.
+        """
         return "Calculate from any field (1-DoF)"
 
     def _init_properties(self):
@@ -1107,6 +1363,16 @@ class GoldenTriangleShape(GeometricShape):
         }
 
     def calculate_from_property(self, property_key: str, value: float) -> bool:
+        """
+        Compute from property logic.
+        
+        Args:
+            property_key: Description of property_key.
+            value: Description of value.
+        
+        Returns:
+            Result of calculate_from_property operation.
+        """
         if property_key not in {'equal_leg', 'base'}:
             return False
         if value <= 0:
@@ -1135,11 +1401,23 @@ class GoldenTriangleShape(GeometricShape):
         self.properties['circumcircle_circumference'].value = _circumference_from_radius(solution.circumradius)
 
     def get_drawing_instructions(self) -> Dict:
+        """
+        Retrieve drawing instructions logic.
+        
+        Returns:
+            Result of get_drawing_instructions operation.
+        """
         if not self._solution:
             return {'type': 'empty'}
         return {'type': 'polygon', 'points': list(self._solution.points)}
 
     def get_label_positions(self) -> List[Tuple[str, float, float]]:
+        """
+        Retrieve label positions logic.
+        
+        Returns:
+            Result of get_label_positions operation.
+        """
         if not self._solution:
             return []
         centroid = _centroid(self._solution.points)
@@ -1153,15 +1431,31 @@ class TriangleSolverShape(GeometricShape):
     """General-purpose triangle solver supporting common input combinations."""
 
     def __init__(self):
+        """
+          init   logic.
+        
+        """
         self._solution: Optional[TriangleSolution] = None
         super().__init__()
 
     @property
     def name(self) -> str:
+        """
+        Name logic.
+        
+        Returns:
+            Result of name operation.
+        """
         return "Triangle Solver"
 
     @property
     def description(self) -> str:
+        """
+        Description logic.
+        
+        Returns:
+            Result of description operation.
+        """
         return "Accepts sides/angles using SSS, SAS, ASA/AAS, or SSA relationships"
 
     def _init_properties(self):
@@ -1191,6 +1485,16 @@ class TriangleSolverShape(GeometricShape):
         }
 
     def calculate_from_property(self, property_key: str, value: float) -> bool:
+        """
+        Compute from property logic.
+        
+        Args:
+            property_key: Description of property_key.
+            value: Description of value.
+        
+        Returns:
+            Result of calculate_from_property operation.
+        """
         if property_key not in {'side_a', 'side_b', 'side_c', 'angle_a_deg', 'angle_b_deg', 'angle_c_deg'}:
             return False
         if property_key.startswith('side'):
@@ -1328,11 +1632,23 @@ class TriangleSolverShape(GeometricShape):
         return None
 
     def get_drawing_instructions(self) -> Dict:
+        """
+        Retrieve drawing instructions logic.
+        
+        Returns:
+            Result of get_drawing_instructions operation.
+        """
         if not self._solution:
             return {'type': 'empty'}
         return {'type': 'polygon', 'points': list(self._solution.points)}
 
     def get_label_positions(self) -> List[Tuple[str, float, float]]:
+        """
+        Retrieve label positions logic.
+        
+        Returns:
+            Result of get_label_positions operation.
+        """
         if not self._solution:
             return []
         centroid = _centroid(self._solution.points)

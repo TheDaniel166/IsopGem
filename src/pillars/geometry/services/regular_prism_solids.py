@@ -15,6 +15,10 @@ Face = Sequence[int]
 
 @dataclass(frozen=True)
 class RegularPrismMetrics:
+    """
+    Regular Prism Metrics class definition.
+    
+    """
     sides: int
     base_edge: float
     height: float
@@ -29,6 +33,10 @@ class RegularPrismMetrics:
 
 @dataclass(frozen=True)
 class RegularPrismSolidResult:
+    """
+    Regular Prism Solid Result class definition.
+    
+    """
     payload: SolidPayload
     metrics: RegularPrismMetrics
 
@@ -115,6 +123,16 @@ class RegularPrismSolidServiceBase:
 
     @classmethod
     def build(cls, base_edge: float = 2.0, height: float = 4.0) -> RegularPrismSolidResult:
+        """
+        Build logic.
+        
+        Args:
+            base_edge: Description of base_edge.
+            height: Description of height.
+        
+        Returns:
+            Result of build operation.
+        """
         if cls.SIDES < 3:
             raise ValueError('A prism base must have at least 3 sides')
         if base_edge <= 0 or height <= 0:
@@ -145,6 +163,16 @@ class RegularPrismSolidServiceBase:
 
     @classmethod
     def payload(cls, base_edge: float = 2.0, height: float = 4.0) -> SolidPayload:
+        """
+        Payload logic.
+        
+        Args:
+            base_edge: Description of base_edge.
+            height: Description of height.
+        
+        Returns:
+            Result of payload operation.
+        """
         return cls.build(base_edge, height).payload
 
 
@@ -167,6 +195,14 @@ class RegularPrismSolidCalculatorBase:
     )
 
     def __init__(self, base_edge: float = 2.0, height: float = 4.0):
+        """
+          init   logic.
+        
+        Args:
+            base_edge: Description of base_edge.
+            height: Description of height.
+        
+        """
         self._properties: Dict[str, SolidProperty] = {
             key: SolidProperty(name=label, key=key, unit=unit, precision=precision, editable=editable)
             for key, label, unit, precision, editable in self._PROPERTY_DEFINITIONS
@@ -177,9 +213,25 @@ class RegularPrismSolidCalculatorBase:
         self._apply_dimensions(self._base_edge, self._height)
 
     def properties(self) -> List[SolidProperty]:
+        """
+        Properties logic.
+        
+        Returns:
+            Result of properties operation.
+        """
         return [self._properties[key] for key, *_ in self._PROPERTY_DEFINITIONS]
 
     def set_property(self, key: str, value: Optional[float]) -> bool:
+        """
+        Configure property logic.
+        
+        Args:
+            key: Description of key.
+            value: Description of value.
+        
+        Returns:
+            Result of set_property operation.
+        """
         if value is None or value <= 0:
             return False
         if key == 'base_edge':
@@ -246,6 +298,10 @@ class RegularPrismSolidCalculatorBase:
         return False
 
     def clear(self):
+        """
+        Clear logic.
+        
+        """
         self._base_edge = 2.0
         self._height = 4.0
         for prop in self._properties.values():
@@ -253,14 +309,32 @@ class RegularPrismSolidCalculatorBase:
         self._result = None
 
     def payload(self) -> Optional[SolidPayload]:
+        """
+        Payload logic.
+        
+        Returns:
+            Result of payload operation.
+        """
         return self._result.payload if self._result else None
 
     def metadata(self) -> Dict[str, float]:
+        """
+        Metadata logic.
+        
+        Returns:
+            Result of metadata operation.
+        """
         if not self._result:
             return {}
         return dict(self._result.payload.metadata)
 
     def metrics(self) -> Optional[RegularPrismMetrics]:
+        """
+        Metrics logic.
+        
+        Returns:
+            Result of metrics operation.
+        """
         return self._result.metrics if self._result else None
 
     def _apply_dimensions(self, base_edge: float, height: float):
@@ -286,51 +360,91 @@ class RegularPrismSolidCalculatorBase:
 
 
 class TriangularPrismSolidService(RegularPrismSolidServiceBase):
+    """
+    Triangular Prism Solid Service class definition.
+    
+    """
     SIDES = 3
     NAME = 'Triangular Prism'
 
 
 class PentagonalPrismSolidService(RegularPrismSolidServiceBase):
+    """
+    Pentagonal Prism Solid Service class definition.
+    
+    """
     SIDES = 5
     NAME = 'Pentagonal Prism'
 
 
 class HexagonalPrismSolidService(RegularPrismSolidServiceBase):
+    """
+    Hexagonal Prism Solid Service class definition.
+    
+    """
     SIDES = 6
     NAME = 'Hexagonal Prism'
 
 
 class OctagonalPrismSolidService(RegularPrismSolidServiceBase):
+    """
+    Octagonal Prism Solid Service class definition.
+    
+    """
     SIDES = 8
     NAME = 'Octagonal Prism'
 
 
 class TriangularPrismSolidCalculator(RegularPrismSolidCalculatorBase):
+    """
+    Triangular Prism Solid Calculator class definition.
+    
+    """
     SIDES = 3
     SERVICE = TriangularPrismSolidService
 
 
 class PentagonalPrismSolidCalculator(RegularPrismSolidCalculatorBase):
+    """
+    Pentagonal Prism Solid Calculator class definition.
+    
+    """
     SIDES = 5
     SERVICE = PentagonalPrismSolidService
 
 
 class HexagonalPrismSolidCalculator(RegularPrismSolidCalculatorBase):
+    """
+    Hexagonal Prism Solid Calculator class definition.
+    
+    """
     SIDES = 6
     SERVICE = HexagonalPrismSolidService
 
 
 class OctagonalPrismSolidCalculator(RegularPrismSolidCalculatorBase):
+    """
+    Octagonal Prism Solid Calculator class definition.
+    
+    """
     SIDES = 8
     SERVICE = OctagonalPrismSolidService
 
 
 class HeptagonalPrismSolidService(RegularPrismSolidServiceBase):
+    """
+    Heptagonal Prism Solid Service class definition.
+    
+    """
     SIDES = 7
     NAME = 'Heptagonal Prism'
 
 
 class HeptagonalPrismSolidCalculator(RegularPrismSolidCalculatorBase):
+    """
+    Heptagonal Prism Solid Calculator class definition.
+    
+    """
     SIDES = 7
     SERVICE = HeptagonalPrismSolidService
 

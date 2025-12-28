@@ -19,6 +19,13 @@ class ScrollTabBar(QWidget):
     show_all_tabs = pyqtSignal() # For the menu
     
     def __init__(self, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.setFixedHeight(32) # Compact height
         
@@ -69,15 +76,41 @@ class ScrollTabBar(QWidget):
         self.layout.addWidget(self.btn_next)
 
     def add_tab(self, name: str):
+        """
+        Add tab logic.
+        
+        Args:
+            name: Description of name.
+        
+        """
         return self.tab_bar.addTab(name)
         
     def set_current_index(self, index: int):
+        """
+        Configure current index logic.
+        
+        Args:
+            index: Description of index.
+        
+        """
         self.tab_bar.setCurrentIndex(index)
         
     def count(self):
+        """
+        Count logic.
+        
+        """
         return self.tab_bar.count()
         
     def set_tab_text(self, index, text):
+        """
+        Configure tab text logic.
+        
+        Args:
+            index: Description of index.
+            text: Description of text.
+        
+        """
         self.tab_bar.setTabText(index, text)
         
     def update_menu(self, names: list):

@@ -56,6 +56,14 @@ class Figurate3DWindow(BaseFigurateWindow):
     ]
 
     def __init__(self, window_manager: Optional[WindowManager] = None, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            window_manager: Description of window_manager.
+            parent: Description of parent.
+        
+        """
         super().__init__(window_manager, parent)
         self.setWindowTitle("3D Figurate Numbers")
         self.setMinimumSize(900, 700)
@@ -183,6 +191,14 @@ class Figurate3DWindow(BaseFigurateWindow):
         return controls
 
     def eventFilter(self, source, event):
+        """
+        Eventfilter logic.
+        
+        Args:
+            source: Description of source.
+            event: Description of event.
+        
+        """
         if source is self.view.viewport():
             if event.type() == event.Type.MouseButtonPress:
                 if event.button() == Qt.MouseButton.RightButton:

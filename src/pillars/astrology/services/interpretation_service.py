@@ -15,6 +15,13 @@ class InterpretationService:
     """Orchestrates the generation of chart interpretation reports."""
 
     def __init__(self, repository: Optional[InterpretationRepository] = None):
+        """
+          init   logic.
+        
+        Args:
+            repository: Description of repository.
+        
+        """
         self.repository = repository or InterpretationRepository()
 
     def interpret_chart(self, chart: ChartResult, chart_name: str = "Chart") -> InterpretationReport:
@@ -142,4 +149,3 @@ class InterpretationService:
         else:
             # Wrap case: 350 to 20
             return s <= t or t < e
-

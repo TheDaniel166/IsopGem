@@ -19,6 +19,15 @@ class EtymologyWorker(QThread):
     finished = pyqtSignal(dict)
 
     def __init__(self, word: str) -> None:
+        """
+          init   logic.
+        
+        Args:
+            word: Description of word.
+        
+        Returns:
+            Result of __init__ operation.
+        """
         super().__init__()
         self.word = word
 
@@ -33,6 +42,15 @@ class ResearchDialog(QDialog):
     """Dialog for Etymology Research - modal-less so user can keep editing."""
     
     def __init__(self, parent: Optional[QWidget] = None) -> None:
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        Returns:
+            Result of __init__ operation.
+        """
         super().__init__(parent)
         self.setWindowTitle("Research & Etymology")
         self.setMinimumSize(450, 500)
@@ -169,6 +187,15 @@ class EtymologyFeature:
     """Feature controller connecting the Editor and Research Dialog."""
     
     def __init__(self, main_editor: Any) -> None:
+        """
+          init   logic.
+        
+        Args:
+            main_editor: Description of main_editor.
+        
+        Returns:
+            Result of __init__ operation.
+        """
         self.main = main_editor
         self.editor = main_editor.editor
         # Create dialog (it won't show until called)

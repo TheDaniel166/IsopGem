@@ -47,6 +47,10 @@ def _compute_metrics(base_edge: float) -> 'GoldenPyramidMetrics':
 
 @dataclass(frozen=True)
 class GoldenPyramidMetrics:
+    """
+    Golden Pyramid Metrics class definition.
+    
+    """
     base_edge: float
     height: float
     slant_height: float
@@ -60,6 +64,10 @@ class GoldenPyramidMetrics:
 
 @dataclass(frozen=True)
 class GoldenPyramidSolidResult:
+    """
+    Golden Pyramid Solid Result class definition.
+    
+    """
     payload: SolidPayload
     metrics: GoldenPyramidMetrics
 
@@ -69,6 +77,15 @@ class GoldenPyramidSolidService:
 
     @staticmethod
     def build(base_edge: float = 440.0) -> GoldenPyramidSolidResult:
+        """
+        Build logic.
+        
+        Args:
+            base_edge: Description of base_edge.
+        
+        Returns:
+            Result of build operation.
+        """
         if base_edge <= 0:
             raise ValueError('Base edge must be positive')
         metrics = _compute_metrics(base_edge)
@@ -115,6 +132,15 @@ class GoldenPyramidSolidService:
 
     @staticmethod
     def payload(base_edge: float = 440.0) -> SolidPayload:
+        """
+        Payload logic.
+        
+        Args:
+            base_edge: Description of base_edge.
+        
+        Returns:
+            Result of payload operation.
+        """
         return GoldenPyramidSolidService.build(base_edge).payload
 
 
@@ -134,6 +160,13 @@ class GoldenPyramidSolidCalculator:
     )
 
     def __init__(self, base_edge: float = 440.0):
+        """
+          init   logic.
+        
+        Args:
+            base_edge: Description of base_edge.
+        
+        """
         self._properties: Dict[str, SolidProperty] = {
             key: SolidProperty(name=label, key=key, unit=unit, precision=precision, editable=editable)
             for key, label, unit, precision, editable in self._PROPERTY_DEFINITIONS
@@ -143,9 +176,25 @@ class GoldenPyramidSolidCalculator:
         self._apply_base_edge(self._base_edge)
 
     def properties(self) -> List[SolidProperty]:
+        """
+        Properties logic.
+        
+        Returns:
+            Result of properties operation.
+        """
         return [self._properties[key] for key, *_ in self._PROPERTY_DEFINITIONS]
 
     def set_property(self, key: str, value: Optional[float]) -> bool:
+        """
+        Configure property logic.
+        
+        Args:
+            key: Description of key.
+            value: Description of value.
+        
+        Returns:
+            Result of set_property operation.
+        """
         if value is None or value <= 0:
             return False
         if key == 'base_edge':
@@ -166,20 +215,42 @@ class GoldenPyramidSolidCalculator:
         return False
 
     def clear(self):
+        """
+        Clear logic.
+        
+        """
         self._base_edge = 440.0
         for prop in self._properties.values():
             prop.value = None
         self._result = None
 
     def payload(self) -> Optional[SolidPayload]:
+        """
+        Payload logic.
+        
+        Returns:
+            Result of payload operation.
+        """
         return self._result.payload if self._result else None
 
     def metadata(self) -> Dict[str, float]:
+        """
+        Metadata logic.
+        
+        Returns:
+            Result of metadata operation.
+        """
         if not self._result:
             return {}
         return dict(self._result.payload.metadata)
 
     def metrics(self) -> Optional[GoldenPyramidMetrics]:
+        """
+        Metrics logic.
+        
+        Returns:
+            Result of metrics operation.
+        """
         return self._result.metrics if self._result else None
 
     def _apply_base_edge(self, base_edge: float):

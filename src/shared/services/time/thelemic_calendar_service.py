@@ -25,6 +25,10 @@ class ThelemicCalendarService:
     """
     
     def __init__(self):
+        """
+          init   logic.
+        
+        """
         self._pairs_by_difference: Dict[int, ConrunePair] = {}
         self._pairs_by_date: Dict[str, ConrunePair] = {}
         self._all_pairs: List[ConrunePair] = []
@@ -257,6 +261,13 @@ class ThelemicCalendarService:
         # Implemented inline ternary conversion.
 
         def decimal_to_ternary(n):
+            """
+            Decimal to ternary logic.
+            
+            Args:
+                n: Description of n.
+            
+            """
             if n == 0:
                 return "0"
             nums = []
@@ -266,6 +277,13 @@ class ThelemicCalendarService:
             return ''.join(reversed(nums))
         
         def ternary_to_decimal(t):
+            """
+            Ternary to decimal logic.
+            
+            Args:
+                t: Description of t.
+            
+            """
             return int(t, 3) if t else 0
         
         # Get Ditrune as ternary, PAD TO 6 DIGITS, reverse it, convert back

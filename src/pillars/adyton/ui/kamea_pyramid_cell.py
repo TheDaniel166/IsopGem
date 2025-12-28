@@ -26,6 +26,16 @@ class KameaPyramidCell(QWidget):
     clicked = pyqtSignal()
     
     def __init__(self, ditrune: str, decimal_value: int, size: int = 60, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            ditrune: Description of ditrune.
+            decimal_value: Description of decimal_value.
+            size: Description of size.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.ditrune = ditrune
         self.decimal_value = decimal_value
@@ -46,6 +56,16 @@ class KameaPyramidCell(QWidget):
         self.is_selected = False
 
     def set_side_colors(self, top: QColor, bottom: QColor, left: QColor, right: QColor):
+        """
+        Configure side colors logic.
+        
+        Args:
+            top: Description of top.
+            bottom: Description of bottom.
+            left: Description of left.
+            right: Description of right.
+        
+        """
         self.color_top = top
         self.color_bottom = bottom
         self.color_left = left
@@ -53,28 +73,70 @@ class KameaPyramidCell(QWidget):
         self.update()
 
     def set_cap_color(self, color: QColor):
+        """
+        Configure cap color logic.
+        
+        Args:
+            color: Description of color.
+        
+        """
         self.color_cap = color
         self.update()
 
     def set_selected(self, selected: bool):
+        """
+        Configure selected logic.
+        
+        Args:
+            selected: Description of selected.
+        
+        """
         self.is_selected = selected
         self.update()
 
     def enterEvent(self, event):
+        """
+        Enterevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        """
         self.is_hovered = True
         self.update()
         super().enterEvent(event)
 
     def leaveEvent(self, event):
+        """
+        Leaveevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        """
         self.is_hovered = False
         self.update()
         super().leaveEvent(event)
         
     def mousePressEvent(self, event):
+        """
+        Mousepressevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        """
         self.clicked.emit()
         super().mousePressEvent(event)
 
     def paintEvent(self, event):
+        """
+        Paintevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        """
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         
@@ -180,4 +242,3 @@ class KameaPyramidCell(QWidget):
              pen = QPen(QColor("#00FFFF"), 2) # Cyan highlight
              painter.setPen(pen)
              painter.drawRect(outer_rect.adjusted(1,1,-1,-1)) # Adjust to draw inside
-

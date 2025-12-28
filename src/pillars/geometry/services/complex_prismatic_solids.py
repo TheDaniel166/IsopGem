@@ -12,6 +12,10 @@ from .solid_property import SolidProperty
 
 @dataclass(frozen=True)
 class ComplexSolidResult:
+    """
+    Complex Solid Result class definition.
+    
+    """
     payload: SolidPayload
     metadata: Dict[str, float]
 
@@ -22,6 +26,15 @@ class SnubAntiprismSolidService:
     @staticmethod
     def build(edge: float = 2.0) -> ComplexSolidResult:
         # Canonical constants for edge=2
+        """
+        Build logic.
+        
+        Args:
+            edge: Description of edge.
+        
+        Returns:
+            Result of build operation.
+        """
         A = 1.715731736910394
         B = 0.371214042564360
         C = 1.353737018062712
@@ -84,7 +97,23 @@ class SnubAntiprismSolidService:
 
 
 class SnubAntiprismSolidCalculator:
+    """
+    Snub Antiprism Solid Calculator class definition.
+    
+    Attributes:
+        _properties: Description of _properties.
+        _edge: Description of _edge.
+        _result: Description of _result.
+    
+    """
     def __init__(self, edge: float = 2.0):
+        """
+          init   logic.
+        
+        Args:
+            edge: Description of edge.
+        
+        """
         self._properties = {
             'edge': SolidProperty('Edge Length', 'edge', 'units', edge),
             'surface_area': SolidProperty('Surface Area', 'surface_area', 'units²', 0.0, editable=False),
@@ -95,9 +124,25 @@ class SnubAntiprismSolidCalculator:
         self._recalculate()
 
     def properties(self) -> List[SolidProperty]:
+        """
+        Properties logic.
+        
+        Returns:
+            Result of properties operation.
+        """
         return list(self._properties.values())
 
     def set_property(self, key: str, value: Optional[float]) -> bool:
+        """
+        Configure property logic.
+        
+        Args:
+            key: Description of key.
+            value: Description of value.
+        
+        Returns:
+            Result of set_property operation.
+        """
         if key == 'edge' and value and value > 0:
             self._edge = value
             self._recalculate()
@@ -111,12 +156,28 @@ class SnubAntiprismSolidCalculator:
         self._properties['volume'].value = self._result.metadata['volume']
 
     def payload(self) -> Optional[SolidPayload]:
+        """
+        Payload logic.
+        
+        Returns:
+            Result of payload operation.
+        """
         return self._result.payload if self._result else None
     
     def metadata(self) -> Dict[str, float]:
+        """
+        Metadata logic.
+        
+        Returns:
+            Result of metadata operation.
+        """
         return self._result.metadata if self._result else {}
 
     def clear(self):
+        """
+        Clear logic.
+        
+        """
         pass
 
 
@@ -127,6 +188,17 @@ class GyroelongatedSquarePrismSolidService:
     def build(edge: float = 2.0, prism_h: float = 2.0, anti_h: float = 1.414) -> ComplexSolidResult:
         # Square Prism Vertices (Bottom)
         # z from 0 to prism_h
+        """
+        Build logic.
+        
+        Args:
+            edge: Description of edge.
+            prism_h: Description of prism_h.
+            anti_h: Description of anti_h.
+        
+        Returns:
+            Result of build operation.
+        """
         r_prism = edge / math.sqrt(2)
         v_prism = []
         for i in range(4):
@@ -186,7 +258,25 @@ class GyroelongatedSquarePrismSolidService:
 
 
 class GyroelongatedSquarePrismSolidCalculator:
+    """
+    Gyroelongated Square Prism Solid Calculator class definition.
+    
+    Attributes:
+        _properties: Description of _properties.
+        _edge: Description of _edge.
+        _prism_h: Description of _prism_h.
+        _result: Description of _result.
+    
+    """
     def __init__(self, edge: float = 2.0, prism_h: float = 2.0):
+        """
+          init   logic.
+        
+        Args:
+            edge: Description of edge.
+            prism_h: Description of prism_h.
+        
+        """
         self._properties = {
             'edge': SolidProperty('Edge Length', 'edge', 'units', edge),
             'prism_height': SolidProperty('Prism Height', 'prism_h', 'units', prism_h),
@@ -199,9 +289,25 @@ class GyroelongatedSquarePrismSolidCalculator:
         self._recalculate()
 
     def properties(self) -> List[SolidProperty]:
+        """
+        Properties logic.
+        
+        Returns:
+            Result of properties operation.
+        """
         return list(self._properties.values())
 
     def set_property(self, key: str, value: Optional[float]) -> bool:
+        """
+        Configure property logic.
+        
+        Args:
+            key: Description of key.
+            value: Description of value.
+        
+        Returns:
+            Result of set_property operation.
+        """
         if value and value > 0:
             if key == 'edge': self._edge = value
             elif key == 'prism_height': self._prism_h = value
@@ -219,10 +325,26 @@ class GyroelongatedSquarePrismSolidCalculator:
         self._properties['volume'].value = self._result.metadata['volume']
 
     def payload(self) -> Optional[SolidPayload]:
+        """
+        Payload logic.
+        
+        Returns:
+            Result of payload operation.
+        """
         return self._result.payload if self._result else None
     
     def metadata(self) -> Dict[str, float]:
+        """
+        Metadata logic.
+        
+        Returns:
+            Result of metadata operation.
+        """
         return self._result.metadata if self._result else {}
 
     def clear(self):
+        """
+        Clear logic.
+        
+        """
         pass

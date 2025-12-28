@@ -16,6 +16,14 @@ class ControlsPane(QWidget):
     """
     
     def __init__(self, view_model: GeometryViewModel, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            view_model: Description of view_model.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.view_model = view_model
         

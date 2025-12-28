@@ -25,6 +25,15 @@ from shared.ui.theme import COLORS, get_card_style, get_app_stylesheet
 
 
 def get_super(x):
+    """
+    Retrieve super logic.
+    
+    Args:
+        x: Description of x.
+    
+    Returns:
+        Result of get_super operation.
+    """
     normal = "0123456789"
     super_s = "⁰¹²³⁴⁵⁶⁷⁸⁹"
     res = x.maketrans(''.join(normal), ''.join(super_s))
@@ -34,10 +43,26 @@ def get_super(x):
 class CardTextEdit(QTextEdit):
     """QTextEdit that delegates context menu events."""
     def __init__(self, text, parent=None, context_menu_handler=None):
+        """
+          init   logic.
+        
+        Args:
+            text: Description of text.
+            parent: Description of parent.
+            context_menu_handler: Description of context_menu_handler.
+        
+        """
         super().__init__(text, parent)
         self.context_menu_handler = context_menu_handler
 
     def contextMenuEvent(self, event):
+        """
+        Contextmenuevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        """
         if self.context_menu_handler:
             self.context_menu_handler(event, self)
         else:
@@ -48,12 +73,27 @@ class QuadsetGlyph(QWidget):
     """Visualize ternary strings as Taoist line glyphs."""
 
     def __init__(self, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self._ternary = ""
     def sizeHint(self):
+        """
+        Sizehint logic.
+        
+        """
         return QSize(80, 100)
 
     def minimumSizeHint(self):
+        """
+        Minimumsizehint logic.
+        
+        """
         return QSize(60, 80)
 
     def set_ternary(self, ternary: str) -> None:
@@ -66,6 +106,13 @@ class QuadsetGlyph(QWidget):
         return digits or ["0"]
 
     def paintEvent(self, _event):  # noqa: N802
+        """
+        Paintevent logic.
+        
+        Args:
+            _event: Description of _event.
+        
+        """
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         painter.fillRect(self.rect(), QColor(255, 255, 255, 0))
@@ -123,6 +170,16 @@ class PropertyCard(QFrame):
     """A card entry for displaying a specific property."""
     
     def __init__(self, title: str, content: str = "", parent=None, link_handler=None):
+        """
+          init   logic.
+        
+        Args:
+            title: Description of title.
+            content: Description of content.
+            parent: Description of parent.
+            link_handler: Description of link_handler.
+        
+        """
         super().__init__(parent)
         self.setObjectName("propertyCard")
         self.setStyleSheet(get_card_style() + f"background-color: {COLORS['surface']};")
@@ -156,6 +213,13 @@ class PropertyCard(QFrame):
         layout.addWidget(self.content_label)
 
     def set_content(self, text: str):
+        """
+        Configure content logic.
+        
+        Args:
+            text: Description of text.
+        
+        """
         self.content_label.setText(text)
 
 
@@ -163,11 +227,26 @@ class SubstrateWidget(QWidget):
     """Widget that paints a background image scaled to fill the entire widget."""
     
     def __init__(self, image_path: str, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            image_path: Description of image_path.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self._pixmap = QPixmap(image_path)
         self._bg_color = QColor(COLORS['background'])
     
     def paintEvent(self, event):
+        """
+        Paintevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        """
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
         
@@ -191,6 +270,15 @@ class QuadsetAnalysisWindow(QMainWindow):
     """Window for Quadset Analysis with detailed property tabs."""
     
     def __init__(self, window_manager: WindowManager = None, parent=None, initial_value=None, **kwargs):
+        """
+          init   logic.
+        
+        Args:
+            window_manager: Description of window_manager.
+            parent: Description of parent.
+            initial_value: Description of initial_value.
+        
+        """
         super().__init__(parent)
         self.window_manager = window_manager
         self.setWindowTitle("Quadset Analysis")
@@ -616,6 +704,10 @@ class QuadsetAnalysisWindow(QMainWindow):
 
         # Helper to create a card
         def create_card():
+            """
+            Create card logic.
+            
+            """
             card = QFrame()
             card.setStyleSheet(f"""
                 QFrame {{

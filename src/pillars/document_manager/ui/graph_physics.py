@@ -9,6 +9,10 @@ from typing import Dict, List, Tuple
 
 @dataclass
 class PhysicsNode:
+    """
+    Physics Node class definition.
+    
+    """
     id: int
     x: float
     y: float
@@ -20,13 +24,35 @@ class PhysicsNode:
 
 @dataclass
 class PhysicsEdge:
+    """
+    Physics Edge class definition.
+    
+    """
     source_id: int
     target_id: int
     length: float = 250.0 # Desired length
     stiffness: float = 0.05
 
 class GraphPhysics:
+    """
+    Graph Physics class definition.
+    
+    Attributes:
+        nodes: Description of nodes.
+        edges: Description of edges.
+        REPULSION: Description of REPULSION.
+        DAMPING: Description of DAMPING.
+        MAX_SPEED: Description of MAX_SPEED.
+        center_force: Description of center_force.
+        RECENTER_GAIN: Description of RECENTER_GAIN.
+        bounds: Description of bounds.
+    
+    """
     def __init__(self):
+        """
+          init   logic.
+        
+        """
         self.nodes: Dict[int, PhysicsNode] = {}
         self.edges: List[PhysicsEdge] = []
         
@@ -39,10 +65,27 @@ class GraphPhysics:
         self.bounds = 5000.0       # Soft clamp boundary radius
         
     def add_node(self, node_id: int, x: float, y: float, mass: float = 1.0):
+        """
+        Add node logic.
+        
+        Args:
+            node_id: Description of node_id.
+            x: Description of x.
+            y: Description of y.
+            mass: Description of mass.
+        
+        """
         if node_id not in self.nodes:
             self.nodes[node_id] = PhysicsNode(id=node_id, x=x, y=y, mass=mass)
             
     def remove_node(self, node_id: int):
+        """
+        Remove node logic.
+        
+        Args:
+            node_id: Description of node_id.
+        
+        """
         if node_id in self.nodes:
             del self.nodes[node_id]
         # Remove associated edges
@@ -50,6 +93,16 @@ class GraphPhysics:
             
     def add_edge(self, source_id: int, target_id: int, length: float = 250.0, stiffness: float = 0.05):
         # Avoid duplicate edges
+        """
+        Add edge logic.
+        
+        Args:
+            source_id: Description of source_id.
+            target_id: Description of target_id.
+            length: Description of length.
+            stiffness: Description of stiffness.
+        
+        """
         for e in self.edges:
             if (e.source_id == source_id and e.target_id == target_id) or \
                (e.source_id == target_id and e.target_id == source_id):
@@ -58,10 +111,23 @@ class GraphPhysics:
         self.edges.append(PhysicsEdge(source_id, target_id, length, stiffness))
         
     def clear(self):
+        """
+        Clear logic.
+        
+        """
         self.nodes.clear()
         self.edges.clear()
         
     def set_position(self, node_id: int, x: float, y: float):
+        """
+        Configure position logic.
+        
+        Args:
+            node_id: Description of node_id.
+            x: Description of x.
+            y: Description of y.
+        
+        """
         if node_id in self.nodes:
             self.nodes[node_id].x = x
             self.nodes[node_id].y = y
@@ -69,6 +135,14 @@ class GraphPhysics:
             self.nodes[node_id].vy = 0
             
     def set_fixed(self, node_id: int, is_fixed: bool):
+        """
+        Configure fixed logic.
+        
+        Args:
+            node_id: Description of node_id.
+            is_fixed: Description of is_fixed.
+        
+        """
         if node_id in self.nodes:
             self.nodes[node_id].fixed = is_fixed
             if is_fixed:
@@ -183,6 +257,15 @@ class GraphPhysics:
         # Recenter disabled; keep pure physics to avoid bias
             
     def get_position(self, node_id: int) -> QPointF:
+        """
+        Retrieve position logic.
+        
+        Args:
+            node_id: Description of node_id.
+        
+        Returns:
+            Result of get_position operation.
+        """
         if node_id in self.nodes:
             return QPointF(self.nodes[node_id].x, self.nodes[node_id].y)
         return QPointF(0, 0)

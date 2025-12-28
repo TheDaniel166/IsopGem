@@ -21,6 +21,13 @@ class AdytonSanctuaryEngine(QWidget):
     The 3D Viewport for the Sanctuary.
     """
     def __init__(self, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.setMouseTracking(True)
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
@@ -60,6 +67,13 @@ class AdytonSanctuaryEngine(QWidget):
     # Rendering
     # ------------------------------------------------------------------
     def paintEvent(self, event: QPaintEvent):
+        """
+        Paintevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        """
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         
@@ -69,13 +83,34 @@ class AdytonSanctuaryEngine(QWidget):
     # Interaction
     # ------------------------------------------------------------------
     def mousePressEvent(self, event: QMouseEvent):
+        """
+        Mousepressevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        """
         self.last_pos = event.position().toPoint()
         self.mouse_pressed = True
 
     def mouseReleaseEvent(self, event: QMouseEvent):
+        """
+        Mousereleaseevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        """
         self.mouse_pressed = False
 
     def mouseMoveEvent(self, event: QMouseEvent):
+        """
+        Mousemoveevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        """
         if not self.mouse_pressed:
             return
             
@@ -97,6 +132,13 @@ class AdytonSanctuaryEngine(QWidget):
             self.update()
 
     def wheelEvent(self, event: QWheelEvent):
+        """
+        Wheelevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        """
         delta = event.angleDelta().y()
         self.camera.zoom(delta * 0.5)
         self.update()

@@ -67,6 +67,10 @@ class CurrentTransitWindow(QMainWindow):
     ]
 
     def __init__(self, *_, parent: Optional[QWidget] = None):
+        """
+          init   logic.
+        
+        """
         super().__init__(parent)
         self.setWindowTitle("Current Transit Viewer")
         self.resize(1100, 720)
@@ -518,5 +522,14 @@ class CurrentTransitWindow(QMainWindow):
         return self.ZODIAC_SIGNS[index]
 
     def closeEvent(self, a0: Optional[QCloseEvent]) -> None:  # noqa: N802
+        """
+        Closeevent logic.
+        
+        Args:
+            a0: Description of a0.
+        
+        Returns:
+            Result of closeEvent operation.
+        """
         self._cleanup_temp_files()
         super().closeEvent(a0)

@@ -41,6 +41,17 @@ J2000 = datetime(2000, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
 class StoneItem(QGraphicsEllipseItem):
     """Visual representation of a hole/stone."""
     def __init__(self, x: float, y: float, r: float, index: int, label: str = ""):
+        """
+          init   logic.
+        
+        Args:
+            x: Description of x.
+            y: Description of y.
+            r: Description of r.
+            index: Description of index.
+            label: Description of label.
+        
+        """
         super().__init__(x - r, y - r, r * 2, r * 2)
         self.setBrush(QBrush(COLOR_STONE))
         self.setPen(QPen(Qt.GlobalColor.black))
@@ -50,6 +61,14 @@ class StoneItem(QGraphicsEllipseItem):
 class MarkerItem(QGraphicsEllipseItem):
     """Movable marker (Sun, Moon, etc)."""
     def __init__(self, color: QColor, label: str):
+        """
+          init   logic.
+        
+        Args:
+            color: Description of color.
+            label: Description of label.
+        
+        """
         super().__init__(-10, -10, 20, 20) # 20px size
         self.setBrush(QBrush(color))
         self.setPen(QPen(Qt.GlobalColor.white, 2))
@@ -60,7 +79,24 @@ class MarkerItem(QGraphicsEllipseItem):
         self._label_item.setDefaultTextColor(Qt.GlobalColor.white)
 
 class EclipseClockScene(QGraphicsScene):
+    """
+    Eclipse Clock Scene class definition.
+    
+    Attributes:
+        saros_stones: Description of saros_stones.
+        aubrey_stones: Description of aubrey_stones.
+        sun_marker: Description of sun_marker.
+        moon_marker: Description of moon_marker.
+        node_marker: Description of node_marker.
+        south_node_marker: Description of south_node_marker.
+        saros_hand: Description of saros_hand.
+    
+    """
     def __init__(self):
+        """
+          init   logic.
+        
+        """
         super().__init__()
         self.setBackgroundBrush(QBrush(QColor("#1e1e1e")))
         self.saros_stones: List[StoneItem] = []
@@ -148,7 +184,18 @@ class EclipseClockScene(QGraphicsScene):
 
 
 class ZoomableGraphicsView(QGraphicsView):
+    """
+    Zoomable Graphics View class definition.
+    
+    """
     def __init__(self, scene):
+        """
+          init   logic.
+        
+        Args:
+            scene: Description of scene.
+        
+        """
         super().__init__(scene)
         self.setRenderHint(QPainter.RenderHint.Antialiasing)
         self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
@@ -157,6 +204,13 @@ class ZoomableGraphicsView(QGraphicsView):
         self.setStyleSheet("border: none;")
 
     def wheelEvent(self, event: QWheelEvent):
+        """
+        Wheelevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        """
         zoom_in = event.angleDelta().y() > 0
         factor = 1.1 if zoom_in else 0.9
         self.scale(factor, factor)
@@ -171,7 +225,26 @@ from PyQt6.QtWidgets import (
 # ... (Previous imports and classes unchanged) ...
 
 class NeoAubreyWindow(QMainWindow):
+    """
+    Neo Aubrey Window class definition.
+    
+    Attributes:
+        ephemeris: Description of ephemeris.
+        location_lookup: Description of location_lookup.
+        current_time: Description of current_time.
+        is_playing: Description of is_playing.
+        days_per_tick: Description of days_per_tick.
+        timer: Description of timer.
+    
+    """
     def __init__(self, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.setWindowTitle("Neo-Aubrey Eclipse Clock (DE441 Engine)")
         self.resize(1200, 850)
@@ -442,6 +515,15 @@ class NeoAubreyWindow(QMainWindow):
                 # Helper to get Aubrey Stone Index (1-56)
                 def get_stone_idx(lon):
                     # Map 0-360 -> 0-56, then +1 for 1-based index
+                    """
+                    Retrieve stone idx logic.
+                    
+                    Args:
+                        lon: Description of lon.
+                    
+                    Returns:
+                        Result of get_stone_idx operation.
+                    """
                     return int((lon / 360.0) * AUBREY_HOLES) + 1
                 
                 sun_stone = get_stone_idx(sun)

@@ -38,6 +38,14 @@ class WallAnalyticsWindow(QMainWindow):
     """Analytics window showing wall data with row, column, and z-axis sums."""
 
     def __init__(self, window_manager=None, parent: Optional[QWidget] = None):
+        """
+          init   logic.
+        
+        Args:
+            window_manager: Description of window_manager.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.window_manager = window_manager
         self.wall_data: List[List[List[int]]] = []  # 7 walls × 8 rows × 13 cols

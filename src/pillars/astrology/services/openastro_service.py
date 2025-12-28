@@ -50,6 +50,15 @@ class OpenAstroService:
     }
 
     def __init__(self, default_settings: Optional[Dict[str, Any]] = None) -> None:
+        """
+          init   logic.
+        
+        Args:
+            default_settings: Description of default_settings.
+        
+        Returns:
+            Result of __init__ operation.
+        """
         if openAstro is None:
             raise OpenAstroNotAvailableError(
                 "openastro2 is not installed. Ensure 'pip install openastro2' "

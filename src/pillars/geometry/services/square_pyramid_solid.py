@@ -11,6 +11,10 @@ from .solid_property import SolidProperty
 
 @dataclass(frozen=True)
 class SquarePyramidMetrics:
+    """
+    Square Pyramid Metrics class definition.
+    
+    """
     base_edge: float
     height: float
     slant_height: float
@@ -24,6 +28,10 @@ class SquarePyramidMetrics:
 
 @dataclass(frozen=True)
 class SquarePyramidSolidResult:
+    """
+    Square Pyramid Solid Result class definition.
+    
+    """
     payload: SolidPayload
     metrics: SquarePyramidMetrics
 
@@ -88,6 +96,16 @@ class SquarePyramidSolidService:
 
     @staticmethod
     def build(base_edge: float = 1.0, height: float = 1.0) -> SquarePyramidSolidResult:
+        """
+        Build logic.
+        
+        Args:
+            base_edge: Description of base_edge.
+            height: Description of height.
+        
+        Returns:
+            Result of build operation.
+        """
         if base_edge <= 0 or height <= 0:
             raise ValueError("Base edge and height must be positive")
         metrics = _compute_metrics(base_edge, height)
@@ -116,6 +134,16 @@ class SquarePyramidSolidService:
 
     @staticmethod
     def payload(base_edge: float = 1.0, height: float = 1.0) -> SolidPayload:
+        """
+        Payload logic.
+        
+        Args:
+            base_edge: Description of base_edge.
+            height: Description of height.
+        
+        Returns:
+            Result of payload operation.
+        """
         return SquarePyramidSolidService.build(base_edge, height).payload
 
 
@@ -135,6 +163,14 @@ class SquarePyramidSolidCalculator:
     )
 
     def __init__(self, base_edge: float = 1.0, height: float = 1.0):
+        """
+          init   logic.
+        
+        Args:
+            base_edge: Description of base_edge.
+            height: Description of height.
+        
+        """
         self._properties: Dict[str, SolidProperty] = {
             key: SolidProperty(name=label, key=key, unit=unit, precision=precision, editable=editable)
             for key, label, unit, precision, editable in self._PROPERTY_DEFINITIONS
@@ -145,9 +181,25 @@ class SquarePyramidSolidCalculator:
         self._apply_dimensions(self._base_edge, self._height)
 
     def properties(self) -> List[SolidProperty]:
+        """
+        Properties logic.
+        
+        Returns:
+            Result of properties operation.
+        """
         return [self._properties[key] for key, *_ in self._PROPERTY_DEFINITIONS]
 
     def set_property(self, key: str, value: Optional[float]) -> bool:
+        """
+        Configure property logic.
+        
+        Args:
+            key: Description of key.
+            value: Description of value.
+        
+        Returns:
+            Result of set_property operation.
+        """
         if value is None or value <= 0:
             return False
         if key == 'base_edge':
@@ -184,6 +236,10 @@ class SquarePyramidSolidCalculator:
         return False
 
     def clear(self):
+        """
+        Clear logic.
+        
+        """
         self._base_edge = 1.0
         self._height = 1.0
         for prop in self._properties.values():
@@ -191,14 +247,32 @@ class SquarePyramidSolidCalculator:
         self._result = None
 
     def payload(self) -> Optional[SolidPayload]:
+        """
+        Payload logic.
+        
+        Returns:
+            Result of payload operation.
+        """
         return self._result.payload if self._result else None
 
     def metadata(self) -> Dict[str, float]:
+        """
+        Metadata logic.
+        
+        Returns:
+            Result of metadata operation.
+        """
         if not self._result:
             return {}
         return dict(self._result.payload.metadata)
 
     def metrics(self) -> Optional[SquarePyramidMetrics]:
+        """
+        Metrics logic.
+        
+        Returns:
+            Result of metrics operation.
+        """
         return self._result.metrics if self._result else None
 
     def _apply_dimensions(self, base_edge: float, height: float):

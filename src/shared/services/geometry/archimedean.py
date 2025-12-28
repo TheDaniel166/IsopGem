@@ -22,6 +22,10 @@ from .archimedean_data import ARCHIMEDEAN_DATA
 
 @dataclass(frozen=True)
 class ArchimedeanSolidMetrics:
+    """
+    Archimedean Solid Metrics class definition.
+    
+    """
     edge_length: float
     surface_area: float
     volume: float
@@ -34,12 +38,20 @@ class ArchimedeanSolidMetrics:
 
 @dataclass(frozen=True)
 class ArchimedeanSolidResult:
+    """
+    Archimedean Solid Result class definition.
+    
+    """
     payload: SolidPayload
     metrics: ArchimedeanSolidMetrics
 
 
 @dataclass(frozen=True)
 class ArchimedeanSolidDefinition:
+    """
+    Archimedean Solid Definition class definition.
+    
+    """
     key: str
     name: str
     canonical_vertices: List[Vec3]
@@ -141,6 +153,15 @@ class ArchimedeanSolidServiceBase:
 
     @classmethod
     def build(cls, edge_length: float = 2.0) -> ArchimedeanSolidResult:
+        """
+        Build logic.
+        
+        Args:
+            edge_length: Description of edge_length.
+        
+        Returns:
+            Result of build operation.
+        """
         if edge_length <= 0:
             raise ValueError('Edge length must be positive')
         definition = _get_definition(cls.DEFINITION_KEY)
@@ -202,6 +223,15 @@ class ArchimedeanSolidServiceBase:
 
     @classmethod
     def payload(cls, edge_length: float = 2.0) -> SolidPayload:
+        """
+        Payload logic.
+        
+        Args:
+            edge_length: Description of edge_length.
+        
+        Returns:
+            Result of payload operation.
+        """
         return cls.build(edge_length=edge_length).payload
 
 
@@ -220,6 +250,13 @@ class ArchimedeanSolidCalculatorBase:
     )
 
     def __init__(self, edge_length: float = 2.0):
+        """
+          init   logic.
+        
+        Args:
+            edge_length: Description of edge_length.
+        
+        """
         self._properties: Dict[str, SolidProperty] = {
             key: SolidProperty(name=label, key=key, unit=unit, precision=precision, editable=editable)
             for key, label, unit, precision, editable in self._PROPERTY_DEFINITIONS
@@ -255,6 +292,12 @@ class ArchimedeanSolidCalculatorBase:
     def properties(self) -> List[SolidProperty]:
         # Return properties sorted to keep face metrics at the end? Or logically grouped?
         # Let's keep core properties first, then sorted face metrics
+        """
+        Properties logic.
+        
+        Returns:
+            Result of properties operation.
+        """
         core_keys = [k for k, *_ in self._PROPERTY_DEFINITIONS]
         dynamic_props = [p for k, p in self._properties.items() if k not in core_keys]
         # Sort dyn props by key (area_3_.., area_4_..) to keep types together
@@ -263,6 +306,16 @@ class ArchimedeanSolidCalculatorBase:
         return [self._properties[k] for k in core_keys] + dynamic_props
 
     def set_property(self, key: str, value: float | None) -> bool:
+        """
+        Configure property logic.
+        
+        Args:
+            key: Description of key.
+            value: Description of value.
+        
+        Returns:
+            Result of set_property operation.
+        """
         if value is None or value <= 0:
             return False
             
@@ -311,20 +364,42 @@ class ArchimedeanSolidCalculatorBase:
         return False
 
     def clear(self):
+        """
+        Clear logic.
+        
+        """
         self._edge_length = 2.0
         for prop in self._properties.values():
             prop.value = None
         self._result = None
 
     def payload(self) -> SolidPayload | None:
+        """
+        Payload logic.
+        
+        Returns:
+            Result of payload operation.
+        """
         return self._result.payload if self._result else None
 
     def metadata(self) -> Dict[str, float]:
+        """
+        Metadata logic.
+        
+        Returns:
+            Result of metadata operation.
+        """
         if not self._result:
             return {}
         return dict(self._result.payload.metadata)
 
     def metrics(self) -> ArchimedeanSolidMetrics | None:
+        """
+        Metrics logic.
+        
+        Returns:
+            Result of metrics operation.
+        """
         return self._result.metrics if self._result else None
 
     def _apply_edge_length(self, edge_length: float):
@@ -359,106 +434,210 @@ class ArchimedeanSolidCalculatorBase:
 
 
 class CuboctahedronSolidService(ArchimedeanSolidServiceBase):
+    """
+    Cuboctahedron Solid Service class definition.
+    
+    """
     DEFINITION_KEY = 'cuboctahedron'
 
 
 class CuboctahedronSolidCalculator(ArchimedeanSolidCalculatorBase):
+    """
+    Cuboctahedron Solid Calculator class definition.
+    
+    """
     SERVICE = CuboctahedronSolidService
 
 
 class TruncatedTetrahedronSolidService(ArchimedeanSolidServiceBase):
+    """
+    Truncated Tetrahedron Solid Service class definition.
+    
+    """
     DEFINITION_KEY = 'truncated_tetrahedron'
 
 
 class TruncatedTetrahedronSolidCalculator(ArchimedeanSolidCalculatorBase):
+    """
+    Truncated Tetrahedron Solid Calculator class definition.
+    
+    """
     SERVICE = TruncatedTetrahedronSolidService
 
 
 class TruncatedCubeSolidService(ArchimedeanSolidServiceBase):
+    """
+    Truncated Cube Solid Service class definition.
+    
+    """
     DEFINITION_KEY = 'truncated_cube'
 
 
 class TruncatedCubeSolidCalculator(ArchimedeanSolidCalculatorBase):
+    """
+    Truncated Cube Solid Calculator class definition.
+    
+    """
     SERVICE = TruncatedCubeSolidService
 
 
 class TruncatedOctahedronSolidService(ArchimedeanSolidServiceBase):
+    """
+    Truncated Octahedron Solid Service class definition.
+    
+    """
     DEFINITION_KEY = 'truncated_octahedron'
 
 
 class TruncatedOctahedronSolidCalculator(ArchimedeanSolidCalculatorBase):
+    """
+    Truncated Octahedron Solid Calculator class definition.
+    
+    """
     SERVICE = TruncatedOctahedronSolidService
 
 
 class RhombicuboctahedronSolidService(ArchimedeanSolidServiceBase):
+    """
+    Rhombicuboctahedron Solid Service class definition.
+    
+    """
     DEFINITION_KEY = 'rhombicuboctahedron'
 
 
 class RhombicuboctahedronSolidCalculator(ArchimedeanSolidCalculatorBase):
+    """
+    Rhombicuboctahedron Solid Calculator class definition.
+    
+    """
     SERVICE = RhombicuboctahedronSolidService
 
 
 class RhombicosidodecahedronSolidService(ArchimedeanSolidServiceBase):
+    """
+    Rhombicosidodecahedron Solid Service class definition.
+    
+    """
     DEFINITION_KEY = 'rhombicosidodecahedron'
 
 
 class RhombicosidodecahedronSolidCalculator(ArchimedeanSolidCalculatorBase):
+    """
+    Rhombicosidodecahedron Solid Calculator class definition.
+    
+    """
     SERVICE = RhombicosidodecahedronSolidService
 
 
 class TruncatedCuboctahedronSolidService(ArchimedeanSolidServiceBase):
+    """
+    Truncated Cuboctahedron Solid Service class definition.
+    
+    """
     DEFINITION_KEY = 'truncated_cuboctahedron'
 
 
 class TruncatedCuboctahedronSolidCalculator(ArchimedeanSolidCalculatorBase):
+    """
+    Truncated Cuboctahedron Solid Calculator class definition.
+    
+    """
     SERVICE = TruncatedCuboctahedronSolidService
 
 
 class IcosidodecahedronSolidService(ArchimedeanSolidServiceBase):
+    """
+    Icosidodecahedron Solid Service class definition.
+    
+    """
     DEFINITION_KEY = 'icosidodecahedron'
 
 
 class IcosidodecahedronSolidCalculator(ArchimedeanSolidCalculatorBase):
+    """
+    Icosidodecahedron Solid Calculator class definition.
+    
+    """
     SERVICE = IcosidodecahedronSolidService
 
 
 class TruncatedDodecahedronSolidService(ArchimedeanSolidServiceBase):
+    """
+    Truncated Dodecahedron Solid Service class definition.
+    
+    """
     DEFINITION_KEY = 'truncated_dodecahedron'
 
 
 class TruncatedDodecahedronSolidCalculator(ArchimedeanSolidCalculatorBase):
+    """
+    Truncated Dodecahedron Solid Calculator class definition.
+    
+    """
     SERVICE = TruncatedDodecahedronSolidService
 
 
 class TruncatedIcosahedronSolidService(ArchimedeanSolidServiceBase):
+    """
+    Truncated Icosahedron Solid Service class definition.
+    
+    """
     DEFINITION_KEY = 'truncated_icosahedron'
 
 
 class TruncatedIcosahedronSolidCalculator(ArchimedeanSolidCalculatorBase):
+    """
+    Truncated Icosahedron Solid Calculator class definition.
+    
+    """
     SERVICE = TruncatedIcosahedronSolidService
 
 
 class TruncatedIcosidodecahedronSolidService(ArchimedeanSolidServiceBase):
+    """
+    Truncated Icosidodecahedron Solid Service class definition.
+    
+    """
     DEFINITION_KEY = 'truncated_icosidodecahedron'
 
 
 class TruncatedIcosidodecahedronSolidCalculator(ArchimedeanSolidCalculatorBase):
+    """
+    Truncated Icosidodecahedron Solid Calculator class definition.
+    
+    """
     SERVICE = TruncatedIcosidodecahedronSolidService
 
 
 class SnubCubeSolidService(ArchimedeanSolidServiceBase):
+    """
+    Snub Cube Solid Service class definition.
+    
+    """
     DEFINITION_KEY = 'snub_cube'
 
 
 class SnubCubeSolidCalculator(ArchimedeanSolidCalculatorBase):
+    """
+    Snub Cube Solid Calculator class definition.
+    
+    """
     SERVICE = SnubCubeSolidService
 
 
 class SnubDodecahedronSolidService(ArchimedeanSolidServiceBase):
+    """
+    Snub Dodecahedron Solid Service class definition.
+    
+    """
     DEFINITION_KEY = 'snub_dodecahedron'
 
 
 class SnubDodecahedronSolidCalculator(ArchimedeanSolidCalculatorBase):
+    """
+    Snub Dodecahedron Solid Calculator class definition.
+    
+    """
     SERVICE = SnubDodecahedronSolidService
 
 

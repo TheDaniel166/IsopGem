@@ -5,12 +5,8 @@ from pathlib import Path
 from datetime import datetime
 import json
 
-try:
-    import pandas as pd  # type: ignore
-    PANDAS_AVAILABLE = True
-except ImportError:
-    PANDAS_AVAILABLE = False
-    pd = None  # type: ignore
+
+from ..services.batch_io_service import BatchIOService
 
 from PyQt6.QtWidgets import (
     QMainWindow, QVBoxLayout, QHBoxLayout, QPushButton, QLabel,
@@ -142,6 +138,7 @@ class GreatHarvestWindow(QMainWindow):
         self.window_manager = window_manager
         self.calculators = {calc.name: calc for calc in calculators}
         self.calculation_service = CalculationService()  # Use Service, not Repository
+        self.io_service = BatchIOService()
         self.imported_data: List[Dict] = []
         self.process_thread: Optional[BatchProcessThread] = None
         
@@ -490,9 +487,9 @@ class GreatHarvestWindow(QMainWindow):
 
     def _import_file(self):
         """Import spreadsheet file."""
-        # Build file filter based on available libraries
+        # Build file filter based on available libraries via service
         file_filter = "CSV/TSV Files (*.csv *.tsv *.txt)"
-        if PANDAS_AVAILABLE:
+        if self.io_service.is_pandas_available():
             file_filter = "All Spreadsheets (*.csv *.tsv *.xlsx *.xls *.ods);;Excel Files (*.xlsx *.xls);;LibreOffice Files (*.ods);;CSV/TSV Files (*.csv *.tsv *.txt);;All Files (*.*)"
         else:
             file_filter += ";;All Files (*.*)"
@@ -511,39 +508,8 @@ class GreatHarvestWindow(QMainWindow):
             return
         
         try:
-            # Determine file type and read accordingly
-            file_ext = Path(file_path).suffix.lower()
-            
-            if file_ext in ['.xlsx', '.xls']:
-                if not PANDAS_AVAILABLE or pd is None:
-                    QMessageBox.critical(self, "Missing Tool", "Install 'pandas' and 'openpyxl' to harvest Excel files.")
-                    return
-                df = pd.read_excel(file_path).fillna('')
-                self.imported_data = [{str(k).lower(): str(v) for k, v in row.items()} for row in df.to_dict('records')]
-            
-            elif file_ext == '.ods':
-                if not PANDAS_AVAILABLE or pd is None:
-                    QMessageBox.critical(self, "Missing Tool", "Install 'pandas' and 'odfpy' to harvest LibreOffice files.")
-                    return
-                try:
-                    df = pd.read_excel(file_path, engine='odf').fillna('')
-                    self.imported_data = [{str(k).lower(): str(v) for k, v in row.items()} for row in df.to_dict('records')]
-                except ImportError:
-                     QMessageBox.critical(self, "Missing Tool", "Install 'odfpy' to harvest LibreOffice files.")
-                     return
-            
-            elif file_ext in ['.csv', '.tsv', '.txt']:
-                delimiter = '\t' if file_ext == '.tsv' else ','
-                if PANDAS_AVAILABLE and pd is not None:
-                    df = pd.read_csv(file_path, delimiter=delimiter).fillna('')
-                    self.imported_data = [{str(k).lower(): str(v) for k, v in row.items()} for row in df.to_dict('records')]
-                else:
-                    with open(file_path, 'r', encoding='utf-8') as f:
-                        reader = csv.DictReader(f, delimiter=delimiter)
-                        self.imported_data = [{str(k).lower(): str(v) for k, v in row.items()} for row in reader]
-            else:
-                QMessageBox.warning(self, "Unknown Seed", f"The format '{file_ext}' cannot be sown.")
-                return
+            # Delegate io to service
+            self.imported_data = self.io_service.read_file(file_path)
             
             # Check if data was loaded
             if not self.imported_data:
@@ -658,6 +624,13 @@ class GreatHarvestWindow(QMainWindow):
         self.process_button.setEnabled(False)
     
     def closeEvent(self, a0: Optional[QCloseEvent]):
+        """
+        Closeevent logic.
+        
+        Args:
+            a0: Description of a0.
+        
+        """
         if a0 is None: return
         if self.process_thread and self.process_thread.isRunning():
             reply = QMessageBox.question(

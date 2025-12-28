@@ -201,6 +201,10 @@ class OctahedronMetrics:
 
 @dataclass(frozen=True)
 class OctahedronSolidResult:
+    """
+    Octahedron Solid Result class definition.
+    
+    """
     payload: SolidPayload
     metrics: OctahedronMetrics
 
@@ -280,6 +284,15 @@ class OctahedronSolidService:
 
     @staticmethod
     def build(edge_length: float = 1.0) -> OctahedronSolidResult:
+        """
+        Build logic.
+        
+        Args:
+            edge_length: Description of edge_length.
+        
+        Returns:
+            Result of build operation.
+        """
         if edge_length <= 0:
             raise ValueError("Edge length must be positive")
         metrics = _compute_metrics(edge_length)
@@ -337,6 +350,15 @@ class OctahedronSolidService:
 
     @staticmethod
     def payload(edge_length: float = 1.0) -> SolidPayload:
+        """
+        Payload logic.
+        
+        Args:
+            edge_length: Description of edge_length.
+        
+        Returns:
+            Result of payload operation.
+        """
         return OctahedronSolidService.build(edge_length).payload
 
 
@@ -393,6 +415,13 @@ class OctahedronSolidCalculator:
     )
 
     def __init__(self, edge_length: float = 1.0):
+        """
+          init   logic.
+        
+        Args:
+            edge_length: Description of edge_length.
+        
+        """
         self._properties: Dict[str, SolidProperty] = {}
         self._edge_solvers: Dict[str, callable] = {}
         
@@ -414,6 +443,15 @@ class OctahedronSolidCalculator:
     @staticmethod
     def _build_solver(base_value: float, power: float):
         def solver(value: Optional[float]) -> Optional[float]:
+            """
+            Solver logic.
+            
+            Args:
+                value: Description of value.
+            
+            Returns:
+                Result of solver operation.
+            """
             if value is None or value <= 0 or base_value <= 0:
                 return None
             scale = (value / base_value) ** (1.0 / power)
@@ -421,11 +459,27 @@ class OctahedronSolidCalculator:
         return solver
 
     def properties(self) -> List[SolidProperty]:
+        """
+        Properties logic.
+        
+        Returns:
+            Result of properties operation.
+        """
         order = [key for key, *_ in self._EDITABLE_PROPERTIES] + \
                 [key for key, *_ in self._READONLY_PROPERTIES]
         return [self._properties[key] for key in order if key in self._properties]
 
     def set_property(self, key: str, value: Optional[float]) -> bool:
+        """
+        Configure property logic.
+        
+        Args:
+            key: Description of key.
+            value: Description of value.
+        
+        Returns:
+            Result of set_property operation.
+        """
         if key not in self._edge_solvers or value is None or value <= 0:
             return False
         solver = self._edge_solvers[key]
@@ -436,19 +490,41 @@ class OctahedronSolidCalculator:
         return True
 
     def clear(self):
+        """
+        Clear logic.
+        
+        """
         for prop in self._properties.values():
             prop.value = None
         self._result = None
 
     def payload(self) -> Optional[SolidPayload]:
+        """
+        Payload logic.
+        
+        Returns:
+            Result of payload operation.
+        """
         return self._result.payload if self._result else None
 
     def metadata(self) -> Dict[str, float]:
+        """
+        Metadata logic.
+        
+        Returns:
+            Result of metadata operation.
+        """
         if not self._result:
             return {}
         return dict(self._result.payload.metadata)
 
     def metrics(self) -> Optional[OctahedronMetrics]:
+        """
+        Metrics logic.
+        
+        Returns:
+            Result of metrics operation.
+        """
         return self._result.metrics if self._result else None
 
     def _apply_edge(self, edge_length: float):

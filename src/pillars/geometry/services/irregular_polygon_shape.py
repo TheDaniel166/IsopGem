@@ -15,6 +15,13 @@ class IrregularPolygonShape(GeometricShape):
     """
 
     def __init__(self, points: Optional[List[Tuple[float, float]]] = None):
+        """
+          init   logic.
+        
+        Args:
+            points: Description of points.
+        
+        """
         self._points: List[Tuple[float, float]] = points if points else []
         super().__init__()
         # If points were passed, ensure properties exist match them
@@ -24,14 +31,32 @@ class IrregularPolygonShape(GeometricShape):
 
     @property
     def name(self) -> str:
+        """
+        Name logic.
+        
+        Returns:
+            Result of name operation.
+        """
         return f"Irregular {len(self._points)}-gon" if self._points else "Irregular Polygon"
 
     @property
     def description(self) -> str:
+        """
+        Description logic.
+        
+        Returns:
+            Result of description operation.
+        """
         return "Custom polygon defined by 3+ vertices"
 
     @property
     def calculation_hint(self) -> str:
+        """
+        Calculation hint logic.
+        
+        Returns:
+            Result of calculation_hint operation.
+        """
         return "Edit vertices in points table (Read-only properties)"
 
     def _init_properties(self):
@@ -123,6 +148,12 @@ class IrregularPolygonShape(GeometricShape):
         return p
 
     def get_drawing_instructions(self) -> Dict:
+        """
+        Retrieve drawing instructions logic.
+        
+        Returns:
+            Result of get_drawing_instructions operation.
+        """
         if not self._points or len(self._points) < 3:
              return {'type': 'empty'}
         return {
@@ -131,6 +162,12 @@ class IrregularPolygonShape(GeometricShape):
         }
 
     def get_label_positions(self) -> List[Tuple[str, float, float]]:
+        """
+        Retrieve label positions logic.
+        
+        Returns:
+            Result of get_label_positions operation.
+        """
         if not self._points or len(self._points) < 3:
             return []
         

@@ -16,6 +16,13 @@ class BaphometPanel(QWidget):
     """
     
     def __init__(self, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.setFixedWidth(300)
         self.setStyleSheet("background-color: #0a0a0a; border-left: 1px solid #ff3333;")
@@ -149,4 +156,3 @@ class BaphometPanel(QWidget):
         # Resolve Color
         color = BaphometColorService.resolve_color(t_val)
         self.color_swatch.setStyleSheet(f"background-color: {color.name()}; border: 1px solid #555; border-radius: 4px;")
-

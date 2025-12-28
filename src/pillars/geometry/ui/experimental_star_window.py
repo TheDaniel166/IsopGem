@@ -24,6 +24,14 @@ class ExperimentalStarWindow(BaseFigurateWindow):
     """
 
     def __init__(self, window_manager: Optional[WindowManager] = None, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            window_manager: Description of window_manager.
+            parent: Description of parent.
+        
+        """
         super().__init__(window_manager, parent)
         self.setWindowTitle("Experimental Star Number Visualizer")
 
@@ -220,6 +228,15 @@ class ExperimentalStarWindow(BaseFigurateWindow):
 
 class _StarRenderRunnable(QRunnable):
     def __init__(self, points_count: int, index: int, spacing: float):
+        """
+          init   logic.
+        
+        Args:
+            points_count: Description of points_count.
+            index: Description of index.
+            spacing: Description of spacing.
+        
+        """
         super().__init__()
         self.points_count = points_count
         self.index = index
@@ -227,6 +244,10 @@ class _StarRenderRunnable(QRunnable):
         self.signals = RenderSignals()
 
     def run(self):
+        """
+        Execute logic.
+        
+        """
         try:
             value = generalized_star_number_value(self.points_count, self.index)
             points = generalized_star_number_points(self.points_count, self.index, spacing=self.spacing)

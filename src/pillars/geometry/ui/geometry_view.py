@@ -22,6 +22,14 @@ class GeometryView(QGraphicsView):
     dots_selected = pyqtSignal(list)
 
     def __init__(self, scene: GeometryScene, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            scene: Description of scene.
+            parent: Description of parent.
+        
+        """
         super().__init__(scene, parent)
         self._pan_active = False
         self._pan_start = QPoint()
@@ -51,6 +59,13 @@ class GeometryView(QGraphicsView):
 
         
     def resizeEvent(self, event):
+        """
+        Resizeevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        """
         super().resizeEvent(event)
         # Also update on resize if needed (though resize doesn't change transform usually, but fits might)
         scene = self.scene()
@@ -62,6 +77,13 @@ class GeometryView(QGraphicsView):
     # Zoom helpers
     # ------------------------------------------------------------------
     def wheelEvent(self, event: Optional[QWheelEvent]):  # pragma: no cover - GUI interaction
+        """
+        Wheelevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        """
         if event is None:
             return
         angle = event.angleDelta().y()
@@ -71,21 +93,44 @@ class GeometryView(QGraphicsView):
         self._apply_zoom(factor)
 
     def zoom_in(self):
+        """
+        Zoom in logic.
+        
+        """
         self._apply_zoom(1.15)
 
     def zoom_out(self):
+        """
+        Zoom out logic.
+        
+        """
         self._apply_zoom(1 / 1.15)
 
     def zoom(self, factor: float):
+        """
+        Zoom logic.
+        
+        Args:
+            factor: Description of factor.
+        
+        """
         self._apply_zoom(factor)
 
     def reset_view(self):
+        """
+        Reset view logic.
+        
+        """
         self.resetTransform()
         scene = self.scene()
         if hasattr(scene, "update_label_layout"):
             scene.update_label_layout(self.transform())
 
     def fit_scene(self):
+        """
+        Fit scene logic.
+        
+        """
         scene = self.scene()
         if hasattr(scene, "get_current_bounds"):
             bounds = scene.get_current_bounds()  # type: ignore[attr-defined]
@@ -105,6 +150,13 @@ class GeometryView(QGraphicsView):
 
 
     def fit_to_bounds(self, bounds: Optional[Bounds]):
+        """
+        Fit to bounds logic.
+        
+        Args:
+            bounds: Description of bounds.
+        
+        """
         if bounds is None:
             self.resetTransform()
             return
@@ -167,6 +219,13 @@ class GeometryView(QGraphicsView):
     # Mouse Events
     # ------------------------------------------------------------------
     def mousePressEvent(self, event: Optional[QMouseEvent]):
+        """
+        Mousepressevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        """
         if event is None:
             return
         
@@ -233,6 +292,13 @@ class GeometryView(QGraphicsView):
         super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event: Optional[QMouseEvent]):
+        """
+        Mousemoveevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        """
         if event is None:
             return
 
@@ -264,6 +330,13 @@ class GeometryView(QGraphicsView):
         super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event: Optional[QMouseEvent]):  # pragma: no cover - GUI interaction
+        """
+        Mousereleaseevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        """
         if event is None:
             return
         

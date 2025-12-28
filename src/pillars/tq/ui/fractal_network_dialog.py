@@ -16,6 +16,13 @@ class FractalNetworkDialog(QDialog):
     """
     
     def __init__(self, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.setWindowTitle("Fractal Network Analysis")
         self.setWindowFlags(Qt.WindowType.Window) # Standard window to ensure visibility

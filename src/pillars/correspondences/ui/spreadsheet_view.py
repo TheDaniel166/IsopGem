@@ -31,6 +31,14 @@ class SpreadsheetModel(QAbstractTableModel):
     Adapts the JSON structure to the Qt Table Model.
     """
     def __init__(self, data_json: dict, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            data_json: Description of data_json.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self._columns = data_json.get("columns", [])
         # Support both "data" and "rows" keys
@@ -135,6 +143,16 @@ class SpreadsheetModel(QAbstractTableModel):
         self._eval_cache.clear()
 
     def get_cell_raw(self, row, col):
+        """
+        Retrieve cell raw logic.
+        
+        Args:
+            row: Description of row.
+            col: Description of col.
+        
+        Returns:
+            Result of get_cell_raw operation.
+        """
         if row < 0 or row >= len(self._data):
             return ""
         if col < 0 or col >= len(self._columns):
@@ -196,12 +214,34 @@ class SpreadsheetModel(QAbstractTableModel):
         return self._data[row][col]
 
     def rowCount(self, parent=QModelIndex()):
+        """
+        Rowcount logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         return len(self._data)
 
     def columnCount(self, parent=QModelIndex()):
+        """
+        Columncount logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         return len(self._columns)
 
     def data(self, index, role=Qt.ItemDataRole.DisplayRole):
+        """
+        Data logic.
+        
+        Args:
+            index: Description of index.
+            role: Description of role.
+        
+        """
         if not index.isValid():
             return None
 
@@ -280,6 +320,15 @@ class SpreadsheetModel(QAbstractTableModel):
         return None
 
     def setData(self, index, value, role=Qt.ItemDataRole.EditRole):
+        """
+        Setdata logic.
+        
+        Args:
+            index: Description of index.
+            value: Description of value.
+            role: Description of role.
+        
+        """
         if not index.isValid(): return False
 
         if role in (Qt.ItemDataRole.EditRole, Qt.ItemDataRole.BackgroundRole, Qt.ItemDataRole.ForegroundRole, Qt.ItemDataRole.TextAlignmentRole, Qt.ItemDataRole.FontRole, BorderRole):
@@ -298,6 +347,15 @@ class SpreadsheetModel(QAbstractTableModel):
         return False
 
     def headerData(self, section, orientation, role=Qt.ItemDataRole.DisplayRole):
+        """
+        Headerdata logic.
+        
+        Args:
+            section: Description of section.
+            orientation: Description of orientation.
+            role: Description of role.
+        
+        """
         if role == Qt.ItemDataRole.DisplayRole:
             if orientation == Qt.Orientation.Horizontal:
                 if section < len(self._columns):
@@ -307,32 +365,79 @@ class SpreadsheetModel(QAbstractTableModel):
         return None
 
     def insertRows(self, position, rows, parent=QModelIndex()):
+        """
+        Insertrows logic.
+        
+        Args:
+            position: Description of position.
+            rows: Description of rows.
+            parent: Description of parent.
+        
+        """
         command = InsertRowsCommand(self, position, rows)
         self.undo_stack.push(command)
         return True
 
     def removeRows(self, position, rows, parent=QModelIndex()):
+        """
+        Removerows logic.
+        
+        Args:
+            position: Description of position.
+            rows: Description of rows.
+            parent: Description of parent.
+        
+        """
         command = RemoveRowsCommand(self, position, rows)
         self.undo_stack.push(command)
         return True
 
     def insertColumns(self, position, columns, parent=QModelIndex()):
+        """
+        Insertcolumns logic.
+        
+        Args:
+            position: Description of position.
+            columns: Description of columns.
+            parent: Description of parent.
+        
+        """
         command = InsertColumnsCommand(self, position, columns)
         self.undo_stack.push(command)
         return True
 
     def removeColumns(self, position, columns, parent=QModelIndex()):
+        """
+        Removecolumns logic.
+        
+        Args:
+            position: Description of position.
+            columns: Description of columns.
+            parent: Description of parent.
+        
+        """
         command = RemoveColumnsCommand(self, position, columns)
         self.undo_stack.push(command)
         return True
 
     def flags(self, index):
+        """
+        Flags logic.
+        
+        Args:
+            index: Description of index.
+        
+        """
         if not index.isValid():
             return Qt.ItemFlag.NoItemFlags
         return Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEditable
 
     def to_json(self):
         # Serialize styles keys to strings
+        """
+        Convert to json logic.
+        
+        """
         styles_str = {f"{r},{c}": v for (r,c), v in self._styles.items()}
         return {
             "columns": self._columns,
@@ -372,6 +477,13 @@ class SpreadsheetModel(QAbstractTableModel):
 
         # 3. Sort Data Rows Only
         def sort_key(row_tuple):
+            """
+            Sort key logic.
+            
+            Args:
+                row_tuple: Description of row_tuple.
+            
+            """
             val, _ = row_tuple[col_offset]
             try:
                 # Parse number
@@ -408,6 +520,15 @@ class RichTextDelegate(QStyledItemDelegate):
     ]
 
     def paint(self, painter, option, index):
+        """
+        Paint logic.
+        
+        Args:
+            painter: Description of painter.
+            option: Description of option.
+            index: Description of index.
+        
+        """
         try:
             options = option
             self.initStyleOption(options, index)
@@ -473,6 +594,15 @@ class RichTextDelegate(QStyledItemDelegate):
                 pen_default = QPen(QColor("#d9d9d9"), 1) # Standard Excel Gray
 
                 def get_pen(side_config):
+                    """
+                    Retrieve pen logic.
+                    
+                    Args:
+                        side_config: Description of side_config.
+                    
+                    Returns:
+                        Result of get_pen operation.
+                    """
                     if side_config is True: return QPen(Qt.GlobalColor.black, 1)
                     if isinstance(side_config, dict):
                         color = QColor(side_config.get("color", "#000000"))
@@ -483,6 +613,15 @@ class RichTextDelegate(QStyledItemDelegate):
 
                 # Borders Helpers
                 def draw_line(p, p1, p2):
+                    """
+                    Draw line logic.
+                    
+                    Args:
+                        p: Description of p.
+                        p1: Description of p1.
+                        p2: Description of p2.
+                    
+                    """
                     if p:
                         painter.setPen(p)
                         painter.drawLine(p1, p2)
@@ -591,6 +730,14 @@ class CellEditorDialog(QDialog):
     Popup window for editing a cell with full Rich Text capabilities.
     """
     def __init__(self, initial_html, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            initial_html: Description of initial_html.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.setWindowTitle("Edit Cell")
         self.resize(800, 600)
@@ -606,15 +753,47 @@ class CellEditorDialog(QDialog):
         layout.addWidget(btns)
 
     def get_html(self):
+        """
+        Retrieve html logic.
+        
+        Returns:
+            Result of get_html operation.
+        """
         return self.editor.get_html()
 
 
 class SpreadsheetView(QTableView):
     # Signals
+    """
+    Spreadsheet View class definition.
+    
+    Attributes:
+        active_editor: Description of active_editor.
+        HANDLE_SIZE: Description of HANDLE_SIZE.
+        _is_over_handle: Description of _is_over_handle.
+        _is_dragging_fill: Description of _is_dragging_fill.
+        _border_actions: Description of _border_actions.
+        _border_settings_actions: Description of _border_settings_actions.
+        _border_style_menu: Description of _border_style_menu.
+        _border_width_menu: Description of _border_width_menu.
+        _last_custom_colors: Description of _last_custom_colors.
+        _fill_drag_rect: Description of _fill_drag_rect.
+        _fill_start_pos: Description of _fill_start_pos.
+        _handle_pos: Description of _handle_pos.
+        _rubber_band: Description of _rubber_band.
+    
+    """
     formula_return_pressed = pyqtSignal()
     editor_text_changed = pyqtSignal(str) # For unified formula bar syncing
 
     def __init__(self, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.active_editor = None # Track inline editor for click hijacking
         self.setItemDelegate(RichTextDelegate(self))
@@ -672,10 +851,25 @@ class SpreadsheetView(QTableView):
         self.resizeRowsToContents()
 
     def resizeEvent(self, event):
+        """
+        Resizeevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        """
         super().resizeEvent(event)
         # No overlay to resize
 
     def selectionChanged(self, selected, deselected):
+        """
+        Selectionchanged logic.
+        
+        Args:
+            selected: Description of selected.
+            deselected: Description of deselected.
+        
+        """
         super().selectionChanged(selected, deselected)
         # Update Handle Index
         selection = self.selectionModel().selection()
@@ -692,6 +886,13 @@ class SpreadsheetView(QTableView):
 
     def mouseMoveEvent(self, event):
         # 1. Check Handle Hover
+        """
+        Mousemoveevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        """
         if not self._is_dragging_fill:
             pos = event.pos()
             # Optimization: Only check if near selection edge?
@@ -723,6 +924,13 @@ class SpreadsheetView(QTableView):
         super().mouseMoveEvent(event)
 
     def mousePressEvent(self, event):
+        """
+        Mousepressevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        """
         if self._is_over_handle and event.button() == Qt.MouseButton.LeftButton:
             self._is_dragging_fill = True
             self._fill_start_pos = event.pos()
@@ -737,6 +945,13 @@ class SpreadsheetView(QTableView):
         super().mousePressEvent(event)
 
     def mouseReleaseEvent(self, event):
+        """
+        Mousereleaseevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        """
         if self._is_dragging_fill:
             self._is_dragging_fill = False
             self.setCursor(Qt.CursorShape.ArrowCursor)

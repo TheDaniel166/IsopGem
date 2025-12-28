@@ -15,6 +15,13 @@ class MidpointsDial(QWidget):
     ZODIAC_SIGNS = ["♈", "♉", "♊", "♋", "♌", "♍", "♎", "♏", "♐", "♑", "♒", "♓"]
 
     def __init__(self, parent: Optional[QWidget] = None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.setMinimumSize(300, 300)
         self.setMouseTracking(True)
@@ -47,6 +54,15 @@ class MidpointsDial(QWidget):
         self.update()
 
     def mouseMoveEvent(self, event) -> None:
+        """
+        Mousemoveevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        Returns:
+            Result of mouseMoveEvent operation.
+        """
         pos = event.position()
         
         for rect, p_a, p_b, degree in self._midpoint_hitboxes:
@@ -76,6 +92,15 @@ class MidpointsDial(QWidget):
         self.update()
 
     def paintEvent(self, event) -> None:
+        """
+        Paintevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        Returns:
+            Result of paintEvent operation.
+        """
         p = QPainter(self)
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
         

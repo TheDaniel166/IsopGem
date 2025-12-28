@@ -9,10 +9,22 @@ class SquareShape(GeometricShape):
     
     @property
     def name(self) -> str:
+        """
+        Name logic.
+        
+        Returns:
+            Result of name operation.
+        """
         return "Square"
     
     @property
     def description(self) -> str:
+        """
+        Description logic.
+        
+        Returns:
+            Result of description operation.
+        """
         return "A regular quadrilateral with all sides equal and all angles 90°"
     
     def _init_properties(self):
@@ -118,10 +130,22 @@ class RectangleShape(GeometricShape):
     
     @property
     def name(self) -> str:
+        """
+        Name logic.
+        
+        Returns:
+            Result of name operation.
+        """
         return "Rectangle"
     
     @property
     def description(self) -> str:
+        """
+        Description logic.
+        
+        Returns:
+            Result of description operation.
+        """
         return "A quadrilateral with opposite sides equal and all angles 90°"
     
     def _init_properties(self):

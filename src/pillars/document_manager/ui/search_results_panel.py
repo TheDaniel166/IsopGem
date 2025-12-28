@@ -19,6 +19,13 @@ class SearchResultsPanel(QWidget):
     open_document_requested = pyqtSignal(int) # Emits doc_id
 
     def __init__(self, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.layout = QVBoxLayout(self)
         self.layout.setContentsMargins(0, 0, 0, 0)

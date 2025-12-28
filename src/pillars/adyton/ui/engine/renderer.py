@@ -23,7 +23,15 @@ class ProjectedFace:
     outline_color: QColor
 
 class AdytonRenderer:
+    """
+    Adyton Renderer class definition.
+    
+    """
     def __init__(self):
+        """
+          init   logic.
+        
+        """
         pass
 
     def render(self, painter: QPainter, scene: AdytonScene, camera: AdytonCamera, viewport: QRect):

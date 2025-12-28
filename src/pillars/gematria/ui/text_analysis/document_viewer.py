@@ -16,6 +16,13 @@ class DocumentViewer(QWidget):
     send_to_quadset_requested = pyqtSignal(str)
     
     def __init__(self, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self._setup_ui()
         
@@ -65,15 +72,42 @@ class DocumentViewer(QWidget):
         menu.exec(self.text_edit.mapToGlobal(pos))
         
     def set_text(self, text: str):
+        """
+        Configure text logic.
+        
+        Args:
+            text: Description of text.
+        
+        """
         self.text_edit.setPlainText(text)
         
     def get_text(self) -> str:
+        """
+        Retrieve text logic.
+        
+        Returns:
+            Result of get_text operation.
+        """
         return self.text_edit.toPlainText()
         
     def get_selected_text(self) -> str:
+        """
+        Retrieve selected text logic.
+        
+        Returns:
+            Result of get_selected_text operation.
+        """
         return self.text_edit.textCursor().selectedText()
         
     def select_range(self, start: int, end: int):
+        """
+        Select range logic.
+        
+        Args:
+            start: Description of start.
+            end: Description of end.
+        
+        """
         cursor = self.text_edit.textCursor()
         cursor.setPosition(start)
         cursor.setPosition(end, QTextCursor.MoveMode.KeepAnchor)
@@ -104,6 +138,10 @@ class DocumentViewer(QWidget):
         self.text_edit.setTextCursor(original_cursor)
         
     def clear_highlights(self):
+        """
+        Clear highlights logic.
+        
+        """
         cursor = self.text_edit.textCursor()
         cursor.select(QTextCursor.SelectionType.Document)
         

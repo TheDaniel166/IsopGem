@@ -90,19 +90,41 @@ class ParallelogramShape(GeometricShape):
 	"""Parallelogram defined by base, side, and included angle/height."""
 
 	def __init__(self):
+		"""
+		init   logic.
+  
+		"""
 		self._points: Optional[Tuple[Tuple[float, float], ...]] = None
 		super().__init__()
 
 	@property
 	def name(self) -> str:
+		"""
+		Name logic.
+  
+		Returns:
+		  Result of name operation.
+		"""
 		return "Parallelogram"
 
 	@property
 	def description(self) -> str:
+		"""
+		Description logic.
+  
+		Returns:
+		  Result of description operation.
+		"""
 		return "Opposite sides parallel with optional angle/height breakdown"
 
 	@property
 	def calculation_hint(self) -> str:
+		"""
+		Calculation hint logic.
+  
+		Returns:
+		  Result of calculation_hint operation.
+		"""
 		return "Enter Base + Height, or Base + Side + Angle"
 
 	def _init_properties(self):
@@ -118,6 +140,16 @@ class ParallelogramShape(GeometricShape):
 		}
 
 	def calculate_from_property(self, property_key: str, value: float) -> bool:
+		"""
+  Compute from property logic.
+  
+		Args:
+		  property_key: Description of property_key.
+		  value: Description of value.
+  
+		Returns:
+		  Result of calculate_from_property operation.
+		"""
 		if property_key not in {'base', 'side', 'height', 'angle_deg'}:
 			return False
 		if value <= 0:
@@ -205,11 +237,23 @@ class ParallelogramShape(GeometricShape):
 		return True
 
 	def get_drawing_instructions(self) -> Dict:
+		"""
+  Retrieve drawing instructions logic.
+  
+		Returns:
+		  Result of get_drawing_instructions operation.
+		"""
 		if not self._points:
 			return {'type': 'empty'}
 		return {'type': 'polygon', 'points': list(self._points)}
 
 	def get_label_positions(self) -> List[Tuple[str, float, float]]:
+		"""
+  Retrieve label positions logic.
+  
+		Returns:
+		  Result of get_label_positions operation.
+		"""
 		if not self._points:
 			return []
 		centroid = _polygon_centroid(self._points)
@@ -225,19 +269,41 @@ class RhombusShape(GeometricShape):
 	"""Rhombus with equal sides and diagonal/angle utilities."""
 
 	def __init__(self):
+		"""
+		init   logic.
+  
+		"""
 		self._points: Optional[Tuple[Tuple[float, float], ...]] = None
 		super().__init__()
 
 	@property
 	def name(self) -> str:
+		"""
+		Name logic.
+  
+		Returns:
+		  Result of name operation.
+		"""
 		return "Rhombus"
 
 	@property
 	def description(self) -> str:
+		"""
+		Description logic.
+  
+		Returns:
+		  Result of description operation.
+		"""
 		return "All sides equal with diagonal and height relationships"
 
 	@property
 	def calculation_hint(self) -> str:
+		"""
+		Calculation hint logic.
+  
+		Returns:
+		  Result of calculation_hint operation.
+		"""
 		return "Enter Side + Angle, or Diagonals"
 
 	def _init_properties(self):
@@ -252,6 +318,16 @@ class RhombusShape(GeometricShape):
 		}
 
 	def calculate_from_property(self, property_key: str, value: float) -> bool:
+		"""
+  Compute from property logic.
+  
+		Args:
+		  property_key: Description of property_key.
+		  value: Description of value.
+  
+		Returns:
+		  Result of calculate_from_property operation.
+		"""
 		if property_key not in {'side', 'height', 'angle_deg', 'diagonal_long', 'diagonal_short'}:
 			return False
 		if value <= 0:
@@ -332,11 +408,23 @@ class RhombusShape(GeometricShape):
 		return True
 
 	def get_drawing_instructions(self) -> Dict:
+		"""
+  Retrieve drawing instructions logic.
+  
+		Returns:
+		  Result of get_drawing_instructions operation.
+		"""
 		if not self._points:
 			return {'type': 'empty'}
 		return {'type': 'polygon', 'points': list(self._points)}
 
 	def get_label_positions(self) -> List[Tuple[str, float, float]]:
+		"""
+  Retrieve label positions logic.
+  
+		Returns:
+		  Result of get_label_positions operation.
+		"""
 		if not self._points:
 			return []
 		centroid = _polygon_centroid(self._points)
@@ -350,19 +438,41 @@ class TrapezoidShape(GeometricShape):
 	"""General trapezoid with one pair of parallel sides."""
 
 	def __init__(self):
+		"""
+		init   logic.
+  
+		"""
 		self._points: Optional[Tuple[Tuple[float, float], ...]] = None
 		super().__init__()
 
 	@property
 	def name(self) -> str:
+		"""
+		Name logic.
+  
+		Returns:
+		  Result of name operation.
+		"""
 		return "Trapezoid"
 
 	@property
 	def description(self) -> str:
+		"""
+		Description logic.
+  
+		Returns:
+		  Result of description operation.
+		"""
 		return "Single pair of parallel bases with leg + altitude metrics"
 
 	@property
 	def calculation_hint(self) -> str:
+		"""
+		Calculation hint logic.
+  
+		Returns:
+		  Result of calculation_hint operation.
+		"""
 		return "Enter Bases + Height + Legs"
 
 	def _init_properties(self):
@@ -380,6 +490,16 @@ class TrapezoidShape(GeometricShape):
 		}
 
 	def calculate_from_property(self, property_key: str, value: float) -> bool:
+		"""
+  Compute from property logic.
+  
+		Args:
+		  property_key: Description of property_key.
+		  value: Description of value.
+  
+		Returns:
+		  Result of calculate_from_property operation.
+		"""
 		if property_key not in {'base_major', 'base_minor', 'height', 'leg_left', 'leg_right'}:
 			return False
 		if value <= 0:
@@ -484,11 +604,23 @@ class TrapezoidShape(GeometricShape):
 		return True
 
 	def get_drawing_instructions(self) -> Dict:
+		"""
+  Retrieve drawing instructions logic.
+  
+		Returns:
+		  Result of get_drawing_instructions operation.
+		"""
 		if not self._points:
 			return {'type': 'empty'}
 		return {'type': 'polygon', 'points': list(self._points)}
 
 	def get_label_positions(self) -> List[Tuple[str, float, float]]:
+		"""
+  Retrieve label positions logic.
+  
+		Returns:
+		  Result of get_label_positions operation.
+		"""
 		if not self._points:
 			return []
 		centroid = _polygon_centroid(self._points)
@@ -502,19 +634,41 @@ class IsoscelesTrapezoidShape(GeometricShape):
 	"""Isosceles trapezoid with equal legs and symmetry tools."""
 
 	def __init__(self):
+		"""
+		init   logic.
+  
+		"""
 		self._points: Optional[Tuple[Tuple[float, float], ...]] = None
 		super().__init__()
 
 	@property
 	def name(self) -> str:
+		"""
+		Name logic.
+  
+		Returns:
+		  Result of name operation.
+		"""
 		return "Isosceles Trapezoid"
 
 	@property
 	def description(self) -> str:
+		"""
+		Description logic.
+  
+		Returns:
+		  Result of description operation.
+		"""
 		return "Congruent legs with equal base angles and diagonal data"
 
 	@property
 	def calculation_hint(self) -> str:
+		"""
+		Calculation hint logic.
+  
+		Returns:
+		  Result of calculation_hint operation.
+		"""
 		return "Enter Bases + Height (or Leg)"
 
 	def _init_properties(self):
@@ -531,6 +685,16 @@ class IsoscelesTrapezoidShape(GeometricShape):
 		}
 
 	def calculate_from_property(self, property_key: str, value: float) -> bool:
+		"""
+  Compute from property logic.
+  
+		Args:
+		  property_key: Description of property_key.
+		  value: Description of value.
+  
+		Returns:
+		  Result of calculate_from_property operation.
+		"""
 		if property_key not in {'base_major', 'base_minor', 'height', 'leg'}:
 			return False
 		if value <= 0:
@@ -606,11 +770,23 @@ class IsoscelesTrapezoidShape(GeometricShape):
 		return True
 
 	def get_drawing_instructions(self) -> Dict:
+		"""
+  Retrieve drawing instructions logic.
+  
+		Returns:
+		  Result of get_drawing_instructions operation.
+		"""
 		if not self._points:
 			return {'type': 'empty'}
 		return {'type': 'polygon', 'points': list(self._points)}
 
 	def get_label_positions(self) -> List[Tuple[str, float, float]]:
+		"""
+  Retrieve label positions logic.
+  
+		Returns:
+		  Result of get_label_positions operation.
+		"""
 		if not self._points:
 			return []
 		centroid = _polygon_centroid(self._points)
@@ -626,6 +802,10 @@ class _BaseAdjacentEqualShape(GeometricShape):
 	convex: bool = True
 
 	def __init__(self):
+		"""
+		init   logic.
+  
+		"""
 		self._points: Optional[Tuple[Tuple[float, float], ...]] = None
 		super().__init__()
 
@@ -641,6 +821,16 @@ class _BaseAdjacentEqualShape(GeometricShape):
 		}
 
 	def calculate_from_property(self, property_key: str, value: float) -> bool:
+		"""
+  Compute from property logic.
+  
+		Args:
+		  property_key: Description of property_key.
+		  value: Description of value.
+  
+		Returns:
+		  Result of calculate_from_property operation.
+		"""
 		if property_key not in {'equal_side', 'unequal_side', 'included_angle_deg'}:
 			return False
 		if value <= 0:
@@ -699,11 +889,23 @@ class _BaseAdjacentEqualShape(GeometricShape):
 		return True
 
 	def get_drawing_instructions(self) -> Dict:
+		"""
+  Retrieve drawing instructions logic.
+  
+		Returns:
+		  Result of get_drawing_instructions operation.
+		"""
 		if not self._points:
 			return {'type': 'empty'}
 		return {'type': 'polygon', 'points': list(self._points)}
 
 	def get_label_positions(self) -> List[Tuple[str, float, float]]:
+		"""
+  Retrieve label positions logic.
+  
+		Returns:
+		  Result of get_label_positions operation.
+		"""
 		if not self._points:
 			return []
 		centroid = _polygon_centroid(self._points)
@@ -720,14 +922,32 @@ class KiteShape(_BaseAdjacentEqualShape):
 
 	@property
 	def name(self) -> str:
+		"""
+		Name logic.
+  
+		Returns:
+		  Result of name operation.
+		"""
 		return "Kite"
 
 	@property
 	def description(self) -> str:
+		"""
+		Description logic.
+  
+		Returns:
+		  Result of description operation.
+		"""
 		return "Two equal adjacent sides mirrored across a diagonal"
 
 	@property
 	def calculation_hint(self) -> str:
+		"""
+		Calculation hint logic.
+  
+		Returns:
+		  Result of calculation_hint operation.
+		"""
 		return "Enter 2 unequal sides + Angle"
 
 
@@ -738,10 +958,22 @@ class DeltoidShape(_BaseAdjacentEqualShape):
 
 	@property
 	def name(self) -> str:
+		"""
+		Name logic.
+  
+		Returns:
+		  Result of name operation.
+		"""
 		return "Deltoid / Dart"
 
 	@property
 	def description(self) -> str:
+		"""
+		Description logic.
+  
+		Returns:
+		  Result of description operation.
+		"""
 		return "Concave kite with reflex apex for dart studies"
 
 
@@ -749,19 +981,41 @@ class CyclicQuadrilateralShape(GeometricShape):
 	"""Quadrilateral with all vertices on a common circumcircle."""
 
 	def __init__(self):
+		"""
+		init   logic.
+  
+		"""
 		self._points: Optional[Tuple[Tuple[float, float], ...]] = None
 		super().__init__()
 
 	@property
 	def name(self) -> str:
+		"""
+		Name logic.
+  
+		Returns:
+		  Result of name operation.
+		"""
 		return "Cyclic Quadrilateral"
 
 	@property
 	def description(self) -> str:
+		"""
+		Description logic.
+  
+		Returns:
+		  Result of description operation.
+		"""
 		return "Vertices on a circle with Brahmagupta area"
 
 	@property
 	def calculation_hint(self) -> str:
+		"""
+		Calculation hint logic.
+  
+		Returns:
+		  Result of calculation_hint operation.
+		"""
 		return "Enter 4 sides"
 
 	def _init_properties(self):
@@ -777,6 +1031,16 @@ class CyclicQuadrilateralShape(GeometricShape):
 		}
 
 	def calculate_from_property(self, property_key: str, value: float) -> bool:
+		"""
+  Compute from property logic.
+  
+		Args:
+		  property_key: Description of property_key.
+		  value: Description of value.
+  
+		Returns:
+		  Result of calculate_from_property operation.
+		"""
 		if property_key not in {'side_a', 'side_b', 'side_c', 'side_d'}:
 			return False
 		if value <= 0:
@@ -835,11 +1099,23 @@ class CyclicQuadrilateralShape(GeometricShape):
 		return True
 
 	def get_drawing_instructions(self) -> Dict:
+		"""
+  Retrieve drawing instructions logic.
+  
+		Returns:
+		  Result of get_drawing_instructions operation.
+		"""
 		if not self._points:
 			return {'type': 'empty'}
 		return {'type': 'polygon', 'points': list(self._points)}
 
 	def get_label_positions(self) -> List[Tuple[str, float, float]]:
+		"""
+  Retrieve label positions logic.
+  
+		Returns:
+		  Result of get_label_positions operation.
+		"""
 		if not self._points:
 			return []
 		centroid = _polygon_centroid(self._points)
@@ -853,19 +1129,41 @@ class TangentialQuadrilateralShape(GeometricShape):
 	"""Quadrilateral admitting an incircle (Pitot condition)."""
 
 	def __init__(self):
+		"""
+		init   logic.
+  
+		"""
 		self._points: Optional[Tuple[Tuple[float, float], ...]] = None
 		super().__init__()
 
 	@property
 	def name(self) -> str:
+		"""
+		Name logic.
+  
+		Returns:
+		  Result of name operation.
+		"""
 		return "Tangential Quadrilateral"
 
 	@property
 	def description(self) -> str:
+		"""
+		Description logic.
+  
+		Returns:
+		  Result of description operation.
+		"""
 		return "Tangential quadrilateral with incircle"
 
 	@property
 	def calculation_hint(self) -> str:
+		"""
+		Calculation hint logic.
+  
+		Returns:
+		  Result of calculation_hint operation.
+		"""
 		return "Enter 3 sides (Pitot's Theorem)"
 
 	def _init_properties(self):
@@ -882,6 +1180,16 @@ class TangentialQuadrilateralShape(GeometricShape):
 		}
 
 	def calculate_from_property(self, property_key: str, value: float) -> bool:
+		"""
+  Compute from property logic.
+  
+		Args:
+		  property_key: Description of property_key.
+		  value: Description of value.
+  
+		Returns:
+		  Result of calculate_from_property operation.
+		"""
 		if property_key not in {'side_a', 'side_b', 'side_c', 'side_d', 'inradius'}:
 			return False
 		if value <= 0:
@@ -937,11 +1245,23 @@ class TangentialQuadrilateralShape(GeometricShape):
 		return True
 
 	def get_drawing_instructions(self) -> Dict:
+		"""
+  Retrieve drawing instructions logic.
+  
+		Returns:
+		  Result of get_drawing_instructions operation.
+		"""
 		if not self._points:
 			return {'type': 'empty'}
 		return {'type': 'polygon', 'points': list(self._points)}
 
 	def get_label_positions(self) -> List[Tuple[str, float, float]]:
+		"""
+  Retrieve label positions logic.
+  
+		Returns:
+		  Result of get_label_positions operation.
+		"""
 		if not self._points:
 			return []
 		centroid = _polygon_centroid(self._points)
@@ -959,19 +1279,41 @@ class BicentricQuadrilateralShape(GeometricShape):
 	"""Quadrilateral that is both cyclic and tangential."""
 
 	def __init__(self):
+		"""
+		init   logic.
+  
+		"""
 		self._points: Optional[Tuple[Tuple[float, float], ...]] = None
 		super().__init__()
 
 	@property
 	def name(self) -> str:
+		"""
+		Name logic.
+  
+		Returns:
+		  Result of name operation.
+		"""
 		return "Bicentric Quadrilateral"
 
 	@property
 	def description(self) -> str:
+		"""
+		Description logic.
+  
+		Returns:
+		  Result of description operation.
+		"""
 		return "Both Cyclic and Tangential (Fuss' Theorem)"
 
 	@property
 	def calculation_hint(self) -> str:
+		"""
+		Calculation hint logic.
+  
+		Returns:
+		  Result of calculation_hint operation.
+		"""
 		return "Enter 2 distinct sides (a, b)"
 
 	def _init_properties(self):
@@ -990,6 +1332,16 @@ class BicentricQuadrilateralShape(GeometricShape):
 		}
 
 	def calculate_from_property(self, property_key: str, value: float) -> bool:
+		"""
+  Compute from property logic.
+  
+		Args:
+		  property_key: Description of property_key.
+		  value: Description of value.
+  
+		Returns:
+		  Result of calculate_from_property operation.
+		"""
 		if property_key not in {'side_a', 'side_b', 'side_c', 'side_d'}:
 			return False
 		if value <= 0:
@@ -1054,11 +1406,23 @@ class BicentricQuadrilateralShape(GeometricShape):
 		return True
 
 	def get_drawing_instructions(self) -> Dict:
+		"""
+  Retrieve drawing instructions logic.
+  
+		Returns:
+		  Result of get_drawing_instructions operation.
+		"""
 		if not self._points:
 			return {'type': 'empty'}
 		return {'type': 'polygon', 'points': list(self._points)}
 
 	def get_label_positions(self) -> List[Tuple[str, float, float]]:
+		"""
+  Retrieve label positions logic.
+  
+		Returns:
+		  Result of get_label_positions operation.
+		"""
 		if not self._points:
 			return []
 		centroid = _polygon_centroid(self._points)
@@ -1072,15 +1436,31 @@ class QuadrilateralSolverShape(GeometricShape):
 	"""General quadrilateral solver using diagonals and included angle."""
 
 	def __init__(self):
+		"""
+		init   logic.
+  
+		"""
 		self._points: Optional[Tuple[Tuple[float, float], ...]] = None
 		super().__init__()
 
 	@property
 	def name(self) -> str:
+		"""
+		Name logic.
+  
+		Returns:
+		  Result of name operation.
+		"""
 		return "Quadrilateral Solver"
 
 	@property
 	def description(self) -> str:
+		"""
+		Description logic.
+  
+		Returns:
+		  Result of description operation.
+		"""
 		return "Mix sides/diagonals with the angle between diagonals"
 
 	def _init_properties(self):
@@ -1097,6 +1477,16 @@ class QuadrilateralSolverShape(GeometricShape):
 		}
 
 	def calculate_from_property(self, property_key: str, value: float) -> bool:
+		"""
+  Compute from property logic.
+  
+		Args:
+		  property_key: Description of property_key.
+		  value: Description of value.
+  
+		Returns:
+		  Result of calculate_from_property operation.
+		"""
 		if property_key not in {
 			'side_a', 'side_b', 'side_c', 'side_d', 'diagonal_p', 'diagonal_q', 'diagonal_angle_deg'
 		}:
@@ -1146,11 +1536,23 @@ class QuadrilateralSolverShape(GeometricShape):
 		return True
 
 	def get_drawing_instructions(self) -> Dict:
+		"""
+  Retrieve drawing instructions logic.
+  
+		Returns:
+		  Result of get_drawing_instructions operation.
+		"""
 		if not self._points:
 			return {'type': 'empty'}
 		return {'type': 'polygon', 'points': list(self._points)}
 
 	def get_label_positions(self) -> List[Tuple[str, float, float]]:
+		"""
+  Retrieve label positions logic.
+  
+		Returns:
+		  Result of get_label_positions operation.
+		"""
 		if not self._points:
 			return []
 		centroid = _polygon_centroid(self._points)

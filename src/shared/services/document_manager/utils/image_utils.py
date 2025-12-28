@@ -32,6 +32,13 @@ def extract_images_from_html(
     seen_hashes = {}  # Map hash -> image_id
     
     def replace_image(match):
+        """
+        Replace image logic.
+        
+        Args:
+            match: Description of match.
+        
+        """
         prefix = match.group('prefix')
         mime_subtype = match.group('mime')
         base64_data = match.group('data')
@@ -85,6 +92,13 @@ def restore_images_in_html(
     Preserves all other HTML attributes.
     """
     def replace_docimg(match):
+        """
+        Replace docimg logic.
+        
+        Args:
+            match: Description of match.
+        
+        """
         prefix = match.group('prefix')
         image_id_str = match.group('id')
         suffix = match.group('suffix')

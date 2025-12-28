@@ -23,12 +23,23 @@ class ImportWorkerSignals(QObject):
 class ImportWorker(QRunnable):
     """Background worker for parsing documents."""
     def __init__(self, filepath: str):
+        """
+          init   logic.
+        
+        Args:
+            filepath: Description of filepath.
+        
+        """
         super().__init__()
         self.filepath = filepath
         self.signals = ImportWorkerSignals()
         
     @pyqtSlot()
     def run(self):
+        """
+        Execute logic.
+        
+        """
         try:
             # Transmute via DocumentService (handles images, duplicates, indexing)
             with document_service_context() as svc:
@@ -52,6 +63,15 @@ class MindscapeTreeWidget(QTreeWidget):
     TYPE_PAGE = 3
     
     def __init__(self, parent: Optional[Any] = None) -> None:
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        Returns:
+            Result of __init__ operation.
+        """
         super().__init__(parent)
         self.setHeaderLabel("Notebooks")
         self.setColumnCount(1)
@@ -399,5 +419,14 @@ class MindscapeTreeWidget(QTreeWidget):
     def dropEvent(self, event: QDropEvent) -> None:
         # Only allow dropping Pages onto Sections
         # Or sorting pages within section
+        """
+        Dropevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        Returns:
+            Result of dropEvent operation.
+        """
         super().dropEvent(event)
         # Handle logic... (Simplified for now)

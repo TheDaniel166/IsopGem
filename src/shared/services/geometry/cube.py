@@ -207,6 +207,10 @@ class CubeMetrics:
 
 @dataclass(frozen=True)
 class CubeSolidResult:
+    """
+    Cube Solid Result class definition.
+    
+    """
     payload: SolidPayload
     metrics: CubeMetrics
 
@@ -291,6 +295,15 @@ class CubeSolidService:
 
     @staticmethod
     def build(edge_length: float = 1.0) -> CubeSolidResult:
+        """
+        Build logic.
+        
+        Args:
+            edge_length: Description of edge_length.
+        
+        Returns:
+            Result of build operation.
+        """
         if edge_length <= 0:
             raise ValueError("Edge length must be positive")
         metrics = _compute_metrics(edge_length)
@@ -372,6 +385,15 @@ class CubeSolidService:
 
     @staticmethod
     def payload(edge_length: float = 1.0) -> SolidPayload:
+        """
+        Payload logic.
+        
+        Args:
+            edge_length: Description of edge_length.
+        
+        Returns:
+            Result of payload operation.
+        """
         return CubeSolidService.build(edge_length).payload
 
 
@@ -433,6 +455,13 @@ class CubeSolidCalculator:
 
     def __init__(self, edge_length: float = 1.0):
         # Build editable properties
+        """
+          init   logic.
+        
+        Args:
+            edge_length: Description of edge_length.
+        
+        """
         self._properties: Dict[str, SolidProperty] = {}
         self._edge_solvers: Dict[str, callable] = {}
         
@@ -455,6 +484,15 @@ class CubeSolidCalculator:
     @staticmethod
     def _build_solver(base_value: float, power: float):
         def solver(value: Optional[float]) -> Optional[float]:
+            """
+            Solver logic.
+            
+            Args:
+                value: Description of value.
+            
+            Returns:
+                Result of solver operation.
+            """
             if value is None or value <= 0 or base_value <= 0:
                 return None
             scale = (value / base_value) ** (1.0 / power)
@@ -479,19 +517,41 @@ class CubeSolidCalculator:
         return True
 
     def clear(self):
+        """
+        Clear logic.
+        
+        """
         for prop in self._properties.values():
             prop.value = None
         self._result = None
 
     def payload(self) -> Optional[SolidPayload]:
+        """
+        Payload logic.
+        
+        Returns:
+            Result of payload operation.
+        """
         return self._result.payload if self._result else None
 
     def metadata(self) -> Dict[str, float]:
+        """
+        Metadata logic.
+        
+        Returns:
+            Result of metadata operation.
+        """
         if not self._result:
             return {}
         return dict(self._result.payload.metadata)
 
     def metrics(self) -> Optional[CubeMetrics]:
+        """
+        Metrics logic.
+        
+        Returns:
+            Result of metrics operation.
+        """
         return self._result.metrics if self._result else None
 
     def _apply_edge(self, edge_length: float):

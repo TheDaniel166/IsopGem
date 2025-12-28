@@ -62,7 +62,7 @@ The **Document Manager** is the **Scribe of the Akaschic Record**. It is respons
 *   **The Purpose**: A specialized "Ribbon-style" editor for composing and formatting text.
 *   **Key Logic**:
     *   **Formatting**: Handlers for Bold, Italic, Underline, and Semantic Styles (Header, Quote).
-    *   **Extensions**: Integrates `[image_features.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/document_manager/ui/image_features.py)`, `[table_features.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/document_manager/ui/table_features.py)`, and `[search_features.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/document_manager/ui/search_features.py)` mixins.
+    *   **Extensions**: Integrates `[image_features.py](file:///home/burkettdaniel927/projects/isopgem/src/shared/ui/rich_text_editor/image_features.py)`, `[table_features.py](file:///home/burkettdaniel927/projects/isopgem/src/shared/ui/rich_text_editor/table_features.py)`, and `[search_features.py](file:///home/burkettdaniel927/projects/isopgem/src/shared/ui/rich_text_editor/search_features.py)` mixins.
     *   `_apply_style`: Applies `QTextCharFormat` to the cursor selection.
 *   **Dependencies**: `[ribbon_widget.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/document_manager/ui/ribbon_widget.py)`
 

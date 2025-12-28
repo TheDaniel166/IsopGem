@@ -15,6 +15,13 @@ import qtawesome as qta
 class TableDialog(QDialog):
     """Dialog for inserting a new table."""
     def __init__(self, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.setWindowTitle("Insert Table")
         self._setup_ui()
@@ -63,6 +70,12 @@ class TableDialog(QDialog):
         layout.addWidget(buttons)
         
     def get_data(self):
+        """
+        Retrieve data logic.
+        
+        Returns:
+            Result of get_data operation.
+        """
         return {
             'rows': self.rows_spin.value(),
             'cols': self.cols_spin.value(),
@@ -74,6 +87,14 @@ class TableDialog(QDialog):
 class TablePropertiesDialog(QDialog):
     """Dialog for editing table properties."""
     def __init__(self, fmt: QTextTableFormat, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            fmt: Description of fmt.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.setWindowTitle("Table Properties")
         self.fmt = fmt
@@ -188,6 +209,13 @@ class TablePropertiesDialog(QDialog):
             self._update_color_button()
         
     def apply_to_format(self, fmt: QTextTableFormat):
+        """
+        Apply to format logic.
+        
+        Args:
+            fmt: Description of fmt.
+        
+        """
         from PyQt6.QtGui import QBrush
         from PyQt6.QtCore import Qt
         fmt.setWidth(QTextLength(QTextLength.Type.PercentageLength, self.width_spin.value()))
@@ -200,6 +228,14 @@ class TablePropertiesDialog(QDialog):
 class CellBorderDialog(QDialog):
     """Dialog for editing individual cell border styles."""
     def __init__(self, fmt: QTextTableCellFormat, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            fmt: Description of fmt.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.setWindowTitle("Cell Border Styles")
         self.fmt = fmt
@@ -367,6 +403,14 @@ class CellBorderDialog(QDialog):
 class CellPropertiesDialog(QDialog):
     """Dialog for editing cell properties."""
     def __init__(self, fmt: QTextTableCellFormat, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            fmt: Description of fmt.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.setWindowTitle("Cell Properties")
         self.fmt = fmt
@@ -420,6 +464,13 @@ class CellPropertiesDialog(QDialog):
         layout.addWidget(buttons)
         
     def apply_to_format(self, fmt: QTextTableCellFormat):
+        """
+        Apply to format logic.
+        
+        Args:
+            fmt: Description of fmt.
+        
+        """
         fmt.setTopPadding(self.pad_top.value())
         fmt.setBottomPadding(self.pad_bottom.value())
         fmt.setLeftPadding(self.pad_left.value())
@@ -436,6 +487,14 @@ class CellPropertiesDialog(QDialog):
 class ColumnPropertiesDialog(QDialog):
     """Dialog for editing column properties."""
     def __init__(self, length: QTextLength, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            length: Description of length.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.setWindowTitle("Column Properties")
         self.length = length
@@ -493,6 +552,12 @@ class ColumnPropertiesDialog(QDialog):
             self.value_spin.setRange(0, 10000)
 
     def get_length(self) -> QTextLength:
+        """
+        Retrieve length logic.
+        
+        Returns:
+            Result of get_length operation.
+        """
         idx = self.type_combo.currentIndex()
         val = self.value_spin.value()
         
@@ -508,6 +573,14 @@ class TableFeature:
     """Manages table operations for the RichTextEditor."""
     
     def __init__(self, editor: QTextEdit, parent: QWidget):
+        """
+          init   logic.
+        
+        Args:
+            editor: Description of editor.
+            parent: Description of parent.
+        
+        """
         self.editor = editor
         self.parent = parent
         self.menu = QMenu(parent)
@@ -688,6 +761,14 @@ class TableFeature:
 
     def insert_table(self, rows=None, cols=None):
         # Ignore rows/cols for now and always show dialog, or use them as defaults if we wanted
+        """
+        Insert table logic.
+        
+        Args:
+            rows: Description of rows.
+            cols: Description of cols.
+        
+        """
         dialog = TableDialog(self.parent)
         if dialog.exec():
             data = dialog.get_data()

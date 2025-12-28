@@ -31,6 +31,13 @@ class SearchWorker(QRunnable):
     """Background worker for document search to prevent UI freezing."""
     
     def __init__(self, query: str):
+        """
+          init   logic.
+        
+        Args:
+            query: Description of query.
+        
+        """
         super().__init__()
         self.query = query
         self.signals = SearchWorkerSignals()
@@ -53,6 +60,13 @@ class DocumentSearchWindow(QMainWindow):
     document_opened = pyqtSignal(int, str) # Emits (Document ID, Search Query)
     
     def __init__(self, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.setWindowTitle("Document Search")
         self.resize(900, 700)

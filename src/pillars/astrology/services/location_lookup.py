@@ -16,6 +16,10 @@ class LocationLookupError(RuntimeError):
 
 @dataclass(slots=True)
 class LocationResult:
+    """
+    Location Result class definition.
+    
+    """
     name: str
     latitude: float
     longitude: float
@@ -26,6 +30,12 @@ class LocationResult:
 
     @property
     def label(self) -> str:
+        """
+        Label logic.
+        
+        Returns:
+            Result of label operation.
+        """
         parts: List[str] = [self.name]
         if self.admin1:
             parts.append(self.admin1)
@@ -40,12 +50,30 @@ class LocationLookupService:
     API_URL = "https://geocoding-api.open-meteo.com/v1/search"
 
     def __init__(self, session=None):
+        """
+          init   logic.
+        
+        Args:
+            session: Description of session.
+        
+        """
         if requests:
             self._session = session or requests.Session()
         else:
             self._session = None
 
     def search(self, query: str, count: int = 7, language: str = "en") -> List[LocationResult]:
+        """
+        Search logic.
+        
+        Args:
+            query: Description of query.
+            count: Description of count.
+            language: Description of language.
+        
+        Returns:
+            Result of search operation.
+        """
         cleaned = query.strip()
         if not cleaned:
             raise LocationLookupError("Search query cannot be empty.")

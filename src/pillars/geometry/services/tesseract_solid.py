@@ -67,6 +67,10 @@ for face in _FACES:
 
 @dataclass(frozen=True)
 class TesseractMetrics:
+    """
+    Tesseract Metrics class definition.
+    
+    """
     edge_length: float
     surface_area: float
     volume: float
@@ -78,6 +82,10 @@ class TesseractMetrics:
 
 @dataclass(frozen=True)
 class TesseractSolidResult:
+    """
+    Tesseract Solid Result class definition.
+    
+    """
     payload: SolidPayload
     metrics: TesseractMetrics
 
@@ -87,6 +95,15 @@ class TesseractSolidService:
 
     @staticmethod
     def build(edge_length: float = 2.0) -> TesseractSolidResult:
+        """
+        Build logic.
+        
+        Args:
+            edge_length: Description of edge_length.
+        
+        Returns:
+            Result of build operation.
+        """
         if edge_length <= 0:
             raise ValueError('Edge length must be positive')
         scale = edge_length / _BASE_EDGE_LENGTH
@@ -130,6 +147,15 @@ class TesseractSolidService:
 
     @staticmethod
     def payload(edge_length: float = 2.0) -> SolidPayload:
+        """
+        Payload logic.
+        
+        Args:
+            edge_length: Description of edge_length.
+        
+        Returns:
+            Result of payload operation.
+        """
         return TesseractSolidService.build(edge_length).payload
 
 
@@ -148,6 +174,13 @@ class TesseractSolidCalculator:
     )
 
     def __init__(self, edge_length: float = 2.0):
+        """
+          init   logic.
+        
+        Args:
+            edge_length: Description of edge_length.
+        
+        """
         self._properties: Dict[str, SolidProperty] = {
             key: SolidProperty(name=label, key=key, unit=unit, precision=precision, editable=editable)
             for key, label, unit, precision, editable in self._PROPERTY_DEFINITIONS
@@ -157,9 +190,25 @@ class TesseractSolidCalculator:
         self._apply_edge_length(self._edge_length)
 
     def properties(self) -> List[SolidProperty]:
+        """
+        Properties logic.
+        
+        Returns:
+            Result of properties operation.
+        """
         return [self._properties[key] for key, *_ in self._PROPERTY_DEFINITIONS]
 
     def set_property(self, key: str, value: float | None) -> bool:
+        """
+        Configure property logic.
+        
+        Args:
+            key: Description of key.
+            value: Description of value.
+        
+        Returns:
+            Result of set_property operation.
+        """
         if value is None or value <= 0:
             return False
         if key == 'edge_length':
@@ -178,20 +227,42 @@ class TesseractSolidCalculator:
         return False
 
     def clear(self):
+        """
+        Clear logic.
+        
+        """
         self._edge_length = 2.0
         for prop in self._properties.values():
             prop.value = None
         self._result = None
 
     def payload(self) -> SolidPayload | None:
+        """
+        Payload logic.
+        
+        Returns:
+            Result of payload operation.
+        """
         return self._result.payload if self._result else None
 
     def metadata(self) -> Dict[str, float]:
+        """
+        Metadata logic.
+        
+        Returns:
+            Result of metadata operation.
+        """
         if not self._result:
             return {}
         return dict(self._result.payload.metadata)
 
     def metrics(self) -> TesseractMetrics | None:
+        """
+        Metrics logic.
+        
+        Returns:
+            Result of metrics operation.
+        """
         return self._result.metrics if self._result else None
 
     def _apply_edge_length(self, edge_length: float):

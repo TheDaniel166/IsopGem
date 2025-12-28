@@ -35,6 +35,14 @@ class ListFeature:
     for the RichTextEditor.
     """
     def __init__(self, editor, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            editor: Description of editor.
+            parent: Description of parent.
+        
+        """
         self.editor = editor
         self.parent = parent
 
@@ -254,4 +262,3 @@ class ListFeature:
             
         cursor.endEditBlock()
         self.editor.setFocus()
-

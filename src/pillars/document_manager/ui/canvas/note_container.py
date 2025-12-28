@@ -17,6 +17,13 @@ class ResizeGripWidget(QWidget):
     resize_finished = pyqtSignal()
     
     def __init__(self, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.setFixedSize(16, 16)
         self.setCursor(Qt.CursorShape.SizeFDiagCursor)
@@ -38,6 +45,13 @@ class ResizeGripWidget(QWidget):
                            self.width(), self.height() - offset)
     
     def mousePressEvent(self, event):
+        """
+        Mousepressevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        """
         if event.button() == Qt.MouseButton.LeftButton:
             self._dragging = True
             self._start_pos = event.globalPosition().toPoint()
@@ -45,6 +59,13 @@ class ResizeGripWidget(QWidget):
             event.accept()
     
     def mouseMoveEvent(self, event):
+        """
+        Mousemoveevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        """
         if self._dragging and self._start_pos:
             current = event.globalPosition().toPoint()
             delta_x = current.x() - self._start_pos.x()
@@ -54,6 +75,13 @@ class ResizeGripWidget(QWidget):
             event.accept()
     
     def mouseReleaseEvent(self, event):
+        """
+        Mousereleaseevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        """
         if self._dragging:
             self._dragging = False
             self._start_pos = None
@@ -69,6 +97,13 @@ class NoteContainerWidget(QWidget):
     resize_requested = pyqtSignal(float, float)  # width delta, height delta
     
     def __init__(self, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.layout = QVBoxLayout(self)
         self.layout.setContentsMargins(0, 0, 0, 0)
@@ -110,12 +145,32 @@ class NoteContainerWidget(QWidget):
         )
         
     def get_html(self):
+        """
+        Retrieve html logic.
+        
+        Returns:
+            Result of get_html operation.
+        """
         return self.editor.toHtml()
         
     def set_html(self, html):
+        """
+        Configure html logic.
+        
+        Args:
+            html: Description of html.
+        
+        """
         self.editor.setHtml(html)
         
     def set_text(self, text):
+        """
+        Configure text logic.
+        
+        Args:
+            text: Description of text.
+        
+        """
         self.editor.setHtml(text) # Fallback if text passed but it expects HTML container logic usually
 
 class NoteContainerItem(QGraphicsProxyWidget):
@@ -125,6 +180,14 @@ class NoteContainerItem(QGraphicsProxyWidget):
     content_changed = pyqtSignal()
     
     def __init__(self, width=400, height=200):
+        """
+          init   logic.
+        
+        Args:
+            width: Description of width.
+            height: Description of height.
+        
+        """
         super().__init__()
         self.widget_inner = NoteContainerWidget()
         self.setWidget(self.widget_inner)
@@ -154,6 +217,13 @@ class NoteContainerItem(QGraphicsProxyWidget):
     def mousePressEvent(self, event):
         # Only allow drag if clicking on the handle
         # Map pos to widget coordinates
+        """
+        Mousepressevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        """
         local_pos = event.pos()
         if local_pos.y() <= 20: # Handle height
              super().mousePressEvent(event) # Allow drag
@@ -189,6 +259,16 @@ class NoteContainerItemMovable(QGraphicsProxyWidget):
     RESIZE_MARGIN = 8  # Pixels from edge to detect resize
 
     def __init__(self, x=0, y=0, w=400, content=""):
+        """
+          init   logic.
+        
+        Args:
+            x: Description of x.
+            y: Description of y.
+            w: Description of w.
+            content: Description of content.
+        
+        """
         super().__init__()
         self.widget_inner = NoteContainerWidget()
         self.setWidget(self.widget_inner)
@@ -267,6 +347,13 @@ class NoteContainerItemMovable(QGraphicsProxyWidget):
         return None
 
     def mousePressEvent(self, event):
+        """
+        Mousepressevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        """
         pos = event.pos()
         
         # Check for resize first
@@ -294,6 +381,13 @@ class NoteContainerItemMovable(QGraphicsProxyWidget):
             super().mousePressEvent(event) # Pass to editor
 
     def mouseMoveEvent(self, event):
+        """
+        Mousemoveevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        """
         if self._resizing and self._resize_start_size and self._resize_start_pos:
             delta = event.scenePos() - self._resize_start_pos
             new_w = self._resize_start_size.width()
@@ -331,6 +425,13 @@ class NoteContainerItemMovable(QGraphicsProxyWidget):
 
     def mouseDoubleClickEvent(self, event):
         # Double-click on header to toggle minimize
+        """
+        Mousedoubleclickevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        """
         if event.pos().y() <= 20:
             self._toggle_minimize()
             event.accept()
@@ -338,6 +439,13 @@ class NoteContainerItemMovable(QGraphicsProxyWidget):
             super().mouseDoubleClickEvent(event)
 
     def mouseReleaseEvent(self, event):
+        """
+        Mousereleaseevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        """
         if self._resizing:
             self._resizing = False
             self._resize_edge = None
@@ -355,6 +463,13 @@ class NoteContainerItemMovable(QGraphicsProxyWidget):
             super().mouseReleaseEvent(event)
             
     def hoverEnterEvent(self, event):
+        """
+        Hoverenterevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        """
         pass
 
     def contextMenuEvent(self, event):

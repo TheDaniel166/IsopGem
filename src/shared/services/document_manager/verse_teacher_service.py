@@ -21,6 +21,13 @@ class VerseTeacherService:
     """Coordinates parser output, curated overrides, and heuristics."""
 
     def __init__(self, db: Session):
+        """
+          init   logic.
+        
+        Args:
+            db: Description of db.
+        
+        """
         self.db = db
         self.document_repo = DocumentRepository(db)
         self.verse_repo = DocumentVerseRepository(db)
@@ -31,6 +38,16 @@ class VerseTeacherService:
     # Public API
     # ------------------------------------------------------------------
     def get_curated_verses(self, document_id: int, include_ignored: bool = True) -> List[Dict[str, Any]]:
+        """
+        Retrieve curated verses logic.
+        
+        Args:
+            document_id: Description of document_id.
+            include_ignored: Description of include_ignored.
+        
+        Returns:
+            Result of get_curated_verses operation.
+        """
         verses = self.verse_repo.get_by_document(document_id, include_ignored=include_ignored)
         return [self._serialize_stored_verse(v) for v in verses]
 
@@ -40,6 +57,17 @@ class VerseTeacherService:
         allow_inline: bool = True,
         apply_rules: bool = True,
     ) -> Dict[str, Any]:
+        """
+        Retrieve or parse verses logic.
+        
+        Args:
+            document_id: Description of document_id.
+            allow_inline: Description of allow_inline.
+            apply_rules: Description of apply_rules.
+        
+        Returns:
+            Result of get_or_parse_verses operation.
+        """
         curated = self.get_curated_verses(document_id)
         if curated:
             return {
@@ -57,6 +85,17 @@ class VerseTeacherService:
         allow_inline: bool = True,
         apply_rules: bool = True,
     ) -> Dict[str, Any]:
+        """
+        Generate parser run logic.
+        
+        Args:
+            document_id: Description of document_id.
+            allow_inline: Description of allow_inline.
+            apply_rules: Description of apply_rules.
+        
+        Returns:
+            Result of generate_parser_run operation.
+        """
         document = self._get_document(document_id)
         text = self._extract_plain_text(document)
         raw_verses = parse_verses(text, allow_inline=allow_inline)
@@ -82,6 +121,18 @@ class VerseTeacherService:
         actor: str = "system",
         notes: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
+        """
+        Save curated verses logic.
+        
+        Args:
+            document_id: Description of document_id.
+            verses: Description of verses.
+            actor: Description of actor.
+            notes: Description of notes.
+        
+        Returns:
+            Result of save_curated_verses operation.
+        """
         stored = self.verse_repo.replace_document_verses(document_id, verses)
         self.log_repo.log(
             document_id=document_id,
@@ -103,6 +154,23 @@ class VerseTeacherService:
         priority: int = 0,
         enabled: bool = True,
     ) -> Dict[str, Any]:
+        """
+        Record rule logic.
+        
+        Args:
+            scope_type: Description of scope_type.
+            scope_value: Description of scope_value.
+            action: Description of action.
+            description: Description of description.
+            pattern_before: Description of pattern_before.
+            pattern_after: Description of pattern_after.
+            parameters: Description of parameters.
+            priority: Description of priority.
+            enabled: Description of enabled.
+        
+        Returns:
+            Result of record_rule operation.
+        """
         from pillars.document_manager.models import VerseRule
 
         rule = VerseRule(
@@ -138,11 +206,28 @@ class VerseTeacherService:
         return self._serialize_rule(saved)
 
     def list_rules_for_document(self, document_id: int) -> List[Dict[str, Any]]:
+        """
+        List rules for document logic.
+        
+        Args:
+            document_id: Description of document_id.
+        
+        Returns:
+            Result of list_rules_for_document operation.
+        """
         document = self._get_document(document_id)
         rules = self._get_applicable_rules(document)
         return [self._serialize_rule(r) for r in rules]
 
     def list_recent_edits(self, document_id: int, limit: int = 50):
+        """
+        List recent edits logic.
+        
+        Args:
+            document_id: Description of document_id.
+            limit: Description of limit.
+        
+        """
         return self.log_repo.list_recent(document_id, limit=limit)
 
     # ------------------------------------------------------------------

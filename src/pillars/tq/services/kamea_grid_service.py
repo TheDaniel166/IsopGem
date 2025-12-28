@@ -19,6 +19,13 @@ class KameaGridService:
     """
 
     def __init__(self, variant: str = "Maut"):
+        """
+          init   logic.
+        
+        Args:
+            variant: Description of variant.
+        
+        """
         self._grid: Dict[Tuple[int, int], KameaCell] = {}
         self._decimal_map: Dict[int, Tuple[int, int]] = {} # Reverse Lookup
         self._initialized = False

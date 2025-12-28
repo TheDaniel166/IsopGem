@@ -19,6 +19,13 @@ class CipherSelectorWidget(QWidget):
     valueChanged = pyqtSignal(str) # Emits "Language (Method)" string
     
     def __init__(self, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.layout = QHBoxLayout(self)
         self.layout.setContentsMargins(0, 0, 0, 0)
@@ -102,6 +109,13 @@ class CipherSelectorWidget(QWidget):
 
     def setText(self, text):
         # Optional: Implement if we needed to load existing value
+        """
+        Settext logic.
+        
+        Args:
+            text: Description of text.
+        
+        """
         pass
 
 
@@ -111,6 +125,15 @@ class FormulaArgumentDialog(QDialog):
     Dynamic form for entering function arguments with live preview.
     """
     def __init__(self, metadata: FormulaMetadata, engine: FormulaEngine = None, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            metadata: Description of metadata.
+            engine: Description of engine.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.metadata = metadata
         self.engine = engine
@@ -209,6 +232,13 @@ class FormulaArgumentDialog(QDialog):
         # but we can try attaching to child or just generic enterEvent
         
         def on_focus(event):
+            """
+            Handle focus logic.
+            
+            Args:
+                event: Description of event.
+            
+            """
             self.guidance_label.setText(f"{name}: {description}")
             
             # Track active input for grid selection
@@ -303,6 +333,14 @@ class FormulaWizardDialog(QDialog):
     """
     
     def __init__(self, engine: FormulaEngine = None, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            engine: Description of engine.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.engine = engine
         self.setWindowTitle("Insert Function")
@@ -416,7 +454,19 @@ class FormulaWizardDialog(QDialog):
         super().accept()
 
     def get_selected_formula(self):
+        """
+        Retrieve selected formula logic.
+        
+        Returns:
+            Result of get_selected_formula operation.
+        """
         return self.selected_formula
 
     def get_insertion_text(self):
+        """
+        Retrieve insertion text logic.
+        
+        Returns:
+            Result of get_insertion_text operation.
+        """
         return self.final_text

@@ -74,6 +74,13 @@ class GeometryScene(QGraphicsScene):
     canvas_clicked = pyqtSignal()      # Emitted when clicking empty space
 
     def __init__(self, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self._payload: Optional[GeometryScenePayload] = None
         self._label_items: List[QGraphicsSimpleTextItem] = []
@@ -125,17 +132,35 @@ class GeometryScene(QGraphicsScene):
         self._rebuild_scene()
 
     def clear_payload(self):
+        """
+        Clear payload logic.
+        
+        """
         self._payload = None
         self._rebuild_scene()
 
 
 
     def set_axes_visible(self, visible: bool):
+        """
+        Configure axes visible logic.
+        
+        Args:
+            visible: Description of visible.
+        
+        """
         if self.axes_visible != visible:
             self.axes_visible = visible
             self._refresh_axes()
 
     def set_labels_visible(self, visible: bool):
+        """
+        Configure labels visible logic.
+        
+        Args:
+            visible: Description of visible.
+        
+        """
         if self.labels_visible != visible:
             self.labels_visible = visible
             self._refresh_labels()
@@ -152,6 +177,13 @@ class GeometryScene(QGraphicsScene):
             item.setVisible(visible)
 
     def apply_theme(self, theme: str):
+        """
+        Apply theme logic.
+        
+        Args:
+            theme: Description of theme.
+        
+        """
         theme_data = self._themes.get(theme, self._themes["Daylight"])
         self._theme_name = theme if theme in self._themes else "Daylight"
         
@@ -171,6 +203,12 @@ class GeometryScene(QGraphicsScene):
         self.update()
 
     def get_current_bounds(self) -> Optional[Bounds]:
+        """
+        Retrieve current bounds logic.
+        
+        Returns:
+            Result of get_current_bounds operation.
+        """
         if not self._payload:
             return None
         if self._payload.bounds:
@@ -352,18 +390,46 @@ class GeometryScene(QGraphicsScene):
             self._temp_items.append(text_item) 
 
     def set_measurement_font_size(self, size: float):
+        """
+        Configure measurement font size logic.
+        
+        Args:
+            size: Description of size.
+        
+        """
         self._meas_font_size = size
         self.update_measurement_preview(self._last_meas_points, self._last_meas_closed)
 
     def set_measurement_line_color(self, color: QColor):
+        """
+        Configure measurement line color logic.
+        
+        Args:
+            color: Description of color.
+        
+        """
         self._meas_line_color = color
         self.update_measurement_preview(self._last_meas_points, self._last_meas_closed)
         
     def set_measurement_text_color(self, color: QColor):
+        """
+        Configure measurement text color logic.
+        
+        Args:
+            color: Description of color.
+        
+        """
         self._meas_text_color = color
         self.update_measurement_preview(self._last_meas_points, self._last_meas_closed)
         
     def set_measurement_show_area(self, enabled: bool):
+        """
+        Configure measurement show area logic.
+        
+        Args:
+            enabled: Description of enabled.
+        
+        """
         self._meas_show_area = enabled
         self.update_measurement_preview(self._last_meas_points, self._last_meas_closed)
 
@@ -379,6 +445,13 @@ class GeometryScene(QGraphicsScene):
     def mousePressEvent(self, event: QGraphicsSceneMouseEvent):
         # Process our custom click logic BEFORE calling super(), otherwise 
         # items with ItemIsSelectable will accept Left Clicks and prevent our logic.
+        """
+        Mousepressevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        """
         pos = event.scenePos()
         logger.debug("Scene click at %s", pos)
         
@@ -457,6 +530,13 @@ class GeometryScene(QGraphicsScene):
             glow.setData(0, -998)
 
     def mouseMoveEvent(self, event: QGraphicsSceneMouseEvent):
+        """
+        Mousemoveevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        """
         pos = event.scenePos()
         self.mouse_moved.emit(pos)
 
@@ -510,6 +590,13 @@ class GeometryScene(QGraphicsScene):
         line_item.setZValue(0.5) # Below dots (dots are at Z=2)
         
     def set_dot_z_index(self, z: float):
+        """
+        Configure dot z index logic.
+        
+        Args:
+            z: Description of z.
+        
+        """
         pass
 
     def highlight_dots(self, indices: List[int], color: QColor):
@@ -601,6 +688,14 @@ class GeometryScene(QGraphicsScene):
     # Rendering hooks
     # ------------------------------------------------------------------
     def drawBackground(self, painter: Optional[QPainter], rect: QRectF):  # pragma: no cover - Qt hook
+        """
+        Drawbackground logic.
+        
+        Args:
+            painter: Description of painter.
+            rect: Description of rect.
+        
+        """
         if painter is None:
             return
 

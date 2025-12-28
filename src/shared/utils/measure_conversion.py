@@ -6,6 +6,10 @@ from typing import Any, Dict, Optional, Tuple
 
 @dataclass(frozen=True)
 class ConversionResult:
+    """
+    Conversion Result class definition.
+    
+    """
     input_value: float
     from_name: str
     to_name: str

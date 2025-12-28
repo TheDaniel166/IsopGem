@@ -4,7 +4,8 @@ A native QGraphicsView-based 3D projection of the Kamea's 729 Ditrunes arranged 
 """
 
 import math
-import numpy as np
+import math
+from ..services.kamea_math_service import KameaMathService
 from PyQt6.QtWidgets import (
     QGraphicsView, QGraphicsScene, QGraphicsEllipseItem, QGraphicsLineItem,
     QToolTip, QLabel, QWidget, QVBoxLayout, QMenu
@@ -21,6 +22,13 @@ class KameaFractalView(QGraphicsView):
     focus_changed = pyqtSignal(object) # Emits ternary (str) or None
     
     def __init__(self, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.scene = QGraphicsScene(self)
         self.setScene(self.scene)
@@ -28,6 +36,8 @@ class KameaFractalView(QGraphicsView):
         # Visual Settings
         self.setBackgroundBrush(QBrush(QColor('#050510')))
         self.setRenderHint(QPainter.RenderHint.Antialiasing)
+        
+        self.math_service = KameaMathService()
         
         # Camera / Interaction State
         self.rotation_x = 0.5  # Pitch
@@ -90,30 +100,11 @@ class KameaFractalView(QGraphicsView):
         """Generates the 729 points and creates their graphic items."""
     def _calculate_coord(self, ternary: str):
         """Calculates 3D world coordinate for any ternary string."""
-        offsets = {
-            '00': (0, 0),
-            '10': (-1, 1), '21': (0, 1), '02': (1, 1),
-            '22': (-1, 0), '11': (1, 0),
-            '01': (-1, -1), '12': (0, -1), '20': (1, -1)
-        }
+        # Use Service
+        gx, gy, gz, pyx_count = self.math_service.calculate_coord(ternary)
         
-        # Parse Quadset Bigrams
-        macro = ternary[2:4]
-        meso = ternary[1] + ternary[4]
-        micro = ternary[0] + ternary[5]
-        
-        off1 = offsets.get(macro, (0,0))
-        off2 = offsets.get(meso, (0,0))
-        off3 = offsets.get(micro, (0,0))
-        
-        # Logic Coords (2D Grid)
-        gx = (off1[0] * 9) + (off2[0] * 3) + (off3[0] * 1)
-        gy = (off1[1] * 9) + (off2[1] * 3) + (off3[1] * 1)
-        
-        pyx_count = ternary.count('0')
-        
-        # Map to 3D: X=gx, Y=Height(pyx), Z=gy
-        return np.array([gx, pyx_count * 4.0, gy]), pyx_count, self._get_spectral_color(pyx_count)
+        # Map to 3D Vector Tuple (X, Y, Z) instead of numpy array
+        return (gx, gy, gz), pyx_count, self._get_spectral_color(pyx_count)
 
 
     def _generate_data(self):
@@ -184,191 +175,115 @@ class KameaFractalView(QGraphicsView):
 
     def _update_projection(self):
         """Projects 3D points to 2D scene based on rotation."""
-        # Rotation Matrices
-        cx, sx = math.cos(self.rotation_x), math.sin(self.rotation_x)
-        cy, sy = math.cos(self.rotation_y), math.sin(self.rotation_y)
         
-        # Rotate around Y then X
-        # R_y = [[cy, 0, sy], [0, 1, 0], [-sy, 0, cy]]
-        # R_x = [[1, 0, 0], [0, cx, -sx], [0, sx, cx]]
+        # 1. Update Points
+        # Collect all points to project in batch
+        all_vecs = [pt['vec'] for pt in self.points_3d]
         
-        # Combined Rotation (simplified for speed)
-        # We'll just rotate vector manually or use np
+        # Project using Service (returns rotated x, y, z tuples)
+        projected = self.math_service.project_points(all_vecs, self.rotation_x, self.rotation_y)
         
-        rot_mat = np.array([
-            [cy, 0, sy],
-            [sx*sy, cx, -sx*cy],
-            [-cx*sy, sx, cx*cy]
-        ])
+        # Update Graphic Items
+        for i, (px, py, pz) in enumerate(projected):
+             point_data = self.points_3d[i]
+             item = self.graphic_items[i]
+             
+             # Screen Coords (Isometric-ish)
+             sx = px * self.base_scale
+             sy = -py * self.base_scale
+             
+             # Visibility / Opacity Logic
+             ternary = point_data['info'].split('\n')[0].split(': ')[1]
+             opacity = 1.0
+             
+             if self.focused_ditrune:
+                 # Check descendant
+                 # Re-implement simple check or use service if needed
+                 # keeping local helper for now or moving it
+                 if not self._is_descendant(self.focused_ditrune, ternary):
+                     opacity = 0.10
+             
+             item.setOpacity(opacity)
+             item.setPos(sx - (point_data['size']/2), sy - (point_data['size']/2))
+             item.setZValue(pz) # Z-depth
         
-        # Center of scene
-        center_x = self.width() / 2
-        center_y = self.height() / 2
+        # 2. Update Lines (Separately for now, could also batch project)
+        visible_lines = self._get_visible_lines()
         
-        # Center of scene
-        center_x = self.width() / 2
-        center_y = self.height() / 2
-        
-        # 1. Hide/Show Lines & Points based on Focus
-        visible_lines = []
-        
-        # Helper for Descendant Check
-        def is_descendant(focus: str, candidate: str) -> bool:
-            if focus == '000000': return True
-            
-            # Generalized Prefix Matching
-            # Mask: Remove trailing zeros to get the "Path Header"
-            # distinct from "Value 0". A 5D Node "100000" means Prefix "1".
-            # A 5D Node "120000" (Wait, 12 is 4D).
-            
-            # We want to match hierarchy.
-            # If Focus is '220000', we want all '22xxxx'.
-            # strip('0') removes internal zeros if we are not careful (e.g. 101000).
-            # We only want to strip *Trailing* zeros.
-            
-            prefix = focus.rstrip('0')
-            if not prefix: 
-                # Case 000000 was handled, but what if focus is '000'?
-                # If focus is effectively root, return True
-                return True
-                
-            return candidate.startswith(prefix)
+        if visible_lines:
+             starts = [start for _, start, end in visible_lines]
+             ends = [end for _, start, end in visible_lines]
+             
+             proj_starts = self.math_service.project_points(starts, self.rotation_x, self.rotation_y)
+             proj_ends = self.math_service.project_points(ends, self.rotation_x, self.rotation_y)
+             
+             pen_std = QPen(QColor(255, 255, 255, 20))
+             pen_std.setWidthF(0.5)
+             if self.focused_ditrune:
+                 pen_std = QPen(QColor(255, 255, 255, 150))
+                 pen_std.setWidthF(2.0)
+             
+             for idx, (line_item, _, _) in enumerate(visible_lines):
+                 s = proj_starts[idx]
+                 e = proj_ends[idx]
+                 
+                 line_item.setLine(
+                     s[0]*self.base_scale, -s[1]*self.base_scale,
+                     e[0]*self.base_scale, -e[1]*self.base_scale
+                 )
+                 line_item.setPen(pen_std)
+                 line_item.setVisible(True)
 
-        if self.focused_ditrune:
-             # Focus Mode: Iterate all tree paths and check if they belong to a descendant
-             for ternary, lines in self.tree_paths.items():
-                 if is_descendant(self.focused_ditrune, ternary):
-                     visible_lines.extend(lines)
-        elif self.show_connections:
-            # Show All
-            for sublist in self.tree_paths.values():
-                visible_lines.extend(sublist)
-        
-        # Hide all lines first (optimization needed? lots of items...)
-        # Better: iterate all known lines and hide, then show visible?
-        # Or just: 
-        # For simplicity in this logic:
-        # We need to know which lines are ACTUALLY active.
-        
-        # OPTIMIZATION:
-        # If showing ALL:
-        #    Use a shared set of lines?
-        #    Actually, since multiple cells share lines (e.g. Area -> Region), we have duplicates in self.tree_paths.
-        #    This is fine for "Focus Mode" (we want that specific branch).
-        #    For "All Mode", we are drawing 3x lines per cell.
-        #    Let's just update the visible ones.
-        
-        # Reset all pens to transparent?
-        # That's slow (2100 items).
-        # We rely on previous state? No.
-        
-        # Let's just Loop All lines if we changed mode... but here we just loop visible for POS updates.
-        # Visibility setting should happen on state change.
-        
-        # Current Logic: Just update positions of visible lines.
-        # Ensure we set Pen for visible, clear Pen for others?
-        
-        pen_std = QPen(QColor(255, 255, 255, 20))
-        pen_std.setWidthF(0.5)
-        
-        if self.focused_ditrune:
-             pen_std = QPen(QColor(255, 255, 255, 150)) # Bright for focused
-             pen_std.setWidthF(2.0)
-        
-        # Hacky Cleanup: If we transitioned, we might have old lines visible.
-        # Ideally we track "currently_visible_items" list.
-        
-        pass # To be handled inside data gen or state set.
-             
-        # Just iterate what we intend to draw
-        for line_item, start, end in visible_lines:
-             # Rotate
-             rs = rot_mat @ start
-             re = rot_mat @ end
-             
-             line_item.setLine(
-                 rs[0]*self.base_scale, -rs[1]*self.base_scale,
-                 re[0]*self.base_scale, -re[1]*self.base_scale
-             )
-             line_item.setPen(pen_std)
-             line_item.setVisible(True)
-             
-        # Hide lines that shouldn't be valid?
-        # This update loop is complex without tracking state.
-        # Let's simplify: reset all lines to hidden at start of update?
-        # Or just rely on set_focus / set_show to trigger a full clear.
-        
-        # 2. Update Points
-        for i, point in enumerate(self.points_3d):
-            item = self.graphic_items[i]
-            ternary = point['info'].split('\n')[0].split(': ')[1]
-            
-            # Context Logic:
-            if self.focused_ditrune:
-                # Use shared descendant logic
-                is_target = is_descendant(self.focused_ditrune, ternary)
-                
-                if is_target:
-                    item.setOpacity(1.0)
-                    # item.setZValue(100) # Ensure on top
-                else:
-                    item.setOpacity(0.10) # Ghosted context (fainter)
-            else:
-                item.setOpacity(1.0)
-            
-            item.setVisible(True) # Always visible now
-            
-            vec = point['vec']
-            # Rotate
-            rotated = rot_mat @ vec
-            
-            # Project (Orthographic/Perspective mix)
-            # Simple Orthographic with scale for now, maybe add perspective later
-            # Screen X = Rotated X * scale
-            # Screen Y = Rotated Y * scale (invert Y for screen coords)
-            
-            # Isometric-like projection
-            px = rotated[0] * self.base_scale
-            py = -rotated[1] * self.base_scale # Y is up in 3D, down in 2D screen
-            
-            # Add Z-depth parallax?
-            # For "3D" feel, we map rotated Z to depth, but QGraphicsScene is 2D.
-            # We just project X and Y (after rotation steps which put Z into view).
-            
-            # Actually, standard 3D to 2D project:
-            # x' = x, y' = y.  (Orthographic)
-            # Since we rotated, 'z' is depth. 'y' is vertical. 'x' is horizontal.
-            
-            item = self.graphic_items[i]
-            # Center it
-            item.setPos(px - (point['size']/2), py - (point['size']/2))
-            
-            # Z-sorting? 
-            # QGraphicsItem zValue. Higher Z is on top.
-            # Rotated Z is depth (positive towards viewer?).
-            # In our matrix: Row 2 is Z.
-            z_depth = rotated[2]
-            item.setZValue(z_depth)
-            
-        # Draw Axis
-        # 0,0,0 -> 0,30,0
-        start = np.array([0,0,0])
-        end = np.array([0,30,0])
-        r_start = rot_mat @ start
-        r_end = rot_mat @ end
-        
+        # 3. Update Axis
+        axis_pts = [(0,0,0), (0,30,0)]
+        proj_axis = self.math_service.project_points(axis_pts, self.rotation_x, self.rotation_y)
         self.axis_item.setLine(
-            r_start[0]*self.base_scale, -r_start[1]*self.base_scale,
-            r_end[0]*self.base_scale, -r_end[1]*self.base_scale
+             proj_axis[0][0]*self.base_scale, -proj_axis[0][1]*self.base_scale,
+             proj_axis[1][0]*self.base_scale, -proj_axis[1][1]*self.base_scale
         )
+             
+    def _is_descendant(self, focus: str, candidate: str) -> bool:
+        if focus == '000000': return True
+        prefix = focus.rstrip('0')
+        if not prefix: return True
+        return candidate.startswith(prefix)
+
+    def _get_visible_lines(self):
+        visible = []
+        if self.focused_ditrune:
+             for ternary, lines in self.tree_paths.items():
+                 if self._is_descendant(self.focused_ditrune, ternary):
+                     visible.extend(lines)
+        elif self.show_connections:
+            for sublist in self.tree_paths.values():
+                visible.extend(sublist)
+        return visible
+
+    def _unused_old_update(self):
+        # Placeholder to replace the old giant method body 
+        pass
             
     def mousePressEvent(self, event):
+        """
+        Mousepressevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        """
         if event.button() == Qt.MouseButton.LeftButton:
             self.last_mouse_pos = event.pos()
             self.mouse_press_start_pos = event.pos() # For click detection
         super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event):
+        """
+        Mousemoveevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        """
         if self.last_mouse_pos and event.buttons() & Qt.MouseButton.LeftButton:
             delta = event.pos() - self.last_mouse_pos
             
@@ -382,6 +297,13 @@ class KameaFractalView(QGraphicsView):
 
     def mouseReleaseEvent(self, event):
         # Click Detection
+        """
+        Mousereleaseevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        """
         if event.button() == Qt.MouseButton.LeftButton and self.mouse_press_start_pos:
             diff = (event.pos() - self.mouse_press_start_pos).manhattanLength()
             if diff < 5: # Threshold for click vs drag
@@ -397,6 +319,13 @@ class KameaFractalView(QGraphicsView):
         super().mouseReleaseEvent(event)
 
     def contextMenuEvent(self, event):
+        """
+        Contextmenuevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        """
         item = self.itemAt(event.pos())
         
         menu = QMenu(self)
@@ -419,6 +348,13 @@ class KameaFractalView(QGraphicsView):
             menu.exec(event.globalPos())
             
     def set_focused_ditrune(self, ternary: str):
+        """
+        Configure focused ditrune logic.
+        
+        Args:
+            ternary: Description of ternary.
+        
+        """
         self.focused_ditrune = ternary
         self.focus_changed.emit(ternary)
         
@@ -432,18 +368,20 @@ class KameaFractalView(QGraphicsView):
         
     def wheelEvent(self, event):
         # Zoom
+        """
+        Wheelevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        """
         angle = event.angleDelta().y()
         factor = 1.1 if angle > 0 else 0.9
         self.scale(factor, factor) 
         # Alternatively adjust base_scale
         
     def _to_ternary(self, n: int) -> str:
-        if n == 0: return "000000"
-        nums = []
-        while n:
-            n, r = divmod(n, 3)
-            nums.append(str(r))
-        return ''.join(reversed(nums)).zfill(6)
+        return self.math_service.to_ternary(n)
 
     def _get_spectral_color(self, pyx: int) -> QColor:
         if pyx == 6: return QColor(255, 50, 50)   # Red
@@ -456,5 +394,12 @@ class KameaFractalView(QGraphicsView):
         return QColor(255, 255, 255)
 
     def set_show_connections(self, show: bool):
+        """
+        Configure show connections logic.
+        
+        Args:
+            show: Description of show.
+        
+        """
         self.show_connections = show
         self._update_projection()

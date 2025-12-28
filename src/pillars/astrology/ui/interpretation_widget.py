@@ -11,6 +11,13 @@ class InterpretationWidget(QWidget):
     """Displays a generated chart interpretation report."""
 
     def __init__(self, parent: QWidget | None = None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self._init_ui()
 

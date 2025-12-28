@@ -11,6 +11,10 @@ from .solid_property import SolidProperty
 
 @dataclass(frozen=True)
 class SquarePyramidFrustumMetrics:
+    """
+    Square Pyramid Frustum Metrics class definition.
+    
+    """
     base_edge: float
     top_edge: float
     height: float
@@ -27,6 +31,10 @@ class SquarePyramidFrustumMetrics:
 
 @dataclass(frozen=True)
 class SquarePyramidFrustumSolidResult:
+    """
+    Square Pyramid Frustum Solid Result class definition.
+    
+    """
     payload: SolidPayload
     metrics: SquarePyramidFrustumMetrics
 
@@ -97,6 +105,17 @@ class SquarePyramidFrustumSolidService:
 
     @staticmethod
     def build(base_edge: float = 2.0, top_edge: float = 1.0, height: float = 1.0) -> SquarePyramidFrustumSolidResult:
+        """
+        Build logic.
+        
+        Args:
+            base_edge: Description of base_edge.
+            top_edge: Description of top_edge.
+            height: Description of height.
+        
+        Returns:
+            Result of build operation.
+        """
         if base_edge <= 0 or top_edge <= 0 or height <= 0:
             raise ValueError('Base edge, top edge, and height must be positive')
         metrics = _compute_metrics(base_edge, top_edge, height)
@@ -129,6 +148,17 @@ class SquarePyramidFrustumSolidService:
 
     @staticmethod
     def payload(base_edge: float = 2.0, top_edge: float = 1.0, height: float = 1.0) -> SolidPayload:
+        """
+        Payload logic.
+        
+        Args:
+            base_edge: Description of base_edge.
+            top_edge: Description of top_edge.
+            height: Description of height.
+        
+        Returns:
+            Result of payload operation.
+        """
         return SquarePyramidFrustumSolidService.build(base_edge, top_edge, height).payload
 
 
@@ -151,6 +181,15 @@ class SquarePyramidFrustumSolidCalculator:
     )
 
     def __init__(self, base_edge: float = 2.0, top_edge: float = 1.0, height: float = 1.0):
+        """
+          init   logic.
+        
+        Args:
+            base_edge: Description of base_edge.
+            top_edge: Description of top_edge.
+            height: Description of height.
+        
+        """
         self._properties: Dict[str, SolidProperty] = {
             key: SolidProperty(name=label, key=key, unit=unit, precision=precision, editable=editable)
             for key, label, unit, precision, editable in self._PROPERTY_DEFINITIONS
@@ -162,9 +201,25 @@ class SquarePyramidFrustumSolidCalculator:
         self._apply_dimensions(self._base_edge, self._top_edge, self._height)
 
     def properties(self) -> List[SolidProperty]:
+        """
+        Properties logic.
+        
+        Returns:
+            Result of properties operation.
+        """
         return [self._properties[key] for key, *_ in self._PROPERTY_DEFINITIONS]
 
     def set_property(self, key: str, value: Optional[float]) -> bool:
+        """
+        Configure property logic.
+        
+        Args:
+            key: Description of key.
+            value: Description of value.
+        
+        Returns:
+            Result of set_property operation.
+        """
         if value is None or value <= 0:
             return False
         if key == 'base_edge':
@@ -201,6 +256,10 @@ class SquarePyramidFrustumSolidCalculator:
         return False
 
     def clear(self):
+        """
+        Clear logic.
+        
+        """
         self._base_edge = 2.0
         self._top_edge = 1.0
         self._height = 1.0
@@ -209,14 +268,32 @@ class SquarePyramidFrustumSolidCalculator:
         self._result = None
 
     def payload(self) -> Optional[SolidPayload]:
+        """
+        Payload logic.
+        
+        Returns:
+            Result of payload operation.
+        """
         return self._result.payload if self._result else None
 
     def metadata(self) -> Dict[str, float]:
+        """
+        Metadata logic.
+        
+        Returns:
+            Result of metadata operation.
+        """
         if not self._result:
             return {}
         return dict(self._result.payload.metadata)
 
     def metrics(self) -> Optional[SquarePyramidFrustumMetrics]:
+        """
+        Metrics logic.
+        
+        Returns:
+            Result of metrics operation.
+        """
         return self._result.metrics if self._result else None
 
     def _apply_dimensions(self, base_edge: float, top_edge: float, height: float):

@@ -48,6 +48,14 @@ class DifferentialNatalWindow(QWidget):
     """Window for calculating Differential Natal Charts."""
     
     def __init__(self, parent: Optional[QWidget] = None, window_manager=None, **kwargs):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+            window_manager: Description of window_manager.
+        
+        """
         super().__init__(parent)
         self.setWindowTitle("Differential Natal Chart")
         self.resize(950, 650)
@@ -566,4 +574,3 @@ class DifferentialNatalWindow(QWidget):
                 "allow_multiple": False
             }
         )
-

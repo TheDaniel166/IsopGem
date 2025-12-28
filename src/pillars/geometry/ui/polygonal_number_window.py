@@ -25,6 +25,14 @@ class PolygonalNumberWindow(BaseFigurateWindow):
     """Interactive viewer for figurate numbers built from dots."""
 
     def __init__(self, window_manager: Optional[WindowManager] = None, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            window_manager: Description of window_manager.
+            parent: Description of parent.
+        
+        """
         super().__init__(window_manager, parent)
         self.setWindowTitle("Polygonal Number Visualizer")
 
@@ -252,6 +260,16 @@ class PolygonalNumberWindow(BaseFigurateWindow):
 
 class _FigurateRenderRunnable(QRunnable):
     def __init__(self, sides: int, index: int, spacing: float, mode: str):
+        """
+          init   logic.
+        
+        Args:
+            sides: Description of sides.
+            index: Description of index.
+            spacing: Description of spacing.
+            mode: Description of mode.
+        
+        """
         super().__init__()
         self.sides = sides
         self.index = index
@@ -260,6 +278,10 @@ class _FigurateRenderRunnable(QRunnable):
         self.signals = RenderSignals()
 
     def run(self):
+        """
+        Execute logic.
+        
+        """
         try:
             is_star = self.mode == "star"
             centered = self.mode == "centered"

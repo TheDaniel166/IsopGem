@@ -11,6 +11,13 @@ class TimeMechanicsHub(QWidget):
     Serves as the entry point for all temporal tools.
     """
     def __init__(self, window_manager=None):
+        """
+          init   logic.
+        
+        Args:
+            window_manager: Description of window_manager.
+        
+        """
         super().__init__()
         self.window_manager = window_manager
         self.setWindowTitle("Time Mechanics")
@@ -55,6 +62,10 @@ class TimeMechanicsHub(QWidget):
         self.show()
 
     def launch_tzolkin(self):
+        """
+        Launch tzolkin logic.
+        
+        """
         from .tzolkin_window import TzolkinCalculatorWindow
         # Use window manager if available, otherwise just show (fallback)
         if self.window_manager:
@@ -67,6 +78,10 @@ class TimeMechanicsHub(QWidget):
             self.calc.show()
 
     def launch_dynamis(self):
+        """
+        Launch dynamis logic.
+        
+        """
         from .dynamis_window import TzolkinDynamisWindow
         # Use window manager if available
         if self.window_manager:
@@ -79,6 +94,10 @@ class TimeMechanicsHub(QWidget):
             self.dynamis.show()
 
     def launch_zodiacal_circle(self):
+        """
+        Launch zodiacal circle logic.
+        
+        """
         from .zodiacal_circle_window import ZodiacalCircleWindow
         # Use window manager if available
         if self.window_manager:

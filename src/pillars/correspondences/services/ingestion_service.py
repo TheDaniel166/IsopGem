@@ -45,6 +45,13 @@ class IngestionService:
             # containing mixed non-serializable objects (like Timedelta).
             
             def sanitize_value(val):
+                """
+                Sanitize value logic.
+                
+                Args:
+                    val: Description of val.
+                
+                """
                 if pd.isna(val):
                     return ""
                 if isinstance(val, (int, float, bool, str)):
@@ -73,6 +80,15 @@ class IngestionService:
         """Create a blank grid (larger default for immediate usability)."""
         # Build column headers A, B, ... AA, AB as needed
         def col_label(idx: int) -> str:
+            """
+            Col label logic.
+            
+            Args:
+                idx: Description of idx.
+            
+            Returns:
+                Result of col_label operation.
+            """
             label = ""
             while True:
                 idx, rem = divmod(idx, 26)

@@ -17,6 +17,13 @@ class NuclearMutationPanel(QWidget):
     Visualizes the Nuclear Mutation breakdown: Skin -> Body -> Core.
     """
     def __init__(self, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.setFixedWidth(300)
         self.setStyleSheet("background-color: #0a0a1a; border-left: 1px solid #333;")

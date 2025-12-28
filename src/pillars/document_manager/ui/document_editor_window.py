@@ -21,6 +21,15 @@ class DocumentEditorWindow(QMainWindow):
     """Window for editing documents using the RichTextEditor."""
     
     def __init__(self, parent: Optional[QWidget] = None) -> None:
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        Returns:
+            Result of __init__ operation.
+        """
         super().__init__(parent)
         self.setWindowTitle("Document Editor")
         self.resize(1000, 800)
@@ -209,6 +218,13 @@ class DocumentEditorWindow(QMainWindow):
         
         # Filter logic
         def filter_items(text):
+            """
+            Filter items logic.
+            
+            Args:
+                text: Description of text.
+            
+            """
             for i in range(list_widget.count()):
                 item = list_widget.item(i)
                 item.setHidden(text.lower() not in item.text().lower())
@@ -223,6 +239,13 @@ class DocumentEditorWindow(QMainWindow):
         
         # Handle selection
         def on_item_double_clicked(item):
+            """
+            Handle item double clicked logic.
+            
+            Args:
+                item: Description of item.
+            
+            """
             dialog.accept()
             
         list_widget.itemDoubleClicked.connect(on_item_double_clicked)
@@ -456,6 +479,12 @@ class DocumentEditorWindow(QMainWindow):
         return True
 
     def new_document(self) -> None:
+        """
+        New document logic.
+        
+        Returns:
+            Result of new_document operation.
+        """
         if not self._check_unsaved_changes():
             return
             
@@ -465,6 +494,12 @@ class DocumentEditorWindow(QMainWindow):
         self._update_title()
 
     def open_document(self) -> None:
+        """
+        Open document logic.
+        
+        Returns:
+            Result of open_document operation.
+        """
         if not self._check_unsaved_changes():
             return
             
@@ -495,6 +530,12 @@ class DocumentEditorWindow(QMainWindow):
                 QMessageBox.critical(self, "Error", f"Could not open file: {str(e)}")
 
     def save_document(self) -> bool:
+        """
+        Save document logic.
+        
+        Returns:
+            Result of save_document operation.
+        """
         if self.current_doc_model:
             try:
                 with document_service_context() as service:
@@ -540,6 +581,12 @@ class DocumentEditorWindow(QMainWindow):
             return False
 
     def save_as_document(self) -> bool:
+        """
+        Save as document logic.
+        
+        Returns:
+            Result of save_as_document operation.
+        """
         file_path, filter_used = QFileDialog.getSaveFileName(
             self,
             "Save Document As",
@@ -587,6 +634,15 @@ class DocumentEditorWindow(QMainWindow):
                 QMessageBox.critical(self, "Export Error", f"Failed to export PDF: {str(e)}")
 
     def closeEvent(self, event: QCloseEvent) -> None:
+        """
+        Closeevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        Returns:
+            Result of closeEvent operation.
+        """
         if not self._check_unsaved_changes():
             event.ignore()
         else:

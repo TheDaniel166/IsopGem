@@ -42,3 +42,6 @@ beautifulsoup4>=4.12.0
 
 # Spell checking
 pyenchant>=3.2.0
+
+# UI Utilities
+qtawesome>=1.3.0

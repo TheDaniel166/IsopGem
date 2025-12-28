@@ -17,14 +17,32 @@ class VaultOfHestiaShape(GeometricShape):
 
     @property
     def name(self) -> str:
+        """
+        Name logic.
+        
+        Returns:
+            Result of name operation.
+        """
         return "Vault of Hestia"
 
     @property
     def description(self) -> str:
+        """
+        Description logic.
+        
+        Returns:
+            Result of description operation.
+        """
         return "Square holding an Isosceles Triangle and its Incircle, generating the Golden Ratio."
 
     @property
     def calculation_hint(self) -> str:
+        """
+        Calculation hint logic.
+        
+        Returns:
+            Result of calculation_hint operation.
+        """
         return "Enter the Side Length (s) of the square."
 
     def _init_properties(self):
@@ -142,6 +160,16 @@ class VaultOfHestiaShape(GeometricShape):
         }
 
     def calculate_from_property(self, property_key: str, value: float) -> bool:
+        """
+        Compute from property logic.
+        
+        Args:
+            property_key: Description of property_key.
+            value: Description of value.
+        
+        Returns:
+            Result of calculate_from_property operation.
+        """
         if value <= 0:
             return False
 
@@ -306,6 +334,12 @@ class VaultOfHestiaShape(GeometricShape):
         self.properties["area_tri_minus_circ"].value = area_tri_minus_circ
 
     def get_drawing_instructions(self) -> Dict:
+        """
+        Retrieve drawing instructions logic.
+        
+        Returns:
+            Result of get_drawing_instructions operation.
+        """
         s = self.properties["side_length"].value
         if not s:
             return {"type": "empty"}
@@ -363,6 +397,12 @@ class VaultOfHestiaShape(GeometricShape):
         }
         
     def get_label_positions(self) -> List[Tuple[str, float, float]]:
+        """
+        Retrieve label positions logic.
+        
+        Returns:
+            Result of get_label_positions operation.
+        """
         labels: List[Tuple[str, float, float]] = []
         s = self.properties["side_length"].value
         if not s:

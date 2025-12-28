@@ -36,13 +36,34 @@ class Bounds:
 
     @property
     def width(self) -> float:
+        """
+        Width logic.
+        
+        Returns:
+            Result of width operation.
+        """
         return max(self.max_x - self.min_x, 1e-6)
 
     @property
     def height(self) -> float:
+        """
+        Height logic.
+        
+        Returns:
+            Result of height operation.
+        """
         return max(self.max_y - self.min_y, 1e-6)
 
     def padded(self, padding: float) -> "Bounds":
+        """
+        Padded logic.
+        
+        Args:
+            padding: Description of padding.
+        
+        Returns:
+            Result of padded operation.
+        """
         return Bounds(
             min_x=self.min_x - padding,
             max_x=self.max_x + padding,
@@ -53,6 +74,10 @@ class Bounds:
 
 @dataclass
 class CirclePrimitive:
+    """
+    Circle Primitive class definition.
+    
+    """
     center: Tuple[float, float]
     radius: float
     pen: PenStyle = field(default_factory=PenStyle)
@@ -62,6 +87,10 @@ class CirclePrimitive:
 
 @dataclass
 class PolygonPrimitive:
+    """
+    Polygon Primitive class definition.
+    
+    """
     points: Sequence[Tuple[float, float]]
     pen: PenStyle = field(default_factory=PenStyle)
     brush: BrushStyle = field(default_factory=BrushStyle)
@@ -70,6 +99,10 @@ class PolygonPrimitive:
 
 @dataclass
 class LinePrimitive:
+    """
+    Line Primitive class definition.
+    
+    """
     start: Tuple[float, float]
     end: Tuple[float, float]
     pen: PenStyle = field(default_factory=PenStyle)
@@ -77,6 +110,10 @@ class LinePrimitive:
 
 @dataclass
 class LabelPrimitive:
+    """
+    Label Primitive class definition.
+    
+    """
     text: str
     position: Tuple[float, float]
     align_center: bool = True

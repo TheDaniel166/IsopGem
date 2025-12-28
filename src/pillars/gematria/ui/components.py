@@ -13,6 +13,15 @@ class SpiritTile(QFrame):
     """A tile representing a single character and its numeric value."""
     
     def __init__(self, char: str, value: int, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            char: Description of char.
+            value: Description of value.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.char = char
         self.value = value
@@ -70,6 +79,15 @@ class TotalValueCard(QFrame):
     """A prominent card displaying the total numeric value."""
     
     def __init__(self, value: int, system_name: str = "", parent=None):
+        """
+          init   logic.
+        
+        Args:
+            value: Description of value.
+            system_name: Description of system_name.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.value = value
         self.system_name = system_name
@@ -138,6 +156,13 @@ class ResultsDashboard(QWidget):
     totalContextMenuRequested = pyqtSignal(int, QPoint)
 
     def __init__(self, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self._setup_ui()
         
@@ -154,7 +179,7 @@ class ResultsDashboard(QWidget):
         self.layout.addWidget(self.placeholder)
         
     def clear(self):
-        """Clear the dashboard and show the placeholder."""
+        """Clear the dashboard and reset to initial state."""
         while self.layout.count():
             item = self.layout.takeAt(0)
             if item.widget():

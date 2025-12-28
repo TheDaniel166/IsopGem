@@ -22,6 +22,13 @@ class GeometryViewModel(QObject):
     history_updated = pyqtSignal()                # Emitted when a save occurs
     
     def __init__(self, shape: GeometricShape):
+        """
+          init   logic.
+        
+        Args:
+            shape: Description of shape.
+        
+        """
         super().__init__()
         self._shape = shape
         self._updating = False
@@ -44,13 +51,31 @@ class GeometryViewModel(QObject):
 
     @property
     def shape_name(self) -> str:
+        """
+        Shape name logic.
+        
+        Returns:
+            Result of shape_name operation.
+        """
         return self._shape.name
 
     @property
     def shape_description(self) -> str:
+        """
+        Shape description logic.
+        
+        Returns:
+            Result of shape_description operation.
+        """
         return self._shape.description
     
     def get_properties(self) -> list[ShapeProperty]:
+        """
+        Retrieve properties logic.
+        
+        Returns:
+            Result of get_properties operation.
+        """
         return self._shape.get_all_properties()
     
     def get_shape(self) -> GeometricShape:

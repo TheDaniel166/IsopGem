@@ -10,14 +10,32 @@ class SeedOfLifeShape(GeometricShape):
 
     @property
     def name(self) -> str:
+        """
+        Name logic.
+        
+        Returns:
+            Result of name operation.
+        """
         return "Seed of Life"
 
     @property
     def description(self) -> str:
+        """
+        Description logic.
+        
+        Returns:
+            Result of description operation.
+        """
         return "Seven circles arranged with six-fold symmetry, forming a pattern of creation."
 
     @property
     def calculation_hint(self) -> str:
+        """
+        Calculation hint logic.
+        
+        Returns:
+            Result of calculation_hint operation.
+        """
         return "Calculate from Radius, Area, or Width"
 
     def _init_properties(self):
@@ -97,6 +115,16 @@ class SeedOfLifeShape(GeometricShape):
         }
 
     def calculate_from_property(self, property_key: str, value: float) -> bool:
+        """
+        Compute from property logic.
+        
+        Args:
+            property_key: Description of property_key.
+            value: Description of value.
+        
+        Returns:
+            Result of calculate_from_property operation.
+        """
         if value <= 0:
             return False
 
@@ -167,6 +195,12 @@ class SeedOfLifeShape(GeometricShape):
         self.properties["total_area"].value = None
 
     def get_drawing_instructions(self) -> Dict:
+        """
+        Retrieve drawing instructions logic.
+        
+        Returns:
+            Result of get_drawing_instructions operation.
+        """
         r = self.properties["radius"].value
         if r is None:
             return {"type": "empty"}
@@ -211,6 +245,12 @@ class SeedOfLifeShape(GeometricShape):
         }
 
     def get_label_positions(self) -> List[Tuple[str, float, float]]:
+        """
+        Retrieve label positions logic.
+        
+        Returns:
+            Result of get_label_positions operation.
+        """
         labels = []
         r = self.properties["radius"].value
         if r is None:

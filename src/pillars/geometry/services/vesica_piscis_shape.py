@@ -10,14 +10,32 @@ class VesicaPiscisShape(GeometricShape):
 
     @property
     def name(self) -> str:
+        """
+        Name logic.
+        
+        Returns:
+            Result of name operation.
+        """
         return "Vesica Piscis"
 
     @property
     def description(self) -> str:
+        """
+        Description logic.
+        
+        Returns:
+            Result of description operation.
+        """
         return "Lens shape formed by the intersection of two congruent disks"
 
     @property
     def calculation_hint(self) -> str:
+        """
+        Calculation hint logic.
+        
+        Returns:
+            Result of calculation_hint operation.
+        """
         return "Calculate from any field (1-DoF)"
 
     def _init_properties(self):
@@ -65,6 +83,16 @@ class VesicaPiscisShape(GeometricShape):
         }
 
     def calculate_from_property(self, property_key: str, value: float) -> bool:
+        """
+        Compute from property logic.
+        
+        Args:
+            property_key: Description of property_key.
+            value: Description of value.
+        
+        Returns:
+            Result of calculate_from_property operation.
+        """
         if value <= 0:
             return False
 
@@ -129,6 +157,12 @@ class VesicaPiscisShape(GeometricShape):
         return area
 
     def get_drawing_instructions(self) -> Dict:
+        """
+        Retrieve drawing instructions logic.
+        
+        Returns:
+            Result of get_drawing_instructions operation.
+        """
         radius = self.properties["radius"].value
         separation = self.properties["separation"].value
         if radius is None:
@@ -200,6 +234,12 @@ class VesicaPiscisShape(GeometricShape):
         return points
 
     def get_label_positions(self) -> List[Tuple[str, float, float]]:
+        """
+        Retrieve label positions logic.
+        
+        Returns:
+            Result of get_label_positions operation.
+        """
         labels: List[Tuple[str, float, float]] = []
         radius = self.properties["radius"].value
         separation = self.properties["separation"].value

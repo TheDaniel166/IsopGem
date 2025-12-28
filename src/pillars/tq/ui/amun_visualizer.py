@@ -14,6 +14,13 @@ class AmunVisualizer(QWidget):
     """
     
     def __init__(self, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.setMinimumHeight(300)
         self.setStyleSheet("background-color: #000000; border-radius: 8px;")
@@ -67,10 +74,18 @@ class AmunVisualizer(QWidget):
         self.attack = params.get('attack', 0.5)
         
     def stop(self):
+        """
+        Stop logic.
+        
+        """
         self.active = False
         self.update()
 
     def update_animation(self):
+        """
+        Update animation logic.
+        
+        """
         if not self.active:
             # Slow idle breath
             self.pulse_phase += 0.05
@@ -91,6 +106,13 @@ class AmunVisualizer(QWidget):
         self.update()
 
     def paintEvent(self, event):
+        """
+        Paintevent logic.
+        
+        Args:
+            event: Description of event.
+        
+        """
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         

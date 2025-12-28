@@ -62,6 +62,14 @@ class ELSSearchWindow(QMainWindow):
     """
     
     def __init__(self, window_manager=None, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            window_manager: Description of window_manager.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.window_manager = window_manager
         self._service = ELSSearchService()
@@ -956,4 +964,3 @@ class ELSSearchWindow(QMainWindow):
         lines.append(f"Term + Skip: {term_value + skip_total}")
         
         self._breakdown_text.setText("\n".join(lines))
-

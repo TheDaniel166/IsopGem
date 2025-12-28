@@ -10,14 +10,32 @@ class RoseCurveShape(GeometricShape):
 
     @property
     def name(self) -> str:
+        """
+        Name logic.
+        
+        Returns:
+            Result of name operation.
+        """
         return "Rose Curve"
 
     @property
     def description(self) -> str:
+        """
+        Description logic.
+        
+        Returns:
+            Result of description operation.
+        """
         return "Sinusoid characterized by polar equation r = cos(kθ)"
 
     @property
     def calculation_hint(self) -> str:
+        """
+        Calculation hint logic.
+        
+        Returns:
+            Result of calculation_hint operation.
+        """
         return "Enter Numerator (n) and Denominator (d) and harmonic k"
 
     def _init_properties(self):
@@ -54,6 +72,16 @@ class RoseCurveShape(GeometricShape):
         }
 
     def calculate_from_property(self, property_key: str, value: float) -> bool:
+        """
+        Compute from property logic.
+        
+        Args:
+            property_key: Description of property_key.
+            value: Description of value.
+        
+        Returns:
+            Result of calculate_from_property operation.
+        """
         if value <= 0:
             return False
 
@@ -85,6 +113,12 @@ class RoseCurveShape(GeometricShape):
         self.properties["total_area"].value = 0.5 * amplitude * amplitude * petals
 
     def get_drawing_instructions(self) -> Dict:
+        """
+        Retrieve drawing instructions logic.
+        
+        Returns:
+            Result of get_drawing_instructions operation.
+        """
         amplitude = self.properties["amplitude"].value
         k_value = self.properties["k_value"].value
         if not amplitude or not k_value:
@@ -116,6 +150,12 @@ class RoseCurveShape(GeometricShape):
         return points
 
     def get_label_positions(self) -> List[Tuple[str, float, float]]:
+        """
+        Retrieve label positions logic.
+        
+        Returns:
+            Result of get_label_positions operation.
+        """
         labels: List[Tuple[str, float, float]] = []
         amplitude = self.properties["amplitude"].value
         k_value = self.properties["k_value"].value

@@ -12,6 +12,10 @@ from .solid_property import SolidProperty
 
 @dataclass(frozen=True)
 class VaultOfHestiaMetrics:
+    """
+    Vault Of Hestia Metrics class definition.
+    
+    """
     side_length: float  # s
     sphere_radius: float  # r
     hestia_ratio_3d: float  # Sphere Vol / Cube Vol
@@ -35,6 +39,10 @@ class VaultOfHestiaMetrics:
 
 @dataclass(frozen=True)
 class VaultOfHestiaResult:
+    """
+    Vault Of Hestia Result class definition.
+    
+    """
     payload: SolidPayload
     metrics: VaultOfHestiaMetrics
 
@@ -49,6 +57,15 @@ class VaultOfHestiaSolidService:
 
     @staticmethod
     def build(side_length: float = 10.0) -> VaultOfHestiaResult:
+        """
+        Build logic.
+        
+        Args:
+            side_length: Description of side_length.
+        
+        Returns:
+            Result of build operation.
+        """
         if side_length <= 0:
             raise ValueError("Side length must be positive")
 
@@ -286,6 +303,13 @@ class VaultOfHestiaSolidCalculator:
     """Bidirectional calculator for the 3D Vault of Hestia."""
 
     def __init__(self, side_length: float = 10.0):
+        """
+          init   logic.
+        
+        Args:
+            side_length: Description of side_length.
+        
+        """
         self._properties = {
             'side_length': SolidProperty('Side Length (s)', 'side_length', 'units', 10.0),
             'sphere_radius': SolidProperty('Sphere Radius (r)', 'sphere_radius', 'units', 10.0),
@@ -309,9 +333,25 @@ class VaultOfHestiaSolidCalculator:
         self._recalculate()
 
     def properties(self) -> List[SolidProperty]:
+        """
+        Properties logic.
+        
+        Returns:
+            Result of properties operation.
+        """
         return list(self._properties.values())
 
     def set_property(self, key: str, value: Optional[float]) -> bool:
+        """
+        Configure property logic.
+        
+        Args:
+            key: Description of key.
+            value: Description of value.
+        
+        Returns:
+            Result of set_property operation.
+        """
         if value is not None and value <= 0:
             return False
             
@@ -390,14 +430,30 @@ class VaultOfHestiaSolidCalculator:
         self._result = VaultOfHestiaSolidService.build(s)
 
     def clear(self):
+        """
+        Clear logic.
+        
+        """
         for p in self._properties.values():
             p.value = None
         self._result = None
 
     def payload(self) -> Optional[SolidPayload]:
+        """
+        Payload logic.
+        
+        Returns:
+            Result of payload operation.
+        """
         return self._result.payload if self._result else None
 
     def metadata(self) -> Dict[str, float]:
+        """
+        Metadata logic.
+        
+        Returns:
+            Result of metadata operation.
+        """
         if not self._result:
             return {}
         return dict(self._result.payload.metadata)

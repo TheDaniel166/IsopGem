@@ -30,6 +30,10 @@ class TzolkinService:
     ]
 
     def __init__(self):
+        """
+          init   logic.
+        
+        """
         self._decimal_grid: List[List[int]] = []
         self._ternary_grid: List[List[str]] = []
         self._load_grid_data()
@@ -143,6 +147,12 @@ class TzolkinService:
 
 
     def get_epoch(self) -> date:
+        """
+        Retrieve epoch logic.
+        
+        Returns:
+            Result of get_epoch operation.
+        """
         return self.EPOCH
 
     def get_conrune(self, ditrune: str) -> str:

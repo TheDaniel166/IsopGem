@@ -234,6 +234,10 @@ class WindowManager:
         Bring all active windows to the front.
         """
         def do_raise():
+            """
+            Do raise logic.
+            
+            """
             windows = list(self._active_windows.values())
             visible = [w for w in windows if w.isVisible()]
             

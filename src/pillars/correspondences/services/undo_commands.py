@@ -10,6 +10,16 @@ class SetCellDataCommand(QUndoCommand):
     Command to change a single cell's value.
     """
     def __init__(self, model, index, new_value, role=Qt.ItemDataRole.EditRole):
+        """
+          init   logic.
+        
+        Args:
+            model: Description of model.
+            index: Description of index.
+            new_value: Description of new_value.
+            role: Description of role.
+        
+        """
         super().__init__()
         self.model = model
         self.row = index.row()
@@ -62,6 +72,10 @@ class SetCellDataCommand(QUndoCommand):
         self.setText(f"Edit Cell {self.row+1},{self.col+1}")
 
     def redo(self):
+        """
+        Redo logic.
+        
+        """
         idx = self.model.index(self.row, self.col)
         
         if self.role in (Qt.ItemDataRole.BackgroundRole, Qt.ItemDataRole.ForegroundRole, Qt.ItemDataRole.TextAlignmentRole, Qt.ItemDataRole.FontRole):
@@ -102,6 +116,10 @@ class SetCellDataCommand(QUndoCommand):
         self.model.dataChanged.emit(idx, idx, [self.role])
 
     def undo(self):
+        """
+        Undo logic.
+        
+        """
         idx = self.model.index(self.row, self.col)
         
         if self.role in (Qt.ItemDataRole.BackgroundRole, Qt.ItemDataRole.ForegroundRole, Qt.ItemDataRole.TextAlignmentRole, Qt.ItemDataRole.FontRole):
@@ -133,7 +151,25 @@ class SetCellDataCommand(QUndoCommand):
 
 
 class InsertRowsCommand(QUndoCommand):
+    """
+    Insert Rows Command class definition.
+    
+    Attributes:
+        model: Description of model.
+        position: Description of position.
+        rows: Description of rows.
+    
+    """
     def __init__(self, model, position, rows):
+        """
+          init   logic.
+        
+        Args:
+            model: Description of model.
+            position: Description of position.
+            rows: Description of rows.
+        
+        """
         super().__init__()
         self.model = model
         self.position = position
@@ -141,6 +177,10 @@ class InsertRowsCommand(QUndoCommand):
         self.setText(f"Insert {rows} Rows")
 
     def redo(self):
+        """
+        Redo logic.
+        
+        """
         self.model.beginInsertRows(QModelIndex(), self.position, self.position + self.rows - 1)
         col_count = len(self.model._columns)
         for _ in range(self.rows):
@@ -150,6 +190,10 @@ class InsertRowsCommand(QUndoCommand):
             self.model.clear_eval_cache()
 
     def undo(self):
+        """
+        Undo logic.
+        
+        """
         self.model.beginRemoveRows(QModelIndex(), self.position, self.position + self.rows - 1)
         for _ in range(self.rows):
             del self.model._data[self.position]
@@ -159,7 +203,26 @@ class InsertRowsCommand(QUndoCommand):
 
 
 class RemoveRowsCommand(QUndoCommand):
+    """
+    Remove Rows Command class definition.
+    
+    Attributes:
+        model: Description of model.
+        position: Description of position.
+        rows: Description of rows.
+        deleted_data: Description of deleted_data.
+    
+    """
     def __init__(self, model, position, rows):
+        """
+          init   logic.
+        
+        Args:
+            model: Description of model.
+            position: Description of position.
+            rows: Description of rows.
+        
+        """
         super().__init__()
         self.model = model
         self.position = position
@@ -172,6 +235,10 @@ class RemoveRowsCommand(QUndoCommand):
             self.deleted_data.append(list(model._data[position + i]))
 
     def redo(self):
+        """
+        Redo logic.
+        
+        """
         self.model.beginRemoveRows(QModelIndex(), self.position, self.position + self.rows - 1)
         for _ in range(self.rows):
             del self.model._data[self.position]
@@ -180,6 +247,10 @@ class RemoveRowsCommand(QUndoCommand):
             self.model.clear_eval_cache()
 
     def undo(self):
+        """
+        Undo logic.
+        
+        """
         self.model.beginInsertRows(QModelIndex(), self.position, self.position + self.rows - 1)
         for i, row_data in enumerate(self.deleted_data):
             self.model._data.insert(self.position + i, row_data)
@@ -189,7 +260,25 @@ class RemoveRowsCommand(QUndoCommand):
 
 
 class InsertColumnsCommand(QUndoCommand):
+    """
+    Insert Columns Command class definition.
+    
+    Attributes:
+        model: Description of model.
+        position: Description of position.
+        columns: Description of columns.
+    
+    """
     def __init__(self, model, position, columns):
+        """
+          init   logic.
+        
+        Args:
+            model: Description of model.
+            position: Description of position.
+            columns: Description of columns.
+        
+        """
         super().__init__()
         self.model = model
         self.position = position
@@ -197,6 +286,10 @@ class InsertColumnsCommand(QUndoCommand):
         self.setText(f"Insert {columns} Columns")
 
     def redo(self):
+        """
+        Redo logic.
+        
+        """
         self.model.beginInsertColumns(QModelIndex(), self.position, self.position + self.columns - 1)
         # Add new column headers
         for i in range(self.columns):
@@ -211,6 +304,10 @@ class InsertColumnsCommand(QUndoCommand):
             self.model.clear_eval_cache()
 
     def undo(self):
+        """
+        Undo logic.
+        
+        """
         self.model.beginRemoveColumns(QModelIndex(), self.position, self.position + self.columns - 1)
         # Remove headers
         for _ in range(self.columns):
@@ -226,7 +323,27 @@ class InsertColumnsCommand(QUndoCommand):
 
 
 class RemoveColumnsCommand(QUndoCommand):
+    """
+    Remove Columns Command class definition.
+    
+    Attributes:
+        model: Description of model.
+        position: Description of position.
+        columns: Description of columns.
+        deleted_headers: Description of deleted_headers.
+        deleted_data: Description of deleted_data.
+    
+    """
     def __init__(self, model, position, columns):
+        """
+          init   logic.
+        
+        Args:
+            model: Description of model.
+            position: Description of position.
+            columns: Description of columns.
+        
+        """
         super().__init__()
         self.model = model
         self.position = position
@@ -246,6 +363,10 @@ class RemoveColumnsCommand(QUndoCommand):
             self.deleted_data.append(cols_data)
 
     def redo(self):
+        """
+        Redo logic.
+        
+        """
         self.model.beginRemoveColumns(QModelIndex(), self.position, self.position + self.columns - 1)
         # Remove headers
         for _ in range(self.columns):
@@ -259,6 +380,10 @@ class RemoveColumnsCommand(QUndoCommand):
             self.model.clear_eval_cache()
 
     def undo(self):
+        """
+        Undo logic.
+        
+        """
         self.model.beginInsertColumns(QModelIndex(), self.position, self.position + self.columns - 1)
         # Restore headers
         for i, header in enumerate(self.deleted_headers):
@@ -279,6 +404,16 @@ class SortRangeCommand(QUndoCommand):
     Holds the old and new state of the data block (including styles).
     """
     def __init__(self, model, range_rect, old_block, new_block):
+        """
+          init   logic.
+        
+        Args:
+            model: Description of model.
+            range_rect: Description of range_rect.
+            old_block: Description of old_block.
+            new_block: Description of new_block.
+        
+        """
         super().__init__()
         self.model = model
         self.top, self.left, self.bottom, self.right = range_rect
@@ -310,7 +445,15 @@ class SortRangeCommand(QUndoCommand):
             self.model.clear_eval_cache()
 
     def redo(self):
+        """
+        Redo logic.
+        
+        """
         self._apply_block(self.new_block)
 
     def undo(self):
+        """
+        Undo logic.
+        
+        """
         self._apply_block(self.old_block)

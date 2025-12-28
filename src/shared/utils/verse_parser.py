@@ -59,6 +59,15 @@ def parse_verses(text: str, allow_inline: bool = True) -> List[Dict[str, Any]]:
     # - If the first non-space char after the marker is uppercase (likely start of sentence), accept
     # - Or, if the candidate participates in a sequence with adjacent numbers (e.g., 1,2,3), accept
     def next_non_space_char(s_idx: int) -> Optional[str]:
+        """
+        Next non space char logic.
+        
+        Args:
+            s_idx: Description of s_idx.
+        
+        Returns:
+            Result of next_non_space_char operation.
+        """
         idx = s_idx
         while idx < len(text) and text[idx].isspace():
             idx += 1

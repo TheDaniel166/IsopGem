@@ -17,6 +17,13 @@ class SQLiteCalculationRepository:
     """Repository implementation that stores data in SQLite via SQLAlchemy."""
 
     def __init__(self, session_factory: Callable[[], Session] = SessionLocal):
+        """
+          init   logic.
+        
+        Args:
+            session_factory: Description of session_factory.
+        
+        """
         self._session_factory = session_factory
 
     @contextmanager
@@ -157,15 +164,53 @@ class SQLiteCalculationRepository:
             return records
 
     def get_all(self, limit: int = 1000) -> List[CalculationRecord]:
+        """
+        Retrieve all logic.
+        
+        Args:
+            limit: Description of limit.
+        
+        Returns:
+            Result of get_all operation.
+        """
         return self.search(limit=limit, page=1, summary_only=False)
 
     def get_by_value(self, value: int, limit: int = 100) -> List[CalculationRecord]:
+        """
+        Retrieve by value logic.
+        
+        Args:
+            value: Description of value.
+            limit: Description of limit.
+        
+        Returns:
+            Result of get_by_value operation.
+        """
         return self.search(value=value, limit=limit, summary_only=False)
 
     def get_favorites(self, limit: int = 100) -> List[CalculationRecord]:
+        """
+        Retrieve favorites logic.
+        
+        Args:
+            limit: Description of limit.
+        
+        Returns:
+            Result of get_favorites operation.
+        """
         return self.search(favorites_only=True, limit=limit, summary_only=False)
 
     def get_by_tags(self, tags: List[str], limit: int = 100) -> List[CalculationRecord]:
+        """
+        Retrieve by tags logic.
+        
+        Args:
+            tags: Description of tags.
+            limit: Description of limit.
+        
+        Returns:
+            Result of get_by_tags operation.
+        """
         return self.search(tags=tags, limit=limit, summary_only=False)
 
     def get_by_text(self, text: str, limit: int = 100) -> List[CalculationRecord]:

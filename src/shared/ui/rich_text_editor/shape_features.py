@@ -23,6 +23,15 @@ class ShapeButton(QPushButton):
     """A button showing a shape preview."""
     
     def __init__(self, shape_name: str, shape_class: type, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            shape_name: Description of shape_name.
+            shape_class: Description of shape_class.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.shape_name = shape_name
         self.shape_class = shape_class
@@ -75,6 +84,13 @@ class PolygonConfigDialog(QDialog):
     """Dialog for configuring a polygon shape (n-gon or n-gram)."""
     
     def __init__(self, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.setWindowTitle("Create Polygon")
         self.setModal(True)
@@ -240,6 +256,13 @@ class ShapePickerDialog(QDialog):
     ]
     
     def __init__(self, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.setWindowTitle("Insert Shape")
         self.setModal(True)
@@ -279,6 +302,14 @@ class ShapePropertiesDialog(QDialog):
     """Dialog for editing shape properties."""
     
     def __init__(self, shape: BaseShapeItem, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            shape: Description of shape.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.shape = shape
         self.setWindowTitle("Shape Properties")
@@ -367,6 +398,13 @@ class ShapeFeature(QObject):
     """Manages shape operations for the RichTextEditor."""
     
     def __init__(self, editor: "RichTextEditor"):
+        """
+          init   logic.
+        
+        Args:
+            editor: Description of editor.
+        
+        """
         super().__init__(editor)  # QObject parent
         self.editor = editor
         self.overlay: Optional[ShapeOverlay] = None
@@ -449,6 +487,13 @@ class ShapeFeature(QObject):
             # Override the insert to use our config
             original_press = self.overlay.mousePressEvent
             def custom_press(event):
+                """
+                Custom press logic.
+                
+                Args:
+                    event: Description of event.
+                
+                """
                 if self.overlay._insert_mode and self.overlay._insert_shape_type == PolygonShapeItem:
                     scene_pos = self.overlay.mapToScene(event.position().toPoint())
                     shape = PolygonShapeItem(scene_pos.x(), scene_pos.y(), 100, 100, sides, skip)

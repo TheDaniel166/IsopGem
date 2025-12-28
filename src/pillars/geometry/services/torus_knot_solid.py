@@ -21,6 +21,10 @@ from .solid_property import SolidProperty
 
 @dataclass(frozen=True)
 class TorusKnotMetrics:
+    """
+    Torus Knot Metrics class definition.
+    
+    """
     p: int
     q: int
     major_radius: float
@@ -33,12 +37,20 @@ class TorusKnotMetrics:
 
 @dataclass(frozen=True)
 class TorusKnotSolidResult:
+    """
+    Torus Knot Solid Result class definition.
+    
+    """
     payload: SolidPayload
     metrics: TorusKnotMetrics
 
 
 @dataclass
 class TorusKnotMeshConfig:
+    """
+    Torus Knot Mesh Config class definition.
+    
+    """
     tubular_segments: int = 120  # Reduced for filled rendering performance
     radial_segments: int = 10    # Reduced for filled rendering performance
 
@@ -55,6 +67,20 @@ class TorusKnotSolidService:
         tube_radius: float = 0.4,
         config: TorusKnotMeshConfig = None
     ) -> TorusKnotSolidResult:
+        """
+        Build logic.
+        
+        Args:
+            p: Description of p.
+            q: Description of q.
+            major_radius: Description of major_radius.
+            minor_radius: Description of minor_radius.
+            tube_radius: Description of tube_radius.
+            config: Description of config.
+        
+        Returns:
+            Result of build operation.
+        """
         if major_radius <= 0 or minor_radius <= 0 or tube_radius <= 0:
             raise ValueError("Radii must be positive")
         if config is None:
@@ -309,6 +335,17 @@ class TorusKnotSolidCalculator:
         minor_radius: float = 1.0,
         tube_radius: float = 0.4,
     ):
+        """
+          init   logic.
+        
+        Args:
+            p: Description of p.
+            q: Description of q.
+            major_radius: Description of major_radius.
+            minor_radius: Description of minor_radius.
+            tube_radius: Description of tube_radius.
+        
+        """
         self._properties = {
             'p': SolidProperty('P (Lobes)', 'p', 'int', 1.0),
             'q': SolidProperty('Q (Twists)', 'q', 'int', 1.0),
@@ -331,9 +368,25 @@ class TorusKnotSolidCalculator:
         self._recalculate()
 
     def properties(self) -> List[SolidProperty]:
+        """
+        Properties logic.
+        
+        Returns:
+            Result of properties operation.
+        """
         return list(self._properties.values())
 
     def set_property(self, key: str, value: Optional[float]) -> bool:
+        """
+        Configure property logic.
+        
+        Args:
+            key: Description of key.
+            value: Description of value.
+        
+        Returns:
+            Result of set_property operation.
+        """
         if value is not None and value <= 0 and key not in ('p', 'q'):
             return False
             
@@ -372,12 +425,28 @@ class TorusKnotSolidCalculator:
         # Reset to defaults
         # self.__init__() # Actually cleaner to just clear values?
         # But UI expects None?
+        """
+        Clear logic.
+        
+        """
         pass
 
     def payload(self) -> Optional[SolidPayload]:
+        """
+        Payload logic.
+        
+        Returns:
+            Result of payload operation.
+        """
         return self._result.payload if self._result else None
 
     def metadata(self) -> Dict[str, float]:
+        """
+        Metadata logic.
+        
+        Returns:
+            Result of metadata operation.
+        """
         if not self._result:
             return {}
         return dict(self._result.payload.metadata)

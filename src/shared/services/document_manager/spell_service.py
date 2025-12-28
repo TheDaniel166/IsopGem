@@ -32,6 +32,13 @@ class SpellService:
     """
     
     def __init__(self, language: str = "en_US"):
+        """
+          init   logic.
+        
+        Args:
+            language: Description of language.
+        
+        """
         self._language = language
         self._dict: Optional[enchant.Dict] = None
         self._custom_words: Set[str] = set()

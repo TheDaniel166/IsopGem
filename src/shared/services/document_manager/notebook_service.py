@@ -15,6 +15,10 @@ from dataclasses import dataclass
 
 @dataclass
 class SearchResult:
+    """
+    Search Result class definition.
+    
+    """
     page_id: int
     title: str
     snippet: str
@@ -24,7 +28,23 @@ class SearchResult:
 logger = logging.getLogger(__name__)
 
 class NotebookService:
+    """
+    Notebook Service class definition.
+    
+    Attributes:
+        db: Description of db.
+    
+    """
     def __init__(self, db: Session) -> None:
+        """
+          init   logic.
+        
+        Args:
+            db: Description of db.
+        
+        Returns:
+            Result of __init__ operation.
+        """
         self.db = db
         
     def get_notebooks_with_structure(self) -> List[Notebook]:
@@ -37,9 +57,28 @@ class NotebookService:
         )
 
     def get_notebook(self, notebook_id: int) -> Optional[Notebook]:
+        """
+        Retrieve notebook logic.
+        
+        Args:
+            notebook_id: Description of notebook_id.
+        
+        Returns:
+            Result of get_notebook operation.
+        """
         return self.db.get(Notebook, notebook_id)
         
     def create_notebook(self, title: str, description: str = None) -> Notebook:
+        """
+        Create notebook logic.
+        
+        Args:
+            title: Description of title.
+            description: Description of description.
+        
+        Returns:
+            Result of create_notebook operation.
+        """
         nb = Notebook(title=title, description=description)
         self.db.add(nb)
         self.db.commit()
@@ -48,12 +87,32 @@ class NotebookService:
         return nb
         
     def delete_notebook(self, notebook_id: int) -> None:
+        """
+        Remove notebook logic.
+        
+        Args:
+            notebook_id: Description of notebook_id.
+        
+        Returns:
+            Result of delete_notebook operation.
+        """
         nb = self.get_notebook(notebook_id)
         if nb:
             self.db.delete(nb)
             self.db.commit()
             
     def create_section(self, notebook_id: int, title: str, color: str = None) -> Section:
+        """
+        Create section logic.
+        
+        Args:
+            notebook_id: Description of notebook_id.
+            title: Description of title.
+            color: Description of color.
+        
+        Returns:
+            Result of create_section operation.
+        """
         section = Section(notebook_id=notebook_id, title=title, color=color)
         self.db.add(section)
         self.db.commit()
@@ -62,6 +121,15 @@ class NotebookService:
         return section
         
     def delete_section(self, section_id: int) -> None:
+        """
+        Remove section logic.
+        
+        Args:
+            section_id: Description of section_id.
+        
+        Returns:
+            Result of delete_section operation.
+        """
         section = self.db.get(Section, section_id)
         if section:
             self.db.delete(section)
@@ -103,6 +171,16 @@ class NotebookService:
 
     # --- Renaming ---
     def rename_notebook(self, nb_id: int, new_title: str) -> None:
+        """
+        Rename notebook logic.
+        
+        Args:
+            nb_id: Description of nb_id.
+            new_title: Description of new_title.
+        
+        Returns:
+            Result of rename_notebook operation.
+        """
         nb = self.get_notebook(nb_id)
         if nb:
             nb.title = new_title
@@ -110,6 +188,16 @@ class NotebookService:
             logger.info(f"Renamed Notebook {nb_id} to '{new_title}'")
 
     def rename_section(self, section_id: int, new_title: str) -> None:
+        """
+        Rename section logic.
+        
+        Args:
+            section_id: Description of section_id.
+            new_title: Description of new_title.
+        
+        Returns:
+            Result of rename_section operation.
+        """
         section = self.db.get(Section, section_id)
         if section:
             section.title = new_title
@@ -117,6 +205,16 @@ class NotebookService:
             logger.info(f"Renamed Section {section_id} to '{new_title}'")
 
     def rename_page(self, page_id: int, new_title: str) -> None:
+        """
+        Rename page logic.
+        
+        Args:
+            page_id: Description of page_id.
+            new_title: Description of new_title.
+        
+        Returns:
+            Result of rename_page operation.
+        """
         doc = self.db.get(Document, page_id)
         if doc:
             doc.title = new_title

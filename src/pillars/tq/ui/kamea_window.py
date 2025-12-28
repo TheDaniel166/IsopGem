@@ -23,6 +23,14 @@ class KameaWindow(QMainWindow):
     Orchestrates the Grid View and Control/Info Panels.
     """
     def __init__(self, service: KameaGridService, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            service: Description of service.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.service = service
         self.setWindowTitle("Kamea of Maut - The Unified Field")

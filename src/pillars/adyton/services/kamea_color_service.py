@@ -16,6 +16,13 @@ class KameaColorService:
     """
 
     def __init__(self, project_root: str):
+        """
+          init   logic.
+        
+        Args:
+            project_root: Description of project_root.
+        
+        """
         self.project_root = Path(project_root)
         self._trigram_map: Dict[int, QColor] = self._load_trigram_map()
         self._setup_cycles()

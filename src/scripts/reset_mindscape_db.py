@@ -5,6 +5,13 @@ from sqlalchemy import text
 
 
 def reset_mindscape(force: bool = False):
+    """
+    Reset mindscape logic.
+    
+    Args:
+        force: Description of force.
+    
+    """
     if not force:
         print("Refusing to reset Mindscape without --force. Aborting.")
         return

@@ -37,6 +37,10 @@ class NavigationBus(QObject):
     window_response = pyqtSignal(str, str, object)
     
     def __init__(self):
+        """
+          init   logic.
+        
+        """
         super().__init__()
         self._handlers: Dict[str, callable] = {}
     

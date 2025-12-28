@@ -9,10 +9,22 @@ class CircleShape(GeometricShape):
     
     @property
     def name(self) -> str:
+        """
+        Name logic.
+        
+        Returns:
+            Result of name operation.
+        """
         return "Circle"
     
     @property
     def description(self) -> str:
+        """
+        Description logic.
+        
+        Returns:
+            Result of description operation.
+        """
         return "A perfectly round 2D shape with all points equidistant from center"
     
     def _init_properties(self):
@@ -230,4 +242,3 @@ class CircleShape(GeometricShape):
         self.properties['sagitta'].value = sagitta
         self.properties['sector_area'].value = sector_area
         self.properties['segment_area'].value = segment_area
-

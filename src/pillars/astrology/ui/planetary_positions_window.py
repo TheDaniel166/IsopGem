@@ -76,6 +76,10 @@ MAX_TIMESTAMPS = 240  # safety valve for UI responsiveness
 
 @dataclass(slots=True)
 class EphemerisRow:
+    """
+    Ephemeris Row class definition.
+    
+    """
     timestamp: datetime
     body: str
     degree: float
@@ -88,6 +92,13 @@ class EphemerisResultsDialog(QDialog):
     """Popup dialog used to display ephemeris matrices."""
 
     def __init__(self, parent: Optional[QWidget] = None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.setWindowTitle("Ephemeris Results")
         self.resize(900, 600)
@@ -103,6 +114,19 @@ class EphemerisResultsDialog(QDialog):
         matrix: Dict[datetime, Dict[str, EphemerisRow]],
         formatter,
     ) -> None:
+        """
+        Populate logic.
+        
+        Args:
+            timestamps: Description of timestamps.
+            planet_labels: Description of planet_labels.
+            planet_keys: Description of planet_keys.
+            matrix: Description of matrix.
+            formatter: Description of formatter.
+        
+        Returns:
+            Result of populate operation.
+        """
         self.table.setRowCount(len(timestamps))
         self.table.setColumnCount(len(planet_labels) + 1)
         headers = ["Timestamp"] + list(planet_labels)
@@ -120,6 +144,10 @@ class PlanetaryPositionsWindow(QMainWindow):
     """Displays planetary positions over a configurable time range."""
 
     def __init__(self, *_, window_manager: Optional[WindowManager] = None, parent: Optional[QWidget] = None):
+        """
+          init   logic.
+        
+        """
         super().__init__(parent)
         self.window_manager = window_manager
         self.setWindowTitle("Planetary Positions")

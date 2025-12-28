@@ -40,21 +40,53 @@ except ImportError:
 class HTMLTextExtractor(HTMLParser):
     """Simple HTML parser to extract text with basic layout preservation."""
     def __init__(self):
+        """
+          init   logic.
+        
+        """
         super().__init__()
         self.text_parts = []
         
     def handle_data(self, data):
+        """
+        Handle data logic.
+        
+        Args:
+            data: Description of data.
+        
+        """
         self.text_parts.append(data)
         
     def handle_starttag(self, tag, attrs):
+        """
+        Handle starttag logic.
+        
+        Args:
+            tag: Description of tag.
+            attrs: Description of attrs.
+        
+        """
         if tag == 'br':
             self.text_parts.append('\n')
             
     def handle_endtag(self, tag):
+        """
+        Handle endtag logic.
+        
+        Args:
+            tag: Description of tag.
+        
+        """
         if tag in ('p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'tr', 'article', 'section'):
             self.text_parts.append('\n')
             
     def get_text(self):
+        """
+        Retrieve text logic.
+        
+        Returns:
+            Result of get_text operation.
+        """
         return "".join(self.text_parts).strip()
 
 class DocumentParser:

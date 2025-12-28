@@ -9,7 +9,24 @@ from pillars.gematria.services.hebrew_calculator import HebrewGematriaCalculator
 from pillars.gematria.services.greek_calculator import GreekGematriaCalculator
 
 class ChiasticWindow(QWidget):
+    """
+    Chiastic Window class definition.
+    
+    Attributes:
+        service: Description of service.
+        patterns: Description of patterns.
+        calculators: Description of calculators.
+    
+    """
     def __init__(self, window_manager=None, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            window_manager: Description of window_manager.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent=parent)
         self.setWindowTitle("Chiastic TQ Finder")
         self.resize(1000, 700)
@@ -28,6 +45,10 @@ class ChiasticWindow(QWidget):
         self.setup_ui()
         
     def setup_ui(self):
+        """
+        Setup ui logic.
+        
+        """
         main_layout = QVBoxLayout(self)
         
         # --- Top Controls ---
@@ -98,6 +119,10 @@ class ChiasticWindow(QWidget):
         main_layout.addWidget(splitter)
 
     def load_document_dialog(self):
+        """
+        Load document dialog logic.
+        
+        """
         from pillars.gematria.ui.document_selector import DocumentSelectorDialog
         dialog = DocumentSelectorDialog(self)
         if dialog.exec():
@@ -106,6 +131,13 @@ class ChiasticWindow(QWidget):
                 self.load_document_text(doc_id)
 
     def load_document_text(self, doc_id):
+        """
+        Load document text logic.
+        
+        Args:
+            doc_id: Description of doc_id.
+        
+        """
         from shared.repositories.document_manager.document_repository import DocumentRepository
         from shared.database import get_db
         from PyQt6.QtWidgets import QMessageBox
@@ -122,6 +154,10 @@ class ChiasticWindow(QWidget):
             QMessageBox.critical(self, "Error", f"Failed to load document: {str(e)}")
 
     def scan_text(self):
+        """
+        Scan text logic.
+        
+        """
         text = self.input_text.toPlainText()
         if not text:
             return
@@ -153,6 +189,13 @@ class ChiasticWindow(QWidget):
             self.pattern_list.addItem(item)
             
     def display_pattern(self, row):
+        """
+        Display pattern logic.
+        
+        Args:
+            row: Description of row.
+        
+        """
         if row < 0 or row >= len(self.patterns):
             self.viz_display.clear()
             return

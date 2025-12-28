@@ -47,6 +47,12 @@ class ELSSearchSummary:
     
     @property
     def total_hits(self) -> int:
+        """
+        Total hits logic.
+        
+        Returns:
+            Result of total_hits operation.
+        """
         return len(self.results)
     
     @property
@@ -76,6 +82,12 @@ class ChainResult:
     
     @property
     def positions(self) -> List[int]:
+        """
+        Positions logic.
+        
+        Returns:
+            Result of positions operation.
+        """
         return [s.position for s in self.steps]
     
     @property

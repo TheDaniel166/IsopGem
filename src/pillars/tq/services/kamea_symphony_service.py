@@ -21,6 +21,10 @@ class KameaSymphonyService:
     
     def __init__(self):
         # Cache impulse response for performance
+        """
+          init   logic.
+        
+        """
         self._reverb_impulse = self._generate_reverb_impulse()
 
     def generate_wav_file(self, nucleation: SymphonyNucleation, duration: float = 4.0) -> str:

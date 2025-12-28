@@ -17,6 +17,10 @@ from .regular_prism_solids import (
 
 @dataclass(frozen=True)
 class RegularAntiprismMetrics:
+    """
+    Regular Antiprism Metrics class definition.
+    
+    """
     sides: int
     base_edge: float
     height: float
@@ -33,6 +37,10 @@ class RegularAntiprismMetrics:
 
 @dataclass(frozen=True)
 class RegularAntiprismSolidResult:
+    """
+    Regular Antiprism Solid Result class definition.
+    
+    """
     payload: SolidPayload
     metrics: RegularAntiprismMetrics
 
@@ -153,6 +161,16 @@ class RegularAntiprismSolidServiceBase:
 
     @classmethod
     def build(cls, base_edge: float = 2.0, height: float = 4.0) -> RegularAntiprismSolidResult:
+        """
+        Build logic.
+        
+        Args:
+            base_edge: Description of base_edge.
+            height: Description of height.
+        
+        Returns:
+            Result of build operation.
+        """
         if cls.SIDES < 3:
             raise ValueError('An antiprism base must have at least 3 sides')
         if base_edge <= 0 or height <= 0:
@@ -162,6 +180,16 @@ class RegularAntiprismSolidServiceBase:
 
     @classmethod
     def payload(cls, base_edge: float = 2.0, height: float = 4.0) -> SolidPayload:
+        """
+        Payload logic.
+        
+        Args:
+            base_edge: Description of base_edge.
+            height: Description of height.
+        
+        Returns:
+            Result of payload operation.
+        """
         return cls.build(base_edge, height).payload
 
 
@@ -183,6 +211,14 @@ class RegularAntiprismSolidCalculatorBase:
     )
 
     def __init__(self, base_edge: float = 2.0, height: float = 4.0):
+        """
+          init   logic.
+        
+        Args:
+            base_edge: Description of base_edge.
+            height: Description of height.
+        
+        """
         self._properties: Dict[str, SolidProperty] = {
             key: SolidProperty(name=label, key=key, unit=unit, precision=precision, editable=editable)
             for key, label, unit, precision, editable in self._PROPERTY_DEFINITIONS
@@ -193,9 +229,25 @@ class RegularAntiprismSolidCalculatorBase:
         self._apply_dimensions(self._base_edge, self._height)
 
     def properties(self) -> List[SolidProperty]:
+        """
+        Properties logic.
+        
+        Returns:
+            Result of properties operation.
+        """
         return [self._properties[key] for key, *_ in self._PROPERTY_DEFINITIONS]
 
     def set_property(self, key: str, value: Optional[float]) -> bool:
+        """
+        Configure property logic.
+        
+        Args:
+            key: Description of key.
+            value: Description of value.
+        
+        Returns:
+            Result of set_property operation.
+        """
         if value is None or value <= 0:
             return False
         if key == 'base_edge':
@@ -253,6 +305,10 @@ class RegularAntiprismSolidCalculatorBase:
         return False
 
     def clear(self):
+        """
+        Clear logic.
+        
+        """
         self._base_edge = 2.0
         self._height = 4.0
         for prop in self._properties.values():
@@ -260,14 +316,32 @@ class RegularAntiprismSolidCalculatorBase:
         self._result = None
 
     def payload(self) -> Optional[SolidPayload]:
+        """
+        Payload logic.
+        
+        Returns:
+            Result of payload operation.
+        """
         return self._result.payload if self._result else None
 
     def metadata(self) -> Dict[str, float]:
+        """
+        Metadata logic.
+        
+        Returns:
+            Result of metadata operation.
+        """
         if not self._result:
             return {}
         return dict(self._result.payload.metadata)
 
     def metrics(self) -> Optional[RegularAntiprismMetrics]:
+        """
+        Metrics logic.
+        
+        Returns:
+            Result of metrics operation.
+        """
         return self._result.metrics if self._result else None
 
     def _apply_dimensions(self, base_edge: float, height: float):
@@ -292,55 +366,103 @@ class RegularAntiprismSolidCalculatorBase:
 
 
 class TriangularAntiprismSolidService(RegularAntiprismSolidServiceBase):
+    """
+    Triangular Antiprism Solid Service class definition.
+    
+    """
     SIDES = 3
 
 
 class SquareAntiprismSolidService(RegularAntiprismSolidServiceBase):
+    """
+    Square Antiprism Solid Service class definition.
+    
+    """
     SIDES = 4
 
 
 class PentagonalAntiprismSolidService(RegularAntiprismSolidServiceBase):
+    """
+    Pentagonal Antiprism Solid Service class definition.
+    
+    """
     SIDES = 5
 
 
 class HexagonalAntiprismSolidService(RegularAntiprismSolidServiceBase):
+    """
+    Hexagonal Antiprism Solid Service class definition.
+    
+    """
     SIDES = 6
 
 
 class OctagonalAntiprismSolidService(RegularAntiprismSolidServiceBase):
+    """
+    Octagonal Antiprism Solid Service class definition.
+    
+    """
     SIDES = 8
 
 
 class HeptagonalAntiprismSolidService(RegularAntiprismSolidServiceBase):
+    """
+    Heptagonal Antiprism Solid Service class definition.
+    
+    """
     SIDES = 7
 
 
 class TriangularAntiprismSolidCalculator(RegularAntiprismSolidCalculatorBase):
+    """
+    Triangular Antiprism Solid Calculator class definition.
+    
+    """
     SIDES = 3
     SERVICE = TriangularAntiprismSolidService
 
 
 class SquareAntiprismSolidCalculator(RegularAntiprismSolidCalculatorBase):
+    """
+    Square Antiprism Solid Calculator class definition.
+    
+    """
     SIDES = 4
     SERVICE = SquareAntiprismSolidService
 
 
 class PentagonalAntiprismSolidCalculator(RegularAntiprismSolidCalculatorBase):
+    """
+    Pentagonal Antiprism Solid Calculator class definition.
+    
+    """
     SIDES = 5
     SERVICE = PentagonalAntiprismSolidService
 
 
 class HexagonalAntiprismSolidCalculator(RegularAntiprismSolidCalculatorBase):
+    """
+    Hexagonal Antiprism Solid Calculator class definition.
+    
+    """
     SIDES = 6
     SERVICE = HexagonalAntiprismSolidService
 
 
 class OctagonalAntiprismSolidCalculator(RegularAntiprismSolidCalculatorBase):
+    """
+    Octagonal Antiprism Solid Calculator class definition.
+    
+    """
     SIDES = 8
     SERVICE = OctagonalAntiprismSolidService
 
 
 class HeptagonalAntiprismSolidCalculator(RegularAntiprismSolidCalculatorBase):
+    """
+    Heptagonal Antiprism Solid Calculator class definition.
+    
+    """
     SIDES = 7
     SERVICE = HeptagonalAntiprismSolidService
 

@@ -161,6 +161,15 @@ class SevenSidedPrism:
         sector_rad = math.radians(360.0 / 7.0)
 
         def f(alpha: float) -> float:
+            """
+            F logic.
+            
+            Args:
+                alpha: Description of alpha.
+            
+            Returns:
+                Result of f operation.
+            """
             beta = sector_rad - alpha
             return (c / math.sin(alpha / 2.0)) - (w / math.sin(beta / 2.0))
 

@@ -26,6 +26,14 @@ class SpellHighlighter(QSyntaxHighlighter):
     """
     
     def __init__(self, document: QTextDocument, enabled: bool = True):
+        """
+          init   logic.
+        
+        Args:
+            document: Description of document.
+            enabled: Description of enabled.
+        
+        """
         super().__init__(document)
         self._spell_service = get_spell_service()
         self._enabled = enabled
@@ -42,10 +50,23 @@ class SpellHighlighter(QSyntaxHighlighter):
     
     @property
     def enabled(self) -> bool:
+        """
+        Enabled logic.
+        
+        Returns:
+            Result of enabled operation.
+        """
         return self._enabled
     
     @enabled.setter
     def enabled(self, value: bool):
+        """
+        Enabled logic.
+        
+        Args:
+            value: Description of value.
+        
+        """
         self._enabled = value
         self.rehighlight()
     
@@ -71,6 +92,14 @@ class SpellCheckDialog(QDialog):
     """
     
     def __init__(self, editor: QTextEdit, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            editor: Description of editor.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.editor = editor
         self._spell_service = get_spell_service()
@@ -239,6 +268,13 @@ class SpellFeature:
     """
     
     def __init__(self, main_editor):
+        """
+          init   logic.
+        
+        Args:
+            main_editor: Description of main_editor.
+        
+        """
         self.main = main_editor
         self.editor = main_editor.editor
         self._spell_service = get_spell_service()
@@ -267,10 +303,23 @@ class SpellFeature:
     
     @property
     def enabled(self) -> bool:
+        """
+        Enabled logic.
+        
+        Returns:
+            Result of enabled operation.
+        """
         return self._highlighter.enabled
     
     @enabled.setter
     def enabled(self, value: bool):
+        """
+        Enabled logic.
+        
+        Args:
+            value: Description of value.
+        
+        """
         self._highlighter.enabled = value
     
     def toggle(self):

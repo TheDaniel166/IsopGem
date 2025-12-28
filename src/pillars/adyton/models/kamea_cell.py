@@ -29,8 +29,20 @@ class KameaCell:
 
     @property
     def is_singularity(self) -> bool:
+        """
+        Determine if singularity logic.
+        
+        Returns:
+            Result of is_singularity operation.
+        """
         return self.x == 0 and self.y == 0
     
     @property
     def is_axis(self) -> bool:
+        """
+        Determine if axis logic.
+        
+        Returns:
+            Result of is_axis operation.
+        """
         return (self.x == 0 or self.y == 0 or abs(self.x) == abs(self.y)) and not self.is_singularity

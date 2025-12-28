@@ -4,6 +4,10 @@ import os
 DB_PATH = "data/isopgem.db"
 
 def migrate_mindscape():
+    """
+    Migrate mindscape logic.
+    
+    """
     if not os.path.exists(DB_PATH):
         print(f"Database not found at {DB_PATH}")
         return
@@ -14,6 +18,14 @@ def migrate_mindscape():
 
     # Helpers
     def column_exists(table, col):
+        """
+        Column exists logic.
+        
+        Args:
+            table: Description of table.
+            col: Description of col.
+        
+        """
         try:
             cursor.execute(f"SELECT {col} FROM {table} LIMIT 1")
             return True
@@ -21,6 +33,15 @@ def migrate_mindscape():
             return False
 
     def add_column(table, col, type_def):
+        """
+        Add column logic.
+        
+        Args:
+            table: Description of table.
+            col: Description of col.
+            type_def: Description of type_def.
+        
+        """
         if not column_exists(table, col):
             print(f"Adding {col} to {table}...")
             try:

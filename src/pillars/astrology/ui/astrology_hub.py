@@ -18,6 +18,13 @@ class AstrologyHub(QWidget):
     """Hub widget for Astrology pillar - displays available tools."""
     
     def __init__(self, window_manager: WindowManager):
+        """
+          init   logic.
+        
+        Args:
+            window_manager: Description of window_manager.
+        
+        """
         super().__init__()
         self.window_manager = window_manager
         self._setup_ui()

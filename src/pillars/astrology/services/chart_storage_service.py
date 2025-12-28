@@ -18,6 +18,12 @@ ChartSessionFactory = Callable[[], AbstractContextManager]
 
 @dataclass(slots=True)
 class SavedChartSummary:
+ """
+ Saved Chart Summary class definition.
+ 
+ Attributes:
+     todo: Add public attributes.
+ """
 	chart_id: int
 	name: str
 	event_timestamp: datetime
@@ -29,6 +35,12 @@ class SavedChartSummary:
 
 @dataclass(slots=True)
 class LoadedChart:
+ """
+ Loaded Chart class definition.
+ 
+ Attributes:
+     todo: Add public attributes.
+ """
 	chart_id: int
 	request: ChartRequest
 	categories: List[str]
@@ -40,6 +52,13 @@ class ChartStorageService:
 	"""High-level persistence facade for natal charts."""
 
 	def __init__(self, session_factory: ChartSessionFactory = get_db_session):
+  """
+    init   logic.
+  
+  Args:
+      session_factory: Description of session_factory.
+  
+  """
 		self._session_factory = session_factory
 
 	# ------------------------------------------------------------------
@@ -55,6 +74,12 @@ class ChartStorageService:
 		tags: Sequence[str] = (),
 		description: Optional[str] = None,
 	) -> int:
+  """
+  Save chart logic.
+  
+  Returns:
+      Result of save_chart operation.
+  """
 		payload = self._serialize_request(request)
 		result_payload = result.to_dict()
 		primary_event = request.primary_event
@@ -81,6 +106,15 @@ class ChartStorageService:
 			return record.id
 
 	def list_recent(self, limit: int = 20) -> List[SavedChartSummary]:
+  """
+  List recent logic.
+  
+  Args:
+      limit: Description of limit.
+  
+  Returns:
+      Result of list_recent operation.
+  """
 		with self._session_factory() as session:
 			repo = ChartRepository(session)
 			records = repo.list_recent(limit)
@@ -94,12 +128,27 @@ class ChartStorageService:
 		tags: Optional[Sequence[str]] = None,
 		limit: int = 50,
 	) -> List[SavedChartSummary]:
+  """
+  Search logic.
+  
+  Returns:
+      Result of search operation.
+  """
 		with self._session_factory() as session:
 			repo = ChartRepository(session)
 			records = repo.search(text=text, categories=categories, tags=tags, limit=limit)
 			return [self._to_summary(record) for record in records]
 
 	def load_chart(self, chart_id: int) -> Optional[LoadedChart]:
+  """
+  Load chart logic.
+  
+  Args:
+      chart_id: Description of chart_id.
+  
+  Returns:
+      Result of load_chart operation.
+  """
 		with self._session_factory() as session:
 			repo = ChartRepository(session)
 			record = repo.get_chart(chart_id)

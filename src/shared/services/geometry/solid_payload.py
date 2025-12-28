@@ -12,6 +12,10 @@ Face = Sequence[int]
 
 @dataclass
 class SolidLabel:
+    """
+    Solid Label class definition.
+    
+    """
     text: str
     position: Vec3
     align_center: bool = True
@@ -19,6 +23,20 @@ class SolidLabel:
 
 @dataclass
 class SolidPayload:
+    """
+    Solid Payload class definition.
+    
+    Attributes:
+        vertices: Description of vertices.
+        edges: Description of edges.
+        faces: Description of faces.
+        labels: Description of labels.
+        metadata: Description of metadata.
+        face_colors: Description of face_colors.
+        suggested_scale: Description of suggested_scale.
+        dual: Description of dual.
+    
+    """
     vertices: List[Vec3] = field(default_factory=list)
     edges: List[Edge] = field(default_factory=list)
     faces: List[Face] = field(default_factory=list)
@@ -39,6 +57,12 @@ class SolidPayload:
         suggested_scale: Optional[float] = None,
         dual: Optional['SolidPayload'] = None,
     ) -> None:
+        """
+          init   logic.
+        
+        Returns:
+            Result of __init__ operation.
+        """
         self.vertices = list(vertices) if vertices is not None else []
         self.edges = list(edges) if edges is not None else []
         self.faces = list(faces) if faces is not None else []
@@ -49,6 +73,12 @@ class SolidPayload:
         self.dual = dual
 
     def bounds(self) -> Optional[Tuple[Vec3, Vec3]]:
+        """
+        Bounds logic.
+        
+        Returns:
+            Result of bounds operation.
+        """
         if not self.vertices:
             return None
         xs = [v[0] for v in self.vertices]

@@ -787,6 +787,14 @@ class AdvancedScientificCalculatorWindow(QMainWindow):
     """
 
     def __init__(self, window_manager: Optional[object] = None, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            window_manager: Description of window_manager.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.window_manager = window_manager
         self._last_answer: Optional[float] = None
@@ -975,6 +983,13 @@ class AdvancedScientificCalculatorWindow(QMainWindow):
             by_system[sys].sort(key=lambda u: str(u.get("name", "")))
 
         def populate(combo: QComboBox):
+            """
+            Populate logic.
+            
+            Args:
+                combo: Description of combo.
+            
+            """
             combo.blockSignals(True)
             combo.clear()
 
@@ -2410,6 +2425,13 @@ class AdvancedScientificCalculatorWindow(QMainWindow):
         )
 
         def populate(combo: QComboBox):
+            """
+            Populate logic.
+            
+            Args:
+                combo: Description of combo.
+            
+            """
             combo.blockSignals(True)
             combo.clear()
             for unit in units_sorted:
@@ -2737,12 +2759,39 @@ class AdvancedScientificCalculatorWindow(QMainWindow):
             return math.radians(x) if self._angle_mode == "DEG" else x
 
         def sin_wrapped(x: float) -> float:
+            """
+            Sin wrapped logic.
+            
+            Args:
+                x: Description of x.
+            
+            Returns:
+                Result of sin_wrapped operation.
+            """
             return math.sin(_angle_to_radians(x))
 
         def cos_wrapped(x: float) -> float:
+            """
+            Cos wrapped logic.
+            
+            Args:
+                x: Description of x.
+            
+            Returns:
+                Result of cos_wrapped operation.
+            """
             return math.cos(_angle_to_radians(x))
 
         def tan_wrapped(x: float) -> float:
+            """
+            Tan wrapped logic.
+            
+            Args:
+                x: Description of x.
+            
+            Returns:
+                Result of tan_wrapped operation.
+            """
             return math.tan(_angle_to_radians(x))
 
         allowed_funcs: Dict[str, Callable] = {
@@ -2860,10 +2909,28 @@ def _insert_implicit_multiplication(expression: str) -> str:
         return expression
 
     def is_value(tok: tuple[str, str]) -> bool:
+        """
+        Determine if value logic.
+        
+        Args:
+            tok: Description of tok.
+        
+        Returns:
+            Result of is_value operation.
+        """
         kind, val = tok
         return kind in {"number", "ident"} or (kind == "op" and val == ")")
 
     def is_value_start(tok: tuple[str, str]) -> bool:
+        """
+        Determine if value start logic.
+        
+        Args:
+            tok: Description of tok.
+        
+        Returns:
+            Result of is_value_start operation.
+        """
         kind, val = tok
         # NOTE: '(' can start a value expression, but we only want implicit
         # multiplication into '(' (not treating '(' as an argument list).
@@ -2927,6 +2994,12 @@ def _rewrite_postfix_factorial(expression: str) -> str:
     out: List[tuple[str, str]] = []
 
     def pop_atom() -> str:
+        """
+        Pop atom logic.
+        
+        Returns:
+            Result of pop_atom operation.
+        """
         if not out:
             raise ValueError("Invalid expression")
 
@@ -2977,6 +3050,15 @@ def _safe_math_eval(
     """
 
     def fail(message: str) -> ValueError:
+        """
+        Fail logic.
+        
+        Args:
+            message: Description of message.
+        
+        Returns:
+            Result of fail operation.
+        """
         return ValueError(message)
 
     expression = _normalize_expression(expression)
@@ -2987,6 +3069,13 @@ def _safe_math_eval(
         raise fail("Invalid expression") from exc
 
     def eval_node(node):
+        """
+        Eval node logic.
+        
+        Args:
+            node: Description of node.
+        
+        """
         if isinstance(node, ast.Expression):
             return eval_node(node.body)
 

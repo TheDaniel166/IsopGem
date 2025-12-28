@@ -14,6 +14,10 @@ class CipherRepository:
     """
 
     def __init__(self):
+        """
+          init   logic.
+        
+        """
         self._tokens: List[CipherToken] = []
         self._map_decimal: Dict[int, CipherToken] = {}
         self._map_letter: Dict[str, CipherToken] = {}

@@ -9,7 +9,23 @@ from pillars.gematria.services.corpus_dictionary_service import CorpusDictionary
 from pillars.gematria.ui.document_selector import DocumentSelectorDialog
 
 class AcrosticsWindow(QWidget):
+    """
+    Acrostics Window class definition.
+    
+    Attributes:
+        service: Description of service.
+        dict_service: Description of dict_service.
+    
+    """
     def __init__(self, window_manager=None, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            window_manager: Description of window_manager.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent=parent)
         self.setWindowTitle("Acrostic Discovery Tool")
         self.resize(800, 600)
@@ -20,6 +36,10 @@ class AcrosticsWindow(QWidget):
         self.setup_ui()
         
     def setup_ui(self):
+        """
+        Setup ui logic.
+        
+        """
         layout = QVBoxLayout(self)
         
         # --- Top Control Panel ---
@@ -117,6 +137,10 @@ class AcrosticsWindow(QWidget):
             QMessageBox.critical(self, "Error", f"Failed to load dictionary: {str(e)}")
 
     def view_dictionary(self):
+        """
+        View dictionary logic.
+        
+        """
         if self.dict_service.word_count == 0:
             QMessageBox.warning(self, "Empty", "Dictionary is empty. Load it first.")
             return
@@ -126,6 +150,10 @@ class AcrosticsWindow(QWidget):
         dialog.exec()
 
     def load_document_dialog(self):
+        """
+        Load document dialog logic.
+        
+        """
         dialog = DocumentSelectorDialog(self)
         if dialog.exec():
             doc_id = dialog.get_selected_doc_id()
@@ -133,6 +161,13 @@ class AcrosticsWindow(QWidget):
                 self.load_document_text(doc_id)
 
     def load_document_text(self, doc_id):
+        """
+        Load document text logic.
+        
+        Args:
+            doc_id: Description of doc_id.
+        
+        """
         from shared.repositories.document_manager.document_repository import DocumentRepository
         from shared.database import get_db
         
@@ -160,6 +195,10 @@ class AcrosticsWindow(QWidget):
         return total
 
     def run_search(self):
+        """
+        Execute search logic.
+        
+        """
         text = self.input_text.toPlainText()
         if not text:
             return
@@ -208,6 +247,14 @@ class AcrosticsWindow(QWidget):
 class DictionaryViewerDialog(QDialog):
     """Dialog to view all words in the loaded dictionary."""
     def __init__(self, words: list[str], parent=None):
+        """
+          init   logic.
+        
+        Args:
+            words: Description of words.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.setWindowTitle(f"Corpus Dictionary ({len(words)} words)")
         self.resize(400, 600)
@@ -233,6 +280,13 @@ class DictionaryViewerDialog(QDialog):
         self.update_list(self.all_words)
         
     def update_list(self, words):
+        """
+        Update list logic.
+        
+        Args:
+            words: Description of words.
+        
+        """
         self.list_widget.clear()
         # Limit display for performance if huge? 
         # But 7000 words is fine for QListWidget.
@@ -243,6 +297,13 @@ class DictionaryViewerDialog(QDialog):
             self.list_widget.addItem(f"... and {len(words)-2000} more (filter to see)")
             
     def filter_list(self, text):
+        """
+        Filter list logic.
+        
+        Args:
+            text: Description of text.
+        
+        """
         text = text.upper()
         if not text:
             self.update_list(self.all_words)
@@ -256,6 +317,15 @@ class AcrosticHighlightDialog(QDialog):
     Dialog to display the source text with the acrostic letters highlighted.
     """
     def __init__(self, source_units: list[str], method: str, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            source_units: Description of source_units.
+            method: Description of method.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.setWindowTitle("Acrostic Visualization")
         self.resize(500, 600)
@@ -350,5 +420,3 @@ class AcrosticHighlightDialog(QDialog):
         # But for "Word" mode, maybe they want to see the sentence flow?
         # "Acrostic" implies vertical reading. Let's stick to <br> to align the letters vertically.
         return "<br>".join(html_lines)
-
-

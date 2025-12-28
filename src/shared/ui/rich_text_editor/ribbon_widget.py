@@ -12,6 +12,13 @@ class RibbonWidget(RibbonBar):
     A unified 'Ribbon' style navigation widget using pyqtribbon.
     """
     def __init__(self, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.setFixedHeight(125) # Force a reasonable height for widget usage
@@ -140,6 +147,13 @@ class RibbonWidget(RibbonBar):
 class RibbonTabWrapper:
     """Wrapper around pyqtribbon Category to match old RibbonTab API."""
     def __init__(self, category):
+        """
+          init   logic.
+        
+        Args:
+            category: Description of category.
+        
+        """
         self.category = category
 
     def add_group(self, title: str) -> 'RibbonGroupWrapper':
@@ -151,6 +165,13 @@ class RibbonTabWrapper:
 class RibbonGroupWrapper:
     """Wrapper around pyqtribbon Panel to match old RibbonGroup API."""
     def __init__(self, panel):
+        """
+          init   logic.
+        
+        Args:
+            panel: Description of panel.
+        
+        """
         self.panel = panel
         
         # Hide the option button (dialog launcher arrow) by default as it is currently unused
@@ -201,6 +222,13 @@ class RibbonGroupWrapper:
 class RibbonGalleryWrapper:
     """Wrapper for RibbonGallery."""
     def __init__(self, gallery):
+        """
+          init   logic.
+        
+        Args:
+            gallery: Description of gallery.
+        
+        """
         self.gallery = gallery
     
     def add_item(self, text, icon, callback=None):
@@ -224,4 +252,3 @@ class RibbonGalleryWrapper:
         """Add a grouping (if supported) or just return self."""
         # pyqtribbon gallery simple usage is direct items
         return self
-

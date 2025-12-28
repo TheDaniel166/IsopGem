@@ -37,6 +37,10 @@ class DocumentLink(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 class Document(Base):
+    """
+    Document class definition.
+    
+    """
     __tablename__ = "documents"
     __table_args__ = {'extend_existing': True}
 

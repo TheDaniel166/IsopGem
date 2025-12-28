@@ -13,6 +13,10 @@ PREFS_PATH = DATA_DIR / "astrology_prefs.json"
 
 @dataclass(slots=True)
 class DefaultLocation:
+    """
+    Default Location class definition.
+    
+    """
     name: str
     latitude: float
     longitude: float
@@ -25,9 +29,22 @@ class AstrologyPreferences:
     """Simple JSON-backed preference store."""
 
     def __init__(self, path: Optional[Path] = None):
+        """
+          init   logic.
+        
+        Args:
+            path: Description of path.
+        
+        """
         self._path = path or PREFS_PATH
 
     def load_default_location(self) -> Optional[DefaultLocation]:
+        """
+        Load default location logic.
+        
+        Returns:
+            Result of load_default_location operation.
+        """
         data = self._read()
         payload = data.get("default_location")
         if not payload:
@@ -38,6 +55,15 @@ class AstrologyPreferences:
             return None
 
     def save_default_location(self, location: DefaultLocation) -> None:
+        """
+        Save default location logic.
+        
+        Args:
+            location: Description of location.
+        
+        Returns:
+            Result of save_default_location operation.
+        """
         data = self._read()
         data["default_location"] = asdict(location)
         self._write(data)

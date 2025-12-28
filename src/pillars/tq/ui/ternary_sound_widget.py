@@ -17,6 +17,14 @@ from .amun_visualizer import AmunVisualizer
 class CalculatorTab(QWidget):
     """Tab for calculating single Ditrunes."""
     def __init__(self, output_display: QTextEdit, main_window):
+        """
+          init   logic.
+        
+        Args:
+            output_display: Description of output_display.
+            main_window: Description of main_window.
+        
+        """
         super().__init__()
         self.main_window = main_window
         self.output_display = output_display
@@ -32,6 +40,10 @@ class CalculatorTab(QWidget):
         self.init_ui()
         
     def init_ui(self):
+        """
+        Initialize ui logic.
+        
+        """
         layout = QVBoxLayout(self)
         
         # Input Frame
@@ -64,6 +76,12 @@ class CalculatorTab(QWidget):
         layout.addStretch()
 
     def calculate(self):
+        """
+        Compute logic.
+        
+        Returns:
+            Result of calculate operation.
+        """
         input_text = self.le_input.text().strip()
         try:
             val = int(input_text)
@@ -118,6 +136,10 @@ class CalculatorTab(QWidget):
         self.output_display.setHtml(html)
 
     def play_sound(self):
+        """
+        Play sound logic.
+        
+        """
         if not self.current_result: return
         
         # Update Visualizer immediately before play
@@ -171,6 +193,13 @@ class CalculatorTab(QWidget):
 class ComposerTab(QWidget):
     """Tab for composing sequences."""
     def __init__(self, main_window):
+        """
+          init   logic.
+        
+        Args:
+            main_window: Description of main_window.
+        
+        """
         super().__init__()
         self.main_window = main_window
         self.calculator = AmunSoundCalculator()
@@ -185,6 +214,10 @@ class ComposerTab(QWidget):
         self.init_ui()
         
     def init_ui(self):
+        """
+        Initialize ui logic.
+        
+        """
         layout = QVBoxLayout(self)
         
         # Input Area
@@ -227,6 +260,10 @@ class ComposerTab(QWidget):
         layout.addWidget(self.list_widget)
         
     def parse_sequence(self):
+        """
+        Parse sequence logic.
+        
+        """
         text = self.txt_input.toPlainText()
         # Replace commas with spaces and split
         tokens = text.replace(',', ' ').split()
@@ -253,6 +290,10 @@ class ComposerTab(QWidget):
             self.btn_chord.setEnabled(True)
             
     def play_sequence(self):
+        """
+        Play sequence logic.
+        
+        """
         if not self.sequence_data: return
         
         try:
@@ -341,6 +382,13 @@ class ComposerTab(QWidget):
 class TernarySoundWidget(QWidget):
     """Main Widget hosting Calculator and Composer tabs + Visualizer."""
     def __init__(self, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.setWindowTitle("Amun Sound System")
         self.resize(800, 600) # Wider for visualizer

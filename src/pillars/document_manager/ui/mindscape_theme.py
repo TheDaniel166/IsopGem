@@ -53,21 +53,65 @@ PALETTES = {
 }
 
 class GraphTheme:
+    """
+    Graph Theme class definition.
+    
+    Attributes:
+        mode: Description of mode.
+        palette: Description of palette.
+    
+    """
     def __init__(self, mode: str = "Dark") -> None:
+        """
+          init   logic.
+        
+        Args:
+            mode: Description of mode.
+        
+        Returns:
+            Result of __init__ operation.
+        """
         self.mode = mode
         self.palette = PALETTES.get(mode, PALETTES["Dark"])
 
     def set_mode(self, mode: str) -> None:
+        """
+        Configure mode logic.
+        
+        Args:
+            mode: Description of mode.
+        
+        Returns:
+            Result of set_mode operation.
+        """
         if mode in PALETTES:
             self.mode = mode
             self.palette = PALETTES[mode]
 
     def get_color(self, key: str) -> QColor:
+        """
+        Retrieve color logic.
+        
+        Args:
+            key: Description of key.
+        
+        Returns:
+            Result of get_color operation.
+        """
         hex_code = self.palette.get(key, "#ff00ff") # Magenta default for error
         return QColor(hex_code)
 
     def get_font(self, style="body") -> QFont:
         # We could map styles to specific fonts here
+        """
+        Retrieve font logic.
+        
+        Args:
+            style: Description of style.
+        
+        Returns:
+            Result of get_font operation.
+        """
         if self.mode == "Egyptian":
             font = QFont("Georgia", 10) # Serif for ancient feel
         else:

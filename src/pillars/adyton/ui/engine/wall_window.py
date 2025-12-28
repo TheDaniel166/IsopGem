@@ -37,6 +37,14 @@ class AdytonWallWindow(QWidget):
     """Displays one wall in isolation with data grid and 3D viewport."""
 
     def __init__(self, wall_index: int, parent: Optional[QWidget] = None):
+        """
+          init   logic.
+        
+        Args:
+            wall_index: Description of wall_index.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.wall_index = wall_index
         self.frustum_service: FrustumColorService = FrustumColorService()

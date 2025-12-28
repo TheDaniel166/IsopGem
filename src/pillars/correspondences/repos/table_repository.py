@@ -13,6 +13,13 @@ class TableRepository:
     Handles CRUD operations for Correspondence Tables.
     """
     def __init__(self, session: Session):
+        """
+          init   logic.
+        
+        Args:
+            session: Description of session.
+        
+        """
         self.session = session
 
     def create(self, name: str, content: dict) -> CorrespondenceTable:

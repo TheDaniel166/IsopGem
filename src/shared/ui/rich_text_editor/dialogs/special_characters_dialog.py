@@ -33,6 +33,13 @@ class SpecialCharactersDialog(QDialog):
     char_selected = pyqtSignal(str)
     
     def __init__(self, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.setWindowTitle("Insert Special Character")
         self.setMinimumSize(800, 550) # Increased width for sidebar
@@ -196,4 +203,3 @@ class SpecialCharactersDialog(QDialog):
         self.selected_label.setText(f"Inserted: {char}")
         self.char_selected.emit(char)
         # Optional: Auto-close? For now keep open for multiple inserts.
-

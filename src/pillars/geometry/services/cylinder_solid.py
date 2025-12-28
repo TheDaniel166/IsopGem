@@ -12,6 +12,10 @@ from .solid_property import SolidProperty
 
 @dataclass(frozen=True)
 class CylinderMetrics:
+    """
+    Cylinder Metrics class definition.
+    
+    """
     radius: float
     height: float
     circumference: float # [NEW]
@@ -23,6 +27,10 @@ class CylinderMetrics:
 
 @dataclass(frozen=True)
 class CylinderResult:
+    """
+    Cylinder Result class definition.
+    
+    """
     payload: SolidPayload
     metrics: CylinderMetrics
 
@@ -32,6 +40,17 @@ class CylinderSolidService:
 
     @staticmethod
     def build(radius: float = 1.0, height: float = 2.0, segments: int = 32) -> CylinderResult:
+        """
+        Build logic.
+        
+        Args:
+            radius: Description of radius.
+            height: Description of height.
+            segments: Description of segments.
+        
+        Returns:
+            Result of build operation.
+        """
         if radius <= 0 or height <= 0:
             raise ValueError("Radius and Height must be positive")
 
@@ -110,6 +129,14 @@ class CylinderSolidCalculator:
     """Bidirectional calculator for the 3D Cylinder."""
 
     def __init__(self, radius: float = 1.0, height: float = 2.0):
+        """
+          init   logic.
+        
+        Args:
+            radius: Description of radius.
+            height: Description of height.
+        
+        """
         self._properties = {
             'radius': SolidProperty('Radius (r)', 'radius', 'units', radius),
             'height': SolidProperty('Height (h)', 'height', 'units', height),
@@ -123,9 +150,25 @@ class CylinderSolidCalculator:
         self._recalculate()
 
     def properties(self) -> List[SolidProperty]:
+        """
+        Properties logic.
+        
+        Returns:
+            Result of properties operation.
+        """
         return list(self._properties.values())
 
     def set_property(self, key: str, value: Optional[float]) -> bool:
+        """
+        Configure property logic.
+        
+        Args:
+            key: Description of key.
+            value: Description of value.
+        
+        Returns:
+            Result of set_property operation.
+        """
         if value is not None and value <= 0:
             return False
             
@@ -213,18 +256,39 @@ class CylinderSolidCalculator:
         self._result = CylinderSolidService.build(r, h)
 
     def clear(self):
+        """
+        Clear logic.
+        
+        """
         for p in self._properties.values():
             p.value = None
         self._result = None
 
     def payload(self) -> Optional[SolidPayload]:
+        """
+        Payload logic.
+        
+        Returns:
+            Result of payload operation.
+        """
         return self._result.payload if self._result else None
 
     def metadata(self) -> Dict[str, float]:
+        """
+        Metadata logic.
+        
+        Returns:
+            Result of metadata operation.
+        """
         if not self._result:
             return {}
         return dict(self._result.payload.metadata)
 
     def metrics(self) -> Optional[CylinderMetrics]:
+        """
+        Metrics logic.
+        
+        Returns:
+            Result of metrics operation.
+        """
         return self._result.metrics if self._result else None
-

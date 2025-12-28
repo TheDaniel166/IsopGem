@@ -18,6 +18,13 @@ class VerseList(QWidget):
     save_all_requested = pyqtSignal(list)        # list of verses
     
     def __init__(self, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.verses_data = []
         self._setup_ui()
@@ -71,6 +78,10 @@ class VerseList(QWidget):
         self.container_layout.addStretch()
         
     def clear(self):
+        """
+        Clear logic.
+        
+        """
         while self.container_layout.count():
             child = self.container_layout.takeAt(0)
             if child.widget():

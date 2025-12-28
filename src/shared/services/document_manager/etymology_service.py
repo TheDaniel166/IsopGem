@@ -32,6 +32,10 @@ class EtymologyService:
     """
 
     def __init__(self):
+        """
+          init   logic.
+        
+        """
         self._ety_available = False
         try:
             import ety
@@ -370,6 +374,13 @@ class EtymologyService:
             
             # Helper to clean text
             def clean_html_text(text):
+                """
+                Clean html text logic.
+                
+                Args:
+                    text: Description of text.
+                
+                """
                 text = re.sub(r'<sup[^>]*>.*?</sup>', '', text, flags=re.DOTALL)
                 text = re.sub(r'<a [^>]*>(.*?)</a>', r'\1', text, flags=re.DOTALL)
                 text = re.sub(r'<span [^>]*>(.*?)</span>', r'\1', text, flags=re.DOTALL)

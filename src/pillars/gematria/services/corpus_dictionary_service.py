@@ -23,6 +23,13 @@ class CorpusDictionaryService:
         return cls._instance
 
     def __init__(self, db_session: Optional[Session] = None):
+        """
+          init   logic.
+        
+        Args:
+            db_session: Description of db_session.
+        
+        """
         if self._initialized:
             return
             
@@ -75,4 +82,10 @@ class CorpusDictionaryService:
 
     @property
     def word_count(self) -> int:
+        """
+        Word count logic.
+        
+        Returns:
+            Result of word_count operation.
+        """
         return len(self._words)

@@ -594,6 +594,14 @@ class SavedCalculationsWindow(QMainWindow):
         form_layout.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
         
         def add_field(label, value):
+            """
+            Add field logic.
+            
+            Args:
+                label: Description of label.
+                value: Description of value.
+            
+            """
             val_label = QLineEdit(str(value))
             val_label.setReadOnly(True)
             val_label.setStyleSheet("border: 1px solid #e2e8f0; border-radius: 4px; padding: 5px; background: #f8fafc;")

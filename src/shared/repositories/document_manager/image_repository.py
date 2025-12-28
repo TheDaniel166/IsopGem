@@ -10,6 +10,13 @@ class ImageRepository:
     """Repository for managing document images."""
     
     def __init__(self, db: Session):
+        """
+          init   logic.
+        
+        Args:
+            db: Description of db.
+        
+        """
         self.db = db
 
     def get(self, image_id: int) -> Optional[DocumentImage]:

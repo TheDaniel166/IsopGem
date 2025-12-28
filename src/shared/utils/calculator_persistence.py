@@ -13,6 +13,10 @@ DEFAULT_MAX_HISTORY = 200
 
 @dataclass(frozen=True)
 class CalculatorState:
+    """
+    Calculator State class definition.
+    
+    """
     version: int = STATE_VERSION
     angle_mode: str = "RAD"  # "RAD" or "DEG"
     memory: float = 0.0
@@ -23,6 +27,12 @@ class CalculatorState:
 
 
 def default_state() -> CalculatorState:
+    """
+    Default state logic.
+    
+    Returns:
+        Result of default_state operation.
+    """
     return CalculatorState(history=[])
 
 

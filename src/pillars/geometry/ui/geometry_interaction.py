@@ -15,6 +15,10 @@ from PyQt6.QtGui import QColor, QAction, QIcon
 
 @dataclass
 class Connection:
+    """
+    Connection class definition.
+    
+    """
     start_index: int
     end_index: int
     color: QColor
@@ -22,6 +26,10 @@ class Connection:
 
 @dataclass
 class DotGroup:
+    """
+    Dot Group class definition.
+    
+    """
     name: str
     indices: Set[int] = field(default_factory=set)
     total_value: int = 0
@@ -50,6 +58,13 @@ class GeometryInteractionManager(QObject):
     draw_start_changed = pyqtSignal(object) # Emitted with new start index or None
 
     def __init__(self, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.groups: Dict[str, DotGroup] = {}
         self.connections: List[Connection] = []
@@ -82,6 +97,13 @@ class GeometryInteractionManager(QObject):
         return name
 
     def delete_group(self, name: str):
+        """
+        Remove group logic.
+        
+        Args:
+            name: Description of name.
+        
+        """
         if name in self.groups:
             del self.groups[name]
             if self.active_group_name == name:
@@ -89,6 +111,15 @@ class GeometryInteractionManager(QObject):
             self.groups_changed.emit()
 
     def add_dot_to_group(self, group_name: str, dot_index: int, value: int = 1):
+        """
+        Add dot to group logic.
+        
+        Args:
+            group_name: Description of group_name.
+            dot_index: Description of dot_index.
+            value: Description of value.
+        
+        """
         if group_name not in self.groups:
             return
         
@@ -99,6 +130,14 @@ class GeometryInteractionManager(QObject):
             self.groups_changed.emit()
 
     def remove_dot_from_group(self, group_name: str, dot_index: int):
+        """
+        Remove dot from group logic.
+        
+        Args:
+            group_name: Description of group_name.
+            dot_index: Description of dot_index.
+        
+        """
         if group_name not in self.groups:
             return
         group = self.groups[group_name]
@@ -120,6 +159,14 @@ class GeometryInteractionManager(QObject):
                 self.add_dot_to_group(self.active_group_name, dot_index)
 
     def add_connection(self, start: int, end: int):
+        """
+        Add connection logic.
+        
+        Args:
+            start: Description of start.
+            end: Description of end.
+        
+        """
         conn = Connection(start, end, self.pen_color, self.pen_width)
         self.connections.append(conn)
         self.connection_added.emit(conn)
@@ -146,6 +193,10 @@ class GeometryInteractionManager(QObject):
             self.draw_start_changed.emit(None)
 
     def clear(self):
+        """
+        Clear logic.
+        
+        """
         self.groups.clear()
         self.connections.clear()
         self.active_group_name = None
@@ -161,6 +212,14 @@ class GroupManagementPanel(QWidget):
     """UI for managing dot groups."""
     
     def __init__(self, manager: GeometryInteractionManager, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            manager: Description of manager.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.manager = manager
         self._refreshing_list = False
@@ -379,6 +438,14 @@ class ConnectionToolBar(QFrame):
     text_color_changed = pyqtSignal(object)  # Emits QColor
     
     def __init__(self, manager: GeometryInteractionManager, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            manager: Description of manager.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.manager = manager
         self._setup_ui()

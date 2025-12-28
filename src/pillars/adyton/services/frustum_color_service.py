@@ -38,6 +38,13 @@ class FrustumColorService:
     }
 
     def __init__(self, docs_root: Optional[Path] = None):
+        """
+          init   logic.
+        
+        Args:
+            docs_root: Description of docs_root.
+        
+        """
         base = docs_root or Path(__file__).resolve().parents[4] / "Docs" / "adyton_walls"
         self.docs_root = base
         self._cache_center: Dict[int, List[List[QColor]]] = {}
@@ -94,6 +101,17 @@ class FrustumColorService:
         return grid
 
     def get_center_color(self, wall_index: int, row: int, col: int) -> QColor:
+        """
+        Retrieve center color logic.
+        
+        Args:
+            wall_index: Description of wall_index.
+            row: Description of row.
+            col: Description of col.
+        
+        Returns:
+            Result of get_center_color operation.
+        """
         grid = self._load_wall(wall_index)
         try:
             return grid[row][col]
@@ -101,6 +119,18 @@ class FrustumColorService:
             return QColor("#000000")
 
     def get_side_color(self, wall_index: int, row: int, col: int, face_index: int) -> QColor:
+        """
+        Retrieve side color logic.
+        
+        Args:
+            wall_index: Description of wall_index.
+            row: Description of row.
+            col: Description of col.
+            face_index: Description of face_index.
+        
+        Returns:
+            Result of get_side_color operation.
+        """
         if face_index == FRUSTUM_FACE_RIGHT:
             return self._resolve_face_two(wall_index, col)
         if face_index == FRUSTUM_FACE_LEFT:
@@ -283,6 +313,15 @@ class FrustumColorService:
         planet_name = self._wall_planet_order[wall_index % len(self._wall_planet_order)]
 
         def planet_by_offset(offset: int) -> Optional[str]:
+            """
+            Planet by offset logic.
+            
+            Args:
+                offset: Description of offset.
+            
+            Returns:
+                Result of planet_by_offset operation.
+            """
             idx = (wall_index + offset) % len(self._wall_planet_order)
             return self._wall_planet_order[idx]
 
@@ -319,6 +358,15 @@ class FrustumColorService:
         planet_name = self._wall_planet_order[wall_index % len(self._wall_planet_order)]
 
         def planet_by_offset(offset: int) -> Optional[str]:
+            """
+            Planet by offset logic.
+            
+            Args:
+                offset: Description of offset.
+            
+            Returns:
+                Result of planet_by_offset operation.
+            """
             idx = (wall_index + offset) % len(self._wall_planet_order)
             return self._wall_planet_order[idx]
 
@@ -352,4 +400,3 @@ class FrustumColorService:
         if not self._zodiac_cycle:
             return 0
         return self._zodiac_cycle[col % len(self._zodiac_cycle)]
-

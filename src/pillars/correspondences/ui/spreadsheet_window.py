@@ -24,6 +24,17 @@ class SpreadsheetWindow(QMainWindow):
     Hosts the Grid and the Toolbar (commands).
     """
     def __init__(self, table_id, name, content, service: TableService, parent=None):
+        """
+          init   logic.
+        
+        Args:
+            table_id: Description of table_id.
+            name: Description of name.
+            content: Description of content.
+            service: Description of service.
+            parent: Description of parent.
+        
+        """
         super().__init__(parent)
         self.table_id = table_id
         self.service = service
@@ -275,6 +286,13 @@ class SpreadsheetWindow(QMainWindow):
         2. The Active Inline Editor (if exists)
         """
         def col_to_letter(col_idx):
+            """
+            Col to letter logic.
+            
+            Args:
+                col_idx: Description of col_idx.
+            
+            """
             res = ""
             while col_idx >= 0:
                 res = chr((col_idx % 26) + 65) + res
@@ -388,6 +406,13 @@ class SpreadsheetWindow(QMainWindow):
         
         def col_to_letter(col_idx):
             # 0 -> A, 26 -> AA
+            """
+            Col to letter logic.
+            
+            Args:
+                col_idx: Description of col_idx.
+            
+            """
             res = ""
             while col_idx >= 0:
                 res = chr((col_idx % 26) + 65) + res
@@ -848,6 +873,13 @@ class SpreadsheetWindow(QMainWindow):
         # Always update Name Box
         if current.isValid():
             def col_to_letter(col_idx):
+                """
+                Col to letter logic.
+                
+                Args:
+                    col_idx: Description of col_idx.
+                
+                """
                 res = ""
                 while col_idx >= 0:
                     res = chr((col_idx % 26) + 65) + res
@@ -890,6 +922,13 @@ class SpreadsheetWindow(QMainWindow):
         max_col = max(idx.column() for idx in indexes)
         
         def col_to_letter(col_idx):
+            """
+            Col to letter logic.
+            
+            Args:
+                col_idx: Description of col_idx.
+            
+            """
             res = ""
             while col_idx >= 0:
                 res = chr((col_idx % 26) + 65) + res
@@ -1021,16 +1060,34 @@ class SpreadsheetWindow(QMainWindow):
 
     # --- Border Settings Methods (Instance) ---
     def set_border_style(self, style):
+        """
+        Configure border style logic.
+        
+        Args:
+            style: Description of style.
+        
+        """
         self._border_settings["style"] = style
         self.statusBar().showMessage(f"Border Style set to {style.title()}", 3000)
         self._update_selected_borders()
 
     def set_border_width(self, width):
+        """
+        Configure border width logic.
+        
+        Args:
+            width: Description of width.
+        
+        """
         self._border_settings["width"] = width
         self.statusBar().showMessage(f"Border Width set to {width}px", 3000)
         self._update_selected_borders()
         
     def pick_border_color(self):
+        """
+        Pick border color logic.
+        
+        """
         c = QColorDialog.getColor()
         if c.isValid():
             self._border_settings["color"] = c.name()
@@ -1276,6 +1333,13 @@ class SpreadsheetWindow(QMainWindow):
         results_data = []
         
         def col_to_letter(col_idx):
+             """
+             Col to letter logic.
+             
+             Args:
+                 col_idx: Description of col_idx.
+             
+             """
              res = ""
              while col_idx >= 0:
                  res = chr((col_idx % 26) + 65) + res
