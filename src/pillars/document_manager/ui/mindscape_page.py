@@ -2,14 +2,19 @@
 Mindscape Page - The Canvas Editor.
 Widget for editing Mindscape documents with ribbon toolbar and infinite canvas support.
 """
+import logging
+from typing import Any, Optional
+
+from PyQt6.QtCore import QPointF, Qt
+from PyQt6.QtGui import QAction, QFont, QTextCharFormat, QTextListFormat
+from PyQt6.QtWidgets import (QColorDialog, QComboBox, QFontComboBox, QFrame,
+                             QHBoxLayout, QLabel, QMessageBox, QPushButton,
+                             QSlider, QTextEdit, QToolButton, QVBoxLayout,
+                             QWidget)
+
+from ..services.document_service import document_service_context
 from .canvas.infinite_canvas import InfiniteCanvasView
 from .ribbon_widget import RibbonWidget
-from ..services.document_service import document_service_context
-from PyQt6.QtWidgets import QApplication, QTextEdit, QWidget, QVBoxLayout, QHBoxLayout, QToolBar, QMessageBox, QComboBox, QFontComboBox, QColorDialog, QToolButton, QFrame, QSlider, QLabel, QPushButton
-from PyQt6.QtGui import QFont, QTextCharFormat, QAction, QIcon, QColor, QTextListFormat
-from PyQt6.QtCore import Qt, pyqtSlot, QPointF
-from typing import Optional, Any
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -21,17 +26,17 @@ class MindscapePageWidget(QWidget):
     """
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
-        self.layout = QVBoxLayout(self)
-        self.layout.setContentsMargins(0, 0, 0, 0)
-        self.layout.setSpacing(0)
+        self.main_layout = QVBoxLayout(self)
+        self.main_layout.setContentsMargins(0, 0, 0, 0)
+        self.main_layout.setSpacing(0)
         
         # --- Ribbon ---
         self.ribbon = RibbonWidget()
-        self.layout.addWidget(self.ribbon)
+        self.main_layout.addWidget(self.ribbon)
         
         # --- Canvas ---
         self.canvas = InfiniteCanvasView()
-        self.layout.addWidget(self.canvas)
+        self.main_layout.addWidget(self.canvas)
         
         # --- Status Bar with Zoom Controls ---
         self._init_status_bar()
@@ -48,12 +53,8 @@ class MindscapePageWidget(QWidget):
         # We use the Scene's focusItemChanged signal instead.
         if self.canvas.scene():
              self.canvas.scene().focusItemChanged.connect(self._on_scene_focus_changed)
-             
-        # Also keep Listen for "regular" focus changes just in case, or disable?
-        # Let's keep it but prioritize scene events if they work.
-        # Actually, let's rely on scene focus for the canvas context.
         
-    def _on_focus_changed(self, old: Any, new: Any) -> None:
+    def _on_focus_changed(self, _old: Any, new: Any) -> None:
         """Track which text editor is active."""
         if isinstance(new, QTextEdit):
             self.active_editor = new
@@ -78,7 +79,7 @@ class MindscapePageWidget(QWidget):
             self.active_editor.mergeCurrentCharFormat(fmt)
             self.active_editor.setFocus()
             
-    def _on_scene_focus_changed(self, new_item: Any, old_item: Any, reason: Any) -> None:
+    def _on_scene_focus_changed(self, new_item: Any, _old_item: Any, _reason: Any) -> None:
         """Track focus within the Graphics Scene."""
         if hasattr(new_item, 'widget_inner'):
              # It's one of our containers
@@ -89,30 +90,35 @@ class MindscapePageWidget(QWidget):
 
 
     def _toggle_bold(self) -> None:
+        """Toggle bold formatting on the active editor's selection."""
         if not self.active_editor: return
         fmt = QTextCharFormat()
         fmt.setFontWeight(QFont.Weight.Normal if self.active_editor.fontWeight() > QFont.Weight.Normal else QFont.Weight.Bold)
         self._apply_format(fmt)
 
     def _toggle_italic(self) -> None:
+        """Toggle italic formatting on the active editor's selection."""
         if not self.active_editor: return
         fmt = QTextCharFormat()
         fmt.setFontItalic(not self.active_editor.fontItalic())
         self._apply_format(fmt)
 
     def _toggle_underline(self) -> None:
+        """Toggle underline formatting on the active editor's selection."""
         if not self.active_editor: return
         fmt = QTextCharFormat()
         fmt.setFontUnderline(not self.active_editor.fontUnderline())
         self._apply_format(fmt)
         
     def _set_font_family(self, font: QFont) -> None:
+        """Apply the selected font family to the active editor's selection."""
         if not self.active_editor: return
         fmt = QTextCharFormat()
         fmt.setFontFamily(font.family())
         self._apply_format(fmt)
         
     def _set_font_size(self, size_str: str) -> None:
+        """Apply the selected font size to the active editor's selection."""
         if not self.active_editor: return
         try:
              size = float(size_str)
@@ -123,6 +129,7 @@ class MindscapePageWidget(QWidget):
              pass
 
     def _pick_color(self) -> None:
+        """Open color picker and apply selected color to text."""
         if not self.active_editor: return
         color = QColorDialog.getColor(Qt.GlobalColor.black, self, "Select Text Color")
         if color.isValid():
@@ -158,6 +165,7 @@ class MindscapePageWidget(QWidget):
         if wrapper: wrapper.clear_formatting()
 
     def _pick_highlight(self) -> None:
+        """Open color picker and apply selected highlight to text background."""
         if not self.active_editor: return
         color = QColorDialog.getColor(Qt.GlobalColor.yellow, self, "Select Highlight Color")
         if color.isValid():
@@ -165,21 +173,20 @@ class MindscapePageWidget(QWidget):
             if wrapper: wrapper.set_highlight(color)
 
     def _insert_table(self) -> None:
+        """Insert a default 3x3 table at the cursor position."""
         wrapper = self._get_active_wrapper()
-        if wrapper: wrapper.insert_table() # Default 3x3
+        if wrapper: wrapper.insert_table()
 
     def _insert_image(self) -> None:
+        """Open file dialog to insert an image at the cursor position."""
         wrapper = self._get_active_wrapper()
-        logger.info(f"[InsertImage] Active Editor: {self.active_editor}")
-        logger.info(f"[InsertImage] Wrapper found: {wrapper}")
         if wrapper:
             wrapper.insert_image()
-        else:
-            logger.warning("[InsertImage] No wrapper found!")
              
     # --- UI Initialization ---
 
     def _show_search(self) -> None:
+        """Show the search/replace dialog for the active editor."""
         wrapper = self._get_active_wrapper()
         if wrapper: wrapper.show_search()
 
@@ -201,8 +208,9 @@ class MindscapePageWidget(QWidget):
     
     def _start_polygon_insert(self) -> None:
         """Start inserting a configured polygon."""
-        from .shape_item import PolygonShapeItem
         from PyQt6.QtCore import Qt
+
+        from .shape_item import PolygonShapeItem
         
         sides, skip = self._pending_polygon
         self.canvas._insert_mode = True
@@ -211,7 +219,7 @@ class MindscapePageWidget(QWidget):
         self.canvas.setCursor(Qt.CursorShape.CrossCursor)
     
     def _init_status_bar(self) -> None:
-        """Initialize status bar with zoom controls."""
+        """Initialize the status bar containing zoom slider and percentage controls."""
         status_bar = QFrame()
         status_bar.setFrameShape(QFrame.Shape.NoFrame)
         status_bar.setStyleSheet("""
@@ -275,7 +283,7 @@ class MindscapePageWidget(QWidget):
         btn_zoom_reset.clicked.connect(self.canvas.zoom_reset)
         status_layout.addWidget(btn_zoom_reset)
         
-        self.layout.addWidget(status_bar)
+        self.main_layout.addWidget(status_bar)
         
         # Connect canvas zoom signal to update UI
         self.canvas.zoom_changed.connect(self._on_canvas_zoom_changed)
@@ -293,7 +301,7 @@ class MindscapePageWidget(QWidget):
 
 
     def _init_actions(self) -> None:
-        # Basic Formatting
+        """Initialize keyboard-shortcut actions for formatting commands."""
         self.act_save = QAction("Save", self)
         self.act_save.setShortcut("Ctrl+S")
         self.act_save.triggered.connect(self.save_page)
@@ -311,6 +319,7 @@ class MindscapePageWidget(QWidget):
         self.act_underline.triggered.connect(self._toggle_underline)
 
     def _init_ribbon(self) -> None:
+        """Build the Ribbon UI with Home and Insert tabs containing formatting groups."""
         tab_home = self.ribbon.add_ribbon_tab("Home")
         
         # File Group
@@ -429,11 +438,11 @@ class MindscapePageWidget(QWidget):
         grp_illus.add_widget(btn_img)
         
         # Shapes dropdown
-        from .shape_item import (
-            RectShapeItem, EllipseShapeItem, TriangleShapeItem,
-            LineShapeItem, ArrowShapeItem
-        )
         from PyQt6.QtWidgets import QMenu
+
+        from .shape_item import (ArrowShapeItem, EllipseShapeItem,
+                                 LineShapeItem, RectShapeItem,
+                                 TriangleShapeItem)
         
         btn_shapes = QToolButton()
         btn_shapes.setText("Shapes")
@@ -449,7 +458,7 @@ class MindscapePageWidget(QWidget):
         ]:
             action = menu_shapes.addAction(name)
             action.triggered.connect(
-                lambda checked, sc=shape_cls: self._start_shape_insert(sc)
+                lambda _checked, sc=shape_cls: self._start_shape_insert(sc)
             )
         
         menu_shapes.addSeparator()
@@ -471,7 +480,6 @@ class MindscapePageWidget(QWidget):
             
         self.current_doc_id = doc_id
         self.setEnabled(True)
-        # self.update_view_mode()
         
         try:
             with document_service_context() as svc:
@@ -497,18 +505,11 @@ class MindscapePageWidget(QWidget):
             return
 
         from .canvas.note_container import NoteContainerItemMovable
-        from PyQt6.QtGui import QTextDocument
 
         for item in self.canvas.scene().items():
             if isinstance(item, NoteContainerItemMovable):
                 editor = item.widget_inner.editor
                 if not editor: continue
-                
-                # Check if text exists in this container
-                if editor.document().find(text).isNull():
-                     # Try case insensitive (though find default depends on flags)
-                     # For now, minimal check
-                     pass
 
                 # Quick check (case-insensitive for convenience)
                 if text.lower() in editor.toPlainText().lower():
@@ -540,7 +541,7 @@ class MindscapePageWidget(QWidget):
                     # Map local X normally (scrolling is usually vertical)
                     target_local_x = editor.pos().x() + rect.center().x() + editor.horizontalScrollBar().value()
 
-                    point_in_scene = item.mapToScene(QPointF(target_local_x, target_local_y))
+
                     
                     # Force the container to expand NOW so the visual matches our calculated point
                     if hasattr(item, '_auto_resize'):

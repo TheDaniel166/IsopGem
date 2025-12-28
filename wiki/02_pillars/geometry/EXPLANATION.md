@@ -48,7 +48,7 @@ A collection of specific shape calculators inheriting from **`[base_shape.py](fi
 *   **And Others**: `annulus_shape`, `ellipse_shape`, `irregular_polygon_shape`, `quadrilateral_shape`, `rose_curve_shape`.
 
 ### **The Solid Library (3D)**
-3D calculators inheriting from **`[base_solid.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/geometry/services/base_solid.py)**.
+3D calculators for Platonic and Archimedean solids.
 *   **Platonic Solids**: `tetrahedron_solid`, `cube_solid`, `octahedron_solid`, `dodecahedron_solid`, `icosahedron_solid`.
 *   **Archimedean**: `archimedean_solids`, `regular_prism_solids`, `regular_antiprism_solids`.
 *   **Pyramids**: `square_pyramid_solid`, `rectangular_pyramid_solid`, `step_pyramid_solid`, `golden_pyramid_solid`.
@@ -64,15 +64,7 @@ A collection of specific shape calculators inheriting from **`[base_shape.py](fi
 
 ### **[geometry_hub.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/geometry/ui/geometry_hub.py)**
 *   **Architectural Role**: View (The Gateway)
-*   **The Purpose**: The sovereign entry point for Geometry operations.
-
-### **[geometry_calculator_window.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/geometry/ui/geometry_calculator_window.py)**
-*   **Architectural Role**: View (The Measurer)
-*   **The Purpose**: The primary interface for 2D shape analysis.
-*   **Key Logic**:
-    *   **3-Pane Layout**: Property List (Left), Canvas (Center), Results (Right).
-    *   `_on_property_changed`: Triggers bidirectional recalculation. If user changes "Area", the "Radius" updates automatically.
-*   **Dependencies**: `GeometryScene`, `GeometricShape`.
+*   **The Purpose**: The sovereign entry point for Geometry operations. Provides 2D shape analysis with a 3-Pane Layout (Property List, Canvas, Results).
 
 ### **[geometry_scene.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/geometry/ui/geometry_scene.py)**
 *   **Architectural Role**: View (The Canvas)

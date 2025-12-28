@@ -130,8 +130,3 @@ The **Gematria Protocol** is the **Tongue of God**. It is responsible for the tr
 *   **The Purpose**: High-speed retrieval of past calculations.
 *   **Key Logic**: Wraps `Whoosh` for text indexing.
 *   **Backing Store**: `[sqlite_calculation_repository.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/gematria/repositories/sqlite_calculation_repository.py)`
-
-### **[cipher_repository.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/gematria/repositories/cipher_repository.py)**
-*   **Architectural Role**: Persistence Layer
-*   **The Purpose**: Loads and caches the Cipher definitions.
-*   **Key Logic**: returns `[cipher_token.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/gematria/models/cipher_token.py)` objects.

@@ -15,21 +15,7 @@ The **Document Manager** is the **Scribe of the Akaschic Record**. It is respons
     *   **Context Management**: Maintains the `document_service_context` global singleton.
 *   **Signal Flow**:
     *   **Emits**: `document_imported`, `document_updated`.
-*   **Dependencies**: `DocumentRepository`, `DocumentSearchRepository`, `parsers`.
-
-### **[mindscape_service.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/document_manager/services/mindscape_service.py)**
-*   **Architectural Role**: Sovereign Service (The Weaver)
-*   **The Purpose**: Manages the "Mindscape", a graph database of Linked Thoughts.
-*   **Key Logic**:
-    *   `create_node`: Instantiates a `MindNode` with visual appearance data (JSON).
-    *   `link_nodes`: Creates a `MindEdge` between concepts.
-    *   `get_graph`: returns the full adjacency list for the visualizer.
-*   **Dependencies**: `MindscapeRepository`.
-
-### **[parsers.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/document_manager/services/parsers.py)**
-*   **Architectural Role**: Service (The Translator)
-*   **The Purpose**: Adapters for reading various file formats (`.pdf`, `.docx`, `.txt`, `.html`).
-*   **Key Logic**: Extracts raw text and metadata.
+*   **Dependencies**: `DocumentRepository`, `DocumentSearchRepository`.
 
 ### **[verse_teacher_service.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/document_manager/services/verse_teacher_service.py)**
 *   **Architectural Role**: Sovereign Service (The Rate)
@@ -70,16 +56,6 @@ The **Document Manager** is the **Scribe of the Akaschic Record**. It is respons
     *   **Drag & Drop**: Accepts dropped "Search Results" to create new nodes.
 *   **Signal Flow**:
     *   **Listens to**: `node_double_clicked` (Navigates to document).
-*   **Dependencies**: `MindscapeView`, `NodeInspectorWidget`.
-
-### **[mindscape_view.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/document_manager/ui/mindscape_view.py)**
-*   **Architectural Role**: View (The Canvas)
-*   **The Purpose**: The specialized `QGraphicsView` for the Mindscape.
-*   **Key Logic**: Handles zooming, panning, and item interaction (selection).
-
-### **[mindscape_inspector.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/document_manager/ui/mindscape_inspector.py)**
-*   **Architectural Role**: View (The Lens)
-*   **The Purpose**: Detailed property editor for a selected Node or Edge.
 
 ### **[rich_text_editor.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/document_manager/ui/rich_text_editor.py)**
 *   **Architectural Role**: View (The Quill)
@@ -105,12 +81,6 @@ The **Document Manager** is the **Scribe of the Akaschic Record**. It is respons
 *   **Architectural Role**: View (The Desk)
 *   **The Purpose**: The container window for the `RichTextEditor`.
 
-### **[verse_teacher_window.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/document_manager/ui/verse_teacher_window.py)**
-*   **Architectural Role**: View (The Classroom)
-*   **The Purpose**: The interface for training the verse segmentation logic.
-*   **Key Logic**:
-    *   **Diff View**: Shows the "Before" (Raw) and "After" (Proposed) split for Magus verification.
-
 ### **[graph_physics.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/document_manager/ui/graph_physics.py)**
 *   **Architectural Role**: Business Logic (Physics Engine)
 *   **The Purpose**: Calculates the layout of the Mindscape nodes.
@@ -128,11 +98,6 @@ The **Document Manager** is the **Scribe of the Akaschic Record**. It is respons
 ### **[document_verse.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/document_manager/models/document_verse.py)**
 *   **Architectural Role**: Domain Model
 *   **The Purpose**: SQL entity for a single verse within a Holy Book.
-
-### **[mindscape.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/document_manager/models/mindscape.py)**
-*   **Architectural Role**: Domain Model
-*   **The Purpose**: Entities for `MindNode` and `MindEdge` (defined in `[mindscape_items.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/document_manager/ui/mindscape_items.py)`).
-*   **Key Logic**: Uses `JSON` columns to store flexible "Appearance" data (Color, Shape, Line Style) without schema migration.
 
 ## Infrastructure
 

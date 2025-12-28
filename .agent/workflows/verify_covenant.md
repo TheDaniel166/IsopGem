@@ -1,5 +1,5 @@
 ---
-description: Verify the alignment of the Covenant and the Primal Seed
+description: "♄ Saturn: Verify the alignment of the Covenant and the Primal Seed"
 ---
 
 # The Rite of the Sentinel
@@ -8,7 +8,7 @@ This workflow verifies that the Public Law (`THE_COVENANT.md`) and the Internal 
 
 1. Run the verification script:
    ```bash
-   python3 scripts/verify_sentinel.py
+   python3 workflow_scripts/verify_sentinel.py
    ```
 
 2. If the script fails (Exit Code 1):
