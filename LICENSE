@@ -1,0 +1,111 @@
+# IsopGem - Proprietary Software License Agreement
+
+**Copyright © 2024 Daniel Burkett. All Rights Reserved.**
+
+---
+
+## 1. DEFINITIONS
+
+- **"Software"** means the IsopGem application, including all source code, object code, 
+  documentation, algorithms, user interfaces, APIs, and any related materials.
+- **"Licensor"** means Daniel Burkett, the copyright holder.
+- **"You"** means any individual or legal entity accessing this repository.
+
+---
+
+## 2. GRANT OF LICENSE
+
+**NO LICENSE IS GRANTED.** This Software is proprietary and confidential. 
+Access to this repository does not constitute permission to:
+
+- Use, copy, or reproduce the Software
+- Modify, adapt, or create derivative works
+- Distribute, publish, or sublicense the Software
+- Reverse engineer, decompile, or disassemble the Software
+- Use the Software for commercial or non-commercial purposes
+- Incorporate any portion of the Software into other projects
+
+---
+
+## 3. INTELLECTUAL PROPERTY
+
+### 3.1 Copyright
+The Software and all copies thereof are proprietary to Licensor and title thereto 
+remains exclusively with Licensor. All applicable rights to patents, copyrights, 
+trademarks, and trade secrets in the Software are and shall remain in Licensor.
+
+### 3.2 Trade Secrets
+The algorithms, methods, and techniques embodied in the Software, including but 
+not limited to the "Ternary Quadset" (TQ) system, "Trigrammaton Qabalah" logic, 
+and related esoteric calculation methods, constitute trade secrets of the Licensor.
+
+### 3.3 No Implied Rights
+Nothing in this Agreement shall be construed to grant You any rights or licenses 
+by implication, estoppel, or otherwise.
+
+---
+
+## 4. RESTRICTIONS
+
+You shall NOT:
+- Clone, download, or copy the Software for any purpose other than viewing
+- Use any portion of the Software in your own projects
+- Train machine learning models on this codebase
+- Scrape, index, or archive this repository
+- Claim authorship or ownership of any part of the Software
+- Remove or alter any copyright, trademark, or proprietary notices
+
+---
+
+## 5. CONFIDENTIALITY
+
+The Software contains confidential and proprietary information. You agree to:
+- Treat the Software as confidential information
+- Not disclose the Software to any third party
+- Not use the Software for any purpose not expressly permitted
+
+---
+
+## 6. DISCLAIMER OF WARRANTIES
+
+THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
+PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL THE LICENSOR BE LIABLE 
+FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, 
+OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE.
+
+---
+
+## 7. LIMITATION OF LIABILITY
+
+IN NO EVENT SHALL LICENSOR BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, 
+EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING BUT NOT LIMITED TO LOSS OF PROFITS, 
+DATA, OR BUSINESS INTERRUPTION) ARISING OUT OF THE USE OR INABILITY TO USE THE SOFTWARE.
+
+---
+
+## 8. TERMINATION
+
+Any violation of this Agreement automatically terminates any implied permission 
+to access this repository. Licensor reserves the right to pursue legal remedies 
+for any unauthorized use.
+
+---
+
+## 9. GOVERNING LAW
+
+This Agreement shall be governed by and construed in accordance with the laws of 
+the United States, without regard to conflicts of law principles.
+
+---
+
+## 10. CONTACT
+
+For licensing inquiries, collaboration requests, or permissions, contact:
+
+**Daniel Burkett**  
+GitHub: [@TheDaniel166](https://github.com/TheDaniel166)
+
+---
+
+*Last Updated: December 28, 2024*
