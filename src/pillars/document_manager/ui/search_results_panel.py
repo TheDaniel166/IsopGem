@@ -1,3 +1,7 @@
+"""
+Search Results Panel - The Librarian's List.
+Side panel displaying search results with add-to-graph and open-document actions.
+"""
 
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QListWidget, QListWidgetItem, 

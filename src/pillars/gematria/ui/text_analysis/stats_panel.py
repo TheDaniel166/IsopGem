@@ -1,3 +1,7 @@
+"""
+Stats Panel - The Numerological Summary.
+Panel displaying document statistics including word count and gematria totals.
+"""
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QFormLayout, QLabel, QGroupBox, QFrame
 )

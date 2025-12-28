@@ -1,3 +1,7 @@
+"""
+Correspondence Hub - The Emerald Tablet Library.
+Central hub UI for managing, importing, and launching CorrespondenceTable spreadsheets.
+"""
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QListWidget, QListWidgetItem, QFileDialog, 
     QMessageBox, QInputDialog, QMenu, QDialog, QDialogButtonBox, QFormLayout, 

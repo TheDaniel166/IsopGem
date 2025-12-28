@@ -1,3 +1,7 @@
+"""
+Fractal Network Dialog - The Dimensional Descent Viewer.
+A popup that visualizes the hierarchical path from Singularity (6D) to Leaf (0D) for any Ditrune.
+"""
 
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QLabel, QWidget, QFrame

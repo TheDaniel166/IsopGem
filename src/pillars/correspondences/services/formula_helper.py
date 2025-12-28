@@ -1,3 +1,7 @@
+"""
+Formula Helper - The Wizard's Apprentice.
+Services for discovering, searching, and validating spreadsheet formulas.
+"""
 from typing import List, Dict, Optional
 from .formula_engine import FormulaRegistry, FormulaMetadata
 

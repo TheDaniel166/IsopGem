@@ -1,3 +1,7 @@
+"""
+Kamea Window - The Unified Field Visualizer.
+Main window for the 27x27 Kamea grid with 2D/3D view switching, dimension filtering, and side panel analysis.
+"""
 from PyQt6.QtWidgets import (
     QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QLabel, QStatusBar,
     QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QLabel, QStatusBar,

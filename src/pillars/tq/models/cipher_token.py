@@ -1,3 +1,7 @@
+"""
+Cipher Token Model - The Base-27 Alphabet.
+Defines the mapping between decimal values (0-26), ternary trigrams, and their symbolic correspondences.
+"""
 from dataclasses import dataclass
 from typing import Optional
 

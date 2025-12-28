@@ -6,6 +6,11 @@ This manifest dissects the "Keeper of Time," mapping the harmonic cycles of the 
 
 
 
+
+
+
+
+
 ---
 
 **File:** `src/pillars/time_mechanics/models/thelemic_calendar_models.py`
@@ -43,7 +48,7 @@ This manifest dissects the "Keeper of Time," mapping the harmonic cycles of the 
 
 **Role:** `[Bone] (Model)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Tzolkin Models - The Harmonic Cycle Data.
 
 **Input (Ingests):**
 * `gregorian_date` (Field)
@@ -118,7 +123,7 @@ This manifest dissects the "Keeper of Time," mapping the harmonic cycles of the 
 
 **Role:** `[Muscle] (Service)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Tzolkin Service - The Temporal Navigator.
 
 **Input (Ingests):**
 * Pure data structure or utility module.
@@ -165,7 +170,7 @@ This manifest dissects the "Keeper of Time," mapping the harmonic cycles of the 
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Dynamis Window - The Circulation of Energies.
 
 **Input (Ingests):**
 * `trigram_str`
@@ -227,7 +232,7 @@ This manifest dissects the "Keeper of Time," mapping the harmonic cycles of the 
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Time Mechanics Hub - The Keeper of Time.
 
 **Input (Ingests):**
 * `window_manager`
@@ -261,7 +266,7 @@ This manifest dissects the "Keeper of Time," mapping the harmonic cycles of the 
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Tzolkin Calculator Window - The Harmonic Grid.
 
 **Input (Ingests):**
 * `parent`

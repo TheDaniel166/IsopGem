@@ -1,3 +1,7 @@
+"""
+Wall Designer - The Constellation Map Editor.
+Visualizes the 13×8 planetary wall grids with asterism lines, Grimoire data, and Quadset integration.
+"""
 import sys
 import os
 import json

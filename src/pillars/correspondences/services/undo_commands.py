@@ -1,3 +1,7 @@
+"""
+Undo Commands - The Chronicle of Edits.
+QUndoCommand implementations for reversible spreadsheet cell, row, column, and sorting operations.
+"""
 from PyQt6.QtGui import QUndoCommand
 from PyQt6.QtCore import QModelIndex, Qt
 

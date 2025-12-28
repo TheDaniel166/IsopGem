@@ -1,3 +1,7 @@
+"""
+Geometry View - The Sacred Canvas Viewport.
+Graphics view for rendering geometry scenes with zoom, pan, and vertex measurement support.
+"""
 from __future__ import annotations
 import math
 from typing import Optional, List

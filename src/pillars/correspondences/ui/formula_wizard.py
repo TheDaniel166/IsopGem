@@ -1,3 +1,7 @@
+"""
+Formula Wizard - The Scribe's Grimoire.
+Two-stage dialog for selecting and configuring spreadsheet formulas with live preview.
+"""
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLineEdit, QListWidget, 
     QTextBrowser, QPushButton, QLabel, QDialogButtonBox, QListWidgetItem,

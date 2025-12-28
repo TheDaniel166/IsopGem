@@ -1,3 +1,7 @@
+"""
+Infinite Canvas - The Boundless Workspace.
+OneNote-style expandable canvas with click-to-type note containers, shape support, and zoom controls.
+"""
 from PyQt6.QtWidgets import QGraphicsView, QGraphicsScene
 from PyQt6.QtCore import Qt, pyqtSignal, QPointF
 from PyQt6.QtGui import QPainter, QBrush, QColor, QMouseEvent
@@ -127,20 +131,48 @@ class InfiniteCanvasView(QGraphicsView):
     def add_note_container(self, x, y, content="", width=400):
         container = NoteContainerItemMovable(x, y, width, content)
         self._scene.addItem(container)
-        container.content_changed.connect(self.content_changed.emit)
+        # Connect to handler that updates scene rect
+        container.content_changed.connect(self._on_item_changed)
         container.setFocus()
         
-        # Ensure scene rect grows
-        self._ensure_visible(x, y)
+        # Initial check
+        self._update_scene_rect()
         self.content_changed.emit()
 
-    def _ensure_visible(self, x, y):
-        rect = self._scene.sceneRect()
-        if x > rect.right() - 500:
-            rect.setWidth(rect.width() + 1000)
-        if y > rect.bottom() - 500:
-            rect.setHeight(rect.height() + 1000)
-        self._scene.setSceneRect(rect)
+    def _on_item_changed(self):
+        """Handle item content changes."""
+        self._update_scene_rect()
+        self.content_changed.emit()
+
+    def _update_scene_rect(self):
+        """Dynamically expand scene rect to fit all items."""
+        items_rect = self._scene.itemsBoundingRect()
+        scene_rect = self._scene.sceneRect()
+        
+        # Check if we need to grow
+        # Default size is 5000x5000, we never shrink below that generally
+        # Logic: If items go beyond current rect - 500 margin, grow by 2000
+        
+        new_w = scene_rect.width()
+        new_h = scene_rect.height()
+        changed = False
+        
+        if items_rect.right() > scene_rect.right() - 500:
+            new_w = max(new_w, items_rect.right() + 1000)
+            changed = True
+            
+        if items_rect.bottom() > scene_rect.bottom() - 500:
+            new_h = max(new_h, items_rect.bottom() + 1000)
+            changed = True
+            
+        if changed:
+            # Save current center point to prevent view jump
+            current_center = self.mapToScene(self.viewport().rect().center())
+            
+            self._scene.setSceneRect(0, 0, new_w, new_h)
+            
+            # Restore center (re-center on the same point)
+            self.centerOn(current_center)
 
     def clear_canvas(self):
         self._scene.clear()
@@ -232,7 +264,21 @@ class InfiniteCanvasView(QGraphicsView):
         }
         return json.dumps(payload)
 
-    def load_json_data(self, json_str: str):
+    def get_searchable_text(self) -> str:
+        """Extract plain text from all note containers for indexing."""
+        texts = []
+        for item in self._scene.items():
+            if isinstance(item, NoteContainerItemMovable):
+                # We need extracted plain text
+                # We can use item.widget_inner.editor.toPlainText()
+                # But widget_inner might not be exposed directly if we didn't import strict type
+                # But python is dynamic.
+                if hasattr(item.widget_inner, 'editor'):
+                     texts.append(item.widget_inner.editor.toPlainText())
+        
+        return "\n".join(texts)
+
+    def load_json_data(self, json_str: str, reset_scroll: bool = True):
         """Load items from JSON."""
         self.clear_canvas()
         if not json_str:
@@ -262,4 +308,9 @@ class InfiniteCanvasView(QGraphicsView):
             # Fallback: Treat as raw HTML and create single container
             self.add_note_container(50, 50, json_str)
             logger.info("Converted legacy HTML to Note Container")
+            
+        # Ensure view starts at top-left
+        if reset_scroll:
+            self.horizontalScrollBar().setValue(0)
+            self.verticalScrollBar().setValue(0)
 

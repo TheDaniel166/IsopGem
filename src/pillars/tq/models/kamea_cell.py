@@ -1,3 +1,7 @@
+"""
+Kamea Cell Model - The 27x27 Grid Unit.
+Represents a single cell in the Kamea matrix with its coordinates, ternary value, and bigram decomposition.
+"""
 from dataclasses import dataclass
 from typing import Tuple
 

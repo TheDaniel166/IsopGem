@@ -1,3 +1,7 @@
+"""
+Tzolkin Service - The Temporal Navigator.
+Manages 260-day harmonic cycle calculations with Ditrune mapping and Conrune logic.
+"""
 import csv
 import os
 import logging

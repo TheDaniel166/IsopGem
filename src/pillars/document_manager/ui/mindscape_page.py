@@ -1,9 +1,14 @@
+"""
+Mindscape Page - The Canvas Editor.
+Widget for editing Mindscape documents with ribbon toolbar and infinite canvas support.
+"""
 from .canvas.infinite_canvas import InfiniteCanvasView
 from .ribbon_widget import RibbonWidget
 from ..services.document_service import document_service_context
 from PyQt6.QtWidgets import QApplication, QTextEdit, QWidget, QVBoxLayout, QHBoxLayout, QToolBar, QMessageBox, QComboBox, QFontComboBox, QColorDialog, QToolButton, QFrame, QSlider, QLabel, QPushButton
 from PyQt6.QtGui import QFont, QTextCharFormat, QAction, QIcon, QColor, QTextListFormat
-from PyQt6.QtCore import Qt, pyqtSlot
+from PyQt6.QtCore import Qt, pyqtSlot, QPointF
+from typing import Optional, Any
 import logging
 
 logger = logging.getLogger(__name__)
@@ -14,7 +19,7 @@ class MindscapePageWidget(QWidget):
     Uses InfiniteCanvasView for OneNote-style editing.
     Hosts a Global Ribbon for formatting active text boxes.
     """
-    def __init__(self, parent=None):
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.layout = QVBoxLayout(self)
         self.layout.setContentsMargins(0, 0, 0, 0)
@@ -48,32 +53,32 @@ class MindscapePageWidget(QWidget):
         # Let's keep it but prioritize scene events if they work.
         # Actually, let's rely on scene focus for the canvas context.
         
-    def _on_focus_changed(self, old, new):
+    def _on_focus_changed(self, old: Any, new: Any) -> None:
         """Track which text editor is active."""
         if isinstance(new, QTextEdit):
             self.active_editor = new
-            # TODO: Update Ribbon UI to reflect current selection state (Bold/Italic status)
+            # NOTE: Ribbon state sync planned for future enhancement (see ADR-007)
         elif new == self.canvas:
              pass
 
     # --- Formatting Helpers ---
     
-    def _get_active_wrapper(self):
+    def _get_active_wrapper(self) -> Optional[Any]:
         """Get the RichTextEditor wrapper for the active editor."""
-        if self.active_editor and self.active_editor.parent():
-             parent = self.active_editor.parent()
-             # Duck typing check for our wrapper API
-             if hasattr(parent, 'toggle_list'):
-                 return parent
+        if self.active_editor:
+            parent = self.active_editor.parent()
+            # Duck typing check for our wrapper API
+            if parent and hasattr(parent, 'toggle_list'):
+                return parent
         return None
 
-    def _apply_format(self, fmt: QTextCharFormat):
+    def _apply_format(self, fmt: QTextCharFormat) -> None:
         """Apply format to current editor selection."""
         if self.active_editor:
             self.active_editor.mergeCurrentCharFormat(fmt)
             self.active_editor.setFocus()
             
-    def _on_scene_focus_changed(self, new_item, old_item, reason):
+    def _on_scene_focus_changed(self, new_item: Any, old_item: Any, reason: Any) -> None:
         """Track focus within the Graphics Scene."""
         if hasattr(new_item, 'widget_inner'):
              # It's one of our containers
@@ -82,51 +87,32 @@ class MindscapePageWidget(QWidget):
                  self.active_editor = inner.rt_editor.editor
                  return
 
-    # --- Formatting Helpers ---
-    
-    def _get_active_wrapper(self):
-        """Get the RichTextEditor wrapper for the active editor."""
-        if self.active_editor and self.active_editor.parent():
-            parent = self.active_editor.parent()
-            # Duck typing check for our wrapper API
-            if hasattr(parent, 'toggle_list'):
-                return parent
-        return None
 
-    def _apply_format(self, fmt: QTextCharFormat):
-        """Apply format to current editor selection."""
-        print(f"[Format] Applying format to {self.active_editor}")
-        if self.active_editor:
-            self.active_editor.mergeCurrentCharFormat(fmt)
-            self.active_editor.setFocus()
-        else:
-            print("[Format] No active editor!")
-
-    def _toggle_bold(self):
+    def _toggle_bold(self) -> None:
         if not self.active_editor: return
         fmt = QTextCharFormat()
         fmt.setFontWeight(QFont.Weight.Normal if self.active_editor.fontWeight() > QFont.Weight.Normal else QFont.Weight.Bold)
         self._apply_format(fmt)
 
-    def _toggle_italic(self):
+    def _toggle_italic(self) -> None:
         if not self.active_editor: return
         fmt = QTextCharFormat()
         fmt.setFontItalic(not self.active_editor.fontItalic())
         self._apply_format(fmt)
 
-    def _toggle_underline(self):
+    def _toggle_underline(self) -> None:
         if not self.active_editor: return
         fmt = QTextCharFormat()
         fmt.setFontUnderline(not self.active_editor.fontUnderline())
         self._apply_format(fmt)
         
-    def _set_font_family(self, font: QFont):
+    def _set_font_family(self, font: QFont) -> None:
         if not self.active_editor: return
         fmt = QTextCharFormat()
         fmt.setFontFamily(font.family())
         self._apply_format(fmt)
         
-    def _set_font_size(self, size_str):
+    def _set_font_size(self, size_str: str) -> None:
         if not self.active_editor: return
         try:
              size = float(size_str)
@@ -136,7 +122,7 @@ class MindscapePageWidget(QWidget):
         except ValueError:
              pass
 
-    def _pick_color(self):
+    def _pick_color(self) -> None:
         if not self.active_editor: return
         color = QColorDialog.getColor(Qt.GlobalColor.black, self, "Select Text Color")
         if color.isValid():
@@ -144,60 +130,64 @@ class MindscapePageWidget(QWidget):
              fmt.setForeground(color)
              self._apply_format(fmt)
 
-    def _set_align(self, alignment):
+    def _set_align(self, alignment: Qt.AlignmentFlag) -> None:
         if self.active_editor:
              self.active_editor.setAlignment(alignment)
              self.active_editor.setFocus()
 
-    def _toggle_list(self, style):
+    def _toggle_list(self, style: QTextListFormat.Style) -> None:
         wrapper = self._get_active_wrapper()
         if wrapper:
              wrapper.toggle_list(style)
              self.active_editor.setFocus()
 
-    def _toggle_strikethrough(self):
+    def _toggle_strikethrough(self) -> None:
         wrapper = self._get_active_wrapper()
         if wrapper: wrapper.toggle_strikethrough()
 
-    def _toggle_subscript(self):
+    def _toggle_subscript(self) -> None:
         wrapper = self._get_active_wrapper()
         if wrapper: wrapper.toggle_subscript()
 
-    def _toggle_superscript(self):
+    def _toggle_superscript(self) -> None:
         wrapper = self._get_active_wrapper()
         if wrapper: wrapper.toggle_superscript()
         
-    def _clear_formatting(self):
+    def _clear_formatting(self) -> None:
         wrapper = self._get_active_wrapper()
         if wrapper: wrapper.clear_formatting()
 
-    def _pick_highlight(self):
+    def _pick_highlight(self) -> None:
         if not self.active_editor: return
         color = QColorDialog.getColor(Qt.GlobalColor.yellow, self, "Select Highlight Color")
         if color.isValid():
             wrapper = self._get_active_wrapper()
             if wrapper: wrapper.set_highlight(color)
 
-    def _insert_table(self):
+    def _insert_table(self) -> None:
         wrapper = self._get_active_wrapper()
         if wrapper: wrapper.insert_table() # Default 3x3
 
-    def _insert_image(self):
+    def _insert_image(self) -> None:
         wrapper = self._get_active_wrapper()
+        logger.info(f"[InsertImage] Active Editor: {self.active_editor}")
+        logger.info(f"[InsertImage] Wrapper found: {wrapper}")
         if wrapper:
             wrapper.insert_image()
+        else:
+            logger.warning("[InsertImage] No wrapper found!")
              
     # --- UI Initialization ---
 
-    def _show_search(self):
+    def _show_search(self) -> None:
         wrapper = self._get_active_wrapper()
         if wrapper: wrapper.show_search()
 
-    def _start_shape_insert(self, shape_type: type):
+    def _start_shape_insert(self, shape_type: type) -> None:
         """Start inserting a shape on the canvas."""
         self.canvas.start_shape_insert(shape_type)
     
-    def _show_polygon_dialog(self):
+    def _show_polygon_dialog(self) -> None:
         """Show polygon configuration dialog."""
         from .shape_features import PolygonConfigDialog
         from .shape_item import PolygonShapeItem
@@ -209,7 +199,7 @@ class MindscapePageWidget(QWidget):
             self._pending_polygon = (sides, skip)
             self._start_polygon_insert()
     
-    def _start_polygon_insert(self):
+    def _start_polygon_insert(self) -> None:
         """Start inserting a configured polygon."""
         from .shape_item import PolygonShapeItem
         from PyQt6.QtCore import Qt
@@ -220,7 +210,7 @@ class MindscapePageWidget(QWidget):
         self.canvas._polygon_config = (sides, skip)
         self.canvas.setCursor(Qt.CursorShape.CrossCursor)
     
-    def _init_status_bar(self):
+    def _init_status_bar(self) -> None:
         """Initialize status bar with zoom controls."""
         status_bar = QFrame()
         status_bar.setFrameShape(QFrame.Shape.NoFrame)
@@ -290,11 +280,11 @@ class MindscapePageWidget(QWidget):
         # Connect canvas zoom signal to update UI
         self.canvas.zoom_changed.connect(self._on_canvas_zoom_changed)
     
-    def _on_zoom_slider_changed(self, value: int):
+    def _on_zoom_slider_changed(self, value: int) -> None:
         """Handle slider value change."""
         self.canvas.set_zoom(value / 100.0)
     
-    def _on_canvas_zoom_changed(self, percentage: float):
+    def _on_canvas_zoom_changed(self, percentage: float) -> None:
         """Update UI when canvas zoom changes."""
         self.zoom_slider.blockSignals(True)
         self.zoom_slider.setValue(int(percentage))
@@ -302,7 +292,7 @@ class MindscapePageWidget(QWidget):
         self.zoom_label.setText(f"{int(percentage)}%")
 
 
-    def _init_actions(self):
+    def _init_actions(self) -> None:
         # Basic Formatting
         self.act_save = QAction("Save", self)
         self.act_save.setShortcut("Ctrl+S")
@@ -320,7 +310,7 @@ class MindscapePageWidget(QWidget):
         self.act_underline.setShortcut("Ctrl+U")
         self.act_underline.triggered.connect(self._toggle_underline)
 
-    def _init_ribbon(self):
+    def _init_ribbon(self) -> None:
         tab_home = self.ribbon.add_ribbon_tab("Home")
         
         # File Group
@@ -469,9 +459,11 @@ class MindscapePageWidget(QWidget):
         btn_shapes.setMenu(menu_shapes)
         grp_illus.add_widget(btn_shapes)
         
-    def load_node(self, doc_id: int):
+    def load_node(self, doc_id: int, reset_scroll: bool = True) -> None:
         """Load content from Document."""
         if self.current_doc_id == doc_id:
+            # Still re-enable just in case
+            self.setEnabled(True)
             return
             
         if self.current_doc_id:
@@ -488,7 +480,7 @@ class MindscapePageWidget(QWidget):
                     # Load canvas data (raw_content should be JSON)
                     # If empty or HTML, load_json_data handles fallback logic
                     content = doc.raw_content or doc.content or ""
-                    self.canvas.load_json_data(content)
+                    self.canvas.load_json_data(content, reset_scroll=reset_scroll)
                 else:
                     self.canvas.clear_canvas()
                     self.setEnabled(False)
@@ -499,7 +491,77 @@ class MindscapePageWidget(QWidget):
             self.canvas.clear_canvas()
             self.canvas.add_note_container(50, 50, f"Error loading: {e}")
 
-    def save_page(self):
+    def highlight_search_term(self, text: str) -> None:
+        """Find text in any note container and jump to it."""
+        if not text or not self.canvas.scene():
+            return
+
+        from .canvas.note_container import NoteContainerItemMovable
+        from PyQt6.QtGui import QTextDocument
+
+        for item in self.canvas.scene().items():
+            if isinstance(item, NoteContainerItemMovable):
+                editor = item.widget_inner.editor
+                if not editor: continue
+                
+                # Check if text exists in this container
+                if editor.document().find(text).isNull():
+                     # Try case insensitive (though find default depends on flags)
+                     # For now, minimal check
+                     pass
+
+                # Quick check (case-insensitive for convenience)
+                if text.lower() in editor.toPlainText().lower():
+                    # Process this item
+                    item.setFocus()
+                    editor.setFocus()
+                    
+                    # Highlight in editor
+                    # Block signals to prevent "Content Changed" -> Scene Expansion -> View Reset
+                    was_blocked = editor.signalsBlocked()
+                    editor.blockSignals(True)
+                    try:
+                        wrapper = item.widget_inner.rt_editor
+                        wrapper.search_feature.find_next(text, False, False)
+                    finally:
+                        editor.blockSignals(was_blocked)
+                    
+                    # Calculate position based on CONTENT coordinates, not just viewport
+                    # This handles the case where the container starts small (scrolled) and then expands
+                    rect = editor.cursorRect()
+                    content_y = rect.center().y() + editor.verticalScrollBar().value()
+                    
+                    # Assume editor is at (0, 20) inside the inner widget (due to handle)
+                    # We can map precisely if we want, but this logic is robust for the expansion case
+                    # editor.pos().y() is usually 20
+                    offset_y = editor.pos().y()
+                    
+                    target_local_y = offset_y + content_y
+                    # Map local X normally (scrolling is usually vertical)
+                    target_local_x = editor.pos().x() + rect.center().x() + editor.horizontalScrollBar().value()
+
+                    point_in_scene = item.mapToScene(QPointF(target_local_x, target_local_y))
+                    
+                    # Force the container to expand NOW so the visual matches our calculated point
+                    if hasattr(item, '_auto_resize'):
+                        item._auto_resize()
+                        
+                    # CRITICAL: Since we blocked signals, the Canvas doesn't know it needs to grow.
+                    # We must tell it manually before we try to look at the new coordinates.
+                    if hasattr(self.canvas, '_update_scene_rect'):
+                        self.canvas._update_scene_rect()
+                        
+                    # Use QTimer to ensure this happens after layout
+                    from PyQt6.QtCore import QTimer
+                    def do_center():
+                        # Recalculate point in case scene transform changed slightly
+                        final_point = item.mapToScene(QPointF(target_local_x, target_local_y))
+                        self.canvas.centerOn(final_point)
+                        
+                    QTimer.singleShot(10, do_center)
+                    return
+
+    def save_page(self) -> None:
         """Persist changes."""
         if not self.current_doc_id:
             return
@@ -509,15 +571,15 @@ class MindscapePageWidget(QWidget):
         try:
             with document_service_context() as svc:
                 # Save JSON to raw_content. 
-                # For 'content', maybe save a text-only dump?
-                # Or just save JSON to raw_content and dummy to content.
-                svc.update_document(self.current_doc_id, content="[Canvas Data]", raw_content=json_data)
+                # Save extracted text to content for searching.
+                searchable_text = self.canvas.get_searchable_text()
+                svc.update_document(self.current_doc_id, content=searchable_text, raw_content=json_data)
             logger.info(f"Saved page {self.current_doc_id}")
             # Optional: Toast
         except Exception as e:
             QMessageBox.critical(self, "Save Error", str(e))
 
-    def clear(self):
+    def clear(self) -> None:
         self.current_doc_id = None
         self.canvas.clear_canvas()
         self.setEnabled(False)

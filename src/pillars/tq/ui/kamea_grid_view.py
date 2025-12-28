@@ -1,3 +1,7 @@
+"""
+Kamea Grid View - The 2D Matrix Renderer.
+A QGraphicsView-based visualization of the 27x27 Kamea grid with quadset highlighting and dimension filtering.
+"""
 import logging
 import math
 from typing import Dict, Tuple, Optional

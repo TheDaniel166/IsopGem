@@ -1,3 +1,7 @@
+"""
+Search Panel - The Value Finder.
+Widget for searching text by gematria value with match list and export support.
+"""
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, 
     QSpinBox, QPushButton, QListWidget, QListWidgetItem, 

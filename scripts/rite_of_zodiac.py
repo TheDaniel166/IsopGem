@@ -11,7 +11,11 @@ import inspect
 import tracemalloc
 import random
 import string
-import coverage
+try:
+    import coverage
+    HAS_COVERAGE = True
+except ImportError:
+    HAS_COVERAGE = False
 import threading
 from typing import Any, Callable, List
 
@@ -48,7 +52,7 @@ class ZodiacAudit:
         self.target_str = target_module_str
         self.module = None
         self.score = 0
-        self.cov = coverage.Coverage()
+        self.cov = coverage.Coverage() if HAS_COVERAGE else None
         
     def load_target(self):
         try:

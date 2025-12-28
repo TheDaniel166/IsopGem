@@ -1,3 +1,7 @@
+"""
+Smart Filter Service - The Linguistic Sieve.
+Filters Gematria phrases using Spacy NLP to remove linguistic nonsense patterns.
+"""
 import spacy
 from typing import List, Tuple
 import logging

@@ -1,3 +1,7 @@
+"""
+Ditrunal Service - The Nuclear Mutation Engine.
+Implements recursive mutation algorithms to find Prime Ditrunes and classify cells into their 9 Canonical Families.
+"""
 from typing import Tuple, List, Optional
 from ..models.kamea_cell import KameaCell
 from ..services.ternary_service import TernaryService

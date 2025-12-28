@@ -1,3 +1,7 @@
+"""
+Baphomet Panel - The Converse Analysis Inspector.
+Displays the Converse Pair relationship, differential, and sumlation for selected Kamea cells.
+"""
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QFrame
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont, QColor

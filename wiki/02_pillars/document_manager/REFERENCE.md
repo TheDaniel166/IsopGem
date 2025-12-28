@@ -6,6 +6,11 @@ This manifest dissects the Akaschic Archive, mapping the lifecycle of rich-text 
 
 
 
+
+
+
+
+
 ---
 
 **File:** `src/pillars/document_manager/models/document.py`
@@ -181,7 +186,7 @@ This manifest dissects the Akaschic Archive, mapping the lifecycle of rich-text 
 
 **Role:** `[Bone] (Model)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Notebook Models - The Mindscape Structure.
 
 **Input (Ingests):**
 * `id` (Column)
@@ -549,7 +554,7 @@ This manifest dissects the Akaschic Archive, mapping the lifecycle of rich-text 
 
 **Role:** `[Muscle] (Service)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Notebook Service - The Mindscape Navigator.
 
 **Input (Ingests):**
 * `db`
@@ -679,7 +684,7 @@ This manifest dissects the Akaschic Archive, mapping the lifecycle of rich-text 
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Infinite Canvas - The Boundless Workspace.
 
 **Input (Ingests):**
 * `parent`
@@ -731,7 +736,41 @@ This manifest dissects the Akaschic Archive, mapping the lifecycle of rich-text 
 **Exposes:** `mousePressEvent()` - *Handle mouse press - check for shape insert mode.*
 **Exposes:** `keyPressEvent()` - *Handle delete key for shapes.*
 **Exposes:** `get_json_data()` - *Serialize all items to JSON.*
-**Exposes:** `load_json_data()` - *Load items from JSON.*
+
+---
+
+**File:** `src/pillars/document_manager/ui/mindscape_page.py`
+
+**Role:** `[Skin] (UI/View)`
+
+**Purpose:** The visual container for a Mindscape "Page" (Infinite Canvas + Tools). Wraps the `InfiniteCanvas` with higher-level logic for resolving selections, handling search jumps, and managing the viewport state.
+
+**Input (Ingests):**
+* `parent`
+* `page_id`
+
+**Output (Emits):**
+* `content_changed`
+* `node_selected`
+
+**Dependencies (It Needs):**
+* `InfiniteCanvas`
+* `MindscapeWindow`
+* `NoteContainerItemMovable`
+* `PyQt6.QtCore.QTimer`
+
+**Consumers (Who Needs It):**
+* `src/pillars/document_manager/ui/mindscape_window.py`
+
+**Key Interactions:**
+**Exposes:** `load_node(doc_id, reset_scroll=True)` - *Loads a document onto the canvas. `reset_scroll=False` is used for search jumps to preserve context.*
+**Exposes:** `highlight_search_term(text)` - *Prophetically calculates the target position of a search term in the dynamic canvas scale and centers the view on it.*
+**Exposes:** `save_page()` - *Serializes the canvas state to the database.*
+
+
+---
+
+**File:** `src/pillars/document_manager/ui/mindscape_tree.py`
 
 
 ---
@@ -740,7 +779,7 @@ This manifest dissects the Akaschic Archive, mapping the lifecycle of rich-text 
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Note Container - The Canvas Fragment.
 
 **Input (Ingests):**
 * `parent`
@@ -1026,7 +1065,7 @@ This manifest dissects the Akaschic Archive, mapping the lifecycle of rich-text 
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Special Characters Dialog - The Symbol Palette.
 
 **Input (Ingests):**
 * `parent`
@@ -1063,7 +1102,7 @@ This manifest dissects the Akaschic Archive, mapping the lifecycle of rich-text 
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Document Editor Window - The Scribe's Sanctum.
 
 **Input (Ingests):**
 * `parent`
@@ -1367,7 +1406,7 @@ This manifest dissects the Akaschic Archive, mapping the lifecycle of rich-text 
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Font Manager Window - The Glyph Atlas.
 
 **Input (Ingests):**
 * `parent`
@@ -1547,7 +1586,7 @@ This manifest dissects the Akaschic Archive, mapping the lifecycle of rich-text 
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Import Options Dialog - The Collection Selector.
 
 **Input (Ingests):**
 * `existing_collections`
@@ -1576,7 +1615,7 @@ This manifest dissects the Akaschic Archive, mapping the lifecycle of rich-text 
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** List Features - The Ordinal Forge.
 
 **Input (Ingests):**
 * `editor`
@@ -1622,7 +1661,7 @@ This manifest dissects the Akaschic Archive, mapping the lifecycle of rich-text 
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Mindscape Page - The Canvas Editor.
 
 **Input (Ingests):**
 * `parent`
@@ -1665,7 +1704,7 @@ This manifest dissects the Akaschic Archive, mapping the lifecycle of rich-text 
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Mindscape Theme - The Visual Palette.
 
 **Input (Ingests):**
 * `mode`
@@ -1692,7 +1731,7 @@ This manifest dissects the Akaschic Archive, mapping the lifecycle of rich-text 
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Mindscape Tree - The Notebook Sidebar.
 
 **Input (Ingests):**
 * `parent`
@@ -1727,7 +1766,7 @@ This manifest dissects the Akaschic Archive, mapping the lifecycle of rich-text 
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Mindscape Window - The Knowledge Tree.
 
 **Input (Ingests):**
 * `parent`
@@ -1757,7 +1796,7 @@ This manifest dissects the Akaschic Archive, mapping the lifecycle of rich-text 
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Ribbon Widget - The Office-Style Toolbar.
 
 **Input (Ingests):**
 * `parent`
@@ -1960,7 +1999,7 @@ This manifest dissects the Akaschic Archive, mapping the lifecycle of rich-text 
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Search Results Panel - The Librarian's List.
 
 **Input (Ingests):**
 * `parent`

@@ -1,3 +1,7 @@
+"""
+Input Pane - The Properties Panel.
+Left panel displaying shape properties as editable cards with calculation controls.
+"""
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QScrollArea, QLabel, QHBoxLayout, QPushButton
 from PyQt6.QtCore import Qt, pyqtSignal
 

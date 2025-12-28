@@ -1,3 +1,7 @@
+"""
+Formula Engine - The Spreadsheet Logic Core.
+Recursive descent parser and evaluator for spreadsheet formulas with Gematria integration.
+"""
 import re
 import math
 from typing import Any, Dict, Callable, NamedTuple, List, Optional, Set, Tuple

@@ -1,3 +1,7 @@
+"""
+Geometry ViewModel - The Mediator.
+ViewModel mediating between GeometricShape model and UI panes with debounced auto-save.
+"""
 from typing import Optional, Dict
 from PyQt6.QtCore import QObject, pyqtSignal, QTimer
 

@@ -1,3 +1,7 @@
+"""
+Tzolkin Models - The Harmonic Cycle Data.
+Immutable dataclass representing dates in the 260-day Tzolkin cycle.
+"""
 from dataclasses import dataclass
 from datetime import date
 

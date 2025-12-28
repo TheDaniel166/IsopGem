@@ -1,3 +1,7 @@
+"""
+Ternary Sound Widget - The Amun Sound System Interface.
+Main widget for the Amun Sound Calculator and Composer, integrating audio playback and real-time visualization.
+"""
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
                              QLineEdit, QPushButton, QTextEdit, QFrame, 
                              QTabWidget, QPlainTextEdit, QListWidget, QSplitter,

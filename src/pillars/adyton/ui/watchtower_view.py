@@ -1,3 +1,7 @@
+"""
+Watchtower View - The Enochian Tablet Visualizer.
+Displays a 156-cell Watchtower using flattened pyramids with multiple view modes for wall, Kerubic, and hexameric analysis.
+"""
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QScrollArea, QFrame, QHBoxLayout, 
     QComboBox, QLabel, QPushButton, QSlider

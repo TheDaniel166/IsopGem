@@ -1,3 +1,7 @@
+"""
+Geometry Definitions - The Sacred Shape Catalog.
+Category and shape registry for circles, triangles, polygons, pyramids, prisms, and platonic solids.
+"""
 from typing import Callable, List, Optional, Dict, Any
 
 from ..services.vault_of_hestia_shape import VaultOfHestiaShape

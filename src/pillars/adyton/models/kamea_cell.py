@@ -1,3 +1,7 @@
+"""
+Kamea Cell - The Adyton Grid Unit.
+Represents a single cell in the Kamea of Maut with position, Ditrune value, and Enochian Tablet mapping.
+"""
 from dataclasses import dataclass
 from typing import Optional
 

@@ -1,3 +1,7 @@
+"""
+Ingestion Service - The Alchemist.
+Transmutes CSV/Excel files into JSON grid data for CorrespondenceTable import.
+"""
 try:
     import pandas as pd
     PANDAS_AVAILABLE = True

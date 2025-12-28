@@ -1,3 +1,7 @@
+"""
+Verse List - The Sacred Stanza Catalog.
+Widget displaying parsed verses with individual value calculation and navigation.
+"""
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, 
     QScrollArea, QGroupBox

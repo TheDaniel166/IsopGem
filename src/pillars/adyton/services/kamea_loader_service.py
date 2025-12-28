@@ -1,3 +1,7 @@
+"""
+Kamea Loader Service - The Grid Parser.
+Loads the 27x27 Kamea of Maut from CSV, mapping coordinates to Ditrunes, Octants, and Enochian Tablets.
+"""
 import csv
 import os
 from typing import List, Dict, Tuple

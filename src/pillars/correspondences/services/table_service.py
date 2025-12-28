@@ -1,3 +1,7 @@
+"""
+Table Service - The Steward of the Tablets.
+Service layer mediating between UI and TableRepository for correspondence table operations.
+"""
 from sqlalchemy.orm import Session
 from pillars.correspondences.repos.table_repository import TableRepository
 from pillars.correspondences.models.correspondence_models import CorrespondenceTable

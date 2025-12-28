@@ -873,7 +873,11 @@ class ImageFeature:
             QMessageBox.critical(self.parent, "Missing dependency", "Pillow is required for image editing. Please install pillow.")
             return
 
-        dialog = ImageEditorDialog(self.parent)
+        # Parent to the active top-level window to ensure it appears above everything
+        from PyQt6.QtWidgets import QApplication
+        parent_widget = QApplication.activeWindow()
+        
+        dialog = ImageEditorDialog(parent_widget)
         if not dialog.exec():
             return
 
@@ -954,7 +958,8 @@ class ImageFeature:
             cursor.movePosition(QTextCursor.MoveOperation.Right, QTextCursor.MoveMode.KeepAnchor)
             
         if target_fmt:
-            dialog = ImagePropertiesDialog(target_fmt, self.parent)
+            parent_widget = self.parent.window() if self.parent else None
+            dialog = ImagePropertiesDialog(target_fmt, parent_widget)
             if dialog.exec():
                 dialog.apply_to_format(target_fmt)
                 # Apply the updated format to the selection

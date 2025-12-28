@@ -1,3 +1,7 @@
+"""
+Amun Visualizer - The Sacred Geometry Mandala.
+A real-time animated widget that renders concentric polygons based on Amun Sound parameters.
+"""
 from PyQt6.QtWidgets import QWidget
 from PyQt6.QtCore import Qt, QTimer, QRectF, QPointF
 from PyQt6.QtGui import QPainter, QColor, QPen, QBrush, QRadialGradient, QPainterPath

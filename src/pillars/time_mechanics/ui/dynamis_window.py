@@ -1,3 +1,7 @@
+"""
+Dynamis Window - The Circulation of Energies.
+Visual Tzolkin cycle animator with trigram rendering, dipole field, and orb tracking.
+"""
 import math
 from datetime import timedelta
 from PyQt6.QtWidgets import (

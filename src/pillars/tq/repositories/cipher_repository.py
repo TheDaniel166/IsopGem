@@ -1,3 +1,7 @@
+"""
+Cipher Repository - The Base-27 Lookup.
+Loads and provides access to the TQ cipher correspondence table from CSV data.
+"""
 import csv
 import os
 from typing import List, Optional, Dict

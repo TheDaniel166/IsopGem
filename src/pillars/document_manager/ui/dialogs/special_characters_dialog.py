@@ -1,3 +1,7 @@
+"""
+Special Characters Dialog - The Symbol Palette.
+Dialog for inserting Hebrew, Greek, alchemical, occult, and mathematical symbols.
+"""
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QGridLayout, QPushButton,
     QLabel, QScrollArea, QWidget, QHBoxLayout,

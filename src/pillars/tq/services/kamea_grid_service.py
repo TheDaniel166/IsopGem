@@ -1,3 +1,7 @@
+"""
+Kamea Grid Service - The 27x27 Matrix Oracle.
+Loads and manages the Kamea coordinate system, providing cell lookup, quadset resolution, and color mapping.
+"""
 import logging
 import csv
 from typing import Dict, List, Optional, Tuple

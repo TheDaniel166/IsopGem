@@ -1,3 +1,7 @@
+"""
+Notebook Models - The Mindscape Structure.
+SQLAlchemy models for Notebooks and Sections, providing hierarchical document organization.
+"""
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text
 from sqlalchemy.orm import relationship
 from shared.database import Base
@@ -9,6 +13,7 @@ class Notebook(Base):
     Analogous to a OneNote Notebook.
     """
     __tablename__ = "notebooks"
+    __table_args__ = {'extend_existing': True}
     
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False)
@@ -25,6 +30,7 @@ class Section(Base):
     Analogous to a OneNote Section / Tab.
     """
     __tablename__ = "sections"
+    __table_args__ = {'extend_existing': True}
     
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False)

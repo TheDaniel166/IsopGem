@@ -1,3 +1,7 @@
+"""
+Baphomet Color Service - The RGB Resolver.
+Implements the Kamea of Baphomet color physics by folding 6-digit ternary strings into RGB channels.
+"""
 from PyQt6.QtGui import QColor
 
 class BaphometColorService:

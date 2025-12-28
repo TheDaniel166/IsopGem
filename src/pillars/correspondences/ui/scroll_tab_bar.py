@@ -1,3 +1,7 @@
+"""
+Scroll Tab Bar - The Sheet Navigator.
+Tab bar widget for navigating between multiple sheets (scrolls) in a spreadsheet.
+"""
 from PyQt6.QtWidgets import QWidget, QHBoxLayout, QToolButton, QTabBar, QMenu, QStyle
 from PyQt6.QtCore import Qt, pyqtSignal, QSize
 from PyQt6.QtGui import QAction, QIcon

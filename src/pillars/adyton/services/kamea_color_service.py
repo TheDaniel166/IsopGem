@@ -1,3 +1,7 @@
+"""
+Kamea Color Service - The Chromatic Resolver.
+Calculates 5-face color assignments for Adyton Kamea cells using Trigram, Zodiac, and Baphomet mappings.
+"""
 from pathlib import Path
 from typing import Dict, List, Tuple
 from PyQt6.QtGui import QColor

@@ -1,3 +1,7 @@
+"""
+Chart Picker Dialog - The Saved Chart Selector.
+Modal dialog for browsing, filtering, and loading previously saved astrology charts.
+"""
 from typing import Optional, List
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton, QTableWidget,

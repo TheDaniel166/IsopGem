@@ -1,3 +1,7 @@
+"""
+Spreadsheet View - The Emerald Grid Renderer.
+QTableView subclass with SpreadsheetModel, formula evaluation, rich text delegate, and fill handle support.
+"""
 from PyQt6.QtWidgets import (
     QTableView, QStyledItemDelegate, QDialog, QVBoxLayout,
     QDialogButtonBox, QWidget, QStyle, QMenu, QLineEdit, QApplication, QHeaderView, QStyleOptionViewItem, QRubberBand

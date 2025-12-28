@@ -6,13 +6,18 @@ This manifest dissects the "Muscle" and "Bone" of the Trigrammaton Qabalah pilla
 
 
 
+
+
+
+
+
 ---
 
 **File:** `src/pillars/tq/models/amun_sound.py`
 
 **Role:** `[Bone] (Model)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Amun Sound Calculator - The Symphonic Engine.
 
 **Input (Ingests):**
 * Pure data structure or utility module.
@@ -43,7 +48,7 @@ This manifest dissects the "Muscle" and "Bone" of the Trigrammaton Qabalah pilla
 
 **Role:** `[Bone] (Model)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Cipher Token Model - The Base-27 Alphabet.
 
 **Input (Ingests):**
 * `decimal_value` (Field)
@@ -73,7 +78,7 @@ This manifest dissects the "Muscle" and "Bone" of the Trigrammaton Qabalah pilla
 
 **Role:** `[Bone] (Model)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Kamea Cell Model - The 27x27 Grid Unit.
 
 **Input (Ingests):**
 * `x` (Field)
@@ -148,7 +153,7 @@ This manifest dissects the "Muscle" and "Bone" of the Trigrammaton Qabalah pilla
 
 **Role:** `[Bone] (Model)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Symphony Configuration - The 9 Orchestral Archetypes.
 
 **Input (Ingests):**
 * `id` (Field)
@@ -186,7 +191,7 @@ This manifest dissects the "Muscle" and "Bone" of the Trigrammaton Qabalah pilla
 
 **Role:** `[Memory] (Repository)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Cipher Repository - The Base-27 Lookup.
 
 **Input (Ingests):**
 * Pure data structure or utility module.
@@ -217,7 +222,7 @@ This manifest dissects the "Muscle" and "Bone" of the Trigrammaton Qabalah pilla
 
 **Role:** `[Muscle] (Service)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Amun Audio Service - The Symphonic Synthesizer.
 
 **Input (Ingests):**
 * Pure data structure or utility module.
@@ -248,7 +253,7 @@ This manifest dissects the "Muscle" and "Bone" of the Trigrammaton Qabalah pilla
 
 **Role:** `[Muscle] (Service)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Baphomet Color Service - The RGB Resolver.
 
 **Input (Ingests):**
 * Pure data structure or utility module.
@@ -304,7 +309,7 @@ This manifest dissects the "Muscle" and "Bone" of the Trigrammaton Qabalah pilla
 
 **Role:** `[Muscle] (Service)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Ditrunal Service - The Nuclear Mutation Engine.
 
 **Input (Ingests):**
 * Pure data structure or utility module.
@@ -387,7 +392,7 @@ This manifest dissects the "Muscle" and "Bone" of the Trigrammaton Qabalah pilla
 
 **Role:** `[Muscle] (Service)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Kamea Grid Service - The 27x27 Matrix Oracle.
 
 **Input (Ingests):**
 * `variant`
@@ -426,7 +431,7 @@ This manifest dissects the "Muscle" and "Bone" of the Trigrammaton Qabalah pilla
 
 **Role:** `[Muscle] (Service)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Kamea Symphony Service - The Cinematic Audio Engine.
 
 **Input (Ingests):**
 * Pure data structure or utility module.
@@ -681,7 +686,7 @@ This manifest dissects the "Muscle" and "Bone" of the Trigrammaton Qabalah pilla
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Amun Visualizer - The Sacred Geometry Mandala.
 
 **Input (Ingests):**
 * `parent`
@@ -719,7 +724,7 @@ This manifest dissects the "Muscle" and "Bone" of the Trigrammaton Qabalah pilla
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Baphomet Panel - The Converse Analysis Inspector.
 
 **Input (Ingests):**
 * `parent`
@@ -793,7 +798,7 @@ This manifest dissects the "Muscle" and "Bone" of the Trigrammaton Qabalah pilla
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Fractal Network Dialog - The Dimensional Descent Viewer.
 
 **Input (Ingests):**
 * `parent`
@@ -925,7 +930,7 @@ This manifest dissects the "Muscle" and "Bone" of the Trigrammaton Qabalah pilla
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Kamea Fractal View - The 3D Canopy Visualizer.
 
 **Input (Ingests):**
 * `parent`
@@ -976,7 +981,7 @@ This manifest dissects the "Muscle" and "Bone" of the Trigrammaton Qabalah pilla
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Kamea Grid View - The 2D Matrix Renderer.
 
 **Input (Ingests):**
 * `cell`
@@ -1032,7 +1037,7 @@ This manifest dissects the "Muscle" and "Bone" of the Trigrammaton Qabalah pilla
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Kamea Window - The Unified Field Visualizer.
 
 **Input (Ingests):**
 * `service`
@@ -1072,7 +1077,7 @@ This manifest dissects the "Muscle" and "Bone" of the Trigrammaton Qabalah pilla
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Nuclear Mutation Panel - The Reactor Sidebar.
 
 **Input (Ingests):**
 * `parent`
@@ -1106,7 +1111,7 @@ This manifest dissects the "Muscle" and "Bone" of the Trigrammaton Qabalah pilla
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Quadset Analysis Window - The Ternary Transformation Explorer.
 
 **Input (Ingests):**
 * `text`
@@ -1212,7 +1217,7 @@ This manifest dissects the "Muscle" and "Bone" of the Trigrammaton Qabalah pilla
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Ternary Sound Widget - The Amun Sound System Interface.
 
 **Input (Ingests):**
 * `output_display`

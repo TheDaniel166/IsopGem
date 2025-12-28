@@ -1,3 +1,7 @@
+"""
+Font Manager Window - The Glyph Atlas.
+Utility window for inspecting, installing, and previewing custom Magickal fonts.
+"""
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
     QListWidget, QTextEdit, QLabel, QSplitter, QFrame,

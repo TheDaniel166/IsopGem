@@ -1,3 +1,7 @@
+"""
+Find Replace Dialog - The Seeker's Lens.
+Non-modal dialog for searching and replacing text in spreadsheet cells.
+"""
 from PyQt6.QtWidgets import (
     QDialog, QLabel, QLineEdit, QPushButton, QCheckBox, QVBoxLayout, QHBoxLayout, 
     QGridLayout, QGroupBox, QListWidget, QListWidgetItem

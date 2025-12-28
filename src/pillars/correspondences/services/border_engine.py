@@ -1,3 +1,7 @@
+"""
+Border Engine - The Architect of Boundaries.
+Calculates cell border configurations based on selection topology and border style settings.
+"""
 from PyQt6.QtCore import Qt
 
 class BorderEngine:

@@ -1,3 +1,7 @@
+"""
+Tzolkin Calculator Window - The Harmonic Grid.
+Window for calculating and navigating Tzolkin dates with interactive 13x20 grid.
+"""
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
     QPushButton, QDateEdit, QFrame, QGridLayout, QTableWidget, QTableWidgetItem, QHeaderView

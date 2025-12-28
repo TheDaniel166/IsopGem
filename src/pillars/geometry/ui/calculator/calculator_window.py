@@ -1,3 +1,7 @@
+"""
+Geometry Calculator Window - The Orchestrator.
+Main window combining input, viewport, and controls panes for shape calculations.
+"""
 from typing import Optional
 from PyQt6.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QSplitter
 from PyQt6.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QSplitter, QApplication

@@ -1,3 +1,7 @@
+"""
+Document Editor Window - The Scribe's Sanctum.
+Main window for rich text document editing with file I/O, printing, and search capabilities.
+"""
 import os
 from typing import Optional, Any
 from pathlib import Path

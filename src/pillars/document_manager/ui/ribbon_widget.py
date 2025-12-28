@@ -1,3 +1,7 @@
+"""
+Ribbon Widget - The Office-Style Toolbar.
+Wrapper around pyqtribbon providing unified ribbon navigation with tabs, groups, and galleries.
+"""
 from PyQt6.QtWidgets import QWidget, QSizePolicy
 from PyQt6.QtGui import QAction, QIcon, QColor
 from PyQt6.QtCore import Qt, QSize

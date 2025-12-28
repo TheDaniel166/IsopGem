@@ -1,3 +1,7 @@
+"""
+Conversions (Utilities) - Zodiacal String Formatter.
+Utility functions for converting ecliptic degrees to zodiacal notation used by astrology services.
+"""
 from typing import Tuple
 
 ZODIAC_SIGNS = [

@@ -6,6 +6,11 @@ This manifest dissects the "Muscle" and "Skin" of the Gematria pillar, mapping t
 
 
 
+
+
+
+
+
 ---
 
 **File:** `src/pillars/gematria/models/calculation_entity.py`
@@ -571,7 +576,7 @@ This manifest dissects the "Muscle" and "Skin" of the Gematria pillar, mapping t
 
 **Role:** `[Muscle] (Service)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Smart Filter Service - The Linguistic Sieve.
 
 **Input (Ingests):**
 * Pure data structure or utility module.
@@ -599,7 +604,7 @@ This manifest dissects the "Muscle" and "Skin" of the Gematria pillar, mapping t
 
 **Role:** `[Muscle] (Service)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Text Analysis Service - The Resonance Scanner.
 
 **Input (Ingests):**
 * Pure data structure or utility module.
@@ -866,7 +871,7 @@ This manifest dissects the "Muscle" and "Skin" of the Gematria pillar, mapping t
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** UI Components - The Gematria Display Widgets.
 
 **Input (Ingests):**
 * `char`
@@ -954,7 +959,7 @@ This manifest dissects the "Muscle" and "Skin" of the Gematria pillar, mapping t
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Document Selector - The Archive Picker.
 
 **Input (Ingests):**
 * `parent`
@@ -1299,7 +1304,7 @@ This manifest dissects the "Muscle" and "Skin" of the Gematria pillar, mapping t
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Document Tab - The Text Analysis Container.
 
 **Input (Ingests):**
 * `document`
@@ -1350,7 +1355,7 @@ This manifest dissects the "Muscle" and "Skin" of the Gematria pillar, mapping t
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Document Viewer - The Sacred Text Display.
 
 **Input (Ingests):**
 * `parent`
@@ -1393,7 +1398,7 @@ This manifest dissects the "Muscle" and "Skin" of the Gematria pillar, mapping t
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Exegesis Main Window - The Scriptural Inquiry.
 
 **Input (Ingests):**
 * `calculators`
@@ -1436,7 +1441,7 @@ This manifest dissects the "Muscle" and "Skin" of the Gematria pillar, mapping t
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Search Panel - The Value Finder.
 
 **Input (Ingests):**
 * `parent`
@@ -1484,7 +1489,7 @@ This manifest dissects the "Muscle" and "Skin" of the Gematria pillar, mapping t
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Smart Filter Dialog - The Linguistic Purifier.
 
 **Input (Ingests):**
 * `matches`
@@ -1525,7 +1530,7 @@ This manifest dissects the "Muscle" and "Skin" of the Gematria pillar, mapping t
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Stats Panel - The Numerological Summary.
 
 **Input (Ingests):**
 * `parent`
@@ -1555,7 +1560,7 @@ This manifest dissects the "Muscle" and "Skin" of the Gematria pillar, mapping t
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Verse List - The Sacred Stanza Catalog.
 
 **Input (Ingests):**
 * `parent`

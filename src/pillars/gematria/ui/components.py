@@ -1,3 +1,7 @@
+"""
+UI Components - The Gematria Display Widgets.
+SpiritTile, TotalValueCard, and ResultsDashboard for visual gematria result presentation.
+"""
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
     QFrame, QGridLayout, QScrollArea, QGraphicsDropShadowEffect

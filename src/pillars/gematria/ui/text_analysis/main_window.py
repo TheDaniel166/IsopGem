@@ -1,3 +1,7 @@
+"""
+Exegesis Main Window - The Scriptural Inquiry.
+Main window for text analysis with multi-document tabs, search, and verse parsing.
+"""
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QSplitter,
     QLabel, QPushButton, QComboBox, QCheckBox, QStackedWidget,

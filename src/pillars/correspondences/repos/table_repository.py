@@ -1,3 +1,7 @@
+"""
+Table Repository - The Guardian of Emerald Tablets.
+CRUD operations for CorrespondenceTable records in the database.
+"""
 from sqlalchemy.orm import Session
 from pillars.correspondences.models.correspondence_models import CorrespondenceTable
 from typing import List, Optional

@@ -6,6 +6,11 @@ This manifest dissects the components of the Inner Sanctuary (Adyton), mapping i
 
 
 
+
+
+
+
+
 ---
 
 **File:** `src/pillars/adyton/constants.py`
@@ -198,7 +203,7 @@ This manifest dissects the components of the Inner Sanctuary (Adyton), mapping i
 
 **Role:** `[Bone] (Model)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Kamea Cell - The Adyton Grid Unit.
 
 **Input (Ingests):**
 * `x` (Field)
@@ -390,7 +395,7 @@ This manifest dissects the components of the Inner Sanctuary (Adyton), mapping i
 
 **Role:** `[Muscle] (Service)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Kamea Color Service - The Chromatic Resolver.
 
 **Input (Ingests):**
 * `project_root`
@@ -421,7 +426,7 @@ This manifest dissects the components of the Inner Sanctuary (Adyton), mapping i
 
 **Role:** `[Muscle] (Service)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Kamea Loader Service - The Grid Parser.
 
 **Input (Ingests):**
 * `project_root`
@@ -835,7 +840,7 @@ This manifest dissects the components of the Inner Sanctuary (Adyton), mapping i
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Kamea Pyramid Cell - The 2D Frustum Widget.
 
 **Input (Ingests):**
 * `ditrune`
@@ -920,7 +925,7 @@ This manifest dissects the components of the Inner Sanctuary (Adyton), mapping i
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Wall Designer - The Constellation Map Editor.
 
 **Input (Ingests):**
 * `parent`
@@ -990,7 +995,7 @@ This manifest dissects the components of the Inner Sanctuary (Adyton), mapping i
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Watchtower View - The Enochian Tablet Visualizer.
 
 **Input (Ingests):**
 * `loader_service`

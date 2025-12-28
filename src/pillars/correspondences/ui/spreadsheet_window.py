@@ -1,3 +1,7 @@
+"""
+Spreadsheet Window - The Sovereign Tablet Editor.
+Main window hosting the spreadsheet view, formula bar, toolbar, and multi-sheet tab navigation.
+"""
 
 from PyQt6.QtWidgets import (
     QMainWindow, QToolBar, QWidget, QVBoxLayout, QHBoxLayout, QMessageBox, QComboBox, QFontComboBox, QSpinBox, QLabel, QColorDialog, QToolButton, QMenu, QLineEdit, QStyle, QFileDialog, QInputDialog

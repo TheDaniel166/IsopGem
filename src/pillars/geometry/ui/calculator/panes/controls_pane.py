@@ -1,3 +1,7 @@
+"""
+Controls Pane - The Visualizer Panel.
+Right panel with display toggles, measurement tools, history, and export options.
+"""
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QTabWidget, QCheckBox, QLabel, QPushButton, QFrame, QListWidget, QListWidgetItem, QHBoxLayout, QApplication, QComboBox, QColorDialog, QMenu, QInputDialog
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QColor

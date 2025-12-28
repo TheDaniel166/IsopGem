@@ -1,3 +1,7 @@
+"""
+Note Container - The Canvas Fragment.
+Movable, resizable note containers with rich text editing for the Infinite Canvas.
+"""
 from PyQt6.QtWidgets import (
     QGraphicsProxyWidget, QTextEdit, QWidget, QVBoxLayout, QFrame, QLabel, QStyleOptionGraphicsItem, QSizeGrip
 )

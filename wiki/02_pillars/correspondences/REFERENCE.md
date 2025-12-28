@@ -1,34 +1,4 @@
----
 
-**File:** `src/pillars/correspondences/models/correspondence_models.py`
-
-**Role:** `[Bone] (Model)`
-
-**Purpose:** Soul not yet specified.
-
-**Input (Ingests):**
-* Not yet audited.
-
-**Output (Emits):**
-* Data primitives or DTOs.
-
-**Dependencies (It Needs):**
-* `datetime.datetime`
-* `shared.database.Base`
-* `sqlalchemy.Column`
-* `sqlalchemy.DateTime`
-* `sqlalchemy.JSON`
-* `sqlalchemy.String`
-* `uuid`
-
-**Consumers (Who Needs It):**
-* `scripts/reproduce_crash_full.py`
-* `src/pillars/correspondences/repos/table_repository.py`
-* `src/pillars/correspondences/services/table_service.py`
-* `src/shared/database.py`
-
-**Key Interactions:**
-**Exposes:** `to_dict()` - *Clean serialization for UI/Transport.*
 
 
 
@@ -38,7 +8,7 @@
 
 **Role:** `[Bone] (Model)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Correspondence Models - The Emerald Scrolls.
 
 **Input (Ingests):**
 * `id` (Column)
@@ -75,7 +45,7 @@
 
 **Role:** `[Memory] (Repository)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Table Repository - The Guardian of Emerald Tablets.
 
 **Input (Ingests):**
 * `session`
@@ -110,7 +80,7 @@
 
 **Role:** `[Muscle] (Service)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Border Engine - The Architect of Boundaries.
 
 **Input (Ingests):**
 * Pure data structure or utility module.
@@ -135,7 +105,7 @@
 
 **Role:** `[Muscle] (Service)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Conditional Formatting - The Rule Engine.
 
 **Input (Ingests):**
 * `rule_type` (Field)
@@ -172,7 +142,7 @@
 
 **Role:** `[Muscle] (Service)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Formula Engine - The Spreadsheet Logic Core.
 
 **Input (Ingests):**
 * `engine`
@@ -275,7 +245,7 @@
 
 **Role:** `[Muscle] (Service)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Formula Helper - The Wizard's Apprentice.
 
 **Input (Ingests):**
 * Pure data structure or utility module.
@@ -306,7 +276,7 @@
 
 **Role:** `[Muscle] (Service)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Ingestion Service - The Alchemist.
 
 **Input (Ingests):**
 * Pure data structure or utility module.
@@ -336,7 +306,7 @@
 
 **Role:** `[Muscle] (Service)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Table Service - The Steward of the Tablets.
 
 **Input (Ingests):**
 * `session`
@@ -372,7 +342,7 @@
 
 **Role:** `[Muscle] (Service)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Undo Commands - The Chronicle of Edits.
 
 **Input (Ingests):**
 * `model`
@@ -428,7 +398,7 @@
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Correspondence Hub - The Emerald Tablet Library.
 
 **Input (Ingests):**
 * `path`
@@ -484,7 +454,7 @@
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Find Replace Dialog - The Seeker's Lens.
 
 **Input (Ingests):**
 * `parent`
@@ -528,7 +498,7 @@
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Formula Wizard - The Scribe's Grimoire.
 
 **Input (Ingests):**
 * `parent`
@@ -580,7 +550,7 @@
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Scroll Tab Bar - The Sheet Navigator.
 
 **Input (Ingests):**
 * `parent`
@@ -622,7 +592,7 @@
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Spreadsheet View - The Emerald Grid Renderer.
 
 **Input (Ingests):**
 * `data_json`
@@ -705,7 +675,7 @@
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Spreadsheet Window - The Sovereign Tablet Editor.
 
 **Input (Ingests):**
 * `table_id`

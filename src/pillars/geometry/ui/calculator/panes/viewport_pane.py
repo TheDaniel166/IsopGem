@@ -1,3 +1,7 @@
+"""
+Viewport Pane - The Visual Canvas.
+Center panel hosting the 2D/3D geometry visualization with scene rendering.
+"""
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QFrame, QHBoxLayout, QPushButton
 from PyQt6.QtCore import Qt, pyqtSignal
 

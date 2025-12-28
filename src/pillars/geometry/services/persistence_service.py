@@ -1,3 +1,7 @@
+"""
+Persistence Service - The Chronicle.
+Manages JSON file persistence for geometry calculation history and notes.
+"""
 import json
 import os
 from typing import List, Dict, Optional

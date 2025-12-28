@@ -1,3 +1,8 @@
+"""
+Amun Sound Calculator - The Symphonic Engine.
+Translates Ditrune values (0-728) into sound signatures using a 3-channel RGB folding system.
+Each channel maps to musical parameters: Pitch (Red), Dynamics (Green), and Harmonic Density (Blue).
+"""
 from typing import Dict, Any, Tuple
 from ..services.ternary_service import TernaryService
 from ..services.baphomet_color_service import BaphometColorService

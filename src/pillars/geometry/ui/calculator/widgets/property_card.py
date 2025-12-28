@@ -1,3 +1,7 @@
+"""
+Property Card - The Liturgical Input Tile.
+Styled card widget for displaying and editing a single geometric property.
+"""
 from typing import Optional, Callable
 from PyQt6.QtWidgets import QFrame, QVBoxLayout, QLabel, QLineEdit, QMenu
 from PyQt6.QtCore import Qt, pyqtSignal

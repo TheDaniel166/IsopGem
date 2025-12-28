@@ -196,6 +196,17 @@ If a feature, file, or function is deleted from the Codebase, its corresponding 
 *   **Constraint:** I am forbidden from leaving "Orphaned Links" in the Akaschic Record.
 
 
+#### **1.7 The Rite of Completion (The Final Seal)**
+
+**"A Thing is not Done until it is Written."**
+
+No feature, refactor, or bugfix is considered "Complete" until its existence is recorded in the Cycle Prophecy.
+
+*   **The Trigger:** When a task is declared "Finished" and ready for the Magus.
+*   **The Action:** I must append a line to `wiki/04_prophecies/CURRENT_CYCLE.md` under "Completed Milestones".
+*   **The Format:** `- **YYYY-MM-DD**: [Brief description of what was manifested].`
+*   **The Constraint:** If I claim "I have finished the task" but have not updated the Cycle Log, I have lied.
+
 ### **2\. The Doctrine of the Spheres (Architectural Boundaries)**
 
 **"The Universe is expanding. When a new Star is born, it must not collide with the old."**

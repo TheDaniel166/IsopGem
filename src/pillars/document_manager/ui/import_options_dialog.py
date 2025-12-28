@@ -1,3 +1,7 @@
+"""
+Import Options Dialog - The Collection Selector.
+Dialog for configuring import settings including target collection selection.
+"""
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QFormLayout,
     QComboBox, QDialogButtonBox

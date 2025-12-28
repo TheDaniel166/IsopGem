@@ -1,3 +1,7 @@
+"""
+Quadset Analysis Window - The Ternary Transformation Explorer.
+A comprehensive UI for analyzing the Quadset (Original, Conrune, Reversal, ConrReversal) and its mathematical properties.
+"""
 
 from PyQt6.QtWidgets import (
     QMainWindow, QVBoxLayout, QHBoxLayout, QLabel,

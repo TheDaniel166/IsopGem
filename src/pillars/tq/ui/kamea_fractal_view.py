@@ -1,3 +1,7 @@
+"""
+Kamea Fractal View - The 3D Canopy Visualizer.
+A native QGraphicsView-based 3D projection of the Kamea's 729 Ditrunes arranged by dimensional hierarchy.
+"""
 
 import math
 import numpy as np

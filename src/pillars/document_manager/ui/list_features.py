@@ -1,3 +1,7 @@
+"""
+List Features - The Ordinal Forge.
+Manages bullet, numbered, and checklist operations for the RichTextEditor.
+"""
 from PyQt6.QtGui import (
     QTextListFormat, QTextBlockFormat, QTextCursor, QAction, QIcon
 )

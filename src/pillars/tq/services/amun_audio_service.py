@@ -1,3 +1,7 @@
+"""
+Amun Audio Service - The Symphonic Synthesizer.
+Generates WAV audio files from Amun Sound signatures using additive synthesis with orchestral archetypes.
+"""
 import wave
 import math
 import struct

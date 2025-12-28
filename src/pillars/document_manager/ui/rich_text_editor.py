@@ -822,6 +822,26 @@ class RichTextEditor(QWidget):
                 icon = qta.icon("fa5s.paragraph", color="#64748b")
                 
             self.style_gallery.add_item(name, icon, lambda checked, s=name: self._apply_style(s))
+            
+        # --- Group: Editing ---
+        grp_edit = tab_home.add_group("Search")
+        
+        # Find
+        self.action_find.setIcon(qta.icon("fa5s.search", color="#1e293b"))
+        grp_edit.add_action(self.action_find, Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
+        
+        # Replace
+        action_replace = QAction("Replace", self)
+        action_replace.triggered.connect(lambda: self.search_feature.show_search_dialog())
+        action_replace.setIcon(qta.icon("fa5s.sync-alt", color="#1e293b"))
+        grp_edit.add_action(action_replace, Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
+        
+        # Select All
+        action_select_all = QAction("Select All", self)
+        action_select_all.setShortcut("Ctrl+A")
+        action_select_all.triggered.connect(self.editor.selectAll)
+        action_select_all.setIcon(qta.icon("fa5s.mouse-pointer", color="#1e293b"))
+        grp_edit.add_action(action_select_all, Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
 
         # =========================================================================
         # TAB: INSERT

@@ -1,3 +1,7 @@
+"""
+Mindscape Theme - The Visual Palette.
+Color and font palettes for Dark, Light, and Egyptian graph themes.
+"""
 from PyQt6.QtGui import QColor, QFont
 
 PALETTES = {
@@ -49,11 +53,11 @@ PALETTES = {
 }
 
 class GraphTheme:
-    def __init__(self, mode="Dark"):
+    def __init__(self, mode: str = "Dark") -> None:
         self.mode = mode
         self.palette = PALETTES.get(mode, PALETTES["Dark"])
 
-    def set_mode(self, mode: str):
+    def set_mode(self, mode: str) -> None:
         if mode in PALETTES:
             self.mode = mode
             self.palette = PALETTES[mode]

@@ -1,3 +1,7 @@
+"""
+Document Selector - The Archive Picker.
+Dialog for selecting documents from the repository with filter support.
+"""
 from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, 
                              QPushButton, QListWidget, QListWidgetItem, QLineEdit)
 from PyQt6.QtCore import Qt

@@ -1,3 +1,7 @@
+"""
+Correspondence Models - The Emerald Scrolls.
+SQLAlchemy models for storing correspondence tables with JSON-based grid content.
+"""
 from sqlalchemy import Column, String, DateTime, JSON
 from shared.database import Base
 from datetime import datetime

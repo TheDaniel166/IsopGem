@@ -1,3 +1,7 @@
+"""
+Kamea Pyramid Cell - The 2D Frustum Widget.
+A flattened top-down representation of a truncated pyramid with 4 trapezoidal sides and a central cap.
+"""
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel
 from PyQt6.QtGui import QPainter, QColor, QPolygon, QBrush, QPen
 from PyQt6.QtCore import Qt, QPoint, QSize, pyqtSignal

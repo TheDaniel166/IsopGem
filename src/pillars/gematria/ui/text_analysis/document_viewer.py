@@ -1,3 +1,7 @@
+"""
+Document Viewer - The Sacred Text Display.
+Read-only text widget with highlighting, selection, and context menu support.
+"""
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QTextEdit, QMenu
 from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6.QtGui import QTextCursor, QTextCharFormat, QColor, QFont, QAction

@@ -1,3 +1,7 @@
+"""
+Text Analysis Service - The Resonance Scanner.
+Service for value matching, text statistics, and verse parsing in gematria analysis.
+"""
 from typing import List, Tuple, Optional, Any, Dict
 from ..services.base_calculator import GematriaCalculator
 from ..utils.numeric_utils import sum_numeric_face_values

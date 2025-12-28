@@ -1,3 +1,7 @@
+"""
+Ephemeris Provider - The Celestial Engine.
+Singleton interface to Skyfield for calculating geocentric/heliocentric planetary positions and lunar nodes.
+"""
 from datetime import datetime, timezone, timedelta
 import math
 import os

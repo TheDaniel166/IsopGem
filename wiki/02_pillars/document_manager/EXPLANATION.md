@@ -150,3 +150,29 @@ The **Document Manager** is the **Scribe of the Akaschic Record**. It is respons
 *   **Key Logic**:
     *   `index_document`: Tokenizes and stores text.
     *   `search`: Returns ranked results with highlighting.
+
+## The Mechanics of the Void (Infinite Canvas)
+
+**"The Map is not the Territory, until the Territory expands to meet it."**
+
+The **Infinite Canvas** (`InfiniteCanvasView`) operates on a principle of **Dynamic Expansion** to reconcile the finite nature of the Viewport ("The Camera") with the potentially infinite nature of the Content ("The Territory").
+
+### 1. The Liquid Height Problem
+Note Containers store their **Width** (e.g., 400px) as a fixed constant, but their **Height** is liquid. It is determined only at runtime when HTML content is poured into the container.
+*   **The Lag:** There is a microsecond gap between "Loading Data" and "Knowing Height."
+*   **The Consequence:** If the Canvas Scene (`sceneRect`) is smaller than the resulting content, the Scrollbars (`QGraphicsView`) will clamp the user's view, making the bottom of the content inaccessible.
+
+### 2. Dynamic Expansion (The Breath)
+To solve this, the Canvas listens for the `content_changed` signal from any `NoteContainer`.
+*   **The Check:** If a container grows within 500px of the current Scene Edge, the Scene expands by 1000px.
+*   **The Anchoring:** Crucially, when the Scene expands, the Viewport's center is mathematically preserved.
+    *   *Without Anchor:* The expansion resets the Scrollbars to (0,0), causing a visual "Jump."
+    *   *With Anchor:* The View calculates its current "Look At" point, expands the map, and immediately re-centers on that point.
+
+### 3. Prophetic Centering (The Search Jump)
+When a user clicks a Search Result, we cannot simply "Scroll to the Highlight," because the Container might be starting in a collapsed state.
+*   **The Sequence:**
+    1.  **Prediction:** We calculate where the highlight *will be* in the fully expanded coordinate space (Content Y), ignoring the current visual state.
+    2.  **Forced Manifestation:** We manually trigger `_auto_resize()` on the container and `_update_scene_rect()` on the Canvas. This forces the "Territory" to expand instantly.
+    3.  **The Jump:** We center the View on the predicted coordinate.
+*   **Result:** A precise, stable jump to content that technically didn't exist a moment prior.

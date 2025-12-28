@@ -1,3 +1,7 @@
+"""
+Neo-Aubrey Window - The Eclipse Clock Simulator.
+Interactive Stonehenge-inspired dual-ring visualizer for eclipse prediction using DE441 ephemeris.
+"""
 from ..services.location_lookup import LocationLookupService, LocationLookupError, LocationResult
 from ..utils.conversions import to_zodiacal_string
 

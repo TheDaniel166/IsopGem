@@ -1,3 +1,7 @@
+"""
+Nuclear Mutation Panel - The Reactor Sidebar.
+Displays the Soul Analysis of a Kamea cell, visualizing the Skin → Body → Core mutation path.
+"""
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QLabel, QFrame, QScrollArea
 )

@@ -1,3 +1,7 @@
+"""
+Smart Filter Dialog - The Linguistic Purifier.
+Dialog applying NLP-based filtering to remove nonsense phrases from search results.
+"""
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, 
     QListWidget, QProgressBar, QMessageBox, QSplitter, QWidget

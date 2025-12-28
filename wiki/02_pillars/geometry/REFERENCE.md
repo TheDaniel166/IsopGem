@@ -6,6 +6,11 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 
 
 
+
+
+
+
+
 ---
 
 **File:** `src/pillars/geometry/services/annulus_shape.py`
@@ -1183,7 +1188,7 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 
 **Role:** `[Muscle] (Service)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Persistence Service - The Chronicle.
 
 **Input (Ingests):**
 * Pure data structure or utility module.
@@ -2884,7 +2889,7 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Geometry Calculator Window - The Orchestrator.
 
 **Input (Ingests):**
 * `shape`
@@ -2925,7 +2930,7 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Controls Pane - The Visualizer Panel.
 
 **Input (Ingests):**
 * `view_model`
@@ -2972,7 +2977,7 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Input Pane - The Properties Panel.
 
 **Input (Ingests):**
 * `view_model`
@@ -3010,7 +3015,7 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Viewport Pane - The Visual Canvas.
 
 **Input (Ingests):**
 * `view_model`
@@ -3049,7 +3054,7 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Geometry ViewModel - The Mediator.
 
 **Input (Ingests):**
 * `shape`
@@ -3093,7 +3098,7 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Property Card - The Liturgical Input Tile.
 
 **Input (Ingests):**
 * `property_data`
@@ -3433,7 +3438,7 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Geometry Definitions - The Sacred Shape Catalog.
 
 **Input (Ingests):**
 * Pure data structure or utility module.
@@ -3651,7 +3656,7 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Geometry View - The Sacred Canvas Viewport.
 
 **Input (Ingests):**
 * `scene`

@@ -1,3 +1,7 @@
+"""
+Time Mechanics Hub - The Keeper of Time.
+Entry point for temporal tools including Tzolkin calculator and Dynamis visualization.
+"""
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton
 from PyQt6.QtCore import Qt
 

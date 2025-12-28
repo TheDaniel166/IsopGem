@@ -1,3 +1,7 @@
+"""
+Kamea Symphony Service - The Cinematic Audio Engine.
+Generates rich, textured audio using NumPy synthesis, convolution reverb, and stereo panning based on Ditrune nucleation.
+"""
 import numpy as np
 from scipy.io import wavfile
 from scipy.signal import fftconvolve

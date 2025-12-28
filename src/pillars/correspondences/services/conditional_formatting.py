@@ -1,3 +1,7 @@
+"""
+Conditional Formatting - The Rule Engine.
+Applies conditional cell styles based on value comparisons (GT, LT, EQ, CONTAINS).
+"""
 
 from dataclasses import dataclass
 from typing import List, Optional, Dict, Any

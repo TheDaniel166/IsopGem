@@ -1,3 +1,7 @@
+"""
+Symphony Configuration - The 9 Orchestral Archetypes.
+Defines the Family mappings, audio synthesis constants, and nucleation transport objects for the Amun Sound Engine.
+"""
 from dataclasses import dataclass
 from typing import Dict
 

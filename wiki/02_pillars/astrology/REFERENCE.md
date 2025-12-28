@@ -6,6 +6,11 @@ This manifest dissects the Celestial Engine of IsopGem, mapping the integration 
 
 
 
+
+
+
+
+
 ---
 
 **File:** `src/pillars/astrology/models/chart_models.py`
@@ -209,7 +214,7 @@ This manifest dissects the Celestial Engine of IsopGem, mapping the integration 
 
 **Role:** `[Memory] (Repository)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Ephemeris Provider - The Celestial Engine.
 
 **Input (Ingests):**
 * Pure data structure or utility module.
@@ -739,7 +744,7 @@ This manifest dissects the Celestial Engine of IsopGem, mapping the integration 
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Chart Picker Dialog - The Saved Chart Selector.
 
 **Input (Ingests):**
 * `storage`
@@ -776,7 +781,7 @@ This manifest dissects the Celestial Engine of IsopGem, mapping the integration 
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Conversions (UI) - Zodiacal String Formatter.
 
 **Input (Ingests):**
 * Pure data structure or utility module.
@@ -1034,7 +1039,7 @@ This manifest dissects the Celestial Engine of IsopGem, mapping the integration 
 
 **Role:** `[Skin] (UI/View)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Neo-Aubrey Window - The Eclipse Clock Simulator.
 
 **Input (Ingests):**
 * `x`
@@ -1183,7 +1188,7 @@ This manifest dissects the Celestial Engine of IsopGem, mapping the integration 
 
 **Role:** `[Tool] (Utility)`
 
-**Purpose:** Soul not yet specified.
+**Purpose:** Conversions (Utilities) - Zodiacal String Formatter.
 
 **Input (Ingests):**
 * Pure data structure or utility module.

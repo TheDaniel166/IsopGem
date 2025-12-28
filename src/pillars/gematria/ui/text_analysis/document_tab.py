@@ -1,3 +1,7 @@
+"""
+Document Tab - The Text Analysis Container.
+Tab widget combining document viewer with verse list and calculation controls.
+"""
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QStackedWidget,
     QMessageBox
