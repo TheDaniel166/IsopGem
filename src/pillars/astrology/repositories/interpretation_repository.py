@@ -119,3 +119,31 @@ class InterpretationRepository:
             return self._parse_content(raw)
             
         return None
+
+    def get_transit_text(self, transiting_planet: str, natal_planet: str, aspect_name: str) -> Optional[RichInterpretationContent]:
+        """
+        Get text for a transiting planet aspecting a natal planet.
+        """
+        data = self._load_json("transits.json")
+        key = f"{transiting_planet}:{aspect_name}:{natal_planet}".lower().replace(" ", "_")
+        # Structure is usually key-value or nested. 
+        # For simplicity in Phase 3, we try nested: transiting -> aspect -> natal
+        # Or flattened key. Let's try nested.
+        try:
+             raw = data.get(transiting_planet.lower(), {}).get(aspect_name.lower(), {}).get(natal_planet.lower())
+             return self._parse_content(raw)
+        except (AttributeError, TypeError):
+             return None
+
+    def get_synastry_text(self, planet_a: str, planet_b: str, aspect_name: str) -> Optional[RichInterpretationContent]:
+        """
+        Get text for synastry aspect (Inter-aspects).
+        """
+        data = self._load_json("synastry.json")
+        # Synastry is usually symmetric conceptually, but text might differ based on who is A and who is B.
+        # "Your Sun aspecting their Moon"
+        try:
+            raw = data.get(planet_a.lower(), {}).get(aspect_name.lower(), {}).get(planet_b.lower())
+            return self._parse_content(raw)
+        except (AttributeError, TypeError):
+            return None

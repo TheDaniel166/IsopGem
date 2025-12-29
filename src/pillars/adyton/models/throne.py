@@ -18,13 +18,14 @@ COLOR_YELLOW  = QColor(255, 255, 0)
 COLOR_KEY     = QColor(20, 20, 20)      # Black
 
 class ThroneGeometry:
-    @staticmethod
     """
     Throne Geometry class definition.
     
     Attributes:
         todo: Add public attributes.
     """
+
+    @staticmethod
     def build(
         height: float = 19.0,
         base_side: float = 60.0,

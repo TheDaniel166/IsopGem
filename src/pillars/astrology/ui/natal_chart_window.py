@@ -611,30 +611,67 @@ class NatalChartWindow(QMainWindow):
 
         try:
             request = self._build_request()
+            self._temp_request = request # Stash for async callbacks
         except ValueError as exc:
             QMessageBox.warning(self, "Invalid Input", str(exc))
             return
 
-        QApplication.setOverrideCursor(Qt.CursorShape.BusyCursor)
-        try:
-            result = self._service.generate_chart(request)
-        except ChartComputationError as exc:
-            QMessageBox.critical(self, "Calculation Error", str(exc))
-            self._set_status(str(exc))
-        except Exception as exc: 
-            QMessageBox.critical(self, "Unexpected Error", str(exc))
-            self._set_status(f"Error: {exc}")
+        # Use Background Worker
+        self._set_status("Calculating...", busy=True)
+        self.generate_button.setEnabled(False)
+        self.tabs.setEnabled(False) # Prevent interaction
+        
+        # We need to wrap the service call
+        # Since BackgroundWorker takes a function, we pass self._service.generate_chart
+        # and arguments.
+        
+        from shared.ui.worker import BackgroundWorker
+        from PyQt6.QtCore import QThreadPool
+        
+        worker = BackgroundWorker(self._service.generate_chart, request)
+        worker.signals.result.connect(self._on_chart_generated)
+        worker.signals.error.connect(self._on_service_error)
+        worker.signals.finished.connect(self._on_service_finished)
+        
+        QThreadPool.globalInstance().start(worker)
+
+    def _on_chart_generated(self, result: ChartResult) -> None:
+        """Handle async chart result."""
+        self._last_result = result
+        self._last_request = self._temp_request # We need to store who requested it
+        
+        self.save_chart_button.setEnabled(True)
+        self.interpret_button.setEnabled(True)
+        self._render_result(result)
+        self.tabs.setCurrentWidget(self.results_tab)
+        self._set_status("Chart generated successfully.")
+        
+        # Auto-interpret?
+        # self._generate_interpretation(switch_tab=False) 
+        # Better to let user click or run async again. 
+        # If we run async immediately, we need another worker.
+
+    def _on_service_error(self, err_tuple):
+        """Handle async error."""
+        exctype, value, traceback_str = err_tuple
+        QMessageBox.critical(self, "Calculation Error", str(value))
+        self._set_status(f"Error: {value}")
+
+    def _on_service_finished(self):
+        """Cleanup after worker."""
+        self.generate_button.setEnabled(True)
+        self.tabs.setEnabled(True)
+        self.unsetCursor()
+        # Ensure status isn't stuck on "Calculating..."
+        if self.status_label.text() == "Calculating...":
+             self._set_status("Ready")
+
+    def _set_status(self, text: str, busy: bool = False) -> None:
+        self.status_label.setText(text)
+        if busy:
+             self.setCursor(Qt.CursorShape.BusyCursor)
         else:
-            self._last_request = request
-            self._last_result = result
-            self.save_chart_button.setEnabled(True)
-            self.interpret_button.setEnabled(True)
-            self._render_result(result)
-            self.tabs.setCurrentWidget(self.results_tab)
-            self._set_status("Chart generated successfully.")
-            
-            # Auto-generate interpretation (without switching tabs) so it is ready
-            self._generate_interpretation(switch_tab=False)
+             self.unsetCursor()
 
     def _generate_interpretation(self, switch_tab: bool = True) -> None:
         """Generate and display the chart interpretation."""
@@ -1253,9 +1290,7 @@ class NatalChartWindow(QMainWindow):
                 self.chart_canvas.set_aspect_options(include_minor, orb_factor)
             self.chart_canvas.update()
 
-    def _set_status(self, message: str) -> None:
-        if hasattr(self, "status_label"):
-            self.status_label.setText(message)
+
 
     def _initialize_preferences(self) -> None:
         self._default_location = self._preferences.load_default_location()

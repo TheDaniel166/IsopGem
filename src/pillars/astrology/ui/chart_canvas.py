@@ -41,6 +41,10 @@ class ChartCanvas(QWidget):
         
         self._hovered_house: Optional[HousePosition] = None
         self._house_hitboxes: List[tuple[QRectF, HousePosition]] = []
+        
+        # Synastry Data (Outer Ring)
+        self.outer_planets: List[PlanetPosition] = []
+        self._is_synastry: bool = False
 
         # Celestia Palette
         self.c_background_start = QColor("#1a1a2e")
@@ -124,6 +128,38 @@ class ChartCanvas(QWidget):
         
         self.planets = filtered_planets
         self.houses = houses or []
+        self.outer_planets = []
+        self._is_synastry = False
+        self.update()
+
+    def set_synastry_data(self, inner_planets: List[PlanetPosition], outer_planets: List[PlanetPosition], houses: List[HousePosition]) -> None:
+        """Set data for a bi-wheel synastry chart."""
+        self.set_data(inner_planets, houses)
+        
+        # Process outer planets similarly
+        shown_bodies = {
+            "Sun", "Moon", "Mercury", "Venus", "Mars", "Jupiter",
+            "Saturn", "Uranus", "Neptune", "Pluto", 
+            "North Node", "South Node", "Mean Node", "True Node", "Chiron"
+        }
+        
+        candidates = []
+        if outer_planets:
+            for p in outer_planets:
+                if any(b.lower() == p.name.strip().lower() for b in shown_bodies):
+                    candidates.append(p)
+
+        # Refine: Prioritize True Node over Mean Node for outer ring
+        has_true = any(p.name.strip().lower() == "true node" for p in candidates)
+        filtered_outer = []
+        for p in candidates:
+            name_lower = p.name.strip().lower()
+            if has_true and name_lower == "mean node":
+                continue
+            filtered_outer.append(p)
+
+        self.outer_planets = filtered_outer
+        self._is_synastry = True
         self.update()
 
     def set_aspect_options(self, include_minor: bool, orb_factor: float) -> None:
@@ -204,9 +240,17 @@ class ChartCanvas(QWidget):
         cx, cy = w / 2.0, h / 2.0
         
         # Dimensions
-        radius = min(w, h) * 0.45
-        inner_radius = radius * 0.75
-        house_radius = inner_radius * 0.95
+        
+        if self._is_synastry:
+            # Shift rings for bi-wheel
+            radius_outer_planets = min(w, h) * 0.48
+            radius = radius_outer_planets * 0.85 # Zodiac Outer
+            inner_radius = radius * 0.75 # Zodiac Inner / Planets Inner Base
+            house_radius = inner_radius * 0.95
+        else:
+            radius = min(w, h) * 0.45
+            inner_radius = radius * 0.75
+            house_radius = inner_radius * 0.95
         
         # Reset Hitboxes
         self._planet_hitboxes = []
@@ -240,8 +284,14 @@ class ChartCanvas(QWidget):
         # 4. Zodiac Ring (The Firmament)
         self._draw_zodiac_ring(painter, cx, cy, angle_for, radius, inner_radius)
 
-        # 5. Planets (The Wandering Stars)
-        self._draw_planets(painter, cx, cy, angle_for, inner_radius)
+        # 5. Inner Planets (The Wandering Stars)
+        self._draw_planets(painter, cx, cy, angle_for, inner_radius, self.planets)
+        
+        # 6. Outer Planets (Synastry)
+        if self._is_synastry and self.outer_planets:
+             # Draw outside the zodiac ring
+             radius_outer_planets = min(w, h) * 0.46 # Slightly inside max bounds
+             self._draw_planets(painter, cx, cy, angle_for, radius_outer_planets, self.outer_planets, is_outer=True)
         
         # Center decoration
         self._draw_center_decoration(painter, cx, cy, inner_radius * 0.6)
@@ -366,18 +416,29 @@ class ChartCanvas(QWidget):
             p.setPen(QColor(255, 255, 255, 100))
             p.drawText(QPointF(nx - 4, ny + 4), str(house.number))
 
-    def _draw_planets(self, p: QPainter, cx: float, cy: float, angle_func, r_inner: float) -> None:
-        base_r = r_inner * 0.75
+    def _draw_planets(self, p: QPainter, cx: float, cy: float, angle_func, r_baseline: float, planet_list: List[PlanetPosition], is_outer: bool = False) -> None:
+        # For inner planets: r_baseline is inner_radius. We draw inwards from it.
+        # For outer planets: r_baseline is radius_outer_planets. We draw outwards? Or just at that line?
+        # Let's assume r_baseline is the MAX radius for inner, and MIN radius for outer?
+        # Actually, let's just stagger around r_baseline.
+        
+        base_r = r_baseline * 0.75 if not is_outer else r_baseline
         
         font = QFont("Sans", 10, QFont.Weight.Bold)
+        if is_outer:
+             font.setPointSize(8) # Smaller font for outer
+             
         p.setFont(font)
         
-        for idx, pos in enumerate(self.planets):
+        for idx, pos in enumerate(planet_list):
             angle = angle_func(pos.degree)
             
             # Stagger tiers to prevent overlap
             tier = idx % 3
-            marker_r = base_r - (tier * 15.0)
+            if is_outer:
+                 marker_r = base_r + (tier * 12.0)
+            else:
+                 marker_r = base_r - (tier * 15.0)
             
             px = cx + math.cos(angle) * marker_r
             py = cy + math.sin(angle) * marker_r

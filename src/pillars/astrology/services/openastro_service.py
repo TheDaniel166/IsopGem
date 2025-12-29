@@ -65,7 +65,22 @@ class OpenAstroService:
                 "has been run on this system."
             )
         self._logger = logging.getLogger(self.__class__.__name__)
-        self._default_settings = default_settings or self._build_default_settings()
+        # Initialize default settings (copied from template if not provided)
+        # Note: self._default_settings is defined in class body but we want instance copy if creating new.
+        # Actually in previous edit I moved definition to init but `_build_default_settings` call remained.
+        
+        base_defaults = {
+            "astrocfg": {
+                "language": "en",
+                "houses_system": "P", 
+                "zodiactype": "tropical",
+                "postype": "geo",
+                "planet_in_one_house": 0,
+                "round_aspects": 0,
+            }
+        }
+        self._default_settings = default_settings or base_defaults
+        self._cache: Dict[str, ChartResult] = {}
 
     # ------------------------------------------------------------------
     # Public API
@@ -79,17 +94,33 @@ class OpenAstroService:
             else None
         )
 
-        chart_settings = (
-            copy.deepcopy(request.settings)
-            if request.settings is not None
-            else self.default_settings()
-        )
-        self._logger.debug("Generating chart", extra={
-            "chart_type": request.chart_type,
-            "has_secondary": bool(secondary),
-        })
+        # Merge request settings on top of defaults
+        chart_settings = self.default_settings()
+        if request.settings:
+            # Deep merge logic for 'astrocfg' etc
+            for key, val in request.settings.items():
+                if isinstance(val, dict) and key in chart_settings:
+                    chart_settings[key].update(val)
+                else:
+                    chart_settings[key] = val
+        if self._logger.isEnabledFor(logging.DEBUG):
+            self._logger.debug("Generating chart", extra={
+                "chart_type": request.chart_type,
+                "has_secondary": bool(secondary),
+            })
+            
+        # Check Cache
+        # Serialize request for key (naive but functional)
+        # We assume ChartRequest is dataclass so repr is stable-ish, but let's use a specific key method
+        cache_key = f"{request}" # Dataclass repr includes all fields
+        if cache_key in self._cache:
+             self._logger.info("Serving chart from cache.")
+             return self._cache[cache_key]
 
         try:
+            # Validate inputs before calling external lib
+            self._validate_request(request)
+
             chart_args: List[Any] = [primary]
             if secondary is not None:
                 chart_args.append(secondary)
@@ -98,8 +129,16 @@ class OpenAstroService:
         except Exception as exc:  # pragma: no cover - wraps upstream errors
             self._logger.exception("OpenAstro2 raised an error")
             raise ChartComputationError("OpenAstro2 failed to compute the chart") from exc
+        
+        result = self._build_chart_result(chart, request)
+        self._cache[cache_key] = result
+        return result
 
-        return self._build_chart_result(chart, request)
+    def _validate_request(self, request: ChartRequest) -> None:
+        """Validate request parameters before calling OpenAstro."""
+        if not request.primary_event.location:
+             raise ValueError("Location is required")
+        # Add more validation if needed
 
     def list_house_systems(self) -> Dict[str, str]:
         """Return a dictionary of supported house systems and their labels."""
@@ -108,22 +147,33 @@ class OpenAstroService:
     def default_settings(self) -> Dict[str, Any]:
         """Expose a safe copy of the default OpenAstro settings template."""
         return copy.deepcopy(self._default_settings)
+    
+    def configure_defaults(self, new_defaults: Dict[str, Any]) -> None:
+        """Update the base default settings for the service instance."""
+        # Deep merge new settings into existing defaults
+        for section, values in new_defaults.items():
+            if section not in self._default_settings:
+                self._default_settings[section] = {}
+            if isinstance(values, dict):
+                self._default_settings[section].update(values)
+            else:
+                self._default_settings[section] = values
 
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
-    def _build_default_settings(self) -> Dict[str, Any]:
-        """Return sane defaults that work for most natal charts."""
-        return {
-            "astrocfg": {
-                "language": "en",
-                "houses_system": "P",  # Placidus
-                "zodiactype": "tropical",
-                "postype": "geo",
-                "planet_in_one_house": 0,
-                "round_aspects": 0,
-            }
-        }
+    def _check_availability(self) -> None:
+        """
+        Checks if openastro2 is available and raises an error if not.
+        
+        Raises:
+            OpenAstroNotAvailableError: If openastro cannot be imported.
+        """
+        if openAstro is None:
+            raise OpenAstroNotAvailableError(
+                "openastro2 is not installed. Ensure 'pip install openastro2' "
+                "has been run on this system."
+            )
 
     def _to_openastro_event(self, event: AstrologyEvent) -> Dict[str, Any]:
         """Convert an AstrologyEvent into kwargs for openAstro.event()."""
@@ -179,7 +229,8 @@ class OpenAstroService:
                 except (TypeError, ValueError):
                     continue
                 sign_idx = payload.get("planets_sign")
-                name = payload.get("planets_name") or fallback_name
+                raw_name = payload.get("planets_name") or fallback_name
+                name = raw_name.title() if raw_name else "Unknown"
                 positions.append(
                     PlanetPosition(
                         name=name,

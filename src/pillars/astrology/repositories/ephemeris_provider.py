@@ -9,6 +9,8 @@ from skyfield.api import load
 from skyfield.framelib import ecliptic_frame
 
 import threading
+from typing import Optional, Union, Dict, Any, Tuple
+from ..models.chart_models import GeoLocation
 
 class EphemerisNotLoadedError(Exception):
     """
@@ -31,6 +33,15 @@ class EphemerisProvider:
     _ts = None
     _loaded = False
     _loading_thread = None
+    
+    # Predefined Ayanamsa offsets at J2000 (roughly)
+    # Note: For professional precision, we should ideally compute dynamic ayanamsa.
+    # For Phase 1, we use standard J2000 offsets and apply precession.
+    AYANAMSA_J2000 = {
+        "LAHIRI": 23.85,  # Chitrapaksha
+        "RAMAN": 22.36,
+        "FAGAN_BRADLEY": 24.71,
+    }
 
     @classmethod
     def get_instance(cls):
@@ -134,12 +145,46 @@ class EphemerisProvider:
         
         return node_deg % 360.0
 
-    def get_geocentric_ecliptic_position(self, body_name: str, dt: datetime) -> float:
+    def get_mean_north_node(self, dt: datetime) -> float:
         """
-        Returns the Geocentric Ecliptic Longitude (0-360) for a given body.
-        body_name: 'venus', 'mars', 'sun', etc.
+        Calculates the Geocentric Mean North Node.
+        Uses the standard formula (Elusieve). 
         """
+        # Skyfield doesn't natively expose Mean Node in standard kernels easily?
+        # Actually, we can use a standard formula relative to J2000 if high precision isn't demanded,
+        # or load a specific kernel. For Phase 1, we use a high-precision formula.
+        #
+        # Meeus (Astronomical Algorithms) Formula for Mean Ascending Node (Omega):
+        # Omega = 125.04452 - 1934.136261 * T + 0.0020708 * T^2 + ...
+        # Where T is centuries since J2000.
+        
+        t = self._ts.from_datetime(dt)
+        # J2000 = 2451545.0
+        jd = t.tt
+        T = (jd - 2451545.0) / 36525.0
+        
+        omega = 125.04452 - 1934.136261 * T + 0.0020708 * (T**2) + (T**3 / 450000.0)
+        return omega % 360.0
 
+    def get_geocentric_ecliptic_position(
+        self, 
+        body_name: str, 
+        dt: datetime, 
+        location: Optional[GeoLocation] = None,
+        zodiac_type: str = "TROPICAL",
+        ayanamsa: str = "LAHIRI"
+    ) -> float:
+        """
+        Returns the Ecliptic Longitude (0-360) for a given body.
+        
+        Args:
+            body_name: 'venus', 'mars', 'sun', etc.
+            dt: Datetime of observation.
+            location: Optional GeoLocation. If provided, returns TOPOCENTRIC position 
+                      (relative to observer on Earth surface). If None, defaults to Geocentric (Earth Center).
+            zodiac_type: 'TROPICAL' (default) or 'SIDEREAL'.
+            ayanamsa: If zodiac_type is SIDEREAL, specifies which system (default LAHIRI).
+        """
         if not self._loaded:
             raise EphemerisNotLoadedError("Ephemeris data is still loading.")
         
@@ -147,13 +192,76 @@ class EphemerisProvider:
         earth = self._planets['earth']
         body = self._planets[body_name]
         
-        # Geocentric observation
-        astrometric = earth.at(t).observe(body)
+        # 1. Define the Observer (Geocentric vs Topocentric)
+        if location:
+            # Topocentric: Earth surface + altitude
+            # wgs84 is the standard ellipsoid
+            from skyfield.api import wgs84
+            # We create a Topos/GeographicPosition object
+            topo = wgs84.latlon(location.latitude, location.longitude, elevation_m=location.elevation)
+            # We sum Earth + Topos
+            observer = earth + topo
+        else:
+            # Geocentric: Earth center
+            observer = earth
+            
+        # 2. Observe the body
+        astrometric = observer.at(t).observe(body)
         
-        # Project to Ecliptic
-        lat, lon, distance = astrometric.ecliptic_latlon()
+        # 3. Apparent position (accounts for light time delay)
+        # We attempt to compute apparent position (gravitational deflection).
+        # If the observer chain detached from the ephemeris (common with some vector sums),
+        # we fallback to the astrometric position (light-time only).
+        try:
+            apparent = astrometric.apparent()
+        except (TypeError, AttributeError):
+            # Fallback: manually attach ephemeris if possible, or just use astrometric
+            try:
+                # Last ditch effort to patch the private attribute for Skyfield < 1.39
+                if hasattr(astrometric, '_ephemeris') and astrometric._ephemeris is None:
+                     astrometric._ephemeris = self._planets
+                     apparent = astrometric.apparent()
+                else:
+                     apparent = astrometric
+            except Exception:
+                apparent = astrometric
         
-        return lon.degrees
+        # 4. Project to Ecliptic
+        lat, lon, distance = apparent.ecliptic_latlon()
+        longitude = lon.degrees
+        
+        # 5. Apply Sidereal correction if requested
+        if zodiac_type.upper() == "SIDEREAL":
+            longitude = self._to_sidereal(longitude, t, ayanamsa)
+            
+        return longitude
+
+    def _to_sidereal(self, tropical_lon: float, t: Any, ayanamsa_name: str) -> float:
+        """
+        Converts a Tropical Longitude to Sidereal by subtracting the Ayanamsa.
+        Sidereal = Tropical - Ayanamsa
+        
+        We calculate Ayanamsa as:
+        Ayanamsa(T) = Ayanamsa(J2000) + Precession accumulated since J2000.
+        
+        Precession rate approx 50.29 arcseconds per year.
+        """
+        # J2000 epoch
+        jd = t.tt
+        T = (jd - 2451545.0) / 36525.0 # Centuries since J2000
+        
+        # Accumulated precession (simplified model for Phase 1)
+        # 5029.0966 arcseconds per century (IAU 2006 value is slightly different but standard usage often cites ~50.29"/yr)
+        # In degrees: 50.29 * 100 / 3600 = ~1.3969 degrees per century
+        precession_degrees = 1.39688783 * T 
+        
+        base_offset = self.AYANAMSA_J2000.get(ayanamsa_name.upper(), 23.85) # Default to Lahiri
+        
+        # Current Ayanamsa
+        current_ayanamsa = base_offset + precession_degrees
+        
+        sidereal = tropical_lon - current_ayanamsa
+        return sidereal % 360.0
 
     def get_heliocentric_ecliptic_position(self, body_name: str, dt: datetime) -> float:
         """

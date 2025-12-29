@@ -12,6 +12,10 @@ from .planetary_positions_window import PlanetaryPositionsWindow
 from .neo_aubrey_window import NeoAubreyWindow
 from .venus_rose_window import VenusRoseWindow
 from .differential_natal_window import DifferentialNatalWindow
+from .synastry_window import SynastryWindow
+from .returns_window import ReturnsWindow
+from .progressions_window import ProgressionsWindow
+from ..services.openastro_service import OpenAstroService
 
 
 class AstrologyHub(QWidget):
@@ -74,8 +78,11 @@ class AstrologyHub(QWidget):
             ("Δ", "Differential", "Map planets to Conrune pairs", "#06b6d4", self._open_differential_chart),
             ("↻", "Transits", "View current planetary transits in real-time", "#3b82f6", self._open_transit_viewer),
             ("♈", "Positions", "Ephemeris table of planetary positions", "#10b981", self._open_planetary_positions),
-            ("◐", "Eclipse Clock", "Neo-Aubrey eclipse timing calculator", "#f97316", self._open_neo_aubrey),
+            ("☾", "Eclipse Clock", "Neo-Aubrey eclipse timing calculator", "#f97316", self._open_neo_aubrey),
             ("♀", "Venus Rose", "The Cytherean Rose - Venus cycles", "#ec4899", self._open_venus_rose),
+            ("∞", "Synastry", "Relationship compatibility & bi-wheels", "#db2777", self._open_synastry),
+            ("↺", "Returns", "Solar and Lunar Returns", "#eab308", self._open_returns),
+            ("↝", "Progressions", "Secondary Progressions & Solar Arc", "#8b5cf6", self._open_progressions),
         ]
 
         grid = QGridLayout()
@@ -214,4 +221,34 @@ class AstrologyHub(QWidget):
             DifferentialNatalWindow,
             allow_multiple=False,
             window_manager=self.window_manager,
+        )
+
+    def _open_synastry(self) -> None:
+        """Launch Synastry Window."""
+        service = OpenAstroService()
+        self.window_manager.open_window(
+            "astrology_synastry",
+            SynastryWindow,
+            allow_multiple=False,
+            service=service
+        )
+        
+    def _open_returns(self) -> None:
+        """Launch Returns Window."""
+        service = OpenAstroService()
+        self.window_manager.open_window(
+            "astrology_returns",
+            ReturnsWindow,
+            allow_multiple=False,
+            service=service
+        )
+        
+    def _open_progressions(self) -> None:
+        """Launch Progressions Window."""
+        service = OpenAstroService()
+        self.window_manager.open_window(
+            "astrology_progressions",
+            ProgressionsWindow,
+            allow_multiple=False,
+            service=service
         )

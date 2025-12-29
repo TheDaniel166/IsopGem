@@ -89,6 +89,8 @@ class PlanetPosition:
     name: str
     degree: float
     sign_index: Optional[int] = None
+    speed: Optional[float] = None  # Degrees per day
+    declination: Optional[float] = None  # Degrees (-90 to +90)
 
 
 @dataclass(slots=True)

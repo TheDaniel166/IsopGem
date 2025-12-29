@@ -41,6 +41,57 @@ class InterpretationService:
         
         return report
 
+    def interpret_transits(self, transit_chart: ChartResult, natal_chart: ChartResult, aspects: List[CalculatedAspect]) -> InterpretationReport:
+        """
+        Interpret Transits vs Natal.
+        """
+        report = InterpretationReport(chart_name=f"Transits for {transit_chart.raw_payload.get('date', 'Unknown Date')}")
+        
+        # We assume 'aspects' list contains CalculatedAspect where planet_a is Transit and planet_b is Natal
+        # Ideally, we should receive semantic objects or verify names.
+        
+        for aspect in aspects:
+            # Check repository
+            content = self.repository.get_transit_text(
+                transiting_planet=aspect.planet_a, # e.g. "Transit Sun" or just "Sun"
+                natal_planet=aspect.planet_b,
+                aspect_name=aspect.aspect.name
+            )
+            
+            if content:
+                report.add_segment(
+                    title=f"Transit {aspect.planet_a} {aspect.aspect.symbol} Natal {aspect.planet_b}",
+                    content=content,
+                    tags=["Transit", aspect.planet_a, aspect.planet_b]
+                )
+                
+        return report
+
+    def interpret_synastry(self, chart_a: ChartResult, chart_b: ChartResult, aspects: List[CalculatedAspect]) -> InterpretationReport:
+        """
+        Interpret Synastry (Relationship).
+        """
+        report = InterpretationReport(chart_name=f"Synastry: A vs B")
+        
+        # 'aspects' are cross-aspects
+        for aspect in aspects:
+            # Parse names if they are like "A: Sun" / "B: Moon"
+            # Our SynastryService produces exact strings.
+            # We strip prefixes if present.
+            p_a = aspect.planet_a.split(": ")[-1] if ":" in aspect.planet_a else aspect.planet_a
+            p_b = aspect.planet_b.split(": ")[-1] if ":" in aspect.planet_b else aspect.planet_b
+            
+            content = self.repository.get_synastry_text(p_a, p_b, aspect.aspect.name)
+            
+            if content:
+                report.add_segment(
+                    title=f"{p_a} {aspect.aspect.symbol} {p_b}",
+                    content=content,
+                    tags=["Synastry", p_a, p_b]
+                )
+                
+        return report
+
     def _interpret_planets(self, planets: List[PlanetPosition], houses: List[HousePosition], report: InterpretationReport) -> None:
         """Add interpretations for each planet."""
         SIGN_NAMES = [
