@@ -7,6 +7,9 @@ from unittest.mock import MagicMock
 sys.path.append(os.path.abspath("src"))
 
 from pillars.document_manager.utils.image_utils import extract_images_from_html, restore_images_in_html
+# Ensure logging doesn't spam stdout during test
+import logging
+logging.basicConfig(level=logging.CRITICAL)
 
 def test_image_utils():
     print("Testing Image Utils Refinement...")
@@ -60,6 +63,43 @@ def test_image_utils():
     
     print("SUCCESS: Deduplication verified.")
     
+    print("SUCCESS: Deduplication verified.")
+    
+    # 2b. OOM Protection Test
+    print("\n[Test 2b] Testing OOM Protection...")
+    # Create fake large base64 data (just checking length logic, not actual memory)
+    # MAX_IMG_SIZE is 20MB. 1.33 * 20MB approx 26.6MB.
+    # We will temporarily mock the logger to check for warning
+    
+    # Construct a string longer than the limit. 
+    # Since we can't easily generate 26MB string in test without cost, 
+    # we can trust the logic or mock len? 
+    # Better: We will rely on unit testing logic. 
+    # For now, let's create a "large" mock match by creating a fake HTML that triggers the size check
+    # But since we can't easily make a 26MB string here efficiently, 
+    # we might just manually call the internal logic or trust the unit test if we had one.
+    # Actually, we can just monkeypatch MAX_IMG_SIZE to be small for this test.
+    
+    import pillars.document_manager.utils.image_utils as img_utils
+    # We must patch the SHARED module, not just the wrapper, because the function is defined in shared
+    import shared.services.document_manager.utils.image_utils as shared_img_utils
+    
+    original_limit = shared_img_utils.MAX_IMG_SIZE
+    shared_img_utils.MAX_IMG_SIZE = 100 # Set limit to 100 bytes
+    
+    large_b64 = "A" * 200 # 200 bytes > 100 * 1.33
+    html_oom = f'<img src="data:{mime};base64,{large_b64}">'
+    
+    modified_oom, _ = extract_images_from_html(html_oom, store_mock)
+    
+    if "docimg://" not in modified_oom:
+        print("SUCCESS: Large image correctly skipped (OOM protection).")
+    else:
+        print(f"FAILURE: Large image was processed! HTML: {modified_oom}")
+        
+    # Restore limit
+    shared_img_utils.MAX_IMG_SIZE = original_limit
+
     # 3. Restore Test
     # Restore the modified HTML from Test 1
     fetch_mock = MagicMock(return_value=(dummy_bytes, mime))

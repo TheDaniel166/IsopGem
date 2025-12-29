@@ -1,1 +1,1 @@
-from shared.services.document_manager.utils.image_utils import extract_images_from_html, restore_images_in_html, has_embedded_images, has_docimg_references
+from shared.services.document_manager.utils.image_utils import extract_images_from_html, restore_images_in_html, has_embedded_images, has_docimg_references, MAX_IMG_SIZE

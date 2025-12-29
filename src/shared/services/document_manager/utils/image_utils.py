@@ -2,13 +2,23 @@
 import re
 import base64
 import hashlib
+import logging
+import mimetypes
 from typing import List, Tuple, Callable
+
+# Configure logger
+logger = logging.getLogger(__name__)
+
+MAX_IMG_SIZE = 20 * 1024 * 1024  # 20MB limit for base64 data
 
 
 # Pattern to match base64 image data in src attributes while preserving other attributes
 # Captures: prefix (before src value), mime, data, suffix (after src value)
+# Improved allows attributes before src
 SAFE_EXTRACT_PATTERN = re.compile(
-    r'(?P<prefix><img\s+[^>]*?src=["\'])data:image/(?P<mime>[^;]+).*?;base64,(?P<data>[^"\']+)(?P<suffix>["\'][^>]*>)',
+    r'(?P<prefix><img\b(?=[^>]*?\bsrc=["\']data:image/)(?:[^>]+?)\bsrc=["\'])'
+    r'data:image/(?P<mime>[^;]+).*?;base64,(?P<data>[^"\']+)'
+    r'(?P<suffix>["\'][^>]*>)',
     re.IGNORECASE | re.DOTALL
 )
 
@@ -44,11 +54,15 @@ def extract_images_from_html(
         base64_data = match.group('data')
         suffix = match.group('suffix')
         
+        if len(base64_data) > (MAX_IMG_SIZE * 1.33):
+            logger.warning("Image too large, skipping extraction")
+            return match.group(0)
+
         # Decode base64 to bytes
         try:
             image_bytes = base64.b64decode(base64_data)
         except Exception as e:
-            print(f"Failed to decode base64 image: {e}")
+            logger.error(f"Failed to decode base64 image: {e}")
             return match.group(0)
         
         # Deduplication check
@@ -58,13 +72,14 @@ def extract_images_from_html(
             image_id = seen_hashes[img_hash]
             is_new = False
         else:
+            # Use mimetypes to normalize if needed, though we get subtype from regex
             mime_type = f"image/{mime_subtype}"
             try:
                 image_id = store_callback(image_bytes, mime_type)
                 seen_hashes[img_hash] = image_id
                 is_new = True
             except Exception as e:
-                print(f"Failed to store image: {e}")
+                logger.error(f"Failed to store image: {e}")
                 return match.group(0)
         
         if is_new:
@@ -121,7 +136,7 @@ def restore_images_in_html(
             return f'{prefix}data:image/{mime_subtype};base64,{base64_data}{suffix}'
             
         except Exception as e:
-            print(f"Failed to fetch image {image_id_str}: {e}")
+            logger.error(f"Failed to fetch image {image_id_str}: {e}")
             return match.group(0)
     
     return SAFE_RESTORE_PATTERN.sub(replace_docimg, html)

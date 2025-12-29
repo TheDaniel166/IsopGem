@@ -40,53 +40,26 @@ except ImportError:
 class HTMLTextExtractor(HTMLParser):
     """Simple HTML parser to extract text with basic layout preservation."""
     def __init__(self):
-        """
-          init   logic.
-        
-        """
+        """Initialize the extractor with an empty text buffer."""
         super().__init__()
         self.text_parts = []
         
     def handle_data(self, data):
-        """
-        Handle data logic.
-        
-        Args:
-            data: Description of data.
-        
-        """
+        """Append text data to the buffer."""
         self.text_parts.append(data)
         
     def handle_starttag(self, tag, attrs):
-        """
-        Handle starttag logic.
-        
-        Args:
-            tag: Description of tag.
-            attrs: Description of attrs.
-        
-        """
+        """Process start tags, adding newlines for breaks."""
         if tag == 'br':
             self.text_parts.append('\n')
             
     def handle_endtag(self, tag):
-        """
-        Handle endtag logic.
-        
-        Args:
-            tag: Description of tag.
-        
-        """
+        """Process end tags, ensuring proper spacing for block elements."""
         if tag in ('p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'tr', 'article', 'section'):
             self.text_parts.append('\n')
             
     def get_text(self):
-        """
-        Retrieve text logic.
-        
-        Returns:
-            Result of get_text operation.
-        """
+        """Return the aggregated, suppressed text content."""
         return "".join(self.text_parts).strip()
 
 class DocumentParser:
@@ -200,7 +173,7 @@ class DocumentParser:
             if not run_text:
                 continue
                 
-            run_text = run_text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('\t', '&nbsp;&nbsp;&nbsp;&nbsp;').replace('\ufffc', '')
+            run_text = run_text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;').replace('\t', '&nbsp;&nbsp;&nbsp;&nbsp;').replace('\ufffc', '')
             
             # If run has text (even spaces, though we might want to trim? for now keep strict)
             if run_text.strip():
@@ -254,7 +227,7 @@ class DocumentParser:
                     
                     if pt_value > 0:
                         para_style_parts.append(f"margin-bottom: {pt_value}pt")
-                except:
+                except Exception:
                     pass
 
             # Space Before (Margin Top)
@@ -266,7 +239,7 @@ class DocumentParser:
                     
                     if pt_value > 0:
                         para_style_parts.append(f"margin-top: {pt_value}pt")
-                except:
+                except Exception:
                     pass
             
             # Line Spacing (Line Height)
@@ -341,7 +314,64 @@ class DocumentParser:
         return f"<table dir='ltr' style='border-collapse: collapse; width: 100%; border: 1px solid #ddd; margin: 10px 0;'>{''.join(rows_html)}</table>"
 
     @staticmethod
-    def _get_list_properties(para) -> tuple[str, int]:
+    def _build_numbering_map(doc) -> dict:
+        """
+        Builds a map of (numId, ilvl) -> 'ul' | 'ol' identifying list types by numbering definition.
+        """
+        num_map = {} # (numId, ilvl) -> list_type
+        
+        try:
+            # Safely access numbering part
+            part = doc.part
+            numbering_part = getattr(part, 'numbering_part', None)
+            
+            if numbering_part is None: 
+                return {}
+                
+            # Access the CT_Numbering element (<w:numbering>)
+            element = numbering_part.element
+            
+            # 1. Map abstractNumId -> { ilvl: format_val }
+            abstract_map = {}
+            
+            # access abstractNum_lst (python-docx generated property)
+            for abstract_num in getattr(element, 'abstractNum_lst', []):
+                 try:
+                     abst_id = abstract_num.abstractNumId.val
+                     abstract_map[abst_id] = {}
+                     
+                     for lvl in abstract_num.lvl_lst:
+                         ilvl = int(lvl.ilvl)
+                         if lvl.numFmt:
+                             abstract_map[abst_id][ilvl] = lvl.numFmt.val
+                 except Exception:
+                     continue
+            
+            # 2. Link numId -> abstractNumId -> format
+            for num in getattr(element, 'num_lst', []):
+                try:
+                    num_id = int(num.numId.val)
+                    abst_id = num.abstractNumId.val
+                    
+                    if abst_id in abstract_map:
+                        for ilvl, fmt in abstract_map[abst_id].items():
+                            # Determine type: bullet -> ul, anything else -> ol
+                            # Common formats: decimal, upperRoman, lowerLetter, bullet
+                            if fmt == 'bullet':
+                                num_map[(num_id, ilvl)] = 'ul'
+                            else:
+                                num_map[(num_id, ilvl)] = 'ol'
+                except Exception:
+                    continue
+                            
+        except Exception as e:
+            # print(f"DEBUG: Failed to build numbering map: {e}")
+            pass 
+            
+        return num_map
+
+    @staticmethod
+    def _get_list_properties(para, numbering_map=None) -> tuple[str, int]:
         """
         Determine if paragraph is a list item.
         Returns: (list_type ('ul'|'ol'|None), level (0-indexed))
@@ -352,11 +382,18 @@ class DocumentParser:
                 # Get indent level
                 level = 0
                 if para._p.pPr.numPr.ilvl is not None:
-                    # ilvl val is usually string "0", "1", etc.
                     level = int(para._p.pPr.numPr.ilvl.val)
                 
-                # Determine type: This is heuristic without checking numbering.xml
-                # If style name suggests numbering, use ol, else ul
+                # High-Precision Check: Use the map if available
+                if numbering_map and para._p.pPr.numPr.numId is not None:
+                    try:
+                        num_id = int(para._p.pPr.numPr.numId.val)
+                        if (num_id, level) in numbering_map:
+                            return numbering_map[(num_id, level)], level
+                    except Exception:
+                        pass
+                
+                # Fallback: Heuristic
                 style_name = para.style.name.lower()
                 list_type = 'ul'
                 if 'num' in style_name or 'order' in style_name:
@@ -373,6 +410,57 @@ class DocumentParser:
             pass
             
         return None, 0
+
+    @staticmethod
+    def _extract_full_text(doc) -> str:
+        """
+        Extract all text from a DOCX document in reading order,
+        including paragraphs and table cells (with nested table support).
+        """
+        text_parts = []
+        
+        def extract_table_text(table) -> list[str]:
+            """Recursively extract text from a table, including nested tables."""
+            table_texts = []
+            for row in table.rows:
+                row_texts = []
+                for cell in row.cells:
+                    cell_texts = []
+                    try:
+                        # Prefer iter_inner_content for mixed content
+                        content_iter = cell.iter_inner_content()
+                    except AttributeError:
+                        # Fallback for older python-docx
+                        content_iter = cell.paragraphs
+                    
+                    for block in content_iter:
+                        if isinstance(block, docx.text.paragraph.Paragraph):
+                            if block.text.strip():
+                                cell_texts.append(block.text.strip())
+                        elif isinstance(block, docx.table.Table):
+                            # Nested table - recurse
+                            nested = extract_table_text(block)
+                            cell_texts.extend(nested)
+                    
+                    if cell_texts:
+                        row_texts.append(" ".join(cell_texts))
+                
+                if row_texts:
+                    # Join cells with pipe structure for visibility (Markdown-ish)
+                    table_texts.append(" | ".join(row_texts))
+            
+            return table_texts
+        
+        # Iterate document in order
+        for block in doc.iter_inner_content():
+            if isinstance(block, docx.text.paragraph.Paragraph):
+                if block.text.strip():
+                    text_parts.append(block.text.strip())
+            elif isinstance(block, docx.table.Table):
+                table_lines = extract_table_text(block)
+                text_parts.extend(table_lines)
+        
+        return "\n".join(text_parts)
 
     @staticmethod
     def _parse_docx(source: object) -> tuple[str, str, str, dict]:
@@ -398,7 +486,10 @@ class DocumentParser:
              try:
                  result = mammoth.convert_to_html(docx_file)
                  html = result.value
-                 text = result.messages
+                 if hasattr(docx_file, 'seek'):
+                     docx_file.seek(0)
+                 text_result = mammoth.extract_raw_text(docx_file)
+                 text = text_result.value
              finally:
                  if not hasattr(source, 'read'):
                      docx_file.close()
@@ -417,7 +508,7 @@ class DocumentParser:
             if core_props.created: metadata['created'] = core_props.created
             
             # --- Text Extraction ---
-            text = "\n".join([para.text for para in doc.paragraphs])
+            text = DocumentParser._extract_full_text(doc)
             
             # --- Custom HTML Generation (Preserving Fonts & Order) ---
             html_parts = []
@@ -427,9 +518,10 @@ class DocumentParser:
             MAX_EMPTY_PARAS = 1 # Allow at most 1 empty line for spacing
             
             # List State Tracking
-            # Stack of open list types. Length represents current nesting level.
-            # e.g., ['ul', 'ol', 'ul'] means level 2 is 'ul' nested in 'ol' nested in 'ul'.
             list_stack = [] 
+            
+            # Build precise numbering map
+            numbering_map = DocumentParser._build_numbering_map(doc)
             
             # Iterate through document content in order
             for block in doc.iter_inner_content():
@@ -438,7 +530,7 @@ class DocumentParser:
                 list_type, list_level = None, 0
                 
                 if isinstance(block, docx.text.paragraph.Paragraph):
-                   list_type, list_level = DocumentParser._get_list_properties(block)
+                   list_type, list_level = DocumentParser._get_list_properties(block, numbering_map)
                 
                 if list_type:
                     is_list_item = True
@@ -507,6 +599,10 @@ class DocumentParser:
                 try:
                     result = mammoth.convert_to_html(docx_file)
                     html = result.value
+                    if hasattr(docx_file, 'seek'):
+                        docx_file.seek(0)
+                    text_result = mammoth.extract_raw_text(docx_file)
+                    text = text_result.value
                 finally:
                     if not hasattr(source, 'read'):
                         docx_file.close()
@@ -589,7 +685,7 @@ class DocumentParser:
                     if reader.is_encrypted:
                         try:
                             reader.decrypt('')
-                        except:
+                        except Exception:
                             raise ValueError("PDF is encrypted and cannot be read.")
 
                     # Metadata
@@ -619,7 +715,7 @@ class DocumentParser:
                     if meta.get('title'): metadata['title'] = meta['title']
                     if meta.get('author'): metadata['author'] = meta['author']
                 doc.close()
-            except:
+            except Exception:
                 pass
         elif pypdf:
              try:
@@ -628,7 +724,7 @@ class DocumentParser:
                     if reader.metadata:
                         if reader.metadata.title: metadata['title'] = reader.metadata.title
                         if reader.metadata.author: metadata['author'] = reader.metadata.author
-             except:
+             except Exception:
                  pass
         return metadata
 
