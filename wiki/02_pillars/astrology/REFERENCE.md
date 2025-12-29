@@ -1243,3 +1243,58 @@ This manifest dissects the Celestial Engine of IsopGem, mapping the integration 
 **Key Interactions:**
 **Exposes:** `load_default_location()` - *Functional interface.*
 **Exposes:** `save_default_location()` - *Functional interface.*
+
+
+---
+
+**File:** `src/pillars/astrology/ui/synastry_window.py`
+
+**Role:** `[Skin] (UI/View)`
+
+**Purpose:** Synastry Analysis Window - Multi-chart harmonic analysis (Bi-Wheel, Composite, Davison).
+
+**Input (Ingests):**
+* `service` (OpenAstroService)
+* `parent`
+
+**Output (Emits):**
+* None
+
+**Dependencies (It Needs):**
+* `PyQt6.QtCore.Qt`
+* `PyQt6.QtCore.QThreadPool`
+* `PyQt6.QtGui.QColor`
+* `PyQt6.QtWidgets.QComboBox`
+* `PyQt6.QtWidgets.QDateTimeEdit`
+* `PyQt6.QtWidgets.QGroupBox`
+* `PyQt6.QtWidgets.QHBoxLayout`
+* `PyQt6.QtWidgets.QLabel`
+* `PyQt6.QtWidgets.QLineEdit`
+* `PyQt6.QtWidgets.QMainWindow`
+* `PyQt6.QtWidgets.QMessageBox`
+* `PyQt6.QtWidgets.QPushButton`
+* `PyQt6.QtWidgets.QStackedWidget`
+* `PyQt6.QtWidgets.QVBoxLayout`
+* `PyQt6.QtWidgets.QWidget`
+* `datetime.datetime`
+* `models.AstrologyEvent`
+* `models.ChartResult`
+* `models.GeoLocation`
+* `services.ChartStorageService`
+* `services.OpenAstroService`
+* `services.SynastryService`
+* `shared.ui.scrollable_tab_bar.ScrollableTabBar`
+* `shared.ui.theme.COLORS`
+* `ui.advanced_analysis_panel.AdvancedAnalysisPanel`
+* `ui.chart_canvas.ChartCanvas`
+* `ui.synastry_widgets.SynastryAspectsWidget`
+* `ui.synastry_widgets.SynastryDavisonWidget`
+* `ui.synastry_widgets.SynastryMidpointsWidget`
+
+**Consumers (Who Needs It):**
+* `src/pillars/astrology/ui/astrology_hub.py`
+
+**Key Interactions:**
+*   **Calculates:** Synastry A/B, Composite, and Davison charts via `SynastryService`.
+*   **Displays:** Uses `ChartCanvas` for wheels and `AdvancedAnalysisPanel` for tabular analysis.
+*   **Navigation:** Uses `ScrollableTabBar` for switching between 6+ analytical views.

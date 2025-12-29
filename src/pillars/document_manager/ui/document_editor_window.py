@@ -180,12 +180,32 @@ class DocumentEditorWindow(QMainWindow):
         
         # Rich Text Editor
         self.editor = RichTextEditor()
+        # Connect resource provider for docimg:// scheme
+        self.editor.editor.resource_provider = self._fetch_image_resource
+        
         self.editor.text_changed.connect(self._on_text_changed)
         self.editor.wiki_link_requested.connect(self._show_wiki_link_selector)
         layout.addWidget(self.editor)
         
         self._init_file_menu()
         self._update_title()
+
+    def _fetch_image_resource(self, image_id: int) -> Optional[Any]:
+        """
+        Fetch image resource for the editor from the database.
+        
+        Args:
+            image_id: ID of the image to fetch
+            
+        Returns:
+            Tuple of (bytes, mime_type) or None
+        """
+        try:
+            with document_service_context() as service:
+                return service.get_image(image_id)
+        except Exception as e:
+            print(f"Error fetching image resource {image_id}: {e}")
+            return None
 
     def _show_wiki_link_selector(self) -> None:
         """Show a dialog to select a document to link."""

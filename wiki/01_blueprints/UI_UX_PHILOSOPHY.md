@@ -51,11 +51,19 @@ We do not use colors; we use **Elements**.
 | **Light** | \#ffffff | The Illumination | **Input Fields** (Where intent is inscribed) |
 | **Ash** | \#cbd5e1 | The Boundary | Borders, Dividers |
 
+### **Kinetic Protocols (The Feel)**
+
+**1. The Aura (Standard Hover)**
+*   **Trigger:** Mouse Enter.
+*   **Effect:** A soft, colored shadow matching the button's archetype emits from the button.
+*   **Meaning:** The tool awakens to the Magus' intent.
+*   **Implementation:** `QGraphicsDropShadowEffect` (Blur: 0 → 20, Duration: 150ms).
+
 ### **The Catalysts (Button Semantics)**
 
 | Archetype | Intent | Color Name | Gradient | Text Color |
 | :---- | :---- | :---- | :---- | :---- |
-| **The Magus** | Transmute / Execute | **Mystic Violet** | \#8b5cf6 → \#7c3aed | White |
+| **The Magus** | Transmute / Execute | **Deep Mystic Violet** | \#6d28d9 → \#5b21b6 | White |
 | **The Seeker** | Uncover / Reveal | **Alchemical Gold** | \#f59e0b → \#d97706 | **Void (\#0f172a)** |
 | **The Scribe** | Preserve / Etch | **Emerald** | \#10b981 → \#059669 | White |
 | **The Destroyer** | Purge / Banish | **Crimson** | \#ef4444 → \#b91c1c | White |
@@ -111,8 +119,8 @@ QFrame\#FloatingPanel {
 *The Agent of Change.*
 
 QPushButton {  
-    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 \#8b5cf6, stop:1 \#7c3aed);  
-    border: 1px solid \#6d28d9;  
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 \#6d28d9, stop:1 \#5b21b6);  
+    border: 1px solid \#4c1d95;  
     color: white;  
     border-radius: 12px;  
     padding: 4px;  
@@ -290,7 +298,7 @@ We adhere to **WCAG 2.1 AA** as the minimum standard. All text must achieve a co
 | Void (\#0f172a) | Marble (\#f1f5f9) | **15.3:1** | ✓ AAA |
 | Void (\#0f172a) | Light (\#ffffff) | **16.1:1** | ✓ AAA |
 | Stone (\#334155) | Marble (\#f1f5f9) | **7.4:1** | ✓ AAA |
-| White (\#ffffff) | Mystic Violet (\#8b5cf6) | **4.6:1** | ✓ AA |
+| White (\#ffffff) | Mystic Violet (\#6d28d9) | **6.5:1** | ✓ AAA |
 | Void (\#0f172a) | Alchemical Gold (\#f59e0b) | **8.2:1** | ✓ AAA |
 | White (\#ffffff) | Emerald (\#10b981) | **3.1:1** | ✓ Large Text |
 | White (\#ffffff) | Crimson (\#ef4444) | **4.5:1** | ✓ AA |
@@ -362,8 +370,8 @@ def reveal_panel(widget):
 
 ```css
 QPushButton#MagusButton {
-    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #8b5cf6, stop:1 #7c3aed);
-    border: 1px solid #6d28d9;
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #6d28d9, stop:1 #5b21b6);
+    border: 1px solid #4c1d95;
     color: white;
     border-radius: 12px;
     padding: 4px;
@@ -560,3 +568,42 @@ QScrollBar::handle:horizontal {
     border-radius: 6px;
 }
 ```
+
+## **12. The Rite of Purity (Architecture in View)**
+
+*To mix the sacred (View) with the profane (Query) is to invite chaos.*
+
+### **The Law of Segregation**
+*   **The View (`ui/`)**: Must concern itself ONLY with Light and Form. It receives Data and emits Signals.
+*   **The Service (`services/`)**: The muscle that performs calculation.
+*   **The Memory (`repositories/`)**: The only layer permitted to speak to the Database.
+
+### **The Heresies (Forbidden Patterns)**
+*   **Direct Query**: `session.query(Model)` inside a Widget. -> **Banish to Repository**.
+*   **Business Logic**: Calculating planetary positions inside `paintEvent`. -> **Banish to Service**.
+*   **Hard Dependencies**: Importing `sqlalchemy` in `ui/`. -> **Forbidden**.
+
+## **13. The Law of Silence (Console Hygiene)**
+
+*The Temple does not shout.*
+
+### **The Ban on Noise**
+*   **Forbidden**: `print("DEBUG: Value is...")`
+*   **Allowed**: `logger.debug("Value transmuting...")`
+*   **The Ritual**: Before any commit, the `print()` statement must be extinguished.
+
+## **14. The Harmonic Resonances (Advanced Tuning)**
+
+### **The Golden Split**
+When dividing a window between Input and Result, we do not halve it. We honor the **Divine Proportion**.
+*   **Ratio**: $\approx$ 38.2% (Input) vs 61.8% (Result).
+*   **Implementation**:
+```python
+splitter.setStretchFactor(0, 382)
+splitter.setStretchFactor(1, 618)
+```
+
+### **The Oracle's Voice (Refined)**
+*   **Forbidden**: "Loading data..." | "Calculation done."
+*   **Mandated**: "consulting the archives..." | "The chart is cast."
+*   **Tone**: Use the active present ("Transmuting...") or celestial passive ("The stars align"). Never robotic ("System Status: OK").

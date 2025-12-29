@@ -13,6 +13,7 @@ from ..services import CalculationService
 from shared.ui import VirtualKeyboard, get_shared_virtual_keyboard
 from shared.ui.window_manager import WindowManager # Should be available via parent typically, but importing for type hint if needed
 from .components import ResultsDashboard
+from shared.ui.components import CatalystButton
 from shared.signals.navigation_bus import navigation_bus
 from shared.services.document_manager.notebook_service import notebook_service_context
 
@@ -286,54 +287,16 @@ class GematriaCalculatorWindow(QMainWindow):
         self.calc_button = QPushButton("Calculate Revelation")
         self.calc_button.clicked.connect(self._calculate)
         self.calc_button.setMinimumHeight(64)
-        self.calc_button.setStyleSheet("""
-            QPushButton {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, 
-                    stop:0 #8b5cf6, stop:1 #7c3aed);
-                color: white;
-                font-size: 15pt;
-                font-weight: 800;
-                border-radius: 16px;
-                border: 1px solid #6d28d9;
-            }
-            QPushButton:hover {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, 
-                    stop:0 #7c3aed, stop:1 #8b5cf6);
-                border-color: #5b21b6;
-                margin: -2px; /* Subtle pop */
-            }
-            QPushButton:pressed {
-                background-color: #5b21b6;
-                padding-top: 4px;
-                margin: 0px;
-            }
-        """)
+        self.calc_button.setProperty("archetype", "magus")
+        self.calc_button.setCursor(Qt.CursorShape.PointingHandCursor)
         actions_layout.addWidget(self.calc_button)
         
         self.save_button = QPushButton("💾 Preserve in Chronicle")
         self.save_button.clicked.connect(self._save_calculation)
         self.save_button.setMinimumHeight(54)
         self.save_button.setEnabled(False)
-        self.save_button.setStyleSheet("""
-            QPushButton:enabled {
-                background-color: #059669;
-                color: white;
-                font-size: 12pt;
-                font-weight: 700;
-                border-radius: 14px;
-                border: 2px solid #064e3b;
-            }
-            QPushButton:enabled:hover {
-                background-color: #10b981;
-                border-color: #059669;
-            }
-            QPushButton:disabled {
-                background-color: #ffffff;
-                color: #94a3b8;
-                border: 2px dashed #e2e8f0;
-                font-size: 11pt;
-            }
-        """)
+        self.save_button.setProperty("archetype", "scribe")
+        self.save_button.setCursor(Qt.CursorShape.PointingHandCursor)
         actions_layout.addWidget(self.save_button)
         l_layout.addLayout(actions_layout)
         

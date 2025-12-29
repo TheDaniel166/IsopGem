@@ -135,14 +135,15 @@ class FixedStarsService:
             pass
         return 0.0
 
-    def find_conjunctions(
+    def find_aspects(
         self,
         planet_longitudes: List[Tuple[str, float]],
         star_positions: List[FixedStarPosition],
-        orb: float = 1.5,
-    ) -> List[Tuple[str, FixedStarPosition, float]]:
+        orb: float = 1.0,
+    ) -> List[Tuple[str, FixedStarPosition, str, float]]:
         """
-        Find fixed stars conjunct to planets within given orb.
+        Find fixed stars aspects to planets within given orb.
+        Supports Conjunction (0), Opposition (180), Trine (120), Square (90), Sextile (60).
 
         Args:
             planet_longitudes: List of (planet_name, longitude) tuples
@@ -150,16 +151,28 @@ class FixedStarsService:
             orb: Maximum orb in degrees
 
         Returns:
-            List of (planet_name, star_position, orb_degrees) tuples
+            List of (planet_name, star_position, aspect_name, orb_degrees) tuples
         """
-        conjunctions = []
+        aspects_map = {
+            0: "Conjunction",
+            60: "Sextile",
+            90: "Square",
+            120: "Trine",
+            180: "Opposition"
+        }
+        
+        found_aspects = []
 
         for planet_name, planet_lon in planet_longitudes:
             for star in star_positions:
-                diff = abs(planet_lon - star.longitude)
+                diff = abs(planet_lon - star.longitude) % 360
                 if diff > 180:
                     diff = 360 - diff
-                if diff <= orb:
-                    conjunctions.append((planet_name, star, round(diff, 2)))
+                
+                # Check each aspect
+                for angle, name in aspects_map.items():
+                    orb_dist = abs(diff - angle)
+                    if orb_dist <= orb:
+                        found_aspects.append((planet_name, star, name, round(orb_dist, 2)))
 
-        return conjunctions
+        return found_aspects

@@ -19,6 +19,11 @@ try:  # pragma: no cover - import guard only hits when dependency missing
 except ImportError:  # pragma: no cover - handled at runtime
     openAstro = None  # type: ignore
 
+try:
+    import swisseph as swe
+except ImportError:
+    swe = None
+
 
 class OpenAstroNotAvailableError(RuntimeError):
     """Raised when openastro2 is not available in the current environment."""
@@ -187,6 +192,28 @@ class OpenAstroService:
         aspects = self._extract_aspects(chart)
         svg_data = self._maybe_render_svg(chart, request.include_svg)
         raw_payload = self._extract_raw_payload(chart, planet_data)
+        raw_payload = self._extract_raw_payload(chart, planet_data)
+        
+        # Try to get JD from chart, or calculate it manually
+        julian_day = getattr(chart, "julian_day_ut", None)
+        if julian_day is None and swe is not None:
+             # Calculate from request event (assumed UTC normalized by to_openastro_kwargs logic)
+             # But request.primary_event.timestamp is the source of truth
+             dt = request.primary_event.timestamp
+             # Convert to UTC
+             from datetime import timezone
+             if dt.tzinfo is None:
+                 dt = dt.replace(tzinfo=timezone.utc)
+             else:
+                 dt = dt.astimezone(timezone.utc)
+                 
+             hour_dec = dt.hour + dt.minute / 60.0 + dt.second / 3600.0
+             try:
+                 julian_day = swe.julday(dt.year, dt.month, dt.day, hour_dec)
+             except Exception:
+                 self._logger.warning("Failed to calculate manual Julian Day via swisseph")
+        if julian_day is None:
+             self._logger.warning(f"Julian Day missing. Chart attributes: {dir(chart)}")
 
         return ChartResult(
             chart_type=request.chart_type,
@@ -195,6 +222,7 @@ class OpenAstroService:
             aspect_summary=aspects,
             svg_document=svg_data,
             raw_payload=raw_payload,
+            julian_day=julian_day,
         )
 
     def _prime_chart(self, chart: Any) -> None:

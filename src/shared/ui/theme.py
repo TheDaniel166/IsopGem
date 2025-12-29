@@ -21,8 +21,8 @@ COLORS = {
     # ─────────────────────────────────────────────────────────────────────────
     # The Catalysts (Semantic Button Colors)
     # ─────────────────────────────────────────────────────────────────────────
-    'magus': '#8b5cf6',          # Mystic Violet - Transmute / Execute
-    'magus_hover': '#a78bfa',
+    'magus': '#6d28d9',          # Deep Mystic Violet - Transmute / Execute
+    'magus_hover': '#7c3aed',
     'seeker': '#f59e0b',         # Alchemical Gold - Uncover / Reveal
     'seeker_hover': '#fbbf24',
     'scribe': '#10b981',         # Emerald - Preserve / Etch
@@ -44,10 +44,10 @@ COLORS = {
     # ─────────────────────────────────────────────────────────────────────────
     # Legacy Aliases (for backward compatibility)
     # ─────────────────────────────────────────────────────────────────────────
-    'primary': '#8b5cf6',        # Magus Violet
+    'primary': '#6d28d9',        # Magus Violet
     'primary_hover': '#7c3aed',
-    'primary_pressed': '#6d28d9',
-    'primary_light': '#ede9fe',
+    'primary_pressed': '#5b21b6',
+    'primary_light': '#ddd6fe',
     
     'accent': '#10b981',         # Scribe Emerald
     'accent_hover': '#059669',
@@ -108,6 +108,113 @@ def get_app_stylesheet() -> str:
     QPushButton:disabled {{
         background-color: {COLORS['border']};
         color: {COLORS['text_disabled']};
+        border-color: {COLORS['border']}; /* Fix border visibility */
+    }}
+
+    /* ─────────────────────────────────────────────────────────────────────────
+       ARCHETYPE STYLES (Centralized)
+       Usage: button.setProperty("archetype", "magus")
+       ───────────────────────────────────────────────────────────────────────── */
+    
+    /* Magus (Violet) - Transmute / Execute */
+    QPushButton[archetype="magus"] {{
+        background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #6d28d9, stop:1 #5b21b6);
+        border: 1px solid #4c1d95;
+        color: white;
+        font-weight: 700;
+        border-radius: 8px;
+        font-size: 11pt; /* Ensure legible */
+    }}
+    QPushButton[archetype="magus"]:hover {{
+        background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #7c3aed, stop:1 #6d28d9);
+    }}
+    QPushButton[archetype="magus"]:pressed {{
+        background: #5b21b6;
+    }}
+    QPushButton[archetype="magus"]:disabled {{
+        background: #ede9fe;
+        color: #7c3aed;
+        border: 1px solid #c4b5fd;
+    }}
+
+    /* Seeker (Gold) - Uncover / Reveal */
+    QPushButton[archetype="seeker"] {{
+        background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #f59e0b, stop:1 #d97706);
+        border: 1px solid #b45309;
+        color: #0f172a;
+        font-weight: 700;
+        border-radius: 8px;
+    }}
+    QPushButton[archetype="seeker"]:hover {{
+        background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #fbbf24, stop:1 #f59e0b);
+    }}
+    QPushButton[archetype="seeker"]:pressed {{
+        background: #d97706;
+    }}
+    QPushButton[archetype="seeker"]:disabled {{
+        background: #fef3c7;
+        color: #92400e;
+        border: 1px solid #fcd34d;
+    }}
+
+    /* Scribe (Emerald) - Preserve / Etch */
+    QPushButton[archetype="scribe"] {{
+        background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #10b981, stop:1 #059669);
+        border: 1px solid #047857;
+        color: white;
+        font-weight: 600;
+        border-radius: 8px;
+    }}
+    QPushButton[archetype="scribe"]:hover {{
+        background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #34d399, stop:1 #10b981);
+    }}
+    QPushButton[archetype="scribe"]:pressed {{
+        background: #059669;
+    }}
+    QPushButton[archetype="scribe"]:disabled {{
+        background: #d1fae5;
+        color: #065f46;
+        border: 1px solid #6ee7b7;
+    }}
+
+    /* Destroyer (Crimson) - Purge / Banish */
+    QPushButton[archetype="destroyer"] {{
+        background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #ef4444, stop:1 #b91c1c);
+        border: 1px solid #991b1b;
+        color: white;
+        font-weight: 600;
+        border-radius: 8px;
+    }}
+    QPushButton[archetype="destroyer"]:hover {{
+        background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #f87171, stop:1 #ef4444);
+    }}
+    QPushButton[archetype="destroyer"]:pressed {{
+        background: #b91c1c;
+    }}
+    QPushButton[archetype="destroyer"]:disabled {{
+        background: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #fca5a5;
+    }}
+
+    /* Navigator (Slate) - Traverse / Neutral */
+    QPushButton[archetype="navigator"] {{
+        background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #64748b, stop:1 #475569);
+        border: 1px solid #334155;
+        color: white;
+        font-weight: 600;
+        border-radius: 8px;
+    }}
+    QPushButton[archetype="navigator"]:hover {{
+        background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #94a3b8, stop:1 #64748b);
+    }}
+    QPushButton[archetype="navigator"]:pressed {{
+        background: #475569;
+    }}
+    QPushButton[archetype="navigator"]:disabled {{
+        background: #e2e8f0;
+        color: #64748b;
+        border: 1px solid #cbd5e1;
     }}
     
     QPushButton:flat {{

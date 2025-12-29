@@ -111,6 +111,7 @@ class ChartResult:
     aspect_summary: Dict[str, Any] = field(default_factory=dict)
     svg_document: Optional[str] = None
     raw_payload: Dict[str, Any] = field(default_factory=dict)
+    julian_day: Optional[float] = None
 
     def has_svg(self) -> bool:
         """Return True when the chart includes SVG output."""

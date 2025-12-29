@@ -242,6 +242,8 @@ class NatalChartWindow(QMainWindow):
         location_row = QHBoxLayout()
         location_row.addWidget(self.location_name_input, stretch=1)
         self.search_location_button = QPushButton("Search City...")
+        self.search_location_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.search_location_button.setProperty("archetype", "seeker")
         self.search_location_button.clicked.connect(self._search_location)
         location_row.addWidget(self.search_location_button)
         location_row_widget = QWidget()
@@ -254,6 +256,8 @@ class NatalChartWindow(QMainWindow):
         self.use_default_button.setEnabled(False)
         defaults_row.addWidget(self.use_default_button)
         self.save_default_button = QPushButton("Save as Default")
+        self.save_default_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.save_default_button.setProperty("archetype", "scribe")
         self.save_default_button.clicked.connect(self._save_default_location)
         defaults_row.addWidget(self.save_default_button)
         defaults_row.addStretch()
@@ -310,138 +314,44 @@ class NatalChartWindow(QMainWindow):
 
         # The Seeker (Gold) - Uncover/Reveal
         self.load_chart_button = QPushButton("Load Chart...")
-        self.load_chart_button.setStyleSheet(f"""
-            QPushButton {{
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #f59e0b, stop:1 #d97706);
-                border: 1px solid #b45309;
-                color: #0f172a;
-                font-weight: 700;
-                border-radius: 8px;
-                padding: 8px 16px;
-                min-height: 36px;
-            }}
-            QPushButton:hover {{
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #fbbf24, stop:1 #f59e0b);
-            }}
-            QPushButton:pressed {{ background: #d97706; }}
-        """)
+        self.load_chart_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.load_chart_button.setProperty("archetype", "seeker")
         self.load_chart_button.clicked.connect(self._load_chart)
         row.addWidget(self.load_chart_button)
 
         # The Scribe (Emerald) - Preserve/Etch
         self.save_chart_button = QPushButton("Save Chart")
-        self.save_chart_button.setStyleSheet(f"""
-            QPushButton {{
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #10b981, stop:1 #059669);
-                border: 1px solid #047857;
-                color: white;
-                font-weight: 600;
-                border-radius: 8px;
-                padding: 8px 16px;
-                min-height: 36px;
-            }}
-            QPushButton:hover {{
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #34d399, stop:1 #10b981);
-            }}
-            QPushButton:pressed {{ background: #059669; }}
-            QPushButton:disabled {{
-                background-color: #d1fae5;
-                border: 1px solid #6ee7b7;
-                color: #065f46;
-            }}
-        """)
+        self.save_chart_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.save_chart_button.setProperty("archetype", "scribe")
         self.save_chart_button.clicked.connect(self._save_chart)
         self.save_chart_button.setEnabled(False)
         row.addWidget(self.save_chart_button)
 
         # The Navigator (Slate) - Traverse
         self.transit_button = QPushButton("Current Transit")
-        self.transit_button.setStyleSheet(f"""
-            QPushButton {{
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #64748b, stop:1 #475569);
-                border: 1px solid #334155;
-                color: white;
-                font-weight: 600;
-                border-radius: 8px;
-                padding: 8px 16px;
-                min-height: 36px;
-            }}
-            QPushButton:hover {{
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #94a3b8, stop:1 #64748b);
-            }}
-            QPushButton:pressed {{ background: #475569; }}
-        """)
+        self.transit_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.transit_button.setProperty("archetype", "navigator")
         self.transit_button.clicked.connect(self._generate_current_transit)
         row.addWidget(self.transit_button)
 
         # The Magus (Violet) - Transmute/Execute - PRIMARY ACTION
         self.generate_button = QPushButton("Generate Chart")
-        self.generate_button.setStyleSheet(f"""
-            QPushButton {{
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #8b5cf6, stop:1 #7c3aed);
-                border: 1px solid #6d28d9;
-                color: white;
-                font-weight: 700;
-                border-radius: 8px;
-                padding: 8px 20px;
-                min-height: 36px;
-                font-size: 11pt;
-            }}
-            QPushButton:hover {{
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #a78bfa, stop:1 #8b5cf6);
-            }}
-            QPushButton:pressed {{ background: #7c3aed; }}
-            QPushButton:disabled {{
-                background-color: #e2e8f0;
-                border: 1px solid #cbd5e1;
-                color: #94a3b8;
-            }}
-        """)
+        self.generate_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.generate_button.setProperty("archetype", "magus")
         self.generate_button.clicked.connect(self._generate_chart)
         row.addWidget(self.generate_button)
 
         # The Navigator (Slate) - Clear
         self.clear_button = QPushButton("Clear Results")
-        self.clear_button.setStyleSheet(f"""
-            QPushButton {{
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #64748b, stop:1 #475569);
-                border: 1px solid #334155;
-                color: white;
-                font-weight: 600;
-                border-radius: 8px;
-                padding: 8px 16px;
-                min-height: 36px;
-            }}
-            QPushButton:hover {{
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #94a3b8, stop:1 #64748b);
-            }}
-            QPushButton:pressed {{ background: #475569; }}
-        """)
+        self.clear_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.clear_button.setProperty("archetype", "navigator")
         self.clear_button.clicked.connect(self._clear_results)
         row.addWidget(self.clear_button)
 
         # The Magus (Violet) - Interpret
         self.interpret_button = QPushButton("Interpret")
-        self.interpret_button.setStyleSheet(f"""
-            QPushButton {{
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #8b5cf6, stop:1 #7c3aed);
-                border: 1px solid #6d28d9;
-                color: white;
-                font-weight: 600;
-                border-radius: 8px;
-                padding: 8px 16px;
-                min-height: 36px;
-            }}
-            QPushButton:hover {{
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #a78bfa, stop:1 #8b5cf6);
-            }}
-            QPushButton:pressed {{ background: #7c3aed; }}
-            QPushButton:disabled {{
-                background-color: #e2e8f0;
-                border: 1px solid #cbd5e1;
-                color: #94a3b8;
-            }}
-        """)
+        self.interpret_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.interpret_button.setProperty("archetype", "magus")
         self.interpret_button.clicked.connect(lambda: self._generate_interpretation(switch_tab=True))
         self.interpret_button.setEnabled(False)
         row.addWidget(self.interpret_button)
@@ -671,7 +581,8 @@ class NatalChartWindow(QMainWindow):
             self.advanced_panel.set_data(
                 result.planet_positions,
                 result.house_positions,
-                fixed_stars
+                fixed_stars,
+                julian_day=result.julian_day
             )
 
         if hasattr(self, 'chart_canvas'):

@@ -131,6 +131,19 @@ class NoteContainerWidget(QWidget):
         self.resize_grip = ResizeGripWidget(self)
         self.resize_grip.resize_delta.connect(self._on_resize_delta)
         
+        # Connect resource provider for docimg:// scheme
+        self.editor.resource_provider = self._fetch_image_resource
+
+    def _fetch_image_resource(self, image_id: int):
+        """Fetch image resource from database."""
+        from pillars.document_manager.services.document_service import document_service_context
+        try:
+            with document_service_context() as service:
+                return service.get_image(image_id)
+        except Exception as e:
+            print(f"Error fetching image resource {image_id}: {e}")
+            return None
+        
     def _on_resize_delta(self, dx: float, dy: float):
         """Forward resize request to parent."""
         self.resize_requested.emit(dx, dy)

@@ -21,20 +21,31 @@ logger = logging.getLogger(__name__)
 class WindowManager:
     """Manages tool windows across the entire application."""
     
-    def __init__(self, parent: Optional[QWidget] = None):
+    def __init__(self, parent: Optional[QWidget] = None, main_window: Optional[QMainWindow] = None):
         """
         Initialize the window manager.
         
         Args:
             parent: Optional parent widget for the windows
+            main_window: Optional reference to the main window for Orbital Physics
         """
         self.parent = parent
+        self.main_window = main_window
         self._active_windows: Dict[str, QWidget] = {}
         self._window_counters: Dict[str, int] = {}  # Track instance counts per window type
-        
         # Subscribe to navigation requests
         navigation_bus.request_window.connect(self._on_navigation_request)
-    
+        
+    def set_main_window(self, window: QMainWindow):
+        """
+        Set the main window reference.
+        
+        Args:
+            window: The main application window
+        """
+        self.main_window = window
+        logger.debug("Orbital Physics enabled: Main Window set.")
+
     def open_window(
         self, 
         window_type: str,
@@ -84,15 +95,12 @@ class WindowManager:
         window.setProperty("window_type", window_type)
         window.setProperty("window_id", window_id)
         
-        # Don't set parent to avoid Wayland issues
-        # window.setParent(self.parent)
-        
         # Configure window
         window.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         # Prevent tool windows from closing the entire application
         window.setAttribute(Qt.WidgetAttribute.WA_QuitOnClose, False)
         
-        # Use Window type for independent behavior (allows taskbar entry and multi-monitor movement)
+        # Set base flags
         window.setWindowFlags(
             Qt.WindowType.Window |
             Qt.WindowType.WindowCloseButtonHint |
@@ -115,12 +123,6 @@ class WindowManager:
         
         # Show the window handles
         window.show()
-        
-        # IMPORTANT: We purposefully DO NOT set the transient parent here.
-        # Setting a transient parent (on Linux/X11) often locks the child window
-        # to the same monitor as the parent and prevents independent movement.
-        # By leaving them independent, the user gains full multi-monitor control.
-        
         window.raise_()
         window.activateWindow()
         

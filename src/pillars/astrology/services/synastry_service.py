@@ -49,6 +49,7 @@ class CompositeResult:
     """Result of a Composite chart calculation."""
     planets: List[PlanetPosition]
     houses: List[HousePosition]
+    julian_day: Optional[float] = None
 
 
 @dataclass(slots=True)
@@ -112,7 +113,16 @@ class SynastryService:
                 mid_deg = calculate_midpoint(house_a[i].degree, house_b[i].degree)
                 composite_houses.append(HousePosition(number=i, degree=mid_deg))
         
-        return CompositeResult(planets=composite_planets, houses=composite_houses)
+        # Calculate approximate mean JD for fixed stars reference
+        mean_jd = None
+        if result_a.julian_day and result_b.julian_day:
+            mean_jd = (result_a.julian_day + result_b.julian_day) / 2
+        
+        return CompositeResult(
+            planets=composite_planets, 
+            houses=composite_houses,
+            julian_day=mean_jd
+        )
     
     def calculate_davison(
         self,

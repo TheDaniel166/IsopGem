@@ -10,7 +10,10 @@ os.environ['QT_QPA_PLATFORM'] = 'xcb'
 # Suppress Qt Wayland warnings if desired
 # os.environ['QT_LOGGING_RULES'] = '*.debug=false;qt.qpa.*=false'
 
-from PyQt6.QtWidgets import QApplication, QMainWindow, QTabWidget, QVBoxLayout, QWidget, QLabel, QHBoxLayout, QFrame, QGraphicsDropShadowEffect
+from PyQt6.QtWidgets import (
+    QApplication, QMainWindow, QTabWidget, QVBoxLayout, QWidget, 
+    QLabel, QHBoxLayout, QFrame, QGraphicsDropShadowEffect, QPushButton
+)
 from PyQt6.QtCore import Qt, QEvent
 from PyQt6.QtGui import QCloseEvent, QIcon, QFont, QColor, QImageReader
 
@@ -21,6 +24,7 @@ QImageReader.setAllocationLimit(512)
 from shared.ui import WindowManager, get_app_stylesheet
 from shared.ui.font_loader import load_custom_fonts
 from shared.database import init_db
+from shared.ui.kinetic_enforcer import KineticEnforcer
 from pillars.gematria.ui import GematriaHub
 from pillars.geometry.ui import GeometryHub
 from pillars.document_manager.ui import DocumentManagerHub
@@ -56,7 +60,8 @@ class IsopGemMainWindow(QMainWindow):
         self.setAttribute(Qt.WidgetAttribute.WA_QuitOnClose, True)
         
         # Create centralized window manager
-        self.window_manager = WindowManager(self)
+        # Pass self as main_window to enable Orbital Physics (Transient Parenting)
+        self.window_manager = WindowManager(self, main_window=self)
         
         # Create main container
         main_container = QWidget()
@@ -240,11 +245,8 @@ class IsopGemMainWindow(QMainWindow):
                 QLabel {
                     color: #94a3b8;
                 }
-                QFrame:hover QLabel {
-                    color: #e2e8f0;
-                }
             """)
-    
+
     def _on_nav_click(self, index: int):
         """Handle navigation button click."""
         # Special case for Manual (Akaschic Archive)
@@ -409,6 +411,11 @@ def main():
     # Load custom fonts
     load_custom_fonts()
     
+    # Initialize Global Kinetic Enforcer (Visual Liturgy)
+    # This applies the 'Aura' effect to all buttons globally
+    enforcer = KineticEnforcer(app)
+    app.installEventFilter(enforcer)
+    
     # Configure app behavior - allow quit on last window close
     app.setQuitOnLastWindowClosed(True)
     
@@ -422,7 +429,9 @@ def main():
     
     # Create and show main window
     window = IsopGemMainWindow()
-    window.showMaximized()
+    # Use normal window size instead of maximized to test multi-monitor behavior
+    window.resize(1440, 900)
+    window.show()
     
     # Run application event loop
     sys.exit(app.exec())

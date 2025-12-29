@@ -20,6 +20,11 @@ Top risks found:
 **What I reviewed**
 
 - Docs: `README.md`, `MIGRATION.md`, `config/ARCHITECTURE.md`, `config/UI_ARCHITECTURE.md`.
+- **Linux Window Management (Wayland/X11)**
+  - **Issue:** Transient Windows (`setTransientParent`) are often forcefully locked to the same monitor as the Parent by the OS compositor.
+  - **Issue:** "Free" Windows (No Parent) can be completely obscured if the Main Window is Maximized, as Compositors often treat Maximized windows as a dedicated layer.
+  - **Workaround:** We implemented a "Gravity Toggle" (Anchor/Sail) to let users choose between parenting (Locked) and independence (Free). We also default to non-maximized launch to encourage better z-order behavior.
+  - **Status:** **Accepted**. This is an OS-level constraint we cannot code around without violating standard window protocols.
 - Entry points: `src/main.py`, `run.sh`, assorted scripts.
 - Static searches across codebase for:
   - dangerous functions (`eval`, `exec`, `subprocess`, `shell=True`, etc.)

@@ -200,7 +200,7 @@ class DocumentParser:
             if not run_text:
                 continue
                 
-            run_text = run_text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('\t', '&nbsp;&nbsp;&nbsp;&nbsp;')
+            run_text = run_text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('\t', '&nbsp;&nbsp;&nbsp;&nbsp;').replace('\ufffc', '')
             
             # If run has text (even spaces, though we might want to trim? for now keep strict)
             if run_text.strip():

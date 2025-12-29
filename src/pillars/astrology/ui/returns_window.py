@@ -84,7 +84,8 @@ class ReturnsWindow(QMainWindow):
         
         # Action
         self.calc_btn = QPushButton("Calculate Return")
-        self.calc_btn.setStyleSheet(f"background-color: {COLORS['primary']}; color: white; padding: 8px;")
+        self.calc_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.calc_btn.setProperty("archetype", "magus")
         self.calc_btn.clicked.connect(self._on_calculate)
         self.side_layout.addWidget(self.calc_btn)
         self.side_layout.addStretch()

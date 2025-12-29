@@ -40,8 +40,8 @@ def get_magus_style() -> str:
     """The Magus (Violet) — Transmutes, executes, primary action."""
     return """
         QPushButton {
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #8b5cf6, stop:1 #7c3aed);
-            border: 1px solid #6d28d9;
+            background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #6d28d9, stop:1 #5b21b6);
+            border: 1px solid #4c1d95;
             color: white;
             font-size: 11pt;
             font-weight: 700;
@@ -50,7 +50,7 @@ def get_magus_style() -> str:
             min-height: 48px;
         }
         QPushButton:hover {
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #a78bfa, stop:1 #8b5cf6);
+            background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #7c3aed, stop:1 #6d28d9);
         }
         QPushButton:focus {
             outline: none;

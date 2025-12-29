@@ -9,7 +9,6 @@ from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
     QLabel, QLineEdit, QDateTimeEdit, QComboBox, 
     QPushButton, QGroupBox, QSplitter, QMessageBox,
-    QTabWidget, QTableWidget, QTableWidgetItem, QHeaderView, QDialog,
     QStackedWidget
 )
 from shared.ui.scrollable_tab_bar import ScrollableTabBar
@@ -56,7 +55,8 @@ class SynastryWindow(QMainWindow):
         # 1. Sidebar (Inputs)
         self.sidebar = QWidget()
         self.sidebar.setObjectName("sidebar")
-        self.sidebar.setFixedWidth(320)
+        # Removed FixedWidth in favor of Golden Splitter
+        # self.sidebar.setFixedWidth(320)
         # Explicitly set text color for sidebar inputs to be visible against light surface
         self.sidebar.setStyleSheet(f"""
             QWidget#sidebar {{
@@ -67,6 +67,13 @@ class SynastryWindow(QMainWindow):
             QLineEdit, QComboBox, QDateTimeEdit {{
                 color: {COLORS['text_primary']};
                 background-color: {COLORS['light']};
+                font-size: 12pt;
+                padding: 4px;
+                border: 1px solid {COLORS['border']};
+                border-radius: 6px;
+            }}
+            QLineEdit:focus, QComboBox:focus, QDateTimeEdit:focus {{
+                border: 2px solid #3b82f6;
             }}
         """)
         self.side_layout = QVBoxLayout(self.sidebar)
@@ -83,21 +90,10 @@ class SynastryWindow(QMainWindow):
         for w in [self.name_a, self.dt_a, self.loc_a, self.lat_a, self.lon_a]: self.form_a.addWidget(w)
         
         # Load Saved Button for A
+        # Load Saved Button for A
         self.load_a_btn = QPushButton("Load Saved Chart...")
         self.load_a_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.load_a_btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {COLORS['seeker']};
-                color: white;
-                border: none;
-                border-radius: 6px;
-                padding: 6px 12px;
-                font-weight: bold;
-            }}
-            QPushButton:hover {{
-                background-color: {COLORS['seeker_hover']};
-            }}
-        """)
+        self.load_a_btn.setProperty("archetype", "seeker")
         self.load_a_btn.clicked.connect(lambda: self._load_saved_chart('A'))
         self.form_a.addWidget(self.load_a_btn)
         
@@ -115,21 +111,10 @@ class SynastryWindow(QMainWindow):
         for w in [self.name_b, self.dt_b, self.loc_b, self.lat_b, self.lon_b]: self.form_b.addWidget(w)
         
         # Load Saved Button for B
+        # Load Saved Button for B
         self.load_b_btn = QPushButton("Load Saved Chart...")
         self.load_b_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.load_b_btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {COLORS['seeker']};
-                color: white;
-                border: none;
-                border-radius: 6px;
-                padding: 6px 12px;
-                font-weight: bold;
-            }}
-            QPushButton:hover {{
-                background-color: {COLORS['seeker_hover']};
-            }}
-        """)
+        self.load_b_btn.setProperty("archetype", "seeker")
         self.load_b_btn.clicked.connect(lambda: self._load_saved_chart('B'))
         self.form_b.addWidget(self.load_b_btn)
         
@@ -142,27 +127,10 @@ class SynastryWindow(QMainWindow):
         self.side_layout.addWidget(self.method_combo)
         
         # Action
-        self.calc_btn = QPushButton("Calculate Compatibility")
-        # Visual Liturgy: Seeker Archetype (Gold Gradient for "Uncover/Reveal")
-        self.calc_btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {COLORS['seeker']}, stop:1 #d97706);
-                color: white;
-                border: 1px solid #d97706;
-                border-radius: 8px;
-                font-weight: bold;
-                padding: 10px;
-                font-size: 11pt;
-            }}
-            QPushButton:hover {{
-                background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {COLORS['seeker_hover']}, stop:1 {COLORS['seeker']});
-                border: 1px solid {COLORS['seeker']};
-            }}
-            QPushButton:pressed {{
-                background-color: #d97706;
-            }}
-        """)
+        # Action
+        self.calc_btn = QPushButton("Reveal Compatibility")
         self.calc_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.calc_btn.setProperty("archetype", "seeker") # Seeking Connection
         self.calc_btn.clicked.connect(self._on_calculate)
         self.side_layout.addWidget(self.calc_btn)
         self.side_layout.addStretch()
@@ -220,8 +188,16 @@ class SynastryWindow(QMainWindow):
         self.content_layout.addWidget(self.tab_bar)
         self.content_layout.addWidget(self.content_stack)
         
-        self.layout.addWidget(self.sidebar)
-        self.layout.addWidget(self.content_area)
+        # Golden Ratio Splitter
+        self.splitter = QSplitter(Qt.Orientation.Horizontal)
+        self.splitter.addWidget(self.sidebar)
+        self.splitter.addWidget(self.content_area)
+        # The Divine Proportion: ~38.2% Input, ~61.8% Content
+        self.splitter.setStretchFactor(0, 382) 
+        self.splitter.setStretchFactor(1, 618)
+        self.splitter.setHandleWidth(2)
+        
+        self.layout.addWidget(self.splitter)
         
         # State
         self._last_result_a: Optional[ChartResult] = None
@@ -233,7 +209,7 @@ class SynastryWindow(QMainWindow):
             event_a = self._build_event(self.name_a, self.dt_a, self.loc_a, self.lat_a, self.lon_a)
             event_b = self._build_event(self.name_b, self.dt_b, self.loc_b, self.lat_b, self.lon_b)
         except ValueError as e:
-            QMessageBox.warning(self, "Invalid Input", str(e))
+            QMessageBox.warning(self, "Input Dissonance", str(e))
             return
 
         mode = self.method_combo.currentText()
@@ -242,7 +218,7 @@ class SynastryWindow(QMainWindow):
         # Composite/Davison require creating a THIRD virtual event.
         
         self.calc_btn.setEnabled(False)
-        self.calc_btn.setText("Calculating...")
+        self.calc_btn.setText("Communing with the Stars...")
         
         # Using simple synchronous logic first to verify, then worker if slow.
         # But Phase 5 says we should be using workers.
@@ -295,7 +271,11 @@ class SynastryWindow(QMainWindow):
             )
         
         # Always populate Composite Analysis panel
-        self.composite_analysis.set_data(composite_result.planets, composite_result.houses)
+        self.composite_analysis.set_data(
+            composite_result.planets, 
+            composite_result.houses,
+            julian_day=composite_result.julian_day
+        )
         
         # Always populate Davison Analysis panel and Davison Info
         davison_info = {
@@ -306,7 +286,8 @@ class SynastryWindow(QMainWindow):
         self.davison_widget.set_data(davison_info)
         self.davison_analysis.set_data(
             davison_result.chart.planet_positions,
-            davison_result.chart.house_positions
+            davison_result.chart.house_positions,
+            julian_day=davison_result.chart.julian_day
         )
         
         # Chart tab display depends on selected mode
@@ -333,10 +314,10 @@ class SynastryWindow(QMainWindow):
             self.canvas.set_data(res_a.planet_positions, res_a.house_positions)
 
     def _on_error(self, err):
-        QMessageBox.critical(self, "Error", str(err[1]))
+        QMessageBox.critical(self, "The Archives are Silent", str(err[1]))
 
     def _on_finished(self):
-        self.calc_btn.setText("Calculate Compatibility")
+        self.calc_btn.setText("Reveal Compatibility")
         self.calc_btn.setEnabled(True)
 
     def _load_saved_chart(self, target: str) -> None:

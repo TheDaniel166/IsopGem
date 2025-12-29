@@ -33,6 +33,7 @@ from ..services.harmonics_service import HarmonicsService
 from ..services.maat_symbols_service import MaatSymbolsService
 from ..services.midpoints_service import MidpointsService
 from ..services.aspects_service import AspectsService
+from ..services.fixed_stars_service import FixedStarsService
 from ..utils.conversions import to_zodiacal_string
 
 if TYPE_CHECKING:
@@ -116,9 +117,11 @@ class AdvancedAnalysisPanel(QWidget):
         self._planets: List[PlanetPosition] = []
         self._houses: List[HousePosition] = []
         self._fixed_stars: List[Any] = []  # From ChartResult
+        self._julian_day: Optional[float] = None
         
         # Services
         self._arabic_service = ArabicPartsService()
+        self._fixed_stars_service = FixedStarsService()
         self._harmonics_service = HarmonicsService()
         self._maat_service = MaatSymbolsService()
         self._midpoints_service = MidpointsService()
@@ -365,10 +368,12 @@ class AdvancedAnalysisPanel(QWidget):
         header.setStyleSheet(f"font-size: 18pt; font-weight: 700; color: {COLORS['text_primary']};")
         layout.addWidget(header)
         
-        self.fixed_stars_table = QTableWidget(0, 2)
-        self.fixed_stars_table.setHorizontalHeaderLabels(["Star", "Position"])
+        self.fixed_stars_table = QTableWidget(0, 3)
+        self.fixed_stars_table.setHorizontalHeaderLabels(["Star", "Position", "Aspects"])
         self.fixed_stars_table.setStyleSheet(self._get_table_style())
         self._stretch_last_section(self.fixed_stars_table)
+        self.fixed_stars_table.setColumnWidth(0, 150)
+        self.fixed_stars_table.setColumnWidth(1, 100)
         layout.addWidget(self.fixed_stars_table)
         
         self.content_stack.addWidget(widget)
@@ -627,11 +632,12 @@ class AdvancedAnalysisPanel(QWidget):
     # =========================================================================
     
     def set_data(self, planets: List[PlanetPosition], houses: List[HousePosition],
-                 fixed_stars: Optional[List[Any]] = None):
+                 fixed_stars: Optional[List[Any]] = None, julian_day: Optional[float] = None):
         """Set chart data and refresh all tabs."""
         self._planets = planets or []
         self._houses = houses or []
         self._fixed_stars = fixed_stars or []
+        self._julian_day = julian_day
         self._refresh_all()
     
     def set_chart_result(self, result: ChartResult):
@@ -639,6 +645,7 @@ class AdvancedAnalysisPanel(QWidget):
         self._planets = result.planet_positions or []
         self._houses = result.house_positions or []
         self._fixed_stars = getattr(result, 'fixed_stars', []) or []
+        self._julian_day = result.julian_day
         self._refresh_all()
     
     def _refresh_all(self):
@@ -658,18 +665,50 @@ class AdvancedAnalysisPanel(QWidget):
         """Populate Fixed Stars table."""
         self.fixed_stars_table.setRowCount(0)
         
+        # Calculate if missing and we have a JD
+        if not self._fixed_stars and self._julian_day:
+            try:
+                self._fixed_stars = self._fixed_stars_service.get_star_positions(self._julian_day)
+            except Exception as e:
+                logger.error(f"Failed to calculate fixed stars: {e}")
+        
         if not self._fixed_stars:
             return
+            
+        # Calculate aspects
+        planet_lons = [(p.name, p.degree) for p in self._planets]
+        hits_by_star = {}
+        try:
+            # find_aspects returns (planet_name, star, aspect_name, orb)
+            found_list = self._fixed_stars_service.find_aspects(
+                planet_lons, self._fixed_stars, orb=2.0
+            ) 
+            
+            for pname, star, aspect_name, orb_val in found_list:
+                sname = star.name
+                if sname not in hits_by_star:
+                    hits_by_star[sname] = []
+                
+                # Format: "☉ ☌ (0.5°)" - using Unicode glyphs
+                p_glyph = self._get_planet_display(pname, use_astro=False)
+                a_glyph = self._get_aspect_display(aspect_name, use_astro=False)
+                hits_by_star[sname].append(f"{p_glyph} {a_glyph} ({orb_val}°)")
+        except Exception as e:
+            logger.warning(f"Failed to calc star aspects: {e}")
         
         for star in self._fixed_stars:
             row = self.fixed_stars_table.rowCount()
             self.fixed_stars_table.insertRow(row)
             
             name = getattr(star, 'name', str(star))
-            degree = getattr(star, 'degree', 0)
+            degree = getattr(star, 'degree', getattr(star, 'longitude', 0)) # handle both models
             
             self.fixed_stars_table.setItem(row, 0, QTableWidgetItem(name))
             self.fixed_stars_table.setItem(row, 1, QTableWidgetItem(to_zodiacal_string(degree)))
+            
+            # Aspects
+            aspects_str = ", ".join(hits_by_star.get(name, []))
+            self.fixed_stars_table.setItem(row, 2, QTableWidgetItem(aspects_str))
     
     def _render_arabic_parts(self):
         """Populate Arabic Parts table."""
