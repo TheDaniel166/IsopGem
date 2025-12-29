@@ -496,3 +496,67 @@ QPushButton#NavigatorButton:disabled {
     color: #64748b;
 }
 ```
+
+## **11. The Celestial Tabs (Navigation)**
+
+*The stars move in their courses; the view shifts with them.*
+
+### **The Adaptive Principle**
+Tabs must never be rigid containers. They flow with the length of their inscription.
+*   **Behavior**: `QSizePolicy.Minimum` (Width fits content + padding).
+*   **Constraint**: No truncation. If the list exceeds the horizon, the Scrollbar appears.
+
+### **The Tab States (QSS)**
+
+#### **The Active Constellation (Selected)**
+*   **Text**: White (Pure Light)
+*   **Indicator**: **Seeker Gold (#f59e0b)** 2px Underline
+*   **Background**: Transparent (Void)
+
+```css
+QPushButton#TabButton:checked {
+    color: white;
+    background-color: transparent;
+    border: none;
+    border-bottom: 2px solid #f59e0b;
+    padding: 8px 16px;
+    font-weight: bold;
+}
+```
+
+#### **The Dormant Star (Inactive)**
+*   **Text**: Dim Grey (#aaaaaa)
+*   **Background**: Transparent
+*   **Hover**: Faint White Glow (5% Opacity)
+
+```css
+QPushButton#TabButton {
+    color: #aaaaaa;
+    background-color: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 8px 16px;
+}
+QPushButton#TabButton:hover {
+    color: white;
+    background-color: rgba(255, 255, 255, 0.05);
+}
+```
+
+### **The Scrollbar (The Horizon)**
+*   **Visibility**: Always On (To prevent layout jumping)
+*   **Track**: Dark Void (#0f0f13)
+*   **Handle**: Stone (#334155), 12px High, Rounded
+
+```css
+QScrollBar:horizontal {
+    background: #0f0f13;
+    height: 12px;
+    border-radius: 6px;
+}
+QScrollBar::handle:horizontal {
+    background: #334155; /* Stone */
+    min-width: 20px;
+    border-radius: 6px;
+}
+```

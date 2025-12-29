@@ -5,6 +5,7 @@ import math
 from PyQt6.QtCore import Qt, QPointF, QRectF
 from PyQt6.QtGui import (
     QFont,
+    QFontDatabase,
     QPainter,
     QColor,
     QPen,
@@ -19,6 +20,22 @@ from ..models.chart_models import PlanetPosition, HousePosition
 
 class ChartCanvas(QWidget):
     """Custom in-app chart renderer (no browser dependency) with 'Celestia' design."""
+    
+    # Astronomicon font mappings
+    ASTRO_ZODIAC = {
+        "Aries": "A", "Taurus": "B", "Gemini": "C", "Cancer": "D",
+        "Leo": "E", "Virgo": "F", "Libra": "G", "Scorpio": "H",
+        "Sagittarius": "I", "Capricorn": "J", "Aquarius": "K", "Pisces": "L"
+    }
+    
+    ASTRO_PLANETS = {
+        "sun": "Q", "moon": "R", "mercury": "S", "venus": "T",
+        "mars": "U", "jupiter": "V", "saturn": "W", "uranus": "X",
+        "neptune": "Y", "pluto": "Z", "north node": "g", "south node": "i",
+        "mean node": "g", "true node": "g",
+        "chiron": "q", "lilith": "z", "part of fortune": "}",
+        "asc": "c", "mc": "d"
+    }
 
     def __init__(self, parent: Optional[QWidget] = None):
         """
@@ -34,6 +51,9 @@ class ChartCanvas(QWidget):
         self.setMinimumHeight(400)
         self.setStyleSheet("background-color: #0f0f13;")
         self.setMouseTracking(True)  # Enable hover detection
+        
+        # Load Astronomicon font
+        self._astro_font_family = self._get_astronomicon_font()
 
         # Interaction State
         self._hovered_planet: Optional[PlanetPosition] = None
@@ -91,6 +111,14 @@ class ChartCanvas(QWidget):
             "ASC": QColor("#D4AF37"),       # Gold
             "MC": QColor("#D4AF37"),        # Gold
         }
+
+    def _get_astronomicon_font(self) -> str:
+        """Return the Astronomicon font family name if available."""
+        families = QFontDatabase.families()
+        for family in families:
+            if "astronomicon" in family.lower():
+                return family
+        return "Arial"  # Fallback
 
     def set_data(self, planets: List[PlanetPosition], houses: List[HousePosition]) -> None:
         # Whitelist of major bodies to display
@@ -318,16 +346,15 @@ class ChartCanvas(QWidget):
         p.setPen(pen)
         p.drawEllipse(QPointF(cx, cy), r_inner, r_inner)
 
-        # Signs
-        signs = [
-            "Aries", "Taurus", "Gemini", "Cancer",
-            "Leo", "Virgo", "Libra", "Scorpio",
-            "Sagittarius", "Capricorn", "Aquarius", "Pisces"
-        ]
+        if self._astro_font_family != "Arial":
+            font = QFont(self._astro_font_family, 24) # Large for zodiac signs
+            p.setFont(font)
+        else:
+            font = QFont("Serif", 10)
+            font.setBold(True)
+            p.setFont(font)
         
-        font = QFont("Serif", 10) # Elegant font
-        font.setBold(True)
-        p.setFont(font)
+        signs = list(self.ASTRO_ZODIAC.keys())
         
         for idx, name in enumerate(signs):
             # Draw dividers
@@ -350,10 +377,17 @@ class ChartCanvas(QWidget):
             ty = cy + math.sin(mid_angle) * text_r
             
             p.setPen(self.c_gold)
-            # Center text calculation
-            rect_w, rect_h = 40, 20
+            
+            # Determine glyph
+            if self._astro_font_family != "Arial":
+                glyph = self.ASTRO_ZODIAC.get(name, "?")
+                rect_w, rect_h = 60, 60 # Larger rect for larger font
+            else:
+                glyph = self._sign_glyph(name)
+                rect_w, rect_h = 40, 20
+                
             t_rect = QRectF(tx - rect_w/2, ty - rect_h/2, rect_w, rect_h)
-            p.drawText(t_rect, Qt.AlignmentFlag.AlignCenter, self._sign_glyph(name))
+            p.drawText(t_rect, Qt.AlignmentFlag.AlignCenter, glyph)
 
     def _draw_houses(self, p: QPainter, cx: float, cy: float, angle_func, r_outer: float, r_inner: float) -> None:
         if not self.houses:
@@ -424,9 +458,14 @@ class ChartCanvas(QWidget):
         
         base_r = r_baseline * 0.75 if not is_outer else r_baseline
         
-        font = QFont("Sans", 10, QFont.Weight.Bold)
-        if is_outer:
-             font.setPointSize(8) # Smaller font for outer
+        if self._astro_font_family != "Arial":
+            # Using Astronomicon
+            size = 18 if not is_outer else 14
+            font = QFont(self._astro_font_family, size)
+        else:
+            font = QFont("Sans", 10, QFont.Weight.Bold)
+            if is_outer:
+                 font.setPointSize(8) # Smaller font for outer
              
         p.setFont(font)
         
@@ -467,16 +506,26 @@ class ChartCanvas(QWidget):
             
             # Glyph label
             p.setPen(color)
+            
+            # Determine glyph
+            if self._astro_font_family != "Arial":
+                glyph = self.ASTRO_PLANETS.get(pos.name.lower(), pos.name[:1])
+            else:
+                glyph = self._planet_glyph(pos.name)
+            
             if is_hovered:
                 # Highlight text
                 font_hover = QFont(font)
-                font_hover.setBold(True)
-                font_hover.setPointSize(12)
+                current_size = font_hover.pointSize()
+                font_hover.setPointSize(current_size + 4)
+                if self._astro_font_family == "Arial":
+                     font_hover.setBold(True)
+                     
                 p.setFont(font_hover)
-                p.drawText(QPointF(px + 8, py + 6), self._planet_glyph(pos.name))
+                p.drawText(QPointF(px + 8, py + 6), glyph)
                 p.setFont(font) # Restore
             else:
-                p.drawText(QPointF(px + 6, py + 5), self._planet_glyph(pos.name))
+                p.drawText(QPointF(px + 6, py + 5), glyph)
 
     def _draw_aspects(self, p: QPainter, cx: float, cy: float, angle_func, r_inner: float) -> None:
         """Draw aspect lines from the hovered planet to others."""
@@ -506,19 +555,44 @@ class ChartCanvas(QWidget):
             ])
 
         # Calculate position of hovered planet
-        # Note: We duplicate the radius calculation logic here... 
-        # Ideally we'd store positions in a pass before drawing, but for now we re-calc.
-        h_idx = self.planets.index(self._hovered_planet)
-        h_tier = h_idx % 3
-        h_r = base_r - (h_tier * 15.0)
+        # Handle case where hovered planet might be in outer_planets (synastry mode)
+        try:
+            h_idx = self.planets.index(self._hovered_planet)
+            is_outer = False
+        except ValueError:
+            # Check outer planets
+            if self._is_synastry and self._hovered_planet in self.outer_planets:
+                h_idx = self.outer_planets.index(self._hovered_planet)
+                is_outer = True
+            else:
+                # Planet not found in either list - skip aspect drawing
+                return
+        
+        if is_outer:
+            # Outer planets use different radius logic
+            h_r = min(self.width(), self.height()) * 0.46 + (h_idx % 3) * 12.0
+        else:
+            h_tier = h_idx % 3
+            h_r = base_r - (h_tier * 15.0)
+        
         h_angle = angle_func(h_deg)
         hx = cx + math.cos(h_angle) * h_r
         hy = cy + math.sin(h_angle) * h_r
 
+        # Build list of planets to check aspects against
+        # In synastry mode, check against BOTH inner and outer planets (cross-chart aspects)
+        targets_with_info: list = []  # (planet, is_outer, idx)
+        
         for idx, pos in enumerate(self.planets):
-            if pos == self._hovered_planet:
-                continue
-                
+            if pos != self._hovered_planet:
+                targets_with_info.append((pos, False, idx))
+        
+        if self._is_synastry and self.outer_planets:
+            for idx, pos in enumerate(self.outer_planets):
+                if pos != self._hovered_planet:
+                    targets_with_info.append((pos, True, idx))
+
+        for pos, is_outer_target, idx in targets_with_info:
             # Calc difference
             diff = abs(pos.degree - h_deg)
             if diff > 180: diff = 360 - diff
@@ -531,9 +605,13 @@ class ChartCanvas(QWidget):
                     break
             
             if matched_color:
-                # Calc target position
-                t_tier = idx % 3
-                t_r = base_r - (t_tier * 15.0)
+                # Calc target position based on which ring it's in
+                if is_outer_target:
+                    t_r = min(self.width(), self.height()) * 0.46 + (idx % 3) * 12.0
+                else:
+                    t_tier = idx % 3
+                    t_r = base_r - (t_tier * 15.0)
+                
                 t_angle = angle_func(pos.degree)
                 tx = cx + math.cos(t_angle) * t_r
                 ty = cy + math.sin(t_angle) * t_r

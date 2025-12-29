@@ -137,6 +137,33 @@ class AspectsService:
         results.sort(key=lambda a: a.orb)
         return results
 
+    def calculate_aspects_between(
+        self,
+        name_a: str,
+        lon_a: float,
+        name_b: str,
+        lon_b: float,
+        tier: int = 3,  # Check all by default for specific pair
+        orb_factor: float = 1.0,
+    ) -> List[CalculatedAspect]:
+        """Calculate aspects between two specific bodies."""
+        aspects_to_check = ASPECT_TIERS.get(tier, ALL_ASPECTS)
+        results = []
+        
+        for aspect_def in aspects_to_check:
+            orb = self._check_aspect(lon_a, lon_b, aspect_def.angle, aspect_def.default_orb * orb_factor)
+            if orb is not None:
+                is_applying = self._is_applying(lon_a, lon_b, aspect_def.angle)
+                results.append(CalculatedAspect(
+                    planet_a=name_a,
+                    planet_b=name_b,
+                    aspect=aspect_def,
+                    orb=orb,
+                    is_applying=is_applying,
+                ))
+        
+        return sorted(results, key=lambda a: a.orb)
+
     @staticmethod
     def _check_aspect(lon_a: float, lon_b: float, target_angle: float, max_orb: float) -> float | None:
         """Check if two longitudes form an aspect. Returns orb if within, else None."""
