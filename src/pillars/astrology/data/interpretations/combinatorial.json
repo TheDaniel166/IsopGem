@@ -2,23 +2,223 @@
     "Sun": {
         "Aries": {
             "1": {
-                "text": "The Double Aries influence. Your identity is forged in the fires of self-discovery. You are here to lead, to start, and to be unapologetically yourself.",
-                "archetype": "The Divine Warrior",
-                "essence": "Vitality expressed through immediate action and self-assertion.",
-                "shadow": "Impatience, domination, and burnout.",
-                "gift": "Unshakable courage and the will to begin.",
-                "alchemical_process": "Calcination",
+                "text": "This is the primordial configuration. The Sun—Tiphareth, the Christ Center, the Gold of the alchemists—stands in its exaltation in Aries, the sign of the Initiator, and does so in the First House, the cusp of individual manifestation. You are, quite literally, a first incarnation of a specific Will. The Zohar speaks of sparks scattered at the Breaking of the Vessels; you carry one of those sparks in its brightest, most undivided form. This is raw Atziluth descending directly into Malkuth without mediation—a dangerous and glorious configuration. The danger is inflation: mistaking the divine spark for the personal ego, the Promethean theft rather than the Christic surrender. Many with this placement spend the first half of life unconsciously acting out the archetype of the Conquering Hero, only to meet the Wall—a humbling, often devastating encounter with limitation that forces the crucial question: *Is this fire mine, or am I its vessel?* When the integration comes—if it comes—you become what the Thelemic tradition calls the Crowned and Conquering Child: will aligned with Will, personality dissolved in purpose. The glyph of Aries (♈) is the Ram's horns, but also the sprouting seed—the fire that breaks through the frozen ground. Your life is an answer to the question: *What happens when the first cause becomes conscious of itself?*",
+                "archetype": "The Crowned and Conquering Child, The Monad, Kether Descending",
+                "tarot_correspondence": "The Emperor (Aries) + The Sun (Tiphareth)",
+                "alchemical_stage": "Calcination",
+                "kabbalistic_path": "The Lightning Flash",
                 "keywords": [
-                    "Initiative",
-                    "Identity",
-                    "Courage"
+                    "Primordial Will",
+                    "Self-Creation",
+                    "Divine Ego",
+                    "The Initiated Spark"
                 ]
             },
-            "10": "A warrior king. Your drive for personal recognition is channeled into career and public reputation. You lead with authority."
+            "2": {
+                "text": "The Sun in Aries in the Second House creates a profound tension between the fire of self-assertion and the earth of material accumulation. Here, the Warrior must learn to build, and the Builder must learn to fight. In Kabbalistic terms, Tiphareth (the Sun, the Self) expresses through Aries (the initiating fire of Chokmah) into the realm of Malkuth's resources. You do not merely want wealth—you *need* it as a validation of your existence, a concrete proof that your will can shape matter. This can manifest as extraordinary entrepreneurial drive, the capacity to generate value from nothing through sheer force of personality. The shadow, however, is spiritual materialism in its rawest form: identifying your worth with your net worth, mistaking the Temple for the God. The Bull that guards the Second House must eventually be sacrificed—not the wealth itself, but the *attachment* to it. Alchemically, this is the challenge of the Red King who must learn to hold gold without being possessed by it. The Hierophant, Lord of Taurus, whispers the secret: true security comes from connection to the eternal, not the temporal. Your work is to use material resources as tools for spiritual expression, not substitutes for it. The test comes when you lose something valuable and must discover whether you still exist without it.",
+                "archetype": "The Spiritual Entrepreneur, The Sacred Accumulator",
+                "tarot_correspondence": "The Emperor (Aries) in the house of the Hierophant (Taurus)",
+                "alchemical_stage": "Congelation through fire",
+                "kabbalistic_path": "Tiphareth channeled toward Malkuth through Netzach (Victory/Desire)",
+                "keywords": [
+                    "Earned Worth",
+                    "Material Will",
+                    "Sacred Acquisition",
+                    "The Warrior-Builder"
+                ]
+            },
+            "3": {
+                "text": "The Sun in Aries in the Third House ignites the mind with the fire of Mars. You think like a warrior—quick, decisive, first to speak and first to strike. In Hermetic terms, Mercury (ruler of the Third) receives the solar fire through the lens of Aries, creating a mind that cuts rather than weaves, that initiates rather than synthesizes. Your words are weapons; your ideas are declarations of war against consensus reality. The gift is originality—you are constitutionally incapable of merely repeating what you've been told. Every thought must be *yours*, forged in the fire of direct experience. The Zohar speaks of the 'Flaming Sword' that guards Eden; your intellect is such a sword, capable of cutting through illusion with terrifying speed. But the shadow is equally clear: intellectual aggression, the inability to listen, the certainty that your first idea is your best idea. The Lovers card (Gemini, natural sign of the Third) asks you to choose—not between ideas, but between the ego's need to be right and the soul's need to know truth. Alchemically, Mercury must be *fixed* or it remains volatile forever, brilliant but unstable. Your work is to slow the fire long enough to receive wisdom, not just generate opinions. The siblings and neighbors of the Third House may serve as whetstones against which your blade is sharpened—or enemies you create through careless speech.",
+                "archetype": "The Flaming Sword, The Warrior-Messenger",
+                "tarot_correspondence": "The Emperor commanding The Magician's realm",
+                "alchemical_stage": "Sublimation of Mercury through Sulphur",
+                "kabbalistic_path": "Hod (Intellect) inflamed by Geburah (Severity)",
+                "keywords": [
+                    "Intellectual Combat",
+                    "Pioneering Thought",
+                    "The Cutting Word",
+                    "Mental Courage"
+                ]
+            },
+            "4": {
+                "text": "The Sun in Aries in the Fourth House places the Warrior at the root of the Tree, the foundation of the psyche. Here, Mars descends into the lunar realm of Cancer's natural house, creating a profound and often uncomfortable paradox: the need to *assert* oneself in the very place where one should *rest*. In Kabbalistic terms, Tiphareth expresses through Aries into the watery depths of Yesod and the ancestral memories of Malkuth. Your home is not a sanctuary—it is a battlefield, or it was. The family of origin likely featured a dominating father figure, or the *absence* of one that forced you to become your own patriarch too early. The Zohar speaks of the Shekinah dwelling in exile; your early experience may mirror this—the divine spark burning in a place that could not contain it, the king born into a kingdom not yet ready for his rule. The shadow is obvious: treating intimate space as territory to be conquered, inability to rest, the projection of battle onto those who offer only love. The gift is equally powerful: the capacity to *protect* with ferocity, to build a lineage of strength where weakness once reigned. Alchemically, the Red King must learn to dissolve into the White Queen of the lunar depths—Solve before you can build the Philosopher's Stone at the base. Your IC (Imum Coeli) becomes the anchor for individuation, but only if you can stop fighting the ancestors long enough to receive their gifts.",
+                "archetype": "The Exiled King, The Ancestral Warrior, The Sacred Protector",
+                "tarot_correspondence": "The Emperor in the house of The Chariot (Cancer)",
+                "alchemical_stage": "Calcination at the Root",
+                "kabbalistic_path": "Tiphareth descending through Yesod to Malkuth",
+                "keywords": [
+                    "Ancestral Fire",
+                    "The Warrior's Rest",
+                    "Foundation of Will",
+                    "Paternal Initiation"
+                ]
+            },
+            "5": {
+                "text": "The Sun in Aries in the Fifth House is a double solar placement—the Sun in its joy, the realm of Leo's natural expression, filtered through the cardinal fire of the Ram. This is the placement of the creator-hero, the one who *must* bring forth something unprecedented or die trying. In Thelemic terms, this is 'the unveiling of the company of heaven' made personal—your creative acts are not hobbies but spiritual necessities, eruptions of the divine Will through the vehicle of individual expression. The Zohar speaks of the Tzimtzum, the divine contraction that made space for creation; you are an agent of the opposite movement—the expansive radiation outward that fills void with light. Children, whether literal or creative, are your legacy and your testing ground. The shadow is the demand for applause, the inability to create without an audience, Leo's need for recognition contaminating Aries' pure self-assertion. The Strength card (Leo) must befriend the wildness of the Ram, not perform for it. Alchemically, this is the Rubedo—the final reddening, the integration of the Gold—but attempted too early, before the Nigredo and Albedo have done their work. Your task is to create *anyway*, whether the world witnesses or not, to discover that the act of creation IS the reward. Romance, too, carries this intensity: you love as you fight, with total commitment and sometimes terrifying passion. The Fifth House demands authenticity; Aries in it guarantees you will accept nothing less.",
+                "archetype": "The Creator-Hero, The Divine Child, The Unveiled Star",
+                "tarot_correspondence": "The Emperor entering Strength's domain",
+                "alchemical_stage": "Rubedo (premature)",
+                "kabbalistic_path": "Tiphareth radiating directly; the danger of bypassing Geburah's discipline",
+                "keywords": [
+                    "Creative Fire",
+                    "Divine Play",
+                    "The Unveiled Heart",
+                    "Heroic Expression"
+                ]
+            },
+            "6": {
+                "text": "The Sun in Aries in the Sixth House brings the Warrior into the temple of Virgo, the realm of service, purification, and the perfecting of craft. This is an uncomfortable placement for Aries' ego—the First must become the helper, the initiator must attend to detail. In Hermetic terms, the Sulphur (Aries) is forced to work *with* the Mercury (Virgo)—not to dominate, but to submit to the requirements of the Work. The Zohar speaks of Tikkun, the repair of the world through small, patient acts of restoration; this is your path, though everything in you resists it. The gift is extraordinary: when the Warrior serves, the service becomes a form of combat—against entropy, against disorder, against the chaos that threatens the integrity of any system. You are the surgeon, not the general; the craftsman who fights imperfection with relentless precision. The shadow is perfectionism turned inward, the destruction of self through impossible standards, the body (Sixth House) rebelling against the ego's demands. Health crises may force you to learn what Aries hates most: *patience*. Alchemically, this is the preliminary purification that precedes the Great Work—the calcination of impurities that most Aries placements skip. The Hermit (Virgo) asks you to turn the warrior's lamp inward, to fight the battle that has no audience. Your work environment becomes your dojo. The tasks that seem beneath you are the ones that will transform you.",
+                "archetype": "The Warrior-Servant, The Sacred Craftsman, The Hermit Armed",
+                "tarot_correspondence": "The Emperor serving The Hermit",
+                "alchemical_stage": "Purification through discipline",
+                "kabbalistic_path": "Tiphareth expressing through Hod's precision",
+                "keywords": [
+                    "Militant Service",
+                    "Combative Craft",
+                    "Health as Initiation",
+                    "The Perfected Warrior"
+                ]
+            },
+            "7": {
+                "text": "The Sun in Aries in the Seventh House is one of astrology's great paradoxes: the sign of pure self meets the house of the other. The Warrior who knows only 'I' is thrust into the realm where 'We' determines everything. In Kabbalistic terms, Tiphareth (the integrated Self) expresses through Aries (individuated will) into the Venusian realm of Netzach and the mirror-world of partnership. You do not simply have relationships—you *fight* them, and through that fighting, you discover who you are. The Other becomes the whetstone against which your identity is sharpened. This can manifest as choosing partners who are themselves warriors, creating a marriage that is an eternal tournament, or projecting your own Aries nature onto partners and attracting those who act out your shadow. The Zohar speaks of the 'face that faces'—the mystical recognition that the Divine can only be known through encounter with an Other. This is your path. The shadow is competition contami, partnerships become battlefields where no one wins. Justice (Libra, natural sign of the Seventh) must balance the Emperor's sword. Alchemically, this is the Coniunctio—the sacred marriage of opposites—but attempted through combat rather than surrender. Your work is not to become less Aries but to find the one who can match your fire without being consumed by it. Open enemies (Seventh House) are also your teachers; you may only know yourself through opposition.",
+                "archetype": "The Warrior of Relationship, The Sacred Opponent, The One Who Knows Through Otherness",
+                "tarot_correspondence": "The Emperor reflected in Justice's mirror",
+                "alchemical_stage": "Coniunctio through opposition",
+                "kabbalistic_path": "Tiphareth meeting itself through Netzach",
+                "keywords": [
+                    "The Relational Warrior",
+                    "Enemy as Teacher",
+                    "Marriage as Initiation",
+                    "The Mirrored Self"
+                ]
+            },
+            "8": {
+                "text": "The Sun in Aries in the Eighth House places the Warrior directly over the gateway to the underworld. Here, Mars meets Pluto, fire descends into the depths, and the hero must die to be reborn. In Kabbalistic terms, Tiphareth expresses through Aries into the Scorpionic depths of Daath—the Abyss, the non-Sephirah where ego dissolves. This is not a comfortable lifetime. You are being asked to learn lessons about power, death, and transformation that most souls spread across many incarnations. Other people's resources (Eighth House) become the arena for your will—inheritances, shared finances, sexual exchanges of energy, occult teachings passed from teacher to student. The gift is extraordinary: you can face what others flee, enter the dark places with a torch, retrieve what has been lost in the collective shadow. The Zohar speaks of the Qliphoth—the shells of unredeemed energy—and you are called to confront them directly. But the shadow is equally profound: manipulation, power games, the use of intimacy as a weapon, the refusal to let go when the universe demands surrender. Death (XIII) in the Tarot is not the end but the doorway; your task is to walk through it willingly, repeatedly, and return changed each time. Alchemically, this is the Nigredo—the blackening, the putrefaction—that most Aries placements avoid at all costs. You cannot avoid it. Sexuality becomes initiatory; money becomes alchemical. The Phoenix rising from ashes is not a metaphor for you; it is a job description.",
+                "archetype": "The Phoenix Warrior, The Initiate of Death, The Torch in the Underworld",
+                "tarot_correspondence": "The Emperor crossing Death's threshold",
+                "alchemical_stage": "Nigredo (mandatory)",
+                "kabbalistic_path": "Tiphareth descending through Daath",
+                "keywords": [
+                    "Death as Initiation",
+                    "Power Through Surrender",
+                    "The Warrior's Descent",
+                    "Alchemical Sexuality"
+                ]
+            },
+            "9": {
+                "text": "The Sun in Aries in the Ninth House is the Warrior-Philosopher, the one who fights not for territory but for truth. Here, Mars' fire serves Jupiter's vision, and the hero's journey becomes literal: foreign lands, higher education, systems of meaning larger than the self. In Kabbalistic terms, Tiphareth expresses through Aries into the expansive realm of Chesed—Mercy, the Sephirah of Jupiter, the benevolent king. You are not content to believe what you were taught; you must discover your own cosmology, often by physically traveling to places where your assumptions are challenged. The Zohar speaks of the 'pardes'—the four levels of scriptural interpretation; you are called to the highest level, Sod, the secret meaning, but you will get there by breaking down doors, not tiptoeing through gardens. The gift is the capacity to teach with fire, to inspire others toward their own quests, to be a guru (Ninth House) who leads through courage rather than mere insight. The shadow is dogmatism—the conversion of personal vision into absolute truth, the crusader who burns heretics in the name of his own epiphany. The Wheel of Fortune (Jupiter) teaches that all philosophies turn; Temperance (Sagittarius) asks for the integration of opposites. Alchemically, this is the Rubedo of the mind—the reddening of understanding through direct encounter with the Divine. Your beliefs are earned in blood. Higher education may be a battlefield. But the mountain you climb is the one that leads to God.",
+                "archetype": "The Warrior-Philosopher, The Crusading Sage, The One Who Earns Truth",
+                "tarot_correspondence": "The Emperor ascending toward The Wheel of Fortune",
+                "alchemical_stage": "Rubedo of Understanding",
+                "kabbalistic_path": "Tiphareth aspiring toward Chesed",
+                "keywords": [
+                    "Truth Through Combat",
+                    "The Philosopher's Quest",
+                    "Earned Belief",
+                    "The Teacher Who Leads by Fire"
+                ]
+            },
+            "10": {
+                "text": "The Sun in Aries in the Tenth House is the Warrior-King upon the throne of public life. Here, Mars' fire meets Saturn's authority at the Midheaven, the highest point of the chart, the place where soul meets society. In Kabbalistic terms, Tiphareth expresses through Aries into the realm of Binah through Geburah—severity in service of structure, power that builds rather than merely destroys. You are not content to work within existing hierarchies; you must either transform them or create new ones. The career path is not a ladder but a battlefield, and you will rise by force of will where others rely on credentials. The Zohar speaks of the 'crown'—Kether—that can only be approached through Tiphareth; your ambition is ultimately spiritual, even when it looks purely worldly. The gift is natural leadership, the capacity to bear responsibility that would crush lesser souls, the ability to stand alone at the summit. The shadow is tyranny: power without wisdom, authority without mercy, Saturn's coldness infecting Mars' heat until you become the very orthodoxy you once opposed. The World (Saturn) shows the completed cycle; The Emperor who reaches it must become Hierophant—not merely ruling, but transmitting tradition. Alchemically, this is the coagulation of the Stone into public form—the Gold must be witnessed to complete the Work. Your career is your initiation. Failure to achieve is not permitted by your soul. But what you build must serve something larger than your name.",
+                "archetype": "The Warrior-King, The Cardinal Authority, The One Who Builds the Visible Temple",
+                "tarot_correspondence": "The Emperor at the summit of The World",
+                "alchemical_stage": "Coagulation of Public Gold",
+                "kabbalistic_path": "Tiphareth expressing through Geburah toward Binah",
+                "keywords": [
+                    "Cardinal Authority",
+                    "Visible Power",
+                    "The Throne Earned",
+                    "Worldly Initiation"
+                ]
+            },
+            "11": {
+                "text": "The Sun in Aries in the Eleventh House brings the Warrior into the realm of collective vision and group consciousness. Here, Mars' individual fire meets Uranus' transpersonal lightning, creating the Revolutionary—the one who fights not for self but for a future that does not yet exist. In Kabbalistic terms, Tiphareth expresses through Aries into the starry realms of Chokmah—Wisdom, the Father, the first stirring of differentiation from the Ain Soph. You are not content with personal achievement; you must catalyze change at the level of civilization. Friends are not companions but co-conspirators; groups are not social clubs but movements. The Zohar speaks of the 'sparks' scattered throughout creation, waiting to be gathered; you are a gatherer of sparks, assembling the tribe of the future from the fragments of the present. The gift is visionary leadership, the capacity to inspire collective action toward goals that seem impossible until they are achieved. The shadow is equally clear: the lone wolf who cannot truly collaborate, the revolutionary who destroys what he cannot control, the star (Eleventh House) that blinds rather than illuminates. The Star (Aquarius) pours water endlessly; the Emperor must learn to be one point of light among many. Alchemically, this is the projection of the Stone onto the world—the multiplication stage where personal Gold transforms base metal in others. Your legacy is not what you build alone but what continues after you are forgotten.",
+                "archetype": "The Revolutionary, The Gatherer of Sparks, The One Who Fights for the Future",
+                "tarot_correspondence": "The Emperor learning from The Star",
+                "alchemical_stage": "Multiplication and Projection",
+                "kabbalistic_path": "Tiphareth aspiring toward Chokmah through social forms",
+                "keywords": [
+                    "Collective Fire",
+                    "The Revolutionary Initiation",
+                    "Friends as Co-Conspirators",
+                    "The Future Warrior"
+                ]
+            },
+            "12": {
+                "text": "The Sun in Aries in the Twelfth House is perhaps the most paradoxical placement of this fiery sign: the Warrior in the house of dissolution, the ego in the realm of ego-death. Here, Mars' self-assertion meets Neptune's ocean, and the hero must learn to fight an enemy that cannot be seen—himself. In Kabbalistic terms, Tiphareth expresses through Aries into the limitless waters of Ain Soph, the negative veils that precede manifestation. You are a Warrior, but your battlefield is the unconscious, the dream realm, the institutions of confinement (hospitals, prisons, monasteries) where identity dissolves. The Zohar speaks of the 'Tehiru'—the primordial void carved by the withdrawal of the Infinite to make space for creation; you live in that void, fighting to exist in a place where existence itself becomes questionable. The gift is profound: you have access to energies that the waking world cannot perceive, the capacity to act as a hidden hand shaping reality from behind the veil. Artists, mystics, and secret revolutionaries carry this placement. The shadow is self-undoing—the unconscious sabotage, the addiction, the sacrifice of ego that never quite becomes liberation. The Moon (Pisces) asks the Emperor to dissolve; The Hanged Man offers the path of voluntary surrender. Alchemically, this is the preliminary Nigredo before you were born—you arrived in this life already composting, already in the underworld. Your work is not to conquer the invisible but to serve it. Anonymous action may be your true power. The ego must die before it can be reborn in daylight.",
+                "archetype": "The Hidden Warrior, The Mystic Combatant, The One Who Fights from Behind the Veil",
+                "tarot_correspondence": "The Emperor dissolving into The Moon",
+                "alchemical_stage": "Pre-birth Nigredo",
+                "kabbalistic_path": "Tiphareth returning to the Ain Soph",
+                "keywords": [
+                    "The Invisible Battle",
+                    "Ego Dissolution",
+                    "Secret Warriorship",
+                    "The Mystic's Initiation"
+                ]
+            }
         }
     },
-    "Moon": {},
-    "Mercury": {},
+    "Moon": {
+        "Taurus": {
+            "2": {
+                "text": "The Moon—Yesod, the Foundation, the silver vessel of the soul's emotional nature—finds its exaltation in Taurus, the sign of the Bull, and does so in the Second House, the domain of resources, values, and embodied worth. This is the configuration of the Hierophant's inner chamber: the soul that knows what is sacred because it can *touch* it. You are not a mystic of the abstract; you are a mystic of the incarnate. The Zohar teaches that the Shekinah—the presence of the Divine Feminine—dwells in Malkuth, the Kingdom of matter. You feel Her there, in your garden, in your kitchen, in the curve of a beloved's body, in the weight of coins earned honestly. Your emotional security is not negotiable; it is the bedrock upon which everything else is built. Without it, you cannot function. With it, you are an unmovable mountain of nurture and generosity. The shadow is obvious but no less dangerous for being so: possessiveness, the confusion of love with ownership, the terror of change that calcifies into stagnation. In alchemical terms, your Moon is *fixed*—salt-heavy, congealed, resistant to the necessary dissolutions of growth. The remedy is not to abandon the body but to remember that all form is temporary, that the Bull must eventually be sacrificed so the Seed can be planted. Venus, your ruler, whispers the secret: *beauty is in the dying as much as the living.* The Empress holds a shield, but also a ripened wheat field. Let the harvest come when it is time. Your work is Coagula—but Solve must come first, or the vessel cracks.",
+                "archetype": "The Temple Guardian, The Hierophant's Inner Sanctuary, The Embodied Feminine",
+                "essence": "The soul's recognition of the sacred in the material.",
+                "shadow": "Possession mistaken for love; resistance to necessary dissolution; spiritual materialism.",
+                "gift": "Unshakable emotional stability that allows others to rest in your presence.",
+                "tarot_correspondence": "The Hierophant (Taurus) illuminated by the High Priestess (Moon); the Empress reversed warns of fecundity without surrender.",
+                "alchemical_stage": "Coagulation (Salt): the necessary fixing of volatile spirit into stable form—but beware premature crystallization.",
+                "kabbalistic_path": "Yesod (Foundation) resting securely in Malkuth (Kingdom); the danger is forgetting Tiphareth (Beauty) above.",
+                "hermetic_correspondence": "The Salt principle in excess; the Green Lion must eventually devour the Sun.",
+                "quote": "The body is not a tomb. It is a temple. — St. Paul (reframed)",
+                "keywords": [
+                    "Embodied Security",
+                    "Sensory Gnosis",
+                    "The Fixed Feminine",
+                    "Material Devotion"
+                ],
+                "remedy": "Voluntary simplicity. Fasting—not from food, but from *acquisition*. The practice of giving away what you most want to keep. Let something go before the universe takes it."
+            }
+        },
+        "Scorpio": {
+            "12": {
+                "text": "This is the configuration of the Psychopomp, the soul who has agreed—consciously or not—to descend into the collective underworld and return with medicine for the tribe. The Moon, the silver mirror of Yesod, falls into Scorpio, the sign of death and regeneration, and does so in the Twelfth House, the House of Undoing, the dissolution gate through which the ego surrenders to the All. You are, quite literally, wired for Daath—the Abyss, the crossing point where the personal self annihilates into the transpersonal. This is not a comfortable incarnation. From early life, you have sensed the presence of the dead, the unspoken traumas, the ancestral ghosts that families bury and call 'the past.' Your emotions are not simply your own; they are channels through which the unprocessed grief of lineages flows into waking life. The Zohar speaks of the Qliphoth—the shells, the husks of unredeemed evil—and you can feel them. Many with this placement suffer from depression, addiction, or psychic overwhelm until they understand their function: you are an alchemical retort for the transformation of collective shadow. The Scorpionic Moon in the 12th is the Nigredo itself—the rotting, the putrefaction, the necessary decay that precedes the Stone. Your gift is shamanic: you can enter the places others fear and retrieve what was lost. But the initiation is brutal. The danger is losing yourself in the underworld, confusing ancestral pain for your own autobiography, becoming a permanent resident of the Bardo rather than a visitor. The High Priestess crossed by Death is your sigil. When you have died enough times to know that you cannot truly die, you become what the Tibetans call a *delok*—one who returns from beyond to guide the living. The Wounded Healer who heals precisely *because* they have been broken in exactly the right places.",
+                "archetype": "The Psychopomp, The Wounded Healer, The Dweller on the Threshold",
+                "essence": "The soul's agreement to transmute collective shadow through personal suffering.",
+                "shadow": "Psychic absorption, depression, addiction, permanent residence in the underworld instead of visitation.",
+                "gift": "Shamanic capacity to retrieve lost soul fragments; the ability to sit with the dying without fear.",
+                "tarot_correspondence": "The Moon (XVIII) crossed by Death (XIII); the Path of Qoph leading through the Qliphoth.",
+                "alchemical_stage": "Nigredo prolonged: the Peacock's Tail (Cauda Pavonis) may take decades to emerge.",
+                "kabbalistic_path": "The crossing of Daath; Binah's dark waters pouring unfiltered into Yesod.",
+                "hermetic_correspondence": "The Black Moon (Lilith) as Hidden Light; Mercury imprisoned beneath Saturn's lead.",
+                "quote": "One does not become enlightened by imagining figures of light, but by making the darkness conscious. — C.G. Jung",
+                "keywords": [
+                    "Ancestral Transmission",
+                    "Psychic Permeability",
+                    "Shamanic Calling",
+                    "The Return from Death"
+                ],
+                "remedy": "Ruthless Saturn structures: non-negotiable routine, grounding practices, firm temple doors that *close* at night. Learn the difference between *processing* shadow and *becoming* shadow. You visit the underworld. You do not live there."
+            }
+        }
+    },
+    "Mercury": {
+        "Gemini": {
+            "3": {
+                "text": "Mercury in its home sign and house. A powerful placement for intellect. Your mind is quick, curious, and versatile.",
+                "archetype": "The Jester / The Scribe",
+                "essence": "Pure communication and adaptability.",
+                "shadow": "Scatterbrained and superficial.",
+                "gift": "Brilliant articulation and networking.",
+                "keywords": [
+                    "Communication",
+                    "Curiosity",
+                    "Speed"
+                ]
+            }
+        }
+    },
     "Venus": {},
     "Mars": {},
     "Jupiter": {},

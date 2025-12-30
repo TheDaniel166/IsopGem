@@ -107,17 +107,17 @@ class InterpretationRepository:
     def get_aspect_text(self, planet_a: str, planet_b: str, aspect_name: str) -> Optional[RichInterpretationContent]:
         """Get text for an aspect between two planets."""
         data = self._load_json("aspects.json")
-        aspect_key = aspect_name.lower().replace(" ", "_")
-        aspect_data = data.get(aspect_key, {})
         
-        # Try A -> B
-        if raw := aspect_data.get(planet_a, {}).get(planet_b):
+        # Try "PlanetA_PlanetB"
+        key_ab = f"{planet_a}_{planet_b}"
+        if raw := data.get(key_ab, {}).get(aspect_name):
             return self._parse_content(raw)
             
-        # Try B -> A
-        if raw := aspect_data.get(planet_b, {}).get(planet_a):
+        # Try "PlanetB_PlanetA"
+        key_ba = f"{planet_b}_{planet_a}"
+        if raw := data.get(key_ba, {}).get(aspect_name):
             return self._parse_content(raw)
-            
+
         return None
 
     def get_transit_text(self, transiting_planet: str, natal_planet: str, aspect_name: str) -> Optional[RichInterpretationContent]:
@@ -144,6 +144,20 @@ class InterpretationRepository:
         # "Your Sun aspecting their Moon"
         try:
             raw = data.get(planet_a.lower(), {}).get(aspect_name.lower(), {}).get(planet_b.lower())
+            return self._parse_content(raw)
+        except (AttributeError, TypeError):
+            return None
+
+    def get_elementalist_text(self, context: str, key: str) -> Optional[RichInterpretationContent]:
+        """
+        Get text for elemental or modality analysis.
+        Args:
+            context: 'elements' or 'modalities'
+            key: e.g. 'high_fire', 'low_water', 'dominant_cardinal'
+        """
+        data = self._load_json("elemental_balance.json")
+        try:
+            raw = data.get(context, {}).get(key)
             return self._parse_content(raw)
         except (AttributeError, TypeError):
             return None

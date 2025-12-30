@@ -24,6 +24,7 @@ from .geometry_definitions import CATEGORY_DEFINITIONS, SOLID_VIEWER_CONFIG
 from .geometry3d.window3d import Geometry3DWindow
 from .esoteric_wisdom_window import EsotericWisdomWindow
 from .shape_picker_dialog import ShapePickerDialog
+from .nested_heptagons_window import NestedHeptagonsWindow
 
 
 class GeometryHub(QWidget):
@@ -140,6 +141,9 @@ class GeometryHub(QWidget):
             # Wisdom
             ("📜", "Esoteric Wisdom", "Sacred meanings of geometric forms", "#9333ea", 
              self._open_esoteric_wisdom),
+            # Heptagons
+            ("⬡", "Nested Heptagons", "Golden Trisection ratios visualizer", "#d97706", 
+             self._open_nested_heptagons),
         ]
 
         grid = QGridLayout()
@@ -438,5 +442,14 @@ class GeometryHub(QWidget):
             window_type="esoteric_wisdom",
             window_class=EsotericWisdomWindow,
             allow_multiple=False,
+            window_manager=self.window_manager,
+        )
+    
+    def _open_nested_heptagons(self):
+        """Open the Nested Heptagons Golden Trisection window."""
+        self.window_manager.open_window(
+            window_type="nested_heptagons",
+            window_class=NestedHeptagonsWindow,
+            allow_multiple=True,
             window_manager=self.window_manager,
         )

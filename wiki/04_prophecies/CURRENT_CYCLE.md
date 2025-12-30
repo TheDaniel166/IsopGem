@@ -18,6 +18,9 @@ Establish a Sovereign Documentation Architecture that mirrors the precision of t
 - [x] **Automated Sentinel**: Manifested `scripts/verify_sentinel.py` to enforce the Law of Dual Inscription.
 
 ## Completed Milestones
+- **2025-12-29**: **Purification of the Parser**: Enhanced `parsers.py` with true-order recursive table extraction, `numbering.xml` list detection, and exception sanitization (Exorcised Broad Excepts).
+- **2025-12-29**: Manifested **Celestial Tabs** (Scrollable Tab Application) in `SynastryWindow`, aligning navigation with the **Adaptive Principle** and **Visual Liturgy**.
+- **2025-12-29**: Harmonized **Synastry Window Aesthetics** with the Celestia Theme (Dark Content, Light Sidebar, Gold Seeker Buttons).
 - **2025-12-28**: Manifested the **Automated Sentinel (Covenant Guard)** to enforce the Law of Dual Inscription between `THE_COVENANT.md` and `GEMINI.md`.
 - **2025-12-28**: Manifested the **Mindscape Global Search** system, unifying the SQL Service with the Visual Graph.
 - **2025-12-28**: Stabilized the **Infinite Canvas** with "Prophetic Centering," curing the scroll-reset anomaly.

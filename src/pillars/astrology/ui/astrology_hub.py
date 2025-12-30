@@ -15,6 +15,7 @@ from .differential_natal_window import DifferentialNatalWindow
 from .synastry_window import SynastryWindow
 from .returns_window import ReturnsWindow
 from .progressions_window import ProgressionsWindow
+from .chariot_window import ChariotWindow
 from ..services.openastro_service import OpenAstroService
 
 
@@ -83,6 +84,7 @@ class AstrologyHub(QWidget):
             ("∞", "Synastry", "Relationship compatibility & bi-wheels", "#db2777", self._open_synastry),
             ("↺", "Returns", "Solar and Lunar Returns", "#eab308", self._open_returns),
             ("↝", "Progressions", "Secondary Progressions & Solar Arc", "#8b5cf6", self._open_progressions),
+            ("⚡", "Chariot", "The Merkabah - 21 Midpoints of Will", "#facc15", self._open_chariot),
         ]
 
         grid = QGridLayout()
@@ -251,4 +253,13 @@ class AstrologyHub(QWidget):
             ProgressionsWindow,
             allow_multiple=False,
             service=service
+        )
+
+    def _open_chariot(self) -> None:
+        """Launch the Celestial Chariot (Merkabah) Window."""
+        self.window_manager.open_window(
+            "astrology_chariot",
+            ChariotWindow,
+            allow_multiple=False,
+            window_manager=self.window_manager,
         )

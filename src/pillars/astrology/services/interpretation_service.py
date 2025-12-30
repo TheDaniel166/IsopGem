@@ -7,7 +7,7 @@ from typing import List, Optional
 from pillars.astrology.models.chart_models import ChartResult, PlanetPosition, HousePosition
 from pillars.astrology.models.interpretation_models import InterpretationReport
 from pillars.astrology.repositories.interpretation_repository import InterpretationRepository
-from pillars.astrology.services.aspects_service import CalculatedAspect
+from pillars.astrology.services.aspects_service import CalculatedAspect, AspectsService
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +23,7 @@ class InterpretationService:
         
         """
         self.repository = repository or InterpretationRepository()
+        self.aspects_service = AspectsService()
 
     def interpret_chart(self, chart: ChartResult, chart_name: str = "Chart") -> InterpretationReport:
         """Generate a full interpretation report for the given chart."""
@@ -31,15 +32,112 @@ class InterpretationService:
         # 1. Interpret Planets in Signs and Houses
         self._interpret_planets(chart.planet_positions, chart.house_positions, report)
 
-        # 2. Interpret Aspects (if available in raw payload or re-calculated)
-        # Note: ChartResult has aspect_summary but we might need CalculatedAspect objects.
-        # Ideally, we should receive CalculatedAspects or derive them.
-        # For now, we'll assume we can't easily get them from ChartResult.aspect_summary 
-        # without parsing. In a real scenario, we might want to inject the AspectService 
-        # here or pass the calculated aspects in.
-        # TODO: Implement aspect interpretation once we have clean aspect objects.
+        # 2. Interpret Aspects
+        self._interpret_aspects(chart.planet_positions, report)
         
+        # 3. Interpret Dominants (Elemental Balance)
+        self._interpret_dominants(chart.planet_positions, report)
+
         return report
+
+    def _interpret_aspects(self, planets: List[PlanetPosition], report: InterpretationReport) -> None:
+        """Calculate and interpret planetary aspects."""
+        # Convert list of PlanetPositions to dict for AspectsService
+        planet_map = {p.name: p.degree for p in planets}
+        
+        # Calculate aspects (Tier 1: Major + Common Minor)
+        aspects = self.aspects_service.calculate_aspects(planet_map, tier=1)
+        for aspect in aspects:
+            # We skip aspects involving the Nodes/Angles if we don't have text for them yet, 
+            # but usually we want them.
+            
+            
+            content = self.repository.get_aspect_text(aspect.planet_a, aspect.planet_b, aspect.aspect.name)
+            
+            if content:
+                # Calculate weight: Tighter orb = Higher weight
+                # Max orb is ~8-10. If orb is 0, weight is high (1.5). If max, weight is 0.5.
+                # Simple linear scaling: 1.5 - (orb / max_orb)
+                weight = 1.5 - (aspect.orb / aspect.aspect.default_orb)
+                weight = max(0.5, weight) # Floor at 0.5
+                
+                applying_str = "Applying" if aspect.is_applying else "Separating"
+                title = f"{aspect.planet_a} {aspect.aspect.symbol} {aspect.planet_b} ({applying_str}, Orb {aspect.orb}°)"
+                
+                report.add_segment(
+                    title=title,
+                    content=content,
+                    tags=["Aspect", aspect.aspect.name, aspect.planet_a, aspect.planet_b],
+                    weight=weight
+                )
+
+    def _interpret_dominants(self, planets: List[PlanetPosition], report: InterpretationReport) -> None:
+        """Analyze elemental balance and dominants."""
+        # Basic mapping (simplified for this iteration)
+        # 0=Fire, 1=Earth, 2=Air, 3=Water
+        ELEMENTS = ["Fire", "Earth", "Air", "Water"]
+        MODALITIES = ["Cardinal", "Fixed", "Mutable"]
+        
+        # Sign index to element/modality
+        # Fire: 0, 4, 8
+        # Earth: 1, 5, 9
+        # Air: 2, 6, 10
+        # Water: 3, 7, 11
+        
+        element_counts = {e: 0 for e in ELEMENTS}
+        modality_counts = {m: 0 for m in MODALITIES}
+        
+        # Weights for bodies (Sun/Moon=3, Personal=2, Outer=1)
+        WEIGHTS = {
+            "Sun": 3, "Moon": 3, "Ascendant": 3, "Midheaven": 2,
+            "Mercury": 2, "Venus": 2, "Mars": 2,
+            "Jupiter": 1, "Saturn": 1, "Uranus": 1, "Neptune": 1, "Pluto": 1
+        }
+        
+        for p in planets:
+            if p.sign_index is None:
+                continue
+                
+            w = WEIGHTS.get(p.name, 1)
+            
+            # Element
+            e_idx = p.sign_index % 4  
+            # Note: The standard order is Fire(0), Earth(1), Air(2), Water(3)?
+            # Zodiac: Aries(Fire), Taurus(Earth), Gemini(Air), Cancer(Water)..
+            # Yes, index % 4 works specifically if 0=Fire.
+            # Aries=0 (Fire), Taurus=1 (Earth), Gemini=2 (Air), Cancer=3 (Water). Matches.
+            
+            element_counts[ELEMENTS[e_idx]] += w
+            
+            # Modality
+            # Cardinal: 0, 3, 6, 9
+            # Fixed: 1, 4, 7, 10
+            # Mutable: 2, 5, 8, 11
+            m_idx = p.sign_index % 3
+            modality_counts[MODALITIES[m_idx]] += w
+
+        # Find Highs/Lows
+        total_points = sum(element_counts.values())
+        if total_points == 0:
+            return
+
+        # Simple logic: If element > 35% of chart -> High
+        # If element < 10% -> Low
+        
+        for elem, score in element_counts.items():
+            pct = score / total_points
+            key = None
+            if pct > 0.35:
+                key = f"high_{elem.lower()}"
+                title = f"Dominant Element: {elem}"
+            elif pct < 0.10:
+                key = f"low_{elem.lower()}"
+                title = f"Deficient Element: {elem}"
+            
+            if key:
+                content = self.repository.get_elementalist_text("elements", key)
+                if content:
+                    report.add_segment(title=title, content=content, tags=["Dominant", "Element", elem])
 
     def interpret_transits(self, transit_chart: ChartResult, natal_chart: ChartResult, aspects: List[CalculatedAspect]) -> InterpretationReport:
         """

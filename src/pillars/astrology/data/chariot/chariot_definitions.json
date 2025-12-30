@@ -1,0 +1,402 @@
+{
+    "midpoints": [
+        {
+            "id": "fool",
+            "name": "The Fool",
+            "planet_a": "Mercury",
+            "planet_b": "Jupiter",
+            "trio": "context",
+            "keywords": [
+                "Unremembered Freedom",
+                "Divine Spark",
+                "Infinite Potential"
+            ],
+            "description": "The boundless faith and brilliant insight that fuels the quest"
+        },
+        {
+            "id": "magus",
+            "name": "The Magus",
+            "planet_a": "Sun",
+            "planet_b": "Moon",
+            "trio": "vitality",
+            "keywords": [
+                "Core Reactor",
+                "Unity of Will and Soul",
+                "Ignition Switch"
+            ],
+            "description": "The sacred marriage of conscious will and unconscious instinct"
+        },
+        {
+            "id": "priestess",
+            "name": "The Priestess",
+            "planet_a": "Moon",
+            "planet_b": "Mercury",
+            "trio": "navigation",
+            "keywords": [
+                "Inner Compass",
+                "Psychic Sonar",
+                "Silent Knowing"
+            ],
+            "description": "The direct telepathic link to universal wisdom from the deep subconscious"
+        },
+        {
+            "id": "empress",
+            "name": "The Empress",
+            "planet_a": "Sun",
+            "planet_b": "Venus",
+            "trio": "form",
+            "keywords": [
+                "Secret Goal",
+                "Fertile Creation",
+                "Champion of Life"
+            ],
+            "description": "The archetype of fertile, abundant, and beautiful creation"
+        },
+        {
+            "id": "emperor",
+            "name": "The Emperor",
+            "planet_a": "Sun",
+            "planet_b": "Mars",
+            "trio": "will",
+            "keywords": [
+                "Inherent Authority",
+                "Sovereign Force",
+                "Law of Being"
+            ],
+            "description": "The natural authority that orders the world by sheer focused presence"
+        },
+        {
+            "id": "hierophant",
+            "name": "The Hierophant",
+            "planet_a": "Sun",
+            "planet_b": "Mercury",
+            "trio": "transformation",
+            "keywords": [
+                "Sacred Key",
+                "New Law",
+                "Word Made Flesh"
+            ],
+            "description": "The embodiment of teaching - the Word made Flesh and put into motion"
+        },
+        {
+            "id": "lovers",
+            "name": "The Lovers",
+            "planet_a": "Moon",
+            "planet_b": "Venus",
+            "trio": "great_work",
+            "keywords": [
+                "Reconciling Principle",
+                "Origin of the Quest",
+                "Alchemical Wedding"
+            ],
+            "description": "The foundational principle of reconciliation that births the quest"
+        },
+        {
+            "id": "chariot",
+            "name": "The Chariot",
+            "planet_a": null,
+            "planet_b": null,
+            "trio": null,
+            "keywords": [
+                "Triumph of Will",
+                "Directed Purpose",
+                "Victory Through Mastery"
+            ],
+            "description": "The synthesis of all 21 powers - the mean of all 7 Axles"
+        },
+        {
+            "id": "adjustment",
+            "name": "Adjustment",
+            "planet_a": "Mercury",
+            "planet_b": "Venus",
+            "trio": "navigation",
+            "keywords": [
+                "Gyroscopic Core",
+                "Active Recalibration",
+                "Perfect Balance"
+            ],
+            "description": "The intellectual faculty that processes data into perfect forward momentum"
+        },
+        {
+            "id": "hermit",
+            "name": "The Hermit",
+            "planet_a": "Moon",
+            "planet_b": "Saturn",
+            "trio": "form",
+            "keywords": [
+                "Essential State",
+                "Inner Discipline",
+                "Psychological Solitude"
+            ],
+            "description": "The profound state of psychological solitude required for the quest"
+        },
+        {
+            "id": "fortune",
+            "name": "Fortune",
+            "planet_a": "Sun",
+            "planet_b": "Jupiter",
+            "trio": "vitality",
+            "keywords": [
+                "Transmission",
+                "Cosmic Gears",
+                "Synchronized Flow"
+            ],
+            "description": "The critical link between individual purpose and the cycles of cosmic opportunity"
+        },
+        {
+            "id": "lust",
+            "name": "Lust",
+            "planet_a": "Moon",
+            "planet_b": "Mars",
+            "trio": "will",
+            "keywords": [
+                "Primordial Power",
+                "Kerubic Beasts",
+                "Sacred Fire"
+            ],
+            "description": "The untamed primordial power of the sphinxes, yoked to personal will"
+        },
+        {
+            "id": "hanged_man",
+            "name": "The Hanged Man",
+            "planet_a": "Venus",
+            "planet_b": "Saturn",
+            "trio": "context",
+            "keywords": [
+                "Secret of Mastery",
+                "True Surrender",
+                "Wisdom of Yielding"
+            ],
+            "description": "Power through perfect alignment with higher law - strength through yielding"
+        },
+        {
+            "id": "death",
+            "name": "Death",
+            "planet_a": "Mars",
+            "planet_b": "Saturn",
+            "trio": "transformation",
+            "keywords": [
+                "Scouring Action",
+                "Creative Destruction",
+                "Clearing the Path"
+            ],
+            "description": "The unyielding clearing away of the obsolete to make way for the new"
+        },
+        {
+            "id": "art",
+            "name": "Art",
+            "planet_a": "Moon",
+            "planet_b": "Jupiter",
+            "trio": "great_work",
+            "keywords": [
+                "Supreme Skill",
+                "High-Speed Alchemy",
+                "Dynamic Masterpiece"
+            ],
+            "description": "The supreme skill of blending the four elements while in motion"
+        },
+        {
+            "id": "devil",
+            "name": "The Devil",
+            "planet_a": "Sun",
+            "planet_b": "Saturn",
+            "trio": "form",
+            "keywords": [
+                "Shadow of Chariot",
+                "Intimate Enemy",
+                "Inertia Temptation"
+            ],
+            "description": "The temptation to mistake the armor for the man, the vehicle for the destination"
+        },
+        {
+            "id": "tower",
+            "name": "The Tower",
+            "planet_a": "Mercury",
+            "planet_b": "Mars",
+            "trio": "will",
+            "keywords": [
+                "Inevitable Impact",
+                "Lightning of Truth",
+                "Divine Demolition"
+            ],
+            "description": "The penetrating truth-bearing force that annihilates all built on lies"
+        },
+        {
+            "id": "star",
+            "name": "The Star",
+            "planet_a": "Venus",
+            "planet_b": "Mars",
+            "trio": "transformation",
+            "keywords": [
+                "Grace in Wake",
+                "Renewed Hope",
+                "Harmonious Balance"
+            ],
+            "description": "The atmosphere of grace and hope that rushes into the vacuum of destruction"
+        },
+        {
+            "id": "moon_card",
+            "name": "The Moon",
+            "planet_a": "Jupiter",
+            "planet_b": "Saturn",
+            "trio": "navigation",
+            "keywords": [
+                "True Terrain",
+                "Psychic Landscape",
+                "Threshold of Being"
+            ],
+            "description": "The boundary between formless cosmic terror and structured reality"
+        },
+        {
+            "id": "sun_card",
+            "name": "The Sun",
+            "planet_a": "Venus",
+            "planet_b": "Jupiter",
+            "trio": "vitality",
+            "keywords": [
+                "Nuclear Furnace",
+                "Joy Element",
+                "Radiant Confidence"
+            ],
+            "description": "The unfailing internal fire that prevents freezing within steely resolve"
+        },
+        {
+            "id": "aeon",
+            "name": "The Aeon",
+            "planet_a": "Mercury",
+            "planet_b": "Saturn",
+            "trio": "context",
+            "keywords": [
+                "Inevitable Horizon",
+                "Karmic Thread",
+                "Self Reckoning"
+            ],
+            "description": "The consequence that accumulates with every action toward final judgment"
+        },
+        {
+            "id": "universe",
+            "name": "The Universe",
+            "planet_a": "Mars",
+            "planet_b": "Jupiter",
+            "trio": "great_work",
+            "keywords": [
+                "Successful Dissolution",
+                "Final Paradox",
+                "Cosmic Dance"
+            ],
+            "description": "The ecstatic surrender of individuality to rejoin the Everything"
+        }
+    ],
+    "trios": [
+        {
+            "id": "context",
+            "name": "The Context of the Journey",
+            "axle_name": "Axle of Context",
+            "midpoints": [
+                "fool",
+                "hanged_man",
+                "aeon"
+            ],
+            "description": "The mythic DNA of your personal quest - the beginning, the sacrifice, and the destination",
+            "meaning": "From what impulse was the journey born? Through what sacrifice did you learn to steer? Toward what reckoning do you drive?"
+        },
+        {
+            "id": "vitality",
+            "name": "The Engine of Vitality",
+            "axle_name": "Axle of Vitality",
+            "midpoints": [
+                "magus",
+                "fortune",
+                "sun_card"
+            ],
+            "description": "The kinetic heart - ignition, transmission, and fuel",
+            "meaning": "Your core energy, capacity for synchronized luck, and radiant joy"
+        },
+        {
+            "id": "navigation",
+            "name": "The Navigation System",
+            "axle_name": "Axle of Navigation",
+            "midpoints": [
+                "priestess",
+                "adjustment",
+                "moon_card"
+            ],
+            "description": "The inner compass - divine perception, intellectual rigor, and psychic endurance",
+            "meaning": "Your intuition, balance mechanisms, and ability to navigate uncertainty"
+        },
+        {
+            "id": "form",
+            "name": "The Relationship with Form",
+            "axle_name": "Axle of Form",
+            "midpoints": [
+                "empress",
+                "hermit",
+                "devil"
+            ],
+            "description": "The drama of embodiment - purpose, discipline, and temptation",
+            "meaning": "What you create, the solitude required, and the trap that threatens"
+        },
+        {
+            "id": "will",
+            "name": "The Arsenal of Will",
+            "axle_name": "Axle of Will",
+            "midpoints": [
+                "emperor",
+                "lust",
+                "tower"
+            ],
+            "description": "The active power - authority, primordial drive, and devastating impact",
+            "meaning": "Your power to command, your raw drive, and your capacity to shatter illusions"
+        },
+        {
+            "id": "transformation",
+            "name": "The Process of Transformation",
+            "axle_name": "Axle of Transformation",
+            "midpoints": [
+                "hierophant",
+                "death",
+                "star"
+            ],
+            "description": "The alchemical work - new law, cleansing dissolution, and renewed grace",
+            "meaning": "The wisdom you embody, what you must clear away, and the light you leave behind"
+        },
+        {
+            "id": "great_work",
+            "name": "The Alchemical Great Work",
+            "axle_name": "Axle of The Great Work",
+            "midpoints": [
+                "lovers",
+                "art",
+                "universe"
+            ],
+            "description": "The ultimate purpose - primal union, supreme skill, and final dissolution",
+            "meaning": "The choice that starts it, the skill that sustains it, the wholeness that completes it"
+        }
+    ],
+    "fateful_degrees": {
+        "27": {
+            "name": "The Masterpiece Anointed",
+            "sign": "Aries",
+            "initiation": "Fateful Inception",
+            "alchemical": "Salt (The Body)",
+            "kabbalistic": "Aub (Hollow Light)",
+            "description": "The perfection of the physical vessel, anointed with cosmic destiny"
+        },
+        "147": {
+            "name": "The Victor's Revelation",
+            "sign": "Leo",
+            "initiation": "Fateful Personalization",
+            "alchemical": "Sulphur (The Will)",
+            "kabbalistic": "Aud (Serpentine Light)",
+            "description": "The awakening of the soul's fire, recognizing its divine sovereignty"
+        },
+        "267": {
+            "name": "The Gateway to the Infinite",
+            "sign": "Sagittarius",
+            "initiation": "Fateful Alignment",
+            "alchemical": "Mercury (The Spirit)",
+            "kabbalistic": "Aur (Limitless Light)",
+            "description": "The conscious alignment with the Galactic Center and cosmic source"
+        }
+    }
+}

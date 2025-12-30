@@ -225,8 +225,15 @@ python -m pytest -q
 - `src/pillars/geometry/ui/advanced_scientific_calculator_window.py` (UI `eval`)
 - `scripts/generate_archimedean_data.py` (remote fetch + `eval`)
 - `src/pillars/gematria/services/text_analysis_service.py` (broad `except:`)
-- `src/pillars/document_manager/utils/parsers.py` (multiple `print` + broad exceptions)
+
 
 ---
 
 If you want, I can follow this report by actually implementing the top two fixes (replacing `eval` safely) and adding a minimal `pyproject.toml` pytest config—keeping changes small and targeted.
+---
+
+## Fixed/Exorcised
+- **2025-12-29**: `src/shared/services/document_manager/utils/parsers.py` - Purified.
+    - **Distortion**: Broad `except:` clauses swallowing interrupts; debug `print` noise; inadequate list/table parsing.
+    - **The Fix**: Replaced with `except Exception`, removed prints, implemented recursive table extraction and `numbering.xml` list parsing.
+    - **The Test**: `tests/verify_fixes.py` (Pass).

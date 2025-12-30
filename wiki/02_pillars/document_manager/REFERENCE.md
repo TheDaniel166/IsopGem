@@ -2298,7 +2298,7 @@ This manifest dissects the Akaschic Archive, mapping the lifecycle of rich-text 
 
 **Role:** `[Tool] (Utility)`
 
-**Purpose:** File parsing utilities for document import.
+**Purpose:** File parsing utilities for document import. Implements "True Order" recursive text extraction and high-fidelity list detection (`numbering.xml`).
 
 **Input (Ingests):**
 * Pure data structure or utility module.
@@ -2323,7 +2323,6 @@ This manifest dissects the Akaschic Archive, mapping the lifecycle of rich-text 
 * `src/pillars/document_manager/services/document_service.py`
 * `tests/manual_metadata_test.py`
 * `tests/mock_metadata_test.py`
-* `tests/verify_fixes.py`
 * `tests/verify_list_parsing.py`
 
 **Key Interactions:**
