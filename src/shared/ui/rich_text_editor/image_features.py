@@ -450,7 +450,7 @@ class ImageEditorDialog(QDialog):
             None,  # Use None for independent top-level window
             "Select Image",
             "",
-            "Images (*.png *.jpg *.jpeg *.bmp *.gif)"
+            "Images (*.png *.jpg *.jpeg *.bmp *.gif *.tif *.tiff *.webp)"
         )
         if not file_path:
             return
