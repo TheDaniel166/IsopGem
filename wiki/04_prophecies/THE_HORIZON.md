@@ -1,4 +1,4 @@
-<!-- Last Verified: 2025-12-28 -->
+<!-- Last Verified: 2025-12-30 -->
 
 # The Horizon — Astrology Pillar Professionalization
 
@@ -27,24 +27,127 @@ This prophecy charts the work required to elevate the Astrology pillar to a prof
 - **Interpretation layer**: Interpretation DTOs in [src/pillars/astrology/models/interpretation_models.py](src/pillars/astrology/models/interpretation_models.py) with content lookup in [src/pillars/astrology/repositories/interpretation_repository.py](src/pillars/astrology/repositories/interpretation_repository.py); service wiring in [src/pillars/astrology/services/interpretation_service.py](src/pillars/astrology/services/interpretation_service.py).
 
 ## Gap Analysis — Required Upgrades
-- **Timekeeping & ephemeris**: Enforce TT/UT conversions, leap seconds, delta-T sourcing; allow true/mean node toggle; implement sidereal with selectable ayanamsa; add topocentric option and atmospheric refraction handling for angles.
-- **Timezone & geocoding**: Integrate robust timezone resolver (e.g., tzdb via geo lookup) with historical DST; validate location input paths and caching.
-- **Chart families**: Add solar/lunar return generation, secondary progressions (Naibod), solar arc directions, synastry/bi-wheel overlays, composite charts, mundane/event charts, midpoints grid.
-- **House/angle systems**: Expand house systems; add latitude guardrails for Placidus/Koch near polar latitudes; compute vertex/east point; ensure MC/ASC correctness across coordinate modes.
-- **Aspect engine**: Configurable orbs per planet/aspect; moieties; parallels/contra-parallels; minor/harmonic aspect sets toggleable; applying/separating accuracy using velocities.
-- **Fixed stars & lots**: Expand star catalog with magnitudes and mythic notes; add parans; extend Arabic Parts catalog and validation; add orbs and day/night reversals with tests.
-- **Interpretation corpus**: Fill triads (planet-sign-house), aspects directional text, transits to natal, progressions/returns narratives, star and lot delineations; surface weights and source metadata.
-- **Data & persistence**: Versioned chart records, delta history, tagging/search facets, export/import flows (JSON/CSV), cached ephemeris slices for batch runs.
-- **UX/reporting**: PDF/PNG export of charts and reports; printable layouts; keyboard shortcuts; accessibility labeling; responsive redraw on setting changes; status/toast feedback for failures.
-- **Performance & offline**: Benchmarks for batch ephemeris generation (Jupiter trial); optional offline mode with cached ephemeris; background threading for heavy calculations (avoid main-thread freezes).
-- **Observability & safety**: Structured logging (pillar=astrology, chart_type, calculation_mode), slow-op warnings, graceful fallbacks when ephemeris/geo lookup fails.
-- **Verification**: Golden-value tests for planetary positions (sample dates), house cusp validations, aspect matrix checks, lots reversal tests, fixed-star proximity tests, performance thresholds, UI smoke tests headless where possible.
+
+### Timekeeping & Ephemeris
+- [ ] Enforce TT/UT conversions, leap seconds, delta-T sourcing
+- [ ] Allow true/mean node toggle
+- [ ] Implement sidereal with selectable ayanamsa
+- [ ] Add topocentric option and atmospheric refraction handling for angles
+
+### Timezone & Geocoding
+- [x] Integrate robust timezone resolver (`location_lookup.py`)
+- [ ] Validate location input paths and caching
+- [ ] Historical DST handling
+
+### Chart Families
+- [x] Synastry/bi-wheel overlays (`synastry_service.py`, `synastry_window.py`)
+- [x] Solar/lunar return generation (`returns_service.py`, `returns_window.py`)
+- [x] Secondary progressions (`progressions_service.py`, `progressions_window.py`)
+- [x] Midpoints grid (`midpoints_service.py`, `midpoints_dial.py`)
+- [ ] Solar arc directions
+- [ ] Composite charts (stub exists: `composite_chart_window.py`)
+- [ ] Mundane/event charts
+
+### House/Angle Systems
+- [ ] Expand house systems (Koch, Regiomontanus, etc.)
+- [ ] Add latitude guardrails for Placidus/Koch near polar latitudes
+- [ ] Compute vertex/east point
+- [ ] Ensure MC/ASC correctness across coordinate modes
+
+### Aspect Engine
+- [x] Basic major/minor aspect calculation (`aspects_service.py`)
+- [ ] Configurable orbs per planet/aspect
+- [ ] Moieties
+- [ ] Parallels/contra-parallels
+- [ ] Applying/separating accuracy using velocities
+
+### Fixed Stars & Lots
+- [x] Fixed star proximity checks (`fixed_stars_service.py`)
+- [x] Arabic Parts with sect-aware reversal (`arabic_parts_service.py`)
+- [ ] Expand star catalog with magnitudes and mythic notes
+- [ ] Add parans
+- [ ] Extend Arabic Parts catalog and validation
+
+### Interpretation Corpus
+- [x] Planet-sign interpretations (partial)
+- [x] Planet-house interpretations (partial)
+- [ ] Complete triads (planet-sign-house)
+- [ ] Aspects directional text
+- [ ] Transits to natal narratives
+- [ ] Progressions/returns narratives
+- [ ] Star and lot delineations
+- [ ] Surface weights and source metadata
+
+### Data & Persistence
+- [x] Chart storage (`chart_storage_service.py`, `chart_repository.py`)
+- [ ] Versioned chart records, delta history
+- [ ] Tagging/search facets
+- [ ] Export/import flows (JSON/CSV)
+- [ ] Cached ephemeris slices for batch runs
+
+### UX/Reporting
+- [x] Report service exists (`report_service.py`)
+- [ ] PDF/PNG export of charts and reports
+- [ ] Printable layouts
+- [ ] Keyboard shortcuts
+- [ ] Accessibility labeling
+- [ ] Responsive redraw on setting changes
+- [ ] Status/toast feedback for failures
+
+### Performance & Offline
+- [ ] Benchmarks for batch ephemeris generation (Jupiter trial)
+- [ ] Optional offline mode with cached ephemeris
+- [ ] Background threading for heavy calculations
+
+### Observability & Safety
+- [ ] Structured logging (pillar=astrology, chart_type, calculation_mode)
+- [ ] Slow-op warnings
+- [ ] Graceful fallbacks when ephemeris/geo lookup fails
+
+### Verification
+- [ ] Golden-value tests for planetary positions (sample dates)
+- [ ] House cusp validations
+- [ ] Aspect matrix checks
+- [ ] Lots reversal tests
+- [ ] Fixed-star proximity tests
+- [ ] Performance thresholds
+- [ ] UI smoke tests headless where possible
 
 ## Phased Roadmap
-- **Phase 1 — Astrometric Integrity**: Harden ephemeris/timezone handling; add true/mean node toggle, sidereal/ayanamsa selection, topocentric option; create golden-value tests for planetary positions and house cusps.
-- **Phase 2 — Chart Breadth & Engines**: Implement solar/lunar returns, progressions (secondary, solar arc), synastry/bi-wheel, composite charts, expanded house systems, aspect engine upgrades (orbs/moieties/parallels).
-- **Phase 3 — Interpretation & Reporting**: Complete interpretation corpus (triads, aspects, transits, progressions, stars, lots), add report generation (PDF/PNG), export/import, versioned chart storage with tags.
-- **Phase 4 — UX, Performance, Observability**: Responsive redraws, keyboard/accessibility, structured logging, slow-op alerts, background workers for heavy ops, caching/offline mode, regression suite for UI flows and performance.
+
+### Phase 1 — Astrometric Integrity
+- [ ] Harden ephemeris/timezone handling
+- [ ] Add true/mean node toggle
+- [ ] Sidereal/ayanamsa selection
+- [ ] Topocentric option
+- [ ] Create golden-value tests for planetary positions and house cusps
+
+### Phase 2 — Chart Breadth & Engines (Mostly Complete)
+- [x] Solar/lunar returns (`returns_service.py`, `returns_window.py`)
+- [x] Secondary progressions (`progressions_service.py`, `progressions_window.py`)
+- [x] Synastry/bi-wheel (`synastry_service.py`, `synastry_window.py`)
+- [x] Midpoints grid (`midpoints_service.py`, `midpoints_dial.py`)
+- [ ] Solar arc directions
+- [ ] Composite charts (stub exists)
+- [ ] Expanded house systems
+- [ ] Aspect engine upgrades (orbs/moieties/parallels)
+
+### Phase 3 — Interpretation & Reporting (Partial)
+- [x] Interpretation service and repository exist
+- [x] Report service exists (`report_service.py`)
+- [ ] Complete interpretation corpus (triads, aspects, transits, progressions, stars, lots)
+- [ ] Add report generation (PDF/PNG)
+- [ ] Export/import
+- [ ] Versioned chart storage with tags
+
+### Phase 4 — UX, Performance, Observability
+- [ ] Responsive redraws
+- [ ] Keyboard/accessibility
+- [ ] Structured logging
+- [ ] Slow-op alerts
+- [ ] Background workers for heavy ops
+- [ ] Caching/offline mode
+- [ ] Regression suite for UI flows and performance
 
 ## Verification Plan (Seals Focus)
 - **Saturn**: Static analysis for sovereignty and import purity; type coverage across services and repositories.

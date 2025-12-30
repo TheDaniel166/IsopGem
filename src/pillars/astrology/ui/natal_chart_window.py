@@ -73,6 +73,7 @@ from .advanced_analysis_panel import AdvancedAnalysisPanel
 from shared.ui.theme import COLORS
 
 from ..ui.chart_picker_dialog import ChartPickerDialog
+from .astro_settings_dialog import AstroSettingsDialog
 from pillars.tq.ui.quadset_analysis_window import SubstrateWidget
     
     
@@ -126,6 +127,7 @@ class NatalChartWindow(QMainWindow):
         self._preferences = AstrologyPreferences()
         self._default_location: Optional[DefaultLocation] = None
         self._current_timezone_id: Optional[str] = None
+        self._chart_settings: Dict[str, Any] = {}  # User-selected calculation settings
 
         self._init_service()
         self._build_ui()
@@ -318,6 +320,13 @@ class NatalChartWindow(QMainWindow):
         self.load_chart_button.setProperty("archetype", "seeker")
         self.load_chart_button.clicked.connect(self._load_chart)
         row.addWidget(self.load_chart_button)
+
+        # Settings Button (⚙️)
+        self.settings_button = QPushButton("⚙️ Settings")
+        self.settings_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.settings_button.setProperty("archetype", "navigator")
+        self.settings_button.clicked.connect(self._open_settings_dialog)
+        row.addWidget(self.settings_button)
 
         # The Scribe (Emerald) - Preserve/Etch
         self.save_chart_button = QPushButton("Save Chart")
@@ -538,8 +547,16 @@ class NatalChartWindow(QMainWindow):
             timezone_offset=self.timezone_input.value()
         )
         
+        # Merge house system from combo with advanced settings from dialog
         selected_house = self.house_system_combo.currentData()
         settings = {"astrocfg": {"houses_system": selected_house}} if selected_house else {}
+        
+        # Merge user-selected calculation settings (from Settings dialog)
+        if self._chart_settings:
+            astrocfg = settings.get("astrocfg", {})
+            dialog_cfg = self._chart_settings.get("astrocfg", {})
+            astrocfg.update(dialog_cfg)
+            settings["astrocfg"] = astrocfg
         
         request = ChartRequest(
             primary_event=event,
@@ -547,6 +564,17 @@ class NatalChartWindow(QMainWindow):
             settings=settings
         )
         return request
+
+    def _open_settings_dialog(self) -> None:
+        """Open the calculation settings dialog."""
+        dialog = AstroSettingsDialog(current_settings=self._chart_settings, parent=self)
+        dialog.settings_changed.connect(self._apply_chart_settings)
+        dialog.exec()
+
+    def _apply_chart_settings(self, settings: Dict[str, Any]) -> None:
+        """Apply settings from the dialog."""
+        self._chart_settings = settings
+        self._set_status("Calculation settings updated. Generate chart to apply.")
 
     def _clear_results(self) -> None:
         self.planets_table.setRowCount(0)

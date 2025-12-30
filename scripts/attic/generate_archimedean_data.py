@@ -72,9 +72,60 @@ DEFAULT_CONSTS = {
 }
 
 
+import ast
+import operator
+
 def _eval(expr: str, consts: Dict[str, float]) -> float:
+    """Safely evaluate a mathematical expression from the source file."""
     expr = expr.strip()
-    return float(eval(expr, {"__builtins__": {}}, {**SAFE_GLOBALS, **consts}))
+    
+    # Safe operators
+    ops = {
+        ast.Add: operator.add,
+        ast.Sub: operator.sub,
+        ast.Mult: operator.mul,
+        ast.Div: operator.truediv,
+        ast.USub: operator.neg,
+        ast.UAdd: operator.pos,
+    }
+
+    # Safe functions
+    funcs = {
+        'sqrt': math.sqrt,
+        'sin': math.sin,
+        'cos': math.cos,
+        'tan': math.tan,
+    }
+
+    def _eval_node(node):
+        if isinstance(node, ast.Expression):
+             return _eval_node(node.body)
+        elif isinstance(node, ast.Constant):  # number
+            return node.value
+        elif isinstance(node, ast.Name):  # variable
+            if node.id in consts:
+                return consts[node.id]
+            if node.id in DEFAULT_CONSTS:
+                 return DEFAULT_CONSTS[node.id]
+            raise ValueError(f"Unknown variable: {node.id}")
+        elif isinstance(node, ast.BinOp):
+            if type(node.op) in ops:
+                return ops[type(node.op)](_eval_node(node.left), _eval_node(node.right))
+        elif isinstance(node, ast.UnaryOp):
+            if type(node.op) in ops:
+                return ops[type(node.op)](_eval_node(node.operand))
+        elif isinstance(node, ast.Call):
+            if isinstance(node.func, ast.Name) and node.func.id in funcs:
+                return funcs[node.func.id](*[_eval_node(a) for a in node.args])
+            raise ValueError(f"Call to unsafe or unknown function: {node.func.id}")
+            
+        raise ValueError(f"Unsafe operation in expression: {expr}")
+
+    try:
+        return float(_eval_node(ast.parse(expr, mode='eval')))
+    except Exception as e:
+        print(f"Failed to parse: {expr}")
+        raise e
 
 
 def parse_solid(text: str) -> Tuple[List[Tuple[float, float, float]], List[Tuple[int, ...]]]:
