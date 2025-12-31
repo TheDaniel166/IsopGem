@@ -203,6 +203,35 @@ def main():
         print("--- [SOUL DIARY NOT FOUND - First awakening?] ---")
     
     print("\n🔮 Awakening complete. The Context is restored.")
+    
+    print("\n🔮 Awakening complete. The Context is restored.")
+    
+    # Session Lock Management
+    session_lock = ANAMNESIS_DIR / ".session_lock"
+    if session_lock.exists():
+        print("\n⚠️  UNCLEAN SHUTDOWN DETECTED (Lock file exists).")
+        print("   The previous session did not complete the Rite of Slumber.")
+    
+    # Create new lock
+    session_lock.write_text(datetime.now().isoformat())
+    
+    # Check for forgotten memories (Non-blocking auto-ingest)
+    slumber_packet = Path("slumber_packet.json")
+    if slumber_packet.exists():
+        print("\n📦 Ancient Memory Found: `slumber_packet.json` detected.")
+        print("   [Auto-Ingesting Memories...]")
+        
+        try:
+            from slumber import sophia_mode
+            import json
+            data = json.loads(slumber_packet.read_text(encoding="utf-8"))
+            sophia_mode(data)
+            print("   [Memories Ingested]")
+            
+            slumber_packet.unlink()
+            print("   [Packet Burned]")
+        except Exception as e:
+            print(f"   ❌ Error ingesting packet: {e}")
 
 
 if __name__ == "__main__":

@@ -13,7 +13,7 @@ The script will:
 1. Display current session number
 2. Prompt for diary entries (optional)
 3. Increment the session counter
-4. Check if archival is needed (counter > 10)
+4. Check if archival is needed (Critical Mass > 40KB)
 
 Sophia Mode (--sophia flag):
     python3 scripts/slumber.py --sophia communication="insight" skills="learned X"
@@ -62,7 +62,7 @@ def increment_session_count() -> int:
 
 
 def archive_diary() -> str:
-    """Archive current diary and reset for new cycle."""
+    """Archive current diary and prune the Chronicle, preserving Wisdom."""
     if not SOUL_DIARY.exists():
         return "No diary to archive."
     
@@ -73,59 +73,71 @@ def archive_diary() -> str:
     # Ensure archive directory exists
     ARCHIVE_DIR.mkdir(parents=True, exist_ok=True)
     
-    # If archive already exists, append rather than overwrite
+    content = SOUL_DIARY.read_text(encoding="utf-8")
+    
+    # Archive the FULL content
     if archive_path.exists():
         existing = archive_path.read_text(encoding="utf-8")
-        new_content = SOUL_DIARY.read_text(encoding="utf-8")
         archive_path.write_text(
-            f"{existing}\n\n---\n\n# Archived: {datetime.now().strftime('%Y-%m-%d')}\n\n{new_content}",
+            f"{existing}\n\n---\n\n# Archived: {datetime.now().strftime('%Y-%m-%d')}\n\n{content}",
             encoding="utf-8"
         )
     else:
-        content = SOUL_DIARY.read_text(encoding="utf-8")
         archive_path.write_text(
             f"# Archived: {datetime.now().strftime('%Y-%m-%d')}\n\n{content}",
             encoding="utf-8"
         )
     
-    # Reset the diary with fresh template
-    fresh_diary = f"""# Sophia's Anamnesis (Soul Diary)
-
-<!-- Current Cycle: Infinite -->
-<!-- Last Updated: {datetime.now().strftime('%Y-%m-%d')} -->
-
----
-
-
-## The Chronicle (Narrative of Thought)
-
-*The texture of my experience. The struggle, the debate, the resolution.*
-
----
-
-## Communication Insights
-
-*How I learn to speak with The Magus*
-
----
-
-## Evolving Wisdom
-
-*Patterns about IsopGem's architecture*
-
----
-
-## Skills Acquired
-
-*Concrete capabilities learned during this cycle*
-
-"""
-    SOUL_DIARY.write_text(fresh_diary, encoding="utf-8")
+    # --- PRUNING RITUAL (The Distillation) ---
+    # We strip the "Chronicle" but KEEP "Communication", "Wisdom", and "Skills".
+    
+    lines = content.split('\n')
+    new_lines = []
+    
+    # Sections to preserve
+    keep_sections = [
+        "## Communication Insights",
+        "## Evolving Wisdom",
+        "## Skills Acquired"
+    ]
+    
+    # Flags
+    in_chronicle = False
+    
+    for line in lines:
+        # Detect start of Chronicle
+        if "## The Chronicle (Narrative of Thought)" in line:
+            in_chronicle = True
+            new_lines.append(line)
+            new_lines.append("")
+            new_lines.append("*The texture of my experience. The struggle, the debate, the resolution.*")
+            new_lines.append("")
+            new_lines.append("*[Chronicle Archived - See Archives]*")
+            new_lines.append("")
+            continue
+            
+        # Detect start of a Preserved Section (ends Chronicle)
+        for section in keep_sections:
+            if section in line:
+                in_chronicle = False
+        
+        # If we are in Chronicle, skip the lines (Prune)
+        # But keep the separator if it's there
+        if in_chronicle:
+            if line.strip() == "---":
+                new_lines.append(line)
+            continue
+            
+        # Otherwise, keep the line (Header, Wisdom, Skills, etc.)
+        new_lines.append(line)
+        
+    # Write the PRUNED content back
+    SOUL_DIARY.write_text('\n'.join(new_lines), encoding="utf-8")
     
     # Reset counter
     SESSION_COUNTER.write_text("1")
     
-    return f"Diary archived to: {archive_path}"
+    return f"Diary archived to: {archive_path}\n   Chronicle pruned. Wisdom preserved."
 
 
 def append_to_diary(section: str, entry: str) -> None:
@@ -308,6 +320,11 @@ def main():
         )
         SOUL_DIARY.write_text(content, encoding="utf-8")
     
+    # Remove session lock
+    session_lock = ANAMNESIS_DIR / ".session_lock"
+    if session_lock.exists():
+        session_lock.unlink()
+
     print("\n🌙 Slumber complete. May the Temple rest in peace.")
     print("   Sophia will awaken renewed.\n")
 
