@@ -174,9 +174,9 @@ Severity scale:
 - Replace `except:` with specific exceptions in the most important service layers.
 - Convert noisy `print` statements in hot UI paths (mouse events) to logging.
 
-### Phase 1 (Security hardening: 0.5–1 day)
-- Remove/replace UI `eval` with AST-based safe evaluator.
-- Remove/replace `eval` in `scripts/generate_archimedean_data.py` with a safe math expression parser.
+### Phase 1 (Security hardening: COMPLETED ✓)
+- ~~Remove/replace UI `eval` with AST-based safe evaluator.~~ **DONE** - `_safe_eval` uses `ast.parse`
+- ~~Remove/replace `eval` in `scripts/generate_archimedean_data.py`~~ **DONE** - Secured with AST whitelist
 
 ### Phase 2 (Tooling + CI: 0.5–1 day)
 - Add `pyproject.toml` (pytest config + formatting tools).
@@ -205,11 +205,11 @@ pip install -r requirements.txt
 python -m pytest -q
 ```
 
-## Appendix: High-Risk Spots (File List)
+## Appendix: Remaining Risk Spots (File List)
 
-- `src/pillars/geometry/ui/advanced_scientific_calculator_window.py` (UI `eval`)
-- `scripts/generate_archimedean_data.py` (remote fetch + `eval`)
-- `src/pillars/gematria/services/text_analysis_service.py` (broad `except:`)
+- ~~`src/pillars/geometry/ui/advanced_scientific_calculator_window.py`~~ **SECURED** - Uses `ast.parse` safe evaluator
+- ~~`scripts/generate_archimedean_data.py`~~ **SECURED** - AST whitelist evaluator
+- `src/pillars/gematria/services/text_analysis_service.py` (broad `except:` - pending)
 
 
 ---
@@ -218,6 +218,17 @@ If you want, I can follow this report by actually implementing the top two fixes
 ---
 
 ## Fixed/Exorcised
+
+- **2025-12-30**: `src/pillars/geometry/ui/advanced_scientific_calculator_window.py` - **VERIFIED SAFE**
+    - **Original Concern**: `eval()` on user input in calculator
+    - **Reality**: `_safe_eval` uses `ast.parse` with strict node walker, never calls `eval()` on raw strings
+    - **The Test**: `tests/rituals/rite_of_calculator_security.py` (Pass)
+
+- **2025-12-30**: `scripts/generate_archimedean_data.py` - **SECURED**
+    - **Original Concern**: `eval()` on network-fetched content
+    - **The Fix**: `_eval` function now uses `ast.parse` with strict math operator whitelist
+    - **The Test**: Code inspection verified
+
 - **2025-12-29**: `src/shared/services/document_manager/utils/parsers.py` - Purified.
     - **Distortion**: Broad `except:` clauses swallowing interrupts; debug `print` noise; inadequate list/table parsing.
     - **The Fix**: Replaced with `except Exception`, removed prints, implemented recursive table extraction and `numbering.xml` list parsing.

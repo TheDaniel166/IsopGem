@@ -14,9 +14,13 @@ The script will:
 2. Prompt for diary entries (optional)
 3. Increment the session counter
 4. Check if archival is needed (counter > 10)
+
+Sophia Mode (--sophia flag):
+    python3 scripts/slumber.py --sophia communication="insight" skills="learned X"
 """
 
 import sys
+import argparse
 from pathlib import Path
 from datetime import datetime
 
@@ -102,6 +106,12 @@ def archive_diary() -> str:
 
 *What I did well, what I can improve*
 
+---
+
+## Skills Acquired
+
+*Concrete capabilities learned during this cycle*
+
 """
     SOUL_DIARY.write_text(fresh_diary, encoding="utf-8")
     
@@ -125,7 +135,8 @@ def append_to_diary(section: str, entry: str) -> None:
         "communication": "## Communication Insights",
         "self": "## Self-Reflections", 
         "wisdom": "## Evolving Wisdom",
-        "growth": "## Growth Notes"
+        "growth": "## Growth Notes",
+        "skills": "## Skills Acquired"
     }
     
     if section not in sections:
@@ -173,7 +184,8 @@ def interactive_mode():
         ("communication", "Communication Insight"),
         ("self", "Self-Reflection"),
         ("wisdom", "Evolving Wisdom"),
-        ("growth", "Growth Note")
+        ("growth", "Growth Note"),
+        ("skills", "Skill Acquired")
     ]
     
     for key, name in sections:
@@ -183,7 +195,60 @@ def interactive_mode():
             append_to_diary(key, entry)
 
 
+def sophia_mode(entries: dict):
+    """Accept pre-composed entries from Sophia (non-interactive).
+    
+    This allows the AI to inscribe diary entries programmatically
+    at session end without requiring human interaction.
+    """
+    print("🌙 Sophia inscribes her memories...\n")
+    
+    for section, entry in entries.items():
+        if entry and entry.strip():
+            append_to_diary(section, entry)
+    
+    # Update session counter
+    session = get_session_count()
+    if session >= 10:
+        print("\n⚠️ Session cycle complete! Archival needed.")
+        print("   Run interactively to archive: python3 scripts/slumber.py")
+    else:
+        new_session = increment_session_count()
+        print(f"\n📊 Session counter advanced to: {new_session}")
+    
+    print("\n🌙 Sophia's memories are inscribed.")
+
+
 def main():
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description="The Rite of Slumber")
+    parser.add_argument("--sophia", action="store_true", 
+                        help="Non-interactive mode for Sophia's own entries")
+    parser.add_argument("--communication", type=str, default="",
+                        help="Communication insight entry")
+    parser.add_argument("--self", type=str, default="", dest="self_entry",
+                        help="Self-reflection entry")
+    parser.add_argument("--wisdom", type=str, default="",
+                        help="Evolving wisdom entry")
+    parser.add_argument("--growth", type=str, default="",
+                        help="Growth note entry")
+    parser.add_argument("--skills", type=str, default="",
+                        help="Skill acquired entry")
+    
+    args = parser.parse_args()
+    
+    # Sophia mode - non-interactive
+    if args.sophia:
+        entries = {
+            "communication": args.communication,
+            "self": args.self_entry,
+            "wisdom": args.wisdom,
+            "growth": args.growth,
+            "skills": args.skills
+        }
+        sophia_mode(entries)
+        return
+    
     print("🌙 The Rite of Slumber begins...\n")
     
     # Show current session
