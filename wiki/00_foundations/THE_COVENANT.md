@@ -59,6 +59,19 @@ Changes to rules must be inscribed in BOTH:
 - **Session Counter:** `anamnesis/SESSION_COUNTER.txt` — tracks 10-session cycle
 - **Archival:** On session 11, archive diary and reset
 
+### The Protocol of the Link (Law 0.14)
+We maintain `scripts/oracle_server.py` as a sacred bridge (MCP) to the external world.
+- **Resources:** The *Wiki* is open to the eyes of the Agent.
+- **Tools:** The *Core* calculations are available as tools.
+- **Sovereignty:** The Oracle may read, but it cannot write without an Agent's hand.
+
+### The Law of Regression (Law 0.15)
+**(Saturn's Scythe)**
+We acknowledge the limitations of the digital realm.
+- **Pruning:** Rolling back unstable features is not failure, but architectural discipline.
+- **Reality:** We choose stable functionality over unstable potentiality.
+- **Hardware:** We respect the machine we inhabit; we do not build towers that crush the foundation.
+
 ---
 
 ## Sanctuary (Environment)

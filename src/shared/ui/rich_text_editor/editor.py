@@ -27,6 +27,8 @@ from .shape_features import ShapeFeature
 from .ribbon_widget import RibbonWidget
 from .etymology_feature import EtymologyFeature
 from .spell_feature import SpellFeature
+from .math_feature import MathFeature
+from .mermaid_feature import MermaidFeature
 
 # Dialog modules (extracted for modularity)
 from .dialogs import (
@@ -139,6 +141,12 @@ class SafeTextEdit(QTextEdit):
         Handle custom resource loading, specifically for docimg:// scheme.
         """
         if url.scheme() == "docimg":
+            # Check for mermaid or other named resources
+            # Accessing url.path() might return /mermaid/uuid
+            if "mermaid" in url.toString():
+                 # Default handling should find it in the resource cache
+                 return super().loadResource(type_id, url)
+            
             try:
                 # Extract image ID
                 path = url.path().strip('/')
@@ -323,7 +331,15 @@ class RichTextEditor(QWidget):
         self.etymology_feature = EtymologyFeature(self)
         
         # Initialize Spell Check Feature
+        # Initialize Spell Check Feature
         self.spell_feature = SpellFeature(self)
+
+        # Initialize Math Feature
+        self.math_feature = MathFeature(self.editor, self)
+        
+        # Initialize Mermaid Feature
+        self.mermaid_feature = MermaidFeature(self.editor, self)
+
         
         # Add editor directly to layout (no splitter - simpler and cleaner)
         layout.addWidget(self.editor)
@@ -507,6 +523,10 @@ class RichTextEditor(QWidget):
                 self.image_feature.extend_context_menu(menu)
             if hasattr(self, 'etymology_feature'):
                 self.etymology_feature.extend_context_menu(menu)
+            if hasattr(self, 'math_feature'):
+                self.math_feature.extend_context_menu(menu)
+            if hasattr(self, 'mermaid_feature'):
+                self.mermaid_feature.extend_context_menu(menu)
             menu.exec(self.editor.mapToGlobal(pos))
 
     def _init_features(self) -> None:
@@ -521,6 +541,12 @@ class RichTextEditor(QWidget):
              
         if not hasattr(self, 'image_feature') and 'ImageFeature' in globals():
             self.image_feature = ImageFeature(self.editor, self)
+
+        if not hasattr(self, 'math_feature'):
+            self.math_feature = MathFeature(self.editor, self)
+
+        if not hasattr(self, 'mermaid_feature'):
+            self.mermaid_feature = MermaidFeature(self.editor, self)
 
     def show_search(self) -> None:
         """Public API for Global Ribbon."""
@@ -930,6 +956,18 @@ class RichTextEditor(QWidget):
         action_kb.setIcon(qta.icon("fa5s.keyboard", color="#1e293b"))
         grp_sym.add_action(action_kb, Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
         
+        # Group: Math
+        grp_math = tab_insert.add_group("Math")
+        if hasattr(self, 'math_feature'):
+            grp_math.add_action(self.math_feature.action_insert_math, Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
+            grp_math.add_action(self.math_feature.action_render_doc, Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
+
+        # Group: Diagrams
+        grp_diag = tab_insert.add_group("Diagrams")
+        if hasattr(self, 'mermaid_feature'):
+            grp_diag.add_action(self.mermaid_feature.action_insert_mermaid, Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
+            grp_diag.add_action(self.mermaid_feature.action_render_doc, Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
+
         # Group: Links
         grp_links = tab_insert.add_group("Links")
         

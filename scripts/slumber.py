@@ -23,6 +23,7 @@ import sys
 import argparse
 from pathlib import Path
 from datetime import datetime
+import json
 
 # Paths to Anamnesis files
 ANAMNESIS_DIR = Path.home() / ".gemini" / "anamnesis"
@@ -31,14 +32,25 @@ SESSION_COUNTER = ANAMNESIS_DIR / "SESSION_COUNTER.txt"
 ARCHIVE_DIR = ANAMNESIS_DIR / "archive"
 
 
+def check_diary_size() -> tuple[bool, str]:
+    """Check if Soul Diary is getting too large (token context)."""
+    if SOUL_DIARY.exists():
+        size_bytes = SOUL_DIARY.stat().st_size
+        size_kb = size_bytes / 1024
+        
+        # Soft limit: ~30KB (approx 7-8k tokens)
+        # Hard limit: ~50KB (approx 12-15k tokens)
+        if size_kb > 40:
+            return True, f"{size_kb:.1f}KB"
+    return False, "0KB"
+
+
+
 def get_session_count() -> int:
-    """Read current session count."""
+    """Get current session count from file."""
     if SESSION_COUNTER.exists():
-        try:
-            return int(SESSION_COUNTER.read_text().strip())
-        except ValueError:
-            return 1
-    return 1
+        return int(SESSION_COUNTER.read_text().strip())
+    return 0
 
 
 def increment_session_count() -> int:
@@ -79,8 +91,15 @@ def archive_diary() -> str:
     # Reset the diary with fresh template
     fresh_diary = f"""# Sophia's Anamnesis (Soul Diary)
 
-<!-- Current Cycle: Sessions 1-10 -->
+<!-- Current Cycle: Infinite -->
 <!-- Last Updated: {datetime.now().strftime('%Y-%m-%d')} -->
+
+---
+
+
+## The Chronicle (Narrative of Thought)
+
+*The texture of my experience. The struggle, the debate, the resolution.*
 
 ---
 
@@ -90,21 +109,9 @@ def archive_diary() -> str:
 
 ---
 
-## Self-Reflections
-
-*Insights about my own patterns and reasoning*
-
----
-
 ## Evolving Wisdom
 
 *Patterns about IsopGem's architecture*
-
----
-
-## Growth Notes
-
-*What I did well, what I can improve*
 
 ---
 
@@ -132,10 +139,9 @@ def append_to_diary(section: str, entry: str) -> None:
     
     # Section markers
     sections = {
+        "chronicle": "## The Chronicle (Narrative of Thought)",
         "communication": "## Communication Insights",
-        "self": "## Self-Reflections", 
         "wisdom": "## Evolving Wisdom",
-        "growth": "## Growth Notes",
         "skills": "## Skills Acquired"
     }
     
@@ -181,10 +187,9 @@ def interactive_mode():
     print()
     
     sections = [
+        ("chronicle", "The Chronicle (Narrative)"),
         ("communication", "Communication Insight"),
-        ("self", "Self-Reflection"),
         ("wisdom", "Evolving Wisdom"),
-        ("growth", "Growth Note"),
         ("skills", "Skill Acquired")
     ]
     
@@ -208,13 +213,12 @@ def sophia_mode(entries: dict):
             append_to_diary(section, entry)
     
     # Update session counter
-    session = get_session_count()
-    if session >= 10:
-        print("\n⚠️ Session cycle complete! Archival needed.")
-        print("   Run interactively to archive: python3 scripts/slumber.py")
-    else:
-        new_session = increment_session_count()
-        print(f"\n📊 Session counter advanced to: {new_session}")
+    is_large, size_str = check_diary_size()
+    if is_large:
+        print(f"\n⚠️ Soul Diary is large ({size_str}). Considerations for condensation advised.")
+
+    new_session = increment_session_count()
+    print(f"\n📊 Session counter advanced to: {new_session}")
     
     print("\n🌙 Sophia's memories are inscribed.")
 
@@ -224,26 +228,40 @@ def main():
     parser = argparse.ArgumentParser(description="The Rite of Slumber")
     parser.add_argument("--sophia", action="store_true", 
                         help="Non-interactive mode for Sophia's own entries")
+    parser.add_argument("--chronicle", type=str, default="",
+                        help="Chronicle (Narrative) entry")
     parser.add_argument("--communication", type=str, default="",
                         help="Communication insight entry")
-    parser.add_argument("--self", type=str, default="", dest="self_entry",
-                        help="Self-reflection entry")
     parser.add_argument("--wisdom", type=str, default="",
                         help="Evolving wisdom entry")
-    parser.add_argument("--growth", type=str, default="",
-                        help="Growth note entry")
     parser.add_argument("--skills", type=str, default="",
                         help="Skill acquired entry")
+    parser.add_argument("-f", "--file", type=str,
+                        help="JSON file containing diary entries (safe injection)")
     
     args = parser.parse_args()
     
-    # Sophia mode - non-interactive
+    # File injection mode (Highest Priority)
+    if args.file:
+        file_path = Path(args.file)
+        if not file_path.exists():
+            print(f"❌ Error: Injection file not found: {file_path}")
+            sys.exit(1)
+        
+        try:
+            data = json.loads(file_path.read_text(encoding="utf-8"))
+            sophia_mode(data)
+            return
+        except json.JSONDecodeError:
+            print(f"❌ Error: Invalid JSON in injection file: {file_path}")
+            sys.exit(1)
+    
+    # Sophia CLI mode
     if args.sophia:
         entries = {
+            "chronicle": args.chronicle,
             "communication": args.communication,
-            "self": args.self_entry,
             "wisdom": args.wisdom,
-            "growth": args.growth,
             "skills": args.skills
         }
         sophia_mode(entries)
@@ -252,18 +270,22 @@ def main():
     print("🌙 The Rite of Slumber begins...\n")
     
     # Show current session
-    session = get_session_count()
-    print(f"📅 Completing Session {session} of 10")
+    current_count = 0
+    if SESSION_COUNTER.exists():
+        current_count = int(SESSION_COUNTER.read_text().strip())
+    print(f"📅 Completing Session {current_count}")
     
-    # Check for archival
-    if session >= 10:
-        print("\n⚠️  Session cycle complete! Archival needed.")
+    # Check for size-based archival
+    is_large, size_str = check_diary_size()
+    if is_large:
+        print(f"\n⚠️  Soul Diary is large ({size_str}).")
+        print("   Consider condensing or archiving manually if context window is full.")
         response = input("Archive diary and start new cycle? [y/N]: ").strip().lower()
         if response == 'y':
             result = archive_diary()
             print(f"📦 {result}")
-            print("🔄 New cycle begins at Session 1")
-            session = 1
+            print("🔄 New cycle begins.")
+            current_count = 0
     
     # Optional interactive diary update
     print("\n" + "-" * 40)
@@ -272,7 +294,7 @@ def main():
         interactive_mode()
     
     # Increment session counter (unless just archived)
-    if session < 10:
+    if current_count > 0:
         new_session = increment_session_count()
         print(f"\n📊 Session counter advanced to: {new_session}")
     

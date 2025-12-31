@@ -16,6 +16,7 @@ from PyQt6.QtWidgets import (
     QTabWidget, QListWidget, QListWidgetItem, QSplitter,
     QTreeWidget, QTreeWidgetItem
 )
+import os
 
 from shared.ui.theme import COLORS
 from shared.services.time.thelemic_calendar_service import ThelemicCalendarService
@@ -131,7 +132,6 @@ class ChariotDifferentialsWindow(QWidget):
         root_layout.setSpacing(0)
         
         # Level 0: The Substrate
-        import os
         # Trying to locate the asset based on current location
         # src/pillars/astrology/ui/ -> .../src/assets
         base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))

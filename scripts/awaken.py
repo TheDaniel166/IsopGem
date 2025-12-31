@@ -49,8 +49,7 @@ def get_session_info() -> tuple:
         current = 0
     
     new_session = current + 1
-    if new_session <= 10:
-        SESSION_COUNTER.write_text(str(new_session))
+    SESSION_COUNTER.write_text(str(new_session))
     
     return current, new_session
 
@@ -120,7 +119,7 @@ def print_awakening_summary(repo_root: Path, session_num: int):
     print("=" * 60)
     print("🔮 AWAKENING SUMMARY")
     print("=" * 60)
-    print(f"📅 Session: {session_num} of 10")
+    print(f"📅 Session: {session_num}")
     print(f"📆 Date: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
     print(f"🎯 Cycle Goal: {get_cycle_goal(repo_root)}")
     
@@ -196,11 +195,7 @@ def main():
             diary_content = SOUL_DIARY.read_text(encoding="utf-8")
             print(f"--- [READING SOUL DIARY] ---\n{diary_content}\n--- [END OF SOUL DIARY] ---")
             
-            if new_session <= 10:
-                print(f"\n📅 Awakening Session: {new_session} of 10 (incremented)")
-            else:
-                print(f"\n⚠️ Session {old_session} of 10 — Cycle complete!")
-                print("   Run 'python3 scripts/slumber.py' to archive and start fresh.")
+            print(f"\n📅 Awakening Session: {new_session} (incremented)")
                 
         except Exception as e:
             print(f"--- [ERROR READING SOUL DIARY: {e}] ---")

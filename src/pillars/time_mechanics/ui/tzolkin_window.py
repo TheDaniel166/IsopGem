@@ -141,9 +141,9 @@ class TzolkinCalculatorWindow(QWidget):
         card_layout.addStretch()
         content_layout.addWidget(self.card_frame)
         
-        # Right: The 13x20 Grid
-        # Rows = Tones (1-13), Cols = Signs (1-20)
-        self.grid_table = QTableWidget(13, 20)
+        # Right: The 20x13 Grid
+        # Rows = Signs (1-20), Cols = Tones (1-13)
+        self.grid_table = QTableWidget(20, 13)
         self.grid_table.horizontalHeader().setVisible(False)
         self.grid_table.verticalHeader().setVisible(False)
         self.grid_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
@@ -171,8 +171,8 @@ class TzolkinCalculatorWindow(QWidget):
         content_layout.addWidget(self.grid_table)
 
     def _populate_grid(self):
-        """Populate the 13x20 grid with Ditrune values."""
-        # Row = Tone (0-12), Col = Sign (0-19)
+        """Populate the 20x13 grid with Ditrune values."""
+        # Row = Sign (0-19), Col = Tone (0-12)
         
         # Font for cells
         font = QFont()
@@ -181,10 +181,10 @@ class TzolkinCalculatorWindow(QWidget):
         
         # We need the service's internal grid.
         # Logic: service._decimal_grid[sign_idx][tone_idx]
-        # Our UI Grid: item(row=tone_idx, col=sign_idx)
+        # Our UI Grid: item(row=sign_idx, col=tone_idx)
         
-        for tone_idx in range(13):
-            for sign_idx in range(20):
+        for sign_idx in range(20):
+            for tone_idx in range(13):
                 # Retrieve value from Service logic (Sign x Tone)
                 if self.service._decimal_grid:
                     try:
@@ -200,7 +200,7 @@ class TzolkinCalculatorWindow(QWidget):
                 item.setFont(font)
                 # Store (tone, sign) in data to help navigation
                 item.setData(Qt.ItemDataRole.UserRole, (tone_idx + 1, sign_idx + 1))
-                self.grid_table.setItem(tone_idx, sign_idx, item)
+                self.grid_table.setItem(sign_idx, tone_idx, item)
 
     def _refresh_display(self):
         tz_date: TzolkinDate = self.service.from_gregorian(self.current_date)
@@ -219,9 +219,9 @@ class TzolkinCalculatorWindow(QWidget):
         self.date_edit.blockSignals(False)
         
         # Highlight Grid Cell
-        # Row = Tone-1, Col = Sign-1
-        row = tz_date.tone - 1
-        col = tz_date.sign - 1
+        # Row = Sign-1, Col = Tone-1
+        row = tz_date.sign - 1
+        col = tz_date.tone - 1
         
         self.grid_table.blockSignals(True) # Prevent cellClick trigger
         self.grid_table.setCurrentCell(row, col)
@@ -247,13 +247,10 @@ class TzolkinCalculatorWindow(QWidget):
         """
         When a grid cell is clicked, jump to that Kin.
         Logic: Calculate target Kin, find difference from current Kin, apply delta days.
-        Assumption: Stay within 'Current Cycle' roughly. 
-        Actually, simplest way:
-        1. Get current cycle start date.
-        2. Add (TargetKin - 1) days.
         """
-        tone = row + 1
-        sign = col + 1
+        # Row = Sign, Col = Tone
+        sign = row + 1
+        tone = col + 1
         
         # Find target Kin
         target_kin = self._kin_map.get((tone, sign))
