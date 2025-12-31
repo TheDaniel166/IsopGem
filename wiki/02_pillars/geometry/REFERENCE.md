@@ -11,6 +11,8 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 
 
 
+
+
 ---
 
 **File:** `src/pillars/geometry/services/annulus_shape.py`
@@ -37,12 +39,12 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 * None detected.
 
 **Key Interactions:**
-**Exposes:** `name()` - *Functional interface.*
-**Exposes:** `description()` - *Functional interface.*
-**Exposes:** `calculation_hint()` - *Functional interface.*
-**Exposes:** `calculate_from_property()` - *Functional interface.*
-**Exposes:** `get_drawing_instructions()` - *Functional interface.*
-**Exposes:** `get_label_positions()` - *Functional interface.*
+**Exposes:** `name()` - *Name logic.*
+**Exposes:** `description()` - *Description logic.*
+**Exposes:** `calculation_hint()` - *Calculation hint logic.*
+**Exposes:** `calculate_from_property()` - *Compute from property logic.*
+**Exposes:** `get_drawing_instructions()` - *Retrieve drawing instructions logic.*
+**Exposes:** `get_label_positions()` - *Retrieve label positions logic.*
 
 
 ---
@@ -51,7 +53,7 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 
 **Role:** `[Muscle] (Service)`
 
-**Purpose:** Canonical Archimedean solid datasets auto-generated from dmccooey.com.
+**Purpose:** Backward compatibility shim for Archimedean Data.
 
 **Input (Ingests):**
 * Pure data structure or utility module.
@@ -60,7 +62,7 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 * Data primitives or DTOs.
 
 **Dependencies (It Needs):**
-* None.
+* `shared.services.geometry.archimedean_data.ARCHIMEDEAN_DATA`
 
 **Consumers (Who Needs It):**
 * None detected.
@@ -75,65 +77,28 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 
 **Role:** `[Muscle] (Service)`
 
-**Purpose:** Archimedean solid services and calculators.
+**Purpose:** Backward compatibility shim for ArchimedeanSolidService.
 
 **Input (Ingests):**
-* `edge_length` (Field)
-* `surface_area` (Field)
-* `volume` (Field)
-* `face_count` (Field)
-* `edge_count` (Field)
-* `vertex_count` (Field)
-* `face_sides` (Field)
-* `face_metrics` (Field)
-* `payload` (Field)
-* `metrics` (Field)
-* `key` (Field)
-* `name` (Field)
-* `canonical_vertices` (Field)
-* `faces` (Field)
-* `edges` (Field)
-* `base_edge_length` (Field)
-* `base_surface_area` (Field)
-* `base_volume` (Field)
-* `face_sides` (Field)
-* `edge_length`
+* Pure data structure or utility module.
 
 **Output (Emits):**
 * Data primitives or DTOs.
 
 **Dependencies (It Needs):**
-* `__future__.annotations`
-* `archimedean_data.ARCHIMEDEAN_DATA`
-* `dataclasses.dataclass`
-* `math`
-* `shared.solid_payload.Edge`
-* `shared.solid_payload.Face`
-* `shared.solid_payload.SolidLabel`
-* `shared.solid_payload.SolidPayload`
-* `shared.solid_payload.Vec3`
-* `solid_geometry.compute_surface_area`
-* `solid_geometry.compute_volume`
-* `solid_geometry.edges_from_faces`
-* `solid_geometry.vec_cross`
-* `solid_geometry.vec_dot`
-* `solid_geometry.vec_length`
-* `solid_geometry.vec_normalize`
-* `soli
+* `shared.services.geometry.archimedean.ArchimedeanSolidCalculatorBase`
+* `shared.services.geometry.archimedean.ArchimedeanSolidServiceBase`
+* `shared.services.geometry.archimedean.CuboctahedronSolidCalculator`
+* `shared.services.geometry.archimedean.CuboctahedronSolidService`
+* `shared.services.geometry.archimedean.IcosidodecahedronSolidCalculator`
+* `shared.services.geometry.archimedean.IcosidodecahedronSolidService`
+* `shared.services.geometry.archimedean.RhombicosidodecahedronSolidCalculator
 
 **Consumers (Who Needs It):**
-* `src/pillars/tq/services/platonic_transition_service.py`
 * `tests/rituals/rite_of_archimedes_metrics.py`
 
 **Key Interactions:**
-**Exposes:** `build()` - *Functional interface.*
-**Exposes:** `payload()` - *Functional interface.*
-**Exposes:** `properties()` - *Functional interface.*
-**Exposes:** `set_property()` - *Functional interface.*
-**Exposes:** `clear()` - *Functional interface.*
-**Exposes:** `payload()` - *Functional interface.*
-**Exposes:** `metadata()` - *Functional interface.*
-**Exposes:** `metrics()` - *Functional interface.*
+* Internal logic only.
 
 
 ---
@@ -210,11 +175,11 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 * `typing.Tuple`
 
 **Consumers (Who Needs It):**
-* `scripts/verification_seal.py`
+* `workflow_scripts/verification_seal.py`
 
 **Key Interactions:**
-**Exposes:** `name()` - *Functional interface.*
-**Exposes:** `description()` - *Functional interface.*
+**Exposes:** `name()` - *Name logic.*
+**Exposes:** `description()` - *Description logic.*
 **Exposes:** `calculate_from_property()` - *Calculate all properties from any given property.*
 **Exposes:** `get_drawing_instructions()` - *Get drawing instructions for the circle.*
 **Exposes:** `get_label_positions()` - *Get label positions for the circle.*
@@ -256,18 +221,18 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 * None detected.
 
 **Key Interactions:**
-**Exposes:** `build()` - *Functional interface.*
-**Exposes:** `properties()` - *Functional interface.*
-**Exposes:** `set_property()` - *Functional interface.*
-**Exposes:** `payload()` - *Functional interface.*
-**Exposes:** `metadata()` - *Functional interface.*
-**Exposes:** `clear()` - *Functional interface.*
-**Exposes:** `build()` - *Functional interface.*
-**Exposes:** `properties()` - *Functional interface.*
-**Exposes:** `set_property()` - *Functional interface.*
-**Exposes:** `payload()` - *Functional interface.*
-**Exposes:** `metadata()` - *Functional interface.*
-**Exposes:** `clear()` - *Functional interface.*
+**Exposes:** `build()` - *Build logic.*
+**Exposes:** `properties()` - *Properties logic.*
+**Exposes:** `set_property()` - *Configure property logic.*
+**Exposes:** `payload()` - *Payload logic.*
+**Exposes:** `metadata()` - *Metadata logic.*
+**Exposes:** `clear()` - *Clear logic.*
+**Exposes:** `build()` - *Build logic.*
+**Exposes:** `properties()` - *Properties logic.*
+**Exposes:** `set_property()` - *Configure property logic.*
+**Exposes:** `payload()` - *Payload logic.*
+**Exposes:** `metadata()` - *Metadata logic.*
+**Exposes:** `clear()` - *Clear logic.*
 
 
 ---
@@ -314,13 +279,13 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 * `tests/rituals/rite_of_trinity_3d.py`
 
 **Key Interactions:**
-**Exposes:** `build()` - *Functional interface.*
-**Exposes:** `properties()` - *Functional interface.*
-**Exposes:** `set_property()` - *Functional interface.*
-**Exposes:** `clear()` - *Functional interface.*
-**Exposes:** `payload()` - *Functional interface.*
-**Exposes:** `metadata()` - *Functional interface.*
-**Exposes:** `metrics()` - *Functional interface.*
+**Exposes:** `build()` - *Build logic.*
+**Exposes:** `properties()` - *Properties logic.*
+**Exposes:** `set_property()` - *Configure property logic.*
+**Exposes:** `clear()` - *Clear logic.*
+**Exposes:** `payload()` - *Payload logic.*
+**Exposes:** `metadata()` - *Metadata logic.*
+**Exposes:** `metrics()` - *Metrics logic.*
 
 
 ---
@@ -349,12 +314,12 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 * None detected.
 
 **Key Interactions:**
-**Exposes:** `name()` - *Functional interface.*
-**Exposes:** `description()` - *Functional interface.*
-**Exposes:** `calculation_hint()` - *Functional interface.*
-**Exposes:** `calculate_from_property()` - *Functional interface.*
-**Exposes:** `get_drawing_instructions()` - *Functional interface.*
-**Exposes:** `get_label_positions()` - *Functional interface.*
+**Exposes:** `name()` - *Name logic.*
+**Exposes:** `description()` - *Description logic.*
+**Exposes:** `calculation_hint()` - *Calculation hint logic.*
+**Exposes:** `calculate_from_property()` - *Compute from property logic.*
+**Exposes:** `get_drawing_instructions()` - *Retrieve drawing instructions logic.*
+**Exposes:** `get_label_positions()` - *Retrieve label positions logic.*
 
 
 ---
@@ -363,87 +328,25 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 
 **Role:** `[Muscle] (Service)`
 
-**Purpose:** Cube solid math utilities and calculator.
+**Purpose:** Backward compatibility shim for CubeSolidService.
 
 **Input (Ingests):**
-* `edge_length` (Field)
-* `face_area` (Field)
-* `surface_area` (Field)
-* `volume` (Field)
-* `face_diagonal` (Field)
-* `space_diagonal` (Field)
-* `inradius` (Field)
-* `midradius` (Field)
-* `circumradius` (Field)
-* `incircle_circumference` (Field)
-* `midsphere_circumference` (Field)
-* `circumcircle_circumference` (Field)
-* `faces` (Field)
-* `edges` (Field)
-* `vertices` (Field)
-* `face_sides` (Field)
-* `vertex_valence` (Field)
-* `dihedral_angle_deg` (Field)
-* `solid_angle_sr` (Field)
-* `face_inradius` (Field)
-* `face_circumradius` (Field)
-* `insphere_surface_area` (Field)
-* `insphere_volume` (Field)
-* `midsphere_surface_area` (Field)
-* `midsphere_volume` (Field)
-* `circumsphere_surface_area` (Field)
-* `circumsphere_volume` (Field)
-* `sphericity` (Field)
-* `isoperimetric_quotient` (Field)
-* `surface_to_volume_ratio` (Field)
-* `moment_inertia_solid` (Field)
-* `moment_inertia_shell` (Field)
-* `angular_defect_vertex_deg` (Field)
-* `total_angular_defect_deg` (Field)
-* `euler_characteristic` (Field)
-* `packing_density` (Field)
-* `symmetry_group_order` (Field)
-* `rotational_symmetry_order` (Field)
-* `symmetry_group_name` (Field)
-* `dual_solid_name` (Field)
-* `golden_ratio_factor` (Field)
-* `payload` (Field)
-* `metrics` (Field)
-* `edge_length`
+* Pure data structure or utility module.
 
 **Output (Emits):**
 * Data primitives or DTOs.
 
 **Dependencies (It Needs):**
-* `__future__.annotations`
-* `dataclasses.dataclass`
-* `geometry_visuals.compute_dual_payload`
-* `math`
-* `platonic_constants.ANGULAR_DEFECT_VERTEX_DEG`
-* `platonic_constants.DIHEDRAL_ANGLES_DEG`
-* `platonic_constants.DUAL_SOLID_NAME`
-* `platonic_constants.GOLDEN_RATIO_FACTOR`
-* `platonic_constants.MOMENT_INERTIA_SHELL_K`
-* `platonic_constants.MOMENT_INERTIA_SOLID_K`
-* `platonic_constants.PACKING_DENSITY`
-* `platonic_constants.PlatonicSolid`
-* `platonic_constants.ROTATIONAL_SYMMETRY_ORDER`
-* `pl
+* `shared.services.geometry.cube.CubeMetrics`
+* `shared.services.geometry.cube.CubeSolidCalculator`
+* `shared.services.geometry.cube.CubeSolidResult`
+* `shared.services.geometry.cube.CubeSolidService`
 
 **Consumers (Who Needs It):**
-* `src/pillars/tq/services/platonic_transition_service.py`
 * `tests/rituals/rite_of_advanced_visualization.py`
 
 **Key Interactions:**
-**Exposes:** `build()` - *Functional interface.*
-**Exposes:** `payload()` - *Functional interface.*
-**Exposes:** `properties()` - *Return all properties in display order.*
-**Exposes:** `set_property()` - *Set a property and recalculate all others.*
-**Exposes:** `clear()` - *Functional interface.*
-**Exposes:** `payload()` - *Functional interface.*
-**Exposes:** `metadata()` - *Functional interface.*
-**Exposes:** `metrics()` - *Functional interface.*
-**Exposes:** `solver()` - *Functional interface.*
+* Internal logic only.
 
 
 ---
@@ -489,13 +392,13 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 * `tests/rituals/rite_of_trinity_3d.py`
 
 **Key Interactions:**
-**Exposes:** `build()` - *Functional interface.*
-**Exposes:** `properties()` - *Functional interface.*
-**Exposes:** `set_property()` - *Functional interface.*
-**Exposes:** `clear()` - *Functional interface.*
-**Exposes:** `payload()` - *Functional interface.*
-**Exposes:** `metadata()` - *Functional interface.*
-**Exposes:** `metrics()` - *Functional interface.*
+**Exposes:** `build()` - *Build logic.*
+**Exposes:** `properties()` - *Properties logic.*
+**Exposes:** `set_property()` - *Configure property logic.*
+**Exposes:** `clear()` - *Clear logic.*
+**Exposes:** `payload()` - *Payload logic.*
+**Exposes:** `metadata()` - *Metadata logic.*
+**Exposes:** `metrics()` - *Metrics logic.*
 
 
 ---
@@ -504,85 +407,24 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 
 **Role:** `[Muscle] (Service)`
 
-**Purpose:** Dodecahedron solid math utilities and calculator.
+**Purpose:** Backward compatibility shim for DodecahedronSolidService.
 
 **Input (Ingests):**
-* `edge_length` (Field)
-* `face_area` (Field)
-* `surface_area` (Field)
-* `volume` (Field)
-* `inradius` (Field)
-* `midradius` (Field)
-* `circumradius` (Field)
-* `incircle_circumference` (Field)
-* `midsphere_circumference` (Field)
-* `circumcircle_circumference` (Field)
-* `faces` (Field)
-* `edges` (Field)
-* `vertices` (Field)
-* `face_sides` (Field)
-* `vertex_valence` (Field)
-* `dihedral_angle_deg` (Field)
-* `solid_angle_sr` (Field)
-* `face_inradius` (Field)
-* `face_circumradius` (Field)
-* `insphere_surface_area` (Field)
-* `insphere_volume` (Field)
-* `midsphere_surface_area` (Field)
-* `midsphere_volume` (Field)
-* `circumsphere_surface_area` (Field)
-* `circumsphere_volume` (Field)
-* `sphericity` (Field)
-* `isoperimetric_quotient` (Field)
-* `surface_to_volume_ratio` (Field)
-* `moment_inertia_solid` (Field)
-* `moment_inertia_shell` (Field)
-* `angular_defect_vertex_deg` (Field)
-* `total_angular_defect_deg` (Field)
-* `euler_characteristic` (Field)
-* `packing_density` (Field)
-* `symmetry_group_order` (Field)
-* `rotational_symmetry_order` (Field)
-* `symmetry_group_name` (Field)
-* `dual_solid_name` (Field)
-* `golden_ratio_factor` (Field)
-* `payload` (Field)
-* `metrics` (Field)
-* `edge_length`
+* Pure data structure or utility module.
 
 **Output (Emits):**
 * Data primitives or DTOs.
 
 **Dependencies (It Needs):**
-* `__future__.annotations`
-* `dataclasses.dataclass`
-* `geometry_visuals.compute_dual_payload`
-* `math`
-* `platonic_constants.ANGULAR_DEFECT_VERTEX_DEG`
-* `platonic_constants.DIHEDRAL_ANGLES_DEG`
-* `platonic_constants.DUAL_SOLID_NAME`
-* `platonic_constants.GOLDEN_RATIO_FACTOR`
-* `platonic_constants.MOMENT_INERTIA_SHELL_K`
-* `platonic_constants.MOMENT_INERTIA_SOLID_K`
-* `platonic_constants.PACKING_DENSITY`
-* `platonic_constants.PlatonicSolid`
-* `platonic_constants.ROTATIONAL_SYMMETRY_ORDER`
-* `pl
+* `shared.services.geometry.dodecahedron.DodecahedronMetrics`
+* `shared.services.geometry.dodecahedron.DodecahedronSolidCalculator`
+* `shared.services.geometry.dodecahedron.DodecahedronSolidService`
 
 **Consumers (Who Needs It):**
-* `src/pillars/tq/services/platonic_transition_service.py`
 * `tests/rituals/rite_of_advanced_visualization.py`
 
 **Key Interactions:**
-**Exposes:** `build()` - *Functional interface.*
-**Exposes:** `payload()` - *Functional interface.*
-**Exposes:** `properties()` - *Functional interface.*
-**Exposes:** `set_property()` - *Functional interface.*
-**Exposes:** `clear()` - *Functional interface.*
-**Exposes:** `payload()` - *Functional interface.*
-**Exposes:** `metadata()` - *Functional interface.*
-**Exposes:** `metrics()` - *Functional interface.*
-**Exposes:** `solver()` - *Functional interface.*
+* Internal logic only.
 
 
 ---
@@ -611,12 +453,12 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 * None detected.
 
 **Key Interactions:**
-**Exposes:** `name()` - *Functional interface.*
-**Exposes:** `description()` - *Functional interface.*
-**Exposes:** `calculation_hint()` - *Functional interface.*
-**Exposes:** `calculate_from_property()` - *Functional interface.*
-**Exposes:** `get_drawing_instructions()` - *Functional interface.*
-**Exposes:** `get_label_positions()` - *Functional interface.*
+**Exposes:** `name()` - *Name logic.*
+**Exposes:** `description()` - *Description logic.*
+**Exposes:** `calculation_hint()` - *Calculation hint logic.*
+**Exposes:** `calculate_from_property()` - *Compute from property logic.*
+**Exposes:** `get_drawing_instructions()` - *Retrieve drawing instructions logic.*
+**Exposes:** `get_label_positions()` - *Retrieve label positions logic.*
 
 
 ---
@@ -743,10 +585,10 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 * None detected.
 
 **Key Interactions:**
-**Exposes:** `build_dynamic()` - *Functional interface.*
-**Exposes:** `set_property()` - *Functional interface.*
-**Exposes:** `build_dynamic()` - *Functional interface.*
-**Exposes:** `set_property()` - *Functional interface.*
+**Exposes:** `build_dynamic()` - *Build dynamic logic.*
+**Exposes:** `set_property()` - *Configure property logic.*
+**Exposes:** `build_dynamic()` - *Build dynamic logic.*
+**Exposes:** `set_property()` - *Configure property logic.*
 
 
 ---
@@ -784,8 +626,8 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 * None detected.
 
 **Key Interactions:**
-**Exposes:** `build_dynamic()` - *Functional interface.*
-**Exposes:** `set_property()` - *Functional interface.*
+**Exposes:** `build_dynamic()` - *Build dynamic logic.*
+**Exposes:** `set_property()` - *Configure property logic.*
 
 
 ---
@@ -794,7 +636,7 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 
 **Role:** `[Muscle] (Service)`
 
-**Purpose:** Geometry visualization services.
+**Purpose:** Backward compatibility shim for Geometry Visuals.
 
 **Input (Ingests):**
 * Pure data structure or utility module.
@@ -803,19 +645,13 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 * Data primitives or DTOs.
 
 **Dependencies (It Needs):**
-* `shared.solid_payload.SolidLabel`
-* `shared.solid_payload.SolidPayload`
-* `typing.Dict`
-* `typing.List`
-* `typing.Optional`
-* `typing.Set`
-* `typing.Tuple`
+* `shared.services.geometry.geometry_visuals.compute_dual_payload`
 
 **Consumers (Who Needs It):**
 * None detected.
 
 **Key Interactions:**
-**Exposes:** `compute_dual_payload()` - *Generate the dual solid for a given primal polyhedron.*
+* Internal logic only.
 
 
 ---
@@ -858,14 +694,14 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 * None detected.
 
 **Key Interactions:**
-**Exposes:** `build()` - *Functional interface.*
-**Exposes:** `payload()` - *Functional interface.*
-**Exposes:** `properties()` - *Functional interface.*
-**Exposes:** `set_property()` - *Functional interface.*
-**Exposes:** `clear()` - *Functional interface.*
-**Exposes:** `payload()` - *Functional interface.*
-**Exposes:** `metadata()` - *Functional interface.*
-**Exposes:** `metrics()` - *Functional interface.*
+**Exposes:** `build()` - *Build logic.*
+**Exposes:** `payload()` - *Payload logic.*
+**Exposes:** `properties()` - *Properties logic.*
+**Exposes:** `set_property()` - *Configure property logic.*
+**Exposes:** `clear()` - *Clear logic.*
+**Exposes:** `payload()` - *Payload logic.*
+**Exposes:** `metadata()` - *Metadata logic.*
+**Exposes:** `metrics()` - *Metrics logic.*
 
 
 ---
@@ -874,85 +710,24 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 
 **Role:** `[Muscle] (Service)`
 
-**Purpose:** Icosahedron solid math utilities and calculator.
+**Purpose:** Backward compatibility shim for IcosahedronSolidService.
 
 **Input (Ingests):**
-* `edge_length` (Field)
-* `face_area` (Field)
-* `surface_area` (Field)
-* `volume` (Field)
-* `inradius` (Field)
-* `midradius` (Field)
-* `circumradius` (Field)
-* `incircle_circumference` (Field)
-* `midsphere_circumference` (Field)
-* `circumcircle_circumference` (Field)
-* `faces` (Field)
-* `edges` (Field)
-* `vertices` (Field)
-* `face_sides` (Field)
-* `vertex_valence` (Field)
-* `dihedral_angle_deg` (Field)
-* `solid_angle_sr` (Field)
-* `face_inradius` (Field)
-* `face_circumradius` (Field)
-* `insphere_surface_area` (Field)
-* `insphere_volume` (Field)
-* `midsphere_surface_area` (Field)
-* `midsphere_volume` (Field)
-* `circumsphere_surface_area` (Field)
-* `circumsphere_volume` (Field)
-* `sphericity` (Field)
-* `isoperimetric_quotient` (Field)
-* `surface_to_volume_ratio` (Field)
-* `moment_inertia_solid` (Field)
-* `moment_inertia_shell` (Field)
-* `angular_defect_vertex_deg` (Field)
-* `total_angular_defect_deg` (Field)
-* `euler_characteristic` (Field)
-* `packing_density` (Field)
-* `symmetry_group_order` (Field)
-* `rotational_symmetry_order` (Field)
-* `symmetry_group_name` (Field)
-* `dual_solid_name` (Field)
-* `golden_ratio_factor` (Field)
-* `payload` (Field)
-* `metrics` (Field)
-* `edge_length`
+* Pure data structure or utility module.
 
 **Output (Emits):**
 * Data primitives or DTOs.
 
 **Dependencies (It Needs):**
-* `__future__.annotations`
-* `dataclasses.dataclass`
-* `geometry_visuals.compute_dual_payload`
-* `math`
-* `platonic_constants.ANGULAR_DEFECT_VERTEX_DEG`
-* `platonic_constants.DIHEDRAL_ANGLES_DEG`
-* `platonic_constants.DUAL_SOLID_NAME`
-* `platonic_constants.GOLDEN_RATIO_FACTOR`
-* `platonic_constants.MOMENT_INERTIA_SHELL_K`
-* `platonic_constants.MOMENT_INERTIA_SOLID_K`
-* `platonic_constants.PACKING_DENSITY`
-* `platonic_constants.PlatonicSolid`
-* `platonic_constants.ROTATIONAL_SYMMETRY_ORDER`
-* `pl
+* `shared.services.geometry.icosahedron.IcosahedronMetrics`
+* `shared.services.geometry.icosahedron.IcosahedronSolidCalculator`
+* `shared.services.geometry.icosahedron.IcosahedronSolidService`
 
 **Consumers (Who Needs It):**
-* `src/pillars/tq/services/platonic_transition_service.py`
 * `tests/rituals/rite_of_advanced_visualization.py`
 
 **Key Interactions:**
-**Exposes:** `build()` - *Functional interface.*
-**Exposes:** `payload()` - *Functional interface.*
-**Exposes:** `properties()` - *Functional interface.*
-**Exposes:** `set_property()` - *Functional interface.*
-**Exposes:** `clear()` - *Functional interface.*
-**Exposes:** `payload()` - *Functional interface.*
-**Exposes:** `metadata()` - *Functional interface.*
-**Exposes:** `metrics()` - *Functional interface.*
-**Exposes:** `solver()` - *Functional interface.*
+* Internal logic only.
 
 
 ---
@@ -985,13 +760,13 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 * None detected.
 
 **Key Interactions:**
-**Exposes:** `name()` - *Functional interface.*
-**Exposes:** `description()` - *Functional interface.*
-**Exposes:** `calculation_hint()` - *Functional interface.*
+**Exposes:** `name()` - *Name logic.*
+**Exposes:** `description()` - *Description logic.*
+**Exposes:** `calculation_hint()` - *Calculation hint logic.*
 **Exposes:** `set_points()` - *Set the vertices and update properties.*
 **Exposes:** `calculate_from_property()` - *Update a coordinate.*
-**Exposes:** `get_drawing_instructions()` - *Functional interface.*
-**Exposes:** `get_label_positions()` - *Functional interface.*
+**Exposes:** `get_drawing_instructions()` - *Retrieve drawing instructions logic.*
+**Exposes:** `get_label_positions()` - *Retrieve label positions logic.*
 
 
 ---
@@ -1027,6 +802,61 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 **Exposes:** `signed_tetrahedron_volume()` - *Calculate signed volume of a tetrahedron.*
 **Exposes:** `polyhedron_volume()` - *Calculate volume of a closed polyhedron.*
 **Exposes:** `polyhedron_surface_area()` - *Calculate total surface area of a polyhedron.*
+
+
+---
+
+**File:** `src/pillars/geometry/services/nested_heptagons_service.py`
+
+**Role:** `[Muscle] (Service)`
+
+**Purpose:** Nested Heptagons Service - Golden Trisection Calculator.
+
+**Input (Ingests):**
+* `x` (Field)
+* `y` (Field)
+* `edge_length` (Field)
+* `perimeter` (Field)
+* `area` (Field)
+* `short_diagonal` (Field)
+* `long_diagonal` (Field)
+* `inradius` (Field)
+* `circumradius` (Field)
+* `incircle_circumference` (Field)
+* `circumcircle_circumference` (Field)
+* `middle_edge_length`
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `__future__.annotations`
+* `dataclasses.dataclass`
+* `math`
+* `typing.List`
+* `typing.Tuple`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `middle_edge()` - *Get the current middle edge length.*
+**Exposes:** `middle_edge()` - *Set the middle edge length.*
+**Exposes:** `orientation()` - *Get the current orientation.*
+**Exposes:** `orientation()` - *Set the orientation ('vertex_top' or 'side_top').*
+**Exposes:** `outer_edge()` - *Calculate outer heptagon edge length.*
+**Exposes:** `inner_edge()` - *Calculate inner heptagon edge length.*
+**Exposes:** `set_from_outer_edge()` - *Set state from outer edge length.*
+**Exposes:** `set_from_inner_edge()` - *Set state from inner edge length.*
+**Exposes:** `outer_properties()` - *Get complete properties for the outer heptagon.*
+**Exposes:** `middle_properties()` - *Get complete properties for the middle heptagon.*
+**Exposes:** `inner_properties()` - *Get complete properties for the inner heptagon.*
+**Exposes:** `outer_vertices()` - *Get vertices of the outer heptagon.*
+**Exposes:** `middle_vertices()` - *Get vertices of the middle heptagon.*
+**Exposes:** `inner_vertices()` - *Get vertices of the inner heptagon.*
+**Exposes:** `interior_angle()` - *Interior angle of a regular heptagon in degrees.*
+**Exposes:** `exterior_angle()` - *Exterior angle of a regular heptagon in degrees.*
+**Exposes:** `central_angle()` - *Central angle of a regular heptagon in degrees.*
 
 
 ---
@@ -1085,14 +915,14 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 * None detected.
 
 **Key Interactions:**
-**Exposes:** `build()` - *Functional interface.*
-**Exposes:** `payload()` - *Functional interface.*
-**Exposes:** `properties()` - *Functional interface.*
-**Exposes:** `set_property()` - *Functional interface.*
-**Exposes:** `clear()` - *Functional interface.*
-**Exposes:** `payload()` - *Functional interface.*
-**Exposes:** `metadata()` - *Functional interface.*
-**Exposes:** `metrics()` - *Functional interface.*
+**Exposes:** `build()` - *Build logic.*
+**Exposes:** `payload()` - *Payload logic.*
+**Exposes:** `properties()` - *Properties logic.*
+**Exposes:** `set_property()` - *Configure property logic.*
+**Exposes:** `clear()` - *Clear logic.*
+**Exposes:** `payload()` - *Payload logic.*
+**Exposes:** `metadata()` - *Metadata logic.*
+**Exposes:** `metrics()` - *Metrics logic.*
 
 
 ---
@@ -1101,85 +931,24 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 
 **Role:** `[Muscle] (Service)`
 
-**Purpose:** Octahedron solid math utilities and calculator.
+**Purpose:** Backward compatibility shim for OctahedronSolidService.
 
 **Input (Ingests):**
-* `edge_length` (Field)
-* `face_area` (Field)
-* `surface_area` (Field)
-* `volume` (Field)
-* `inradius` (Field)
-* `midradius` (Field)
-* `circumradius` (Field)
-* `incircle_circumference` (Field)
-* `midsphere_circumference` (Field)
-* `circumcircle_circumference` (Field)
-* `faces` (Field)
-* `edges` (Field)
-* `vertices` (Field)
-* `face_sides` (Field)
-* `vertex_valence` (Field)
-* `dihedral_angle_deg` (Field)
-* `solid_angle_sr` (Field)
-* `face_inradius` (Field)
-* `face_circumradius` (Field)
-* `insphere_surface_area` (Field)
-* `insphere_volume` (Field)
-* `midsphere_surface_area` (Field)
-* `midsphere_volume` (Field)
-* `circumsphere_surface_area` (Field)
-* `circumsphere_volume` (Field)
-* `sphericity` (Field)
-* `isoperimetric_quotient` (Field)
-* `surface_to_volume_ratio` (Field)
-* `moment_inertia_solid` (Field)
-* `moment_inertia_shell` (Field)
-* `angular_defect_vertex_deg` (Field)
-* `total_angular_defect_deg` (Field)
-* `euler_characteristic` (Field)
-* `packing_density` (Field)
-* `symmetry_group_order` (Field)
-* `rotational_symmetry_order` (Field)
-* `symmetry_group_name` (Field)
-* `dual_solid_name` (Field)
-* `golden_ratio_factor` (Field)
-* `payload` (Field)
-* `metrics` (Field)
-* `edge_length`
+* Pure data structure or utility module.
 
 **Output (Emits):**
 * Data primitives or DTOs.
 
 **Dependencies (It Needs):**
-* `__future__.annotations`
-* `dataclasses.dataclass`
-* `geometry_visuals.compute_dual_payload`
-* `math`
-* `platonic_constants.ANGULAR_DEFECT_VERTEX_DEG`
-* `platonic_constants.DIHEDRAL_ANGLES_DEG`
-* `platonic_constants.DUAL_SOLID_NAME`
-* `platonic_constants.GOLDEN_RATIO_FACTOR`
-* `platonic_constants.MOMENT_INERTIA_SHELL_K`
-* `platonic_constants.MOMENT_INERTIA_SOLID_K`
-* `platonic_constants.PACKING_DENSITY`
-* `platonic_constants.PlatonicSolid`
-* `platonic_constants.ROTATIONAL_SYMMETRY_ORDER`
-* `pl
+* `shared.services.geometry.octahedron.OctahedronMetrics`
+* `shared.services.geometry.octahedron.OctahedronSolidCalculator`
+* `shared.services.geometry.octahedron.OctahedronSolidService`
 
 **Consumers (Who Needs It):**
-* `src/pillars/tq/services/platonic_transition_service.py`
 * `tests/rituals/rite_of_advanced_visualization.py`
 
 **Key Interactions:**
-**Exposes:** `build()` - *Functional interface.*
-**Exposes:** `payload()` - *Functional interface.*
-**Exposes:** `properties()` - *Functional interface.*
-**Exposes:** `set_property()` - *Functional interface.*
-**Exposes:** `clear()` - *Functional interface.*
-**Exposes:** `payload()` - *Functional interface.*
-**Exposes:** `metadata()` - *Functional interface.*
-**Exposes:** `metrics()` - *Functional interface.*
-**Exposes:** `solver()` - *Functional interface.*
+* Internal logic only.
 
 
 ---
@@ -1206,14 +975,14 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 * `typing.Optional`
 
 **Consumers (Who Needs It):**
-* `scripts/verification_seal.py`
+* `workflow_scripts/verification_seal.py`
 
 **Key Interactions:**
 **Exposes:** `save_calculation()` - *Save the current state of a shape to history.*
 **Exposes:** `update_note()` - *Update the note for a specific history entry.*
 **Exposes:** `delete_calculation()` - *Delete a history entry by timestamp.*
 **Exposes:** `get_recent_calculations()` - *Get list of recent calculations.*
-**Exposes:** `clear_history()` - *Functional interface.*
+**Exposes:** `clear_history()` - *Clear history logic.*
 
 
 ---
@@ -1222,53 +991,29 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 
 **Role:** `[Muscle] (Service)`
 
-**Purpose:** Platonic Solid Constants and Formulas.
+**Purpose:** Backward compatibility shim for Platonic Constants.
 
 **Input (Ingests):**
-* `p` (Field)
-* `q` (Field)
-* `faces` (Field)
-* `vertices` (Field)
-* `edges` (Field)
-* `name` (Field)
-* `key` (Field)
-* `unit` (Field)
-* `precision` (Field)
-* `power` (Field)
-* `base_value` (Field)
-* `editable` (Field)
+* Pure data structure or utility module.
 
 **Output (Emits):**
 * Data primitives or DTOs.
 
 **Dependencies (It Needs):**
-* `__future__.annotations`
-* `dataclasses.dataclass`
-* `enum.Enum`
-* `math`
-* `typing.Dict`
+* `shared.services.geometry.platonic_constants.DIHEDRAL_ANGLES_DEG`
+* `shared.services.geometry.platonic_constants.PlatonicSolid`
+* `shared.services.geometry.platonic_constants.SOLID_ANGLES_SR`
+* `shared.services.geometry.platonic_constants.TOPOLOGY`
+* `shared.services.geometry.platonic_constants.face_circumradius`
+* `shared.services.geometry.platonic_constants.face_inradius`
+* `shared.services.geometry.platonic_constants.isoperimetric_quotient`
+* `shared.services.geometry.platonic_constants.sph
 
 **Consumers (Who Needs It):**
 * None detected.
 
 **Key Interactions:**
-**Exposes:** `face_inradius()` - *Inradius of a regular p-gon face.*
-**Exposes:** `face_circumradius()` - *Circumradius of a regular p-gon face.*
-**Exposes:** `face_area()` - *Area of a regular p-gon face.*
-**Exposes:** `edge_from_face_inradius()` - *Derive edge length from face inradius.*
-**Exposes:** `edge_from_face_circumradius()` - *Derive edge length from face circumradius.*
-**Exposes:** `edge_from_face_area()` - *Derive edge length from face area.*
-**Exposes:** `sphere_surface_area()` - *Surface area of a sphere: 4πr²*
-**Exposes:** `sphere_volume()` - *Volume of a sphere: (4/3)πr³*
-**Exposes:** `radius_from_sphere_surface_area()` - *Derive radius from sphere surface area.*
-**Exposes:** `radius_from_sphere_volume()` - *Derive radius from sphere volume.*
-**Exposes:** `sphericity()` - *Sphericity: how close to a sphere.*
-**Exposes:** `isoperimetric_quotient()` - *Isoperimetric quotient (IQ).*
-**Exposes:** `surface_to_volume_ratio()` - *Surface area to volume ratio.*
-**Exposes:** `angular_defect_vertex()` - *Angular defect at a vertex in radians.*
-**Exposes:** `euler_characteristic()` - *V - E + F = 2 for convex polyhedra.*
-**Exposes:** `scale()` - *Scale base value to given edge length.*
-**Exposes:** `solve_edge()` - *Solve for edge length given this property's value.*
+* Internal logic only.
 
 
 ---
@@ -1297,8 +1042,8 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 * `tests/verify_geometry_fixes.py`
 
 **Key Interactions:**
-**Exposes:** `name()` - *Functional interface.*
-**Exposes:** `description()` - *Functional interface.*
+**Exposes:** `name()` - *Name logic.*
+**Exposes:** `description()` - *Description logic.*
 **Exposes:** `calculate_from_property()` - *Calculate all properties from any given property.*
 **Exposes:** `get_drawing_instructions()` - *Get drawing instructions for the regular polygon.*
 **Exposes:** `get_label_positions()` - *Get label positions for the polygon (static diagram positions).*
@@ -1397,14 +1142,14 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 * None detected.
 
 **Key Interactions:**
-**Exposes:** `build()` - *Functional interface.*
-**Exposes:** `payload()` - *Functional interface.*
-**Exposes:** `properties()` - *Functional interface.*
-**Exposes:** `set_property()` - *Functional interface.*
-**Exposes:** `clear()` - *Functional interface.*
-**Exposes:** `payload()` - *Functional interface.*
-**Exposes:** `metadata()` - *Functional interface.*
-**Exposes:** `metrics()` - *Functional interface.*
+**Exposes:** `build()` - *Build logic.*
+**Exposes:** `payload()` - *Payload logic.*
+**Exposes:** `properties()` - *Properties logic.*
+**Exposes:** `set_property()` - *Configure property logic.*
+**Exposes:** `clear()` - *Clear logic.*
+**Exposes:** `payload()` - *Payload logic.*
+**Exposes:** `metadata()` - *Metadata logic.*
+**Exposes:** `metrics()` - *Metrics logic.*
 
 
 ---
@@ -1435,61 +1180,61 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 * None detected.
 
 **Key Interactions:**
-**Exposes:** `name()` - *Functional interface.*
-**Exposes:** `description()` - *Functional interface.*
-**Exposes:** `calculation_hint()` - *Functional interface.*
-**Exposes:** `calculate_from_property()` - *Functional interface.*
-**Exposes:** `get_drawing_instructions()` - *Functional interface.*
-**Exposes:** `get_label_positions()` - *Functional interface.*
-**Exposes:** `name()` - *Functional interface.*
-**Exposes:** `description()` - *Functional interface.*
-**Exposes:** `calculation_hint()` - *Functional interface.*
-**Exposes:** `calculate_from_property()` - *Functional interface.*
-**Exposes:** `get_drawing_instructions()` - *Functional interface.*
-**Exposes:** `get_label_positions()` - *Functional interface.*
-**Exposes:** `name()` - *Functional interface.*
-**Exposes:** `description()` - *Functional interface.*
-**Exposes:** `calculation_hint()` - *Functional interface.*
-**Exposes:** `calculate_from_property()` - *Functional interface.*
-**Exposes:** `get_drawing_instructions()` - *Functional interface.*
-**Exposes:** `get_label_positions()` - *Functional interface.*
-**Exposes:** `name()` - *Functional interface.*
-**Exposes:** `description()` - *Functional interface.*
-**Exposes:** `calculation_hint()` - *Functional interface.*
-**Exposes:** `calculate_from_property()` - *Functional interface.*
-**Exposes:** `get_drawing_instructions()` - *Functional interface.*
-**Exposes:** `get_label_positions()` - *Functional interface.*
-**Exposes:** `calculate_from_property()` - *Functional interface.*
-**Exposes:** `get_drawing_instructions()` - *Functional interface.*
-**Exposes:** `get_label_positions()` - *Functional interface.*
-**Exposes:** `name()` - *Functional interface.*
-**Exposes:** `description()` - *Functional interface.*
-**Exposes:** `calculation_hint()` - *Functional interface.*
-**Exposes:** `name()` - *Functional interface.*
-**Exposes:** `description()` - *Functional interface.*
-**Exposes:** `name()` - *Functional interface.*
-**Exposes:** `description()` - *Functional interface.*
-**Exposes:** `calculation_hint()` - *Functional interface.*
-**Exposes:** `calculate_from_property()` - *Functional interface.*
-**Exposes:** `get_drawing_instructions()` - *Functional interface.*
-**Exposes:** `get_label_positions()` - *Functional interface.*
-**Exposes:** `name()` - *Functional interface.*
-**Exposes:** `description()` - *Functional interface.*
-**Exposes:** `calculation_hint()` - *Functional interface.*
-**Exposes:** `calculate_from_property()` - *Functional interface.*
-**Exposes:** `get_drawing_instructions()` - *Functional interface.*
-**Exposes:** `get_label_positions()` - *Functional interface.*
-**Exposes:** `name()` - *Functional interface.*
-**Exposes:** `description()` - *Functional interface.*
-**Exposes:** `calculation_hint()` - *Functional interface.*
-**Exposes:** `calculate_from_property()` - *Functional interface.*
-**Exposes:** `get_drawing_instructions()` - *Functional interface.*
-**Exposes:** `get_label_positions()` - *Functional interface.*
-**Exposes:** `name()` - *Functional interface.*
-**Exposes:** `description()` - *Functional interface.*
-**Exposes:** `calculate_from_property()` - *Functional interface.*
-**Exposes:** `get_drawing_instructions()` - *Functional interface.*
-**Exposes:** `get_label_positions()` - *Functional interface.*
+**Exposes:** `name()` - *Name logic.*
+**Exposes:** `description()` - *Description logic.*
+**Exposes:** `calculation_hint()` - *Calculation hint logic.*
+**Exposes:** `calculate_from_property()` - *Compute from property logic.*
+**Exposes:** `get_drawing_instructions()` - *Retrieve drawing instructions logic.*
+**Exposes:** `get_label_positions()` - *Retrieve label positions logic.*
+**Exposes:** `name()` - *Name logic.*
+**Exposes:** `description()` - *Description logic.*
+**Exposes:** `calculation_hint()` - *Calculation hint logic.*
+**Exposes:** `calculate_from_property()` - *Compute from property logic.*
+**Exposes:** `get_drawing_instructions()` - *Retrieve drawing instructions logic.*
+**Exposes:** `get_label_positions()` - *Retrieve label positions logic.*
+**Exposes:** `name()` - *Name logic.*
+**Exposes:** `description()` - *Description logic.*
+**Exposes:** `calculation_hint()` - *Calculation hint logic.*
+**Exposes:** `calculate_from_property()` - *Compute from property logic.*
+**Exposes:** `get_drawing_instructions()` - *Retrieve drawing instructions logic.*
+**Exposes:** `get_label_positions()` - *Retrieve label positions logic.*
+**Exposes:** `name()` - *Name logic.*
+**Exposes:** `description()` - *Description logic.*
+**Exposes:** `calculation_hint()` - *Calculation hint logic.*
+**Exposes:** `calculate_from_property()` - *Compute from property logic.*
+**Exposes:** `get_drawing_instructions()` - *Retrieve drawing instructions logic.*
+**Exposes:** `get_label_positions()` - *Retrieve label positions logic.*
+**Exposes:** `calculate_from_property()` - *Compute from property logic.*
+**Exposes:** `get_drawing_instructions()` - *Retrieve drawing instructions logic.*
+**Exposes:** `get_label_positions()` - *Retrieve label positions logic.*
+**Exposes:** `name()` - *Name logic.*
+**Exposes:** `description()` - *Description logic.*
+**Exposes:** `calculation_hint()` - *Calculation hint logic.*
+**Exposes:** `name()` - *Name logic.*
+**Exposes:** `description()` - *Description logic.*
+**Exposes:** `name()` - *Name logic.*
+**Exposes:** `description()` - *Description logic.*
+**Exposes:** `calculation_hint()` - *Calculation hint logic.*
+**Exposes:** `calculate_from_property()` - *Compute from property logic.*
+**Exposes:** `get_drawing_instructions()` - *Retrieve drawing instructions logic.*
+**Exposes:** `get_label_positions()` - *Retrieve label positions logic.*
+**Exposes:** `name()` - *Name logic.*
+**Exposes:** `description()` - *Description logic.*
+**Exposes:** `calculation_hint()` - *Calculation hint logic.*
+**Exposes:** `calculate_from_property()` - *Compute from property logic.*
+**Exposes:** `get_drawing_instructions()` - *Retrieve drawing instructions logic.*
+**Exposes:** `get_label_positions()` - *Retrieve label positions logic.*
+**Exposes:** `name()` - *Name logic.*
+**Exposes:** `description()` - *Description logic.*
+**Exposes:** `calculation_hint()` - *Calculation hint logic.*
+**Exposes:** `calculate_from_property()` - *Compute from property logic.*
+**Exposes:** `get_drawing_instructions()` - *Retrieve drawing instructions logic.*
+**Exposes:** `get_label_positions()` - *Retrieve label positions logic.*
+**Exposes:** `name()` - *Name logic.*
+**Exposes:** `description()` - *Description logic.*
+**Exposes:** `calculate_from_property()` - *Compute from property logic.*
+**Exposes:** `get_drawing_instructions()` - *Retrieve drawing instructions logic.*
+**Exposes:** `get_label_positions()` - *Retrieve label positions logic.*
 
 
 ---
@@ -1536,14 +1281,14 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 * None detected.
 
 **Key Interactions:**
-**Exposes:** `build()` - *Functional interface.*
-**Exposes:** `payload()` - *Functional interface.*
-**Exposes:** `properties()` - *Functional interface.*
-**Exposes:** `set_property()` - *Functional interface.*
-**Exposes:** `clear()` - *Functional interface.*
-**Exposes:** `payload()` - *Functional interface.*
-**Exposes:** `metadata()` - *Functional interface.*
-**Exposes:** `metrics()` - *Functional interface.*
+**Exposes:** `build()` - *Build logic.*
+**Exposes:** `payload()` - *Payload logic.*
+**Exposes:** `properties()` - *Properties logic.*
+**Exposes:** `set_property()` - *Configure property logic.*
+**Exposes:** `clear()` - *Clear logic.*
+**Exposes:** `payload()` - *Payload logic.*
+**Exposes:** `metadata()` - *Metadata logic.*
+**Exposes:** `metrics()` - *Metrics logic.*
 
 
 ---
@@ -1590,14 +1335,14 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 * None detected.
 
 **Key Interactions:**
-**Exposes:** `build()` - *Functional interface.*
-**Exposes:** `payload()` - *Functional interface.*
-**Exposes:** `properties()` - *Functional interface.*
-**Exposes:** `set_property()` - *Functional interface.*
-**Exposes:** `clear()` - *Functional interface.*
-**Exposes:** `payload()` - *Functional interface.*
-**Exposes:** `metadata()` - *Functional interface.*
-**Exposes:** `metrics()` - *Functional interface.*
+**Exposes:** `build()` - *Build logic.*
+**Exposes:** `payload()` - *Payload logic.*
+**Exposes:** `properties()` - *Properties logic.*
+**Exposes:** `set_property()` - *Configure property logic.*
+**Exposes:** `clear()` - *Clear logic.*
+**Exposes:** `payload()` - *Payload logic.*
+**Exposes:** `metadata()` - *Metadata logic.*
+**Exposes:** `metrics()` - *Metrics logic.*
 
 
 ---
@@ -1653,14 +1398,14 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 * `tests/rituals/rite_of_calculator_refinement.py`
 
 **Key Interactions:**
-**Exposes:** `build()` - *Functional interface.*
-**Exposes:** `payload()` - *Functional interface.*
-**Exposes:** `properties()` - *Functional interface.*
-**Exposes:** `set_property()` - *Functional interface.*
-**Exposes:** `clear()` - *Functional interface.*
-**Exposes:** `payload()` - *Functional interface.*
-**Exposes:** `metadata()` - *Functional interface.*
-**Exposes:** `metrics()` - *Functional interface.*
+**Exposes:** `build()` - *Build logic.*
+**Exposes:** `payload()` - *Payload logic.*
+**Exposes:** `properties()` - *Properties logic.*
+**Exposes:** `set_property()` - *Configure property logic.*
+**Exposes:** `clear()` - *Clear logic.*
+**Exposes:** `payload()` - *Payload logic.*
+**Exposes:** `metadata()` - *Metadata logic.*
+**Exposes:** `metrics()` - *Metrics logic.*
 
 
 ---
@@ -1708,14 +1453,14 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 * `tests/rituals/rite_of_calculator_refinement.py`
 
 **Key Interactions:**
-**Exposes:** `build()` - *Functional interface.*
-**Exposes:** `payload()` - *Functional interface.*
-**Exposes:** `properties()` - *Functional interface.*
-**Exposes:** `set_property()` - *Functional interface.*
-**Exposes:** `clear()` - *Functional interface.*
-**Exposes:** `payload()` - *Functional interface.*
-**Exposes:** `metadata()` - *Functional interface.*
-**Exposes:** `metrics()` - *Functional interface.*
+**Exposes:** `build()` - *Build logic.*
+**Exposes:** `payload()` - *Payload logic.*
+**Exposes:** `properties()` - *Properties logic.*
+**Exposes:** `set_property()` - *Configure property logic.*
+**Exposes:** `clear()` - *Clear logic.*
+**Exposes:** `payload()` - *Payload logic.*
+**Exposes:** `metadata()` - *Metadata logic.*
+**Exposes:** `metrics()` - *Metrics logic.*
 
 
 ---
@@ -1771,14 +1516,14 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 * `tests/rituals/rite_of_calculator_refinement.py`
 
 **Key Interactions:**
-**Exposes:** `build()` - *Functional interface.*
-**Exposes:** `payload()` - *Functional interface.*
-**Exposes:** `properties()` - *Functional interface.*
-**Exposes:** `set_property()` - *Functional interface.*
-**Exposes:** `clear()` - *Functional interface.*
-**Exposes:** `payload()` - *Functional interface.*
-**Exposes:** `metadata()` - *Functional interface.*
-**Exposes:** `metrics()` - *Functional interface.*
+**Exposes:** `build()` - *Build logic.*
+**Exposes:** `payload()` - *Payload logic.*
+**Exposes:** `properties()` - *Properties logic.*
+**Exposes:** `set_property()` - *Configure property logic.*
+**Exposes:** `clear()` - *Clear logic.*
+**Exposes:** `payload()` - *Payload logic.*
+**Exposes:** `metadata()` - *Metadata logic.*
+**Exposes:** `metrics()` - *Metrics logic.*
 
 
 ---
@@ -1828,14 +1573,14 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 * `tests/rituals/rite_of_calculator_refinement.py`
 
 **Key Interactions:**
-**Exposes:** `build()` - *Functional interface.*
-**Exposes:** `payload()` - *Functional interface.*
-**Exposes:** `properties()` - *Functional interface.*
-**Exposes:** `set_property()` - *Functional interface.*
-**Exposes:** `clear()` - *Functional interface.*
-**Exposes:** `payload()` - *Functional interface.*
-**Exposes:** `metadata()` - *Functional interface.*
-**Exposes:** `metrics()` - *Functional interface.*
+**Exposes:** `build()` - *Build logic.*
+**Exposes:** `payload()` - *Payload logic.*
+**Exposes:** `properties()` - *Properties logic.*
+**Exposes:** `set_property()` - *Configure property logic.*
+**Exposes:** `clear()` - *Clear logic.*
+**Exposes:** `payload()` - *Payload logic.*
+**Exposes:** `metadata()` - *Metadata logic.*
+**Exposes:** `metrics()` - *Metrics logic.*
 
 
 ---
@@ -1864,12 +1609,12 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 * None detected.
 
 **Key Interactions:**
-**Exposes:** `name()` - *Functional interface.*
-**Exposes:** `description()` - *Functional interface.*
-**Exposes:** `calculation_hint()` - *Functional interface.*
-**Exposes:** `calculate_from_property()` - *Functional interface.*
-**Exposes:** `get_drawing_instructions()` - *Functional interface.*
-**Exposes:** `get_label_positions()` - *Functional interface.*
+**Exposes:** `name()` - *Name logic.*
+**Exposes:** `description()` - *Description logic.*
+**Exposes:** `calculation_hint()` - *Calculation hint logic.*
+**Exposes:** `calculate_from_property()` - *Compute from property logic.*
+**Exposes:** `get_drawing_instructions()` - *Retrieve drawing instructions logic.*
+**Exposes:** `get_label_positions()` - *Retrieve label positions logic.*
 
 
 ---
@@ -1898,12 +1643,12 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 * `scripts/verify_seed_of_life.py`
 
 **Key Interactions:**
-**Exposes:** `name()` - *Functional interface.*
-**Exposes:** `description()` - *Functional interface.*
-**Exposes:** `calculation_hint()` - *Functional interface.*
-**Exposes:** `calculate_from_property()` - *Functional interface.*
-**Exposes:** `get_drawing_instructions()` - *Functional interface.*
-**Exposes:** `get_label_positions()` - *Functional interface.*
+**Exposes:** `name()` - *Name logic.*
+**Exposes:** `description()` - *Description logic.*
+**Exposes:** `calculation_hint()` - *Calculation hint logic.*
+**Exposes:** `calculate_from_property()` - *Compute from property logic.*
+**Exposes:** `get_drawing_instructions()` - *Retrieve drawing instructions logic.*
+**Exposes:** `get_label_positions()` - *Retrieve label positions logic.*
 
 
 ---
@@ -1947,7 +1692,34 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 
 ---
 
+**File:** `src/pillars/geometry/services/solid_geometry.py`
 
+**Role:** `[Muscle] (Service)`
+
+**Purpose:** Backward compatibility shim for Solid Geometry.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `shared.services.geometry.solid_geometry.Edge`
+* `shared.services.geometry.solid_geometry.Face`
+* `shared.services.geometry.solid_geometry.Vec3`
+* `shared.services.geometry.solid_geometry.Vertex`
+* `shared.services.geometry.solid_geometry.angle_around_axis`
+* `shared.services.geometry.solid_geometry.compute_surface_area`
+* `shared.services.geometry.solid_geometry.compute_volume`
+* `shared.services.geometry.solid_geometry.edges_from_faces`
+* `shared.services.geometry.solid_geometry.face_centroi
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+* Internal logic only.
 
 
 ---
@@ -1956,23 +1728,16 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 
 **Role:** `[Muscle] (Service)`
 
-**Purpose:** Shared dataclasses for 3D solid calculators.
+**Purpose:** Backward compatibility shim for Solid Property.
 
 **Input (Ingests):**
-* `name` (Field)
-* `key` (Field)
-* `unit` (Field)
-* `value` (Field)
-* `precision` (Field)
-* `editable` (Field)
+* Pure data structure or utility module.
 
 **Output (Emits):**
 * Data primitives or DTOs.
 
 **Dependencies (It Needs):**
-* `__future__.annotations`
-* `dataclasses.dataclass`
-* `typing.Optional`
+* `shared.services.geometry.solid_property.SolidProperty`
 
 **Consumers (Who Needs It):**
 * None detected.
@@ -2019,12 +1784,12 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 * `tests/rituals/rite_of_trinity_3d.py`
 
 **Key Interactions:**
-**Exposes:** `build()` - *Functional interface.*
-**Exposes:** `properties()` - *Functional interface.*
-**Exposes:** `set_property()` - *Functional interface.*
-**Exposes:** `clear()` - *Functional interface.*
-**Exposes:** `payload()` - *Functional interface.*
-**Exposes:** `metadata()` - *Functional interface.*
+**Exposes:** `build()` - *Build logic.*
+**Exposes:** `properties()` - *Properties logic.*
+**Exposes:** `set_property()` - *Configure property logic.*
+**Exposes:** `clear()` - *Clear logic.*
+**Exposes:** `payload()` - *Payload logic.*
+**Exposes:** `metadata()` - *Metadata logic.*
 
 
 ---
@@ -2072,14 +1837,14 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 * None detected.
 
 **Key Interactions:**
-**Exposes:** `build()` - *Functional interface.*
-**Exposes:** `payload()` - *Functional interface.*
-**Exposes:** `properties()` - *Functional interface.*
-**Exposes:** `set_property()` - *Functional interface.*
-**Exposes:** `clear()` - *Functional interface.*
-**Exposes:** `payload()` - *Functional interface.*
-**Exposes:** `metadata()` - *Functional interface.*
-**Exposes:** `metrics()` - *Functional interface.*
+**Exposes:** `build()` - *Build logic.*
+**Exposes:** `payload()` - *Payload logic.*
+**Exposes:** `properties()` - *Properties logic.*
+**Exposes:** `set_property()` - *Configure property logic.*
+**Exposes:** `clear()` - *Clear logic.*
+**Exposes:** `payload()` - *Payload logic.*
+**Exposes:** `metadata()` - *Metadata logic.*
+**Exposes:** `metrics()` - *Metrics logic.*
 
 
 ---
@@ -2123,14 +1888,14 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 * None detected.
 
 **Key Interactions:**
-**Exposes:** `build()` - *Functional interface.*
-**Exposes:** `payload()` - *Functional interface.*
-**Exposes:** `properties()` - *Functional interface.*
-**Exposes:** `set_property()` - *Functional interface.*
-**Exposes:** `clear()` - *Functional interface.*
-**Exposes:** `payload()` - *Functional interface.*
-**Exposes:** `metadata()` - *Functional interface.*
-**Exposes:** `metrics()` - *Functional interface.*
+**Exposes:** `build()` - *Build logic.*
+**Exposes:** `payload()` - *Payload logic.*
+**Exposes:** `properties()` - *Properties logic.*
+**Exposes:** `set_property()` - *Configure property logic.*
+**Exposes:** `clear()` - *Clear logic.*
+**Exposes:** `payload()` - *Payload logic.*
+**Exposes:** `metadata()` - *Metadata logic.*
+**Exposes:** `metrics()` - *Metrics logic.*
 
 
 ---
@@ -2159,13 +1924,13 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 * `tests/verify_geometry_fixes.py`
 
 **Key Interactions:**
-**Exposes:** `name()` - *Functional interface.*
-**Exposes:** `description()` - *Functional interface.*
+**Exposes:** `name()` - *Name logic.*
+**Exposes:** `description()` - *Description logic.*
 **Exposes:** `calculate_from_property()` - *Calculate all properties from any given property.*
 **Exposes:** `get_drawing_instructions()` - *Get drawing instructions for the square.*
 **Exposes:** `get_label_positions()` - *Get label positions for the square.*
-**Exposes:** `name()` - *Functional interface.*
-**Exposes:** `description()` - *Functional interface.*
+**Exposes:** `name()` - *Name logic.*
+**Exposes:** `description()` - *Description logic.*
 **Exposes:** `calculate_from_property()` - *Calculate dependent properties.*
 **Exposes:** `get_drawing_instructions()` - *Get drawing instructions for the rectangle.*
 **Exposes:** `get_label_positions()` - *Get label positions for the rectangle.*
@@ -2217,14 +1982,14 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 * None detected.
 
 **Key Interactions:**
-**Exposes:** `build()` - *Functional interface.*
-**Exposes:** `payload()` - *Functional interface.*
-**Exposes:** `properties()` - *Functional interface.*
-**Exposes:** `set_property()` - *Functional interface.*
-**Exposes:** `clear()` - *Functional interface.*
-**Exposes:** `payload()` - *Functional interface.*
-**Exposes:** `metadata()` - *Functional interface.*
-**Exposes:** `metrics()` - *Functional interface.*
+**Exposes:** `build()` - *Build logic.*
+**Exposes:** `payload()` - *Payload logic.*
+**Exposes:** `properties()` - *Properties logic.*
+**Exposes:** `set_property()` - *Configure property logic.*
+**Exposes:** `clear()` - *Clear logic.*
+**Exposes:** `payload()` - *Payload logic.*
+**Exposes:** `metadata()` - *Metadata logic.*
+**Exposes:** `metrics()` - *Metrics logic.*
 
 
 ---
@@ -2273,14 +2038,14 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 * None detected.
 
 **Key Interactions:**
-**Exposes:** `build()` - *Functional interface.*
-**Exposes:** `payload()` - *Functional interface.*
-**Exposes:** `properties()` - *Functional interface.*
-**Exposes:** `set_property()` - *Functional interface.*
-**Exposes:** `clear()` - *Functional interface.*
-**Exposes:** `payload()` - *Functional interface.*
-**Exposes:** `metadata()` - *Functional interface.*
-**Exposes:** `metrics()` - *Functional interface.*
+**Exposes:** `build()` - *Build logic.*
+**Exposes:** `payload()` - *Payload logic.*
+**Exposes:** `properties()` - *Properties logic.*
+**Exposes:** `set_property()` - *Configure property logic.*
+**Exposes:** `clear()` - *Clear logic.*
+**Exposes:** `payload()` - *Payload logic.*
+**Exposes:** `metadata()` - *Metadata logic.*
+**Exposes:** `metrics()` - *Metrics logic.*
 
 
 ---
@@ -2289,86 +2054,24 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 
 **Role:** `[Muscle] (Service)`
 
-**Purpose:** Equilateral tetrahedron solid math + payload builder.
+**Purpose:** Backward compatibility shim for TetrahedronSolidService.
 
 **Input (Ingests):**
-* `edge_length` (Field)
-* `height` (Field)
-* `face_area` (Field)
-* `surface_area` (Field)
-* `volume` (Field)
-* `inradius` (Field)
-* `midradius` (Field)
-* `circumradius` (Field)
-* `incircle_circumference` (Field)
-* `midsphere_circumference` (Field)
-* `circumcircle_circumference` (Field)
-* `faces` (Field)
-* `edges` (Field)
-* `vertices` (Field)
-* `face_sides` (Field)
-* `vertex_valence` (Field)
-* `dihedral_angle_deg` (Field)
-* `solid_angle_sr` (Field)
-* `face_inradius` (Field)
-* `face_circumradius` (Field)
-* `insphere_surface_area` (Field)
-* `insphere_volume` (Field)
-* `midsphere_surface_area` (Field)
-* `midsphere_volume` (Field)
-* `circumsphere_surface_area` (Field)
-* `circumsphere_volume` (Field)
-* `sphericity` (Field)
-* `isoperimetric_quotient` (Field)
-* `surface_to_volume_ratio` (Field)
-* `moment_inertia_solid` (Field)
-* `moment_inertia_shell` (Field)
-* `angular_defect_vertex_deg` (Field)
-* `total_angular_defect_deg` (Field)
-* `euler_characteristic` (Field)
-* `packing_density` (Field)
-* `symmetry_group_order` (Field)
-* `rotational_symmetry_order` (Field)
-* `symmetry_group_name` (Field)
-* `dual_solid_name` (Field)
-* `golden_ratio_factor` (Field)
-* `payload` (Field)
-* `metrics` (Field)
-* `edge_length`
+* Pure data structure or utility module.
 
 **Output (Emits):**
 * Data primitives or DTOs.
 
 **Dependencies (It Needs):**
-* `__future__.annotations`
-* `dataclasses.dataclass`
-* `geometry_visuals.compute_dual_payload`
-* `math`
-* `platonic_constants.ANGULAR_DEFECT_VERTEX_DEG`
-* `platonic_constants.DIHEDRAL_ANGLES_DEG`
-* `platonic_constants.DUAL_SOLID_NAME`
-* `platonic_constants.GOLDEN_RATIO_FACTOR`
-* `platonic_constants.MOMENT_INERTIA_SHELL_K`
-* `platonic_constants.MOMENT_INERTIA_SOLID_K`
-* `platonic_constants.PACKING_DENSITY`
-* `platonic_constants.PlatonicSolid`
-* `platonic_constants.ROTATIONAL_SYMMETRY_ORDER`
-* `pl
+* `shared.services.geometry.tetrahedron.TetrahedronMetrics`
+* `shared.services.geometry.tetrahedron.TetrahedronSolidCalculator`
+* `shared.services.geometry.tetrahedron.TetrahedronSolidService`
 
 **Consumers (Who Needs It):**
-* `src/pillars/tq/services/platonic_transition_service.py`
 * `tests/rituals/rite_of_advanced_visualization.py`
 
 **Key Interactions:**
-**Exposes:** `build()` - *Functional interface.*
-**Exposes:** `payload()` - *Convenience accessor when only the payload is required.*
-**Exposes:** `properties()` - *Return all properties in display order.*
-**Exposes:** `set_property()` - *Set a property and recalculate all others.*
-**Exposes:** `clear()` - *Functional interface.*
-**Exposes:** `payload()` - *Functional interface.*
-**Exposes:** `metadata()` - *Functional interface.*
-**Exposes:** `metrics()` - *Functional interface.*
-**Exposes:** `solver()` - *Functional interface.*
+* Internal logic only.
 
 
 ---
@@ -2425,12 +2128,12 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 * `scripts/verify_torus_knot.py`
 
 **Key Interactions:**
-**Exposes:** `build()` - *Functional interface.*
-**Exposes:** `properties()` - *Functional interface.*
-**Exposes:** `set_property()` - *Functional interface.*
-**Exposes:** `clear()` - *Functional interface.*
-**Exposes:** `payload()` - *Functional interface.*
-**Exposes:** `metadata()` - *Functional interface.*
+**Exposes:** `build()` - *Build logic.*
+**Exposes:** `properties()` - *Properties logic.*
+**Exposes:** `set_property()` - *Configure property logic.*
+**Exposes:** `clear()` - *Clear logic.*
+**Exposes:** `payload()` - *Payload logic.*
+**Exposes:** `metadata()` - *Metadata logic.*
 
 
 ---
@@ -2477,13 +2180,13 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 * `scripts/verify_torus.py`
 
 **Key Interactions:**
-**Exposes:** `build()` - *Functional interface.*
-**Exposes:** `properties()` - *Functional interface.*
-**Exposes:** `set_property()` - *Functional interface.*
-**Exposes:** `clear()` - *Functional interface.*
-**Exposes:** `payload()` - *Functional interface.*
-**Exposes:** `metadata()` - *Functional interface.*
-**Exposes:** `metrics()` - *Functional interface.*
+**Exposes:** `build()` - *Build logic.*
+**Exposes:** `properties()` - *Properties logic.*
+**Exposes:** `set_property()` - *Configure property logic.*
+**Exposes:** `clear()` - *Clear logic.*
+**Exposes:** `payload()` - *Payload logic.*
+**Exposes:** `metadata()` - *Metadata logic.*
+**Exposes:** `metrics()` - *Metrics logic.*
 
 
 ---
@@ -2527,58 +2230,58 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 * `tests/verify_geometry_fixes.py`
 
 **Key Interactions:**
-**Exposes:** `calculate_from_property()` - *Functional interface.*
-**Exposes:** `get_drawing_instructions()` - *Functional interface.*
-**Exposes:** `get_label_positions()` - *Functional interface.*
-**Exposes:** `name()` - *Functional interface.*
-**Exposes:** `description()` - *Functional interface.*
+**Exposes:** `calculate_from_property()` - *Compute from property logic.*
+**Exposes:** `get_drawing_instructions()` - *Retrieve drawing instructions logic.*
+**Exposes:** `get_label_positions()` - *Retrieve label positions logic.*
+**Exposes:** `name()` - *Name logic.*
+**Exposes:** `description()` - *Description logic.*
 **Exposes:** `calculate_from_property()` - *Calculate all properties from any given property.*
 **Exposes:** `get_drawing_instructions()` - *Get drawing instructions for the equilateral triangle.*
 **Exposes:** `get_label_positions()` - *Get label positions for the triangle.*
-**Exposes:** `name()` - *Functional interface.*
-**Exposes:** `description()` - *Functional interface.*
-**Exposes:** `calculation_hint()` - *Functional interface.*
+**Exposes:** `name()` - *Name logic.*
+**Exposes:** `description()` - *Description logic.*
+**Exposes:** `calculation_hint()` - *Calculation hint logic.*
 **Exposes:** `calculate_from_property()` - *Calculate dependent properties.*
 **Exposes:** `get_drawing_instructions()` - *Get drawing instructions for the right triangle.*
 **Exposes:** `get_label_positions()` - *Get label positions for the triangle.*
-**Exposes:** `name()` - *Functional interface.*
-**Exposes:** `description()` - *Functional interface.*
-**Exposes:** `calculation_hint()` - *Functional interface.*
-**Exposes:** `calculate_from_property()` - *Functional interface.*
-**Exposes:** `get_drawing_instructions()` - *Functional interface.*
-**Exposes:** `get_label_positions()` - *Functional interface.*
-**Exposes:** `name()` - *Functional interface.*
-**Exposes:** `description()` - *Functional interface.*
-**Exposes:** `calculation_hint()` - *Functional interface.*
-**Exposes:** `name()` - *Functional interface.*
-**Exposes:** `description()` - *Functional interface.*
-**Exposes:** `name()` - *Functional interface.*
-**Exposes:** `description()` - *Functional interface.*
-**Exposes:** `name()` - *Functional interface.*
-**Exposes:** `description()` - *Functional interface.*
-**Exposes:** `name()` - *Functional interface.*
-**Exposes:** `description()` - *Functional interface.*
-**Exposes:** `calculation_hint()` - *Functional interface.*
-**Exposes:** `calculate_from_property()` - *Functional interface.*
-**Exposes:** `get_drawing_instructions()` - *Functional interface.*
-**Exposes:** `get_label_positions()` - *Functional interface.*
-**Exposes:** `name()` - *Functional interface.*
-**Exposes:** `description()` - *Functional interface.*
-**Exposes:** `calculation_hint()` - *Functional interface.*
-**Exposes:** `calculate_from_property()` - *Functional interface.*
-**Exposes:** `get_drawing_instructions()` - *Functional interface.*
-**Exposes:** `get_label_positions()` - *Functional interface.*
-**Exposes:** `name()` - *Functional interface.*
-**Exposes:** `description()` - *Functional interface.*
-**Exposes:** `calculation_hint()` - *Functional interface.*
-**Exposes:** `calculate_from_property()` - *Functional interface.*
-**Exposes:** `get_drawing_instructions()` - *Functional interface.*
-**Exposes:** `get_label_positions()` - *Functional interface.*
-**Exposes:** `name()` - *Functional interface.*
-**Exposes:** `description()` - *Functional interface.*
-**Exposes:** `calculate_from_property()` - *Functional interface.*
-**Exposes:** `get_drawing_instructions()` - *Functional interface.*
-**Exposes:** `get_label_positions()` - *Functional interface.*
+**Exposes:** `name()` - *Name logic.*
+**Exposes:** `description()` - *Description logic.*
+**Exposes:** `calculation_hint()` - *Calculation hint logic.*
+**Exposes:** `calculate_from_property()` - *Compute from property logic.*
+**Exposes:** `get_drawing_instructions()` - *Retrieve drawing instructions logic.*
+**Exposes:** `get_label_positions()` - *Retrieve label positions logic.*
+**Exposes:** `name()` - *Name logic.*
+**Exposes:** `description()` - *Description logic.*
+**Exposes:** `calculation_hint()` - *Calculation hint logic.*
+**Exposes:** `name()` - *Name logic.*
+**Exposes:** `description()` - *Description logic.*
+**Exposes:** `name()` - *Name logic.*
+**Exposes:** `description()` - *Description logic.*
+**Exposes:** `name()` - *Name logic.*
+**Exposes:** `description()` - *Description logic.*
+**Exposes:** `name()` - *Name logic.*
+**Exposes:** `description()` - *Description logic.*
+**Exposes:** `calculation_hint()` - *Calculation hint logic.*
+**Exposes:** `calculate_from_property()` - *Compute from property logic.*
+**Exposes:** `get_drawing_instructions()` - *Retrieve drawing instructions logic.*
+**Exposes:** `get_label_positions()` - *Retrieve label positions logic.*
+**Exposes:** `name()` - *Name logic.*
+**Exposes:** `description()` - *Description logic.*
+**Exposes:** `calculation_hint()` - *Calculation hint logic.*
+**Exposes:** `calculate_from_property()` - *Compute from property logic.*
+**Exposes:** `get_drawing_instructions()` - *Retrieve drawing instructions logic.*
+**Exposes:** `get_label_positions()` - *Retrieve label positions logic.*
+**Exposes:** `name()` - *Name logic.*
+**Exposes:** `description()` - *Description logic.*
+**Exposes:** `calculation_hint()` - *Calculation hint logic.*
+**Exposes:** `calculate_from_property()` - *Compute from property logic.*
+**Exposes:** `get_drawing_instructions()` - *Retrieve drawing instructions logic.*
+**Exposes:** `get_label_positions()` - *Retrieve label positions logic.*
+**Exposes:** `name()` - *Name logic.*
+**Exposes:** `description()` - *Description logic.*
+**Exposes:** `calculate_from_property()` - *Compute from property logic.*
+**Exposes:** `get_drawing_instructions()` - *Retrieve drawing instructions logic.*
+**Exposes:** `get_label_positions()` - *Retrieve label positions logic.*
 
 
 ---
@@ -2608,12 +2311,12 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 * `scripts/verify_hestia_expanded.py`
 
 **Key Interactions:**
-**Exposes:** `name()` - *Functional interface.*
-**Exposes:** `description()` - *Functional interface.*
-**Exposes:** `calculation_hint()` - *Functional interface.*
-**Exposes:** `calculate_from_property()` - *Functional interface.*
-**Exposes:** `get_drawing_instructions()` - *Functional interface.*
-**Exposes:** `get_label_positions()` - *Functional interface.*
+**Exposes:** `name()` - *Name logic.*
+**Exposes:** `description()` - *Description logic.*
+**Exposes:** `calculation_hint()` - *Calculation hint logic.*
+**Exposes:** `calculate_from_property()` - *Compute from property logic.*
+**Exposes:** `get_drawing_instructions()` - *Retrieve drawing instructions logic.*
+**Exposes:** `get_label_positions()` - *Retrieve label positions logic.*
 
 
 ---
@@ -2669,12 +2372,12 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 * `tests/rituals/rite_of_hestia_3d.py`
 
 **Key Interactions:**
-**Exposes:** `build()` - *Functional interface.*
-**Exposes:** `properties()` - *Functional interface.*
-**Exposes:** `set_property()` - *Functional interface.*
-**Exposes:** `clear()` - *Functional interface.*
-**Exposes:** `payload()` - *Functional interface.*
-**Exposes:** `metadata()` - *Functional interface.*
+**Exposes:** `build()` - *Build logic.*
+**Exposes:** `properties()` - *Properties logic.*
+**Exposes:** `set_property()` - *Configure property logic.*
+**Exposes:** `clear()` - *Clear logic.*
+**Exposes:** `payload()` - *Payload logic.*
+**Exposes:** `metadata()` - *Metadata logic.*
 
 
 ---
@@ -2704,12 +2407,12 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 * None detected.
 
 **Key Interactions:**
-**Exposes:** `name()` - *Functional interface.*
-**Exposes:** `description()` - *Functional interface.*
-**Exposes:** `calculation_hint()` - *Functional interface.*
-**Exposes:** `calculate_from_property()` - *Functional interface.*
-**Exposes:** `get_drawing_instructions()` - *Functional interface.*
-**Exposes:** `get_label_positions()` - *Functional interface.*
+**Exposes:** `name()` - *Name logic.*
+**Exposes:** `description()` - *Description logic.*
+**Exposes:** `calculation_hint()` - *Calculation hint logic.*
+**Exposes:** `calculate_from_property()` - *Compute from property logic.*
+**Exposes:** `get_drawing_instructions()` - *Retrieve drawing instructions logic.*
+**Exposes:** `get_label_positions()` - *Retrieve label positions logic.*
 
 
 ---
@@ -2718,37 +2421,27 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 
 **Role:** `[Scout]`
 
-**Purpose:** Shared 3D solid payload structures.
+**Purpose:** Backward compatibility shim for SolidPayload.
 
 **Input (Ingests):**
-* `text` (Field)
-* `position` (Field)
-* `align_center` (Field)
-* `vertices` (Field)
-* `edges` (Field)
-* `faces` (Field)
-* `labels` (Field)
-* `metadata` (Field)
-* `face_colors` (Field)
-* `suggested_scale` (Field)
+* Pure data structure or utility module.
 
 **Output (Emits):**
 * Data primitives or DTOs.
 
 **Dependencies (It Needs):**
-* `__future__.annotations`
-* `dataclasses.dataclass`
-* `dataclasses.field`
-* `typing.List`
-* `typing.Optional`
-* `typing.Sequence`
-* `typing.Tuple`
+* `shared.services.geometry.solid_payload.Edge`
+* `shared.services.geometry.solid_payload.Face`
+* `shared.services.geometry.solid_payload.SolidLabel`
+* `shared.services.geometry.solid_payload.SolidPayload`
+* `shared.services.geometry.solid_payload.Vec3`
+* `shared.services.geometry.solid_payload.Vertex`
 
 **Consumers (Who Needs It):**
-* `src/pillars/tq/services/platonic_transition_service.py`
+* None detected.
 
 **Key Interactions:**
-**Exposes:** `bounds()` - *Functional interface.*
+* Internal logic only.
 
 
 ---
@@ -2788,19 +2481,19 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 
 
 **Consumers (Who Needs It):**
-* None detected.
+* `tests/rituals/rite_of_calculator_security.py`
 
 **Key Interactions:**
-**Exposes:** `is_value()` - *Functional interface.*
-**Exposes:** `is_value_start()` - *Functional interface.*
-**Exposes:** `pop_atom()` - *Functional interface.*
-**Exposes:** `fail()` - *Functional interface.*
-**Exposes:** `eval_node()` - *Functional interface.*
-**Exposes:** `populate()` - *Functional interface.*
-**Exposes:** `populate()` - *Functional interface.*
-**Exposes:** `sin_wrapped()` - *Functional interface.*
-**Exposes:** `cos_wrapped()` - *Functional interface.*
-**Exposes:** `tan_wrapped()` - *Functional interface.*
+**Exposes:** `is_value()` - *Determine if value logic.*
+**Exposes:** `is_value_start()` - *Determine if value start logic.*
+**Exposes:** `pop_atom()` - *Pop atom logic.*
+**Exposes:** `fail()` - *Fail logic.*
+**Exposes:** `eval_node()` - *Eval node logic.*
+**Exposes:** `populate()` - *Populate logic.*
+**Exposes:** `populate()` - *Populate logic.*
+**Exposes:** `sin_wrapped()` - *Sin wrapped logic.*
+**Exposes:** `cos_wrapped()` - *Cos wrapped logic.*
+**Exposes:** `tan_wrapped()` - *Tan wrapped logic.*
 
 
 ---
@@ -3045,9 +2738,9 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 **Emits:** `history_updated` - *Nervous System Signal.*
 **Exposes:** `save_state()` - *Manually trigger save (or auto-save hook).*
 **Exposes:** `load_state()` - *Load state from history entry data.*
-**Exposes:** `shape_name()` - *Functional interface.*
-**Exposes:** `shape_description()` - *Functional interface.*
-**Exposes:** `get_properties()` - *Functional interface.*
+**Exposes:** `shape_name()` - *Shape name logic.*
+**Exposes:** `shape_description()` - *Shape description logic.*
+**Exposes:** `get_properties()` - *Retrieve properties logic.*
 **Exposes:** `get_shape()` - *Access underlying shape for rendering (Scene needs direct access usually).*
 **Exposes:** `set_property()` - *Attempt to set a property and trigger calculation.*
 **Exposes:** `clear_property()` - *Clear a single property value.*
@@ -3201,7 +2894,7 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 * None detected.
 
 **Key Interactions:**
-**Exposes:** `run()` - *Functional interface.*
+**Exposes:** `run()` - *Execute logic.*
 
 
 ---
@@ -3239,10 +2932,10 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 * `primitives.Labe
 
 **Consumers (Who Needs It):**
-* `src/pillars/tq/ui/quadset_analysis_window.py`
+* None detected.
 
 **Key Interactions:**
-**Exposes:** `eventFilter()` - *Functional interface.*
+**Exposes:** `eventFilter()` - *Eventfilter logic.*
 
 
 ---
@@ -3319,35 +3012,35 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 * None detected.
 
 **Key Interactions:**
-**Exposes:** `rotation_matrix()` - *Functional interface.*
-**Exposes:** `set_payload()` - *Functional interface.*
-**Exposes:** `reset_view()` - *Functional interface.*
-**Exposes:** `set_camera_angles()` - *Functional interface.*
-**Exposes:** `set_axes_visible()` - *Functional interface.*
-**Exposes:** `axes_visible()` - *Functional interface.*
-**Exposes:** `set_labels_visible()` - *Functional interface.*
-**Exposes:** `labels_visible()` - *Functional interface.*
-**Exposes:** `set_vertices_visible()` - *Functional interface.*
-**Exposes:** `vertices_visible()` - *Functional interface.*
-**Exposes:** `set_dual_visible()` - *Functional interface.*
-**Exposes:** `dual_visible()` - *Functional interface.*
-**Exposes:** `set_measure_mode()` - *Functional interface.*
-**Exposes:** `measure_mode()` - *Functional interface.*
-**Exposes:** `clear_measurement()` - *Functional interface.*
-**Exposes:** `selected_vertices()` - *Functional interface.*
+**Exposes:** `rotation_matrix()` - *Rotation matrix logic.*
+**Exposes:** `set_payload()` - *Configure payload logic.*
+**Exposes:** `reset_view()` - *Reset view logic.*
+**Exposes:** `set_camera_angles()` - *Configure camera angles logic.*
+**Exposes:** `set_axes_visible()` - *Configure axes visible logic.*
+**Exposes:** `axes_visible()` - *Axes visible logic.*
+**Exposes:** `set_labels_visible()` - *Configure labels visible logic.*
+**Exposes:** `labels_visible()` - *Labels visible logic.*
+**Exposes:** `set_vertices_visible()` - *Configure vertices visible logic.*
+**Exposes:** `vertices_visible()` - *Vertices visible logic.*
+**Exposes:** `set_dual_visible()` - *Configure dual visible logic.*
+**Exposes:** `dual_visible()` - *Dual visible logic.*
+**Exposes:** `set_measure_mode()` - *Configure measure mode logic.*
+**Exposes:** `measure_mode()` - *Measure mode logic.*
+**Exposes:** `clear_measurement()` - *Clear measurement logic.*
+**Exposes:** `selected_vertices()` - *Selected vertices logic.*
 **Emits:** `measurement_complete` - *Nervous System Signal.*
-**Exposes:** `set_sphere_visible()` - *Functional interface.*
-**Exposes:** `sphere_visible()` - *Functional interface.*
-**Exposes:** `zoom_in()` - *Functional interface.*
-**Exposes:** `zoom_out()` - *Functional interface.*
-**Exposes:** `fit_scene()` - *Functional interface.*
-**Exposes:** `paintEvent()` - *Functional interface.*
-**Exposes:** `wheelEvent()` - *Functional interface.*
-**Exposes:** `mousePressEvent()` - *Functional interface.*
-**Exposes:** `mouseMoveEvent()` - *Functional interface.*
-**Exposes:** `mouseReleaseEvent()` - *Functional interface.*
-**Exposes:** `get_pt_3d()` - *Functional interface.*
-**Exposes:** `get_pt_screen()` - *Functional interface.*
+**Exposes:** `set_sphere_visible()` - *Configure sphere visible logic.*
+**Exposes:** `sphere_visible()` - *Sphere visible logic.*
+**Exposes:** `zoom_in()` - *Zoom in logic.*
+**Exposes:** `zoom_out()` - *Zoom out logic.*
+**Exposes:** `fit_scene()` - *Fit scene logic.*
+**Exposes:** `paintEvent()` - *Paintevent logic.*
+**Exposes:** `wheelEvent()` - *Wheelevent logic.*
+**Exposes:** `mousePressEvent()` - *Mousepressevent logic.*
+**Exposes:** `mouseMoveEvent()` - *Mousemoveevent logic.*
+**Exposes:** `mouseReleaseEvent()` - *Mousereleaseevent logic.*
+**Exposes:** `get_pt_3d()` - *Retrieve pt 3d logic.*
+**Exposes:** `get_pt_screen()` - *Retrieve pt screen logic.*
 
 
 ---
@@ -3389,9 +3082,9 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 * None detected.
 
 **Key Interactions:**
-**Exposes:** `set_payload()` - *Functional interface.*
-**Exposes:** `set_solid_context()` - *Functional interface.*
-**Exposes:** `set_calculator()` - *Functional interface.*
+**Exposes:** `set_payload()` - *Configure payload logic.*
+**Exposes:** `set_solid_context()` - *Configure solid context logic.*
+**Exposes:** `set_calculator()` - *Configure calculator logic.*
 
 
 ---
@@ -3527,14 +3220,14 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 **Emits:** `mode_changed` - *Nervous System Signal.*
 **Emits:** `draw_start_changed` - *Nervous System Signal.*
 **Exposes:** `create_group()` - *Create a new group. Returns the actual name used (handles duplicates).*
-**Exposes:** `delete_group()` - *Functional interface.*
-**Exposes:** `add_dot_to_group()` - *Functional interface.*
-**Exposes:** `remove_dot_from_group()` - *Functional interface.*
+**Exposes:** `delete_group()` - *Remove group logic.*
+**Exposes:** `add_dot_to_group()` - *Add dot to group logic.*
+**Exposes:** `remove_dot_from_group()` - *Remove dot from group logic.*
 **Exposes:** `toggle_dot_in_group()` - *Toggle dot membership in the ACTIVE group.*
-**Exposes:** `add_connection()` - *Functional interface.*
+**Exposes:** `add_connection()` - *Add connection logic.*
 **Exposes:** `process_draw_click()` - *Handle a click in draw mode: Polyline logic.*
 **Exposes:** `cancel_drawing_chain()` - *Reset the current drawing chain (e.g. stop preview).*
-**Exposes:** `clear()` - *Functional interface.*
+**Exposes:** `clear()` - *Clear logic.*
 **Emits:** `dot_color_changed` - *Nervous System Signal.*
 **Emits:** `text_color_changed` - *Nervous System Signal.*
 
@@ -3583,32 +3276,32 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 **Emits:** `dot_hover_leave` - *Nervous System Signal.*
 **Emits:** `canvas_clicked` - *Nervous System Signal.*
 **Exposes:** `set_payload()` - *Replace the scene content with the provided payload.*
-**Exposes:** `clear_payload()` - *Functional interface.*
-**Exposes:** `set_axes_visible()` - *Functional interface.*
-**Exposes:** `set_labels_visible()` - *Functional interface.*
+**Exposes:** `clear_payload()` - *Clear payload logic.*
+**Exposes:** `set_axes_visible()` - *Configure axes visible logic.*
+**Exposes:** `set_labels_visible()` - *Configure labels visible logic.*
 **Exposes:** `set_vertex_highlights_visible()` - *Toggle visibility of vertex highlight dots.*
-**Exposes:** `apply_theme()` - *Functional interface.*
-**Exposes:** `get_current_bounds()` - *Functional interface.*
+**Exposes:** `apply_theme()` - *Apply theme logic.*
+**Exposes:** `get_current_bounds()` - *Retrieve current bounds logic.*
 **Exposes:** `get_vertices()` - *Get all significant vertices from the current payload.*
 **Exposes:** `add_temporary_line()` - *Legacy helper, redirected to new system or kept for simple 2-point compatibility.*
 **Exposes:** `update_measurement_preview()` - *Update the scene with the current multi-point measurement state.*
-**Exposes:** `set_measurement_font_size()` - *Functional interface.*
-**Exposes:** `set_measurement_line_color()` - *Functional interface.*
-**Exposes:** `set_measurement_text_color()` - *Functional interface.*
-**Exposes:** `set_measurement_show_area()` - *Functional interface.*
+**Exposes:** `set_measurement_font_size()` - *Configure measurement font size logic.*
+**Exposes:** `set_measurement_line_color()` - *Configure measurement line color logic.*
+**Exposes:** `set_measurement_text_color()` - *Configure measurement text color logic.*
+**Exposes:** `set_measurement_show_area()` - *Configure measurement show area logic.*
 **Exposes:** `clear_temporary_items()` - *Remove all temporary items from the scene.*
-**Exposes:** `mousePressEvent()` - *Functional interface.*
+**Exposes:** `mousePressEvent()` - *Mousepressevent logic.*
 **Exposes:** `set_start_dot_highlight()` - *Highlight the active drawing start dot (Drawing Anchor).*
-**Exposes:** `mouseMoveEvent()` - *Functional interface.*
+**Exposes:** `mouseMoveEvent()` - *Mousemoveevent logic.*
 **Exposes:** `set_preview_line()` - *Update or create a temporary preview line for drawing.*
 **Exposes:** `add_connection_line()` - *Add a persistent connection line to the scene.*
-**Exposes:** `set_dot_z_index()` - *Functional interface.*
+**Exposes:** `set_dot_z_index()` - *Configure dot z index logic.*
 **Exposes:** `highlight_dots()` - *Highlight specific dots by index.*
 **Exposes:** `set_hover_target()` - *Highlight a specific dot as a hover target (e.g. for snapping).*
 **Exposes:** `set_dot_color()` - *Set the fill color for all dot items (EllipseItems).*
 **Exposes:** `set_text_color()` - *Set the color for all text labels.*
 **Exposes:** `get_dots_in_rect()` - *Return list of dot indices whose centers fall within the given rectangle.*
-**Exposes:** `drawBackground()` - *Functional interface.*
+**Exposes:** `drawBackground()` - *Drawbackground logic.*
 **Exposes:** `update_label_layout()` - *Dynamically adjust label visibility and size based on zoom level.*
 
 
@@ -3651,18 +3344,18 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 
 **Key Interactions:**
 **Emits:** `dots_selected` - *Nervous System Signal.*
-**Exposes:** `resizeEvent()` - *Functional interface.*
-**Exposes:** `wheelEvent()` - *Functional interface.*
-**Exposes:** `zoom_in()` - *Functional interface.*
-**Exposes:** `zoom_out()` - *Functional interface.*
-**Exposes:** `zoom()` - *Functional interface.*
-**Exposes:** `reset_view()` - *Functional interface.*
-**Exposes:** `fit_scene()` - *Functional interface.*
-**Exposes:** `fit_to_bounds()` - *Functional interface.*
+**Exposes:** `resizeEvent()` - *Resizeevent logic.*
+**Exposes:** `wheelEvent()` - *Wheelevent logic.*
+**Exposes:** `zoom_in()` - *Zoom in logic.*
+**Exposes:** `zoom_out()` - *Zoom out logic.*
+**Exposes:** `zoom()` - *Zoom logic.*
+**Exposes:** `reset_view()` - *Reset view logic.*
+**Exposes:** `fit_scene()` - *Fit scene logic.*
+**Exposes:** `fit_to_bounds()` - *Fit to bounds logic.*
 **Exposes:** `set_measurement_mode()` - *Enable or disable measurement mode.*
-**Exposes:** `mousePressEvent()` - *Functional interface.*
-**Exposes:** `mouseMoveEvent()` - *Functional interface.*
-**Exposes:** `mouseReleaseEvent()` - *Functional interface.*
+**Exposes:** `mousePressEvent()` - *Mousepressevent logic.*
+**Exposes:** `mouseMoveEvent()` - *Mousemoveevent logic.*
+**Exposes:** `mouseReleaseEvent()` - *Mousereleaseevent logic.*
 **Exposes:** `set_selection_mode()` - *Enable or disable rubber-band selection mode.*
 
 
@@ -3712,6 +3405,50 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 
 ---
 
+**File:** `src/pillars/geometry/ui/nested_heptagons_window.py`
+
+**Role:** `[Skin] (UI/View)`
+
+**Purpose:** Nested Heptagons Window - Golden Trisection Visualizer.
+
+**Input (Ingests):**
+* `service`
+* `parent`
+* `parent`
+* `window_manager`
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `PyQt6.QtCore.QPointF`
+* `PyQt6.QtCore.Qt`
+* `PyQt6.QtGui.QBrush`
+* `PyQt6.QtGui.QColor`
+* `PyQt6.QtGui.QFont`
+* `PyQt6.QtGui.QPainter`
+* `PyQt6.QtGui.QPen`
+* `PyQt6.QtGui.QPolygonF`
+* `PyQt6.QtWidgets.QCheckBox`
+* `PyQt6.QtWidgets.QComboBox`
+* `PyQt6.QtWidgets.QDoubleSpinBox`
+* `PyQt6.QtWidgets.QFormLayout`
+* `PyQt6.QtWidgets.QFrame`
+* `PyQt6.QtWidgets.QGraphicsDropShadowEffect`
+* `PyQt6.QtWidgets.QGridLayout`
+* `PyQt6.QtWidgets.QGroupBox`
+* `PyQt6.QtWidgets.QHBoxLayout`
+* `PyQt6.QtWidgets.QL
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `paintEvent()` - *Paint the nested heptagons visualization.*
+
+
+---
+
 **File:** `src/pillars/geometry/ui/polygonal_number_window.py`
 
 **Role:** `[Skin] (UI/View)`
@@ -3750,10 +3487,10 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 * `primitives.Ci
 
 **Consumers (Who Needs It):**
-* `src/pillars/tq/ui/quadset_analysis_window.py`
+* None detected.
 
 **Key Interactions:**
-**Exposes:** `run()` - *Functional interface.*
+**Exposes:** `run()` - *Execute logic.*
 
 
 ---
@@ -3817,9 +3554,9 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 * `scripts/verify_polyline.py`
 
 **Key Interactions:**
-**Exposes:** `width()` - *Functional interface.*
-**Exposes:** `height()` - *Functional interface.*
-**Exposes:** `padded()` - *Functional interface.*
+**Exposes:** `width()` - *Width logic.*
+**Exposes:** `height()` - *Height logic.*
+**Exposes:** `padded()` - *Padded logic.*
 
 
 ---
@@ -3902,6 +3639,6 @@ This manifest dissects the Sacred Geometry pillar, mapping the transition from 2
 
 **Key Interactions:**
 **Emits:** `clicked` - *Nervous System Signal.*
-**Exposes:** `mousePressEvent()` - *Functional interface.*
+**Exposes:** `mousePressEvent()` - *Mousepressevent logic.*
 **Emits:** `shape_selected` - *Nervous System Signal.*
 **Exposes:** `get_selected_shape()` - *Return the selected shape definition.*

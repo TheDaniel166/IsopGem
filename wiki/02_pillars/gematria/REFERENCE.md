@@ -11,13 +11,15 @@ This manifest dissects the "Muscle" and "Skin" of the Gematria pillar, mapping t
 
 
 
+
+
 ---
 
 **File:** `src/pillars/gematria/models/calculation_entity.py`
 
 **Role:** `[Bone] (Model)`
 
-**Purpose:** SQLAlchemy entity for persisting gematria calculations.
+**Purpose:** SQLAlchemy entity for persisting gematria calculations (Shim).
 
 **Input (Ingests):**
 * Pure data structure or utility module.
@@ -26,25 +28,13 @@ This manifest dissects the "Muscle" and "Skin" of the Gematria pillar, mapping t
 * Data primitives or DTOs.
 
 **Dependencies (It Needs):**
-* `__future__.annotations`
-* `calculation_record.CalculationRecord`
-* `datetime.datetime`
-* `json`
-* `shared.database.Base`
-* `sqlalchemy.String`
-* `sqlalchemy.Text`
-* `sqlalchemy.orm.Mapped`
-* `sqlalchemy.orm.mapped_column`
-* `typing.List`
-* `typing.TYPE_CHECKING`
-* `uuid`
+* `shared.models.gematria.CalculationEntity`
 
 **Consumers (Who Needs It):**
-* `src/pillars/tq/ui/quadset_analysis_window.py`
+* None detected.
 
 **Key Interactions:**
-**Exposes:** `update_from_record()` - *Populate entity fields from a `CalculationRecord`.*
-**Exposes:** `to_record()` - *Convert this entity into a `CalculationRecord`.*
+* Internal logic only.
 
 
 ---
@@ -53,46 +43,23 @@ This manifest dissects the "Muscle" and "Skin" of the Gematria pillar, mapping t
 
 **Role:** `[Bone] (Model)`
 
-**Purpose:** Data model for stored gematria calculations.
+**Purpose:** Data model for stored gematria calculations (Shim).
 
 **Input (Ingests):**
-* `text` (Field)
-* `value` (Field)
-* `language` (Field)
-* `method` (Field)
-* `id` (Field)
-* `date_created` (Field)
-* `date_modified` (Field)
-* `notes` (Field)
-* `source` (Field)
-* `tags` (Field)
-* `breakdown` (Field)
-* `character_count` (Field)
-* `normalized_text` (Field)
-* `user_rating` (Field)
-* `is_favorite` (Field)
-* `category` (Field)
-* `related_ids` (Field)
+* Pure data structure or utility module.
 
 **Output (Emits):**
 * Data primitives or DTOs.
 
 **Dependencies (It Needs):**
-* `dataclasses.dataclass`
-* `dataclasses.field`
-* `datetime.datetime`
-* `json`
-* `typing.Dict`
-* `typing.List`
-* `typing.Optional`
+* `shared.models.gematria.CalculationRecord`
 
 **Consumers (Who Needs It):**
 * `tests/gematria/test_calculation_service.py`
 * `tests/gematria/test_sqlite_repository.py`
 
 **Key Interactions:**
-**Exposes:** `to_dict()` - *Convert to dictionary for storage.*
-**Exposes:** `from_dict()` - *Create from dictionary.*
+* Internal logic only.
 
 
 ---
@@ -147,9 +114,9 @@ This manifest dissects the "Muscle" and "Skin" of the Gematria pillar, mapping t
 **Key Interactions:**
 **Exposes:** `total_gematria()` - *Sum of term gematria + skip gematria.*
 **Exposes:** `get_row_col_coords()` - *Calculate (row, col) coordinates for current grid configuration.*
-**Exposes:** `total_hits()` - *Functional interface.*
+**Exposes:** `total_hits()` - *Total hits logic.*
 **Exposes:** `skip_distribution()` - *Count of results per skip interval.*
-**Exposes:** `positions()` - *Functional interface.*
+**Exposes:** `positions()` - *Positions logic.*
 **Exposes:** `total_length()` - *Total path length (last position - first position).*
 **Exposes:** `interval_sum()` - *Sum of all intervals.*
 **Exposes:** `total_gematria()` - *Sum of all intervening letters' gematria.*
@@ -249,10 +216,10 @@ This manifest dissects the "Muscle" and "Skin" of the Gematria pillar, mapping t
 **Exposes:** `get_by_id()` - *Fetch a record by primary key.*
 **Exposes:** `delete()` - *Remove a record by ID.*
 **Exposes:** `search()` - *Search calculations by metadata.*
-**Exposes:** `get_all()` - *Functional interface.*
-**Exposes:** `get_by_value()` - *Functional interface.*
-**Exposes:** `get_favorites()` - *Functional interface.*
-**Exposes:** `get_by_tags()` - *Functional interface.*
+**Exposes:** `get_all()` - *Retrieve all logic.*
+**Exposes:** `get_by_value()` - *Retrieve by value logic.*
+**Exposes:** `get_favorites()` - *Retrieve favorites logic.*
+**Exposes:** `get_by_tags()` - *Retrieve by tags logic.*
 **Exposes:** `get_by_text()` - *Fetch records with exact text match.*
 
 
@@ -294,7 +261,58 @@ This manifest dissects the "Muscle" and "Skin" of the Gematria pillar, mapping t
 
 ---
 
+**File:** `src/pillars/gematria/services/base_calculator.py`
 
+**Role:** `[Muscle] (Service)`
+
+**Purpose:** Backward compatibility shim for BaseCalculator.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `shared.services.gematria.base_calculator.GematriaCalculator`
+
+**Consumers (Who Needs It):**
+* `scripts/verify_gematria_send.py`
+* `scripts/verify_text_analysis_send.py`
+* `tests/gematria/test_calculation_service.py`
+
+**Key Interactions:**
+* Internal logic only.
+
+
+---
+
+**File:** `src/pillars/gematria/services/batch_io_service.py`
+
+**Role:** `[Muscle] (Service)`
+
+**Purpose:** Batch IO Service - The Granary Guard.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `csv`
+* `pandas`
+* `pathlib.Path`
+* `typing.Dict`
+* `typing.List`
+* `typing.Optional`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `is_pandas_available()` - *Check if pandas is available for advanced file formats.*
+**Exposes:** `read_file()` - *Read a file and return a list of dictionaries with normalized keys.*
 
 
 ---
@@ -312,16 +330,15 @@ This manifest dissects the "Muscle" and "Skin" of the Gematria pillar, mapping t
 * Data primitives or DTOs.
 
 **Dependencies (It Needs):**
-* `base_calculator.GematriaCalculator`
 * `datetime.datetime`
 * `json`
 * `models.CalculationRecord`
 * `repositories.CalculationRepository`
+* `shared.services.gematria.base_calculator.GematriaCalculator`
 * `typing.List`
 * `typing.Optional`
 
 **Consumers (Who Needs It):**
-* `src/pillars/correspondences/services/formula_engine.py`
 * `tests/gematria/test_calculation_service.py`
 
 **Key Interactions:**
@@ -389,9 +406,9 @@ This manifest dissects the "Muscle" and "Skin" of the Gematria pillar, mapping t
 
 **Dependencies (It Needs):**
 * `logging`
-* `pillars.document_manager.repositories.document_repository.DocumentRepository`
 * `re`
 * `shared.database.get_db`
+* `shared.repositories.document_manager.document_repository.DocumentRepository`
 * `sqlalchemy.orm.Session`
 * `typing.Optional`
 * `typing.Set`
@@ -404,7 +421,7 @@ This manifest dissects the "Muscle" and "Skin" of the Gematria pillar, mapping t
 **Exposes:** `load_dictionary()` - *Loads words from documents matching the collection filter.*
 **Exposes:** `get_words()` - *Return a sorted list of all words in the dictionary.*
 **Exposes:** `is_word()` - *Check if a candidate string exists in the loaded dictionary.*
-**Exposes:** `word_count()` - *Functional interface.*
+**Exposes:** `word_count()` - *Word count logic.*
 
 
 ---
@@ -453,12 +470,64 @@ This manifest dissects the "Muscle" and "Skin" of the Gematria pillar, mapping t
 
 ---
 
+**File:** `src/pillars/gematria/services/greek_calculator.py`
 
+**Role:** `[Muscle] (Service)`
+
+**Purpose:** Backward compatibility shim for GreekCalculator.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `shared.services.gematria.greek_calculator.GreekCubeCalculator`
+* `shared.services.gematria.greek_calculator.GreekDigitalCalculator`
+* `shared.services.gematria.greek_calculator.GreekFullValueCalculator`
+* `shared.services.gematria.greek_calculator.GreekGematriaCalculator`
+* `shared.services.gematria.greek_calculator.GreekKolelCalculator`
+* `shared.services.gematria.greek_calculator.GreekLetterValueCalculator`
+* `shared.services.gematria.greek_calculator.GreekNextLetterCalculator`
+* `shared.se
+
+**Consumers (Who Needs It):**
+* `src/pillars/gematria/ui/chiastic_window.py`
+
+**Key Interactions:**
+* Internal logic only.
 
 
 ---
 
+**File:** `src/pillars/gematria/services/hebrew_calculator.py`
 
+**Role:** `[Muscle] (Service)`
+
+**Purpose:** Backward compatibility shim for HebrewCalculator.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `shared.services.gematria.hebrew_calculator.HebrewAlbamCalculator`
+* `shared.services.gematria.hebrew_calculator.HebrewAtBashCalculator`
+* `shared.services.gematria.hebrew_calculator.HebrewCubeCalculator`
+* `shared.services.gematria.hebrew_calculator.HebrewFullValueCalculator`
+* `shared.services.gematria.hebrew_calculator.HebrewGematriaCalculator`
+* `shared.services.gematria.hebrew_calculator.HebrewIntegralReducedCalculator`
+* `shared.services.gematria.hebrew_calculator.HebrewKolelCalculator`
+
+
+**Consumers (Who Needs It):**
+* `src/pillars/gematria/ui/chiastic_window.py`
+
+**Key Interactions:**
+* Internal logic only.
 
 
 ---
@@ -505,8 +574,8 @@ This manifest dissects the "Muscle" and "Skin" of the Gematria pillar, mapping t
 
 **Dependencies (It Needs):**
 * `logging`
-* `pillars.document_manager.services.verse_teacher_service.verse_teacher_service_context`
 * `services.base_calculator.GematriaCalculator`
+* `shared.services.document_manager.verse_teacher_service.verse_teacher_service_context`
 * `typing.Any`
 * `typing.Dict`
 * `typing.List`
@@ -527,7 +596,30 @@ This manifest dissects the "Muscle" and "Skin" of the Gematria pillar, mapping t
 
 ---
 
+**File:** `src/pillars/gematria/services/tq_calculator.py`
 
+**Role:** `[Muscle] (Service)`
+
+**Purpose:** Backward compatibility shim for TQCalculator.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `shared.services.gematria.tq_calculator.TQGematriaCalculator`
+* `shared.services.gematria.tq_calculator.TQPositionCalculator`
+* `shared.services.gematria.tq_calculator.TQReducedCalculator`
+* `shared.services.gematria.tq_calculator.TQSquareCalculator`
+* `shared.services.gematria.tq_calculator.TQTriangularCalculator`
+
+**Consumers (Who Needs It):**
+* `src/pillars/gematria/ui/chiastic_window.py`
+
+**Key Interactions:**
+* Internal logic only.
 
 
 ---
@@ -573,16 +665,16 @@ This manifest dissects the "Muscle" and "Skin" of the Gematria pillar, mapping t
 * None detected.
 
 **Key Interactions:**
-**Exposes:** `setup_ui()` - *Functional interface.*
+**Exposes:** `setup_ui()` - *Setup ui logic.*
 **Exposes:** `on_result_double_clicked()` - *Opens the highlight dialog for the selected result.*
 **Exposes:** `load_dictionary()` - *Loads the dictionary from the 'Holy' corpus.*
-**Exposes:** `view_dictionary()` - *Functional interface.*
-**Exposes:** `load_document_dialog()` - *Functional interface.*
-**Exposes:** `load_document_text()` - *Functional interface.*
+**Exposes:** `view_dictionary()` - *View dictionary logic.*
+**Exposes:** `load_document_dialog()` - *Load document dialog logic.*
+**Exposes:** `load_document_text()` - *Load document text logic.*
 **Exposes:** `calculate_gematria()` - *Simple TQ Cipher (A=1, B=2...) calculation.*
-**Exposes:** `run_search()` - *Functional interface.*
-**Exposes:** `update_list()` - *Functional interface.*
-**Exposes:** `filter_list()` - *Functional interface.*
+**Exposes:** `run_search()` - *Execute search logic.*
+**Exposes:** `update_list()` - *Update list logic.*
+**Exposes:** `filter_list()` - *Filter list logic.*
 **Exposes:** `generate_html()` - *Generates HTML with red bolded letters for the acrostic.*
 
 
@@ -627,7 +719,6 @@ This manifest dissects the "Muscle" and "Skin" of the Gematria pillar, mapping t
 * `PyQt
 
 **Consumers (Who Needs It):**
-* `scripts/reproduce_crash_full.py`
 * `scripts/verify_batch_send.py`
 * `scripts/verify_planetary_send.py`
 
@@ -637,7 +728,7 @@ This manifest dissects the "Muscle" and "Skin" of the Gematria pillar, mapping t
 **Emits:** `processing_finished` - *Nervous System Signal.*
 **Exposes:** `run()` - *Process all calculations.*
 **Exposes:** `stop()` - *Stop processing.*
-**Exposes:** `closeEvent()` - *Functional interface.*
+**Exposes:** `closeEvent()` - *Closeevent logic.*
 
 
 ---
@@ -713,18 +804,18 @@ This manifest dissects the "Muscle" and "Skin" of the Gematria pillar, mapping t
 * `PyQt6.QtWidgets.QTextEdit`
 * `PyQt6.QtWidgets.QVBoxLayout`
 * `PyQt6.QtWidgets.QWidget`
-* `pillars.document_manager.repositories.document_repository.DocumentRepository`
-* 
+* `pillars.gematria.services.chiasmus_service.ChiasmusService`
+* `pillars.gematria.
 
 **Consumers (Who Needs It):**
 * None detected.
 
 **Key Interactions:**
-**Exposes:** `setup_ui()` - *Functional interface.*
-**Exposes:** `load_document_dialog()` - *Functional interface.*
-**Exposes:** `load_document_text()` - *Functional interface.*
-**Exposes:** `scan_text()` - *Functional interface.*
-**Exposes:** `display_pattern()` - *Functional interface.*
+**Exposes:** `setup_ui()` - *Setup ui logic.*
+**Exposes:** `load_document_dialog()` - *Load document dialog logic.*
+**Exposes:** `load_document_text()` - *Load document text logic.*
+**Exposes:** `scan_text()` - *Scan text logic.*
+**Exposes:** `display_pattern()` - *Display pattern logic.*
 **Exposes:** `generate_viz_html()` - *Generates V-shape or Mirror HTML.*
 
 
@@ -770,7 +861,7 @@ This manifest dissects the "Muscle" and "Skin" of the Gematria pillar, mapping t
 
 **Key Interactions:**
 **Emits:** `totalContextMenuRequested` - *Nervous System Signal.*
-**Exposes:** `clear()` - *Clear the dashboard and show the placeholder.*
+**Exposes:** `clear()` - *Clear the dashboard and reset to initial state.*
 **Exposes:** `display_results()` - *Update the dashboard with new results.*
 **Exposes:** `display_comparison()` - *Update the dashboard with comparison results.*
 
@@ -839,18 +930,18 @@ This manifest dissects the "Muscle" and "Skin" of the Gematria pillar, mapping t
 * `PyQt6.QtWidgets.QListWidget`
 * `PyQt6.QtWidgets.QPushButton`
 * `PyQt6.QtWidgets.QVBoxLayout`
-* `pillars.document_manager.repositories.document_repository.DocumentRepository`
 * `shared.database.get_db`
+* `shared.repositories.document_manager.document_repository.DocumentRepository`
 
 **Consumers (Who Needs It):**
 * `src/pillars/gematria/ui/acrostics_window.py`
 * `src/pillars/gematria/ui/chiastic_window.py`
 
 **Key Interactions:**
-**Exposes:** `load_docs()` - *Functional interface.*
-**Exposes:** `update_list()` - *Functional interface.*
-**Exposes:** `filter_list()` - *Functional interface.*
-**Exposes:** `get_selected_doc_id()` - *Functional interface.*
+**Exposes:** `load_docs()` - *Load docs logic.*
+**Exposes:** `update_list()` - *Update list logic.*
+**Exposes:** `filter_list()` - *Filter list logic.*
+**Exposes:** `get_selected_doc_id()` - *Retrieve selected doc id logic.*
 
 
 ---
@@ -1113,7 +1204,7 @@ This manifest dissects the "Muscle" and "Skin" of the Gematria pillar, mapping t
 * None detected.
 
 **Key Interactions:**
-**Exposes:** `closeEvent()` - *Functional interface.*
+**Exposes:** `closeEvent()` - *Closeevent logic.*
 
 
 ---
@@ -1127,6 +1218,7 @@ This manifest dissects the "Muscle" and "Skin" of the Gematria pillar, mapping t
 **Input (Ingests):**
 * `window_manager`
 * `parent`
+* `initial_value`
 
 **Output (Emits):**
 * Data primitives or DTOs.
@@ -1151,14 +1243,10 @@ This manifest dissects the "Muscle" and "Skin" of the Gematria pillar, mapping t
 * `PyQt6.QtWidgets.QMai
 
 **Consumers (Who Needs It):**
-* `src/pillars/astrology/ui/differential_natal_window.py`
-* `src/pillars/geometry/ui/geometry3d/window3d.py`
-* `src/pillars/tq/ui/conrune_pair_finder_window.py`
-* `src/pillars/tq/ui/geometric_transitions_3d_window.py`
-* `src/pillars/tq/ui/geometric_transitions_window.py`
+* None detected.
 
 **Key Interactions:**
-**Exposes:** `add_field()` - *Functional interface.*
+**Exposes:** `add_field()` - *Add field logic.*
 
 
 ---
@@ -1189,8 +1277,8 @@ This manifest dissects the "Muscle" and "Skin" of the Gematria pillar, mapping t
 * `PyQt6.QtWidgets.QVBoxLayout`
 * `PyQt6.QtWidgets.QWidget`
 * `document_viewer.DocumentViewer`
-* `pillars.document_manager.models.document.Document`
 * `services.text_analysis_service.TextAnalysisService`
+* `shared.models.document_manager.document.Document`
 * `typing.Optional`
 * `verse_list.VerseList`
 
@@ -1204,12 +1292,12 @@ This manifest dissects the "Muscle" and "Skin" of the Gematria pillar, mapping t
 **Emits:** `save_text_requested` - *Nervous System Signal.*
 **Emits:** `open_quadset_requested` - *Nervous System Signal.*
 **Emits:** `teach_requested` - *Nervous System Signal.*
-**Exposes:** `set_view_mode()` - *Functional interface.*
-**Exposes:** `refresh_verse_list()` - *Functional interface.*
-**Exposes:** `update_settings()` - *Functional interface.*
-**Exposes:** `get_text()` - *Functional interface.*
-**Exposes:** `highlight_ranges()` - *Functional interface.*
-**Exposes:** `clear_highlights()` - *Functional interface.*
+**Exposes:** `set_view_mode()` - *Configure view mode logic.*
+**Exposes:** `refresh_verse_list()` - *Refresh verse list logic.*
+**Exposes:** `update_settings()` - *Update settings logic.*
+**Exposes:** `get_text()` - *Retrieve text logic.*
+**Exposes:** `highlight_ranges()` - *Highlight ranges logic.*
+**Exposes:** `clear_highlights()` - *Clear highlights logic.*
 
 
 ---
@@ -1247,12 +1335,12 @@ This manifest dissects the "Muscle" and "Skin" of the Gematria pillar, mapping t
 **Emits:** `save_requested` - *Nervous System Signal.*
 **Emits:** `calculate_requested` - *Nervous System Signal.*
 **Emits:** `send_to_quadset_requested` - *Nervous System Signal.*
-**Exposes:** `set_text()` - *Functional interface.*
-**Exposes:** `get_text()` - *Functional interface.*
-**Exposes:** `get_selected_text()` - *Functional interface.*
-**Exposes:** `select_range()` - *Functional interface.*
+**Exposes:** `set_text()` - *Configure text logic.*
+**Exposes:** `get_text()` - *Retrieve text logic.*
+**Exposes:** `get_selected_text()` - *Retrieve selected text logic.*
+**Exposes:** `select_range()` - *Select range logic.*
 **Exposes:** `highlight_ranges()` - *Highlight list of (start, end) ranges.*
-**Exposes:** `clear_highlights()` - *Functional interface.*
+**Exposes:** `clear_highlights()` - *Clear highlights logic.*
 
 
 ---
@@ -1339,9 +1427,9 @@ This manifest dissects the "Muscle" and "Skin" of the Gematria pillar, mapping t
 **Emits:** `export_requested` - *Nervous System Signal.*
 **Emits:** `smart_filter_requested` - *Nervous System Signal.*
 **Emits:** `clear_requested` - *Nervous System Signal.*
-**Exposes:** `set_active_tab()` - *Functional interface.*
+**Exposes:** `set_active_tab()` - *Configure active tab logic.*
 **Exposes:** `set_results()` - *Set matches and refresh display.*
-**Exposes:** `clear_results()` - *Functional interface.*
+**Exposes:** `clear_results()` - *Clear results logic.*
 **Emits:** `send_to_tablet_requested` - *Nervous System Signal.*
 **Exposes:** `contextMenuEvent()` - *Context menu for results.*
 
@@ -1384,7 +1472,7 @@ This manifest dissects the "Muscle" and "Skin" of the Gematria pillar, mapping t
 
 **Key Interactions:**
 **Emits:** `finished` - *Nervous System Signal.*
-**Exposes:** `run()` - *Functional interface.*
+**Exposes:** `run()` - *Execute logic.*
 
 
 ---
@@ -1454,7 +1542,7 @@ This manifest dissects the "Muscle" and "Skin" of the Gematria pillar, mapping t
 **Emits:** `verse_save_requested` - *Nervous System Signal.*
 **Emits:** `save_all_requested` - *Nervous System Signal.*
 **Exposes:** `render_verses()` - *Render verses into the list.*
-**Exposes:** `clear()` - *Functional interface.*
+**Exposes:** `clear()` - *Clear logic.*
 
 
 ---
@@ -1512,7 +1600,7 @@ This manifest dissects the "Muscle" and "Skin" of the Gematria pillar, mapping t
 
 **Role:** `[Tool] (Utility)`
 
-**Purpose:** Utilities for parsing documents into verses by number.
+**Purpose:** Backward compatibility shim for verse_parser.
 
 **Input (Ingests):**
 * Pure data structure or utility module.
@@ -1521,16 +1609,10 @@ This manifest dissects the "Muscle" and "Skin" of the Gematria pillar, mapping t
 * Data primitives or DTOs.
 
 **Dependencies (It Needs):**
-* `re`
-* `typing.Any`
-* `typing.Dict`
-* `typing.List`
-* `typing.Optional`
+* `shared.utils.verse_parser.parse_verses`
 
 **Consumers (Who Needs It):**
-* `src/pillars/document_manager/services/verse_teacher_service.py`
 * `tests/document/test_verse_parser.py`
 
 **Key Interactions:**
-**Exposes:** `parse_verses()` - *Parse the given plain text into numbered verses.*
-**Exposes:** `next_non_space_char()` - *Functional interface.*
+* Internal logic only.

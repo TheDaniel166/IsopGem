@@ -6,7 +6,7 @@ This window bridges the Astrology and Time Mechanics pillars by:
 """
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont, QAction, QPixmap, QPainter, QColor
@@ -104,6 +104,10 @@ class ChariotDifferentialsWindow(QWidget):
         self._total_difference = 0
         self._total_ditrune = 0
         self._total_contrune = 0
+        
+        # Store 7 Axle subtotals for cross-pillar transfer
+        # Maps axle_id (1-7) -> {"difference": int, "ditrune": int, "contrune": int}
+        self._axle_subtotals: Dict[int, Dict[str, int]] = {}
         
         # UI Components
         self.tabs: QTabWidget
@@ -443,6 +447,7 @@ class ChariotDifferentialsWindow(QWidget):
         self._midpoint_differences = []
         self._midpoint_ditrunes = []
         self._midpoint_contrunes = []
+        self._axle_subtotals = {}  # Clear for fresh calculation
         
         chariot_diff = 0
         chariot_ditrune = 0
@@ -542,6 +547,13 @@ class ChariotDifferentialsWindow(QWidget):
                 self.results_table.setItem(row, col, item)
             
             self.results_table.setItem(row, 5, QTableWidgetItem(""))
+            
+            # Store axle subtotals for cross-pillar transfer
+            self._axle_subtotals[axle.id] = {
+                "difference": sum(axle_diffs),
+                "ditrune": sum(axle_ditrunes),
+                "contrune": sum(axle_contrunes)
+            }
         
         # Calculate 21 Midpoints total
         total_21_diff = sum(self._midpoint_differences)
@@ -682,6 +694,23 @@ class ChariotDifferentialsWindow(QWidget):
         lookup_action.triggered.connect(lambda: self._lookup_value_in_database(value))
         menu.addAction(lookup_action)
         
+        # Check if this is a total or subtotal row — offer "Send 7 Axles to Geometry"
+        if self._axle_subtotals and len(self._axle_subtotals) == 7:
+            # Add separator and Geometry options
+            menu.addSeparator()
+            
+            diff_action = QAction("⚡ Send 7 Axle Differences to Geometry", menu)
+            diff_action.triggered.connect(lambda: self._send_axles_to_geometry("difference"))
+            menu.addAction(diff_action)
+            
+            ditrune_action = QAction("⚡ Send 7 Axle Ditrunes to Geometry", menu)
+            ditrune_action.triggered.connect(lambda: self._send_axles_to_geometry("ditrune"))
+            menu.addAction(ditrune_action)
+            
+            contrune_action = QAction("⚡ Send 7 Axle Contrunes to Geometry", menu)
+            contrune_action.triggered.connect(lambda: self._send_axles_to_geometry("contrune"))
+            menu.addAction(contrune_action)
+        
         menu.exec(self.results_table.viewport().mapToGlobal(position))
     
     def _send_value_to_quadset(self, value: int) -> None:
@@ -700,4 +729,26 @@ class ChariotDifferentialsWindow(QWidget):
         navigation_bus.request_window.emit(
             "saved_calculations",
             {"initial_value": value}
+        )
+    
+    def _send_axles_to_geometry(self, column: str) -> None:
+        """Send 7 Axle subtotals to Geometric Transitions as heptagon vertices.
+        
+        Args:
+            column: Which column to send ('difference', 'ditrune', or 'contrune')
+        """
+        if not self._axle_subtotals or len(self._axle_subtotals) != 7:
+            return
+        
+        from shared.signals.navigation_bus import navigation_bus
+        
+        # Extract values in axle order (sorted by axle_id 1-7)
+        values = [
+            self._axle_subtotals[axle_id][column]
+            for axle_id in sorted(self._axle_subtotals.keys())
+        ]
+        
+        navigation_bus.request_window.emit(
+            "geometric_transitions",
+            {"initial_values": values}
         )

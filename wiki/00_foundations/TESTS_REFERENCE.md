@@ -31,6 +31,8 @@
 
 
 
+
+
 ---
 
 **File:** `tests/_legacy/test_db_persistence.py`
@@ -1265,6 +1267,85 @@
 
 ---
 
+**File:** `tests/pillars/astrology/test_ephemeris_golden_values.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** Golden-value tests for ephemeris accuracy.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `datetime.datetime`
+* `datetime.timezone`
+* `pathlib.Path`
+* `pillars.astrology.models.chart_models.GeoLocation`
+* `pillars.astrology.repositories.ephemeris_provider.EphemerisProvider`
+* `pytest`
+* `sys`
+* `time`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `setup_ephemeris()` - *Ensure ephemeris is loaded before tests.*
+**Exposes:** `test_sun_j2000_epoch()` - *Sun longitude at J2000 epoch (2000-01-01 12:00 TT).*
+**Exposes:** `test_moon_sample_date()` - *Moon longitude on a known date.*
+**Exposes:** `test_venus_position()` - *Venus longitude on a known date.*
+**Exposes:** `setup_ephemeris()` - *Functional interface.*
+**Exposes:** `test_true_vs_mean_node_differ()` - *True Node and Mean Node should differ.*
+**Exposes:** `setup_ephemeris()` - *Functional interface.*
+**Exposes:** `test_lahiri_ayanamsa_offset()` - *Lahiri Ayanamsa at J2000 should be ~23.85°.*
+**Exposes:** `test_sidereal_less_than_tropical()` - *Sidereal positions should be less than tropical (westward offset).*
+**Exposes:** `setup_ephemeris()` - *Functional interface.*
+**Exposes:** `test_topocentric_moon_parallax()` - *Moon should show measurable parallax between geo and topo.*
+**Exposes:** `test_sun_minimal_parallax()` - *Sun parallax should be negligible (<0.01°).*
+
+
+---
+
+**File:** `tests/pillars/astrology/test_interpretation_depth.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** Tests for expanded astrology interpretation capabilities.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `logging`
+* `pillars.astrology.models.chart_models.AstrologyEvent`
+* `pillars.astrology.models.chart_models.ChartResult`
+* `pillars.astrology.models.chart_models.GeoLocation`
+* `pillars.astrology.models.chart_models.HousePosition`
+* `pillars.astrology.models.chart_models.PlanetPosition`
+* `pillars.astrology.models.interpretation_models.RichInterpretationContent`
+* `pillars.astrology.services.aspects_service.AspectDefinition`
+* `pillars.astrology.services.aspects_service.AspectsService`
+* `pill
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `mock_repo()` - *Functional interface.*
+**Exposes:** `sample_chart()` - *Create a basic chart result.*
+**Exposes:** `test_interpret_aspects_integration()` - *Verify aspects are calculated and interpreted.*
+**Exposes:** `test_ordering_by_orb()` - *Verify tighter orbs appear earlier in the report.*
+**Exposes:** `test_dominant_element_analysis()` - *Verify element analysis is added.*
+
+
+---
+
 **File:** `tests/repro_detached.py`
 
 **Role:** `[Scout]`
@@ -1486,6 +1567,35 @@
 **Exposes:** `test_prism_solving()` - *Verify Prism bidirectional metrics.*
 **Exposes:** `test_antiprism_solving()` - *Verify Antiprism bidirectional metrics.*
 **Exposes:** `test_frustum_solving()` - *Verify Frustum bidirectional metrics.*
+
+
+---
+
+**File:** `tests/rituals/rite_of_calculator_security.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** Soul not yet specified.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `pathlib.Path`
+* `pillars.geometry.ui.advanced_scientific_calculator_window._safe_math_eval`
+* `src.pillars.geometry.ui.advanced_scientific_calculator_window._safe_math_eval`
+* `sys`
+* `unittest`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `test_basic_math()` - *Sun Trial: Does it calculate correctly?*
+**Exposes:** `test_exploit_injection()` - *Mars Trial: Does it block injection?*
 
 
 ---
@@ -2984,38 +3094,6 @@
 
 ---
 
-**File:** `tests/verify_fixes.py`
-
-**Role:** `[Scout]`
-
-**Purpose:** Soul not yet specified.
-
-**Input (Ingests):**
-* Pure data structure or utility module.
-
-**Output (Emits):**
-* Data primitives or DTOs.
-
-**Dependencies (It Needs):**
-* `PyQt6.QtCore.Qt`
-* `PyQt6.QtWidgets.QApplication`
-* `PyQt6.QtWidgets.QTextEdit`
-* `os`
-* `pathlib.Path`
-* `pillars.document_manager.ui.rich_text_editor.RichTextEditor`
-* `pillars.document_manager.utils.parsers.DocumentParser`
-* `sys`
-
-**Consumers (Who Needs It):**
-* None detected.
-
-**Key Interactions:**
-**Exposes:** `verify_editor_ltr()` - *Functional interface.*
-**Exposes:** `verify_parser_integrity()` - *Functional interface.*
-
-
----
-
 **File:** `tests/verify_geometry_fixes.py`
 
 **Role:** `[Scout]`
@@ -3061,9 +3139,12 @@
 
 **Dependencies (It Needs):**
 * `base64`
+* `logging`
 * `os`
 * `pillars.document_manager.utils.image_utils.extract_images_from_html`
 * `pillars.document_manager.utils.image_utils.restore_images_in_html`
+* `pillars.document_manager.utils.image_utils`
+* `shared.services.document_manager.utils.image_utils`
 * `sys`
 * `unittest.mock.MagicMock`
 

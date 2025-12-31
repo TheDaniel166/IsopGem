@@ -11,6 +11,71 @@ This manifest dissects the Celestial Engine of IsopGem, mapping the integration 
 
 
 
+
+
+---
+
+**File:** `src/pillars/astrology/models/chariot_models.py`
+
+**Role:** `[Bone] (Model)`
+
+**Purpose:** Chariot system models - The Merkabah of the Soul.
+
+**Input (Ingests):**
+* `id` (Field)
+* `name` (Field)
+* `planet_a` (Field)
+* `planet_b` (Field)
+* `longitude` (Field)
+* `sign` (Field)
+* `sign_degree` (Field)
+* `trio_id` (Field)
+* `keywords` (Field)
+* `description` (Field)
+* `id` (Field)
+* `name` (Field)
+* `longitude` (Field)
+* `sign` (Field)
+* `sign_degree` (Field)
+* `midpoints` (Field)
+* `description` (Field)
+* `longitude` (Field)
+* `sign` (Field)
+* `sign_degree` (Field)
+* `axles` (Field)
+* `degree` (Field)
+* `name` (Field)
+* `initiation` (Field)
+* `affected_point` (Field)
+* `orb` (Field)
+* `midpoints` (Field)
+* `axles` (Field)
+* `chariot_point` (Field)
+* `midpoint_symbols` (Field)
+* `axle_symbols` (Field)
+* `chariot_symbol` (Field)
+* `fateful_positions` (Field)
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `__future__.annotations`
+* `dataclasses.dataclass`
+* `dataclasses.field`
+* `services.maat_symbols_service.MaatSymbol`
+* `typing.Dict`
+* `typing.List`
+* `typing.Optional`
+* `typing.TYPE_CHECKING`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+* Internal logic only.
+
+
 ---
 
 **File:** `src/pillars/astrology/models/chart_models.py`
@@ -38,6 +103,8 @@ This manifest dissects the Celestial Engine of IsopGem, mapping the integration 
 * `name` (Field)
 * `degree` (Field)
 * `sign_index` (Field)
+* `speed` (Field)
+* `declination` (Field)
 * `number` (Field)
 * `degree` (Field)
 * `chart_type` (Field)
@@ -46,6 +113,7 @@ This manifest dissects the Celestial Engine of IsopGem, mapping the integration 
 * `aspect_summary` (Field)
 * `svg_document` (Field)
 * `raw_payload` (Field)
+* `julian_day` (Field)
 
 **Output (Emits):**
 * Data primitives or DTOs.
@@ -64,7 +132,16 @@ This manifest dissects the Celestial Engine of IsopGem, mapping the integration 
 * `typing.Optional`
 
 **Consumers (Who Needs It):**
+* `scripts/horizon_seals/seal_jupiter.py`
+* `scripts/horizon_seals/seal_mars.py`
+* `scripts/horizon_seals/seal_sun.py`
+* `scripts/verify_fixed_stars_panel.py`
+* `scripts/verify_horizon_phase1.py`
+* `scripts/verify_horizon_phase2.py`
+* `scripts/verify_horizon_phase4.py`
 * `src/pillars/astrology/services/interpretation_service.py`
+* `tests/pillars/astrology/test_ephemeris_golden_values.py`
+* `tests/pillars/astrology/test_interpretation_depth.py`
 * `tests/rituals/render_chart_preview.py`
 * `tests/rituals/rite_of_interpretation.py`
 
@@ -165,8 +242,10 @@ This manifest dissects the Celestial Engine of IsopGem, mapping the integration 
 * `typing.Optional`
 
 **Consumers (Who Needs It):**
+* `scripts/verify_horizon_phase3.py`
 * `src/pillars/astrology/services/interpretation_service.py`
 * `src/pillars/astrology/ui/interpretation_widget.py`
+* `tests/pillars/astrology/test_interpretation_depth.py`
 
 **Key Interactions:**
 **Exposes:** `add_segment()` - *Add a segment to the report.*
@@ -202,10 +281,10 @@ This manifest dissects the Celestial Engine of IsopGem, mapping the integration 
 * None detected.
 
 **Key Interactions:**
-**Exposes:** `create_chart()` - *Functional interface.*
-**Exposes:** `get_chart()` - *Functional interface.*
-**Exposes:** `list_recent()` - *Functional interface.*
-**Exposes:** `search()` - *Functional interface.*
+**Exposes:** `create_chart()` - *Create chart logic.*
+**Exposes:** `get_chart()` - *Retrieve chart logic.*
+**Exposes:** `list_recent()` - *List recent logic.*
+**Exposes:** `search()` - *Search logic.*
 
 
 ---
@@ -227,19 +306,29 @@ This manifest dissects the Celestial Engine of IsopGem, mapping the integration 
 * `datetime.timedelta`
 * `datetime.timezone`
 * `math`
+* `models.chart_models.GeoLocation`
 * `os`
 * `skyfield.api.load`
+* `skyfield.api.wgs84`
 * `skyfield.framelib.ecliptic_frame`
 * `threading`
+* `typing.Any`
+* `typing.Dict`
+* `typing.Optional`
+* `typing.Tuple`
+* `typing.Union`
 
 **Consumers (Who Needs It):**
+* `scripts/verify_horizon_phase1.py`
 * `src/pillars/astrology/ui/venus_rose_window.py`
+* `tests/pillars/astrology/test_ephemeris_golden_values.py`
 
 **Key Interactions:**
-**Exposes:** `get_instance()` - *Functional interface.*
-**Exposes:** `is_loaded()` - *Functional interface.*
+**Exposes:** `get_instance()` - *Retrieve instance logic.*
+**Exposes:** `is_loaded()` - *Determine if loaded logic.*
 **Exposes:** `get_osculating_north_node()` - *Calculates the Geocentric Osculating North Node (True Node) of the Moon.*
-**Exposes:** `get_geocentric_ecliptic_position()` - *Returns the Geocentric Ecliptic Longitude (0-360) for a given body.*
+**Exposes:** `get_mean_north_node()` - *Calculates the Geocentric Mean North Node.*
+**Exposes:** `get_geocentric_ecliptic_position()` - *Returns the Ecliptic Longitude (0-360) for a given body.*
 **Exposes:** `get_heliocentric_ecliptic_position()` - *Returns the Heliocentric Ecliptic Longitude (0-360) for a given body.*
 **Exposes:** `get_extended_data()` - *Returns a dictionary of extended orbital data:*
 
@@ -269,6 +358,7 @@ This manifest dissects the Celestial Engine of IsopGem, mapping the integration 
 * `typing.Optional`
 
 **Consumers (Who Needs It):**
+* `scripts/verify_horizon_phase3.py`
 * `src/pillars/astrology/services/interpretation_service.py`
 * `tests/rituals/rite_of_interpretation.py`
 
@@ -277,6 +367,9 @@ This manifest dissects the Celestial Engine of IsopGem, mapping the integration 
 **Exposes:** `get_planet_house_text()` - *Get text for a planet in a house.*
 **Exposes:** `get_planet_sign_house_text()` - *Get text for the combinatorial triad (Planet + Sign + House).*
 **Exposes:** `get_aspect_text()` - *Get text for an aspect between two planets.*
+**Exposes:** `get_transit_text()` - *Get text for a transiting planet aspecting a natal planet.*
+**Exposes:** `get_synastry_text()` - *Get text for synastry aspect (Inter-aspects).*
+**Exposes:** `get_elementalist_text()` - *Get text for elemental or modality analysis.*
 
 
 ---
@@ -351,12 +444,60 @@ This manifest dissects the Celestial Engine of IsopGem, mapping the integration 
 * `typing.Tuple`
 
 **Consumers (Who Needs It):**
+* `scripts/verify_horizon_phase2.py`
 * `src/pillars/astrology/services/interpretation_service.py`
+* `tests/pillars/astrology/test_interpretation_depth.py`
 * `tests/rituals/verify_aspects.py`
 
 **Key Interactions:**
 **Exposes:** `calculate_aspects()` - *Calculate all aspects between planets.*
+**Exposes:** `calculate_aspects_between()` - *Calculate aspects between two specific bodies.*
 **Exposes:** `get_aspect_definitions()` - *Get list of aspect definitions.*
+
+
+---
+
+**File:** `src/pillars/astrology/services/chariot_service.py`
+
+**Role:** `[Muscle] (Service)`
+
+**Purpose:** Chariot Service - The Merkabah Engine.
+
+**Input (Ingests):**
+* `positions`
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `__future__.annotations`
+* `json`
+* `maat_symbols_service.MaatSymbol`
+* `maat_symbols_service.MaatSymbolsService`
+* `math`
+* `midpoints_service.MidpointsService`
+* `models.chariot_models.AxlePosition`
+* `models.chariot_models.ChariotMidpoint`
+* `models.chariot_models.ChariotPosition`
+* `models.chariot_models.ChariotReport`
+* `models.chariot_models.FatefulDegreePosition`
+* `models.chart_models.ChartResult`
+* `models.chart_models.PlanetPosition`
+* `pathlib.Path`
+* `typing.Dict`
+* `typing.List`
+*
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `get_chariot_midpoints()` - *Calculate the 21 Chariot midpoints from planetary positions.*
+**Exposes:** `calculate_axles()` - *Calculate the 7 Axles from the Chariot midpoints.*
+**Exposes:** `calculate_chariot_point()` - *Calculate the Chariot Point - the mean of all 7 Axles.*
+**Exposes:** `detect_fateful_positions()` - *Detect any positions on the three Fateful Degrees.*
+**Exposes:** `generate_chariot_report()` - *Generate a complete Chariot analysis from a natal chart.*
+**Exposes:** `generate_from_positions()` - *Generate a Chariot report directly from planet positions.*
 
 
 ---
@@ -390,13 +531,17 @@ This manifest dissects the Celestial Engine of IsopGem, mapping the integration 
 * `contextlib.AbstractContextManager`
 * `dataclasses.dataclass`
 * `datetime.datetime`
+* `json`
 * `models.AstrologyEvent`
 * `models.ChartRequest`
 * `models.ChartResult`
 * `models.GeoLocation`
+* `models.HousePosition`
+* `models.PlanetPosition`
 * `models.chart_record.AstrologyChart`
 * `repositories.chart_repository.ChartRepository`
 * `shared.database.get_db_session`
+* `typing.Any`
 * `typing.Callable`
 * `typing.Dict`
 * `typing.List`
@@ -404,13 +549,15 @@ This manifest dissects the Celestial Engine of IsopGem, mapping the integration 
 * `typing.Sequence`
 
 **Consumers (Who Needs It):**
-* None detected.
+* `scripts/verify_horizon_phase3.py`
 
 **Key Interactions:**
-**Exposes:** `save_chart()` - *Functional interface.*
-**Exposes:** `list_recent()` - *Functional interface.*
-**Exposes:** `search()` - *Functional interface.*
-**Exposes:** `load_chart()` - *Functional interface.*
+**Exposes:** `save_chart()` - *Save chart logic.*
+**Exposes:** `list_recent()` - *List recent logic.*
+**Exposes:** `search()` - *Search logic.*
+**Exposes:** `load_chart()` - *Load chart logic.*
+**Exposes:** `export_chart_to_json()` - *Export a chart record to a JSON string.*
+**Exposes:** `import_chart_from_json()` - *Import a chart from a JSON string. Returns new ID.*
 
 
 ---
@@ -446,11 +593,12 @@ This manifest dissects the Celestial Engine of IsopGem, mapping the integration 
 * `typing.Tuple`
 
 **Consumers (Who Needs It):**
+* `scripts/verify_fixed_stars_panel.py`
 * `tests/rituals/verify_fixed_stars.py`
 
 **Key Interactions:**
 **Exposes:** `get_star_positions()` - *Calculate positions for notable fixed stars at a given Julian Day.*
-**Exposes:** `find_conjunctions()` - *Find fixed stars conjunct to planets within given orb.*
+**Exposes:** `find_aspects()` - *Find fixed stars aspects to planets within given orb.*
 
 
 ---
@@ -505,15 +653,18 @@ This manifest dissects the Celestial Engine of IsopGem, mapping the integration 
 * `pillars.astrology.models.chart_models.PlanetPosition`
 * `pillars.astrology.models.interpretation_models.InterpretationReport`
 * `pillars.astrology.repositories.interpretation_repository.InterpretationRepository`
+* `pillars.astrology.services.aspects_service.AspectsService`
 * `pillars.astrology.services.aspects_service.CalculatedAspect`
-* `typing.List`
-* `typing.Optional`
+* `typing.
 
 **Consumers (Who Needs It):**
+* `tests/pillars/astrology/test_interpretation_depth.py`
 * `tests/rituals/rite_of_interpretation.py`
 
 **Key Interactions:**
 **Exposes:** `interpret_chart()` - *Generate a full interpretation report for the given chart.*
+**Exposes:** `interpret_transits()` - *Interpret Transits vs Natal.*
+**Exposes:** `interpret_synastry()` - *Interpret Synastry (Relationship).*
 
 
 ---
@@ -548,8 +699,9 @@ This manifest dissects the Celestial Engine of IsopGem, mapping the integration 
 * None detected.
 
 **Key Interactions:**
-**Exposes:** `label()` - *Functional interface.*
-**Exposes:** `search()` - *Functional interface.*
+**Exposes:** `label()` - *Label logic.*
+**Exposes:** `search()` - *Search logic.*
+**Exposes:** `reverse_geocode()` - *Reverse geocode coordinates to a location name.*
 
 
 ---
@@ -635,6 +787,7 @@ This manifest dissects the Celestial Engine of IsopGem, mapping the integration 
 **Dependencies (It Needs):**
 * `__future__.annotations`
 * `copy`
+* `datetime.timezone`
 * `logging`
 * `models.AstrologyEvent`
 * `models.ChartRequest`
@@ -643,18 +796,262 @@ This manifest dissects the Celestial Engine of IsopGem, mapping the integration 
 * `models.HousePosition`
 * `models.PlanetPosition`
 * `openastro2.openastro2.openAstro`
+* `swisseph`
 * `typing.Any`
 * `typing.Dict`
 * `typing.List`
 * `typing.Optional`
 
 **Consumers (Who Needs It):**
-* None detected.
+* `scripts/horizon_seals/seal_jupiter.py`
+* `scripts/horizon_seals/seal_mars.py`
+* `scripts/horizon_seals/seal_sun.py`
+* `scripts/verify_horizon_phase2.py`
+* `scripts/verify_horizon_phase4.py`
 
 **Key Interactions:**
 **Exposes:** `generate_chart()` - *Generate a chart with OpenAstro2 based on the supplied request.*
 **Exposes:** `list_house_systems()` - *Return a dictionary of supported house systems and their labels.*
 **Exposes:** `default_settings()` - *Expose a safe copy of the default OpenAstro settings template.*
+**Exposes:** `configure_defaults()` - *Update the base default settings for the service instance.*
+
+
+---
+
+**File:** `src/pillars/astrology/services/progressions_service.py`
+
+**Role:** `[Muscle] (Service)`
+
+**Purpose:** Services for calculating Progressions and Directions.
+
+**Input (Ingests):**
+* `openastro_service`
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `__future__.annotations`
+* `copy`
+* `datetime.datetime`
+* `datetime.timedelta`
+* `datetime.timezone`
+* `models.chart_models.AstrologyEvent`
+* `models.chart_models.ChartRequest`
+* `models.chart_models.ChartResult`
+* `models.chart_models.PlanetPosition`
+* `openastro_service.OpenAstroService`
+* `repositories.ephemeris_provider.EphemerisProvider`
+* `typing.Any`
+* `typing.Dict`
+* `typing.List`
+* `typing.Optional`
+
+**Consumers (Who Needs It):**
+* `scripts/verify_horizon_phase2.py`
+
+**Key Interactions:**
+**Exposes:** `calculate_secondary_progression()` - *Calculates Secondary Progressions (1 Day = 1 Year).*
+**Exposes:** `calculate_solar_arc()` - *Calculates Solar Arc Directions.*
+
+
+---
+
+**File:** `src/pillars/astrology/services/report_service.py`
+
+**Role:** `[Muscle] (Service)`
+
+**Purpose:** Service for rendering Interpretation Reports to HTML and PDF.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `PyQt6.QtCore.QSizeF`
+* `PyQt6.QtGui.QPageLayout`
+* `PyQt6.QtGui.QPageSize`
+* `PyQt6.QtGui.QTextDocument`
+* `PyQt6.QtPrintSupport.QPrinter`
+* `__future__.annotations`
+* `logging`
+* `models.interpretation_models.InterpretationReport`
+* `pathlib.Path`
+* `typing.Optional`
+
+**Consumers (Who Needs It):**
+* `scripts/verify_horizon_phase3.py`
+
+**Key Interactions:**
+**Exposes:** `render_html()` - *Convert report to a full HTML string.*
+**Exposes:** `export_pdf()` - *Render report to PDF at output_path.*
+
+
+---
+
+**File:** `src/pillars/astrology/services/returns_service.py`
+
+**Role:** `[Muscle] (Service)`
+
+**Purpose:** Services for calculating Planetary Returns (Solar/Lunar Return Charts).
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `__future__.annotations`
+* `datetime.datetime`
+* `datetime.timedelta`
+* `datetime.timezone`
+* `math`
+* `models.chart_models.AstrologyEvent`
+* `models.chart_models.ChartRequest`
+* `models.chart_models.GeoLocation`
+* `repositories.ephemeris_provider.EphemerisProvider`
+* `typing.Optional`
+* `typing.Tuple`
+
+**Consumers (Who Needs It):**
+* `scripts/verify_horizon_phase2.py`
+
+**Key Interactions:**
+**Exposes:** `calculate_return()` - *Calculate the exact return time for a body.*
+
+
+---
+
+**File:** `src/pillars/astrology/services/synastry_service.py`
+
+**Role:** `[Muscle] (Service)`
+
+**Purpose:** Synastry Service — The Muscle of Relationship Astrology.
+
+**Input (Ingests):**
+* `midpoint_time` (Field)
+* `midpoint_latitude` (Field)
+* `midpoint_longitude` (Field)
+* `planets` (Field)
+* `houses` (Field)
+* `julian_day` (Field)
+* `chart` (Field)
+* `info` (Field)
+* `openastro_service`
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `__future__.annotations`
+* `dataclasses.dataclass`
+* `datetime.datetime`
+* `datetime.timezone`
+* `models.chart_models.AstrologyEvent`
+* `models.chart_models.ChartRequest`
+* `models.chart_models.ChartResult`
+* `models.chart_models.GeoLocation`
+* `models.chart_models.HousePosition`
+* `models.chart_models.PlanetPosition`
+* `openastro_service.OpenAstroService`
+* `typing.Any`
+* `typing.Dict`
+* `typing.List`
+* `typing.Optional`
+* `typing.Tuple`
+
+**Consumers (Who Needs It):**
+* `scripts/verify_horizon_phase2.py`
+
+**Key Interactions:**
+**Exposes:** `calculate_midpoint()` - *Calculate the midpoint between two degrees on a circle.*
+**Exposes:** `generate_chart()` - *Generate a single radix chart.*
+**Exposes:** `calculate_composite()` - *Calculate a Composite chart from two existing chart results.*
+**Exposes:** `calculate_davison()` - *Calculate a Davison Relationship Chart.*
+
+
+---
+
+**File:** `src/pillars/astrology/ui/advanced_analysis_panel.py`
+
+**Role:** `[Skin] (UI/View)`
+
+**Purpose:** Advanced Analysis Panel — Reusable component for comprehensive chart analysis.
+
+**Input (Ingests):**
+* `parent`
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `PyQt6.QtCore.Qt`
+* `PyQt6.QtGui.QColor`
+* `PyQt6.QtGui.QFontDatabase`
+* `PyQt6.QtGui.QFont`
+* `PyQt6.QtWidgets.QCheckBox`
+* `PyQt6.QtWidgets.QComboBox`
+* `PyQt6.QtWidgets.QFrame`
+* `PyQt6.QtWidgets.QGraphicsDropShadowEffect`
+* `PyQt6.QtWidgets.QGroupBox`
+* `PyQt6.QtWidgets.QHBoxLayout`
+* `PyQt6.QtWidgets.QHeaderView`
+* `PyQt6.QtWidgets.QLabel`
+* `PyQt6.QtWidgets.QListWidget`
+* `PyQt6.QtWidgets.QPushButton`
+* `PyQt6.QtWidgets.QSlider`
+* `PyQt6.QtWidgets.QSpinBox`
+* `PyQt6.QtWidgets.QStackedWid
+
+**Consumers (Who Needs It):**
+* `scripts/verify_fixed_stars_panel.py`
+
+**Key Interactions:**
+**Exposes:** `set_data()` - *Set chart data and refresh all tabs.*
+**Exposes:** `set_chart_result()` - *Set data from a ChartResult object.*
+
+
+---
+
+**File:** `src/pillars/astrology/ui/astro_settings_dialog.py`
+
+**Role:** `[Skin] (UI/View)`
+
+**Purpose:** Astrology Settings Dialog - Configuration for chart calculation options.
+
+**Input (Ingests):**
+* `current_settings`
+* `parent`
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `PyQt6.QtCore.Qt`
+* `PyQt6.QtCore.pyqtSignal`
+* `PyQt6.QtGui.QFont`
+* `PyQt6.QtWidgets.QComboBox`
+* `PyQt6.QtWidgets.QDialog`
+* `PyQt6.QtWidgets.QFormLayout`
+* `PyQt6.QtWidgets.QFrame`
+* `PyQt6.QtWidgets.QGroupBox`
+* `PyQt6.QtWidgets.QHBoxLayout`
+* `PyQt6.QtWidgets.QLabel`
+* `PyQt6.QtWidgets.QPushButton`
+* `PyQt6.QtWidgets.QVBoxLayout`
+* `shared.ui.theme.COLORS`
+* `typing.Any`
+* `typing.Dict`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Emits:** `settings_changed` - *Nervous System Signal.*
+**Exposes:** `get_settings()` - *Return the currently selected settings.*
 
 
 ---
@@ -681,17 +1078,153 @@ This manifest dissects the Celestial Engine of IsopGem, mapping the integration 
 * `PyQt6.QtWidgets.QScrollArea`
 * `PyQt6.QtWidgets.QVBoxLayout`
 * `PyQt6.QtWidgets.QWidget`
+* `chariot_window.ChariotWindow`
 * `current_transit_window.CurrentTransitWindow`
 * `differential_natal_window.DifferentialNatalWindow`
 * `natal_chart_window.NatalChartWindow`
 * `neo_aubrey_window.NeoAubreyWindow`
-* `planetary_positions_window.PlanetaryPositionsWindo
+* `planetary_positio
 
 **Consumers (Who Needs It):**
 * None detected.
 
 **Key Interactions:**
 * Internal logic only.
+
+
+---
+
+**File:** `src/pillars/astrology/ui/chariot_canvas.py`
+
+**Role:** `[Skin] (UI/View)`
+
+**Purpose:** Canvas for visualizing Chariot Axles and Geometry.
+
+**Input (Ingests):**
+* `parent`
+* `report`
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `PyQt6.QtCore.QPointF`
+* `PyQt6.QtCore.QRectF`
+* `PyQt6.QtCore.Qt`
+* `PyQt6.QtGui.QBrush`
+* `PyQt6.QtGui.QColor`
+* `PyQt6.QtGui.QFont`
+* `PyQt6.QtGui.QPainter`
+* `PyQt6.QtGui.QPen`
+* `PyQt6.QtGui.QPolygonF`
+* `PyQt6.QtWidgets.QWidget`
+* `chart_canvas.ChartCanvas`
+* `math`
+* `models.chariot_models.AxlePosition`
+* `models.chariot_models.ChariotReport`
+* `shared.services.astro_glyph_service.astro_glyphs`
+* `typing.Dict`
+* `typing.List`
+* `typing.Optional`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `set_chariot_data()` - *Set the chariot report data.*
+**Exposes:** `set_highlighted_axle()` - *Set which Axle to highlight (brighten).*
+**Exposes:** `set_highlighted_point()` - *Set which specific point (Tarot Card) to highlight.*
+**Exposes:** `paintEvent()` - *Draw the Chariot geometry.*
+**Exposes:** `angle_for()` - *Functional interface.*
+
+
+---
+
+**File:** `src/pillars/astrology/ui/chariot_differentials_window.py`
+
+**Role:** `[Skin] (UI/View)`
+
+**Purpose:** Chariot Differentials Window - Maps 21 midpoints to Conrune pairs.
+
+**Input (Ingests):**
+* `image_path`
+* `parent`
+* `parent`
+* `window_manager`
+* `report`
+* `chart_name`
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `PyQt6.QtCore.Qt`
+* `PyQt6.QtGui.QAction`
+* `PyQt6.QtGui.QColor`
+* `PyQt6.QtGui.QFont`
+* `PyQt6.QtGui.QPainter`
+* `PyQt6.QtGui.QPixmap`
+* `PyQt6.QtWidgets.QFrame`
+* `PyQt6.QtWidgets.QHBoxLayout`
+* `PyQt6.QtWidgets.QHeaderView`
+* `PyQt6.QtWidgets.QLabel`
+* `PyQt6.QtWidgets.QListWidgetItem`
+* `PyQt6.QtWidgets.QListWidget`
+* `PyQt6.QtWidgets.QMenu`
+* `PyQt6.QtWidgets.QSplitter`
+* `PyQt6.QtWidgets.QTabWidget`
+* `PyQt6.QtWidgets.QTableWidgetItem`
+* `PyQt6.QtWidgets.QTableWidget`
+* `PyQt6.QtWidgets.
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `paintEvent()` - *Functional interface.*
+
+
+---
+
+**File:** `src/pillars/astrology/ui/chariot_window.py`
+
+**Role:** `[Skin] (UI/View)`
+
+**Purpose:** Chariot Window - The Merkabah Analysis UI.
+
+**Input (Ingests):**
+* `parent`
+* `window_manager`
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `PyQt6.QtCore.QSize`
+* `PyQt6.QtCore.Qt`
+* `PyQt6.QtGui.QBrush`
+* `PyQt6.QtGui.QColor`
+* `PyQt6.QtGui.QFont`
+* `PyQt6.QtGui.QPainter`
+* `PyQt6.QtGui.QPalette`
+* `PyQt6.QtGui.QPixmap`
+* `PyQt6.QtWidgets.QFrame`
+* `PyQt6.QtWidgets.QGraphicsDropShadowEffect`
+* `PyQt6.QtWidgets.QGroupBox`
+* `PyQt6.QtWidgets.QHBoxLayout`
+* `PyQt6.QtWidgets.QLabel`
+* `PyQt6.QtWidgets.QMessageBox`
+* `PyQt6.QtWidgets.QPushButton`
+* `PyQt6.QtWidgets.QScrollArea`
+* `PyQt6.QtWidgets.QSplitter`
+* `PyQt6.QtWidgets.QTextBro
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `load_from_positions()` - *Load chart data from planet positions.*
+**Exposes:** `load_from_chart()` - *Load chart data from a ChartResult.*
 
 
 ---
@@ -714,6 +1247,7 @@ This manifest dissects the Celestial Engine of IsopGem, mapping the integration 
 * `PyQt6.QtCore.Qt`
 * `PyQt6.QtGui.QBrush`
 * `PyQt6.QtGui.QColor`
+* `PyQt6.QtGui.QFontDatabase`
 * `PyQt6.QtGui.QFont`
 * `PyQt6.QtGui.QLinearGradient`
 * `PyQt6.QtGui.QMouseEvent`
@@ -731,11 +1265,12 @@ This manifest dissects the Celestial Engine of IsopGem, mapping the integration 
 * `tests/rituals/render_chart_preview.py`
 
 **Key Interactions:**
-**Exposes:** `set_data()` - *Functional interface.*
+**Exposes:** `set_data()` - *Configure data logic.*
+**Exposes:** `set_synastry_data()` - *Set data for a bi-wheel synastry chart.*
 **Exposes:** `set_aspect_options()` - *Set aspect display options.*
-**Exposes:** `mouseMoveEvent()` - *Functional interface.*
-**Exposes:** `paintEvent()` - *Functional interface.*
-**Exposes:** `angle_for()` - *Functional interface.*
+**Exposes:** `mouseMoveEvent()` - *Mousemoveevent logic.*
+**Exposes:** `paintEvent()` - *Paintevent logic.*
+**Exposes:** `angle_for()` - *Angle for logic.*
 
 
 ---
@@ -765,6 +1300,40 @@ This manifest dissects the Celestial Engine of IsopGem, mapping the integration 
 * `PyQt6.QtWidgets.QWidget`
 * `services.ChartStorageService`
 * `services.SavedChartSummary`
+* `typing.List`
+* `typing.Optional`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+* Internal logic only.
+
+
+---
+
+**File:** `src/pillars/astrology/ui/composite_chart_window.py`
+
+**Role:** `[Skin] (UI/View)`
+
+**Purpose:** Composite Chart Window — Non-modal window displaying midpoint-based composite chart.
+
+**Input (Ingests):**
+* `planets`
+* `houses`
+* `parent`
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `PyQt6.QtCore.Qt`
+* `PyQt6.QtWidgets.QMainWindow`
+* `PyQt6.QtWidgets.QVBoxLayout`
+* `PyQt6.QtWidgets.QWidget`
+* `chart_canvas.ChartCanvas`
+* `models.chart_models.HousePosition`
+* `models.chart_models.PlanetPosition`
 * `typing.List`
 * `typing.Optional`
 
@@ -836,7 +1405,7 @@ This manifest dissects the Celestial Engine of IsopGem, mapping the integration 
 * None detected.
 
 **Key Interactions:**
-**Exposes:** `closeEvent()` - *Functional interface.*
+**Exposes:** `closeEvent()` - *Closeevent logic.*
 
 
 ---
@@ -918,7 +1487,7 @@ This manifest dissects the Celestial Engine of IsopGem, mapping the integration 
 **Key Interactions:**
 **Exposes:** `set_data()` - *Set harmonic positions. positions = [(name, harmonic_degree), ...]*
 **Exposes:** `mouseMoveEvent()` - *Handle mouse move for tooltips.*
-**Exposes:** `paintEvent()` - *Functional interface.*
+**Exposes:** `paintEvent()` - *Paintevent logic.*
 
 
 ---
@@ -950,6 +1519,47 @@ This manifest dissects the Celestial Engine of IsopGem, mapping the integration 
 
 **Key Interactions:**
 **Exposes:** `display_report()` - *Render the report into the text view.*
+
+
+---
+
+**File:** `src/pillars/astrology/ui/location_search_dialog.py`
+
+**Role:** `[Skin] (UI/View)`
+
+**Purpose:** Location Search Dialog - The Cartographer's Sanctum.
+
+**Input (Ingests):**
+* `preferences`
+* `parent`
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `PyQt6.QtCore.QTimer`
+* `PyQt6.QtCore.Qt`
+* `PyQt6.QtCore.pyqtSignal`
+* `PyQt6.QtGui.QFont`
+* `PyQt6.QtWidgets.QApplication`
+* `PyQt6.QtWidgets.QDialog`
+* `PyQt6.QtWidgets.QDoubleSpinBox`
+* `PyQt6.QtWidgets.QFormLayout`
+* `PyQt6.QtWidgets.QGroupBox`
+* `PyQt6.QtWidgets.QHBoxLayout`
+* `PyQt6.QtWidgets.QLabel`
+* `PyQt6.QtWidgets.QLineEdit`
+* `PyQt6.QtWidgets.QListWidgetItem`
+* `PyQt6.QtWidgets.QListWidget`
+* `PyQt6.QtWidgets.QMessageBox`
+* `PyQt6.QtWidgets.QPushButton`
+* `PyQt6.QtWidgets.QTabWidg
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Emits:** `location_selected` - *Nervous System Signal.*
 
 
 ---
@@ -989,8 +1599,8 @@ This manifest dissects the Celestial Engine of IsopGem, mapping the integration 
 
 **Key Interactions:**
 **Exposes:** `set_data()` - *Set midpoint data and planet positions for planet-on-midpoint detection.*
-**Exposes:** `mouseMoveEvent()` - *Functional interface.*
-**Exposes:** `paintEvent()` - *Functional interface.*
+**Exposes:** `mouseMoveEvent()` - *Mousemoveevent logic.*
+**Exposes:** `paintEvent()` - *Paintevent logic.*
 
 
 ---
@@ -1009,6 +1619,7 @@ This manifest dissects the Celestial Engine of IsopGem, mapping the integration 
 
 **Dependencies (It Needs):**
 * `PyQt6.QtCore.QDateTime`
+* `PyQt6.QtCore.QThreadPool`
 * `PyQt6.QtCore.Qt`
 * `PyQt6.QtGui.QCloseEvent`
 * `PyQt6.QtGui.QColor`
@@ -1021,16 +1632,15 @@ This manifest dissects the Celestial Engine of IsopGem, mapping the integration 
 * `PyQt6.QtWidgets.QDoubleSpinBox`
 * `PyQt6.QtWidgets.QFileDialog`
 * `PyQt6.QtWidgets.QFormLayout`
-* `PyQt6.QtWidgets.QGroupBox`
-* `PyQt6.QtWidgets.QHBoxLayout`
-* `PyQt6.QtWidgets.QHeaderView`
-* `PyQt6.QtWidgets.QInputDialog`
+* `PyQt6.QtWidgets.QFrame`
+* `PyQt6.QtWidgets.QGraphicsDropShadowEffect`
+* `PyQt6.QtWidgets.QGrou
 
 **Consumers (Who Needs It):**
 * `src/pillars/astrology/ui/venus_rose_window.py`
 
 **Key Interactions:**
-**Exposes:** `closeEvent()` - *Functional interface.*
+**Exposes:** `closeEvent()` - *Closeevent logic.*
 
 
 ---
@@ -1080,8 +1690,8 @@ This manifest dissects the Celestial Engine of IsopGem, mapping the integration 
 
 **Key Interactions:**
 **Exposes:** `set_markers()` - *Update marker positions based on Zodiac Longitude (0-360).*
-**Exposes:** `wheelEvent()` - *Functional interface.*
-**Exposes:** `get_stone_idx()` - *Functional interface.*
+**Exposes:** `wheelEvent()` - *Wheelevent logic.*
+**Exposes:** `get_stone_idx()` - *Retrieve stone idx logic.*
 
 
 ---
@@ -1127,7 +1737,243 @@ This manifest dissects the Celestial Engine of IsopGem, mapping the integration 
 * `scripts/verify_planetary_send.py`
 
 **Key Interactions:**
-**Exposes:** `populate()` - *Functional interface.*
+**Exposes:** `populate()` - *Populate logic.*
+
+
+---
+
+**File:** `src/pillars/astrology/ui/progressions_window.py`
+
+**Role:** `[Skin] (UI/View)`
+
+**Purpose:** Sovereign Window for Progressions and Directions.
+
+**Input (Ingests):**
+* `service`
+* `parent`
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `PyQt6.QtCore.QThreadPool`
+* `PyQt6.QtCore.Qt`
+* `PyQt6.QtWidgets.QCheckBox`
+* `PyQt6.QtWidgets.QComboBox`
+* `PyQt6.QtWidgets.QDateTimeEdit`
+* `PyQt6.QtWidgets.QGroupBox`
+* `PyQt6.QtWidgets.QHBoxLayout`
+* `PyQt6.QtWidgets.QLabel`
+* `PyQt6.QtWidgets.QLineEdit`
+* `PyQt6.QtWidgets.QMainWindow`
+* `PyQt6.QtWidgets.QMessageBox`
+* `PyQt6.QtWidgets.QPushButton`
+* `PyQt6.QtWidgets.QVBoxLayout`
+* `PyQt6.QtWidgets.QWidget`
+* `chart_canvas.ChartCanvas`
+* `datetime.datetime`
+* `models.chart_models.Astrolog
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+* Internal logic only.
+
+
+---
+
+**File:** `src/pillars/astrology/ui/returns_window.py`
+
+**Role:** `[Skin] (UI/View)`
+
+**Purpose:** Sovereign Window for Planetary Returns (Solar/Lunar).
+
+**Input (Ingests):**
+* `service`
+* `parent`
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `PyQt6.QtCore.QThreadPool`
+* `PyQt6.QtCore.Qt`
+* `PyQt6.QtWidgets.QCheckBox`
+* `PyQt6.QtWidgets.QComboBox`
+* `PyQt6.QtWidgets.QDateTimeEdit`
+* `PyQt6.QtWidgets.QGroupBox`
+* `PyQt6.QtWidgets.QHBoxLayout`
+* `PyQt6.QtWidgets.QLabel`
+* `PyQt6.QtWidgets.QLineEdit`
+* `PyQt6.QtWidgets.QMainWindow`
+* `PyQt6.QtWidgets.QMessageBox`
+* `PyQt6.QtWidgets.QPushButton`
+* `PyQt6.QtWidgets.QSpinBox`
+* `PyQt6.QtWidgets.QVBoxLayout`
+* `PyQt6.QtWidgets.QWidget`
+* `chart_canvas.ChartCanvas`
+* `datetime.datetime`
+* 
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+* Internal logic only.
+
+
+---
+
+**File:** `src/pillars/astrology/ui/synastry_aspects_widget.py`
+
+**Role:** `[Skin] (UI/View)`
+
+**Purpose:** Synastry Aspects Widget — Cross-chart aspect analysis.
+
+**Input (Ingests):**
+* `parent`
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `PyQt6.QtCore.Qt`
+* `PyQt6.QtGui.QColor`
+* `PyQt6.QtWidgets.QComboBox`
+* `PyQt6.QtWidgets.QHBoxLayout`
+* `PyQt6.QtWidgets.QHeaderView`
+* `PyQt6.QtWidgets.QLabel`
+* `PyQt6.QtWidgets.QPushButton`
+* `PyQt6.QtWidgets.QTableWidgetItem`
+* `PyQt6.QtWidgets.QTableWidget`
+* `PyQt6.QtWidgets.QVBoxLayout`
+* `PyQt6.QtWidgets.QWidget`
+* `models.chart_models.PlanetPosition`
+* `typing.List`
+* `typing.Optional`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `set_data()` - *Set the two planet lists and calculate aspects.*
+
+
+---
+
+**File:** `src/pillars/astrology/ui/synastry_davison_widget.py`
+
+**Role:** `[Skin] (UI/View)`
+
+**Purpose:** Synastry Davison Widget — Davison Relationship Chart information.
+
+**Input (Ingests):**
+* `parent`
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `PyQt6.QtCore.Qt`
+* `PyQt6.QtWidgets.QFormLayout`
+* `PyQt6.QtWidgets.QGroupBox`
+* `PyQt6.QtWidgets.QHBoxLayout`
+* `PyQt6.QtWidgets.QLabel`
+* `PyQt6.QtWidgets.QVBoxLayout`
+* `PyQt6.QtWidgets.QWidget`
+* `datetime.datetime`
+* `typing.Any`
+* `typing.Dict`
+* `typing.Optional`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `set_data()` - *Update the displayed Davison midpoint information.*
+
+
+---
+
+**File:** `src/pillars/astrology/ui/synastry_midpoints_widget.py`
+
+**Role:** `[Skin] (UI/View)`
+
+**Purpose:** Synastry Midpoints Widget — Planet and House midpoint analysis.
+
+**Input (Ingests):**
+* `parent`
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `PyQt6.QtCore.Qt`
+* `PyQt6.QtWidgets.QGroupBox`
+* `PyQt6.QtWidgets.QHBoxLayout`
+* `PyQt6.QtWidgets.QHeaderView`
+* `PyQt6.QtWidgets.QLabel`
+* `PyQt6.QtWidgets.QPushButton`
+* `PyQt6.QtWidgets.QTableWidgetItem`
+* `PyQt6.QtWidgets.QTableWidget`
+* `PyQt6.QtWidgets.QVBoxLayout`
+* `PyQt6.QtWidgets.QWidget`
+* `models.chart_models.HousePosition`
+* `models.chart_models.PlanetPosition`
+* `typing.List`
+* `typing.Optional`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `calculate_midpoint()` - *Calculate the midpoint between two degrees on a circle.*
+**Exposes:** `degree_to_zodiac()` - *Convert degree to zodiacal notation.*
+**Exposes:** `set_data()` - *Set the chart data and calculate midpoints.*
+**Exposes:** `get_midpoint_data()` - *Return calculated midpoint positions.*
+
+
+---
+
+**File:** `src/pillars/astrology/ui/synastry_window.py`
+
+**Role:** `[Skin] (UI/View)`
+
+**Purpose:** Sovereign Window for Synastry Analysis.
+
+**Input (Ingests):**
+* `service`
+* `parent`
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `PyQt6.QtCore.QThreadPool`
+* `PyQt6.QtCore.QTimer`
+* `PyQt6.QtCore.Qt`
+* `PyQt6.QtGui.QIcon`
+* `PyQt6.QtWidgets.QComboBox`
+* `PyQt6.QtWidgets.QDateTimeEdit`
+* `PyQt6.QtWidgets.QGroupBox`
+* `PyQt6.QtWidgets.QHBoxLayout`
+* `PyQt6.QtWidgets.QLabel`
+* `PyQt6.QtWidgets.QLineEdit`
+* `PyQt6.QtWidgets.QMainWindow`
+* `PyQt6.QtWidgets.QMessageBox`
+* `PyQt6.QtWidgets.QPushButton`
+* `PyQt6.QtWidgets.QSplitter`
+* `PyQt6.QtWidgets.QStackedWidget`
+* `PyQt6.QtWidgets.QVBoxLayout`
+* `PyQt6.QtWidgets.QWidget`
+*
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+* Internal logic only.
 
 
 ---
@@ -1176,10 +2022,10 @@ This manifest dissects the Celestial Engine of IsopGem, mapping the integration 
 
 **Key Interactions:**
 **Exposes:** `update_positions_by_date()` - *Updates planet positions based on actual datetime using J2000 epoch.*
-**Exposes:** `add_highlight()` - *Functional interface.*
-**Exposes:** `clear_trace()` - *Functional interface.*
-**Exposes:** `wheelEvent()` - *Functional interface.*
-**Exposes:** `get_diff()` - *Functional interface.*
+**Exposes:** `add_highlight()` - *Add highlight logic.*
+**Exposes:** `clear_trace()` - *Clear trace logic.*
+**Exposes:** `wheelEvent()` - *Wheelevent logic.*
+**Exposes:** `get_diff()` - *Retrieve diff logic.*
 
 
 ---
@@ -1241,60 +2087,8 @@ This manifest dissects the Celestial Engine of IsopGem, mapping the integration 
 * None detected.
 
 **Key Interactions:**
-**Exposes:** `load_default_location()` - *Functional interface.*
-**Exposes:** `save_default_location()` - *Functional interface.*
-
-
----
-
-**File:** `src/pillars/astrology/ui/synastry_window.py`
-
-**Role:** `[Skin] (UI/View)`
-
-**Purpose:** Synastry Analysis Window - Multi-chart harmonic analysis (Bi-Wheel, Composite, Davison).
-
-**Input (Ingests):**
-* `service` (OpenAstroService)
-* `parent`
-
-**Output (Emits):**
-* None
-
-**Dependencies (It Needs):**
-* `PyQt6.QtCore.Qt`
-* `PyQt6.QtCore.QThreadPool`
-* `PyQt6.QtGui.QColor`
-* `PyQt6.QtWidgets.QComboBox`
-* `PyQt6.QtWidgets.QDateTimeEdit`
-* `PyQt6.QtWidgets.QGroupBox`
-* `PyQt6.QtWidgets.QHBoxLayout`
-* `PyQt6.QtWidgets.QLabel`
-* `PyQt6.QtWidgets.QLineEdit`
-* `PyQt6.QtWidgets.QMainWindow`
-* `PyQt6.QtWidgets.QMessageBox`
-* `PyQt6.QtWidgets.QPushButton`
-* `PyQt6.QtWidgets.QStackedWidget`
-* `PyQt6.QtWidgets.QVBoxLayout`
-* `PyQt6.QtWidgets.QWidget`
-* `datetime.datetime`
-* `models.AstrologyEvent`
-* `models.ChartResult`
-* `models.GeoLocation`
-* `services.ChartStorageService`
-* `services.OpenAstroService`
-* `services.SynastryService`
-* `shared.ui.scrollable_tab_bar.ScrollableTabBar`
-* `shared.ui.theme.COLORS`
-* `ui.advanced_analysis_panel.AdvancedAnalysisPanel`
-* `ui.chart_canvas.ChartCanvas`
-* `ui.synastry_widgets.SynastryAspectsWidget`
-* `ui.synastry_widgets.SynastryDavisonWidget`
-* `ui.synastry_widgets.SynastryMidpointsWidget`
-
-**Consumers (Who Needs It):**
-* `src/pillars/astrology/ui/astrology_hub.py`
-
-**Key Interactions:**
-*   **Calculates:** Synastry A/B, Composite, and Davison charts via `SynastryService`.
-*   **Displays:** Uses `ChartCanvas` for wheels and `AdvancedAnalysisPanel` for tabular analysis.
-*   **Navigation:** Uses `ScrollableTabBar` for switching between 6+ analytical views.
+**Exposes:** `load_default_location()` - *Load default location logic.*
+**Exposes:** `save_default_location()` - *Save default location logic.*
+**Exposes:** `load_favorites()` - *Load favorite locations from preferences.*
+**Exposes:** `add_favorite()` - *Add a location to favorites.*
+**Exposes:** `remove_favorite()` - *Remove a location from favorites.*

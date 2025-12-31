@@ -68,6 +68,59 @@ class AstrologyPreferences:
         data["default_location"] = asdict(location)
         self._write(data)
 
+    def load_favorites(self) -> list:
+        """
+        Load favorite locations from preferences.
+        
+        Returns:
+            List of DefaultLocation objects.
+        """
+        data = self._read()
+        favorites_data = data.get("favorites", [])
+        favorites = []
+        for item in favorites_data:
+            try:
+                favorites.append(DefaultLocation(**item))
+            except TypeError:
+                continue
+        return favorites
+
+    def add_favorite(self, location: DefaultLocation) -> None:
+        """
+        Add a location to favorites.
+        
+        Args:
+            location: Location to add.
+        """
+        data = self._read()
+        favorites = data.get("favorites", [])
+        
+        # Avoid duplicates (by coordinates)
+        for fav in favorites:
+            if fav.get("latitude") == location.latitude and fav.get("longitude") == location.longitude:
+                return  # Already exists
+        
+        favorites.append(asdict(location))
+        data["favorites"] = favorites
+        self._write(data)
+
+    def remove_favorite(self, location: DefaultLocation) -> None:
+        """
+        Remove a location from favorites.
+        
+        Args:
+            location: Location to remove.
+        """
+        data = self._read()
+        favorites = data.get("favorites", [])
+        
+        # Filter out the matching location
+        data["favorites"] = [
+            fav for fav in favorites
+            if not (fav.get("latitude") == location.latitude and fav.get("longitude") == location.longitude)
+        ]
+        self._write(data)
+
     # ------------------------------------------------------------------
     def _read(self) -> Dict[str, Any]:
         if not self._path.exists():

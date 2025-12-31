@@ -1,4 +1,37 @@
+---
 
+**File:** `src/pillars/correspondences/models/correspondence_models.py`
+
+**Role:** `[Bone] (Model)`
+
+**Purpose:** Correspondence Models - The Emerald Scrolls.
+
+**Input (Ingests):**
+* `id` (Column)
+* `name` (Column)
+* `created_at` (Column)
+* `updated_at` (Column)
+* `content` (Column)
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `datetime.datetime`
+* `shared.database.Base`
+* `sqlalchemy.Column`
+* `sqlalchemy.DateTime`
+* `sqlalchemy.JSON`
+* `sqlalchemy.String`
+* `uuid`
+
+**Consumers (Who Needs It):**
+* `src/pillars/correspondences/repos/table_repository.py`
+* `src/pillars/correspondences/services/table_service.py`
+* `src/shared/database.py`
+
+**Key Interactions:**
+**Exposes:** `to_dict()` - *Clean serialization for UI/Transport.*
 
 
 
@@ -30,7 +63,6 @@
 * `uuid`
 
 **Consumers (Who Needs It):**
-* `scripts/reproduce_crash_full.py`
 * `src/pillars/correspondences/repos/table_repository.py`
 * `src/pillars/correspondences/services/table_service.py`
 * `src/shared/database.py`
@@ -131,8 +163,8 @@
 * `src/pillars/correspondences/ui/spreadsheet_window.py`
 
 **Key Interactions:**
-**Exposes:** `add_rule()` - *Functional interface.*
-**Exposes:** `clear_all_rules()` - *Functional interface.*
+**Exposes:** `add_rule()` - *Add rule logic.*
+**Exposes:** `clear_all_rules()` - *Clear all rules logic.*
 **Exposes:** `get_style()` - *Returns format dict if any rule matches, else None.*
 
 
@@ -156,87 +188,87 @@
 * `enum.Enum`
 * `enum.auto`
 * `math`
-* `pillars.gematria.services.GreekCubeCalculator`
-* `pillars.gematria.services.GreekDigitalCalculator`
-* `pillars.gematria.services.GreekFullValueCalculator`
-* `pillars.gematria.services.GreekGematriaCalculator`
-* `pillars.gematria.services.GreekKolelCalculator`
-* `pillars.gematria.services.GreekLetterValueCalculator`
-* `pillars.gematria.services.GreekNextLetterCalculator`
-* `pillars.gematria.services.GreekOrdinalCalculator`
-* `pillars.gematria.services.Greek
+* `re`
+* `shared.services.gematria.GreekCubeCalculator`
+* `shared.services.gematria.GreekDigitalCalculator`
+* `shared.services.gematria.GreekFullValueCalculator`
+* `shared.services.gematria.GreekGematriaCalculator`
+* `shared.services.gematria.GreekKolelCalculator`
+* `shared.services.gematria.GreekLetterValueCalculator`
+* `shared.services.gematria.GreekNextLetterCalculator`
+* `shared.services.gematria.GreekOrdinalCalculator`
+* `shared.services.gematria.GreekOr
 
 **Consumers (Who Needs It):**
-* `scripts/reproduce_parser_error.py`
-* `scripts/verification_seal.py`
 * `scripts/verify_boolean.py`
 * `scripts/verify_formula_range.py`
 * `scripts/verify_parser.py`
 * `scripts/verify_string_functions.py`
 * `scripts/verify_textjoin_none.py`
 * `src/pillars/correspondences/ui/spreadsheet_view.py`
+* `workflow_scripts/verification_seal.py`
 
 **Key Interactions:**
-**Exposes:** `func_gematria()` - *Functional interface.*
-**Exposes:** `func_sum()` - *Functional interface.*
-**Exposes:** `func_average()` - *Functional interface.*
-**Exposes:** `func_count()` - *Functional interface.*
-**Exposes:** `func_min()` - *Functional interface.*
-**Exposes:** `func_max()` - *Functional interface.*
-**Exposes:** `func_if()` - *Functional interface.*
-**Exposes:** `func_concat()` - *Functional interface.*
-**Exposes:** `func_abs()` - *Functional interface.*
-**Exposes:** `func_round()` - *Functional interface.*
-**Exposes:** `func_floor()` - *Functional interface.*
-**Exposes:** `func_ceiling()` - *Functional interface.*
-**Exposes:** `func_int()` - *Functional interface.*
-**Exposes:** `func_sqrt()` - *Functional interface.*
-**Exposes:** `func_power()` - *Functional interface.*
-**Exposes:** `func_mod()` - *Functional interface.*
-**Exposes:** `func_pi()` - *Functional interface.*
-**Exposes:** `func_sin()` - *Functional interface.*
-**Exposes:** `func_cos()` - *Functional interface.*
-**Exposes:** `func_tan()` - *Functional interface.*
-**Exposes:** `func_asin()` - *Functional interface.*
-**Exposes:** `func_acos()` - *Functional interface.*
-**Exposes:** `func_atan()` - *Functional interface.*
-**Exposes:** `func_ln()` - *Functional interface.*
-**Exposes:** `func_log10()` - *Functional interface.*
-**Exposes:** `func_len()` - *Functional interface.*
-**Exposes:** `func_upper()` - *Functional interface.*
-**Exposes:** `func_lower()` - *Functional interface.*
-**Exposes:** `func_proper()` - *Functional interface.*
-**Exposes:** `func_left()` - *Functional interface.*
-**Exposes:** `func_right()` - *Functional interface.*
-**Exposes:** `func_mid()` - *Functional interface.*
-**Exposes:** `func_trim()` - *Functional interface.*
-**Exposes:** `func_replace()` - *Functional interface.*
-**Exposes:** `func_substitute()` - *Functional interface.*
-**Exposes:** `func_textjoin()` - *Functional interface.*
+**Exposes:** `func_gematria()` - *Func gematria logic.*
+**Exposes:** `func_sum()` - *Func sum logic.*
+**Exposes:** `func_average()` - *Func average logic.*
+**Exposes:** `func_count()` - *Func count logic.*
+**Exposes:** `func_min()` - *Func min logic.*
+**Exposes:** `func_max()` - *Func max logic.*
+**Exposes:** `func_if()` - *Func if logic.*
+**Exposes:** `func_concat()` - *Func concat logic.*
+**Exposes:** `func_abs()` - *Func abs logic.*
+**Exposes:** `func_round()` - *Func round logic.*
+**Exposes:** `func_floor()` - *Func floor logic.*
+**Exposes:** `func_ceiling()` - *Func ceiling logic.*
+**Exposes:** `func_int()` - *Func int logic.*
+**Exposes:** `func_sqrt()` - *Func sqrt logic.*
+**Exposes:** `func_power()` - *Func power logic.*
+**Exposes:** `func_mod()` - *Func mod logic.*
+**Exposes:** `func_pi()` - *Func pi logic.*
+**Exposes:** `func_sin()` - *Func sin logic.*
+**Exposes:** `func_cos()` - *Func cos logic.*
+**Exposes:** `func_tan()` - *Func tan logic.*
+**Exposes:** `func_asin()` - *Func asin logic.*
+**Exposes:** `func_acos()` - *Func acos logic.*
+**Exposes:** `func_atan()` - *Func atan logic.*
+**Exposes:** `func_ln()` - *Func ln logic.*
+**Exposes:** `func_log10()` - *Func log10 logic.*
+**Exposes:** `func_len()` - *Func len logic.*
+**Exposes:** `func_upper()` - *Func upper logic.*
+**Exposes:** `func_lower()` - *Func lower logic.*
+**Exposes:** `func_proper()` - *Func proper logic.*
+**Exposes:** `func_left()` - *Func left logic.*
+**Exposes:** `func_right()` - *Func right logic.*
+**Exposes:** `func_mid()` - *Func mid logic.*
+**Exposes:** `func_trim()` - *Func trim logic.*
+**Exposes:** `func_replace()` - *Func replace logic.*
+**Exposes:** `func_substitute()` - *Func substitute logic.*
+**Exposes:** `func_textjoin()` - *Func textjoin logic.*
 **Exposes:** `register()` - *Decorator to register a function with metadata.*
-**Exposes:** `get()` - *Functional interface.*
-**Exposes:** `get_metadata()` - *Functional interface.*
+**Exposes:** `get()` - *Retrieve logic.*
+**Exposes:** `get_metadata()` - *Retrieve metadata logic.*
 **Exposes:** `get_all_metadata()` - *Returns list of all available formulas sorted by name.*
 **Exposes:** `get_cipher_names()` - *Returns list of all registered registered Gematria cipher names.*
-**Exposes:** `tokenize()` - *Functional interface.*
-**Exposes:** `eat()` - *Functional interface.*
-**Exposes:** `parse()` - *Functional interface.*
+**Exposes:** `tokenize()` - *Tokenize logic.*
+**Exposes:** `eat()` - *Eat logic.*
+**Exposes:** `parse()` - *Parse logic.*
 **Exposes:** `expr()` - *Parse comparison operations (lowest precedence).*
-**Exposes:** `concatenation()` - *Functional interface.*
-**Exposes:** `additive()` - *Functional interface.*
-**Exposes:** `multiplicative()` - *Functional interface.*
-**Exposes:** `power()` - *Functional interface.*
-**Exposes:** `atom()` - *Functional interface.*
+**Exposes:** `concatenation()` - *Concatenation logic.*
+**Exposes:** `additive()` - *Additive logic.*
+**Exposes:** `multiplicative()` - *Multiplicative logic.*
+**Exposes:** `power()` - *Power logic.*
+**Exposes:** `atom()` - *Atom logic.*
 **Exposes:** `evaluate()` - *Evaluate a formula string, tracking the current dependency stack to avoid cycles.*
-**Exposes:** `add()` - *Functional interface.*
-**Exposes:** `collect()` - *Functional interface.*
-**Exposes:** `check()` - *Functional interface.*
-**Exposes:** `collect()` - *Functional interface.*
-**Exposes:** `collect()` - *Functional interface.*
-**Exposes:** `collect()` - *Functional interface.*
-**Exposes:** `collect()` - *Functional interface.*
+**Exposes:** `add()` - *Add logic.*
+**Exposes:** `collect()` - *Collect logic.*
+**Exposes:** `check()` - *Check logic.*
+**Exposes:** `collect()` - *Collect logic.*
+**Exposes:** `collect()` - *Collect logic.*
+**Exposes:** `collect()` - *Collect logic.*
+**Exposes:** `collect()` - *Collect logic.*
 **Exposes:** `adjust_references()` - *Shift cell references in a formula by (row_delta, col_delta).*
-**Exposes:** `decorator()` - *Functional interface.*
+**Exposes:** `decorator()` - *Decorator logic.*
 
 
 ---
@@ -261,7 +293,7 @@
 * `typing.Optional`
 
 **Consumers (Who Needs It):**
-* `scripts/verification_seal.py`
+* `workflow_scripts/verification_seal.py`
 
 **Key Interactions:**
 **Exposes:** `get_all_definitions()` - *Returns all registered formulas.*
@@ -296,8 +328,8 @@
 **Key Interactions:**
 **Exposes:** `ingest_file()` - *Read a file and return the JSON structure for the CorrespondenceTable.*
 **Exposes:** `create_empty()` - *Create a blank grid (larger default for immediate usability).*
-**Exposes:** `col_label()` - *Functional interface.*
-**Exposes:** `sanitize_value()` - *Functional interface.*
+**Exposes:** `col_label()` - *Col label logic.*
+**Exposes:** `sanitize_value()` - *Sanitize value logic.*
 
 
 ---
@@ -378,18 +410,18 @@
 * `src/pillars/correspondences/ui/spreadsheet_view.py`
 
 **Key Interactions:**
-**Exposes:** `redo()` - *Functional interface.*
-**Exposes:** `undo()` - *Functional interface.*
-**Exposes:** `redo()` - *Functional interface.*
-**Exposes:** `undo()` - *Functional interface.*
-**Exposes:** `redo()` - *Functional interface.*
-**Exposes:** `undo()` - *Functional interface.*
-**Exposes:** `redo()` - *Functional interface.*
-**Exposes:** `undo()` - *Functional interface.*
-**Exposes:** `redo()` - *Functional interface.*
-**Exposes:** `undo()` - *Functional interface.*
-**Exposes:** `redo()` - *Functional interface.*
-**Exposes:** `undo()` - *Functional interface.*
+**Exposes:** `redo()` - *Redo logic.*
+**Exposes:** `undo()` - *Undo logic.*
+**Exposes:** `redo()` - *Redo logic.*
+**Exposes:** `undo()` - *Undo logic.*
+**Exposes:** `redo()` - *Redo logic.*
+**Exposes:** `undo()` - *Undo logic.*
+**Exposes:** `redo()` - *Redo logic.*
+**Exposes:** `undo()` - *Undo logic.*
+**Exposes:** `redo()` - *Redo logic.*
+**Exposes:** `undo()` - *Undo logic.*
+**Exposes:** `redo()` - *Redo logic.*
+**Exposes:** `undo()` - *Undo logic.*
 
 
 ---
@@ -431,20 +463,13 @@
 * `PyQt
 
 **Consumers (Who Needs It):**
-* `scripts/reproduce_crash_full.py`
 * `scripts/verify_send_to.py`
-* `src/pillars/astrology/ui/planetary_positions_window.py`
-* `src/pillars/gematria/ui/batch_calculator_window.py`
-* `src/pillars/gematria/ui/gematria_calculator_window.py`
-* `src/pillars/gematria/ui/text_analysis/main_window.py`
-* `src/pillars/time_mechanics/ui/zodiacal_circle_window.py`
-* `src/pillars/tq/ui/transitions_window.py`
 
 **Key Interactions:**
 **Emits:** `finished` - *Nervous System Signal.*
 **Emits:** `failed` - *Nervous System Signal.*
-**Exposes:** `run()` - *Functional interface.*
-**Exposes:** `get_values()` - *Functional interface.*
+**Exposes:** `run()` - *Execute logic.*
+**Exposes:** `get_values()` - *Retrieve values logic.*
 **Exposes:** `receive_import()` - *Public API: specific import method for other pillars.*
 
 
@@ -488,7 +513,7 @@
 **Emits:** `navigation_requested` - *Nervous System Signal.*
 **Exposes:** `show_find_mode()` - *Focus Find input.*
 **Exposes:** `show_replace_mode()` - *Focus Replace input (but usually Find is first).*
-**Exposes:** `get_options()` - *Functional interface.*
+**Exposes:** `get_options()` - *Retrieve options logic.*
 **Exposes:** `show_results()` - *Populate the list widget.*
 
 
@@ -536,12 +561,12 @@
 **Key Interactions:**
 **Emits:** `valueChanged` - *Nervous System Signal.*
 **Exposes:** `text()` - *Returns the formatted cipher string.*
-**Exposes:** `setText()` - *Functional interface.*
+**Exposes:** `setText()` - *Settext logic.*
 **Exposes:** `update_active_input()` - *Called by parent window when grid selection changes.*
 **Exposes:** `get_formula_text()` - *Reconstructs =NAME(Arg1, Arg2, ...)*
-**Exposes:** `get_selected_formula()` - *Functional interface.*
-**Exposes:** `get_insertion_text()` - *Functional interface.*
-**Exposes:** `on_focus()` - *Functional interface.*
+**Exposes:** `get_selected_formula()` - *Retrieve selected formula logic.*
+**Exposes:** `get_insertion_text()` - *Retrieve insertion text logic.*
+**Exposes:** `on_focus()` - *Handle focus logic.*
 
 
 ---
@@ -579,10 +604,10 @@
 **Emits:** `tab_changed` - *Nervous System Signal.*
 **Emits:** `tab_renamed` - *Nervous System Signal.*
 **Emits:** `show_all_tabs` - *Nervous System Signal.*
-**Exposes:** `add_tab()` - *Functional interface.*
-**Exposes:** `set_current_index()` - *Functional interface.*
-**Exposes:** `count()` - *Functional interface.*
-**Exposes:** `set_tab_text()` - *Functional interface.*
+**Exposes:** `add_tab()` - *Add tab logic.*
+**Exposes:** `set_current_index()` - *Configure current index logic.*
+**Exposes:** `count()` - *Count logic.*
+**Exposes:** `set_tab_text()` - *Configure tab text logic.*
 **Exposes:** `update_menu()` - *Populate the ≡ menu with actions to jump to tabs.*
 
 
@@ -626,47 +651,47 @@
 * `
 
 **Consumers (Who Needs It):**
-* `scripts/verification_seal.py`
 * `scripts/verify_planetary_send.py`
 * `tests/test_correspondences_cycles.py`
+* `workflow_scripts/verification_seal.py`
 
 **Key Interactions:**
 **Exposes:** `fill_selection()` - *Fill target_rect with data/pattern from source_rect.*
 **Exposes:** `clear_eval_cache()` - *Reset cached formula evaluations after mutations.*
-**Exposes:** `get_cell_raw()` - *Functional interface.*
+**Exposes:** `get_cell_raw()` - *Retrieve cell raw logic.*
 **Exposes:** `evaluate_cell()` - *Return the evaluated value for a cell with cycle protection and caching.*
 **Exposes:** `get_cell_value()` - *Helper for Formula Engine to resolve references.*
-**Exposes:** `rowCount()` - *Functional interface.*
-**Exposes:** `columnCount()` - *Functional interface.*
-**Exposes:** `data()` - *Functional interface.*
-**Exposes:** `setData()` - *Functional interface.*
-**Exposes:** `headerData()` - *Functional interface.*
-**Exposes:** `insertRows()` - *Functional interface.*
-**Exposes:** `removeRows()` - *Functional interface.*
-**Exposes:** `insertColumns()` - *Functional interface.*
-**Exposes:** `removeColumns()` - *Functional interface.*
-**Exposes:** `flags()` - *Functional interface.*
-**Exposes:** `to_json()` - *Functional interface.*
+**Exposes:** `rowCount()` - *Rowcount logic.*
+**Exposes:** `columnCount()` - *Columncount logic.*
+**Exposes:** `data()` - *Data logic.*
+**Exposes:** `setData()` - *Setdata logic.*
+**Exposes:** `headerData()` - *Headerdata logic.*
+**Exposes:** `insertRows()` - *Insertrows logic.*
+**Exposes:** `removeRows()` - *Removerows logic.*
+**Exposes:** `insertColumns()` - *Insertcolumns logic.*
+**Exposes:** `removeColumns()` - *Removecolumns logic.*
+**Exposes:** `flags()` - *Flags logic.*
+**Exposes:** `to_json()` - *Convert to json logic.*
 **Exposes:** `sort_range()` - *Sorts the data in the given range based on key_col.*
-**Exposes:** `paint()` - *Functional interface.*
+**Exposes:** `paint()` - *Paint logic.*
 **Exposes:** `createEditor()` - *Custom Editor to fix clipping and style issues.*
 **Exposes:** `updateEditorGeometry()` - *Ensure editor fills the cell exactly.*
 **Exposes:** `setEditorData()` - *Get raw data (formula) for editing.*
 **Exposes:** `setModelData()` - *Save text back to model.*
-**Exposes:** `get_html()` - *Functional interface.*
+**Exposes:** `get_html()` - *Retrieve html logic.*
 **Emits:** `formula_return_pressed` - *Nervous System Signal.*
 **Emits:** `editor_text_changed` - *Nervous System Signal.*
 **Exposes:** `set_border_ui()` - *Receive Actions from Window.*
 **Exposes:** `autofit()` - *Resize all columns and rows to fit content.*
-**Exposes:** `resizeEvent()` - *Functional interface.*
-**Exposes:** `selectionChanged()` - *Functional interface.*
-**Exposes:** `mouseMoveEvent()` - *Functional interface.*
-**Exposes:** `mousePressEvent()` - *Functional interface.*
-**Exposes:** `mouseReleaseEvent()` - *Functional interface.*
+**Exposes:** `resizeEvent()` - *Resizeevent logic.*
+**Exposes:** `selectionChanged()` - *Selectionchanged logic.*
+**Exposes:** `mouseMoveEvent()` - *Mousemoveevent logic.*
+**Exposes:** `mousePressEvent()` - *Mousepressevent logic.*
+**Exposes:** `mouseReleaseEvent()` - *Mousereleaseevent logic.*
 **Exposes:** `keyPressEvent()` - *Intercept Copy/Paste Shortcuts.*
-**Exposes:** `sort_key()` - *Functional interface.*
-**Exposes:** `get_pen()` - *Functional interface.*
-**Exposes:** `draw_line()` - *Functional interface.*
+**Exposes:** `sort_key()` - *Sort key logic.*
+**Exposes:** `get_pen()` - *Retrieve pen logic.*
+**Exposes:** `draw_line()` - *Draw line logic.*
 
 
 ---
@@ -708,7 +733,6 @@
 * `PyQt6.QtWidgets.Q
 
 **Consumers (Who Needs It):**
-* `scripts/reproduce_textjoin.py`
 * `scripts/verify_context_menu.py`
 * `scripts/verify_copy_paste.py`
 * `scripts/verify_copy_values.py`
@@ -721,11 +745,11 @@
 
 **Key Interactions:**
 **Exposes:** `eventFilter()` - *Hijack mouse clicks and KEY PRESSES on the viewport/editor when in Reference Mode.*
-**Exposes:** `set_border_style()` - *Functional interface.*
-**Exposes:** `set_border_width()` - *Functional interface.*
-**Exposes:** `pick_border_color()` - *Functional interface.*
-**Exposes:** `col_to_letter()` - *Functional interface.*
-**Exposes:** `col_to_letter()` - *Functional interface.*
-**Exposes:** `col_to_letter()` - *Functional interface.*
-**Exposes:** `col_to_letter()` - *Functional interface.*
-**Exposes:** `col_to_letter()` - *Functional interface.*
+**Exposes:** `set_border_style()` - *Configure border style logic.*
+**Exposes:** `set_border_width()` - *Configure border width logic.*
+**Exposes:** `pick_border_color()` - *Pick border color logic.*
+**Exposes:** `col_to_letter()` - *Col to letter logic.*
+**Exposes:** `col_to_letter()` - *Col to letter logic.*
+**Exposes:** `col_to_letter()` - *Col to letter logic.*
+**Exposes:** `col_to_letter()` - *Col to letter logic.*
+**Exposes:** `col_to_letter()` - *Col to letter logic.*

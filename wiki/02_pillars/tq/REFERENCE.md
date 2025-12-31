@@ -11,6 +11,8 @@ This manifest dissects the "Muscle" and "Bone" of the Trigrammaton Qabalah pilla
 
 
 
+
+
 ---
 
 **File:** `src/pillars/tq/models/amun_sound.py`
@@ -101,7 +103,7 @@ This manifest dissects the "Muscle" and "Bone" of the Trigrammaton Qabalah pilla
 **Key Interactions:**
 **Exposes:** `kamea_locator()` - *Returns the Kamea Locator string 'Region-Area-Cell'.*
 **Exposes:** `is_axis()` - *Returns True if the cell lies on the X or Y axis.*
-**Exposes:** `is_origin()` - *Functional interface.*
+**Exposes:** `is_origin()` - *Determine if origin logic.*
 **Exposes:** `pyx_count()` - *Returns the Dimensional Density (count of '0's).*
 **Exposes:** `conrune_vector()` - *Returns the Magnitude of the Vector between Self and Conrune.*
 
@@ -253,7 +255,7 @@ This manifest dissects the "Muscle" and "Bone" of the Trigrammaton Qabalah pilla
 
 **Role:** `[Muscle] (Service)`
 
-**Purpose:** Baphomet Color Service - The RGB Resolver.
+**Purpose:** Backward compatibility shim for BaphometColorService.
 
 **Input (Ingests):**
 * Pure data structure or utility module.
@@ -262,15 +264,13 @@ This manifest dissects the "Muscle" and "Bone" of the Trigrammaton Qabalah pilla
 * Data primitives or DTOs.
 
 **Dependencies (It Needs):**
-* `PyQt6.QtGui.QColor`
+* `shared.services.tq.baphomet_color_service.BaphometColorService`
 
 **Consumers (Who Needs It):**
-* `src/pillars/adyton/services/frustum_color_service.py`
-* `src/pillars/adyton/services/kamea_color_service.py`
-* `src/pillars/adyton/ui/frustum_popup.py`
+* None detected.
 
 **Key Interactions:**
-**Exposes:** `resolve_color()` - *Resolves the RGB color for a given 6-digit ternary string.*
+* Internal logic only.
 
 
 ---
@@ -334,7 +334,7 @@ This manifest dissects the "Muscle" and "Bone" of the Trigrammaton Qabalah pilla
 **Exposes:** `get_family_id()` - *Determines the Family ID (0-8) based on the Prime.*
 **Exposes:** `get_conrune_value()` - *Calculates the Conrune (Polarity Swap) of a ternary string.*
 **Exposes:** `get_star_category()` - *Classifies a Ditrune based on the 'Star Correspondence' of its two Triunes.*
-**Exposes:** `get_type()` - *Functional interface.*
+**Exposes:** `get_type()` - *Retrieve type logic.*
 
 
 ---
@@ -423,6 +423,36 @@ This manifest dissects the "Muscle" and "Bone" of the Trigrammaton Qabalah pilla
 **Exposes:** `get_cell_color()` - *Returns the color for the cell based on the Baphomet Physics (used for all variants now).*
 **Exposes:** `get_quadset()` - *Returns the list of related cells for (x, y).*
 **Exposes:** `get_chord_values()` - *Returns the list of decimal values forming the Geometric Chord (Quadset)*
+
+
+---
+
+**File:** `src/pillars/tq/services/kamea_math_service.py`
+
+**Role:** `[Muscle] (Service)`
+
+**Purpose:** Kamea Math Service - The Pattern Weaver.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `math`
+* `numpy`
+* `typing.Dict`
+* `typing.List`
+* `typing.Tuple`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `to_ternary()` - *Convert integer to 6-digit ternary string.*
+**Exposes:** `calculate_coord()` - *Calculates 3D world coordinate for any ternary string.*
+**Exposes:** `project_points()` - *Rotate and project 3D points based on camera angles.*
 
 
 ---
@@ -575,13 +605,14 @@ This manifest dissects the "Muscle" and "Bone" of the Trigrammaton Qabalah pilla
 * `__future__.annotations`
 * `dataclasses.dataclass`
 * `math`
-* `pillars.geometry.services.archimedean_solids.CuboctahedronSolidService`
-* `pillars.geometry.services.cube_solid.CubeSolidService`
-* `pillars.geometry.services.dodecahedron_solid.DodecahedronSolidService`
-* `pillars.geometry.services.icosahedron_solid.IcosahedronSolidService`
-* `pillars.geometry.services.octahedron_solid.OctahedronSolidService`
-* `pillars.geometry.services.tetrahedron_solid.TetrahedronSolidService`
-* `pillars.geomet
+* `shared.services.geometry.archimedean.CuboctahedronSolidService`
+* `shared.services.geometry.cube.CubeSolidService`
+* `shared.services.geometry.dodecahedron.DodecahedronSolidService`
+* `shared.services.geometry.icosahedron.IcosahedronSolidService`
+* `shared.services.geometry.octahedron.OctahedronSolidService`
+* `shared.services.geometry.solid_payload.SolidPayload`
+* `shared.services.geometry.tetrahedron.TetrahedronSolidService`
+* `t
 
 **Consumers (Who Needs It):**
 * None detected.
@@ -589,8 +620,8 @@ This manifest dissects the "Muscle" and "Bone" of the Trigrammaton Qabalah pilla
 **Key Interactions:**
 **Exposes:** `get_solid_options()` - *Return selectable Platonic solid metadata for UI controls.*
 **Exposes:** `build_geometry()` - *Resolve vertices, edges, and faces for the requested solid.*
-**Exposes:** `generate_families()` - *Functional interface.*
-**Exposes:** `generate_face_sequences()` - *Functional interface.*
+**Exposes:** `generate_families()` - *Generate families logic.*
+**Exposes:** `generate_face_sequences()` - *Generate face sequences logic.*
 
 
 ---
@@ -628,7 +659,7 @@ This manifest dissects the "Muscle" and "Bone" of the Trigrammaton Qabalah pilla
 
 **Role:** `[Muscle] (Service)`
 
-**Purpose:** Service for ternary conversions.
+**Purpose:** Backward compatibility shim for TernaryService.
 
 **Input (Ingests):**
 * Pure data structure or utility module.
@@ -637,19 +668,13 @@ This manifest dissects the "Muscle" and "Bone" of the Trigrammaton Qabalah pilla
 * Data primitives or DTOs.
 
 **Dependencies (It Needs):**
-* None.
+* `shared.services.tq.ternary_service.TernaryService`
 
 **Consumers (Who Needs It):**
 * `scripts/universal_pattern_search.py`
-* `src/pillars/adyton/services/frustum_color_service.py`
-* `src/pillars/adyton/services/kamea_color_service.py`
-* `src/pillars/adyton/ui/frustum_popup.py`
 
 **Key Interactions:**
-**Exposes:** `decimal_to_ternary()` - *Convert a decimal integer to a ternary string.*
-**Exposes:** `ternary_to_decimal()` - *Convert a ternary string to a decimal integer.*
-**Exposes:** `conrune_transform()` - *Apply Conrune transformation to a ternary string.*
-**Exposes:** `reverse_ternary()` - *Reverse a ternary string.*
+* Internal logic only.
 
 
 ---
@@ -713,9 +738,9 @@ This manifest dissects the "Muscle" and "Bone" of the Trigrammaton Qabalah pilla
 
 **Key Interactions:**
 **Exposes:** `update_parameters()` - *Update visualization target parameters from Symphony data.*
-**Exposes:** `stop()` - *Functional interface.*
-**Exposes:** `update_animation()` - *Functional interface.*
-**Exposes:** `paintEvent()` - *Functional interface.*
+**Exposes:** `stop()` - *Stop logic.*
+**Exposes:** `update_animation()` - *Update animation logic.*
+**Exposes:** `paintEvent()` - *Paintevent logic.*
 
 
 ---
@@ -865,16 +890,16 @@ This manifest dissects the "Muscle" and "Bone" of the Trigrammaton Qabalah pilla
 
 **Key Interactions:**
 **Emits:** `rotation_changed` - *Nervous System Signal.*
-**Exposes:** `set_geometry()` - *Functional interface.*
-**Exposes:** `set_family_segments()` - *Functional interface.*
-**Exposes:** `set_pattern_segments()` - *Functional interface.*
-**Exposes:** `set_transition()` - *Functional interface.*
-**Exposes:** `paintEvent()` - *Functional interface.*
-**Exposes:** `mousePressEvent()` - *Functional interface.*
-**Exposes:** `mouseMoveEvent()` - *Functional interface.*
-**Exposes:** `mouseReleaseEvent()` - *Functional interface.*
-**Exposes:** `set_rotation()` - *Functional interface.*
-**Exposes:** `reset_view()` - *Functional interface.*
+**Exposes:** `set_geometry()` - *Configure geometry logic.*
+**Exposes:** `set_family_segments()` - *Configure family segments logic.*
+**Exposes:** `set_pattern_segments()` - *Configure pattern segments logic.*
+**Exposes:** `set_transition()` - *Configure transition logic.*
+**Exposes:** `paintEvent()` - *Paintevent logic.*
+**Exposes:** `mousePressEvent()` - *Mousepressevent logic.*
+**Exposes:** `mouseMoveEvent()` - *Mousemoveevent logic.*
+**Exposes:** `mouseReleaseEvent()` - *Mousereleaseevent logic.*
+**Exposes:** `set_rotation()` - *Configure rotation logic.*
+**Exposes:** `reset_view()` - *Reset view logic.*
 
 
 ---
@@ -889,6 +914,7 @@ This manifest dissects the "Muscle" and "Bone" of the Trigrammaton Qabalah pilla
 * `parent`
 * `window_manager`
 * `parent`
+* `initial_values`
 
 **Output (Emits):**
 * Data primitives or DTOs.
@@ -914,14 +940,13 @@ This manifest dissects the "Muscle" and "Bone" of the Trigrammaton Qabalah pilla
 * `PyQt6.QtWidg
 
 **Consumers (Who Needs It):**
-* `src/pillars/adyton/ui/wall_designer.py`
-* `src/pillars/astrology/ui/differential_natal_window.py`
+* None detected.
 
 **Key Interactions:**
-**Exposes:** `set_vertices()` - *Functional interface.*
-**Exposes:** `set_highlight()` - *Functional interface.*
-**Exposes:** `set_special_segments()` - *Functional interface.*
-**Exposes:** `paintEvent()` - *Functional interface.*
+**Exposes:** `set_vertices()` - *Configure vertices logic.*
+**Exposes:** `set_highlight()` - *Configure highlight logic.*
+**Exposes:** `set_special_segments()` - *Configure special segments logic.*
+**Exposes:** `paintEvent()` - *Paintevent logic.*
 
 
 ---
@@ -965,14 +990,13 @@ This manifest dissects the "Muscle" and "Bone" of the Trigrammaton Qabalah pilla
 **Key Interactions:**
 **Emits:** `cell_clicked` - *Nervous System Signal.*
 **Emits:** `focus_changed` - *Nervous System Signal.*
-**Exposes:** `mousePressEvent()` - *Functional interface.*
-**Exposes:** `mouseMoveEvent()` - *Functional interface.*
-**Exposes:** `mouseReleaseEvent()` - *Functional interface.*
-**Exposes:** `contextMenuEvent()` - *Functional interface.*
-**Exposes:** `set_focused_ditrune()` - *Functional interface.*
-**Exposes:** `wheelEvent()` - *Functional interface.*
-**Exposes:** `set_show_connections()` - *Functional interface.*
-**Exposes:** `is_descendant()` - *Functional interface.*
+**Exposes:** `mousePressEvent()` - *Mousepressevent logic.*
+**Exposes:** `mouseMoveEvent()` - *Mousemoveevent logic.*
+**Exposes:** `mouseReleaseEvent()` - *Mousereleaseevent logic.*
+**Exposes:** `contextMenuEvent()` - *Contextmenuevent logic.*
+**Exposes:** `set_focused_ditrune()` - *Configure focused ditrune logic.*
+**Exposes:** `wheelEvent()` - *Wheelevent logic.*
+**Exposes:** `set_show_connections()` - *Configure show connections logic.*
 
 
 ---
@@ -1021,9 +1045,9 @@ This manifest dissects the "Muscle" and "Bone" of the Trigrammaton Qabalah pilla
 **Exposes:** `set_highlight()` - *Sets the highlight mode for the cell.*
 **Exposes:** `set_dimmed()` - *Dims the cell if filtered out.*
 **Exposes:** `set_view_mode()` - *Updates the text based on view mode ('decimal' or 'ternary').*
-**Exposes:** `hoverEnterEvent()` - *Functional interface.*
-**Exposes:** `hoverLeaveEvent()` - *Functional interface.*
-**Exposes:** `mousePressEvent()` - *Functional interface.*
+**Exposes:** `hoverEnterEvent()` - *Hoverenterevent logic.*
+**Exposes:** `hoverLeaveEvent()` - *Hoverleaveevent logic.*
+**Exposes:** `mousePressEvent()` - *Mousepressevent logic.*
 **Emits:** `cell_selected` - *Nervous System Signal.*
 **Exposes:** `set_dimension_filter()` - *Filters the grid by Pyx Count (Dimensional Density).*
 **Exposes:** `set_view_mode()` - *Propagates view mode to all cells.*
@@ -1126,6 +1150,7 @@ This manifest dissects the "Muscle" and "Bone" of the Trigrammaton Qabalah pilla
 * `parent`
 * `window_manager`
 * `parent`
+* `initial_value`
 
 **Output (Emits):**
 * Data primitives or DTOs.
@@ -1152,23 +1177,19 @@ This manifest dissects the "Muscle" and "Bone" of the Trigrammaton Qabalah pilla
 * `PyQt6.QtWidgets.QHe
 
 **Consumers (Who Needs It):**
-* `src/pillars/adyton/ui/wall_analytics_window.py`
-* `src/pillars/adyton/ui/wall_designer.py`
-* `src/pillars/astrology/ui/differential_natal_window.py`
-* `src/pillars/gematria/ui/gematria_calculator_window.py`
-* `src/pillars/gematria/ui/text_analysis/main_window.py`
-* `src/pillars/geometry/ui/geometry3d/window3d.py`
+* `src/pillars/astrology/ui/chariot_window.py`
+* `src/pillars/astrology/ui/natal_chart_window.py`
 
 **Key Interactions:**
-**Exposes:** `get_super()` - *Functional interface.*
-**Exposes:** `contextMenuEvent()` - *Functional interface.*
-**Exposes:** `sizeHint()` - *Functional interface.*
-**Exposes:** `minimumSizeHint()` - *Functional interface.*
+**Exposes:** `get_super()` - *Retrieve super logic.*
+**Exposes:** `contextMenuEvent()` - *Contextmenuevent logic.*
+**Exposes:** `sizeHint()` - *Sizehint logic.*
+**Exposes:** `minimumSizeHint()` - *Minimumsizehint logic.*
 **Exposes:** `set_ternary()` - *Update the glyph with a ternary string and repaint.*
-**Exposes:** `paintEvent()` - *Functional interface.*
-**Exposes:** `set_content()` - *Functional interface.*
-**Exposes:** `paintEvent()` - *Functional interface.*
-**Exposes:** `create_card()` - *Functional interface.*
+**Exposes:** `paintEvent()` - *Paintevent logic.*
+**Exposes:** `set_content()` - *Configure content logic.*
+**Exposes:** `paintEvent()` - *Paintevent logic.*
+**Exposes:** `create_card()` - *Create card logic.*
 
 
 ---
@@ -1251,12 +1272,12 @@ This manifest dissects the "Muscle" and "Bone" of the Trigrammaton Qabalah pilla
 * None detected.
 
 **Key Interactions:**
-**Exposes:** `init_ui()` - *Functional interface.*
-**Exposes:** `calculate()` - *Functional interface.*
-**Exposes:** `play_sound()` - *Functional interface.*
-**Exposes:** `init_ui()` - *Functional interface.*
-**Exposes:** `parse_sequence()` - *Functional interface.*
-**Exposes:** `play_sequence()` - *Functional interface.*
+**Exposes:** `init_ui()` - *Initialize ui logic.*
+**Exposes:** `calculate()` - *Compute logic.*
+**Exposes:** `play_sound()` - *Play sound logic.*
+**Exposes:** `init_ui()` - *Initialize ui logic.*
+**Exposes:** `parse_sequence()` - *Parse sequence logic.*
+**Exposes:** `play_sequence()` - *Play sequence logic.*
 **Exposes:** `play_chord()` - *Play all notes simultaneously.*
 **Exposes:** `map_chord()` - *Takes the first valid number in the input, finds its Quadset,*
 **Exposes:** `update_visualizer()` - *Update the visualizer with new signature data.*

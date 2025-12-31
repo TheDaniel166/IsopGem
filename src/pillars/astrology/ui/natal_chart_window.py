@@ -74,6 +74,7 @@ from shared.ui.theme import COLORS
 
 from ..ui.chart_picker_dialog import ChartPickerDialog
 from .astro_settings_dialog import AstroSettingsDialog
+from .location_search_dialog import LocationSearchDialog
 from pillars.tq.ui.quadset_analysis_window import SubstrateWidget
     
     
@@ -251,21 +252,6 @@ class NatalChartWindow(QMainWindow):
         location_row_widget = QWidget()
         location_row_widget.setLayout(location_row)
         form.addRow("Location Label", location_row_widget)
-
-        defaults_row = QHBoxLayout()
-        self.use_default_button = QPushButton("Use Default")
-        self.use_default_button.clicked.connect(self._use_default_location)
-        self.use_default_button.setEnabled(False)
-        defaults_row.addWidget(self.use_default_button)
-        self.save_default_button = QPushButton("Save as Default")
-        self.save_default_button.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.save_default_button.setProperty("archetype", "scribe")
-        self.save_default_button.clicked.connect(self._save_default_location)
-        defaults_row.addWidget(self.save_default_button)
-        defaults_row.addStretch()
-        defaults_widget = QWidget()
-        defaults_widget.setLayout(defaults_row)
-        form.addRow("Defaults", defaults_widget)
 
         self.latitude_input = QDoubleSpinBox()
         self.latitude_input.setRange(-90.0, 90.0)
@@ -645,37 +631,6 @@ class NatalChartWindow(QMainWindow):
         self._default_location = self._preferences.load_default_location()
         if self._default_location:
             self._apply_default_location_fields(self._default_location)
-        self._refresh_default_buttons()
-
-    def _refresh_default_buttons(self) -> None:
-        has_default = self._default_location is not None
-        if hasattr(self, "use_default_button"):
-            self.use_default_button.setEnabled(has_default)
-
-    def _use_default_location(self) -> None:
-        if not self._default_location:
-            QMessageBox.information(self, "No Default", "Save a default location first.")
-            return
-        self._apply_default_location_fields(self._default_location)
-        self._set_status("Default location applied.")
-
-    def _save_default_location(self) -> None:
-        location = DefaultLocation(
-            name=self.location_name_input.text().strip() or "Default Location",
-            latitude=self.latitude_input.value(),
-            longitude=self.longitude_input.value(),
-            elevation=float(self.elevation_input.value()),
-            timezone_offset=self.timezone_input.value(),
-            timezone_id=self._current_timezone_id,
-        )
-        try:
-            self._preferences.save_default_location(location)
-        except OSError as exc:  # pragma: no cover - filesystem errors
-            QMessageBox.critical(self, "Save Failed", str(exc))
-            return
-        self._default_location = location
-        self._refresh_default_buttons()
-        self._set_status("Default location saved.")
 
     def _apply_default_location_fields(
         self, location: DefaultLocation, target_dt: Optional[datetime] = None
@@ -733,27 +688,21 @@ class NatalChartWindow(QMainWindow):
         return [token.strip() for token in text.split(",") if token.strip()]
 
     def _search_location(self) -> None:
-        query, accepted = QInputDialog.getText(self, "Search City", "Enter a city or place name:", text=self.location_name_input.text())
-        if not accepted or not query.strip():
-            return
+        """Open the location search dialog."""
+        dialog = LocationSearchDialog(preferences=self._preferences, parent=self)
+        dialog.location_selected.connect(self._on_location_selected)
+        dialog.exec()
 
-        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
-        try:
-            results = self._location_lookup.search(query)
-        except LocationLookupError as exc:
-            QMessageBox.information(self, "No Results", str(exc))
-            return
-        except Exception as exc:  # pragma: no cover - network related
-            QMessageBox.critical(self, "Lookup Failed", str(exc))
-            return
-        finally:
-            QApplication.restoreOverrideCursor()
-
-        selection = self._select_location_candidate(results)
-        if selection is None:
-            return
-        self._apply_location_result(selection)
-        self._set_status("Location populated from lookup.")
+    def _on_location_selected(self, location) -> None:
+        """Handle location selection from the search dialog."""
+        # Check if it's a DefaultLocation or LocationResult
+        from ..utils import DefaultLocation
+        if isinstance(location, DefaultLocation):
+            self._apply_default_location_fields(location)
+            self._set_status("Default location applied.")
+        else:
+            self._apply_location_result(location)
+            self._set_status("Location populated from search.")
 
     def _select_location_candidate(self, results: List[LocationResult]) -> Optional[LocationResult]:
         if len(results) == 1:

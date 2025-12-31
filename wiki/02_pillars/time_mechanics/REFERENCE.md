@@ -11,35 +11,32 @@ This manifest dissects the "Keeper of Time," mapping the harmonic cycles of the 
 
 
 
+
+
 ---
 
 **File:** `src/pillars/time_mechanics/models/thelemic_calendar_models.py`
 
 **Role:** `[Bone] (Model)`
 
-**Purpose:** Thelemic Calendar Models - Data Transfer Objects for the Zodiacal Circle.
+**Purpose:** SHIM: Backward compatibility export for Thelemic Calendar Models.
 
 **Input (Ingests):**
-* `ditrune` (Field)
-* `contrune` (Field)
-* `difference` (Field)
-* `zodiacal` (Field)
-* `gregorian_date` (Field)
+* Pure data structure or utility module.
 
 **Output (Emits):**
 * Data primitives or DTOs.
 
 **Dependencies (It Needs):**
-* `dataclasses.dataclass`
-* `typing.Optional`
+* `shared.models.time.thelemic_calendar_models.ASTRONOMICON_CHARS`
+* `shared.models.time.thelemic_calendar_models.ConrunePair`
+* `shared.models.time.thelemic_calendar_models.ZODIAC_SIGNS`
 
 **Consumers (Who Needs It):**
 * None detected.
 
 **Key Interactions:**
-**Exposes:** `is_prime_ditrune()` - *True if this is one of the 4 Prime Ditrune Sets (intercalary days).*
-**Exposes:** `sign_letter()` - *Extract the zodiac sign letter (A-L) or None for Prime Ditrunes.*
-**Exposes:** `sign_day()` - *Extract the day within the sign (0-29) or None for Prime Ditrunes.*
+* Internal logic only.
 
 
 ---
@@ -80,7 +77,7 @@ This manifest dissects the "Keeper of Time," mapping the harmonic cycles of the 
 
 **Role:** `[Muscle] (Service)`
 
-**Purpose:** Thelemic Calendar Service - Loads and queries the Thelemic Calendar CSV.
+**Purpose:** SHIM: Backward compatibility export for ThelemicCalendarService.
 
 **Input (Ingests):**
 * Pure data structure or utility module.
@@ -89,32 +86,13 @@ This manifest dissects the "Keeper of Time," mapping the harmonic cycles of the 
 * Data primitives or DTOs.
 
 **Dependencies (It Needs):**
-* `csv`
-* `models.thelemic_calendar_models.ConrunePair`
-* `models.thelemic_calendar_models.ZODIAC_SIGNS`
-* `os`
-* `pathlib.Path`
-* `tq.services.ternary_service.TernaryService`
-* `typing.Dict`
-* `typing.List`
-* `typing.Optional`
+* `shared.services.time.thelemic_calendar_service.ThelemicCalendarService`
 
 **Consumers (Who Needs It):**
-* `src/pillars/astrology/ui/differential_natal_window.py`
+* None detected.
 
 **Key Interactions:**
-**Exposes:** `load_calendar()` - *Load the Thelemic Calendar from CSV.*
-**Exposes:** `ensure_loaded()` - *Ensure the calendar is loaded, loading if necessary.*
-**Exposes:** `get_pair_by_difference()` - *Get Conrune pair by Difference value (degree position 1-364).*
-**Exposes:** `get_pair_by_date()` - *Get Conrune pair by Gregorian date string.*
-**Exposes:** `get_all_pairs()` - *Get all Conrune pairs in order.*
-**Exposes:** `get_prime_ditrune_pairs()` - *Get the 4 Prime Ditrune Sets (intercalary days).*
-**Exposes:** `search_by_value()` - *Search for pairs where a specific field matches the given value.*
-**Exposes:** `difference_to_zodiac_degree()` - *Convert a Difference value to zodiacal degrees (0-360).*
-**Exposes:** `zodiac_degree_to_difference()` - *Convert a zodiacal degree (0-360) to a Difference value.*
-**Exposes:** `get_reversal_pair()` - *Find the reversal pair using ternary string reversal.*
-**Exposes:** `decimal_to_ternary()` - *Functional interface.*
-**Exposes:** `ternary_to_decimal()` - *Functional interface.*
+* Internal logic only.
 
 
 ---
@@ -143,14 +121,14 @@ This manifest dissects the "Keeper of Time," mapping the harmonic cycles of the 
 * `typing.Tuple`
 
 **Consumers (Who Needs It):**
-* `scripts/analyze_matrix_properties.py`
-* `scripts/analyze_ternary_patterns.py`
-* `scripts/analyze_trigram_tensor.py`
-* `scripts/generate_conrune_deltas.py`
-* `scripts/generate_cycle_nomenclature.py`
-* `scripts/generate_kairos_names.py`
-* `scripts/generate_spiral_deltas.py`
-* `scripts/generate_spiral_matrix.py`
+* `scripts/attic/analyze_matrix_properties.py`
+* `scripts/attic/analyze_ternary_patterns.py`
+* `scripts/attic/analyze_trigram_tensor.py`
+* `scripts/attic/generate_conrune_deltas.py`
+* `scripts/attic/generate_cycle_nomenclature.py`
+* `scripts/attic/generate_kairos_names.py`
+* `scripts/attic/generate_spiral_deltas.py`
+* `scripts/attic/generate_spiral_matrix.py`
 * `scripts/verify_columnar_symmetry.py`
 * `scripts/verify_three_laws.py`
 * `tests/rituals/rite_of_dynamis.py`
@@ -159,7 +137,7 @@ This manifest dissects the "Keeper of Time," mapping the harmonic cycles of the 
 
 **Key Interactions:**
 **Exposes:** `from_gregorian()` - *Convert a Gregorian Date to a Tzolkin Date.*
-**Exposes:** `get_epoch()` - *Functional interface.*
+**Exposes:** `get_epoch()` - *Retrieve epoch logic.*
 **Exposes:** `get_conrune()` - *Calculate the Conrune (Anti-Self) of a Ditrune.*
 **Exposes:** `get_trigrams()` - *Split a Ditrune into its Upper (Sky) and Lower (Earth) Trigrams.*
 
@@ -210,20 +188,20 @@ This manifest dissects the "Keeper of Time," mapping the harmonic cycles of the 
 * `tests/rituals/rite_of_hyperphysics.py`
 
 **Key Interactions:**
-**Exposes:** `boundingRect()` - *Functional interface.*
-**Exposes:** `paint()` - *Functional interface.*
-**Exposes:** `update_trigram()` - *Functional interface.*
-**Exposes:** `boundingRect()` - *Functional interface.*
-**Exposes:** `update_state()` - *Functional interface.*
-**Exposes:** `paint()` - *Functional interface.*
-**Exposes:** `boundingRect()` - *Functional interface.*
-**Exposes:** `paint()` - *Functional interface.*
-**Exposes:** `drawBackground()` - *Functional interface.*
-**Exposes:** `drawForeground()` - *Functional interface.*
-**Exposes:** `on_slider_change()` - *Functional interface.*
-**Exposes:** `toggle_animation()` - *Functional interface.*
-**Exposes:** `advance_frame()` - *Functional interface.*
-**Exposes:** `update_positions()` - *Functional interface.*
+**Exposes:** `boundingRect()` - *Boundingrect logic.*
+**Exposes:** `paint()` - *Paint logic.*
+**Exposes:** `update_trigram()` - *Update trigram logic.*
+**Exposes:** `boundingRect()` - *Boundingrect logic.*
+**Exposes:** `update_state()` - *Update state logic.*
+**Exposes:** `paint()` - *Paint logic.*
+**Exposes:** `boundingRect()` - *Boundingrect logic.*
+**Exposes:** `paint()` - *Paint logic.*
+**Exposes:** `drawBackground()` - *Drawbackground logic.*
+**Exposes:** `drawForeground()` - *Drawforeground logic.*
+**Exposes:** `on_slider_change()` - *Handle slider change logic.*
+**Exposes:** `toggle_animation()` - *Toggle animation logic.*
+**Exposes:** `advance_frame()` - *Advance frame logic.*
+**Exposes:** `update_positions()` - *Update positions logic.*
 
 
 ---
@@ -255,9 +233,9 @@ This manifest dissects the "Keeper of Time," mapping the harmonic cycles of the 
 
 **Key Interactions:**
 **Exposes:** `launch()` - *The method invoked by the WindowManager to show this sovereign domain.*
-**Exposes:** `launch_tzolkin()` - *Functional interface.*
-**Exposes:** `launch_dynamis()` - *Functional interface.*
-**Exposes:** `launch_zodiacal_circle()` - *Functional interface.*
+**Exposes:** `launch_tzolkin()` - *Launch tzolkin logic.*
+**Exposes:** `launch_dynamis()` - *Launch dynamis logic.*
+**Exposes:** `launch_zodiacal_circle()` - *Launch zodiacal circle logic.*
 
 
 ---
@@ -343,7 +321,7 @@ This manifest dissects the "Keeper of Time," mapping the harmonic cycles of the 
 **Emits:** `degree_clicked` - *Nervous System Signal.*
 **Exposes:** `mouseMoveEvent()` - *Handle mouse movement for hover effects.*
 **Exposes:** `mousePressEvent()` - *Handle mouse click to select a degree.*
-**Exposes:** `paintEvent()` - *Functional interface.*
+**Exposes:** `paintEvent()` - *Paintevent logic.*
 **Exposes:** `set_selected_difference()` - *Programmatically select a difference value.*
 **Exposes:** `set_active_divisors()` - *Set which divisors to show relationship lines for.*
 **Exposes:** `get_divisors()` - *Return all available divisors with their info.*

@@ -11,6 +11,8 @@ This manifest dissects the components of the Inner Sanctuary (Adyton), mapping i
 
 
 
+
+
 ---
 
 **File:** `src/pillars/adyton/constants.py`
@@ -221,7 +223,7 @@ This manifest dissects the components of the Inner Sanctuary (Adyton), mapping i
 * `typing.Optional`
 
 **Consumers (Who Needs It):**
-* `scripts/analyze_wall_patterns.py`
+* `scripts/attic/analyze_wall_patterns.py`
 * `scripts/deep_wall_analysis.py`
 * `scripts/universal_pattern_search.py`
 * `src/pillars/adyton/services/kamea_color_service.py`
@@ -229,8 +231,8 @@ This manifest dissects the components of the Inner Sanctuary (Adyton), mapping i
 * `src/pillars/adyton/ui/watchtower_view.py`
 
 **Key Interactions:**
-**Exposes:** `is_singularity()` - *Functional interface.*
-**Exposes:** `is_axis()` - *Functional interface.*
+**Exposes:** `is_singularity()` - *Determine if singularity logic.*
+**Exposes:** `is_axis()` - *Determine if axis logic.*
 
 
 ---
@@ -273,7 +275,7 @@ This manifest dissects the components of the Inner Sanctuary (Adyton), mapping i
 **Key Interactions:**
 **Exposes:** `build()` - *Constructs the Adyton Chamber using 728 Ashlar Blocks AND 7 Corner Stones.*
 **Exposes:** `build_wall()` - *Constructs a single wall placed in its canonical position (no floor).*
-**Exposes:** `f()` - *Functional interface.*
+**Exposes:** `f()` - *F logic.*
 
 
 ---
@@ -340,8 +342,8 @@ This manifest dissects the components of the Inner Sanctuary (Adyton), mapping i
 * None detected.
 
 **Key Interactions:**
-**Exposes:** `build()` - *Functional interface.*
-**Exposes:** `quad()` - *Functional interface.*
+**Exposes:** `build()` - *Build logic.*
+**Exposes:** `quad()` - *Quad logic.*
 
 
 ---
@@ -366,8 +368,8 @@ This manifest dissects the components of the Inner Sanctuary (Adyton), mapping i
 * `pillars.adyton.constants.FRUSTUM_FACE_RIGHT`
 * `pillars.adyton.constants.FRUSTUM_FACE_TOP`
 * `pillars.adyton.constants.WALL_WIDTH_UNITS`
-* `pillars.tq.services.baphomet_color_service.BaphometColorService`
-* `pillars.tq.services.ternary_service.TernaryService`
+* `shared.services.tq.baphomet_color_service.BaphometColorService`
+* `shared.services.tq.ternary_service.TernaryService`
 * `typing.Dict`
 * `typing.List`
 * `typing.Optional`
@@ -379,14 +381,14 @@ This manifest dissects the components of the Inner Sanctuary (Adyton), mapping i
 
 **Key Interactions:**
 **Exposes:** `get_wall_decimals()` - *Returns the raw decimal values from the wall CSV (8 rows × 13 cols).*
-**Exposes:** `get_center_color()` - *Functional interface.*
-**Exposes:** `get_side_color()` - *Functional interface.*
+**Exposes:** `get_center_color()` - *Retrieve center color logic.*
+**Exposes:** `get_side_color()` - *Retrieve side color logic.*
 **Exposes:** `get_trigram_glyph()` - *Returns the glyph symbol for a trigram decimal value.*
 **Exposes:** `get_trigram_letter()` - *Returns the letter for a trigram decimal value.*
 **Exposes:** `get_left_face_trigram_code()` - *Get the trigram code for the left face (planet-based).*
 **Exposes:** `get_right_face_trigram_code()` - *Get the trigram code for the right face (zodiac-based).*
-**Exposes:** `planet_by_offset()` - *Functional interface.*
-**Exposes:** `planet_by_offset()` - *Functional interface.*
+**Exposes:** `planet_by_offset()` - *Planet by offset logic.*
+**Exposes:** `planet_by_offset()` - *Planet by offset logic.*
 
 
 ---
@@ -407,8 +409,8 @@ This manifest dissects the components of the Inner Sanctuary (Adyton), mapping i
 * `PyQt6.QtGui.QColor`
 * `pathlib.Path`
 * `pillars.adyton.models.kamea_cell.KameaCell`
-* `pillars.tq.services.baphomet_color_service.BaphometColorService`
-* `pillars.tq.services.ternary_service.TernaryService`
+* `shared.services.tq.baphomet_color_service.BaphometColorService`
+* `shared.services.tq.ternary_service.TernaryService`
 * `typing.Dict`
 * `typing.List`
 * `typing.Tuple`
@@ -443,16 +445,16 @@ This manifest dissects the components of the Inner Sanctuary (Adyton), mapping i
 * `typing.Tuple`
 
 **Consumers (Who Needs It):**
-* `scripts/analyze_wall_patterns.py`
+* `scripts/attic/analyze_wall_patterns.py`
+* `scripts/attic/visualize_hexameric_split.py`
+* `scripts/attic/visualize_structure_options.py`
+* `scripts/attic/visualize_wall_octets.py`
 * `scripts/deep_wall_analysis.py`
 * `scripts/explore_cluster_variants.py`
 * `scripts/find_cluster_split.py`
 * `scripts/octant_distribution_law.py`
 * `scripts/universal_pattern_search.py`
 * `scripts/verify_wall_map_loading.py`
-* `scripts/visualize_hexameric_split.py`
-* `scripts/visualize_structure_options.py`
-* `scripts/visualize_wall_octets.py`
 * `src/pillars/adyton/ui/adyton_hub.py`
 * `src/pillars/adyton/ui/watchtower_view.py`
 * `tests/rite_of_adyton_kamea.py`
@@ -579,13 +581,13 @@ This manifest dissects the components of the Inner Sanctuary (Adyton), mapping i
 * None detected.
 
 **Key Interactions:**
-**Exposes:** `initializeGL()` - *Functional interface.*
-**Exposes:** `resizeGL()` - *Functional interface.*
-**Exposes:** `paintGL()` - *Functional interface.*
-**Exposes:** `mousePressEvent()` - *Functional interface.*
-**Exposes:** `mouseReleaseEvent()` - *Functional interface.*
-**Exposes:** `mouseMoveEvent()` - *Functional interface.*
-**Exposes:** `wheelEvent()` - *Functional interface.*
+**Exposes:** `initializeGL()` - *Initializegl logic.*
+**Exposes:** `resizeGL()` - *Resizegl logic.*
+**Exposes:** `paintGL()` - *Paintgl logic.*
+**Exposes:** `mousePressEvent()` - *Mousepressevent logic.*
+**Exposes:** `mouseReleaseEvent()` - *Mousereleaseevent logic.*
+**Exposes:** `mouseMoveEvent()` - *Mousemoveevent logic.*
+**Exposes:** `wheelEvent()` - *Wheelevent logic.*
 
 
 ---
@@ -660,8 +662,8 @@ This manifest dissects the components of the Inner Sanctuary (Adyton), mapping i
 * None detected.
 
 **Key Interactions:**
-**Exposes:** `add_object()` - *Functional interface.*
-**Exposes:** `clear()` - *Functional interface.*
+**Exposes:** `add_object()` - *Add object logic.*
+**Exposes:** `clear()` - *Clear logic.*
 **Exposes:** `get_all_faces()` - *Flattens scene into a list of world-space faces for the renderer.*
 
 
@@ -739,11 +741,11 @@ This manifest dissects the components of the Inner Sanctuary (Adyton), mapping i
 * None detected.
 
 **Key Interactions:**
-**Exposes:** `paintEvent()` - *Functional interface.*
-**Exposes:** `mousePressEvent()` - *Functional interface.*
-**Exposes:** `mouseReleaseEvent()` - *Functional interface.*
-**Exposes:** `mouseMoveEvent()` - *Functional interface.*
-**Exposes:** `wheelEvent()` - *Functional interface.*
+**Exposes:** `paintEvent()` - *Paintevent logic.*
+**Exposes:** `mousePressEvent()` - *Mousepressevent logic.*
+**Exposes:** `mouseReleaseEvent()` - *Mousereleaseevent logic.*
+**Exposes:** `mouseMoveEvent()` - *Mousemoveevent logic.*
+**Exposes:** `wheelEvent()` - *Wheelevent logic.*
 
 
 ---
@@ -824,14 +826,14 @@ This manifest dissects the components of the Inner Sanctuary (Adyton), mapping i
 * `PyQt6.QtWidgets.QWidget`
 * `dataclasses.dataclass`
 * `pillars.adyton.services.frustum_color_service.FrustumColorService`
-* `pillars.tq.services.baphomet_color_service.BaphometColorService`
-* `pillars.t
+* `shared.services.tq.baphomet_color_service.BaphometColorService`
+* `shared.ser
 
 **Consumers (Who Needs It):**
 * `src/pillars/adyton/ui/engine/wall_window.py`
 
 **Key Interactions:**
-**Exposes:** `paintEvent()` - *Functional interface.*
+**Exposes:** `paintEvent()` - *Paintevent logic.*
 
 
 ---
@@ -870,13 +872,13 @@ This manifest dissects the components of the Inner Sanctuary (Adyton), mapping i
 
 **Key Interactions:**
 **Emits:** `clicked` - *Nervous System Signal.*
-**Exposes:** `set_side_colors()` - *Functional interface.*
-**Exposes:** `set_cap_color()` - *Functional interface.*
-**Exposes:** `set_selected()` - *Functional interface.*
-**Exposes:** `enterEvent()` - *Functional interface.*
-**Exposes:** `leaveEvent()` - *Functional interface.*
-**Exposes:** `mousePressEvent()` - *Functional interface.*
-**Exposes:** `paintEvent()` - *Functional interface.*
+**Exposes:** `set_side_colors()` - *Configure side colors logic.*
+**Exposes:** `set_cap_color()` - *Configure cap color logic.*
+**Exposes:** `set_selected()` - *Configure selected logic.*
+**Exposes:** `enterEvent()` - *Enterevent logic.*
+**Exposes:** `leaveEvent()` - *Leaveevent logic.*
+**Exposes:** `mousePressEvent()` - *Mousepressevent logic.*
+**Exposes:** `paintEvent()` - *Paintevent logic.*
 
 
 ---
@@ -909,8 +911,8 @@ This manifest dissects the components of the Inner Sanctuary (Adyton), mapping i
 * `PyQt6.QtWidgets.QWidget`
 * `__future__.annotations`
 * `pathlib.Path`
-* `pillars.tq.ui.quadset_analysis_window.QuadsetAnalysisWindow`
-* `services.frustum_color_service.Frus
+* `services.frustum_color_service.FrustumColorService`
+* `shared.signals.navigation_bus.navigation_bus
 
 **Consumers (Who Needs It):**
 * None detected.
@@ -966,27 +968,27 @@ This manifest dissects the components of the Inner Sanctuary (Adyton), mapping i
 
 **Key Interactions:**
 **Exposes:** `set_lattice()` - *Calculates the Minimum Spanning Tree for each constellation group*
-**Exposes:** `paintEvent()` - *Functional interface.*
-**Exposes:** `set_edges()` - *Functional interface.*
-**Exposes:** `paintEvent()` - *Functional interface.*
+**Exposes:** `paintEvent()` - *Paintevent logic.*
+**Exposes:** `set_edges()` - *Configure edges logic.*
+**Exposes:** `paintEvent()` - *Paintevent logic.*
 **Emits:** `clicked` - *Nervous System Signal.*
 **Emits:** `right_clicked` - *Nervous System Signal.*
-**Exposes:** `set_overlay()` - *Functional interface.*
+**Exposes:** `set_overlay()` - *Configure overlay logic.*
 **Exposes:** `update_style()` - *Updates the background color and border.*
-**Exposes:** `mousePressEvent()` - *Functional interface.*
-**Exposes:** `load_lattices()` - *Functional interface.*
-**Exposes:** `init_ui()` - *Functional interface.*
-**Exposes:** `on_wall_changed()` - *Functional interface.*
-**Exposes:** `load_wall_values()` - *Functional interface.*
-**Exposes:** `on_cell_clicked()` - *Functional interface.*
+**Exposes:** `mousePressEvent()` - *Mousepressevent logic.*
+**Exposes:** `load_lattices()` - *Load lattices logic.*
+**Exposes:** `init_ui()` - *Initialize ui logic.*
+**Exposes:** `on_wall_changed()` - *Handle wall changed logic.*
+**Exposes:** `load_wall_values()` - *Load wall values logic.*
+**Exposes:** `on_cell_clicked()` - *Handle cell clicked logic.*
 **Exposes:** `on_cell_right_clicked()` - *Handle right click on a cell to show context menu.*
-**Exposes:** `update_grid_overlay()` - *Functional interface.*
+**Exposes:** `update_grid_overlay()` - *Update grid overlay logic.*
 **Exposes:** `calculate_seeds()` - *Calculates Geometric Center (Seed) for each group.*
 **Exposes:** `get_growth_order()` - *Returns values ordered by distance from seed.*
 **Exposes:** `calculate_mst_edges()` - *Calculates edges for Minimum Spanning Trees of clusters.*
 **Exposes:** `export_snapshot()` - *Grabs the grid frame and saves as PNG.*
-**Exposes:** `get_center()` - *Functional interface.*
-**Exposes:** `on_grid_resize()` - *Functional interface.*
+**Exposes:** `get_center()` - *Retrieve center logic.*
+**Exposes:** `on_grid_resize()` - *Handle grid resize logic.*
 
 
 ---
@@ -1025,15 +1027,15 @@ This manifest dissects the components of the Inner Sanctuary (Adyton), mapping i
 * `src/pillars/adyton/ui/adyton_hub.py`
 
 **Key Interactions:**
-**Exposes:** `init_ui()` - *Functional interface.*
-**Exposes:** `on_view_mode_changed()` - *Functional interface.*
-**Exposes:** `on_zoom_changed()` - *Functional interface.*
-**Exposes:** `load_tablet()` - *Functional interface.*
-**Exposes:** `render_tablet()` - *Functional interface.*
-**Exposes:** `rebuild_widgets()` - *Functional interface.*
-**Exposes:** `on_cell_clicked()` - *Functional interface.*
+**Exposes:** `init_ui()` - *Initialize ui logic.*
+**Exposes:** `on_view_mode_changed()` - *Handle view mode changed logic.*
+**Exposes:** `on_zoom_changed()` - *Handle zoom changed logic.*
+**Exposes:** `load_tablet()` - *Load tablet logic.*
+**Exposes:** `render_tablet()` - *Render tablet logic.*
+**Exposes:** `rebuild_widgets()` - *Rebuild widgets logic.*
+**Exposes:** `on_cell_clicked()` - *Handle cell clicked logic.*
 **Exposes:** `refresh_layout()` - *Lays out the two triangles to form a Diamond (Base-to-Base).*
-**Exposes:** `create_widget()` - *Functional interface.*
-**Exposes:** `layout_triangle()` - *Functional interface.*
-**Exposes:** `assign_groups()` - *Functional interface.*
-**Exposes:** `key_func()` - *Functional interface.*
+**Exposes:** `create_widget()` - *Create widget logic.*
+**Exposes:** `layout_triangle()` - *Layout triangle logic.*
+**Exposes:** `assign_groups()` - *Assign groups logic.*
+**Exposes:** `key_func()` - *Key func logic.*

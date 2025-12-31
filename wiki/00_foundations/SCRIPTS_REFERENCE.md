@@ -31,7 +31,7 @@
 
 
 
----
+
 
 **File:** `scripts/analyze_constellation_shapes.py`
 
@@ -58,7 +58,7 @@
 **Exposes:** `analyze_constellation_shapes()` - *Functional interface.*
 
 
----
+
 
 **File:** `scripts/analyze_eclipse_stones.py`
 
@@ -91,7 +91,7 @@
 **Exposes:** `get_deg()` - *Functional interface.*
 
 
----
+
 
 **File:** `scripts/analyze_matrix_properties.py`
 
@@ -119,7 +119,7 @@
 **Exposes:** `analyze_matrix()` - *Functional interface.*
 
 
----
+
 
 **File:** `scripts/analyze_pattern_stats.py`
 
@@ -144,7 +144,7 @@
 **Exposes:** `analyze_stats()` - *Functional interface.*
 
 
----
+
 
 **File:** `scripts/analyze_seed_hotspots.py`
 
@@ -170,7 +170,7 @@
 **Exposes:** `analyze_hotspots()` - *Functional interface.*
 
 
----
+
 
 **File:** `scripts/analyze_seeds.py`
 
@@ -195,7 +195,7 @@
 **Exposes:** `analyze_seeds()` - *Functional interface.*
 
 
----
+
 
 **File:** `scripts/analyze_spiral_harmonics.py`
 
@@ -223,7 +223,7 @@
 **Exposes:** `analyze_harmonics()` - *Functional interface.*
 
 
----
+
 
 **File:** `scripts/analyze_ternary_patterns.py`
 
@@ -252,7 +252,7 @@
 **Exposes:** `analyze_patterns()` - *Functional interface.*
 
 
----
+
 
 **File:** `scripts/analyze_trigram_tensor.py`
 
@@ -282,7 +282,7 @@
 **Exposes:** `analyze_tensor()` - *Functional interface.*
 
 
----
+
 
 **File:** `scripts/analyze_void_distribution.py`
 
@@ -307,7 +307,7 @@
 **Exposes:** `calculate_seeds_for_planet()` - *Calculate seed coordinates for a planetary lattice.*
 
 
----
+
 
 **File:** `scripts/analyze_wall_patterns.py`
 
@@ -333,6 +333,8 @@
 **Key Interactions:**
 **Exposes:** `get_wall_index()` - *Functional interface.*
 **Exposes:** `analyze_air_tablet()` - *Functional interface.*
+
+
 
 
 ---
@@ -361,6 +363,1004 @@
 **Exposes:** `render_asterism()` - *Functional interface.*
 **Exposes:** `process_match()` - *Functional interface.*
 **Exposes:** `main()` - *Functional interface.*
+
+
+---
+
+**File:** `scripts/attic/analyze_constellation_shapes.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** Soul not yet specified.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `collections`
+* `json`
+* `os`
+* `sys`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `analyze_constellation_shapes()` - *Functional interface.*
+
+
+---
+
+**File:** `scripts/attic/analyze_eclipse_stones.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** Soul not yet specified.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `datetime.datetime`
+* `datetime.timedelta`
+* `datetime.timezone`
+* `math`
+* `openastro2.openastro2.openAstro`
+* `os`
+* `sys`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `to_zodiacal_string()` - *Functional interface.*
+**Exposes:** `get_stone_idx()` - *Functional interface.*
+**Exposes:** `analyze()` - *Functional interface.*
+**Exposes:** `get_deg()` - *Functional interface.*
+
+
+---
+
+**File:** `scripts/attic/analyze_matrix_properties.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** Soul not yet specified.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `datetime.timedelta`
+* `numpy`
+* `os`
+* `pillars.time_mechanics.services.tzolkin_service.TzolkinService`
+* `sys`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `analyze_matrix()` - *Functional interface.*
+
+
+---
+
+**File:** `scripts/attic/analyze_pattern_stats.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** Soul not yet specified.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `collections`
+* `re`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `analyze_stats()` - *Functional interface.*
+
+
+---
+
+**File:** `scripts/attic/analyze_seed_hotspots.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** Soul not yet specified.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `collections`
+* `json`
+* `os`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `analyze_hotspots()` - *Functional interface.*
+
+
+---
+
+**File:** `scripts/attic/analyze_seeds.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** Soul not yet specified.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `json`
+* `os`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `analyze_seeds()` - *Functional interface.*
+
+
+---
+
+**File:** `scripts/attic/analyze_spiral_harmonics.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** Soul not yet specified.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `csv`
+* `math`
+* `os`
+* `sys`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `gcd_list()` - *Functional interface.*
+**Exposes:** `analyze_harmonics()` - *Functional interface.*
+
+
+---
+
+**File:** `scripts/attic/analyze_ternary_patterns.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** Soul not yet specified.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `collections.Counter`
+* `collections.defaultdict`
+* `datetime.timedelta`
+* `os`
+* `pillars.time_mechanics.services.tzolkin_service.TzolkinService`
+* `sys`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `analyze_patterns()` - *Functional interface.*
+
+
+---
+
+**File:** `scripts/attic/analyze_trigram_tensor.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** Soul not yet specified.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `datetime.timedelta`
+* `numpy`
+* `os`
+* `pillars.time_mechanics.services.tzolkin_service.TzolkinService`
+* `sys`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `trigram_to_charge()` - *Functional interface.*
+**Exposes:** `trigram_to_id()` - *Functional interface.*
+**Exposes:** `analyze_tensor()` - *Functional interface.*
+
+
+---
+
+**File:** `scripts/attic/analyze_void_distribution.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** Analyze the actual Void Star distribution from the planetary lattices.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `collections.defaultdict`
+* `json`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `calculate_seeds_for_planet()` - *Calculate seed coordinates for a planetary lattice.*
+
+
+---
+
+**File:** `scripts/attic/analyze_wall_patterns.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** Soul not yet specified.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `os`
+* `pillars.adyton.models.kamea_cell.KameaCell`
+* `pillars.adyton.services.kamea_loader_service.KameaLoaderService`
+* `sys`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `get_wall_index()` - *Functional interface.*
+**Exposes:** `analyze_air_tablet()` - *Functional interface.*
+
+
+---
+
+**File:** `scripts/attic/debug_doc_collections.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** Soul not yet specified.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `os`
+* `pillars.document_manager.services.document_service.document_service_context`
+* `sys`
+* `traceback`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `main()` - *Functional interface.*
+
+
+---
+
+**File:** `scripts/attic/debug_doc_tags.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** Soul not yet specified.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `os`
+* `pillars.document_manager.services.document_service.document_service_context`
+* `sys`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `main()` - *Functional interface.*
+
+
+---
+
+**File:** `scripts/attic/debug_natal_julian_day.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** Soul not yet specified.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `datetime.datetime`
+* `os`
+* `pillars.astrology.models.AstrologyEvent`
+* `pillars.astrology.models.ChartRequest`
+* `pillars.astrology.models.GeoLocation`
+* `pillars.astrology.services.OpenAstroService`
+* `sys`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `debug_julian_day()` - *Functional interface.*
+
+
+---
+
+**File:** `scripts/attic/generate_adyton_constellations.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** Soul not yet specified.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `random`
+* `sys`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `generate_constellations()` - *Functional interface.*
+
+
+---
+
+**File:** `scripts/attic/generate_annealed_constellations.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** Soul not yet specified.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `math`
+* `random`
+* `sys`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `generate_kmeans_constellations()` - *Functional interface.*
+**Exposes:** `is_connected()` - *Functional interface.*
+**Exposes:** `is_valid_shape()` - *Functional interface.*
+**Exposes:** `calculate_compactness()` - *Functional interface.*
+
+
+---
+
+**File:** `scripts/attic/generate_archimedean_data.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** Fetch canonical Archimedean solid data from dmccooey.com and emit Python module.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `__future__.annotations`
+* `ast`
+* `math`
+* `operator`
+* `pathlib`
+* `requests`
+* `typing.Dict`
+* `typing.List`
+* `typing.Tuple`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `parse_solid()` - *Functional interface.*
+**Exposes:** `main()` - *Functional interface.*
+
+
+---
+
+**File:** `scripts/attic/generate_conrune_deltas.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** Soul not yet specified.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `csv`
+* `numpy`
+* `os`
+* `pillars.time_mechanics.services.tzolkin_service.TzolkinService`
+* `sys`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `get_conrune()` - *Functional interface.*
+**Exposes:** `ternary_to_decimal()` - *Functional interface.*
+**Exposes:** `generate_deltas()` - *Functional interface.*
+
+
+---
+
+**File:** `scripts/attic/generate_constellation_report.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** Soul not yet specified.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `csv`
+* `json`
+* `os`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `main()` - *Functional interface.*
+
+
+---
+
+**File:** `scripts/attic/generate_cycle_nomenclature.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** Soul not yet specified.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `csv`
+* `datetime.timedelta`
+* `math`
+* `os`
+* `pillars.time_mechanics.services.tzolkin_service.TzolkinService`
+* `sys`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `get_charge()` - *Functional interface.*
+**Exposes:** `get_sign_code()` - *Functional interface.*
+**Exposes:** `generate_nomenclature()` - *Functional interface.*
+
+
+---
+
+**File:** `scripts/attic/generate_grimoire.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** Soul not yet specified.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `collections`
+* `csv`
+* `json`
+* `os`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `generate_grimoire()` - *Functional interface.*
+
+
+---
+
+**File:** `scripts/attic/generate_kairos_names.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** Soul not yet specified.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `csv`
+* `datetime.timedelta`
+* `os`
+* `pillars.time_mechanics.services.tzolkin_service.TzolkinService`
+* `random`
+* `sys`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `get_charge()` - *Functional interface.*
+**Exposes:** `generate_name()` - *Generate a unique poetic name based on physics.*
+**Exposes:** `generate_kairoi()` - *Functional interface.*
+
+
+---
+
+**File:** `scripts/attic/generate_organic_constellations.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** Soul not yet specified.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `random`
+* `sys`
+* `time`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `generate_organic_constellations()` - *Functional interface.*
+**Exposes:** `print_grid()` - *Functional interface.*
+
+
+---
+
+**File:** `scripts/attic/generate_planetary_lattices.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** Soul not yet specified.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `json`
+* `os`
+* `random`
+* `sys`
+* `time`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `generate_planetary_lattices()` - *Functional interface.*
+
+
+---
+
+**File:** `scripts/attic/generate_prompts.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** Soul not yet specified.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `json`
+* `os`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `generate_prompts()` - *Functional interface.*
+
+
+---
+
+**File:** `scripts/attic/generate_source_docs.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** Soul not yet specified.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `ast`
+* `logging`
+* `os`
+* `pathlib.Path`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `infer_architecture()` - *Functional interface.*
+**Exposes:** `analyze_file()` - *Functional interface.*
+**Exposes:** `generate_mermaid()` - *Functional interface.*
+**Exposes:** `generate_markdown()` - *Functional interface.*
+**Exposes:** `main()` - *Functional interface.*
+**Exposes:** `visit_Import()` - *Functional interface.*
+**Exposes:** `visit_ImportFrom()` - *Functional interface.*
+**Exposes:** `visit_ClassDef()` - *Functional interface.*
+**Exposes:** `visit_FunctionDef()` - *Functional interface.*
+**Exposes:** `calculate_complexity()` - *Functional interface.*
+**Exposes:** `visit_Call()` - *Functional interface.*
+**Exposes:** `visit_Assign()` - *Functional interface.*
+
+
+---
+
+**File:** `scripts/attic/generate_spiral_deltas.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** Soul not yet specified.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `csv`
+* `datetime.timedelta`
+* `os`
+* `pillars.time_mechanics.services.tzolkin_service.TzolkinService`
+* `sys`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `get_conrune()` - *Functional interface.*
+**Exposes:** `ternary_to_decimal()` - *Functional interface.*
+**Exposes:** `generate_spiral_deltas()` - *Functional interface.*
+
+
+---
+
+**File:** `scripts/attic/generate_spiral_matrix.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** Soul not yet specified.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `csv`
+* `datetime.timedelta`
+* `os`
+* `pillars.time_mechanics.services.tzolkin_service.TzolkinService`
+* `sys`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `get_conrune_ternary()` - *Functional interface.*
+**Exposes:** `ternary_to_decimal()` - *Functional interface.*
+**Exposes:** `generate_spiral_matrix()` - *Functional interface.*
+
+
+---
+
+**File:** `scripts/attic/generate_star_catalog.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** Generate The Catalog of Fixed Stars v2.0
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `collections.defaultdict`
+* `csv`
+* `json`
+* `os`
+* `random`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `load_lattices()` - *Functional interface.*
+**Exposes:** `load_wall_values()` - *Load numeric values for each wall.*
+**Exposes:** `calculate_seeds()` - *Calculate seed coordinates for a planetary lattice.*
+**Exposes:** `find_void_and_seed_coords()` - *Find all void coords and all seed coords.*
+**Exposes:** `distribute_voids_to_walls()` - *Distribute 41 void coords evenly across 7 walls (6,6,6,6,6,6,5).*
+**Exposes:** `generate_name()` - *Generate a unique mythical name.*
+**Exposes:** `get_etymology()` - *Get etymology for a name.*
+**Exposes:** `generate_void_nature()` - *Generate nature description for a void star.*
+**Exposes:** `generate_seed_nature()` - *Generate nature description for a seed star.*
+**Exposes:** `generate_void_whisper()` - *Functional interface.*
+**Exposes:** `generate_seed_whisper()` - *Functional interface.*
+**Exposes:** `generate_catalog()` - *Generate the full star catalog.*
+**Exposes:** `write_markdown()` - *Write the catalog as Markdown.*
+**Exposes:** `write_json()` - *Write the catalog as JSON.*
+
+
+---
+
+**File:** `scripts/attic/reverse_engineer_seeds.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** Soul not yet specified.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `collections`
+* `json`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `reverse_engineer()` - *Functional interface.*
+
+
+---
+
+**File:** `scripts/attic/visualize_constellation_preview.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** Soul not yet specified.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* None.
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `text_to_grid()` - *Functional interface.*
+**Exposes:** `render_stars_only()` - *Functional interface.*
+**Exposes:** `render_asterism_cardinal()` - *Functional interface.*
+
+
+---
+
+**File:** `scripts/attic/visualize_hexameric_split.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** Soul not yet specified.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `collections`
+* `os`
+* `pillars.adyton.services.kamea_loader_service.KameaLoaderService`
+* `sys`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `visualize_hexameric_split()` - *Functional interface.*
+
+
+---
+
+**File:** `scripts/attic/visualize_seeds_atlas.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** Soul not yet specified.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `collections`
+* `json`
+* `os`
+* `sys`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `generate_vis()` - *Functional interface.*
+
+
+---
+
+**File:** `scripts/attic/visualize_structure_options.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** Soul not yet specified.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `collections`
+* `os`
+* `pillars.adyton.services.kamea_loader_service.KameaLoaderService`
+* `sys`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `visualize_structure()` - *Functional interface.*
+
+
+---
+
+**File:** `scripts/attic/visualize_wall_octets.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** Soul not yet specified.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `collections.defaultdict`
+* `csv`
+* `os`
+* `pillars.adyton.services.kamea_loader_service.KameaLoaderService`
+* `sys`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `visualize_octets()` - *Functional interface.*
 
 
 ---
@@ -451,6 +1451,33 @@
 
 ---
 
+**File:** `scripts/awaken.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** The Rite of Awakening (awaken.py)
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `os`
+* `pathlib.Path`
+* `sys`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `read_scroll()` - *Functional interface.*
+**Exposes:** `main()` - *Functional interface.*
+
+
+---
+
 **File:** `scripts/conversions.py`
 
 **Role:** `[Scout]`
@@ -471,59 +1498,6 @@
 
 **Key Interactions:**
 **Exposes:** `to_zodiacal_string()` - *Convert absolute degree (0-360) to zodiacal degree notation (Deg Sign Min).*
-
-
----
-
-**File:** `scripts/debug_doc_collections.py`
-
-**Role:** `[Scout]`
-
-**Purpose:** Soul not yet specified.
-
-**Input (Ingests):**
-* Pure data structure or utility module.
-
-**Output (Emits):**
-* Data primitives or DTOs.
-
-**Dependencies (It Needs):**
-* `os`
-* `pillars.document_manager.services.document_service.document_service_context`
-* `sys`
-* `traceback`
-
-**Consumers (Who Needs It):**
-* None detected.
-
-**Key Interactions:**
-**Exposes:** `main()` - *Functional interface.*
-
-
----
-
-**File:** `scripts/debug_doc_tags.py`
-
-**Role:** `[Scout]`
-
-**Purpose:** Soul not yet specified.
-
-**Input (Ingests):**
-* Pure data structure or utility module.
-
-**Output (Emits):**
-* Data primitives or DTOs.
-
-**Dependencies (It Needs):**
-* `os`
-* `pillars.document_manager.services.document_service.document_service_context`
-* `sys`
-
-**Consumers (Who Needs It):**
-* None detected.
-
-**Key Interactions:**
-**Exposes:** `main()` - *Functional interface.*
 
 
 ---
@@ -553,6 +1527,39 @@
 **Key Interactions:**
 **Exposes:** `analyze_deep()` - *Functional interface.*
 **Exposes:** `get_wall()` - *Functional interface.*
+
+
+---
+
+**File:** `scripts/diagnose_window_flags.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** Soul not yet specified.
+
+**Input (Ingests):**
+* `name`
+* `flags`
+* `parent`
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `PyQt6.QtCore.Qt`
+* `PyQt6.QtWidgets.QApplication`
+* `PyQt6.QtWidgets.QLabel`
+* `PyQt6.QtWidgets.QMainWindow`
+* `PyQt6.QtWidgets.QPushButton`
+* `PyQt6.QtWidgets.QVBoxLayout`
+* `PyQt6.QtWidgets.QWidget`
+* `sys`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `setup_ui()` - *Functional interface.*
 
 
 ---
@@ -688,455 +1695,6 @@
 
 ---
 
-**File:** `scripts/generate_adyton_constellations.py`
-
-**Role:** `[Scout]`
-
-**Purpose:** Soul not yet specified.
-
-**Input (Ingests):**
-* Pure data structure or utility module.
-
-**Output (Emits):**
-* Data primitives or DTOs.
-
-**Dependencies (It Needs):**
-* `random`
-* `sys`
-
-**Consumers (Who Needs It):**
-* None detected.
-
-**Key Interactions:**
-**Exposes:** `generate_constellations()` - *Functional interface.*
-
-
----
-
-**File:** `scripts/generate_annealed_constellations.py`
-
-**Role:** `[Scout]`
-
-**Purpose:** Soul not yet specified.
-
-**Input (Ingests):**
-* Pure data structure or utility module.
-
-**Output (Emits):**
-* Data primitives or DTOs.
-
-**Dependencies (It Needs):**
-* `math`
-* `random`
-* `sys`
-
-**Consumers (Who Needs It):**
-* None detected.
-
-**Key Interactions:**
-**Exposes:** `generate_kmeans_constellations()` - *Functional interface.*
-**Exposes:** `is_connected()` - *Functional interface.*
-**Exposes:** `is_valid_shape()` - *Functional interface.*
-**Exposes:** `calculate_compactness()` - *Functional interface.*
-
-
----
-
-**File:** `scripts/generate_archimedean_data.py`
-
-**Role:** `[Scout]`
-
-**Purpose:** Fetch canonical Archimedean solid data from dmccooey.com and emit Python module.
-
-**Input (Ingests):**
-* Pure data structure or utility module.
-
-**Output (Emits):**
-* Data primitives or DTOs.
-
-**Dependencies (It Needs):**
-* `__future__.annotations`
-* `math`
-* `pathlib`
-* `requests`
-* `typing.Dict`
-* `typing.List`
-* `typing.Tuple`
-
-**Consumers (Who Needs It):**
-* None detected.
-
-**Key Interactions:**
-**Exposes:** `parse_solid()` - *Functional interface.*
-**Exposes:** `main()` - *Functional interface.*
-
-
----
-
-**File:** `scripts/generate_conrune_deltas.py`
-
-**Role:** `[Scout]`
-
-**Purpose:** Soul not yet specified.
-
-**Input (Ingests):**
-* Pure data structure or utility module.
-
-**Output (Emits):**
-* Data primitives or DTOs.
-
-**Dependencies (It Needs):**
-* `csv`
-* `numpy`
-* `os`
-* `pillars.time_mechanics.services.tzolkin_service.TzolkinService`
-* `sys`
-
-**Consumers (Who Needs It):**
-* None detected.
-
-**Key Interactions:**
-**Exposes:** `get_conrune()` - *Functional interface.*
-**Exposes:** `ternary_to_decimal()` - *Functional interface.*
-**Exposes:** `generate_deltas()` - *Functional interface.*
-
-
----
-
-**File:** `scripts/generate_constellation_report.py`
-
-**Role:** `[Scout]`
-
-**Purpose:** Soul not yet specified.
-
-**Input (Ingests):**
-* Pure data structure or utility module.
-
-**Output (Emits):**
-* Data primitives or DTOs.
-
-**Dependencies (It Needs):**
-* `csv`
-* `json`
-* `os`
-
-**Consumers (Who Needs It):**
-* None detected.
-
-**Key Interactions:**
-**Exposes:** `main()` - *Functional interface.*
-
-
----
-
-**File:** `scripts/generate_cycle_nomenclature.py`
-
-**Role:** `[Scout]`
-
-**Purpose:** Soul not yet specified.
-
-**Input (Ingests):**
-* Pure data structure or utility module.
-
-**Output (Emits):**
-* Data primitives or DTOs.
-
-**Dependencies (It Needs):**
-* `csv`
-* `datetime.timedelta`
-* `math`
-* `os`
-* `pillars.time_mechanics.services.tzolkin_service.TzolkinService`
-* `sys`
-
-**Consumers (Who Needs It):**
-* None detected.
-
-**Key Interactions:**
-**Exposes:** `get_charge()` - *Functional interface.*
-**Exposes:** `get_sign_code()` - *Functional interface.*
-**Exposes:** `generate_nomenclature()` - *Functional interface.*
-
-
----
-
-**File:** `scripts/generate_grimoire.py`
-
-**Role:** `[Scout]`
-
-**Purpose:** Soul not yet specified.
-
-**Input (Ingests):**
-* Pure data structure or utility module.
-
-**Output (Emits):**
-* Data primitives or DTOs.
-
-**Dependencies (It Needs):**
-* `collections`
-* `csv`
-* `json`
-* `os`
-
-**Consumers (Who Needs It):**
-* None detected.
-
-**Key Interactions:**
-**Exposes:** `generate_grimoire()` - *Functional interface.*
-
-
----
-
-**File:** `scripts/generate_kairos_names.py`
-
-**Role:** `[Scout]`
-
-**Purpose:** Soul not yet specified.
-
-**Input (Ingests):**
-* Pure data structure or utility module.
-
-**Output (Emits):**
-* Data primitives or DTOs.
-
-**Dependencies (It Needs):**
-* `csv`
-* `datetime.timedelta`
-* `os`
-* `pillars.time_mechanics.services.tzolkin_service.TzolkinService`
-* `random`
-* `sys`
-
-**Consumers (Who Needs It):**
-* None detected.
-
-**Key Interactions:**
-**Exposes:** `get_charge()` - *Functional interface.*
-**Exposes:** `generate_name()` - *Generate a unique poetic name based on physics.*
-**Exposes:** `generate_kairoi()` - *Functional interface.*
-
-
----
-
-**File:** `scripts/generate_organic_constellations.py`
-
-**Role:** `[Scout]`
-
-**Purpose:** Soul not yet specified.
-
-**Input (Ingests):**
-* Pure data structure or utility module.
-
-**Output (Emits):**
-* Data primitives or DTOs.
-
-**Dependencies (It Needs):**
-* `random`
-* `sys`
-* `time`
-
-**Consumers (Who Needs It):**
-* None detected.
-
-**Key Interactions:**
-**Exposes:** `generate_organic_constellations()` - *Functional interface.*
-**Exposes:** `print_grid()` - *Functional interface.*
-
-
----
-
-**File:** `scripts/generate_planetary_lattices.py`
-
-**Role:** `[Scout]`
-
-**Purpose:** Soul not yet specified.
-
-**Input (Ingests):**
-* Pure data structure or utility module.
-
-**Output (Emits):**
-* Data primitives or DTOs.
-
-**Dependencies (It Needs):**
-* `json`
-* `os`
-* `random`
-* `sys`
-* `time`
-
-**Consumers (Who Needs It):**
-* None detected.
-
-**Key Interactions:**
-**Exposes:** `generate_planetary_lattices()` - *Functional interface.*
-
-
----
-
-**File:** `scripts/generate_prompts.py`
-
-**Role:** `[Scout]`
-
-**Purpose:** Soul not yet specified.
-
-**Input (Ingests):**
-* Pure data structure or utility module.
-
-**Output (Emits):**
-* Data primitives or DTOs.
-
-**Dependencies (It Needs):**
-* `json`
-* `os`
-
-**Consumers (Who Needs It):**
-* None detected.
-
-**Key Interactions:**
-**Exposes:** `generate_prompts()` - *Functional interface.*
-
-
----
-
-**File:** `scripts/generate_source_docs.py`
-
-**Role:** `[Scout]`
-
-**Purpose:** Soul not yet specified.
-
-**Input (Ingests):**
-* Pure data structure or utility module.
-
-**Output (Emits):**
-* Data primitives or DTOs.
-
-**Dependencies (It Needs):**
-* `ast`
-* `logging`
-* `os`
-* `pathlib.Path`
-
-**Consumers (Who Needs It):**
-* None detected.
-
-**Key Interactions:**
-**Exposes:** `infer_architecture()` - *Functional interface.*
-**Exposes:** `analyze_file()` - *Functional interface.*
-**Exposes:** `generate_mermaid()` - *Functional interface.*
-**Exposes:** `generate_markdown()` - *Functional interface.*
-**Exposes:** `main()` - *Functional interface.*
-**Exposes:** `visit_Import()` - *Functional interface.*
-**Exposes:** `visit_ImportFrom()` - *Functional interface.*
-**Exposes:** `visit_ClassDef()` - *Functional interface.*
-**Exposes:** `visit_FunctionDef()` - *Functional interface.*
-**Exposes:** `calculate_complexity()` - *Functional interface.*
-**Exposes:** `visit_Call()` - *Functional interface.*
-**Exposes:** `visit_Assign()` - *Functional interface.*
-
-
----
-
-**File:** `scripts/generate_spiral_deltas.py`
-
-**Role:** `[Scout]`
-
-**Purpose:** Soul not yet specified.
-
-**Input (Ingests):**
-* Pure data structure or utility module.
-
-**Output (Emits):**
-* Data primitives or DTOs.
-
-**Dependencies (It Needs):**
-* `csv`
-* `datetime.timedelta`
-* `os`
-* `pillars.time_mechanics.services.tzolkin_service.TzolkinService`
-* `sys`
-
-**Consumers (Who Needs It):**
-* None detected.
-
-**Key Interactions:**
-**Exposes:** `get_conrune()` - *Functional interface.*
-**Exposes:** `ternary_to_decimal()` - *Functional interface.*
-**Exposes:** `generate_spiral_deltas()` - *Functional interface.*
-
-
----
-
-**File:** `scripts/generate_spiral_matrix.py`
-
-**Role:** `[Scout]`
-
-**Purpose:** Soul not yet specified.
-
-**Input (Ingests):**
-* Pure data structure or utility module.
-
-**Output (Emits):**
-* Data primitives or DTOs.
-
-**Dependencies (It Needs):**
-* `csv`
-* `datetime.timedelta`
-* `os`
-* `pillars.time_mechanics.services.tzolkin_service.TzolkinService`
-* `sys`
-
-**Consumers (Who Needs It):**
-* None detected.
-
-**Key Interactions:**
-**Exposes:** `get_conrune_ternary()` - *Functional interface.*
-**Exposes:** `ternary_to_decimal()` - *Functional interface.*
-**Exposes:** `generate_spiral_matrix()` - *Functional interface.*
-
-
----
-
-**File:** `scripts/generate_star_catalog.py`
-
-**Role:** `[Scout]`
-
-**Purpose:** Generate The Catalog of Fixed Stars v2.0
-
-**Input (Ingests):**
-* Pure data structure or utility module.
-
-**Output (Emits):**
-* Data primitives or DTOs.
-
-**Dependencies (It Needs):**
-* `collections.defaultdict`
-* `csv`
-* `json`
-* `os`
-* `random`
-
-**Consumers (Who Needs It):**
-* None detected.
-
-**Key Interactions:**
-**Exposes:** `load_lattices()` - *Functional interface.*
-**Exposes:** `load_wall_values()` - *Load numeric values for each wall.*
-**Exposes:** `calculate_seeds()` - *Calculate seed coordinates for a planetary lattice.*
-**Exposes:** `find_void_and_seed_coords()` - *Find all void coords and all seed coords.*
-**Exposes:** `distribute_voids_to_walls()` - *Distribute 41 void coords evenly across 7 walls (6,6,6,6,6,6,5).*
-**Exposes:** `generate_name()` - *Generate a unique mythical name.*
-**Exposes:** `get_etymology()` - *Get etymology for a name.*
-**Exposes:** `generate_void_nature()` - *Generate nature description for a void star.*
-**Exposes:** `generate_seed_nature()` - *Generate nature description for a seed star.*
-**Exposes:** `generate_void_whisper()` - *Functional interface.*
-**Exposes:** `generate_seed_whisper()` - *Functional interface.*
-**Exposes:** `generate_catalog()` - *Generate the full star catalog.*
-**Exposes:** `write_markdown()` - *Write the catalog as Markdown.*
-**Exposes:** `write_json()` - *Write the catalog as JSON.*
-
-
----
-
 **File:** `scripts/get_constellation_metrics.py`
 
 **Role:** `[Scout]`
@@ -1241,6 +1799,98 @@
 
 **Key Interactions:**
 **Exposes:** `get_seed_values()` - *Functional interface.*
+
+
+---
+
+**File:** `scripts/horizon_seals/seal_jupiter.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** The Seal of Jupiter: Performance & Expansion.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `datetime.datetime`
+* `datetime.timedelta`
+* `logging`
+* `pillars.astrology.models.chart_models.AstrologyEvent`
+* `pillars.astrology.models.chart_models.ChartRequest`
+* `pillars.astrology.models.chart_models.GeoLocation`
+* `pillars.astrology.services.openastro_service.OpenAstroService`
+* `statistics.mean`
+* `statistics.stdev`
+* `time`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `run_seal()` - *Functional interface.*
+
+
+---
+
+**File:** `scripts/horizon_seals/seal_mars.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** The Seal of Mars: Resilience & Fuzzing.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `datetime.datetime`
+* `pillars.astrology.models.chart_models.AstrologyEvent`
+* `pillars.astrology.models.chart_models.ChartRequest`
+* `pillars.astrology.models.chart_models.GeoLocation`
+* `pillars.astrology.services.openastro_service.ChartComputationError`
+* `pillars.astrology.services.openastro_service.OpenAstroService`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `run_seal()` - *Functional interface.*
+
+
+---
+
+**File:** `scripts/horizon_seals/seal_sun.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** The Seal of the Sun: Truth & Accuracy.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `datetime.datetime`
+* `datetime.timezone`
+* `math`
+* `pillars.astrology.models.chart_models.AstrologyEvent`
+* `pillars.astrology.models.chart_models.ChartRequest`
+* `pillars.astrology.models.chart_models.GeoLocation`
+* `pillars.astrology.services.openastro_service.OpenAstroService`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `run_seal()` - *Functional interface.*
 
 
 ---
@@ -1483,7 +2133,7 @@
 
 ---
 
-**File:** `scripts/reproduce_crash_full.py`
+**File:** `scripts/repair_quad_shape.py`
 
 **Role:** `[Scout]`
 
@@ -1496,109 +2146,13 @@
 * Data primitives or DTOs.
 
 **Dependencies (It Needs):**
-* `PyQt6.QtCore.QTimer`
-* `PyQt6.QtWidgets.QApplication`
-* `datetime.datetime`
-* `os`
-* `pillars.correspondences.models.correspondence_models.CorrespondenceTable`
-* `pillars.correspondences.ui.correspondence_hub.CorrespondenceHub`
-* `pillars.gematria.ui.batch_calculator_window.BatchCalculatorWindow`
-* `shared.database`
-* `signal`
-* `sqlalchemy.create_engine`
-* `sqlalchemy.orm.sessionmaker`
-* `sys`
-* `traceback`
-* `unittest.mock.MagicMock`
+* `pathlib.Path`
 
 **Consumers (Who Needs It):**
 * None detected.
 
 **Key Interactions:**
-**Exposes:** `run_integration_test()` - *Functional interface.*
-**Exposes:** `close_and_exit()` - *Functional interface.*
-
-
----
-
-**File:** `scripts/reproduce_export_crash.py`
-
-**Role:** `[Scout]`
-
-**Purpose:** Soul not yet specified.
-
-**Input (Ingests):**
-* Pure data structure or utility module.
-
-**Output (Emits):**
-* Data primitives or DTOs.
-
-**Dependencies (It Needs):**
-* `PyQt6.QtWidgets.QApplication`
-* `os`
-* `pillars.document_manager.ui.document_editor_window.DocumentEditorWindow`
-* `sys`
-* `traceback`
-
-**Consumers (Who Needs It):**
-* None detected.
-
-**Key Interactions:**
-**Exposes:** `test_import()` - *Functional interface.*
-
-
----
-
-**File:** `scripts/reproduce_parser_error.py`
-
-**Role:** `[Scout]`
-
-**Purpose:** Soul not yet specified.
-
-**Input (Ingests):**
-* Pure data structure or utility module.
-
-**Output (Emits):**
-* Data primitives or DTOs.
-
-**Dependencies (It Needs):**
-* `os`
-* `pillars.correspondences.services.formula_engine.FormulaEngine`
-* `sys`
-
-**Consumers (Who Needs It):**
-* None detected.
-
-**Key Interactions:**
-**Exposes:** `reproduce_error()` - *Functional interface.*
-
-
----
-
-**File:** `scripts/reproduce_textjoin.py`
-
-**Role:** `[Scout]`
-
-**Purpose:** Soul not yet specified.
-
-**Input (Ingests):**
-* Pure data structure or utility module.
-
-**Output (Emits):**
-* Data primitives or DTOs.
-
-**Dependencies (It Needs):**
-* `PyQt6.QtCore.Qt`
-* `PyQt6.QtWidgets.QApplication`
-* `os`
-* `pillars.correspondences.ui.spreadsheet_window.SpreadsheetWindow`
-* `sys`
-
-**Consumers (Who Needs It):**
-* None detected.
-
-**Key Interactions:**
-**Exposes:** `reproduce_textjoin()` - *Functional interface.*
+**Exposes:** `repair()` - *Functional interface.*
 
 
 ---
@@ -1629,7 +2183,7 @@
 
 ---
 
-**File:** `scripts/reverse_engineer_seeds.py`
+**File:** `scripts/rite_of_sovereignty.py`
 
 **Role:** `[Scout]`
 
@@ -1642,14 +2196,15 @@
 * Data primitives or DTOs.
 
 **Dependencies (It Needs):**
-* `collections`
-* `json`
+* `os`
+* `re`
+* `sys`
 
 **Consumers (Who Needs It):**
 * None detected.
 
 **Key Interactions:**
-**Exposes:** `reverse_engineer()` - *Functional interface.*
+**Exposes:** `check_sovereignty()` - *Functional interface.*
 
 
 ---
@@ -1734,6 +2289,40 @@
 **Exposes:** `scaffold_signs()` - *Functional interface.*
 **Exposes:** `scaffold_houses()` - *Functional interface.*
 **Exposes:** `scaffold_combinatorial()` - *Functional interface.*
+
+
+---
+
+**File:** `scripts/scribe_of_thoth.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** The Scribe of Thoth - Automated Inscription Tool.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `ast`
+* `pathlib.Path`
+* `re`
+* `sys`
+* `typing.List`
+* `typing.Optional`
+* `typing.Tuple`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `camel_to_spaces()` - *Convert CamelCase to 'Camel Case'.*
+**Exposes:** `snake_to_sentence()` - *Convert snake_case to 'Sentence case'.*
+**Exposes:** `generate_docstring()` - *Generate a skeleton docstring for a node.*
+**Exposes:** `process_file()` - *Inject or update docstrings into a file. Returns count of inscriptions.*
+**Exposes:** `main()` - *Functional interface.*
 
 
 ---
@@ -1878,60 +2467,6 @@
 **Key Interactions:**
 **Exposes:** `add_column()` - *Functional interface.*
 **Exposes:** `update_schema()` - *Functional interface.*
-
-
----
-
-**File:** `scripts/verification_seal.py`
-
-**Role:** `[Scout]`
-
-**Purpose:** THE VERIFICATION SEAL (IsopGem v1)
-
-**Input (Ingests):**
-* `name`
-* `name`
-* `name`
-* `name`
-* `name`
-* `name`
-
-**Output (Emits):**
-* Data primitives or DTOs.
-
-**Dependencies (It Needs):**
-* `PyQt6.QtCore.QRect`
-* `PyQt6.QtCore.Qt`
-* `PyQt6.QtGui.QColor`
-* `PyQt6.QtGui.QImage`
-* `PyQt6.QtGui.QPainter`
-* `PyQt6.QtGui.QVector3D`
-* `os`
-* `pillars.correspondences.services.formula_engine.FormulaEngine`
-* `pillars.correspondences.services.formula_helper.FormulaHelperService`
-* `pillars.correspondences.ui.spreadsheet_view.SpreadsheetModel`
-* `pillars.geometry.services.circle_shape.CircleShape`
-* `pillars.geometry.services.persistence_service.PersistenceService`
-* `src.pillars.adyton.ui.
-
-**Consumers (Who Needs It):**
-* None detected.
-
-**Key Interactions:**
-**Exposes:** `info()` - *Functional interface.*
-**Exposes:** `success()` - *Functional interface.*
-**Exposes:** `failure()` - *Functional interface.*
-**Exposes:** `section()` - *Functional interface.*
-**Exposes:** `prepare()` - *Setup logic (database connections, object instantiation).*
-**Exposes:** `perform()` - *The core logic test. Must raise AssertionErrors on failure.*
-**Exposes:** `cleanse()` - *Teardown logic.*
-**Exposes:** `execute()` - *Functional interface.*
-**Exposes:** `perform()` - *Functional interface.*
-**Exposes:** `perform()` - *Functional interface.*
-**Exposes:** `perform()` - *Functional interface.*
-**Exposes:** `perform()` - *Functional interface.*
-**Exposes:** `perform()` - *Functional interface.*
-**Exposes:** `execute()` - *The Grand Ritual.*
 
 
 ---
@@ -2283,6 +2818,37 @@
 
 ---
 
+**File:** `scripts/verify_fixed_stars_panel.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** Soul not yet specified.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `PyQt6.QtWidgets.QApplication`
+* `datetime.datetime`
+* `os`
+* `pillars.astrology.models.chart_models.ChartResult`
+* `pillars.astrology.models.chart_models.PlanetPosition`
+* `pillars.astrology.services.fixed_stars_service.FixedStarsService`
+* `pillars.astrology.ui.advanced_analysis_panel.AdvancedAnalysisPanel`
+* `sys`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `verify_logic()` - *Functional interface.*
+
+
+---
+
 **File:** `scripts/verify_formula_range.py`
 
 **Role:** `[Scout]`
@@ -2482,6 +3048,172 @@
 
 ---
 
+**File:** `scripts/verify_horizon_phase1.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** Verification Script for Horizon Phase 1 (Astrometric Integrity).
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `datetime.datetime`
+* `datetime.timezone`
+* `os`
+* `pillars.astrology.models.chart_models.GeoLocation`
+* `pillars.astrology.repositories.ephemeris_provider.EphemerisProvider`
+* `sys`
+* `time`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `run_verification()` - *Functional interface.*
+
+
+---
+
+**File:** `scripts/verify_horizon_phase2.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** Verification Script for Horizon Phase 2 (Chart Breadth).
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `datetime.datetime`
+* `datetime.timezone`
+* `os`
+* `pillars.astrology.models.chart_models.AstrologyEvent`
+* `pillars.astrology.models.chart_models.ChartRequest`
+* `pillars.astrology.models.chart_models.ChartResult`
+* `pillars.astrology.models.chart_models.GeoLocation`
+* `pillars.astrology.models.chart_models.PlanetPosition`
+* `pillars.astrology.services.aspects_service.AspectsService`
+* `pillars.astrology.services.openastro_service.OpenAstroService`
+* `pillars.astrology.services.progressions_s
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `run_verification()` - *Functional interface.*
+**Exposes:** `generate_chart()` - *Functional interface.*
+
+
+---
+
+**File:** `scripts/verify_horizon_phase3.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** Verification Script for Horizon Phase 3 (Interpretation & Reporting).
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `PyQt6.QtWidgets.QApplication`
+* `os`
+* `pathlib.Path`
+* `pillars.astrology.models.interpretation_models.InterpretationReport`
+* `pillars.astrology.models.interpretation_models.RichInterpretationContent`
+* `pillars.astrology.repositories.interpretation_repository.InterpretationRepository`
+* `pillars.astrology.services.chart_storage_service.ChartStorageService`
+* `pillars.astrology.services.report_service.ReportService`
+* `sys`
+* `tempfile`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `run_verification()` - *Functional interface.*
+
+
+---
+
+**File:** `scripts/verify_horizon_phase4.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** Verification Script for Horizon Phase 4 (UX & Performance).
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `PyQt6.QtCore.QCoreApplication`
+* `PyQt6.QtCore.QThreadPool`
+* `logging`
+* `os`
+* `pillars.astrology.models.chart_models.AstrologyEvent`
+* `pillars.astrology.models.chart_models.ChartRequest`
+* `pillars.astrology.models.chart_models.GeoLocation`
+* `pillars.astrology.services.openastro_service.OpenAstroService`
+* `shared.logging_config.configure_logging`
+* `shared.ui.worker.BackgroundWorker`
+* `sys`
+* `time`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `test_worker_function()` - *Functional interface.*
+**Exposes:** `run_verification()` - *Functional interface.*
+**Exposes:** `on_result()` - *Functional interface.*
+**Exposes:** `on_finished()` - *Functional interface.*
+**Exposes:** `generate_chart_internal()` - *Functional interface.*
+
+
+---
+
+**File:** `scripts/verify_horizon_phase5.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** The Final Rite: Verifying the Horizon.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `horizon_seals.seal_jupiter`
+* `horizon_seals.seal_mars`
+* `horizon_seals.seal_sun`
+* `os`
+* `shutil`
+* `sys`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `main()` - *Functional interface.*
+
+
+---
+
 **File:** `scripts/verify_keyboard_nav.py`
 
 **Role:** `[Scout]`
@@ -2510,6 +3242,35 @@
 
 **Key Interactions:**
 **Exposes:** `verify_keyboard_nav()` - *Functional interface.*
+
+
+---
+
+**File:** `scripts/verify_kinetic_enforcer.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** Soul not yet specified.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `PyQt6.QtCore.QEvent`
+* `PyQt6.QtCore.QObject`
+* `PyQt6.QtWidgets.QApplication`
+* `PyQt6.QtWidgets.QPushButton`
+* `shared.ui.kinetic_enforcer.KineticEnforcer`
+* `sys`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+* Internal logic only.
 
 
 ---
@@ -2569,6 +3330,35 @@
 **Exposes:** `verify_file_integrity()` - *Functional interface.*
 **Exposes:** `run()` - *Functional interface.*
 **Exposes:** `summary()` - *Functional interface.*
+
+
+---
+
+**File:** `scripts/verify_orbital_physics.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** Soul not yet specified.
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `PyQt6.QtCore.Qt`
+* `PyQt6.QtWidgets.QApplication`
+* `PyQt6.QtWidgets.QMainWindow`
+* `PyQt6.QtWidgets.QWidget`
+* `shared.ui.window_manager.WindowManager`
+* `sys`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+* Internal logic only.
 
 
 ---
@@ -2947,6 +3737,39 @@
 
 ---
 
+**File:** `scripts/verify_ui_startup.py`
+
+**Role:** `[Scout]`
+
+**Purpose:** UI Startup Verification Script
+
+**Input (Ingests):**
+* Pure data structure or utility module.
+
+**Output (Emits):**
+* Data primitives or DTOs.
+
+**Dependencies (It Needs):**
+* `PyQt6.QtWidgets.QApplication`
+* `PyQt6.QtWidgets.QWidget`
+* `importlib`
+* `logging`
+* `os`
+* `shared.services.gematria.greek_calculator.GreekGematriaCalculator`
+* `shared.services.gematria.hebrew_calculator.HebrewGematriaCalculator`
+* `shared.services.gematria.tq_calculator.TQGematriaCalculator`
+* `shared.signals.navigation_bus.WINDOW_REGISTRY`
+* `sys`
+
+**Consumers (Who Needs It):**
+* None detected.
+
+**Key Interactions:**
+**Exposes:** `verify_windows()` - *Functional interface.*
+
+
+---
+
 **File:** `scripts/verify_unified_edit.py`
 
 **Role:** `[Scout]`
@@ -3000,141 +3823,6 @@
 
 **Key Interactions:**
 **Exposes:** `verify_map()` - *Functional interface.*
-
-
----
-
-**File:** `scripts/visualize_constellation_preview.py`
-
-**Role:** `[Scout]`
-
-**Purpose:** Soul not yet specified.
-
-**Input (Ingests):**
-* Pure data structure or utility module.
-
-**Output (Emits):**
-* Data primitives or DTOs.
-
-**Dependencies (It Needs):**
-* None.
-
-**Consumers (Who Needs It):**
-* None detected.
-
-**Key Interactions:**
-**Exposes:** `text_to_grid()` - *Functional interface.*
-**Exposes:** `render_stars_only()` - *Functional interface.*
-**Exposes:** `render_asterism_cardinal()` - *Functional interface.*
-
-
----
-
-**File:** `scripts/visualize_hexameric_split.py`
-
-**Role:** `[Scout]`
-
-**Purpose:** Soul not yet specified.
-
-**Input (Ingests):**
-* Pure data structure or utility module.
-
-**Output (Emits):**
-* Data primitives or DTOs.
-
-**Dependencies (It Needs):**
-* `collections`
-* `os`
-* `pillars.adyton.services.kamea_loader_service.KameaLoaderService`
-* `sys`
-
-**Consumers (Who Needs It):**
-* None detected.
-
-**Key Interactions:**
-**Exposes:** `visualize_hexameric_split()` - *Functional interface.*
-
-
----
-
-**File:** `scripts/visualize_seeds_atlas.py`
-
-**Role:** `[Scout]`
-
-**Purpose:** Soul not yet specified.
-
-**Input (Ingests):**
-* Pure data structure or utility module.
-
-**Output (Emits):**
-* Data primitives or DTOs.
-
-**Dependencies (It Needs):**
-* `collections`
-* `json`
-* `os`
-* `sys`
-
-**Consumers (Who Needs It):**
-* None detected.
-
-**Key Interactions:**
-**Exposes:** `generate_vis()` - *Functional interface.*
-
-
----
-
-**File:** `scripts/visualize_structure_options.py`
-
-**Role:** `[Scout]`
-
-**Purpose:** Soul not yet specified.
-
-**Input (Ingests):**
-* Pure data structure or utility module.
-
-**Output (Emits):**
-* Data primitives or DTOs.
-
-**Dependencies (It Needs):**
-* `collections`
-* `os`
-* `pillars.adyton.services.kamea_loader_service.KameaLoaderService`
-* `sys`
-
-**Consumers (Who Needs It):**
-* None detected.
-
-**Key Interactions:**
-**Exposes:** `visualize_structure()` - *Functional interface.*
-
-
----
-
-**File:** `scripts/visualize_wall_octets.py`
-
-**Role:** `[Scout]`
-
-**Purpose:** Soul not yet specified.
-
-**Input (Ingests):**
-* Pure data structure or utility module.
-
-**Output (Emits):**
-* Data primitives or DTOs.
-
-**Dependencies (It Needs):**
-* `collections.defaultdict`
-* `csv`
-* `os`
-* `pillars.adyton.services.kamea_loader_service.KameaLoaderService`
-* `sys`
-
-**Consumers (Who Needs It):**
-* None detected.
-
-**Key Interactions:**
-**Exposes:** `visualize_octets()` - *Functional interface.*
 
 
 ---

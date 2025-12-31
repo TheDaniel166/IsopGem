@@ -19,13 +19,13 @@ from pillars.adyton.constants import (
 
 
 class FloorGeometry:
-    @staticmethod
-    """
-    Floor Geometry class definition.
+    """Floor Geometry class for building the ceremonial heptagonal floor.
     
-    Attributes:
-        todo: Add public attributes.
+    Generates a concentric heptagonal floor with an outer MAAT blue field
+    and an inner vowel ring for the Adyton sanctuary.
     """
+    
+    @staticmethod
     def build(
         ring_colors: Optional[List[QColor]] = None,
     ) -> Object3D:

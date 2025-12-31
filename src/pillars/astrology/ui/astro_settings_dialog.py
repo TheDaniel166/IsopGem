@@ -139,18 +139,8 @@ class AstroSettingsDialog(QDialog):
         
         apply_btn = QPushButton("Apply")
         apply_btn.setDefault(True)
+        apply_btn.setProperty("archetype", "magus")  # Use archetype for styling
         apply_btn.clicked.connect(self._apply_settings)
-        apply_btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {COLORS['accent_primary']};
-                color: white;
-                padding: 8px 24px;
-                border-radius: 4px;
-            }}
-            QPushButton:hover {{
-                background-color: {COLORS['accent_hover']};
-            }}
-        """)
         button_layout.addWidget(apply_btn)
         
         layout.addLayout(button_layout)
@@ -164,7 +154,7 @@ class AstroSettingsDialog(QDialog):
                 color: {COLORS['text_primary']};
             }}
             QComboBox {{
-                background-color: {COLORS['surface_elevated']};
+                background-color: {COLORS['surface']};
                 color: {COLORS['text_primary']};
                 border: 1px solid {COLORS['border']};
                 border-radius: 4px;

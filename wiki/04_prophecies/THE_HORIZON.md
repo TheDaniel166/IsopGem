@@ -115,12 +115,13 @@ This prophecy charts the work required to elevate the Astrology pillar to a prof
 
 ## Phased Roadmap
 
-### Phase 1 — Astrometric Integrity
-- [ ] Harden ephemeris/timezone handling
-- [ ] Add true/mean node toggle
-- [ ] Sidereal/ayanamsa selection
-- [ ] Topocentric option
-- [ ] Create golden-value tests for planetary positions and house cusps
+### Phase 1 — Astrometric Integrity (Mostly Complete)
+- [x] Harden ephemeris/timezone handling (Skyfield DE441)
+- [x] Add true/mean node toggle (UI via `AstroSettingsDialog`)
+- [x] Sidereal/ayanamsa selection (UI via `AstroSettingsDialog`)
+- [x] Topocentric option (UI via `AstroSettingsDialog`)
+- [x] Create golden-value tests for planetary positions (`test_ephemeris_golden_values.py` - 8 tests)
+- [ ] House cusp validation tests (deferred)
 
 ### Phase 2 — Chart Breadth & Engines (Mostly Complete)
 - [x] Solar/lunar returns (`returns_service.py`, `returns_window.py`)
