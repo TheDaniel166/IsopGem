@@ -575,15 +575,11 @@ class GematriaCalculatorWindow(QMainWindow):
             QMessageBox.warning(self, "Integration Error", "Window Manager not linked.")
             return
 
-        # Open Hub
-        hub = self.window_manager.open_window(
-            "emerald_tablet", 
-            allow_multiple=False,
-            window_manager=self.window_manager
-        )
+        # Open Hub using registry-based lookup
+        hub = self.window_manager.open_window_by_key("emerald_tablet")
         
-        # Send
-        if hasattr(hub, "receive_import"):
+        # Send data to hub
+        if hub and hasattr(hub, "receive_import"):
             name = self.last_export_data["name"]
             data = self.last_export_data["data"]
             hub.receive_import(name, data)
@@ -621,7 +617,7 @@ class GematriaCalculatorWindow(QMainWindow):
     def _send_to_rtf_editor(self, value: int):
         """Send results to RTF Editor."""
         if not self.window_manager: return
-        win = self.window_manager.open_window("document_editor")
+        win = self.window_manager.open_window_by_key("document_editor")
         if win:
             # Format high-quality summary
             res_str = f"""
@@ -632,11 +628,9 @@ class GematriaCalculatorWindow(QMainWindow):
                 <p><b>System Used:</b> <i style="color: #4b5563;">{self.current_calculator.name if self.current_calculator else "All Methods"}</i></p>
             </div>
             """
-            # RTF editor usually has a rich_text_editor attribute with a set_text(html) or similar
-            if hasattr(win, "rich_text_editor"):
-                # Append or set? Let's use append if possible, or set.
-                # Usually set_text is a custom method on our editor.
-                win.rich_text_editor.set_text(res_str)
+            # DocumentEditorWindow uses 'editor' attribute (RichTextEditor)
+            if hasattr(win, "editor"):
+                win.editor.set_html(res_str)
             win.raise_()
             win.activateWindow()
 
@@ -699,7 +693,7 @@ class GematriaCalculatorWindow(QMainWindow):
             if ok and choice:
                 doc_id = page_map[choice]
                 # Open/Get Mindscape
-                ms = self.window_manager.open_window("mindscape")
+                ms = self.window_manager.open_window_by_key("mindscape")
                 if ms:
                     ms.page.load_node(doc_id)
                     self._ms_add_note(ms.page, self.current_value)
@@ -734,7 +728,7 @@ class GematriaCalculatorWindow(QMainWindow):
             new_page = service.create_page(sec_id, title)
             
             # Open and insert
-            ms = self.window_manager.open_window("mindscape")
+            ms = self.window_manager.open_window_by_key("mindscape")
             if ms:
                 ms.tree.load_tree() # Refresh tree to show new page
                 ms.page.load_node(new_page.id)

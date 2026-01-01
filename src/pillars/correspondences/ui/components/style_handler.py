@@ -10,13 +10,21 @@ class StyleHandler(QObject):
     def __init__(self, window):
         super().__init__(window)
         self.window = window
-        self.model = window.model
-        self.view = window.view
         self._border_settings = {"style": "solid", "width": 1, "color": "#000000"}
         
         # UI Elements managed by handler (optional, but keep references if needed)
         self.border_menu = None
         self.border_actions = []
+
+    @property
+    def model(self):
+        """Always fetch current model from window to avoid stale references."""
+        return self.window.model
+
+    @property
+    def view(self):
+        """Always fetch view from window."""
+        return self.window.view
 
     def setup_border_menu(self):
         """Creates and returns the Border Menu Actions for the Toolbar."""

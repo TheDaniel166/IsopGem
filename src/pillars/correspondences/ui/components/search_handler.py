@@ -1,5 +1,7 @@
 from PyQt6.QtWidgets import QMessageBox
 from PyQt6.QtCore import Qt
+from ...services.formula_helper import cell_address
+
 try:
     from ..find_replace_dialog import FindReplaceDialog
 except ImportError:
@@ -13,10 +15,22 @@ class SearchHandler:
     """
     def __init__(self, window):
         self.window = window
-        self.view = window.view
-        self.model = window.model
-        self.status_bar = window.status_bar
         self._find_dialog = None
+
+    @property
+    def view(self):
+        """Always fetch current view from window."""
+        return self.window.view
+
+    @property
+    def model(self):
+        """Always fetch current model from window."""
+        return self.window.model
+
+    @property
+    def status_bar(self):
+        """Always fetch status bar from window."""
+        return self.window.status_bar
 
     def launch(self, mode="find"):
         if not self._find_dialog:
@@ -91,15 +105,8 @@ class SearchHandler:
         
         results_data = []
         
-        def col_to_letter(col_idx):
-             res = ""
-             while col_idx >= 0:
-                 res = chr((col_idx % 26) + 65) + res
-                 col_idx = (col_idx // 26) - 1
-             return res
-             
         for idx in matches:
-            addr = f"{col_to_letter(idx.column())}{idx.row() + 1}"
+            addr = cell_address(idx.row(), idx.column())
             val = str(self.model.data(idx, Qt.ItemDataRole.DisplayRole) or "")
             display = f"{addr}: {val}"
             results_data.append((display, idx))

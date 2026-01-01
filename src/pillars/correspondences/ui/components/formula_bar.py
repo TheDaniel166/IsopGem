@@ -1,5 +1,6 @@
-from PyQt6.QtWidgets import QWidget, QHBoxLayout, QLineEdit, QLabel
-from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtWidgets import QWidget, QHBoxLayout, QLineEdit, QPushButton, QGraphicsDropShadowEffect
+from PyQt6.QtCore import pyqtSignal, Qt
+from PyQt6.QtGui import QColor
 
 class FormulaBarWidget(QWidget):
     """
@@ -11,6 +12,7 @@ class FormulaBarWidget(QWidget):
     text_changed = pyqtSignal(str)     # Emitted when user types
     return_pressed = pyqtSignal()      # Emitted on Enter
     focus_received = pyqtSignal()      # Emitted when bar gets focus (if needed)
+    fx_clicked = pyqtSignal()          # Emitted when fx button is clicked (Formula Wizard)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -20,10 +22,31 @@ class FormulaBarWidget(QWidget):
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         
-        # fx Label
-        self.lbl_fx = QLabel("fx")
-        self.lbl_fx.setStyleSheet("font-weight: bold; color: #64748b; margin-right: 5px;")
-        layout.addWidget(self.lbl_fx)
+        # fx Button - Portal to the Formula Wizard
+        self.btn_fx = QPushButton("fx")
+        self.btn_fx.setFixedWidth(32)
+        self.btn_fx.setToolTip("Insert Function (Formula Wizard)")
+        self.btn_fx.setStyleSheet("""
+            QPushButton {
+                font-weight: bold;
+                font-style: italic;
+                color: #64748b;
+                background: transparent;
+                border: 1px solid #e2e8f0;
+                border-radius: 4px;
+                padding: 2px 6px;
+            }
+            QPushButton:hover {
+                background: #f1f5f9;
+                color: #3b82f6;
+                border-color: #3b82f6;
+            }
+            QPushButton:pressed {
+                background: #e2e8f0;
+            }
+        """)
+        self.btn_fx.clicked.connect(self.fx_clicked.emit)
+        layout.addWidget(self.btn_fx)
         
         # The Input Field
         self.editor = QLineEdit()
@@ -67,3 +90,29 @@ class FormulaBarWidget(QWidget):
     def setFocus(self):
         """Override to focus the internal editor, not the container."""
         self.editor.setFocus()
+
+    def hasFocus(self) -> bool:
+        """Check if the internal editor has focus."""
+        return self.editor.hasFocus()
+    
+    def is_formula_text(self) -> bool:
+        """Returns True if current text starts with '=' (formula mode)."""
+        text = self.editor.text()
+        return text.startswith("=") if text else False
+    
+    def set_composition_mode(self, active: bool) -> None:
+        """Apply visual indication when in formula composition mode."""
+        if active:
+            # Subtle golden glow effect
+            effect = QGraphicsDropShadowEffect(self)
+            effect.setBlurRadius(15)
+            effect.setColor(QColor(255, 193, 7, 180))  # Amber glow
+            effect.setOffset(0, 0)
+            self.editor.setGraphicsEffect(effect)
+            self.editor.setStyleSheet(
+                "border: 2px solid #f59e0b; border-radius: 4px; padding: 2px;"
+            )
+        else:
+            # Remove glow
+            self.editor.setGraphicsEffect(None)
+            self.editor.setStyleSheet("")

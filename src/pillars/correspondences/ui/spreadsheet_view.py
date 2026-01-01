@@ -550,6 +550,17 @@ class RichTextDelegate(QStyledItemDelegate):
                 # Excel shows selection OVER background.
                 painter.fillRect(options.rect, bg_color)
 
+            # --- 1.5. Formula Reference Highlighting ---
+            view = self.parent()
+            if hasattr(view, '_ref_highlights') and view._ref_highlights:
+                row, col = index.row(), index.column()
+                for (r1, c1, r2, c2, color) in view._ref_highlights:
+                    if r1 <= row <= r2 and c1 <= col <= c2:
+                        # Draw light background tint
+                        ref_color = QColor(color)
+                        ref_color.setAlpha(25)
+                        painter.fillRect(options.rect, ref_color)
+
             # --- 2. Text ---
             doc = QTextDocument()
             text_option = QTextOption()
@@ -657,6 +668,19 @@ class RichTextDelegate(QStyledItemDelegate):
                 painter.setPen(pen)
                 painter.drawRect(options.rect.adjusted(1, 1, -2, -2))
 
+            # --- 4.5. Formula Reference Border Overlay ---
+            view = self.parent()
+            if hasattr(view, '_ref_highlights') and view._ref_highlights:
+                row, col = index.row(), index.column()
+                for (r1, c1, r2, c2, color) in view._ref_highlights:
+                    if r1 <= row <= r2 and c1 <= col <= c2:
+                        # Draw thick colored border around referenced cells
+                        ref_color = QColor(color)
+                        pen = QPen(ref_color, 2)
+                        painter.setPen(pen)
+                        painter.drawRect(options.rect.adjusted(1, 1, -2, -2))
+                        break  # Only one border per cell
+
             # --- 5. Fill Handle ---
             view = self.parent()
             # Check (row, col)
@@ -666,16 +690,10 @@ class RichTextDelegate(QStyledItemDelegate):
                 h_x = option.rect.right() - (h_size // 2)
                 h_y = option.rect.bottom() - (h_size // 2)
                 
-                # Check bounds
-                
-                painter.translate(0, 0) # Reset just in case
-                
                 # Scribe Emerald for the Handle (Creation/Extension)
                 painter.fillRect(h_x, h_y, h_size, h_size, QBrush(QColor(COLORS['scribe'])))
                 painter.setPen(QColor("white"))
                 painter.drawRect(h_x, h_y, h_size, h_size)
-                
-                painter.restore()
 
             painter.restore()
 
@@ -837,6 +855,27 @@ class SpreadsheetView(QTableView):
         self._rubber_band = QRubberBand(QRubberBand.Shape.Rectangle, self)
         # Style it to look like a border
         self._rubber_band.setStyleSheet("background-color: transparent; border: 2px dashed gray;")
+        
+        # Formula reference highlighting for color-coded visualization
+        # List of (row, col, end_row, end_col, color_hex) tuples
+        self._ref_highlights = []
+
+    def set_reference_highlights(self, highlights):
+        """
+        Set the cells to highlight as formula references.
+        
+        Args:
+            highlights: List of (row, col, end_row, end_col, color_hex) tuples.
+                       For single cells, end_row=row and end_col=col.
+        """
+        self._ref_highlights = highlights or []
+        self.viewport().update()  # Trigger repaint
+
+    def clear_reference_highlights(self):
+        """Remove all formula reference highlights."""
+        self._ref_highlights = []
+        self.viewport().update()
+
     def set_border_ui(self, actions, settings, style_menu, width_menu):
         """Receive Actions from Window."""
         self._border_actions = actions

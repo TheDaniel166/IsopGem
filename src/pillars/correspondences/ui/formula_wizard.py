@@ -122,6 +122,81 @@ class CipherSelectorWidget(QWidget):
         pass
 
 
+class AstroPropertySelectorWidget(QWidget):
+    """
+    Nested dropdown for selecting ASTRO function properties.
+    Category (Names, Glyphs, Technical) -> Property
+    """
+    valueChanged = pyqtSignal(str)
+    
+    # Property definitions with categories and descriptions
+    PROPERTY_MAP = {
+        "Names & Text": [
+            ("Sign", "Zodiac sign name (e.g., Capricorn)"),
+            ("ZodiacalDegree", "Full notation (e.g., 10° Capricorn 23')"),
+        ],
+        "Glyphs (Astronomicon)": [
+            ("SignGlyph", "Zodiac glyph (e.g., J for Capricorn)"),
+            ("BodyGlyph", "Planet glyph (e.g., Q for Sun)"),
+            ("GlyphString", "Full with glyphs (e.g., 10^J23)"),
+        ],
+        "Technical": [
+            ("Degree", "Degree within sign (0-29)"),
+            ("Longitude", "Absolute ecliptic longitude (0-360)"),
+            ("Retrograde", "Is planet retrograde? (Yes/No)"),
+        ]
+    }
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._layout = QHBoxLayout(self)
+        self._layout.setContentsMargins(0, 0, 0, 0)
+        
+        self.combo_category = QComboBox()
+        self.combo_property = QComboBox()
+        
+        self._layout.addWidget(self.combo_category, stretch=1)
+        self._layout.addWidget(self.combo_property, stretch=2)
+        
+        # Populate categories
+        self.combo_category.addItems(list(self.PROPERTY_MAP.keys()))
+        
+        # Connect
+        self.combo_category.currentTextChanged.connect(self._on_category_changed)
+        self.combo_property.currentTextChanged.connect(self._emit_change)
+        
+        # Initialize with first category
+        self._on_category_changed(self.combo_category.currentText())
+    
+    def _on_category_changed(self, category):
+        self.combo_property.blockSignals(True)
+        self.combo_property.clear()
+        
+        if category in self.PROPERTY_MAP:
+            for prop_name, prop_desc in self.PROPERTY_MAP[category]:
+                self.combo_property.addItem(f"{prop_name} - {prop_desc}", prop_name)
+        
+        self.combo_property.blockSignals(False)
+        self._emit_change()
+    
+    def _emit_change(self):
+        self.valueChanged.emit(self.text())
+    
+    def text(self) -> str:
+        """Returns just the property name for formula construction."""
+        idx = self.combo_property.currentIndex()
+        if idx >= 0:
+            return self.combo_property.itemData(idx) or ""
+        return ""
+    
+    def setText(self, text):
+        """Set value by property name."""
+        for i in range(self.combo_property.count()):
+            if self.combo_property.itemData(i) == text:
+                self.combo_property.setCurrentIndex(i)
+                return
+
+
 class FormulaArgumentDialog(QDialog):
     """
     Stage 2: The Formula Palette.
@@ -223,6 +298,9 @@ class FormulaArgumentDialog(QDialog):
             
         if type_hint == "gematria_cipher":
             inp = CipherSelectorWidget()
+            inp.valueChanged.connect(self._recalculate)
+        elif type_hint == "astro_property":
+            inp = AstroPropertySelectorWidget()
             inp.valueChanged.connect(self._recalculate)
         else:
             inp = QLineEdit()

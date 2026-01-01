@@ -26,6 +26,7 @@ from ..services.spreadsheet_io import SpreadsheetIO
 from .components.search_handler import SearchHandler
 from .components.style_handler import StyleHandler
 from .components.formula_wizard_handler import FormulaWizardHandler
+from ..services.formula_helper import col_to_letter, cell_address, get_reference_cells
 
 class SpreadsheetWindow(QMainWindow):
     # The Sovereign Window.
@@ -181,6 +182,9 @@ class SpreadsheetWindow(QMainWindow):
         self.view.editor_text_changed.connect(self._on_inline_text_edited)
         self.view.viewport().installEventFilter(self)
         
+        # Also install event filter on formula bar for focus changes
+        self.formula_bar_widget.editor.installEventFilter(self)
+        
         # 6. Status Bar
         self.status_bar = SpreadsheetStatusBar()
         self.status_bar.zoom_changed.connect(self._on_zoom_changed)
@@ -194,15 +198,32 @@ class SpreadsheetWindow(QMainWindow):
 
         # 9. Wizard Handler
         self.wizard_handler = FormulaWizardHandler(self)
+        
+        # Connect fx button to Formula Wizard
+        self.formula_bar_widget.fx_clicked.connect(self.wizard_handler.launch)
+        
+        # 10. Zoom state - track base sizes for scaling
+        self._base_row_height = 25
+        self._base_font_size = 10
+        self._current_zoom = 100
 
     def _on_zoom_changed(self, value: int) -> None:
-        # Scale = value / 100.0
-        # If view supports proper scaling:
-        # self.view.scale(scale, scale) # QTableView doesn't scale easily.
-        # We might need to adjust font size or row/col sizes.
-        # For V1, let's just update font size or ignore.
-        # Actually SpreadsheetView inheritance from QTableView makes generic scaling hard.
-        pass
+        """Scales the view by adjusting row heights and font size."""
+        self._current_zoom = value
+        scale = value / 100.0
+        
+        # 1. Scale row heights
+        new_row_height = int(self._base_row_height * scale)
+        header = self.view.verticalHeader()
+        header.setDefaultSectionSize(new_row_height)
+        
+        # 2. Scale default font size for new cells
+        font = self.view.font()
+        font.setPointSize(int(self._base_font_size * scale))
+        self.view.setFont(font)
+        
+        # 3. Force repaint
+        self.view.viewport().update()
 
     def show_status(self, message: str, timeout: int = 0) -> None:
         # Proxy to our component
@@ -211,10 +232,41 @@ class SpreadsheetWindow(QMainWindow):
     # Override standard statusBar() usage if possible or replace calls?
     # We can replace internal calls to self.status_bar.show_message using regex or manual replace.
 
+    def _is_in_formula_composition_mode(self) -> bool:
+        """
+        Unified check for formula composition mode.
+        
+        Returns True when:
+        - Formula bar has focus AND text starts with '='
+        - OR inline editor is active AND text starts with '='
+        
+        This mirrors Excel/Google Sheets behavior where cell clicks
+        insert references instead of changing selection.
+        """
+        text = self.formula_bar.text()
+        if not text.startswith("="):
+            return False
+        
+        formula_bar_focused = self.formula_bar_widget.hasFocus()
+        inline_editor_active = self._is_editing_formula
+        
+        return formula_bar_focused or inline_editor_active
+
+    def _update_composition_mode_visuals(self) -> None:
+        """Update visual indicators based on formula composition state."""
+        in_composition = self._is_in_formula_composition_mode()
+        
+        # Update formula bar glow
+        self.formula_bar_widget.set_composition_mode(in_composition)
+        
+        # Update status bar indicator
+        self.status_bar.set_ref_mode(in_composition)
+
     def eventFilter(self, source: Any, event: QEvent) -> bool:
-        # A. Mouse Click Logic (Existing + New: Click Editor -> Edit Mode)
+        # A. Mouse Click Logic - Unified Formula Composition Mode
         if source == self.view.viewport() and event.type() == QEvent.Type.MouseButtonPress:
-             if self._is_editing_formula:
+            # Check unified composition mode (formula bar OR inline editor with '=' prefix)
+            if self._is_in_formula_composition_mode():
                 # Calculate cell under mouse
                 pos = event.pos()
                 index = self.view.indexAt(pos)
@@ -224,32 +276,34 @@ class SpreadsheetWindow(QMainWindow):
                 
                 if index.isValid() and not is_source:
                     # Insert Reference
-                    self._insert_reference_manual(index)
-                    return True
+                    self._insert_reference_at_cursor(index)
+                    return True  # Consume event - don't change selection
                 
         # B. Key Press Logic (Navigation)
-        # We listen on active_editor (which installed us as filter) OR the viewport?
-        # Actually editor events come from editor source.
         if event.type() == QEvent.Type.KeyPress:
-             # 1. Toggle Mode (Ctrl+E)
-             if event.key() == Qt.Key.Key_E and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
-                 self._ref_mode = not self._ref_mode
-                 # Force cursor update?
-                 return True # Consume
-                 
-             # 2. Key Navigation (Arrows)
-             if self._is_editing_formula and self._ref_mode:
-                 if event.key() in (Qt.Key.Key_Up, Qt.Key.Key_Down, Qt.Key.Key_Left, Qt.Key.Key_Right):
-                     self._handle_arrow_navigation(event.key())
-                     return True # Swallow event (don't move cursor in text)
+            # 1. Toggle Mode (Ctrl+E)
+            if event.key() == Qt.Key.Key_E and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+                self._ref_mode = not self._ref_mode
+                self.status_bar.set_ref_mode(self._ref_mode)
+                return True  # Consume
+                
+            # 2. Key Navigation (Arrows) in composition mode
+            if self._is_in_formula_composition_mode() and self._ref_mode:
+                if event.key() in (Qt.Key.Key_Up, Qt.Key.Key_Down, Qt.Key.Key_Left, Qt.Key.Key_Right):
+                    self._handle_arrow_navigation(event.key())
+                    return True  # Swallow event (don't move cursor in text)
 
-        # C. Click on Editor -> Disable Ref Mode (Switch to Edit)
-        # Note: Editor is separate widget, so source check needed?
-        # C. Click on Editor -> Disable Ref Mode (Switch to Edit)
-        # Note: Editor is separate widget, so source check needed?
+        # C. Focus events on formula bar -> update composition visuals
+        if source == self.formula_bar_widget.editor:
+            if event.type() in (QEvent.Type.FocusIn, QEvent.Type.FocusOut):
+                # Delay slightly to allow focus to settle
+                from PyQt6.QtCore import QTimer
+                QTimer.singleShot(10, self._update_composition_mode_visuals)
+
+        # D. Click on Editor -> Disable Ref Mode (Switch to Edit)
         if self.view.active_editor and source == self.view.active_editor:
-             if event.type() == QEvent.Type.MouseButtonPress:
-                 self._ref_mode = False
+            if event.type() == QEvent.Type.MouseButtonPress:
+                self._ref_mode = False
 
         return super().eventFilter(source, event)
 
@@ -281,7 +335,7 @@ class SpreadsheetWindow(QMainWindow):
         
         # 5. Insert Reference
         # This will trigger text update -> parser -> highlighting of new_index
-        self._insert_reference_manual(new_index)
+        self._insert_reference_at_cursor(new_index)
         
         # Note: We DO NOT call setCurrentIndex(new_index) because that would close the active editor.
         # The visual highlighting relies on the Formula Engine parsing the new text and drawing the Colored Box.
@@ -308,53 +362,48 @@ class SpreadsheetWindow(QMainWindow):
         if text and text[-1] in ('=', '+', '-', '*', '/', '(', ','):
             self._ref_mode = True
             self._phantom_ref_cursor = None # Reset virtual cursor to start from Source again
+            self.status_bar.set_ref_mode(True)
 
-    def _insert_reference_manual(self, index: QModelIndex) -> None:
-        # 
-#         Manually inserts a reference into:
-#         1. The Formula Bar
-#         2. The Active Inline Editor (if exists)
-        # 
-        def col_to_letter(col_idx):
-            # 
-#             Col to letter logic.
-#             
-#             Args:
-#                 col_idx: Description of col_idx.
-#             
-            # 
-            res = ""
-            while col_idx >= 0:
-                res = chr((col_idx % 26) + 65) + res
-                col_idx = (col_idx // 26) - 1
-            return res
-            
-        ref_str = f"{col_to_letter(index.column())}{index.row() + 1}"
+    def _insert_reference_at_cursor(self, index: QModelIndex) -> None:
+        """
+        Inserts a cell reference at the cursor position in:
+        1. The Formula Bar
+        2. The Active Inline Editor (if exists)
         
-        # Insert into Formula Bar
-        # Strategy: Insert at cursor position.
-        # But where is the cursor?
-        # If inline editor is focused, we use its cursor.
-        # If formula bar is focused, we use its cursor.
+        This preserves focus and cursor position, mirroring Excel behavior.
+        """
+        ref_str = cell_address(index.row(), index.column())
         
-        target_widget = self.view.active_editor if self.view.active_editor else self.formula_bar
+        # Determine which widget has the cursor
+        # Priority: inline editor > formula bar
+        if self.view.active_editor and self.view.active_editor.hasFocus():
+            target_widget = self.view.active_editor
+        else:
+            target_widget = self.formula_bar_widget.editor
         
         cursor = target_widget.cursorPosition()
         text = target_widget.text()
         
+        # Insert reference at cursor
         new_text = text[:cursor] + ref_str + text[cursor:]
+        new_cursor = cursor + len(ref_str)
         
-        # Update both
+        # Update formula bar
+        self.formula_bar.blockSignals(True)
         self.formula_bar.setText(new_text)
+        self.formula_bar.setCursorPosition(new_cursor)
+        self.formula_bar.blockSignals(False)
+        
+        # Update inline editor if active
         if self.view.active_editor:
             self.view.active_editor.setText(new_text)
-            self.view.active_editor.setCursorPosition(cursor + len(ref_str))
-            
-        # Update state
-        # (Usually handled by textEdited, but we set programmatically)
-        # We need to ensure coloring update happens
-        # self._update_toolbar_state(current) # Not quite.
-        # Just triggering a viewport update usually helps
+            self.view.active_editor.setCursorPosition(new_cursor)
+        
+        # Return focus to original widget
+        target_widget.setFocus()
+        target_widget.setCursorPosition(new_cursor)
+        
+        # Trigger viewport update for visual highlighting
         self.view.viewport().update()
         
     def _launch_formula_wizard(self) -> None:
@@ -374,6 +423,10 @@ class SpreadsheetWindow(QMainWindow):
         # Reset State BEFORE changing selection/focus to prevent accidental formula appends
         self._is_editing_formula = False
         self._edit_source_index = None
+        self._phantom_ref_cursor = None
+        
+        # Reset visual indicators
+        self._update_composition_mode_visuals()
 
         if target.isValid():
             self.model.setData(target, text, Qt.ItemDataRole.EditRole)
@@ -609,23 +662,10 @@ class SpreadsheetWindow(QMainWindow):
     # --- Formatting Logic delegated to StyleHandler ---
 
     def _on_selection_changed(self, current: QModelIndex, previous: QModelIndex) -> None:
-        """Updates formula bar and Name Box when selection changes."""
+        """Updates formula bar, Name Box, and reference highlights when selection changes."""
         # Always update Name Box
         if current.isValid():
-            def col_to_letter(col_idx):
-                # 
-#                 Col to letter logic.
-#                 
-#                 Args:
-#                     col_idx: Description of col_idx.
-#                 
-                # 
-                res = ""
-                while col_idx >= 0:
-                    res = chr((col_idx % 26) + 65) + res
-                    col_idx = (col_idx // 26) - 1
-                return res
-            addr = f"{col_to_letter(current.column())}{current.row() + 1}"
+            addr = cell_address(current.row(), current.column())
             self.name_box.setText(addr)
         else:
             self.name_box.setText("")
@@ -639,11 +679,24 @@ class SpreadsheetWindow(QMainWindow):
         if self._is_editing_formula:
             return
 
+        # --- Update Reference Highlights (Persistence) ---
+        # When selecting a cell with a formula, highlight the referenced cells
         if current.isValid():
             val = self.model.data(current, Qt.ItemDataRole.EditRole)
+            formula_str = str(val) if val is not None else ""
+            
             self.formula_bar.blockSignals(True)
-            self.formula_bar.setText(str(val) if val is not None else "")
+            self.formula_bar.setText(formula_str)
             self.formula_bar.blockSignals(False)
+            
+            # If it's a formula, extract and highlight references
+            if formula_str.startswith("="):
+                highlights = get_reference_cells(formula_str)
+                self.view.set_reference_highlights(highlights)
+            else:
+                self.view.clear_reference_highlights()
+        else:
+            self.view.clear_reference_highlights()
             
     def _on_range_selection_changed(self, selected: Any, deselected: Any) -> None:
         """Handles range selection for formula reference insertion."""
@@ -659,25 +712,11 @@ class SpreadsheetWindow(QMainWindow):
         min_col = min(idx.column() for idx in indexes)
         max_col = max(idx.column() for idx in indexes)
         
-        def col_to_letter(col_idx):
-            # 
-#             Col to letter logic.
-#             
-#             Args:
-#                 col_idx: Description of col_idx.
-#             
-            # 
-            res = ""
-            while col_idx >= 0:
-                res = chr((col_idx % 26) + 65) + res
-                col_idx = (col_idx // 26) - 1
-            return res
-            
-        start_addr = f"{col_to_letter(min_col)}{min_row + 1}"
+        start_addr = cell_address(min_row, min_col)
         if min_row == max_row and min_col == max_col:
             ref_str = start_addr
         else:
-            end_addr = f"{col_to_letter(max_col)}{max_row + 1}"
+            end_addr = cell_address(max_row, max_col)
             ref_str = f"{start_addr}:{end_addr}"
         
         # 2. Insert into Formula Bar
@@ -704,10 +743,18 @@ class SpreadsheetWindow(QMainWindow):
                 # Enter Edit Mode
                 self._is_editing_formula = True
                 self._edit_source_index = self.view.currentIndex()
+            
+            # Update reference highlights as user types
+            highlights = get_reference_cells(text)
+            self.view.set_reference_highlights(highlights)
         else:
             if self._is_editing_formula and not text.startswith("="):
                 self._is_editing_formula = False
                 self._edit_source_index = None
+            self.view.clear_reference_highlights()
+        
+        # Update visual indicators (glow, REF mode)
+        self._update_composition_mode_visuals()
 
 
 
@@ -730,9 +777,11 @@ class SpreadsheetWindow(QMainWindow):
         """Switches the active view to the selected scroll."""
         if index < 0 or index >= len(self.models): return
         
-        # 1. Disconnect old
-        try: self.model.dataChanged.disconnect(self._on_data_changed)
-        except: pass
+        # 1. Disconnect old model signal safely
+        try:
+            self.model.dataChanged.disconnect(self._on_data_changed)
+        except (TypeError, RuntimeError):
+            pass  # Already disconnected or never connected
         
         # 2. Switch
         self.current_model_index = index

@@ -9,6 +9,7 @@ requests, performing lazy imports to preserve pillar sovereignty.
 from typing import Dict, Optional, Type, Any
 import logging
 import importlib
+import inspect
 from PyQt6.QtWidgets import QWidget, QMainWindow, QApplication
 from PyQt6.QtCore import Qt, QTimer
 # Import signal bus and registry
@@ -230,6 +231,60 @@ class WindowManager:
             Number of active windows
         """
         return len(self._active_windows)
+
+    def open_window_by_key(
+        self, 
+        window_key: str, 
+        allow_multiple: Optional[bool] = None,
+        **kwargs
+    ) -> Optional[QWidget]:
+        """
+        Open a window using its registry key (lazy import).
+        
+        This is the preferred method for cross-pillar window opening,
+        as it preserves sovereignty by avoiding direct class imports.
+        
+        Args:
+            window_key: Identifier from WINDOW_REGISTRY (e.g., 'emerald_tablet')
+            allow_multiple: Override the registry's allow_multiple setting
+            **kwargs: Parameters to pass to the window constructor
+            
+        Returns:
+            The window instance, or None if the key is not found
+        """
+        try:
+            info = get_window_info(window_key)
+            module_name = info["module"]
+            class_name = info["class"]
+            use_multiple = allow_multiple if allow_multiple is not None else info.get("allow_multiple", True)
+            
+            # Lazy import
+            module = importlib.import_module(module_name)
+            window_class = getattr(module, class_name)
+            
+            # Only inject window_manager if the class constructor accepts it
+            if "window_manager" not in kwargs:
+                try:
+                    sig = inspect.signature(window_class.__init__)
+                    if "window_manager" in sig.parameters or any(
+                        p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values()
+                    ):
+                        kwargs["window_manager"] = self
+                except (ValueError, TypeError):
+                    pass  # Can't inspect, don't inject
+            
+            return self.open_window(
+                window_type=window_key,
+                window_class=window_class,
+                allow_multiple=use_multiple,
+                **kwargs
+            )
+        except KeyError as e:
+            logger.error(f"Unknown window key: {window_key}. Error: {e}")
+            return None
+        except (ImportError, AttributeError) as e:
+            logger.error(f"Failed to import window '{window_key}': {e}")
+            return None
 
     def raise_all_windows(self):
         """

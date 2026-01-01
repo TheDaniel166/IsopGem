@@ -576,15 +576,153 @@ def func_gematria(engine: FormulaEngine, text: Any, cipher: str = "English (TQ)"
     if not calculator: return f"#CIPHER? ({cipher})"
     return calculator.calculate(text_str)
 
-@FormulaRegistry.register("ASTRO", "Astrological Data (Stub).", "ASTRO(body, type)", "Esoteric", [
-    ArgumentMetadata("body", "Body (e.g. Sun)", "str"),
-    ArgumentMetadata("type", "Type (Sign, Deg)", "str")
-])
-def func_astro(engine: FormulaEngine, body: str, type_: str):
+@FormulaRegistry.register(
+    "ASTRO", 
+    "Retrieves live planetary data from the Ephemeris Engine. Use 'Sign' for zodiac name, 'Degree' for position, 'SignGlyph' for Astronomicon symbol, or 'GlyphString' for full notation like 10^J23.", 
+    "ASTRO(body, property)", 
+    "Esoteric", 
+    [
+        ArgumentMetadata("body", "Planet name: Sun, Moon, Mercury, Venus, Mars, Jupiter, Saturn, Uranus, Neptune, Pluto", "str"),
+        ArgumentMetadata("property", "What to return", "astro_property")
+    ]
+)
+def func_astro(engine: FormulaEngine, body: str, property_: str):
     """
-    Retrieves astrological data (Placeholder for Phase 3).
+    Retrieves live astrological data for a celestial body.
+    
+    Uses the Ephemeris Engine (Skyfield) to calculate current planetary positions.
+    Supports Astronomicon font glyphs for zodiac signs and planets.
+    
+    Properties:
+        Sign           - Zodiac sign name (e.g., "Capricorn")
+        Degree         - Degree within sign (e.g., "15")
+        Longitude      - Absolute ecliptic longitude (e.g., "285.5")
+        Retrograde     - Is planet retrograde? ("Yes" or "No")
+        ZodiacalDegree - Full notation (e.g., "15° Capricorn 30'")
+        SignGlyph      - Zodiac sign as Astronomicon glyph (e.g., "J" for Capricorn)
+        BodyGlyph      - Planet as Astronomicon glyph (e.g., "Q" for Sun)
+        GlyphString    - Full zodiacal with glyphs (e.g., "15^J30")
+    
+    Examples:
+        =ASTRO("Sun", "Sign")           -> "Capricorn"
+        =ASTRO("Sun", "SignGlyph")      -> "J" (Astronomicon)
+        =ASTRO("Sun", "BodyGlyph")      -> "Q" (Astronomicon)
+        =ASTRO("Mars", "GlyphString")   -> "12^A45" (12° Aries 45')
     """
-    return f"[{body} in {type_}]"
+    from datetime import datetime, timezone
+    
+    # Normalize inputs
+    body_lower = str(body).strip().lower()
+    prop_lower = str(property_).strip().lower()
+    
+    # Map body names to ephemeris keys
+    BODY_MAP = {
+        "sun": "sun",
+        "moon": "moon",
+        "mercury": "mercury",
+        "venus": "venus",
+        "mars": "mars",
+        "jupiter": "jupiter barycenter",
+        "saturn": "saturn barycenter",
+        "uranus": "uranus barycenter",
+        "neptune": "neptune barycenter",
+        "pluto": "pluto barycenter",
+    }
+    
+    # Fallback keys for different ephemeris files
+    BODY_FALLBACK = {
+        "mars": "mars barycenter",
+        "jupiter barycenter": "jupiter",
+        "saturn barycenter": "saturn",
+        "uranus barycenter": "uranus",
+        "neptune barycenter": "neptune",
+        "pluto barycenter": "pluto",
+    }
+    
+    ZODIAC_SIGNS = [
+        "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
+        "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"
+    ]
+    
+    if body_lower not in BODY_MAP:
+        return f"#BODY? ({body})"
+    
+    try:
+        # Get ephemeris provider
+        from pillars.astrology.repositories.ephemeris_provider import EphemerisProvider, EphemerisNotLoadedError
+        
+        ephemeris = EphemerisProvider.get_instance()
+        
+        if not ephemeris.is_loaded():
+            return "#LOADING..."
+        
+        now = datetime.now(timezone.utc)
+        ephem_key = BODY_MAP[body_lower]
+        
+        # Try primary key, fallback if needed
+        try:
+            longitude = ephemeris.get_geocentric_ecliptic_position(ephem_key, now)
+        except KeyError:
+            # Try fallback key
+            fallback = BODY_FALLBACK.get(ephem_key)
+            if fallback:
+                longitude = ephemeris.get_geocentric_ecliptic_position(fallback, now)
+            else:
+                raise
+        
+        # Calculate sign and degree
+        sign_idx = int(longitude / 30) % 12
+        sign_name = ZODIAC_SIGNS[sign_idx]
+        degree_in_sign = longitude % 30
+        degree_int = int(degree_in_sign)
+        minutes = int((degree_in_sign - degree_int) * 60)
+        
+        # Return based on property
+        if prop_lower == "sign":
+            return sign_name
+        elif prop_lower == "degree":
+            return degree_int
+        elif prop_lower == "longitude" or prop_lower == "lon":
+            return round(longitude, 2)
+        elif prop_lower == "zodiacaldegree" or prop_lower == "zodiacal":
+            return f"{degree_int}° {sign_name} {minutes:02d}'"
+        elif prop_lower == "signglyph" or prop_lower == "signgl":
+            # Return Astronomicon zodiac glyph
+            try:
+                from shared.services.astro_glyph_service import astro_glyphs
+                return astro_glyphs.get_zodiac_glyph(sign_name)
+            except ImportError:
+                # Fallback to first letter
+                return sign_name[0]
+        elif prop_lower == "bodyglyph" or prop_lower == "planetglyph":
+            # Return Astronomicon planet glyph
+            try:
+                from shared.services.astro_glyph_service import astro_glyphs
+                return astro_glyphs.get_planet_glyph(body)
+            except ImportError:
+                return body[0].upper()
+        elif prop_lower == "glyphstring" or prop_lower == "glyph":
+            # Return full zodiacal string with Astronomicon glyphs
+            try:
+                from shared.services.astro_glyph_service import astro_glyphs
+                return astro_glyphs.to_zodiacal_string(longitude, use_glyphs=True)
+            except ImportError:
+                return f"{degree_int}° {sign_name} {minutes:02d}'"
+        elif prop_lower == "retrograde" or prop_lower == "rx":
+            # Get extended data for retrograde status
+            try:
+                ext_data = ephemeris.get_extended_data(ephem_key, now)
+                is_rx = ext_data.get("is_retrograde", False)
+                return "Yes" if is_rx else "No"
+            except Exception:
+                return "N/A"  # Sun/Moon don't have retrograde
+        else:
+            return f"#PROP? ({property_})"
+            
+    except EphemerisNotLoadedError:
+        return "#LOADING..."
+    except Exception as e:
+        return f"#ERR: {str(e)[:30]}"
 
 @FormulaRegistry.register("SUM", "Adds arguments.", "SUM(val1, ...)", "Math", [
     ArgumentMetadata("number1", "Value", "number"),
