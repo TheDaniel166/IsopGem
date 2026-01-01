@@ -7,13 +7,14 @@ from PyQt6.QtWidgets import (
     QDialogButtonBox, QWidget, QStyle, QMenu, QLineEdit, QApplication, QHeaderView, QStyleOptionViewItem, QRubberBand
 )
 from PyQt6.QtCore import Qt, QAbstractTableModel, QModelIndex, pyqtSignal, QEvent, QItemSelectionModel, QPoint, QRect, QSize, QTimer
-from PyQt6.QtGui import QTextDocument, QAbstractTextDocumentLayout, QPalette, QColor, QAction, QUndoStack, QPen, QFont, QKeyEvent, QKeySequence, QBrush, QPainter, QStandardItemModel, QStandardItem, QMouseEvent, QTextOption
-from shared.ui.rich_text_editor import RichTextEditor
-import json
+from PyQt6.QtGui import QTextDocument, QAbstractTextDocumentLayout, QColor, QAction, QUndoStack, QPen, QFont, QKeyEvent, QKeySequence, QBrush, QTextOption
 import re
-import os
 
-from pillars.correspondences.services.formula_engine import FormulaEngine, FormulaHelper
+from shared.ui.rich_text_editor import RichTextEditor
+
+from pillars.correspondences.services.formula_engine import FormulaHelper, FormulaEngine
+
+
 from shared.ui.theme import COLORS
 
 from pillars.correspondences.services.undo_commands import (
@@ -21,7 +22,7 @@ from pillars.correspondences.services.undo_commands import (
     InsertColumnsCommand, RemoveColumnsCommand, SortRangeCommand
 )
 
-from pillars.correspondences.services.conditional_formatting import ConditionalManager, ConditionalRule
+from pillars.correspondences.services.conditional_formatting import ConditionalManager
 
 # Custom Roles
 BorderRole = Qt.ItemDataRole.UserRole + 1
@@ -59,9 +60,6 @@ class SpreadsheetModel(QAbstractTableModel):
         # Run Sanitization to migrate old HTML content to Plain Text
         self._sanitize_data()
 
-        # Run Sanitization to migrate old HTML content to Plain Text
-        self._sanitize_data()
-
         self.formula_engine = FormulaEngine(self)
         self.undo_stack = QUndoStack(self)
         self.conditional_manager = ConditionalManager()
@@ -92,7 +90,7 @@ class SpreadsheetModel(QAbstractTableModel):
                     continue
 
                 # Map to Source
-                rel_r = (r - src_top) % src_h # Use src_top as anchor valid?
+                # rel_r = (r - src_top) % src_h
                 # If target is BELOW source, r > src_bottom.
                 # Pattern repeats relative to TOP of source.
                 # Example: Src rows 0,1. Target 2,3,4.
@@ -681,7 +679,7 @@ class RichTextDelegate(QStyledItemDelegate):
 
             painter.restore()
 
-        except Exception as e:
+        except Exception:
             # print(f"Paint Error at {index.row()},{index.column()}: {e}")
             painter.save()
             painter.drawText(option.rect, Qt.AlignmentFlag.AlignCenter, "ERR")
@@ -877,7 +875,7 @@ class SpreadsheetView(QTableView):
         if not selection.isEmpty():
             r = selection.last()
             # We want the bottom-right index
-            idx = self.model().index(r.bottom(), r.right())
+            # idx = self.model().index(r.bottom(), r.right())
             # Store simple logic
             self._handle_pos = (r.bottom(), r.right())
             self.viewport().update() # Trigger repaint for handle
@@ -1011,7 +1009,7 @@ class SpreadsheetView(QTableView):
 
     def _calculate_target_range_from_rect(self, rect):
         """Convert visual rect back to row/col range."""
-        from PyQt6.QtCore import QPoint, QItemSelectionRange
+        # from PyQt6.QtCore import QPoint
         # Sample center of corners to avoid grid lines
         tl = rect.topLeft() + QPoint(5,5)
         br = rect.bottomRight() - QPoint(5,5)
@@ -1231,10 +1229,10 @@ class SpreadsheetView(QTableView):
         indexes = sorted(indexes, key=lambda x: (x.row(), x.column()))
         
         # Determine bounds
-        min_row = indexes[0].row()
-        min_col = indexes[0].column()
-        max_row = indexes[-1].row()
-        max_col = indexes[-1].column()
+        # min_row = indexes[0].row()
+        # min_col = indexes[0].column()
+        # max_row = indexes[-1].row()
+        # max_col = indexes[-1].column()
         
         # Build Table
         # sparse grid map
@@ -1242,7 +1240,7 @@ class SpreadsheetView(QTableView):
         for idx in indexes:
             grid[(idx.row(), idx.column())] = idx.data(Qt.ItemDataRole.EditRole)
             
-        tsv_rows = []
+        # tsv_rows = []
         # We must iterate strictly from min to max to preserve structure, even if some cells are NOT selected in a sparse selection (?)
         # Standard behavior: Copy rectangular bounds of selection.
         

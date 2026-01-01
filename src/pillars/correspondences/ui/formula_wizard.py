@@ -1,15 +1,18 @@
+
 """
 Formula Wizard - The Scribe's Grimoire.
 Two-stage dialog for selecting and configuring spreadsheet formulas with live preview.
 """
 from PyQt6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLineEdit, QListWidget, 
-    QTextBrowser, QPushButton, QLabel, QDialogButtonBox, QListWidgetItem,
-    QComboBox, QWidget, QFormLayout, QScrollArea
+    QDialog, QVBoxLayout, QLabel, QLineEdit, QListWidget,
+    QDialogButtonBox, QHBoxLayout, QWidget, QSplitter,
+    QTableWidget, QTableWidgetItem, QHeaderView,
+    QComboBox, QScrollArea, QFormLayout, QPushButton, QListWidgetItem
 )
 from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtGui import QFont, QColor
 from ..services.formula_helper import FormulaHelperService
-from ..services.formula_engine import FormulaMetadata, FormulaEngine, Optional, FormulaRegistry
+from ..services.formula_engine import FormulaMetadata, FormulaEngine, FormulaRegistry
 
 class CipherSelectorWidget(QWidget):
     """

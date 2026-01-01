@@ -56,8 +56,10 @@ class ZodiacAudit:
         
     def load_target(self):
         try:
-            # UI components need a QApplication
+            # UI components need a QApplication with proper WebEngine init
             if "ui" in self.target_str.split('.'):
+                from PyQt6.QtCore import Qt, QCoreApplication
+                QCoreApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
                 from PyQt6.QtWidgets import QApplication
                 if not QApplication.instance():
                     self.app = QApplication(sys.argv)

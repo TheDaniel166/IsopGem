@@ -1,15 +1,13 @@
 # Spreadsheet Window - The Sovereign Tablet Editor.
 # Main window hosting the spreadsheet view, formula bar, toolbar, and multi-sheet tab navigation. 
 
-from typing import Any, Dict, List, Optional
-
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QDockWidget,
     QToolBar, QMessageBox, QMenu, QToolButton, QStyle,
     QLineEdit, QInputDialog
 )
 from PyQt6.QtGui import QAction
-from PyQt6.QtCore import Qt, QEvent, QSize, QModelIndex
+from PyQt6.QtCore import Qt, QEvent, QSize
 
 from .spreadsheet_view import SpreadsheetView, SpreadsheetModel
 from .scroll_tab_bar import ScrollTabBar
@@ -31,7 +29,7 @@ class SpreadsheetWindow(QMainWindow):
     # The Sovereign Window.
     # Hosts the Grid and the Toolbar (commands).
 
-    def __init__(self, table_id: int, name: str, content: Dict[str, Any], service: TableService, parent: Optional[QWidget] = None) -> None:
+    def __init__(self, table_id, name, content, service: TableService, parent=None):
         super().__init__(parent)
         # init logic.
         
@@ -164,8 +162,8 @@ class SpreadsheetWindow(QMainWindow):
         self._edit_source_index = None # The index we are editing (e.g. A1) while clicking B2
         self._phantom_ref_cursor = None # Virtual cursor for arrow navigation (keeps editor open)
         
-        # Track manual edits to detect '=' (Signal already connected via text_changed above)
-        # REMOVED: self.formula_bar.textEdited.connect(self._on_formula_text_edited)
+        # Track manual edits to detect '='
+        self.formula_bar.textEdited.connect(self._on_formula_text_edited)
         
         # 3. Toolbar
         self._setup_toolbar()
@@ -195,7 +193,7 @@ class SpreadsheetWindow(QMainWindow):
         # 9. Wizard Handler
         self.wizard_handler = FormulaWizardHandler(self)
 
-    def _on_zoom_changed(self, value: int) -> None:
+    def _on_zoom_changed(self, value):
         # Scale = value / 100.0
         # If view supports proper scaling:
         # self.view.scale(scale, scale) # QTableView doesn't scale easily.
@@ -204,14 +202,14 @@ class SpreadsheetWindow(QMainWindow):
         # Actually SpreadsheetView inheritance from QTableView makes generic scaling hard.
         pass
 
-    def show_status(self, message: str, timeout: int = 0) -> None:
+    def show_status(self, message, timeout=0):
         # Proxy to our component
         self.status_bar.show_message(message, timeout)
 
     # Override standard statusBar() usage if possible or replace calls?
     # We can replace internal calls to self.status_bar.show_message using regex or manual replace.
 
-    def eventFilter(self, source: Any, event: QEvent) -> bool:
+    def eventFilter(self, source, event):
         # A. Mouse Click Logic (Existing + New: Click Editor -> Edit Mode)
         if source == self.view.viewport() and event.type() == QEvent.Type.MouseButtonPress:
              if self._is_editing_formula:
@@ -253,7 +251,7 @@ class SpreadsheetWindow(QMainWindow):
 
         return super().eventFilter(source, event)
 
-    def _handle_arrow_navigation(self, key: Qt.Key) -> None:
+    def _handle_arrow_navigation(self, key):
         # 
 #         Moves the selection relative to the LAST inserted reference (or current selection).
 #         And inserts/updates the reference in the formula.
@@ -286,7 +284,7 @@ class SpreadsheetWindow(QMainWindow):
         # Note: We DO NOT call setCurrentIndex(new_index) because that would close the active editor.
         # The visual highlighting relies on the Formula Engine parsing the new text and drawing the Colored Box.
 
-    def _on_inline_text_edited(self, text: str) -> None:
+    def _on_inline_text_edited(self, text):
         # 
 #         Called when user types in the inline cell editor.
 #         Syncs to Formula Bar and triggers Reference Mode check.
@@ -309,7 +307,7 @@ class SpreadsheetWindow(QMainWindow):
             self._ref_mode = True
             self._phantom_ref_cursor = None # Reset virtual cursor to start from Source again
 
-    def _insert_reference_manual(self, index: QModelIndex) -> None:
+    def _insert_reference_manual(self, index):
         # 
 #         Manually inserts a reference into:
 #         1. The Formula Bar
@@ -357,15 +355,14 @@ class SpreadsheetWindow(QMainWindow):
         # Just triggering a viewport update usually helps
         self.view.viewport().update()
         
-    def _launch_formula_wizard(self) -> None:
+    def _launch_formula_wizard(self):
         self.wizard_handler.launch()
 
-    def _on_formula_return(self) -> None:
-        """Triggered by Formula Bar 'Enter' or Wizard commit."""
+    def _on_formula_return(self):
+        # Triggered by Formula Bar 'Enter' or Wizard commit
         self._commit_formula()
 
-    def _commit_formula(self) -> None:
-        """Commits the current formula bar content to the target cell."""
+    def _commit_formula(self):
         text = self.formula_bar.text()
         
         # Target: explicit edit source OR current selection
@@ -383,8 +380,7 @@ class SpreadsheetWindow(QMainWindow):
         
 
 
-    def _setup_toolbar(self) -> None:
-        """Configures the main toolbar with all actions."""
+    def _setup_toolbar(self):
         toolbar = QToolBar("Tablet Tools")
         icon_size = self.style().pixelMetric(QStyle.PixelMetric.PM_SmallIconSize)
         scaled_size = int(icon_size * 1.5)
@@ -535,54 +531,36 @@ class SpreadsheetWindow(QMainWindow):
 
 
 
-    def _update_toolbar_state(self, index: QModelIndex) -> None:
-        """Updates toolbar state based on selected cell formatting.
-        
-        Note: Font/style widgets are optional and may not exist if using
-        the new modular SpreadsheetToolbar component.
-        """
-        if not index.isValid():
-            return
-            
+    def _update_toolbar_state(self, index):
+        # Renamed from old logic inside _on_selection_changed# 
         font = self.model.data(index, Qt.ItemDataRole.FontRole)
-        
-        # Font Combo (optional - may be in SpreadsheetToolbar)
-        if hasattr(self, 'font_combo') and self.font_combo and font:
+        if font:
             self.font_combo.blockSignals(True)
             self.font_combo.setCurrentFont(font)
             self.font_combo.blockSignals(False)
-        
-        # Size Spin (optional)
-        if hasattr(self, 'size_spin') and self.size_spin and font:
+            
             self.size_spin.blockSignals(True)
             self.size_spin.setValue(font.pointSize())
             self.size_spin.blockSignals(False)
-        
-        # Style Actions (optional)
-        if font:
-            bold = font.bold()
-            italic = font.italic()
-            underline = font.underline()
-        else:
-            bold = italic = underline = False
             
-        if hasattr(self, 'act_bold') and self.act_bold:
             self.act_bold.blockSignals(True)
-            self.act_bold.setChecked(bold)
+            self.act_bold.setChecked(font.bold())
             self.act_bold.blockSignals(False)
             
-        if hasattr(self, 'act_italic') and self.act_italic:
             self.act_italic.blockSignals(True)
-            self.act_italic.setChecked(italic)
+            self.act_italic.setChecked(font.italic())
             self.act_italic.blockSignals(False)
             
-        if hasattr(self, 'act_underline') and self.act_underline:
             self.act_underline.blockSignals(True)
-            self.act_underline.setChecked(underline)
+            self.act_underline.setChecked(font.underline())
             self.act_underline.blockSignals(False)
+        else:
+             self.act_bold.setChecked(False)
+             self.act_italic.setChecked(False)
+             self.act_underline.setChecked(False)
 
-    def _save_table(self) -> None:
-        """Persists the table to the database (Multi-Scroll format)."""
+    def _save_table(self):
+        # Persist to Database (Multi-Scroll).# 
         try:
             # Serialize all scrolls
             scrolls_list = []
@@ -608,8 +586,8 @@ class SpreadsheetWindow(QMainWindow):
     # --- Formatting Helpers ---
     # --- Formatting Logic delegated to StyleHandler ---
 
-    def _on_selection_changed(self, current: QModelIndex, previous: QModelIndex) -> None:
-        """Updates formula bar and Name Box when selection changes."""
+    def _on_selection_changed(self, current, previous):
+        # Updates formula bar and Name Box (unless editing).# 
         # Always update Name Box
         if current.isValid():
             def col_to_letter(col_idx):
@@ -645,8 +623,10 @@ class SpreadsheetWindow(QMainWindow):
             self.formula_bar.setText(str(val) if val is not None else "")
             self.formula_bar.blockSignals(False)
             
-    def _on_range_selection_changed(self, selected: Any, deselected: Any) -> None:
-        """Handles range selection for formula reference insertion."""
+    def _on_range_selection_changed(self, selected, deselected):
+        # 
+#         If in formula edit mode, inserting range references.
+        # 
         if not self._is_editing_formula:
             return
             
@@ -697,8 +677,8 @@ class SpreadsheetWindow(QMainWindow):
         # Return focus to bar
         self.formula_bar.setFocus()
 
-    def _on_formula_text_edited(self, text: str) -> None:
-        """Detects if user is starting a formula (text starts with '=')."""
+    def _on_formula_text_edited(self, text):
+        # Detect if user is starting a formula.# 
         if text.startswith("="):
             if not self._is_editing_formula:
                 # Enter Edit Mode
@@ -711,8 +691,8 @@ class SpreadsheetWindow(QMainWindow):
 
 
 
-    def _on_scroll_added(self) -> None:
-        """Creates a new scroll/sheet in the workbook."""
+    def _on_scroll_added(self):
+        # Create a new scroll.# 
         new_name, ok = QInputDialog.getText(self, "New Scroll", "Scroll Name:", text="Sheet")
         if not ok or not new_name: return
         
@@ -726,8 +706,8 @@ class SpreadsheetWindow(QMainWindow):
         # Switch to it
         self.tab_bar.set_current_index(len(self.models) - 1)
         
-    def _on_scroll_changed(self, index: int) -> None:
-        """Switches the active view to the selected scroll."""
+    def _on_scroll_changed(self, index):
+        # Switch the active view model.# 
         if index < 0 or index >= len(self.models): return
         
         # 1. Disconnect old
@@ -749,8 +729,8 @@ class SpreadsheetWindow(QMainWindow):
         self.name_box.setText("")
         self.formula_bar.setText("")
         
-    def _create_default_content(self) -> Dict[str, Any]:
-        """Creates default content structure for a new scroll."""
+    def _create_default_content(self):
+        # 26 Columns (A-Z)
         cols = [chr(65 + i) for i in range(26)]
         # 100 empty rows of similar width
         # Data format is list of lists
@@ -761,8 +741,11 @@ class SpreadsheetWindow(QMainWindow):
             "styles": {}
         }
 
-    def _on_data_changed(self, top_left: QModelIndex, bottom_right: QModelIndex, roles: Optional[List[int]] = None) -> None:
-        """Updates formula bar when cell data changes."""
+    def _on_data_changed(self, top_left, bottom_right, roles=None):
+        # 
+#         If the data in the currently selected cell changes (e.g. via inline edit), 
+#         update the formula bar to reflect it.
+        # 
         current = self.view.currentIndex()
         if not current.isValid():
             return
@@ -780,32 +763,15 @@ class SpreadsheetWindow(QMainWindow):
 
     # --- Border Settings Methods (Instance) ---
     # --- Border Logic delegated to StyleHandler ---
-
-    def _apply_borders(self, border_type: str) -> None:
-        """Proxy to StyleHandler for border application."""
-        self.style_handler.apply_borders(border_type)
-
-    def pick_border_color(self) -> None:
-        """Proxy to StyleHandler for border color picker."""
-        self.style_handler.pick_border_color()
-
-    def set_border_style(self, style: str) -> None:
-        """Proxy to StyleHandler for border style."""
-        self.style_handler.set_border_style(style)
-
-    def set_border_width(self, width: int) -> None:
-        """Proxy to StyleHandler for border width."""
-        self.style_handler.set_border_width(width)
-
-    def _toggle_keyboard(self) -> None:
-        """Toggles the Virtual Keyboard dock visibility."""
+    def _toggle_keyboard(self):
+        # Toggle Virtual Keyboard in/out.# 
         if self._kb_dock.isVisible():
             self._kb_dock.hide()
         else:
             self._kb_dock.show()
 
-    def _sort_selection(self, ascending: bool = True) -> None:
-        """Sorts selection based on active cell column."""
+    def _sort_selection(self, ascending=True):
+        # Sorts selection based on active cell column.# 
         selection = self.view.selectionModel()
         if not selection.hasSelection():
             # If nothing selected, maybe select used range?
@@ -834,8 +800,8 @@ class SpreadsheetWindow(QMainWindow):
             
         self.model.sort_range(top, left, bottom, right, key_col, ascending)
         
-    def _add_conditional_rule(self, rule_type: str) -> None:
-        """Adds a conditional formatting rule to the selected range."""
+    def _add_conditional_rule(self, rule_type):
+        # Adds a conditional rule to the selected range.# 
         selection = self.view.selectionModel()
         if not selection.hasSelection(): return
 
@@ -877,8 +843,8 @@ class SpreadsheetWindow(QMainWindow):
             # Repaint
             self.view.viewport().update()
             
-    def _clear_conditional_rules(self) -> None:
-        """Removes all conditional formatting rules."""
+    def _clear_conditional_rules(self):
+        # Removes all conditional formatting rules.# 
         if hasattr(self.model, "conditional_manager"):
             self.model.conditional_manager.clear_all_rules()
             self.view.viewport().update()
@@ -887,27 +853,38 @@ class SpreadsheetWindow(QMainWindow):
 
 
 
-    def _export_csv(self) -> None:
-        """Exports the current sheet to CSV format."""
+    def _export_csv(self):
         SpreadsheetIO.export_csv(self, self.model)
 
-    def _export_json(self) -> None:
-        """Exports the current sheet to JSON format."""
+    def _export_json(self):
         SpreadsheetIO.export_json(self, self.model)
 
-    def _export_image(self) -> None:
-        """Exports the current view as an image."""
+    def _export_image(self):
         SpreadsheetIO.export_image(self, self.view)
 
-    def _import_csv(self) -> None:
-        """Imports data from a CSV file."""
+    def _import_csv(self):
         SpreadsheetIO.import_csv(self, self.model)
 
     # --- Find & Replace ---
 
 
 
-    def _launch_find_replace(self, mode: str = "find") -> None:
-        """Launches the Find/Replace dialog."""
+    def _launch_find_replace(self, mode="find"):
         self.search_handler.launch(mode)
+
+    # --- Search Logic moved to SearchHandler ---
+
+        # 7. Search Handler
+        self.search_handler = SearchHandler(self)
+        
+        # 8. Style Handler
+        self.style_handler = StyleHandler(self)
+        
+        # 9. Wizard Handler
+        self.wizard_handler = FormulaWizardHandler(self)
+        
+        # Setup UI
+        self._setup_ui()
+        self._setup_toolbar() 
+        # Note: _setup_toolbar now needs to pull menu from StyleHandler
         
