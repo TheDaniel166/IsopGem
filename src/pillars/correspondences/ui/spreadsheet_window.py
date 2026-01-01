@@ -17,6 +17,8 @@ from .find_replace_dialog import FindReplaceDialog
 from pillars.correspondences.services.table_service import TableService
 from pillars.correspondences.services.conditional_formatting import ConditionalRule
 from shared.ui.virtual_keyboard import get_shared_virtual_keyboard
+from shared.ui.theme import COLORS
+import json
 
 class SpreadsheetWindow(QMainWindow):
     """
@@ -28,14 +30,6 @@ class SpreadsheetWindow(QMainWindow):
           init   logic.
         
         Args:
-            table_id: Description of table_id.
-            name: Description of name.
-            content: Description of content.
-            service: Description of service.
-            parent: Description of parent.
-        
-        """
-        super().__init__(parent)
         self.table_id = table_id
         self.service = service
         self.setWindowTitle(f"Emerald Tablet: {name}")
@@ -468,6 +462,16 @@ class SpreadsheetWindow(QMainWindow):
         act_export.setToolTip("Export CSV")
         act_export.triggered.connect(self._export_csv)
         toolbar.addAction(act_export)
+
+        act_export_json = QAction("JSON", self)
+        act_export_json.setToolTip("Export JSON")
+        act_export_json.triggered.connect(self._export_json)
+        toolbar.addAction(act_export_json)
+
+        act_export_img = QAction("IMG", self)
+        act_export_img.setToolTip("Export Image")
+        act_export_img.triggered.connect(self._export_image)
+        toolbar.addAction(act_export_img)
         
         toolbar.addSeparator()
 
@@ -751,7 +755,7 @@ class SpreadsheetWindow(QMainWindow):
         indexes = self.view.selectionModel().selectedIndexes()
         if not indexes: return
         
-        print(f"[DEBUG] Apply Borders: Type={border_type}, Settings={self._border_settings}")
+        # logger.debug(f"Apply Borders: Type={border_type}, Settings={self._border_settings}")
         
         # Delegate Calculation
         updates = BorderEngine.calculate_borders(
@@ -1147,9 +1151,8 @@ class SpreadsheetWindow(QMainWindow):
         if not ok or not val_str: return
         
         # 2. Ask for Color (Simple for now: Default Red, or ask?)
-        # Let's default to Light Red Fill + Dark Red Text (Excel style)
-        # bg: #FFC7CE, fg: #9C0006
-        style = {"bg": "#FFC7CE", "fg": "#9C0006"}
+        # Default: Light Red Fill + Dark Red Text (Theme Aligned)
+        style = {"bg": COLORS['destroyer_disabled'], "fg": COLORS['destroyer']}
         
         # 3. Calculate Ranges
         indexes = selection.selectedIndexes()
@@ -1182,6 +1185,38 @@ class SpreadsheetWindow(QMainWindow):
             self.model.conditional_manager.clear_all_rules()
             self.view.viewport().update()
             self.statusBar().showMessage("Cleared all Conditional Formatting rules.", 3000)
+
+    def _export_json(self):
+        """Export grid to JSON."""
+        path, _ = QFileDialog.getSaveFileName(self, "Export JSON", "", "JSON Files (*.json)")
+        if not path: return
+        
+        try:
+            data = self.model.to_json()
+            # Wrap in minimal structure or just raw model? 
+            # model.to_json() returns {columns, data, styles}
+            # Add name
+            data['name'] = getattr(self.model, "scroll_name", "Sheet")
+
+            with open(path, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2)
+            
+            QMessageBox.information(self, "Export Successful", f"Saved to {path}")
+        except Exception as e:
+            QMessageBox.critical(self, "Export Failed", str(e))
+
+    def _export_image(self):
+        """Export visible grid to PNG."""
+        path, _ = QFileDialog.getSaveFileName(self, "Export Image", "", "PNG Files (*.png)")
+        if not path: return
+        
+        try:
+            # Grab current viewport
+            pixmap = self.view.grab()
+            pixmap.save(path)
+            QMessageBox.information(self, "Export Successful", f"Saved to {path}")
+        except Exception as e:
+            QMessageBox.critical(self, "Export Failed", str(e))
 
     def _export_csv(self):
         """Export grid to CSV (Values or Formulas)."""

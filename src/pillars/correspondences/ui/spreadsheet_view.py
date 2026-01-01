@@ -14,6 +14,7 @@ import re
 import os
 
 from pillars.correspondences.services.formula_engine import FormulaEngine, FormulaHelper
+from shared.ui.theme import COLORS
 
 from pillars.correspondences.services.undo_commands import (
     SetCellDataCommand, InsertRowsCommand, RemoveRowsCommand,
@@ -645,9 +646,9 @@ class RichTextDelegate(QStyledItemDelegate):
 
             # --- 4. Selection Highlight ---
             if options.state & QStyle.StateFlag.State_Selected:
-                # Default: Standard Blue
-                base_color = QColor("#0078D7")
-                fill_color = QColor("#0078D7")
+                # Default: Standard Blue -> Theme Focus (Azure)
+                base_color = QColor(COLORS['focus'])
+                fill_color = QColor(COLORS['focus'])
                 fill_color.setAlpha(30)
 
                 # Draw Fill
@@ -669,10 +670,10 @@ class RichTextDelegate(QStyledItemDelegate):
                 
                 # Check bounds
                 
-                painter.save()
                 painter.translate(0, 0) # Reset just in case
                 
-                painter.fillRect(h_x, h_y, h_size, h_size, QBrush(QColor("#217346")))
+                # Scribe Emerald for the Handle (Creation/Extension)
+                painter.fillRect(h_x, h_y, h_size, h_size, QBrush(QColor(COLORS['scribe'])))
                 painter.setPen(QColor("white"))
                 painter.drawRect(h_x, h_y, h_size, h_size)
                 
@@ -681,7 +682,7 @@ class RichTextDelegate(QStyledItemDelegate):
             painter.restore()
 
         except Exception as e:
-            print(f"Paint Error at {index.row()},{index.column()}: {e}")
+            # print(f"Paint Error at {index.row()},{index.column()}: {e}")
             painter.save()
             painter.drawText(option.rect, Qt.AlignmentFlag.AlignCenter, "ERR")
             painter.restore()

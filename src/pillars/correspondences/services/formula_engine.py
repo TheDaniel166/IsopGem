@@ -6,7 +6,7 @@ import re
 import math
 from typing import Any, Dict, Callable, NamedTuple, List, Optional, Set, Tuple
 from enum import Enum, auto
-# from pillars.gematria.services.calculation_service import CalculationService # Removed unused dependency
+# from shared.services.gematria.service import GematriaService # TODO: Integrate fully in Phase 3
 from shared.services.gematria.base_calculator import GematriaCalculator
 from shared.services.gematria import (
     HebrewGematriaCalculator, HebrewSofitCalculator, HebrewLetterValueCalculator,
@@ -566,15 +566,8 @@ class FormulaEngine:
     ArgumentMetadata("cipher", "Cipher Name", "gematria_cipher", True)
 ])
 def func_gematria(engine: FormulaEngine, text: Any, cipher: str = "English (TQ)"):
-    # TODO: Align GEMATRIA(ABC) with SUM expectation (currently returns 27, Seal expects 6)
     """
-    Func gematria logic.
-    
-    Args:
-        engine: Description of engine.
-        text: Description of text.
-        cipher: Description of cipher.
-    
+    Calculates the Gematria value of the text.
     """
     if not text: return 0
     text_str = str(text)
@@ -582,6 +575,16 @@ def func_gematria(engine: FormulaEngine, text: Any, cipher: str = "English (TQ)"
     calculator = _CIPHER_REGISTRY.get(cipher_key)
     if not calculator: return f"#CIPHER? ({cipher})"
     return calculator.calculate(text_str)
+
+@FormulaRegistry.register("ASTRO", "Astrological Data (Stub).", "ASTRO(body, type)", "Esoteric", [
+    ArgumentMetadata("body", "Body (e.g. Sun)", "str"),
+    ArgumentMetadata("type", "Type (Sign, Deg)", "str")
+])
+def func_astro(engine: FormulaEngine, body: str, type_: str):
+    """
+    Retrieves astrological data (Placeholder for Phase 3).
+    """
+    return f"[{body} in {type_}]"
 
 @FormulaRegistry.register("SUM", "Adds arguments.", "SUM(val1, ...)", "Math", [
     ArgumentMetadata("number1", "Value", "number"),
