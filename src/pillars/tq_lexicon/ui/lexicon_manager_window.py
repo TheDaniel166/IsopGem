@@ -59,11 +59,12 @@ class LexiconManagerWindow(QMainWindow):
     def __init__(self, window_manager=None, parent=None, **kwargs):
         super().__init__(parent)
         self.window_manager = window_manager
-        self.setWindowTitle("Holy Key Lexicon")
+        self.setWindowTitle("Holy Key Lexicon Manager [DEPRECATED - Use Unified Window]")
         self.resize(1000, 700)
         
         # Initialize Service
         self.service = HolyKeyService()
+        self._enrich_worker = EnrichmentService(self.service) # Assuming NonelyKeyService was a typo and meant EnrichmentService
         self.worker = None
         
         # Main Layout

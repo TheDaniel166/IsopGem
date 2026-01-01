@@ -61,6 +61,43 @@ class ParseAndIndexWorker(QThread):
         self.progress.emit(current, total, message)
 
 
+class EnrichmentWorker(QThread):
+    """Worker thread for running the batch enrichment process."""
+    progress = pyqtSignal(int, int, str)
+    finished = pyqtSignal()
+    
+    def __init__(self, service: HolyKeyService):
+        super().__init__()
+        self.service = service
+        self.enricher = EnrichmentService(service)
+        self._is_running = True
+        
+    def run(self):
+        self.enricher.enrich_batch(self._emit_progress)
+        self.finished.emit()
+        
+    def _emit_progress(self, current, total, status):
+        if self._is_running:
+            self.progress.emit(current, total, status)
+            
+    def stop(self):
+        self._is_running = False
+
+class SuggestionWorker(QThread):
+    """Worker for fetching suggestions for a single word."""
+    finished = pyqtSignal(list)
+    
+    def __init__(self, service: HolyKeyService, word: str):
+        super().__init__()
+        self.service = service
+        self.word = word
+        self.enricher = EnrichmentService(service)
+        
+    def run(self):
+        suggestions = self.enricher.get_suggestions(self.word)
+        self.finished.emit(suggestions)
+
+
 class UnifiedLexiconWindow(QMainWindow):
     """
     Unified window for the complete TQ Lexicon workflow.
@@ -218,7 +255,14 @@ class UnifiedLexiconWindow(QMainWindow):
         btn_refresh = QPushButton("↻ Refresh")
         btn_refresh.clicked.connect(self._load_documents)
         btn_row.addWidget(btn_refresh)
-
+        
+        # Advanced (Teacher) Button - Ported from HolyBookConcordanceWindow
+        self.btn_teacher = QPushButton("⚙️ Teacher")
+        self.btn_teacher.setToolTip("Open detailed verse editor for manual curation")
+        self.btn_teacher.clicked.connect(self._open_teacher_window)
+        self.btn_teacher.setEnabled(False) 
+        btn_row.addWidget(self.btn_teacher)
+        
         right_layout.addLayout(btn_row)
 
         layout.addWidget(right_panel)
@@ -452,17 +496,25 @@ class UnifiedLexiconWindow(QMainWindow):
     # =========================================================================
 
     def _load_documents(self):
-        """Load documents for the import tab."""
+        """Load documents for the import tab (filtered to Holy Books only)."""
         try:
             from shared.database import get_db_session
             from shared.repositories.document_manager.document_repository import DocumentRepository
 
+            # Sacred collection markers
+            SACRED_MARKERS = ["holy", "class a", "class f"]
+
             with get_db_session() as db:
                 doc_repo = DocumentRepository(db)
-                documents = doc_repo.get_all()
+                all_documents = doc_repo.get_all()
 
             self._documents = []
-            for doc in documents:
+            for doc in all_documents:
+                # Filter to only sacred texts
+                collection_lower = (doc.collection or "").lower()
+                if not any(marker in collection_lower for marker in SACRED_MARKERS):
+                    continue
+
                 status = self.indexer.get_document_status(doc.id)
                 self._documents.append({
                     'id': doc.id,
@@ -475,6 +527,12 @@ class UnifiedLexiconWindow(QMainWindow):
 
             self._populate_doc_table()
             self._update_stats()
+
+            # Show helpful message if no sacred texts found
+            if not self._documents:
+                self.statusBar().showMessage(
+                    "No Holy Books found. Add documents to 'Holy', 'Class A', or 'Class F' collections."
+                )
 
         except Exception as e:
             logger.exception("Failed to load documents")
@@ -607,10 +665,10 @@ class UnifiedLexiconWindow(QMainWindow):
         lines = [
             f"✓ Completed: '{result.document_title}'",
             "=" * 40,
-            f"\n📝 PARSING:",
+            "\n📝 PARSING:",
             f"  Verses: {len(result.verses)}",
             f"  Source: {result.source}",
-            f"\n📚 INDEXING:",
+            "\n📚 INDEXING:",
             f"  Words: {result.total_words}",
             f"  New keys: {result.new_keys_added}",
             f"  Occurrences: {result.occurrences_added}",
@@ -798,6 +856,244 @@ class UnifiedLexiconWindow(QMainWindow):
             self.list_occurrences.addItem(item)
 
     # =========================================================================
+    # TEACHER / ADVANCED WORKFLOW
+    # =========================================================================
+
+    def _open_teacher_window(self):
+        """Open the detailed verse teacher window for advanced curation."""
+        if not self._active_document:
+            return
+            
+        try:
+            from pillars.gematria.ui.holy_book_teacher_window import HolyBookTeacherWindow
+            
+            doc = self._active_document
+            self.teacher_window = HolyBookTeacherWindow(
+                document_id=doc['id'],
+                document_title=doc['title'],
+                allow_inline=self.chk_inline.isChecked(),
+                parent=self,
+            )
+            self.teacher_window.verses_saved.connect(self._load_documents)
+            self.teacher_window.show()
+        except Exception as e:
+            logger.exception("Failed to open Teacher window")
+            QMessageBox.critical(self, "Error", f"Failed to open Teacher window:\n{e}")
+
+    # =========================================================================
+    # DETAILED VIEW & ENRICHMENT
+    # =========================================================================
+
+    def _on_mk_double_click(self, item: QTableWidgetItem):
+        """Handle double-click in Master Key table."""
+        row = item.row()
+        self._open_key_details(row)
+
+    def _open_key_details(self, row):
+        """Open detailed view for a Master Key with enrichment & concordance."""
+        # Get data from table
+        id_item = self.tbl_master_key.item(row, 0)
+        word_item = self.tbl_master_key.item(row, 1)
+        tq_item = self.tbl_master_key.item(row, 2)
+        
+        if not id_item or not word_item:
+            return
+            
+        key_id = int(id_item.text())
+        word = word_item.text()
+        tq_value = tq_item.text() if tq_item else "?"
+        
+        from PyQt6.QtWidgets import QDialog, QFormLayout, QTextEdit, QComboBox, QGroupBox
+        
+        dlg = QDialog(self)
+        dlg.setWindowTitle(f"Key Details: {word} (TQ: {tq_value})")
+        dlg.resize(700, 700)
+        layout = QVBoxLayout(dlg)
+        
+        # Header
+        header_widget = QWidget()
+        header_layout = QHBoxLayout(header_widget)
+        header_layout.setContentsMargins(0, 0, 0, 0)
+        
+        lbl_word = QLabel(f"<h2>{word}</h2>")
+        lbl_word.setStyleSheet("color: #7c3aed;")
+        header_layout.addWidget(lbl_word)
+        
+        lbl_tq = QLabel(f"TQ Value: <b>{tq_value}</b>")
+        lbl_tq.setStyleSheet("font-size: 14px; padding: 5px 10px; background: #ede9fe; border-radius: 4px;")
+        header_layout.addWidget(lbl_tq)
+        header_layout.addStretch()
+        layout.addWidget(header_widget)
+        
+        # Tabs
+        detail_tabs = QTabWidget()
+        layout.addWidget(detail_tabs)
+        
+        # === Tab 1: Definitions ===
+        def_tab = QWidget()
+        def_layout = QVBoxLayout(def_tab)
+        
+        # List of existing definitions
+        def_list = QListWidget()
+        def_list.setAlternatingRowColors(True)
+        definitions = self.service.db.get_definitions(key_id)
+        
+        for d in definitions:
+            src_text = f" ({d.source})" if d.source else ""
+            item = QListWidgetItem(f"[{d.type}] {d.content}{src_text}")
+            item.setData(Qt.ItemDataRole.UserRole, d)
+            def_list.addItem(item)
+            
+        if not definitions:
+            def_list.addItem(QListWidgetItem("No definitions recorded. Use 'Fetch Suggestions' to add."))
+            
+        def_layout.addWidget(def_list)
+        
+        # Add Definition Section
+        group_add = QGroupBox("Add New Definition")
+        def_layout.addWidget(group_add)
+        add_layout = QVBoxLayout(group_add)
+        
+        # Auto-fetch button (no dropdown)
+        box_auto = QHBoxLayout()
+        btn_fetch = QPushButton("✨ Fetch & Add All")
+        btn_fetch.setIcon(qta.icon("fa5s.magic", color="#8b5cf6"))
+        btn_fetch.setStyleSheet("background-color: #8b5cf6; color: white; font-weight: bold; padding: 8px 16px;")
+        box_auto.addWidget(btn_fetch)
+        box_auto.addStretch()
+        add_layout.addLayout(box_auto)
+        
+        # Status label for fetch results
+        lbl_fetch_status = QLabel("")
+        lbl_fetch_status.setStyleSheet("color: #64748b; font-style: italic;")
+        add_layout.addWidget(lbl_fetch_status)
+        
+        # Separator
+        add_layout.addWidget(QLabel("— or add manually —"))
+        
+        # Manual Form
+        form_layout = QFormLayout()
+        cmb_type = QComboBox()
+        cmb_type.addItems(['Etymology', 'Standard', 'Alchemical', 'Botanical', 'Occult', 'Divinatory', 'Mythological'])
+        
+        txt_content = QTextEdit()
+        txt_content.setMaximumHeight(80)
+        
+        txt_source = QLineEdit()
+        txt_source.setPlaceholderText("Citation / Authority")
+        
+        form_layout.addRow("Type:", cmb_type)
+        form_layout.addRow("Meaning:", txt_content)
+        form_layout.addRow("Citation:", txt_source)
+        add_layout.addLayout(form_layout)
+        
+        btn_add = QPushButton("Add Definition")
+        btn_add.setStyleSheet("background-color: #7c3aed; color: white; font-weight: bold;")
+        add_layout.addWidget(btn_add)
+        
+        detail_tabs.addTab(def_tab, f"Definitions ({len(definitions)})")
+        
+        # Logic for auto-fetch and add
+        def fetch_and_add_all():
+            btn_fetch.setText("Fetching...")
+            btn_fetch.setEnabled(False)
+            lbl_fetch_status.setText("Querying sources...")
+            self.sugg_worker = SuggestionWorker(self.service, word)
+            self.sugg_worker.finished.connect(on_auto_add_complete)
+            self.sugg_worker.start()
+            
+        def on_auto_add_complete(suggestions):
+            btn_fetch.setText("✨ Fetch & Add All")
+            btn_fetch.setEnabled(True)
+            
+            if not suggestions:
+                lbl_fetch_status.setText("No definitions found from any source.")
+                return
+                
+            # Track what types we add to avoid duplicates
+            added_types = set()
+            added_count = 0
+            
+            # Principle of Apocalypsis: ALL revelation, no veils
+            for s in suggestions:
+                self.service.db.add_definition(key_id, s.type, s.content, s.source)
+                added_count += 1
+            
+            # Refresh the list
+            def_list.clear()
+            new_defs = self.service.db.get_definitions(key_id)
+            for d in new_defs:
+                src_text = f" ({d.source})" if d.source else ""
+                item = QListWidgetItem(f"[{d.type}] {d.content}{src_text}")
+                item.setData(Qt.ItemDataRole.UserRole, d)
+                def_list.addItem(item)
+                
+            detail_tabs.setTabText(0, f"Definitions ({len(new_defs)})")
+            lbl_fetch_status.setText(f"Added {added_count} definitions from {len(added_types)} categories.")
+            
+            # Emit signal
+            try:
+                from shared.signals.navigation_bus import navigation_bus
+                navigation_bus.lexicon_updated.emit(key_id, word)
+            except Exception as e:
+                logger.error(f"Signal emit failed: {e}")
+                
+            QMessageBox.information(dlg, "Enriched", f"Added {added_count} definitions.")
+
+        def add_definition():
+            """Manual definition add."""
+            content = txt_content.toPlainText().strip()
+            dtype = cmb_type.currentText()
+            source = txt_source.text().strip()
+            
+            if not content:
+                QMessageBox.warning(dlg, "Missing Content", "Please enter a meaning.")
+                return
+                
+            self.service.db.add_definition(key_id, dtype, content, source)
+            
+            # Refresh list
+            def_list.clear()
+            new_defs = self.service.db.get_definitions(key_id)
+            for d in new_defs:
+                src_text = f" ({d.source})" if d.source else ""
+                item = QListWidgetItem(f"[{d.type}] {d.content}{src_text}")
+                item.setData(Qt.ItemDataRole.UserRole, d)
+                def_list.addItem(item)
+            
+            detail_tabs.setTabText(0, f"Definitions ({len(new_defs)})")
+            txt_content.clear()
+            
+            # Emit Signal
+            try:
+                from shared.signals.navigation_bus import navigation_bus
+                navigation_bus.lexicon_updated.emit(key_id, word)
+            except Exception as e:
+                logger.error(f"Signal emit failed: {e}")
+                
+            QMessageBox.information(dlg, "Added", "Definition added successfully.")
+
+        btn_fetch.clicked.connect(fetch_and_add_all)
+        btn_add.clicked.connect(add_definition)
+        
+        # === Tab 2: Concordance ===
+        conc_tab = QWidget()
+        conc_layout = QVBoxLayout(conc_tab)
+        
+        occ_list = QListWidget()
+        occ_list.setAlternatingRowColors(True)
+        occurrences = self.service.db.get_word_occurrences(key_id)
+        
+        for occ in occurrences:
+             text = f"📖 {occ.document_title} — Verse {occ.verse_number}\n   \"{occ.context_snippet}\""
+             occ_list.addItem(text)
+             
+        conc_layout.addWidget(occ_list)
+        detail_tabs.addTab(conc_tab, f"Occurrences ({len(occurrences)})")
+        
+        dlg.exec()
+
+    # =========================================================================
     # MASTER KEY (Tab 4)
     # =========================================================================
 
@@ -832,25 +1128,32 @@ class UnifiedLexiconWindow(QMainWindow):
             self._mk_page += 1
             self._search_master_key(self.txt_mk_search.text())
 
-    def _on_mk_double_click(self, item: QTableWidgetItem):
-        """Show word details on double click."""
-        row = item.row()
-        word = self.tbl_master_key.item(row, 1).text()
-        key_id = int(self.tbl_master_key.item(row, 0).text())
-        tq_value = self.tbl_master_key.item(row, 2).text()
 
-        definitions = self.service.db.get_definitions(key_id)
-        def_text = "\n".join([f"• [{d.type}] {d.content}" for d in definitions]) if definitions else "No definitions."
-
-        QMessageBox.information(
-            self, f"{word} (TQ: {tq_value})",
-            f"ID: {key_id}\n\nDefinitions:\n{def_text}"
-        )
 
     def _start_enrichment(self):
         """Start auto-enrichment of definitions."""
-        QMessageBox.information(self, "Enrichment", "Auto-enrichment will run in background.")
-        # TODO: Implement enrichment worker
+        targets = self.service.get_undefined_keys()
+        if not targets:
+            QMessageBox.information(self, "Enrichment", "All keys already have definitions!")
+            return
+            
+        count = len(targets)
+        reply = QMessageBox.question(
+            self, "Confirm Enrichment",
+            f"Found {count} keys without definitions.\nFetch meanings automatically?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+        
+        if reply == QMessageBox.StandardButton.Yes:
+            self._enrich_worker = EnrichmentWorker(self.service)
+            self._enrich_worker.progress.connect(self._on_enrich_progress)
+            self._enrich_worker.finished.connect(self._on_enrich_finished)
+            
+            self.progress_bar.setVisible(True)
+            self.progress_bar.setValue(0)
+            self.progress_bar.setMaximum(count)
+            self.statusBar().showMessage(f"Enrichment started ({count} keys)...")
+            self._enrich_worker.start()
 
     def _reset_database(self):
         """Reset the entire database."""
@@ -865,6 +1168,17 @@ class UnifiedLexiconWindow(QMainWindow):
             self._load_concordance()
             self._load_documents()
             self.statusBar().showMessage("Database reset.")
+
+    def _on_enrich_progress(self, current: int, total: int, status: str):
+        """Handle enrichment progress updates."""
+        self.progress_bar.setValue(current)
+        self.statusBar().showMessage(status)
+
+    def _on_enrich_finished(self):
+        """Handle enrichment completion."""
+        self.progress_bar.setVisible(False)
+        self.statusBar().showMessage("Enrichment complete!")
+        self._search_master_key("")  # Refresh the list
 
     # =========================================================================
     # UTILITIES

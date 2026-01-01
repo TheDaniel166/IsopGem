@@ -62,6 +62,8 @@ class ParseAndIndexWorker(QThread):
             from pillars.tq_lexicon.services.concordance_indexer_service import (
                 ConcordanceIndexerService,
             )
+            from pillars.tq_lexicon.services.holy_key_service import HolyKeyService
+            from shared.services.document_manager.document_service import DocumentService
             
             indexer = ConcordanceIndexerService()
             result = indexer.parse_and_index(
@@ -97,9 +99,14 @@ class HolyBookConcordanceWindow(QMainWindow):
     
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Holy Book Concordance")
-        self.setMinimumSize(1100, 700)
+        self.setWindowTitle("Holy Book Concordance [DEPRECATED - Use Unified Window]")
+        self.resize(1100, 750)
         
+        from pillars.tq_lexicon.services.holy_key_service import HolyKeyService
+        from shared.services.document_manager.document_service import DocumentService
+
+        self.service = HolyKeyService()
+        self.document_service = DocumentService()
         self._documents: List[Dict[str, Any]] = []
         self._current_worker: Optional[ParseAndIndexWorker] = None
         
@@ -460,7 +467,7 @@ class HolyBookConcordanceWindow(QMainWindow):
         # Auto-check reindex if already indexed
         self.reindex_check.setChecked(doc['is_indexed'])
         
-    def _on_doc_double_clicked(self, row: int, col: int):
+    def _on_doc_double_clicked(self, row: int, _col: int):
         """Handle double-click on document row."""
         self._on_parse_and_index()
         

@@ -124,3 +124,42 @@ class HolyKeyService:
             "total_definitions": total_defs,
             "total_ignored": total_ignored
         }
+
+    def process_batch(self, words: List[str], source: str = "Magus") -> Tuple[int, int]:
+        """
+        Process a batch of words - add to Master Key.
+        
+        Args:
+            words: List of words to add
+            source: Source attribution for the batch
+            
+        Returns:
+            Tuple of (added_count, already_existed_count)
+        """
+        added = 0
+        already_existed = 0
+        
+        for word in words:
+            w = word.lower()
+            existing_id = self.db.get_id_by_word(w)
+            
+            if existing_id is not None:
+                already_existed += 1
+                continue
+            
+            # Calculate TQ and add
+            tq_value = self.calculator.calculate(w)
+            self.db.add_word(w, tq_value)
+            added += 1
+        
+        return added, already_existed
+
+    def bulk_ignore(self, words: List[str]):
+        """
+        Add multiple words to the ignore list.
+        
+        Args:
+            words: List of words to ignore
+        """
+        for word in words:
+            self.db.ignore_word(word.lower())

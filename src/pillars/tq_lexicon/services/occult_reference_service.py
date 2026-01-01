@@ -69,7 +69,7 @@ class OccultReferenceService:
         self._load_tarot()
         
         self._loaded = True
-        logger.info(f"Loaded {len(self._index)} occult reference terms")
+        logger.debug(f"Loaded {len(self._index)} occult reference terms")
         
     def _load_json(self, filename: str) -> List[Dict]:
         """Load a JSON file from the data directory."""

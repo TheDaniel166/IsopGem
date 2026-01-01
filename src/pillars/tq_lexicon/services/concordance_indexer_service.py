@@ -174,14 +174,20 @@ class ConcordanceIndexerService:
                 except Exception as e:
                     result.errors.append(f"Failed to save verses: {e}")
         
-        # Step 3: Index to concordance
+        # Step 3: Index to concordance (exclude ignored verses)
         if progress_callback:
             progress_callback(20, 100, "Indexing words...")
+        
+        # Filter out ignored verses before indexing
+        active_verses = [
+            v for v in result.verses 
+            if v.get('status', 'auto') != 'ignored'
+        ]
             
         indexing_result = self.index_document(
             document_id=document_id,
             document_title=result.document_title,
-            verses=result.verses,
+            verses=active_verses,
             progress_callback=lambda c, t, m: progress_callback(20 + int(c/t * 80), 100, m) if progress_callback else None,
             reindex=reindex
         )
@@ -506,10 +512,16 @@ class ConcordanceIndexerService:
                     errors=[f"Document {document_id} not found"]
                 )
             
-            # Get curated verses
+            # Get curated verses (excluding ignored ones)
             verse_service = VerseTeacherService(db)
             result = verse_service.get_or_parse_verses(document_id)
-            verses = result.get('verses', [])
+            all_verses = result.get('verses', [])
+            
+            # Filter out ignored verses - they should not be indexed
+            verses = [
+                v for v in all_verses 
+                if v.get('status', 'auto') != 'ignored'
+            ]
             
             if not verses:
                 return IndexingResult(

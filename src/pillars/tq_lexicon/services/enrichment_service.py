@@ -11,15 +11,16 @@ except ImportError:
     ETY_AVAILABLE = False
 
 from .occult_reference_service import OccultReferenceService
+from .theosophical_glossary_service import TheosophicalGlossaryService
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class Suggestion:
-    type: str       # 'Standard', 'Etymology', 'Occult', 'Botanical', 'Crystal', 'Rune', 'Tarot'
+    type: str       # 'Standard', 'Etymology', 'Occult', 'Botanical', 'Theosophical', etc.
     content: str    # The definition text
-    source: str     # 'FreeDict API', 'ety-python', 'OpenOccult', etc.
+    source: str     # 'FreeDict API', 'ety-python', 'OpenOccult', 'Theosophical Glossary', etc.
     part_of_speech: Optional[str] = None
     category: Optional[str] = None  # For occult: 'crystal', 'botanical', 'rune', 'tarot'
 
@@ -29,9 +30,11 @@ class EnrichmentService:
     Service for enriching the Holy Key Lexicon with external data.
     
     Sources (in order of query):
-    1. OpenOccult - Local esoteric reference data (crystals, herbs, runes, tarot)
-    2. ety library - Etymology/word origins
-    3. FreeDict API - Standard English definitions
+    1. Theosophical Glossary - G. de Purucker esoteric definitions
+    2. OpenOccult - Local esoteric reference data (crystals, herbs, runes, tarot)
+    3. Wiktionary - Etymology and definitions
+    4. ety library - Etymology/word origins (fallback)
+    5. FreeDict API - Standard English definitions
     """
     
     # Map OpenOccult categories to definition types
@@ -45,6 +48,7 @@ class EnrichmentService:
     def __init__(self, holy_key_service=None):
         self.hk_service = holy_key_service
         self._occult_service = None
+        self._theosophical_service = None
         
     @property
     def occult_service(self) -> OccultReferenceService:
@@ -53,19 +57,39 @@ class EnrichmentService:
             self._occult_service = OccultReferenceService()
         return self._occult_service
 
+    @property
+    def theosophical_service(self) -> TheosophicalGlossaryService:
+        """Lazy-load the Theosophical glossary service."""
+        if self._theosophical_service is None:
+            self._theosophical_service = TheosophicalGlossaryService()
+        return self._theosophical_service
+
     def get_suggestions(self, word: str) -> List[Suggestion]:
         """
-        Fetch all available suggestions (etymology + definitions + occult) for a word.
+        Fetch all available suggestions for a word.
         Returns a list of Suggestion objects for the UI to display.
         
-        Query order:
-        1. OpenOccult (local, fast) - esoteric meanings
-        2. Etymology (local) - word origins
-        3. FreeDict API (online) - standard definitions
+        Query order (Principle of Apocalypsis - complete revelation):
+        1. Theosophical Glossary (local) - G. de Purucker esoteric definitions
+        2. OpenOccult (local) - crystals, herbs, runes, tarot
+        3. Wiktionary (online) - etymology and definitions
+        4. ety-python (local fallback) - etymology
+        5. FreeDict API (online) - standard definitions
         """
         suggestions = []
         
-        # 1. OpenOccult (Local esoteric data - query first as it's fast and specialized)
+        # 1. Theosophical Glossary (Local esoteric - G. de Purucker)
+        theo_entries = self.theosophical_service.lookup(word)
+        for entry in theo_entries:
+            # Format with language if present
+            lang_note = f" ({entry.language})" if entry.language else ""
+            suggestions.append(Suggestion(
+                type="Theosophical",
+                content=f"{entry.term}{lang_note}: {entry.definition}",
+                source="Theosophical Glossary"
+            ))
+        
+        # 2. OpenOccult (Local esoteric data - crystals, herbs, runes, tarot)
         occult_refs = self.occult_service.lookup(word)
         for ref in occult_refs:
             def_type = self.CATEGORY_TYPE_MAP.get(ref.category, 'Occult')
@@ -103,19 +127,64 @@ class EnrichmentService:
                 category=ref.category
             ))
         
-        # 2. Etymology (Local)
-        etyms = self.get_etymology(word)
-        if etyms:
-            content = "Recursive Origins: " + "; ".join(etyms[:5])
-            suggestions.append(Suggestion(
-                type="Etymology",
-                content=content,
-                source="ety-python"
-            ))
+        # 2. Etymology (Wiktionary first, ety-python fallback)
+        wiki_etyms = self._fetch_wiktionary_etymology(word)
+        if wiki_etyms:
+            suggestions.extend(wiki_etyms)
+        else:
+            # Fallback to local ety library
+            etyms = self.get_etymology(word)
+            if etyms:
+                content = "Origins: " + "; ".join(etyms[:5])
+                suggestions.append(Suggestion(
+                    type="Etymology",
+                    content=content,
+                    source="ety-python"
+                ))
             
-        # 3. Standard Definitions (API)
+        # 3. Standard Definitions (FreeDict API)
         api_suggestions = self._fetch_freedict(word)
         suggestions.extend(api_suggestions)
+            
+        return suggestions
+
+    def _fetch_wiktionary_etymology(self, word: str) -> List[Suggestion]:
+        """Fetch etymology from Wiktionary REST API."""
+        suggestions = []
+        url = f"https://en.wiktionary.org/api/rest_v1/page/definition/{word}"
+        
+        try:
+            response = requests.get(url, timeout=5, headers={
+                'User-Agent': 'IsopGem/1.0 (Esoteric Research Tool)'
+            })
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Parse English entries
+                for lang_entry in data.get('en', []):
+                    pos = lang_entry.get('partOfSpeech', '')
+                    
+                    for definition in lang_entry.get('definitions', []):
+                        def_text = definition.get('definition', '')
+                        
+                        # Clean HTML tags
+                        import re
+                        def_text = re.sub(r'<[^>]+>', '', def_text)
+                        
+                        if def_text:
+                            suggestions.append(Suggestion(
+                                type="Standard",
+                                content=f"({pos}) {def_text}",
+                                source="Wiktionary",
+                                part_of_speech=pos
+                            ))
+                            
+                        # Check for etymology in definition context
+                        # (Wiktionary sometimes embeds etymology info)
+                        
+        except Exception as e:
+            logger.debug(f"Wiktionary API error for '{word}': {e}")
             
         return suggestions
     
@@ -189,7 +258,8 @@ class EnrichmentService:
 
     def enrich_batch(self, progress_callback: Callable[[int, int, str], None] = None):
         """
-        Enrich all undefined keys.
+        Enrich all undefined keys (skeletons → flesh).
+        Applies the Principle of Apocalypsis: ALL definitions, no limits.
         progress_callback: (current, total, status_message)
         """
         if not self.hk_service:
@@ -204,6 +274,7 @@ class EnrichmentService:
                 progress_callback(0, 0, "No keys require enrichment.")
             return
 
+        total_added = 0
         for i, (key_id, word) in enumerate(targets):
             if progress_callback:
                 progress_callback(i + 1, total, f"Enriching: {word}")
@@ -212,27 +283,13 @@ class EnrichmentService:
             time.sleep(0.3)
             suggestions = self.get_suggestions(word)
             
-            # Track what types we've added to avoid duplicates
-            added_types = set()
-            
+            # Principle of Apocalypsis: ALL revelation, no veils
             for s in suggestions:
-                # Add Etymology (one per word)
-                if s.type == "Etymology" and "Etymology" not in added_types:
-                    self.hk_service.db.add_definition(key_id, s.type, s.content, source=s.source)
-                    added_types.add("Etymology")
-                    
-                # Add Occult/Esoteric types (prioritize these)
-                elif s.type in ('Occult', 'Alchemical', 'Botanical', 'Divinatory'):
-                    if s.type not in added_types:
-                        self.hk_service.db.add_definition(key_id, s.type, s.content, source=s.source)
-                        added_types.add(s.type)
-                        
-                # Add Standard definitions (limit to 2)
-                elif s.type == "Standard":
-                    current_defs = self.hk_service.db.get_definitions(key_id)
-                    standard_count = len([d for d in current_defs if d.type == "Standard"])
-                    if standard_count < 2:
-                        self.hk_service.db.add_definition(key_id, s.type, s.content, source=s.source)
+                self.hk_service.db.add_definition(key_id, s.type, s.content, source=s.source)
+                total_added += 1
+        
+        if progress_callback:
+            progress_callback(total, total, f"Complete. Added {total_added} definitions to {total} words.")
     
     def get_source_stats(self) -> dict:
         """Get statistics about available enrichment sources."""
