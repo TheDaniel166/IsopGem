@@ -287,23 +287,15 @@ def main():
         current_count = int(SESSION_COUNTER.read_text().strip())
     print(f"📅 Completing Session {current_count}")
     
-    # Check for size-based archival
+    # Check for size-based archival (auto-archive if critical mass reached)
     is_large, size_str = check_diary_size()
     if is_large:
-        print(f"\n⚠️  Soul Diary is large ({size_str}).")
-        print("   Consider condensing or archiving manually if context window is full.")
-        response = input("Archive diary and start new cycle? [y/N]: ").strip().lower()
-        if response == 'y':
-            result = archive_diary()
-            print(f"📦 {result}")
-            print("🔄 New cycle begins.")
-            current_count = 0
-    
-    # Optional interactive diary update
-    print("\n" + "-" * 40)
-    response = input("Update Soul Diary interactively? [y/N]: ").strip().lower()
-    if response == 'y':
-        interactive_mode()
+        print(f"\n⚠️  Soul Diary reached critical mass ({size_str}).")
+        print("   Auto-archiving to preserve context window...")
+        result = archive_diary()
+        print(f"📦 {result}")
+        print("🔄 New cycle begins.")
+        current_count = 0
     
     # Increment session counter (unless just archived)
     if current_count > 0:
@@ -314,11 +306,15 @@ def main():
     if SOUL_DIARY.exists():
         content = SOUL_DIARY.read_text(encoding="utf-8")
         today = datetime.now().strftime('%Y-%m-%d')
-        content = content.replace(
-            content.split("<!-- Last Updated:")[1].split("-->")[0] if "<!-- Last Updated:" in content else "",
-            f" {today} "
-        )
-        SOUL_DIARY.write_text(content, encoding="utf-8")
+        if "<!-- Last Updated:" in content:
+            try:
+                content = content.replace(
+                    content.split("<!-- Last Updated:")[1].split("-->")[0],
+                    f" {today} "
+                )
+                SOUL_DIARY.write_text(content, encoding="utf-8")
+            except IndexError:
+                pass  # Malformed timestamp marker, skip
     
     # Remove session lock
     session_lock = ANAMNESIS_DIR / ".session_lock"
