@@ -611,7 +611,7 @@ class GematriaCalculatorWindow(QMainWindow):
     def _send_to_quadset(self, value: int):
         """Send current results to Quadset Analysis."""
         navigation_bus.request_window.emit(
-            "tq_quadset_analysis",
+            "quadset_analysis",
             {
                 "window_manager": self.window_manager,
                 "initial_value": value

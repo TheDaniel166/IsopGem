@@ -60,8 +60,89 @@ class SafeTextEdit(QTextEdit):
             Result of __init__ operation.
         """
         super().__init__(parent)
-        self._show_page_breaks = True
+        self._show_page_breaks = False
         self._page_settings = DEFAULT_PAGE_SETTINGS
+        
+        # Pagination State
+        self._page_height = 1056 # Matches Substrate
+        self._page_gap = 20 # Matches Substrate
+        self._is_paginating = False
+        self.textChanged.connect(self._check_pagination)
+
+    def _check_pagination(self):
+        """
+        Atomic Block Pagination: Ensures blocks don't straddle page boundaries.
+        
+        Algorithm:
+        1. Iterate through all text blocks in the document
+        2. For each block, check if it would cross a page boundary
+        3. If so, add top margin to push it to the next page
+        4. Blocks larger than a page are allowed to overflow
+        """
+        if self._is_paginating:
+            return
+            
+        self._is_paginating = True
+        try:
+            doc = self.document()
+            layout = doc.documentLayout()
+            cycle = self._page_height + self._page_gap
+            
+            # Iterate all blocks
+            block = doc.begin()
+            while block.isValid():
+                rect = layout.blockBoundingRect(block)
+                
+                # Skip empty or invisible blocks
+                if rect.height() < 1:
+                    block = block.next()
+                    continue
+                
+                # Get block geometry
+                block_top = rect.y()
+                block_bottom = rect.bottom()
+                block_height = rect.height()
+                
+                # Determine which page this block starts on
+                page_num = int(block_top / cycle)
+                
+                # Position within the current cycle (0 = start of page)
+                local_top = block_top - (page_num * cycle)
+                local_bottom = block_bottom - (page_num * cycle)
+                
+                # Check if block would cross into the gap or next page
+                needs_push = False
+                
+                # Case 1: Block starts in the gap
+                if local_top >= self._page_height:
+                    needs_push = True
+                    
+                # Case 2: Block starts on page but extends into gap
+                elif local_bottom > self._page_height and block_height < self._page_height:
+                    # Only push if block is smaller than a page
+                    # (Large blocks like images are allowed to overflow)
+                    needs_push = True
+                
+                if needs_push:
+                    # Calculate how much to push
+                    # We want to move the block to the start of the next page
+                    next_page_start = (page_num + 1) * cycle
+                    margin_needed = next_page_start - block_top
+                    
+                    # Apply margin to this block
+                    fmt = block.blockFormat()
+                    current_margin = fmt.topMargin()
+                    
+                    # Only add margin if not already set (avoid duplicates)
+                    if abs(current_margin - margin_needed) > 1:
+                        fmt.setTopMargin(margin_needed)
+                        cursor = QTextCursor(block)
+                        cursor.setBlockFormat(fmt)
+                
+                block = block.next()
+                
+        finally:
+            self._is_paginating = False
     
     @property
     def page_height(self) -> int:
@@ -265,14 +346,18 @@ class RichTextEditor(QWidget):
             "Code": {"size": 10, "weight": QFont.Weight.Normal, "family": "Courier New"},
         }
         
-        # Features
-        self.search_feature = None # Lazy or init later? better init in setup
+        # Initialize self.editor to None (will be set by _on_active_page_changed)
+        self.editor = None
         
+        # Initialize features FIRST (sets attributes to None)
+        self._init_features()
+        
+        # Then setup UI (which may call _ensure_features_initialized)
         self._setup_ui(placeholder_text, show_ui)
-        self._init_features() 
         
         # Force LTR by default to prevent auto-detection issues
-        self.editor.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
+        if self.editor:
+            self.editor.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
         
     def _setup_ui(self, placeholder_text: str, show_ui: bool) -> None:
         """Initialize the UI components."""
@@ -280,72 +365,42 @@ class RichTextEditor(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         
-        # --- Ribbon ---
+        # --- Ribbon (if UI is shown) ---
         if show_ui:
             self.ribbon = RibbonWidget()
             layout.addWidget(self.ribbon)
         
-        # --- Editor ---
-        self.editor = SafeTextEdit()
+        # --- Text Editor ---
+        self.editor = SafeTextEdit(self)
         self.editor.setPlaceholderText(placeholder_text)
-        self.editor.setStyleSheet("""
-            QTextEdit {
-                border: none;
-                padding: 10px; /* Reduced padding for canvas */
-                background-color: #fefefe;
-                selection-background-color: #bfdbfe;
-                selection-color: #1e293b;
-                font-size: 11pt;
-                line-height: 1.6;
-            }
-            QScrollBar:vertical {
-                background: #f1f5f9;
-                width: 10px;
-                border-radius: 5px;
-                margin: 2px;
-            }
-            QScrollBar::handle:vertical {
-                background: #cbd5e1;
-                border-radius: 5px;
-                min-height: 30px;
-            }
-            QScrollBar::handle:vertical:hover {
-                background: #94a3b8;
-            }
-            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
-                height: 0px;
-            }
-        """)
+        layout.addWidget(self.editor, 1)  # Stretch to fill
+        
+        # Ensure features initialized
+        self._ensure_features_initialized()
+        
+        # Connect editor signals
+        self.editor.textChanged.connect(self._update_word_count)
         self.editor.textChanged.connect(self.text_changed.emit)
         self.editor.textChanged.connect(self._check_wiki_link_trigger)
         self.editor.currentCharFormatChanged.connect(self._update_format_widgets)
         
-        # Initialize features that depend on editor
-        self.search_feature = SearchReplaceFeature(self.editor, self)
-        
-        # Context Menu
+        # Context menu
         self.editor.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.editor.customContextMenuRequested.connect(self._show_context_menu)
         
-        # Initialize Etymology Feature (panel created but NOT added to layout - lives as floating widget)
-        self.etymology_feature = EtymologyFeature(self)
+        # Create keyboard shortcuts (needed before ribbon init)
+        self.action_find = QAction("Find", self)
+        self.action_find.setShortcut("Ctrl+F")
+        self.action_find.triggered.connect(self._show_search_dialog)
+        self.addAction(self.action_find)
         
-        # Initialize Spell Check Feature
-        # Initialize Spell Check Feature
-        self.spell_feature = SpellFeature(self)
-
-        # Initialize Math Feature
-        self.math_feature = MathFeature(self.editor, self)
-        
-        # Initialize Mermaid Feature
-        self.mermaid_feature = MermaidFeature(self.editor, self)
-
-        
-        # Add editor directly to layout (no splitter - simpler and cleaner)
-        layout.addWidget(self.editor)
+        self.action_spell_check = QAction("Spelling", self)
+        self.action_spell_check.setShortcut("F7")
+        self.action_spell_check.triggered.connect(self._show_spell_dialog)
+        self.addAction(self.action_spell_check)
         
         if show_ui:
-            # --- Status Bar with Word Count and Zoom ---
+            # --- Status Bar ---
             self.status_bar = QStatusBar()
             self.status_bar.setStyleSheet("""
                 QStatusBar {
@@ -391,14 +446,9 @@ class RichTextEditor(QWidget):
                 }
             """)
             
-            # Word count label
-            self.word_count_label = QLabel("Words: 0 | Characters: 0")
+            # Word count
+            self.word_count_label = QLabel("Words: 0")
             self.status_bar.addWidget(self.word_count_label)
-            
-            # Page count label
-            self.page_count_label = QLabel("Page 1 of 1")
-            self.page_count_label.setStyleSheet("margin-left: 10px;")
-            self.status_bar.addWidget(self.page_count_label)
             
             # Spacer
             self.status_bar.addWidget(QLabel(""), 1)  # Stretch
@@ -413,7 +463,7 @@ class RichTextEditor(QWidget):
             self.zoom_label.setMinimumWidth(40)
             
             self.zoom_slider = QSlider(Qt.Orientation.Horizontal)
-            self.zoom_slider.setRange(25, 400)
+            self.zoom_slider.setRange(25, 300)
             self.zoom_slider.setValue(100)
             self.zoom_slider.setFixedWidth(100)
             self.zoom_slider.valueChanged.connect(self._on_zoom_changed)
@@ -424,7 +474,7 @@ class RichTextEditor(QWidget):
             
             btn_zoom_in = QToolButton()
             btn_zoom_in.setText("+")
-            btn_zoom_in.clicked.connect(lambda: self.zoom_slider.setValue(min(400, self.zoom_slider.value() + 25)))
+            btn_zoom_in.clicked.connect(lambda: self.zoom_slider.setValue(min(300, self.zoom_slider.value() + 25)))
             
             btn_zoom_reset = QToolButton()
             btn_zoom_reset.setText("100%")
@@ -440,26 +490,26 @@ class RichTextEditor(QWidget):
             self.status_bar.addPermanentWidget(zoom_widget)
             layout.addWidget(self.status_bar)
             
-            # Connect text changed to update word count and page count
-            self.editor.textChanged.connect(self._update_word_count)
-            self.editor.textChanged.connect(self._update_page_count)
-            self.editor.cursorPositionChanged.connect(self._update_current_page)
-        
-        # Keybindings (Available even with show_ui=False)
-        self.action_find = QAction("Find", self)
-        self.action_find.setShortcut("Ctrl+F")
-        self.action_find.triggered.connect(self.search_feature.show_search_dialog)
-        self.addAction(self.action_find)
-        
-        # Spell check shortcut (F7)
-        self.action_spell_check = QAction("Spelling", self)
-        self.action_spell_check.setShortcut("F7")
-        self.action_spell_check.triggered.connect(self.spell_feature.show_dialog)
-        self.addAction(self.action_spell_check)
-        
-        if show_ui:
-            # Initialize Ribbon Content (must be after action_find is created)
+            # Initialize ribbon tabs and groups
             self._init_ribbon()
+            
+            # Update ribbon state to match current format
+            self._update_format_widgets(self.editor.currentCharFormat())
+            
+            # Initial word count
+            self._update_word_count()
+    
+    
+    def _show_search_dialog(self):
+        """Placeholder for search feature."""
+        if hasattr(self, 'search_feature') and self.search_feature:
+            self.search_feature.show_search_dialog()
+    
+    def _show_spell_dialog(self):
+        """Placeholder for spell feature."""
+        if hasattr(self, 'spell_feature') and self.spell_feature:
+            self.spell_feature.show_dialog()
+    
 
     def insertFromMimeData(self, source: QMimeData) -> None:
         """
@@ -504,8 +554,14 @@ class RichTextEditor(QWidget):
             self.wiki_link_requested.emit()
 
     def _show_context_menu(self, pos: QPoint) -> None:
-        """Show context menu with table options if applicable."""
-        # Only move cursor if there's no selection - preserve selection for Cut/Copy/Delete
+        """Show context menu for the editor."""
+        if not self.editor:
+            return
+        
+        # Ensure all features are initialized
+        self._ensure_features_initialized()
+        
+        # If there's no selection, move cursor to click position
         current_cursor = self.editor.textCursor()
         if not current_cursor.hasSelection():
             cursor = self.editor.cursorForPosition(pos)
@@ -515,37 +571,62 @@ class RichTextEditor(QWidget):
         
         if menu is not None:
             # Spell check suggestions first (at top of menu)
-            if hasattr(self, 'spell_feature'):
+            if hasattr(self, 'spell_feature') and self.spell_feature:
                 self.spell_feature.extend_context_menu(menu, pos)
-            if hasattr(self, 'table_feature'):
+            if hasattr(self, 'table_feature') and self.table_feature:
                 self.table_feature.extend_context_menu(menu)
-            if hasattr(self, 'image_feature'):
+            if hasattr(self, 'image_feature') and self.image_feature:
                 self.image_feature.extend_context_menu(menu)
-            if hasattr(self, 'etymology_feature'):
+            if hasattr(self, 'etymology_feature') and self.etymology_feature:
                 self.etymology_feature.extend_context_menu(menu)
-            if hasattr(self, 'math_feature'):
+            if hasattr(self, 'math_feature') and self.math_feature:
                 self.math_feature.extend_context_menu(menu)
-            if hasattr(self, 'mermaid_feature'):
+            if hasattr(self, 'mermaid_feature') and self.mermaid_feature:
                 self.mermaid_feature.extend_context_menu(menu)
             menu.exec(self.editor.mapToGlobal(pos))
 
     def _init_features(self) -> None:
         """Initialize features that don't require the Ribbon UI."""
-        # Lists - always needed
-        self.list_feature = ListFeature(self.editor, self)
+        # Features will be initialized lazily when first accessed
+        # since editor is now dynamic (changes per page)
         
-        # Note: table_feature and image_feature are initialized in _init_ribbon()
-        # when show_ui=True. For headless mode, they can be initialized here:
-        if not hasattr(self, 'table_feature') and 'TableFeature' in globals():
+        # Set all features to None initially
+        self.etymology_feature = None
+        self.list_feature = None
+        self.table_feature = None
+        self.image_feature = None
+        self.search_feature = None
+        self.spell_feature = None
+        self.math_feature = None
+        self.mermaid_feature = None
+    
+    def _ensure_features_initialized(self):
+        """Lazy initialization of editor-dependent features."""
+        if not self.editor:
+            return
+        
+        if not self.etymology_feature:
+            self.etymology_feature = EtymologyFeature(self)
+        
+        if not self.list_feature:
+            self.list_feature = ListFeature(self.editor, self)
+        
+        if not self.table_feature:
             self.table_feature = TableFeature(self.editor, self)
-             
-        if not hasattr(self, 'image_feature') and 'ImageFeature' in globals():
+        
+        if not self.image_feature:
             self.image_feature = ImageFeature(self.editor, self)
-
-        if not hasattr(self, 'math_feature'):
+        
+        if not self.search_feature:
+            self.search_feature = SearchReplaceFeature(self.editor, self)
+        
+        if not self.spell_feature:
+            self.spell_feature = SpellFeature(self)
+        
+        if not self.math_feature:
             self.math_feature = MathFeature(self.editor, self)
-
-        if not hasattr(self, 'mermaid_feature'):
+        
+        if not self.mermaid_feature:
             self.mermaid_feature = MermaidFeature(self.editor, self)
 
     def show_search(self) -> None:
@@ -695,6 +776,12 @@ class RichTextEditor(QWidget):
         self.btn_bold.setCheckable(True)
         self.btn_bold.setShortcut("Ctrl+B")
         self.btn_bold.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.btn_bold.setStyleSheet("""
+            QToolButton:checked {
+                background-color: #bfdbfe;
+                border: 1px solid #3b82f6;
+            }
+        """)
         self.btn_bold.clicked.connect(self._toggle_bold)
         grp_basic.add_widget(self.btn_bold)
         
@@ -705,7 +792,13 @@ class RichTextEditor(QWidget):
         self.btn_italic.setCheckable(True)
         self.btn_italic.setShortcut("Ctrl+I")
         self.btn_italic.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.btn_italic.clicked.connect(self.editor.setFontItalic)
+        self.btn_italic.setStyleSheet("""
+            QToolButton:checked {
+                background-color: #bfdbfe;
+                border: 1px solid #3b82f6;
+            }
+        """)
+        self.btn_italic.clicked.connect(lambda checked: (self.editor.setFontItalic(checked), self.editor.setFocus()))
         grp_basic.add_widget(self.btn_italic)
 
         # Underline
@@ -715,7 +808,13 @@ class RichTextEditor(QWidget):
         self.btn_underline.setCheckable(True)
         self.btn_underline.setShortcut("Ctrl+U")
         self.btn_underline.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.btn_underline.clicked.connect(self.editor.setFontUnderline)
+        self.btn_underline.setStyleSheet("""
+            QToolButton:checked {
+                background-color: #bfdbfe;
+                border: 1px solid #3b82f6;
+            }
+        """)
+        self.btn_underline.clicked.connect(lambda checked: (self.editor.setFontUnderline(checked), self.editor.setFocus()))
         grp_basic.add_widget(self.btn_underline)
         
         # --- Group: Advanced Formatting ---
@@ -726,6 +825,12 @@ class RichTextEditor(QWidget):
         self.btn_strike.setCheckable(True)
         self.btn_strike.setToolTip("Strikethrough")
         self.btn_strike.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.btn_strike.setStyleSheet("""
+            QToolButton:checked {
+                background-color: #bfdbfe;
+                border: 1px solid #3b82f6;
+            }
+        """)
         self.btn_strike.clicked.connect(self._toggle_strikethrough)
         self.btn_strike.setIcon(qta.icon("fa5s.strikethrough", color="#1e293b"))
         grp_adv.add_widget(self.btn_strike)
@@ -736,6 +841,7 @@ class RichTextEditor(QWidget):
         self.action_sub.setToolTip("Subscript")
         self.action_sub.triggered.connect(self._toggle_subscript)
         self.action_sub.setIcon(qta.icon("fa5s.subscript", color="#1e293b"))
+        # Note: QAction styling handled by ribbon widget
         grp_adv.add_action(self.action_sub, Qt.ToolButtonStyle.ToolButtonIconOnly)
 
         # Superscript
@@ -744,6 +850,7 @@ class RichTextEditor(QWidget):
         self.action_super.setToolTip("Superscript")
         self.action_super.triggered.connect(self._toggle_superscript)
         self.action_super.setIcon(qta.icon("fa5s.superscript", color="#1e293b"))
+        # Note: QAction styling handled by ribbon widget
         grp_adv.add_action(self.action_super, Qt.ToolButtonStyle.ToolButtonIconOnly)
         
         # Clear Formatting
@@ -2017,35 +2124,13 @@ class RichTextEditor(QWidget):
     def _on_zoom_changed(self, value: int):
         """Handle zoom slider change."""
         self.zoom_label.setText(f"{value}%")
-        # Scale the editor using CSS zoom or font scaling
-        # QTextEdit doesn't have native zoom, so we scale via transform
-        scale = value / 100.0
-        self.editor.setStyleSheet(f"""
-            QTextEdit {{
-                border: none;
-                padding: 40px;
-                background-color: white;
-                selection-background-color: #bfdbfe;
-                selection-color: black;
-            }}
-        """)
-        # Apply zoom via viewport transform
-        from PyQt6.QtGui import QTransform
-        transform = QTransform()
-        transform.scale(scale, scale)
-        # Note: QTextEdit doesn't support transforms directly on viewport
-        # Alternative: adjust font size proportionally
-        # We'll use zoomIn/zoomOut approach
-        self.editor.zoomIn(0)  # Reset first
-        base_zoom = value - 100
-        if base_zoom != 0:
-            # zoomIn takes steps, each step is roughly 1 point
-            # This is approximate but works well
-            steps = base_zoom // 10
-            if steps > 0:
-                self.editor.zoomIn(steps)
-            elif steps < 0:
-                self.editor.zoomOut(-steps)
+        # Delegate zoom to the Substrate (Infinite Canvas)
+        # This scales the entire view (Paper + Text)
+        if hasattr(self, 'substrate'):
+            self.substrate.set_zoom(value / 100.0)
+        else:
+            # Fallback for headless or legacy modes (though setup always creates substrate now)
+            pass
 
     def _update_word_count(self) -> None:
         """Update the word and character count in status bar."""

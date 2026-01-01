@@ -536,7 +536,7 @@ class DifferentialNatalWindow(QWidget):
         from shared.signals.navigation_bus import navigation_bus
         
         navigation_bus.request_window.emit(
-            "tq_quadset_analysis",
+            "quadset_analysis",
             {
                 "window_manager": self.window_manager,
                 "initial_value": self._total_difference,

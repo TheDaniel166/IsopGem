@@ -80,6 +80,7 @@ class TQHub(QWidget):
             ("⬡", "3D Transitions", "3D geometric transition space", "#0f766e", self._open_geometric_transitions_3d),
             ("⊜", "Conrune Finder", "Find conrune pairs and matches", "#f97316", self._open_conrune_pair_finder),
             ("♫", "Amun Sound", "Ternary sound calculator", "#8b5cf6", self._open_amun_sound),
+            ("🗝️", "Holy Book Key", "Sovereign lexicon & concordance", "#10b981", self._open_holy_key),
         ]
 
         grid = QGridLayout()
@@ -283,4 +284,12 @@ class TQHub(QWidget):
             "kamea_baphomet",
             KameaWindow,
             service=service
+        )
+
+    def _open_holy_key(self):
+        """Open the Holy Key Lexicon Manager."""
+        from shared.signals.navigation_bus import navigation_bus
+        navigation_bus.request_window.emit(
+            "lexicon_manager",
+            {"window_manager": self.window_manager}
         )

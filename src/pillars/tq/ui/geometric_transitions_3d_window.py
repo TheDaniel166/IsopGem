@@ -1015,7 +1015,7 @@ class GeometricTransitions3DWindow(QMainWindow):
     def _send_value_to_quadset(self, value: float):
         rounded = int(round(value))
         navigation_bus.request_window.emit(
-            "tq_quadset_analysis",
+            "quadset_analysis",
             {
                 "window_manager": self.window_manager,
                 "initial_value": rounded

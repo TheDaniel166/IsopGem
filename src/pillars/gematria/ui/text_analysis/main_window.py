@@ -204,6 +204,7 @@ class ExegesisWindow(QMainWindow):
         self.teach_btn.clicked.connect(self._open_teacher)
         toolbar.addWidget(self.teach_btn)
         
+        
         toolbar.addStretch()
         main_layout.addWidget(toolbar_frame)
         
@@ -515,6 +516,15 @@ class ExegesisWindow(QMainWindow):
         dlg.verses_saved.connect(current.refresh_verse_list)
         dlg.show()
         
+    def _open_lexicon(self):
+        """Launch the Holy Key Lexicon Manager."""
+        from shared.signals.navigation_bus import navigation_bus
+        if self.window_manager:
+            navigation_bus.request_window.emit(
+                "lexicon_manager",
+                {"window_manager": self.window_manager}
+            )
+        
     def _on_save_verse(self, verse):
         self._save_record(verse['text'], f"Verse {verse['number']}")
 
@@ -564,7 +574,7 @@ class ExegesisWindow(QMainWindow):
         
         if self.window_manager:
             navigation_bus.request_window.emit(
-                "tq_quadset_analysis", 
+                "quadset_analysis", 
                 {"window_manager": self.window_manager, "initial_value": value}
             )
         else:

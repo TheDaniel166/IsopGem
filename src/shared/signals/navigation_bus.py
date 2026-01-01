@@ -201,6 +201,13 @@ WINDOW_REGISTRY: Dict[str, Dict[str, Any]] = {
         "class": "ZodiacalCircleWindow",
         "allow_multiple": True,
     },
+    
+    # Holy Key Pillar
+    "lexicon_manager": {
+        "module": "pillars.tq_lexicon.ui.lexicon_manager_window",
+        "class": "LexiconManagerWindow",
+        "allow_multiple": False,
+    },
 }
 
 
