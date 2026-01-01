@@ -36,6 +36,10 @@ class NavigationBus(QObject):
     # (request_id: str, window_key: str, data: Any)
     window_response = pyqtSignal(str, str, object)
     
+    # Signal: (key_id: int, word: str)
+    # Broadcast when a lexicon key is updated (enriched, added, etc.)
+    lexicon_updated = pyqtSignal(int, str)
+    
     def __init__(self):
         """
           init   logic.
@@ -202,10 +206,10 @@ WINDOW_REGISTRY: Dict[str, Dict[str, Any]] = {
         "allow_multiple": True,
     },
     
-    # Holy Key Pillar
+    # Holy Key Pillar (Unified Window - sovereign interface)
     "lexicon_manager": {
-        "module": "pillars.tq_lexicon.ui.lexicon_manager_window",
-        "class": "LexiconManagerWindow",
+        "module": "pillars.tq_lexicon.ui.unified_lexicon_window",
+        "class": "UnifiedLexiconWindow",
         "allow_multiple": False,
     },
 }
