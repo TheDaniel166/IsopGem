@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import (
     QGraphicsDropShadowEffect
 )
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QColor, QPalette, QBrush, QImage
+from PyQt6.QtGui import QColor
 from typing import List, Optional, Any, Dict
 from pathlib import Path
 
@@ -188,6 +188,11 @@ class ExegesisWindow(QMainWindow):
         self.include_nums_chk.stateChanged.connect(self._on_options_changed)
         toolbar.addWidget(self.include_nums_chk)
         
+        self.curated_format_chk = QCheckBox("Curated Format")
+        self.curated_format_chk.setToolTip("Display text with curated verse structure (one verse per line)")
+        self.curated_format_chk.toggled.connect(self._on_curated_format_toggled)
+        toolbar.addWidget(self.curated_format_chk)
+        
         self.teach_btn = QPushButton("Train Scribe")
         self.teach_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.teach_btn.setEnabled(False) # Enable if tab active
@@ -305,17 +310,65 @@ class ExegesisWindow(QMainWindow):
         main_layout.addWidget(self.status)
         
     def _load_documents(self):
+        """Load holy book documents into the dropdown with curation status indicators.
+        
+        Uses a single batch query to fetch all curated document IDs upfront,
+        then uses O(1) set membership checks during iteration for efficiency.
+        """
         try:
+            from shared.services.document_manager.verse_teacher_service import verse_teacher_service_context
+            
+            # Batch query: get all document IDs with curated verses in ONE query
+            curated_doc_ids: set = set()
+            try:
+                with verse_teacher_service_context() as verse_service:
+                    curated_doc_ids = verse_service.get_documents_with_curated_verses()
+            except Exception:
+                # Graceful fallback - all documents show as uncurated
+                curated_doc_ids = set()
+            
             with document_service_context() as service:
                 docs = service.get_all_documents()
                 self.doc_combo.clear()
                 self.doc_combo.addItem("-- Select Sacred Text --", None)
+                
                 for d in docs:
                     collection = (d.collection or "").lower()
                     if "holy" in collection:
-                        self.doc_combo.addItem(f"{d.title}", d.id)
+                        # O(1) set membership check instead of N+1 database queries
+                        has_curated = d.id in curated_doc_ids
+                        
+                        if has_curated:
+                            # Curated indicator: ✓
+                            display_text = f"✓ {d.title}"
+                        else:
+                            display_text = f"  {d.title}"  # Align with curated ones
+                        
+                        self.doc_combo.addItem(display_text, d.id)
+                        
         except Exception as e:
             self.status.setText(f"Error loading texts: {e}")
+    
+    def _check_document_curated(self, document_id: int) -> bool:
+        """Check if a single document has curated verses.
+        
+        Note: For bulk checks, use get_documents_with_curated_verses() instead
+        to avoid N+1 query patterns.
+        
+        Args:
+            document_id: The document ID to check
+            
+        Returns:
+            True if curated verses exist (excluding ignored)
+        """
+        try:
+            from shared.services.document_manager.verse_teacher_service import verse_teacher_service_context
+            
+            with verse_teacher_service_context() as service:
+                curated_ids = service.get_documents_with_curated_verses()
+                return document_id in curated_ids
+        except Exception:
+            return False
             
     def _on_open_document(self):
         doc_id = self.doc_combo.currentData()
@@ -407,10 +460,28 @@ class ExegesisWindow(QMainWindow):
         holy_mode = self.holy_view_chk.isChecked()
         interlinear_mode = self.interlinear_chk.isChecked()
         
+        # When Holy Scansion is enabled, auto-check Curated Format if curated verses exist
+        if holy_mode and self.sender() == self.holy_view_chk:
+            current_tab = self.doc_tabs.currentWidget()
+            if isinstance(current_tab, DocumentTab) and current_tab.has_curated_verses():
+                self.curated_format_chk.setChecked(True)
+        
         for i in range(self.doc_tabs.count()):
             tab = self.doc_tabs.widget(i)
             if isinstance(tab, DocumentTab):
                 tab.set_view_mode(holy_mode, interlinear=interlinear_mode)
+    
+    def _on_curated_format_toggled(self, checked):
+        """Toggle between raw document text and curated verse format."""
+        for i in range(self.doc_tabs.count()):
+            tab = self.doc_tabs.widget(i)
+            if isinstance(tab, DocumentTab):
+                tab.toggle_formatted_view(checked)
+        
+        if checked:
+            self.status.setText("Viewing curated verse structure")
+        else:
+            self.status.setText("Viewing raw document text")
 
     def _update_stats_for_tab(self, tab: DocumentTab):
         text = tab.get_text()
@@ -453,10 +524,13 @@ class ExegesisWindow(QMainWindow):
         self.search_panel.set_active_tab(current_idx)
         
         # Highlight matches in CURRENT tab only
-        self.doc_tabs.currentWidget().clear_highlights()
-        if not is_global and tabs_to_search:
-            ranges = [(m[1], m[2]) for m in all_matches]
-            self.doc_tabs.currentWidget().highlight_ranges(ranges)
+        # Highlight matches in CURRENT tab only
+        current_widget = self.doc_tabs.currentWidget()
+        if isinstance(current_widget, DocumentTab):
+            current_widget.clear_highlights()
+            if not is_global and tabs_to_search:
+                ranges = [(m[1], m[2]) for m in all_matches]
+                current_widget.highlight_ranges(ranges)
             
     def _on_search_result_selected(self, start, end, tab_index):
         if tab_index >= 0 and tab_index < self.doc_tabs.count():
@@ -554,6 +628,12 @@ class ExegesisWindow(QMainWindow):
     def _open_concordance(self):
         """Open the unified TQ Lexicon Workflow window."""
         try:
+            # Focus existing window if open
+            if hasattr(self, 'concordance_window') and self.concordance_window and self.concordance_window.isVisible():
+                self.concordance_window.raise_()
+                self.concordance_window.activateWindow()
+                return
+
             from pillars.tq_lexicon.ui.unified_lexicon_window import UnifiedLexiconWindow
             
             self.concordance_window = UnifiedLexiconWindow(parent=None)

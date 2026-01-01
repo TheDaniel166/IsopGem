@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 import re
 from contextlib import contextmanager
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Set, Tuple
 
 from sqlalchemy.orm import Session
 
@@ -50,6 +50,31 @@ class VerseTeacherService:
         """
         verses = self.verse_repo.get_by_document(document_id, include_ignored=include_ignored)
         return [self._serialize_stored_verse(v) for v in verses]
+    
+    def get_documents_with_curated_verses(self) -> Set[int]:
+        """
+        Get all document IDs that have active curated verses.
+        
+        This is an efficient batch query that returns distinct document IDs
+        where at least one non-ignored verse exists. Use this for bulk checks
+        instead of individual per-document queries.
+        
+        Returns:
+            Set of document IDs that have at least one active curated verse.
+        """
+        try:
+            from shared.models.document_manager.document_verse import DocumentVerse
+            from sqlalchemy import distinct
+            
+            # Query distinct document IDs where status is not 'ignored'
+            result = self.db.query(distinct(DocumentVerse.document_id)).filter(
+                DocumentVerse.status != 'ignored'
+            ).all()
+            
+            return {row[0] for row in result}
+        except Exception:
+            # Table may not exist yet or other DB error - return empty set
+            return set()
 
     def get_or_parse_verses(
         self,

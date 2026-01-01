@@ -61,17 +61,29 @@ class VerseList(QWidget):
         Render verses into the list.
         """
         self.clear()
-        self.verses_data = verses
         self.status_label.setText(source_info)
-        self.save_all_btn.setEnabled(bool(verses))
+
+        # Filter out ignored and empty verses
+        active_verses = []
+        for v in verses:
+            # Skip ignored verses
+            if v.get('status') == 'ignored':
+                continue
+            # Skip empty verses
+            if not v.get('text', '').strip():
+                continue
+            active_verses.append(v)
+
+        self.verses_data = active_verses
+        self.save_all_btn.setEnabled(bool(active_verses))
         
-        if not verses:
+        if not active_verses:
             self.container_layout.addWidget(QLabel("No verses detected."))
             return
             
         from ...utils.numeric_utils import sum_numeric_face_values
 
-        for v in verses:
+        for v in active_verses:
             item = self._create_verse_item(v, calculator, include_face_values)
             self.container_layout.addWidget(item)
             
