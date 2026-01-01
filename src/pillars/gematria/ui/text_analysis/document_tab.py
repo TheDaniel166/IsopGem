@@ -4,13 +4,14 @@ Tab widget combining document viewer with verse list and calculation controls.
 """
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QStackedWidget,
-    QMessageBox
+    QMessageBox, QCheckBox
 )
 from PyQt6.QtCore import pyqtSignal, Qt
 from typing import Optional
 
 from .document_viewer import DocumentViewer
 from .verse_list import VerseList
+from .interlinear_widget import InterlinearDocumentView
 from shared.models.document_manager.document import Document
 from ...services.text_analysis_service import TextAnalysisService
 
@@ -86,6 +87,10 @@ class DocumentTab(QWidget):
         self.verse_list.save_all_requested.connect(self.save_all_requested.emit)
         self.stack.addWidget(self.verse_list)
         
+        # Interlinear view (TQ Concordance mode)
+        self.interlinear_view = InterlinearDocumentView()
+        self.stack.addWidget(self.interlinear_view)
+        
         layout.addWidget(self.stack)
         
         # Selection Result Label
@@ -104,15 +109,19 @@ class DocumentTab(QWidget):
         
         self.doc_viewer.set_text(plain)
         
-    def set_view_mode(self, verse_mode: bool):
+    def set_view_mode(self, verse_mode: bool, interlinear: bool = False):
         """
-        Configure view mode logic.
+        Configure view mode.
         
         Args:
-            verse_mode: Description of verse_mode.
-        
+            verse_mode: Show verse list instead of plain text
+            interlinear: Show interlinear concordance view (requires verse_mode)
         """
-        if verse_mode:
+        if interlinear and verse_mode:
+            self.stack.setCurrentWidget(self.interlinear_view)
+            self.viewer_label.setText("Interlinear Concordance")
+            self._refresh_interlinear_view()
+        elif verse_mode:
             self.stack.setCurrentWidget(self.verse_list)
             self.viewer_label.setText("Verse List")
             self.refresh_verse_list()
@@ -121,10 +130,7 @@ class DocumentTab(QWidget):
             self.viewer_label.setText("Document Text")
             
     def refresh_verse_list(self):
-        """
-        Refresh verse list logic.
-        
-        """
+        """Refresh the verse list with current settings."""
         if not self.document or not self.current_calculator:
             return
             
@@ -138,6 +144,46 @@ class DocumentTab(QWidget):
         source = result.get('source', '')
         
         self.verse_list.render_verses(verses, self.current_calculator, self.include_numbers, f"Source: {source}")
+    
+    def _refresh_interlinear_view(self):
+        """Refresh the interlinear view with verses from the document."""
+        if not self.document or not self.current_calculator:
+            return
+            
+        # Get key service for concordance lookup
+        try:
+            from pillars.tq_lexicon.services.holy_key_service import HolyKeyService
+            key_service = HolyKeyService()
+        except ImportError:
+            key_service = None
+            
+        # Set calculator and key service
+        self.interlinear_view.calculator = self.current_calculator
+        self.interlinear_view.key_service = key_service
+        
+        # Parse verses
+        text = self.doc_viewer.get_text()
+        result = self.analysis_service.parse_verses(
+            text, 
+            self.document.id, 
+            allow_inline=not self.strict_parsing
+        )
+        raw_verses = result.get('verses', [])
+        
+        # Convert to format expected by interlinear view
+        verses = []
+        for i, verse in enumerate(raw_verses):
+            if isinstance(verse, str):
+                verses.append({'text': verse, 'verse_number': i + 1})
+            elif isinstance(verse, dict):
+                verses.append({
+                    'text': verse.get('text', str(verse)),
+                    'verse_number': verse.get('number', i + 1)
+                })
+            else:
+                verses.append({'text': str(verse), 'verse_number': i + 1})
+                
+        self.interlinear_view.set_verses(verses)
 
     def update_settings(self, calculator, strict_parsing: bool, include_numbers: bool):
         """

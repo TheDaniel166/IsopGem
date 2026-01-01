@@ -173,6 +173,12 @@ class ExegesisWindow(QMainWindow):
         self.holy_view_chk.toggled.connect(self._on_view_mode_toggled)
         toolbar.addWidget(self.holy_view_chk)
         
+        self.interlinear_chk = QCheckBox("Interlinear")
+        self.interlinear_chk.setToolTip("Show word-level TQ values and concordance links")
+        self.interlinear_chk.toggled.connect(self._on_view_mode_toggled)
+        self.interlinear_chk.setEnabled(False)  # Only enabled when Holy Scansion is checked
+        toolbar.addWidget(self.interlinear_chk)
+        
         self.strict_verse_chk = QCheckBox("Strict Parsing")
         self.strict_verse_chk.setChecked(True)
         self.strict_verse_chk.toggled.connect(self._on_options_changed)
@@ -204,6 +210,23 @@ class ExegesisWindow(QMainWindow):
         self.teach_btn.clicked.connect(self._open_teacher)
         toolbar.addWidget(self.teach_btn)
         
+        # Concordance button - unified parse + index workflow
+        self.concordance_btn = QPushButton("📚 Concordance")
+        self.concordance_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.concordance_btn.setToolTip("Open Holy Book Concordance - parse and index documents")
+        self.concordance_btn.setStyleSheet("""
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #059669, stop:1 #047857);
+                color: white;
+                border: 1px solid #065f46;
+                font-weight: 700;
+            }
+            QPushButton:hover {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #047857, stop:1 #059669);
+            }
+        """)
+        self.concordance_btn.clicked.connect(self._open_concordance)
+        toolbar.addWidget(self.concordance_btn)
         
         toolbar.addStretch()
         main_layout.addWidget(toolbar_frame)
@@ -326,7 +349,10 @@ class ExegesisWindow(QMainWindow):
                 self.include_nums_chk.isChecked()
             )
             # If global "Holy Book View" is checked, set it
-            tab.set_view_mode(self.holy_view_chk.isChecked())
+            tab.set_view_mode(
+                self.holy_view_chk.isChecked(),
+                interlinear=self.interlinear_chk.isChecked()
+            )
             
             index = self.doc_tabs.addTab(tab, document.title)
             self.doc_tabs.setCurrentIndex(index)
@@ -372,10 +398,19 @@ class ExegesisWindow(QMainWindow):
             self._update_stats_for_tab(current)
 
     def _on_view_mode_toggled(self, checked):
+        # Enable/disable interlinear checkbox based on Holy Scansion
+        if self.sender() == self.holy_view_chk:
+            self.interlinear_chk.setEnabled(checked)
+            if not checked:
+                self.interlinear_chk.setChecked(False)
+        
+        holy_mode = self.holy_view_chk.isChecked()
+        interlinear_mode = self.interlinear_chk.isChecked()
+        
         for i in range(self.doc_tabs.count()):
             tab = self.doc_tabs.widget(i)
             if isinstance(tab, DocumentTab):
-                tab.set_view_mode(checked)
+                tab.set_view_mode(holy_mode, interlinear=interlinear_mode)
 
     def _update_stats_for_tab(self, tab: DocumentTab):
         text = tab.get_text()
@@ -500,7 +535,7 @@ class ExegesisWindow(QMainWindow):
         dlg = SmartFilterDialog(matches, self)
         dlg.exec()
 
-    # --- Saving / Teacher ---
+    # --- Saving / Teacher / Concordance ---
     
     def _open_teacher(self):
         current = self.doc_tabs.currentWidget()
@@ -515,6 +550,16 @@ class ExegesisWindow(QMainWindow):
         )
         dlg.verses_saved.connect(current.refresh_verse_list)
         dlg.show()
+    
+    def _open_concordance(self):
+        """Open the unified TQ Lexicon Workflow window."""
+        try:
+            from pillars.tq_lexicon.ui.unified_lexicon_window import UnifiedLexiconWindow
+            
+            self.concordance_window = UnifiedLexiconWindow(parent=None)
+            self.concordance_window.show()
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to open Lexicon:\n{e}")
         
     def _open_lexicon(self):
         """Launch the Holy Key Lexicon Manager."""

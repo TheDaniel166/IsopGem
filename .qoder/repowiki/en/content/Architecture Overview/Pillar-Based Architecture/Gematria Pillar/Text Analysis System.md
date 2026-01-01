@@ -2,6 +2,12 @@
 
 <cite>
 **Referenced Files in This Document**   
+- [acrostic_service.py](file://src/pillars/gematria/services/acrostic_service.py)
+- [chiasmus_service.py](file://src/pillars/gematria/services/chiasmus_service.py)
+- [els_service.py](file://src/pillars/gematria/services/els_service.py)
+- [acrostics_window.py](file://src/pillars/gematria/ui/acrostics_window.py)
+- [chiastic_window.py](file://src/pillars/gematria/ui/chiastic_window.py)
+- [els_search_window.py](file://src/pillars/gematria/ui/els_search_window.py)
 - [text_analysis_window.py](file://src/pillars/gematria/ui/text_analysis/main_window.py)
 - [text_analysis_service.py](file://src/pillars/gematria/services/text_analysis_service.py)
 - [smart_filter_service.py](file://src/pillars/gematria/services/smart_filter_service.py)
@@ -14,20 +20,33 @@
 - [calculation_service.py](file://src/pillars/gematria/services/calculation_service.py)
 </cite>
 
+## Update Summary
+**Changes Made**   
+- Added new sections for acrostics, chiasmus, and ELS analysis capabilities
+- Updated architecture overview to include new services and UI components
+- Added new diagrams for acrostics, chiasmus, and ELS analysis workflows
+- Updated core components section to include new analysis types
+- Added performance considerations for new analysis methods
+
 ## Table of Contents
 1. [Introduction](#introduction)
 2. [Architecture Overview](#architecture-overview)
 3. [Core Components](#core-components)
 4. [Text Analysis Service](#text-analysis-service)
-5. [Smart Filter Service](#smart-filter-service)
-6. [Integration with Document Manager](#integration-with-document-manager)
-7. [Performance Considerations](#performance-considerations)
-8. [Troubleshooting Guide](#troubleshooting-guide)
-9. [Conclusion](#conclusion)
+5. [Acrostic Analysis](#acrostic-analysis)
+6. [Chiasmus Analysis](#chiasmus-analysis)
+7. [ELS Analysis](#els-analysis)
+8. [Smart Filter Service](#smart-filter-service)
+9. [Integration with Document Manager](#integration-with-document-manager)
+10. [Performance Considerations](#performance-considerations)
+11. [Troubleshooting Guide](#troubleshooting-guide)
+12. [Conclusion](#conclusion)
 
 ## Introduction
 
 The Text Analysis System is an advanced feature that combines gematria calculations with document analysis from the Document Manager pillar. This system enables users to analyze verses and passages by applying multiple gematria methods to large texts, breaking them into segments for comprehensive analysis. The system integrates the TextAnalysisWindow with the DocumentManager to provide a seamless workflow for text analysis, pattern recognition, and contextual interpretation.
+
+The system has been expanded to include acrostics, chiasmus, and Equidistant Letter Sequence (ELS) analysis capabilities with new services and UI components. These new features provide advanced text analysis methods for discovering hidden patterns and structures in sacred texts.
 
 The system is designed to be accessible to beginners while providing sufficient technical depth for experienced developers. It addresses common issues such as performance bottlenecks when analyzing large documents and provides optimization strategies to ensure efficient processing.
 
@@ -36,11 +55,11 @@ The system is designed to be accessible to beginners while providing sufficient 
 
 ## Architecture Overview
 
-The Text Analysis System follows a modular architecture with clear separation of concerns between UI components, services, and data models. The system is built around the TextAnalysisWindow, which serves as the main interface for users to interact with the text analysis features.
+The Text Analysis System follows a modular architecture with clear separation of concerns between UI components, services, and data models. The system is built around the ExegesisWindow (formerly TextAnalysisWindow), which serves as the main interface for users to interact with the text analysis features.
 
 ```mermaid
 graph TD
-A[TextAnalysisWindow] --> B[DocumentTab]
+A[ExegesisWindow] --> B[DocumentTab]
 A --> C[SearchPanel]
 A --> D[StatsPanel]
 A --> E[SmartFilterDialog]
@@ -55,6 +74,9 @@ K --> M[DocumentRepository]
 K --> N[DocumentVerseRepository]
 K --> O[VerseRuleRepository]
 K --> P[VerseEditLogRepository]
+Q[AcrosticsWindow] --> R[AcrosticService]
+S[ChiasticWindow] --> T[ChiasmusService]
+U[ELSSearchWindow] --> V[ELSSearchService]
 ```
 
 **Diagram sources**
@@ -65,10 +87,21 @@ K --> P[VerseEditLogRepository]
 - [text_analysis_service.py](file://src/pillars/gematria/services/text_analysis_service.py#L5-L185)
 - [smart_filter_service.py](file://src/pillars/gematria/services/smart_filter_service.py#L5-L102)
 - [verse_teacher_service.py](file://src/pillars/document_manager/services/verse_teacher_service.py#L20-L352)
+- [acrostics_window.py](file://src/pillars/gematria/ui/acrostics_window.py#L1-L423)
+- [acrostic_service.py](file://src/pillars/gematria/services/acrostic_service.py#L1-L151)
+- [chiastic_window.py](file://src/pillars/gematria/ui/chiastic_window.py#L1-L307)
+- [chiasmus_service.py](file://src/pillars/gematria/services/chiasmus_service.py#L1-L141)
+- [els_search_window.py](file://src/pillars/gematria/ui/els_search_window.py#L1-L967)
+- [els_service.py](file://src/pillars/gematria/services/els_service.py#L1-L548)
 
 ## Core Components
 
-The Text Analysis System consists of several core components that work together to provide comprehensive text analysis capabilities. The main components include the TextAnalysisWindow, which serves as the primary user interface, and the TextAnalysisService, which handles the core text processing and gematria calculations.
+The Text Analysis System consists of several core components that work together to provide comprehensive text analysis capabilities. The main components include the ExegesisWindow, which serves as the primary user interface, and the TextAnalysisService, which handles the core text processing and gematria calculations.
+
+The system also includes specialized services for advanced text analysis:
+- **AcrosticService**: Discovers hidden messages encoded in the first or last letters of lines/words
+- **ChiasmusService**: Scans text for symmetric gematria patterns (e.g., values 10-20-30-20-10)
+- **ELSSearchService**: Implements Equidistant Letter Sequence ("Bible Code") search
 
 The system also includes the SmartFilterService for filtering results using NLP techniques, and integrates with the VerseTeacherService for contextual interpretation of verses. These components are designed to work together seamlessly, providing a powerful tool for analyzing texts using gematria methods.
 
@@ -78,6 +111,9 @@ The architecture follows a service-oriented design pattern, with clear separatio
 - [text_analysis_window.py](file://src/pillars/gematria/ui/text_analysis/main_window.py#L24-L465)
 - [text_analysis_service.py](file://src/pillars/gematria/services/text_analysis_service.py#L5-L185)
 - [smart_filter_service.py](file://src/pillars/gematria/services/smart_filter_service.py#L5-L102)
+- [acrostic_service.py](file://src/pillars/gematria/services/acrostic_service.py#L1-L151)
+- [chiasmus_service.py](file://src/pillars/gematria/services/chiasmus_service.py#L1-L141)
+- [els_service.py](file://src/pillars/gematria/services/els_service.py#L1-L548)
 
 ## Text Analysis Service
 
@@ -103,6 +139,117 @@ Additionally, the `parse_verses` method integrates with the VerseTeacherService 
 
 **Section sources**
 - [text_analysis_service.py](file://src/pillars/gematria/services/text_analysis_service.py#L5-L185)
+
+## Acrostic Analysis
+
+The AcrosticService discovers hidden messages encoded in the first or last letters of lines or words. This service implements two primary modes: First Letter (Acrostic) and Last Letter (Telestich).
+
+The service supports both line-based analysis (for poetry) and word-based analysis (for prose). It works by extracting sequences of first or last letters from text units and scanning for valid words using the CorpusDictionaryService.
+
+```mermaid
+sequenceDiagram
+participant User
+participant AcrosticsWindow
+participant AcrosticService
+participant CorpusDictionaryService
+User->>AcrosticsWindow : Open Acrostic Discovery Tool
+AcrosticsWindow->>AcrosticService : find_acrostics(text, mode)
+AcrosticService->>CorpusDictionaryService : is_word(sequence)
+CorpusDictionaryService-->>AcrosticService : Boolean result
+AcrosticService-->>AcrosticsWindow : AcrosticResult[]
+AcrosticsWindow-->>User : Display results with visualization
+```
+
+**Diagram sources**
+- [acrostic_service.py](file://src/pillars/gematria/services/acrostic_service.py#L1-L151)
+- [acrostics_window.py](file://src/pillars/gematria/ui/acrostics_window.py#L1-L423)
+
+The AcrosticsWindow provides a user interface for configuring and running acrostic analysis. Users can select between line and word modes, choose to check first letters, last letters, or both, and load a dictionary for validating discovered words.
+
+Key features of the acrostic analysis system:
+- **Modes**: First Letter (Acrostic) and Last Letter (Telestich)
+- **Scope**: Supports Line-based (poetry) and Word-based (prose) analysis
+- **Dictionary Integration**: Uses CorpusDictionaryService to validate discovered words
+- **Visualization**: Highlights the source letters in context
+
+**Section sources**
+- [acrostic_service.py](file://src/pillars/gematria/services/acrostic_service.py#L1-L151)
+- [acrostics_window.py](file://src/pillars/gematria/ui/acrostics_window.py#L1-L423)
+
+## Chiasmus Analysis
+
+The ChiasmusService scans text for symmetric gematria patterns, such as values 10-20-30-20-10. This service detects both Single Pivot (A-B-C-B-A) and Mirror (A-B-B-A) structures.
+
+The service works by tokenizing text into words, calculating gematria values for each word, and then scanning for symmetric patterns. It supports configurable recursion depth to prevent infinite loops on uniform text.
+
+```mermaid
+sequenceDiagram
+participant User
+participant ChiasticWindow
+participant ChiasmusService
+participant Calculator
+User->>ChiasticWindow : Open Chiastic TQ Finder
+ChiasticWindow->>ChiasmusService : scan_text(text, calculator, depth)
+ChiasmusService->>Calculator : calculate(word)
+Calculator-->>ChiasmusService : Gematria value
+ChiasmusService-->>ChiasticWindow : ChiasmusPattern[]
+ChiasticWindow-->>User : Display V-shaped visualization
+```
+
+**Diagram sources**
+- [chiasmus_service.py](file://src/pillars/gematria/services/chiasmus_service.py#L1-L141)
+- [chiastic_window.py](file://src/pillars/gematria/ui/chiastic_window.py#L1-L307)
+
+The ChiasticWindow provides a user interface for configuring and running chiasmus analysis. Users can select different gematria calculators (English TQ, Hebrew Standard, Hebrew Ordinal, Greek Isopsephy), set minimum depth requirements, and visualize the mirror structures.
+
+Key features of the chiasmus analysis system:
+- **Patterns**: Detects both Single Pivot (A-B-C-B-A) and Mirror (A-B-B-A) structures
+- **Depth Control**: Configurable recursion depth to prevent infinite loops on uniform text
+- **Multiple Calculators**: Supports various gematria systems
+- **Visualization**: Displays results in a V-shape or mirror format
+
+**Section sources**
+- [chiasmus_service.py](file://src/pillars/gematria/services/chiasmus_service.py#L1-L141)
+- [chiastic_window.py](file://src/pillars/gematria/ui/chiastic_window.py#L1-L307)
+
+## ELS Analysis
+
+The ELSSearchService implements Equidistant Letter Sequence ("Bible Code") search. This service supports multiple search methods including standard ELS, arithmetical sequences, and chain searches.
+
+The service supports various skip sequences: Standard (n-th letter), Triangular (1, 3, 6...), Square (1, 4, 9...), and Fibonacci skips. It also supports chain searches for finding non-equidistant chains of letters forming a target phrase.
+
+```mermaid
+sequenceDiagram
+participant User
+participant ELSSearchWindow
+participant ELSSearchService
+participant TQCalculator
+User->>ELSSearchWindow : Open The Resonant Chain
+ELSSearchWindow->>ELSSearchService : search_els(text, term, skip)
+ELSSearchService->>TQCalculator : calculate(intervening_letters)
+TQCalculator-->>ELSSearchService : Gematria values
+ELSSearchService-->>ELSSearchWindow : ELSResult[]
+ELSSearchWindow-->>User : Display grid visualization
+```
+
+**Diagram sources**
+- [els_service.py](file://src/pillars/gematria/services/els_service.py#L1-L548)
+- [els_search_window.py](file://src/pillars/gematria/ui/els_search_window.py#L1-L967)
+
+The ELSSearchWindow provides a three-pane interface for ELS searching:
+- **Left pane**: Controls for text source, grid configuration, and search parameters
+- **Center pane**: Zoomable/pannable letter grid visualization
+- **Right pane**: Clickable search results with gematria breakdown
+
+Key features of the ELS analysis system:
+- **Skip Sequences**: Supports Standard (n-th letter), Triangular (1, 3, 6...), Square (1, 4, 9...), and Fibonacci skips
+- **Chain Search**: Finds non-equidistant chains of letters forming a target phrase
+- **Intervening Text**: Extracts and analyzes the text between the ELS hits
+- **Grid Visualization**: Arranges text in configurable grids for pattern recognition
+
+**Section sources**
+- [els_service.py](file://src/pillars/gematria/services/els_service.py#L1-L548)
+- [els_search_window.py](file://src/pillars/gematria/ui/els_search_window.py#L1-L967)
 
 ## Smart Filter Service
 
@@ -154,13 +301,13 @@ The service processes texts in batches using Spacy's pipe functionality, which i
 
 ## Integration with Document Manager
 
-The Text Analysis System integrates closely with the Document Manager pillar through several key components. The TextAnalysisWindow uses the document_service_context to load documents and the verse_teacher_service_context to access verse interpretation functionality.
+The Text Analysis System integrates closely with the Document Manager pillar through several key components. The ExegesisWindow uses the document_service_context to load documents and the verse_teacher_service_context to access verse interpretation functionality.
 
-The integration follows a modular approach, with the TextAnalysisWindow creating DocumentTab instances for each document. Each DocumentTab contains a DocumentViewer for displaying text and a VerseList for showing parsed verses. The tab communicates with the main window through signals, enabling features like saving verses and opening the Holy Book Teacher.
+The integration follows a modular approach, with the ExegesisWindow creating DocumentTab instances for each document. Each DocumentTab contains a DocumentViewer for displaying text and a VerseList for showing parsed verses. The tab communicates with the main window through signals, enabling features like saving verses and opening the Holy Book Teacher.
 
 ```mermaid
 classDiagram
-class TextAnalysisWindow {
+class ExegesisWindow {
 +_setup_ui()
 +_load_documents()
 +_on_open_document()
@@ -188,14 +335,14 @@ class VerseList {
 +render_verses()
 +_on_verse_item_clicked()
 }
-TextAnalysisWindow --> DocumentTab : creates
+ExegesisWindow --> DocumentTab : creates
 DocumentTab --> DocumentViewer : contains
 DocumentTab --> VerseList : contains
 DocumentTab --> TextAnalysisService : uses
-TextAnalysisWindow --> SearchPanel : contains
-TextAnalysisWindow --> StatsPanel : contains
-TextAnalysisWindow --> SmartFilterDialog : opens
-TextAnalysisWindow --> HolyBookTeacherWindow : opens
+ExegesisWindow --> SearchPanel : contains
+ExegesisWindow --> StatsPanel : contains
+ExegesisWindow --> SmartFilterDialog : opens
+ExegesisWindow --> HolyBookTeacherWindow : opens
 ```
 
 **Diagram sources**
@@ -227,6 +374,12 @@ Key performance features include:
 
 5. **Lazy loading**: Document content is only loaded when a tab is opened, reducing memory usage and improving startup time.
 
+For the new analysis methods, additional performance considerations include:
+
+- **Acrostic Analysis**: The service processes text units efficiently by extracting letter sequences in a single pass and using substring matching algorithms to find valid words.
+- **Chiasmus Analysis**: The service uses a two-pass algorithm to detect both odd-length (A-B-C-B-A) and even-length (A-B-B-A) patterns, with configurable depth limits to prevent excessive processing.
+- **ELS Analysis**: The service optimizes grid calculations by pre-computing factors and suggesting better counts for prime numbers, improving visualization performance.
+
 For very large documents, users may experience performance bottlenecks during initial text processing. To mitigate this, the system could implement additional optimizations such as:
 
 - **Text segmentation**: Breaking large documents into smaller chunks for parallel processing
@@ -239,6 +392,9 @@ The system's architecture supports these optimizations through its modular desig
 **Section sources**
 - [text_analysis_service.py](file://src/pillars/gematria/services/text_analysis_service.py#L8-L113)
 - [smart_filter_service.py](file://src/pillars/gematria/services/smart_filter_service.py#L5-L102)
+- [acrostic_service.py](file://src/pillars/gematria/services/acrostic_service.py#L1-L151)
+- [chiasmus_service.py](file://src/pillars/gematria/services/chiasmus_service.py#L1-L141)
+- [els_service.py](file://src/pillars/gematria/services/els_service.py#L1-L548)
 
 ## Troubleshooting Guide
 
@@ -264,6 +420,14 @@ Common issues with the Text Analysis System typically relate to performance, con
 - **Symptom**: Unable to open documents or missing documents in the selector
 - **Solution**: Verify document integrity and check database connectivity; use the Document Library to verify document availability
 
+**Acrostic Analysis Issues**
+- **Symptom**: No valid words found despite apparent patterns
+- **Solution**: Load a corpus dictionary using the "Load Corpus Dictionary" button to validate discovered words
+
+**ELS Analysis Issues**
+- **Symptom**: No ELS patterns found in expected text
+- **Solution**: Try different skip values or use the "Suggest Better Counts" feature to find texts with better factorization for grid visualization
+
 The system includes logging capabilities through Python's logging module, which can help diagnose issues. Error messages are displayed to users through QMessageBox dialogs, providing clear feedback about problems and potential solutions.
 
 **Section sources**
@@ -271,10 +435,15 @@ The system includes logging capabilities through Python's logging module, which 
 - [smart_filter_service.py](file://src/pillars/gematria/services/smart_filter_service.py#L5-L102)
 - [verse_teacher_service.py](file://src/pillars/document_manager/services/verse_teacher_service.py#L20-L352)
 - [text_analysis_window.py](file://src/pillars/gematria/ui/text_analysis/main_window.py#L24-L465)
+- [acrostic_service.py](file://src/pillars/gematria/services/acrostic_service.py#L1-L151)
+- [chiasmus_service.py](file://src/pillars/gematria/services/chiasmus_service.py#L1-L141)
+- [els_service.py](file://src/pillars/gematria/services/els_service.py#L1-L548)
 
 ## Conclusion
 
-The Text Analysis System provides a comprehensive solution for combining gematria calculations with document analysis. By integrating the TextAnalysisWindow with the DocumentManager, the system enables users to analyze verses and passages using multiple gematria methods, with support for contextual interpretation through the VerseTeacherService.
+The Text Analysis System provides a comprehensive solution for combining gematria calculations with document analysis. By integrating the ExegesisWindow with the DocumentManager, the system enables users to analyze verses and passages using multiple gematria methods, with support for contextual interpretation through the VerseTeacherService.
+
+The system has been expanded to include advanced analysis capabilities for acrostics, chiasmus, and ELS patterns, providing researchers with powerful tools for discovering hidden structures in sacred texts. These new features are implemented through specialized services (AcrosticService, ChiasmusService, ELSSearchService) and dedicated UI components (AcrosticsWindow, ChiasticWindow, ELSSearchWindow).
 
 The system's modular architecture, with clear separation between UI components and services, makes it both accessible to beginners and extensible for experienced developers. Performance optimizations such as the Fast Scan algorithm and batch processing ensure efficient analysis even with large documents.
 

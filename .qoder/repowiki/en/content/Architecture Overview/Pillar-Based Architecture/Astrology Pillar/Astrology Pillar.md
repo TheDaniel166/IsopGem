@@ -16,7 +16,24 @@
 - [chart_repository.py](file://src/pillars/astrology/repositories/chart_repository.py)
 - [conversions.py](file://src/pillars/astrology/utils/conversions.py)
 - [ephemeris_provider.py](file://src/pillars/astrology/repositories/ephemeris_provider.py)
+- [progressions_service.py](file://src/pillars/astrology/services/progressions_service.py)
+- [returns_service.py](file://src/pillars/astrology/services/returns_service.py)
+- [synastry_service.py](file://src/pillars/astrology/services/synastry_service.py)
+- [chariot_service.py](file://src/pillars/astrology/services/chariot_service.py)
+- [progressions_window.py](file://src/pillars/astrology/ui/progressions_window.py)
+- [returns_window.py](file://src/pillars/astrology/ui/returns_window.py)
+- [synastry_window.py](file://src/pillars/astrology/ui/synastry_window.py)
+- [chariot_window.py](file://src/pillars/astrology/ui/chariot_window.py)
 </cite>
+
+## Update Summary
+**Changes Made**   
+- Added new sections for chariot midpoints, progressions, returns, and synastry analysis
+- Updated architecture overview to include new services and UI components
+- Added detailed component analysis for new services and windows
+- Added new workflows for progressions, returns, and synastry analysis
+- Updated UI components section to include new windows
+- Added new diagrams for new services and workflows
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -30,19 +47,23 @@
 9. [Conclusion](#conclusion)
 
 ## Introduction
-The Astrology pillar of the isopgem application serves as a comprehensive astrological analysis platform that integrates with external calculation engines OpenAstro2 and pyswisseph for precise celestial calculations. This documentation provides a detailed architectural overview of the system, focusing on its component structure, data flow, user interface elements, and integration points. The pillar enables users to generate natal charts, analyze planetary positions, visualize transit patterns, and explore specialized astrological phenomena such as the Venus Rose. The system handles complex astronomical calculations while providing intuitive interfaces for both novice and advanced users.
+The Astrology pillar of the isopgem application serves as a comprehensive astrological analysis platform that integrates with external calculation engines OpenAstro2 and pyswisseph for precise celestial calculations. This documentation provides a detailed architectural overview of the system, focusing on its component structure, data flow, user interface elements, and integration points. The pillar enables users to generate natal charts, analyze planetary positions, visualize transit patterns, and explore specialized astrological phenomena such as the Venus Rose. The system handles complex astronomical calculations while providing intuitive interfaces for both novice and advanced users. Recent enhancements have expanded the platform's capabilities to include chariot midpoints, progressions, returns, and synastry analysis with corresponding UI windows and services.
 
 ## Core Components
-The Astrology pillar consists of several key components that work together to provide a complete astrological analysis environment. The main interface is the astrology_hub, which serves as the central launcher for all astrology tools. The chart_storage_service manages the persistence of astrological charts, allowing users to save, retrieve, and organize their analyses. The chart_record model represents the core data structure for storing astrological information, including planetary positions, house cusps, and aspect data. The openastro_service acts as an integration layer between the application and the external OpenAstro2 calculation engine, handling the complex mathematical computations required for accurate astrological predictions.
+The Astrology pillar consists of several key components that work together to provide a complete astrological analysis environment. The main interface is the astrology_hub, which serves as the central launcher for all astrology tools. The chart_storage_service manages the persistence of astrological charts, allowing users to save, retrieve, and organize their analyses. The chart_record model represents the core data structure for storing astrological information, including planetary positions, house cusps, and aspect data. The openastro_service acts as an integration layer between the application and the external OpenAstro2 calculation engine, handling the complex mathematical computations required for accurate astrological predictions. New components include the chariot_service for calculating chariot midpoints, progressions_service for secondary progressions and solar arc directions, returns_service for planetary returns, and synastry_service for relationship astrology calculations.
 
 **Section sources**
 - [astrology_hub.py](file://src/pillars/astrology/ui/astrology_hub.py)
 - [chart_storage_service.py](file://src/pillars/astrology/services/chart_storage_service.py)
 - [chart_record.py](file://src/pillars/astrology/models/chart_record.py)
 - [openastro_service.py](file://src/pillars/astrology/services/openastro_service.py)
+- [progressions_service.py](file://src/pillars/astrology/services/progressions_service.py)
+- [returns_service.py](file://src/pillars/astrology/services/returns_service.py)
+- [synastry_service.py](file://src/pillars/astrology/services/synastry_service.py)
+- [chariot_service.py](file://src/pillars/astrology/services/chariot_service.py)
 
 ## Architecture Overview
-The Astrology pillar follows a layered architecture with clear separation between user interface, business logic, and data persistence layers. The system is designed around a service-oriented approach where specialized services handle specific aspects of astrological computation and data management.
+The Astrology pillar follows a layered architecture with clear separation between user interface, business logic, and data persistence layers. The system is designed around a service-oriented approach where specialized services handle specific aspects of astrological computation and data management. The enhanced architecture now includes additional services for advanced astrological techniques.
 
 ```mermaid
 graph TD
@@ -52,40 +73,67 @@ B[natal_chart_window]
 C[current_transit_window]
 D[planetary_positions_window]
 E[venus_rose_window]
+F[progressions_window]
+G[returns_window]
+H[synastry_window]
+I[chariot_window]
 end
 subgraph "Service Layer"
-F[openastro_service]
-G[chart_storage_service]
-H[location_lookup]
+J[openastro_service]
+K[chart_storage_service]
+L[location_lookup]
+M[progressions_service]
+N[returns_service]
+O[synastry_service]
+P[chariot_service]
+Q[midpoints_service]
 end
 subgraph "Data Layer"
-I[chart_repository]
-J[chart_record]
-K[preferences]
+R[chart_repository]
+S[chart_record]
+T[preferences]
+U[ephemeris_provider]
 end
 subgraph "External Systems"
-L[OpenAstro2]
-M[pyswisseph]
-N[Open-Meteo Geocoding API]
+V[OpenAstro2]
+W[pyswisseph]
+X[Open-Meteo Geocoding API]
 end
-A --> F
-B --> F
-C --> F
-D --> F
-E --> F
-B --> G
-C --> G
-D --> G
-F --> L
+A --> J
+B --> J
+C --> J
+D --> J
+E --> J
 F --> M
-H --> N
-G --> I
+F --> J
+G --> N
+G --> J
+H --> O
+H --> J
+I --> P
 I --> J
+B --> K
+C --> K
+D --> K
+F --> K
 G --> K
 H --> K
+I --> K
+J --> V
+J --> W
+L --> X
+K --> R
+R --> S
+K --> T
+L --> T
+M --> U
+N --> U
+O --> J
+P --> Q
+P --> J
 ```
 
-**Diagram sources **
+**Diagram sources**
 - [astrology_hub.py](file://src/pillars/astrology/ui/astrology_hub.py)
 - [openastro_service.py](file://src/pillars/astrology/services/openastro_service.py)
 - [chart_storage_service.py](file://src/pillars/astrology/services/chart_storage_service.py)
@@ -93,11 +141,16 @@ H --> K
 - [chart_record.py](file://src/pillars/astrology/models/chart_record.py)
 - [preferences.py](file://src/pillars/astrology/utils/preferences.py)
 - [location_lookup.py](file://src/pillars/astrology/services/location_lookup.py)
+- [progressions_service.py](file://src/pillars/astrology/services/progressions_service.py)
+- [returns_service.py](file://src/pillars/astrology/services/returns_service.py)
+- [synastry_service.py](file://src/pillars/astrology/services/synastry_service.py)
+- [chariot_service.py](file://src/pillars/astrology/services/chariot_service.py)
+- [midpoints_service.py](file://src/pillars/astrology/services/midpoints_service.py)
 
 ## Detailed Component Analysis
 
 ### astrology_hub Analysis
-The astrology_hub serves as the main interface for the Astrology pillar, providing a centralized launch point for all astrological tools. It presents users with a clean interface that includes buttons for accessing the natal chart generator, current transit viewer, planetary positions table, Neo-Aubrey Eclipse Clock, and the Cytherean Rose visualization.
+The astrology_hub serves as the main interface for the Astrology pillar, providing a centralized launch point for all astrological tools. It presents users with a clean interface that includes buttons for accessing the natal chart generator, current transit viewer, planetary positions table, Neo-Aubrey Eclipse Clock, and the Cytherean Rose visualization. The hub has been enhanced to include new buttons for the progressions, returns, synastry, and chariot analysis windows.
 
 ```mermaid
 classDiagram
@@ -110,6 +163,10 @@ class AstrologyHub {
 -_open_planetary_positions()
 -_open_neo_aubrey()
 -_open_venus_rose()
+-_open_progressions()
+-_open_returns()
+-_open_synastry()
+-_open_chariot()
 }
 class WindowManager {
 +open_window(window_id, window_class, allow_multiple)
@@ -117,11 +174,11 @@ class WindowManager {
 AstrologyHub --> WindowManager : "uses"
 ```
 
-**Diagram sources **
+**Diagram sources**
 - [astrology_hub.py](file://src/pillars/astrology/ui/astrology_hub.py)
 
 ### chart_storage_service Analysis
-The chart_storage_service provides a high-level persistence facade for natal charts, handling the storage and retrieval of astrological data. It works in conjunction with the chart_repository to manage database operations while providing a clean API for other components.
+The chart_storage_service provides a high-level persistence facade for natal charts, handling the storage and retrieval of astrological data. It works in conjunction with the chart_repository to manage database operations while providing a clean API for other components. The service has been updated to support storage and retrieval of charts used in the new analysis types.
 
 ```mermaid
 classDiagram
@@ -165,12 +222,12 @@ ChartStorageService --> SavedChartSummary : "returns"
 ChartStorageService --> LoadedChart : "returns"
 ```
 
-**Diagram sources **
+**Diagram sources**
 - [chart_storage_service.py](file://src/pillars/astrology/services/chart_storage_service.py)
 - [chart_repository.py](file://src/pillars/astrology/repositories/chart_repository.py)
 
 ### chart_record Analysis
-The chart_record module defines the SQLAlchemy models for persisting astrology charts in the database. It includes the main AstrologyChart entity along with supporting entities for categories and tags, enabling rich organization and filtering of stored charts.
+The chart_record module defines the SQLAlchemy models for persisting astrology charts in the database. It includes the main AstrologyChart entity along with supporting entities for categories and tags, enabling rich organization and filtering of stored charts. The model has been updated to support new chart types for the enhanced features.
 
 ```mermaid
 classDiagram
@@ -222,11 +279,11 @@ chart_tag_links --> AstrologyChart : "belongs to"
 chart_tag_links --> ChartTag : "belongs to"
 ```
 
-**Diagram sources **
+**Diagram sources**
 - [chart_record.py](file://src/pillars/astrology/models/chart_record.py)
 
 ### openastro_service Analysis
-The openastro_service acts as a high-level orchestration layer for OpenAstro2 usage, isolating direct dependencies on the external library while providing a clean API surface for the UI components. It handles chart generation, house system management, and error handling.
+The openastro_service acts as a high-level orchestration layer for OpenAstro2 usage, isolating direct dependencies on the external library while providing a clean API surface for the UI components. It handles chart generation, house system management, and error handling. The service serves as the foundation for the new specialized services.
 
 ```mermaid
 classDiagram
@@ -288,9 +345,131 @@ OpenAstroService --> AstrologyEvent : "converts"
 OpenAstroService --> GeoLocation : "uses"
 ```
 
-**Diagram sources **
+**Diagram sources**
 - [openastro_service.py](file://src/pillars/astrology/services/openastro_service.py)
 - [chart_models.py](file://src/pillars/astrology/models/chart_models.py)
+
+### progressions_service Analysis
+The progressions_service calculates Secondary Progressions (1 Day = 1 Year) and Solar Arc Directions. Secondary Progressions advance the natal chart by one day for each year of life, while Solar Arc Directions move all planets by the arc between the natal Sun and progressed Sun.
+
+```mermaid
+classDiagram
+class ProgressionsService {
+-_ephemeris : EphemerisProvider
+-_openastro : OpenAstroService
++__init__(openastro_service)
++calculate_secondary_progression(natal_req, target_date)
++calculate_solar_arc(natal_req, target_date)
+}
+class EphemerisProvider {
++get_instance()
++get_geocentric_ecliptic_position(body_name, timestamp)
++get_extended_data(body_name, timestamp)
+}
+class OpenAstroService {
++generate_chart(request)
+}
+ProgressionsService --> EphemerisProvider : "uses"
+ProgressionsService --> OpenAstroService : "uses"
+```
+
+**Diagram sources**
+- [progressions_service.py](file://src/pillars/astrology/services/progressions_service.py)
+- [ephemeris_provider.py](file://src/pillars/astrology/repositories/ephemeris_provider.py)
+- [openastro_service.py](file://src/pillars/astrology/services/openastro_service.py)
+
+### returns_service Analysis
+The returns_service calculates the exact moment when a planet returns to its natal longitude, such as Solar Returns (annual birthday charts) and Lunar Returns (monthly mood indicators). The service uses iterative solving to find the precise return time.
+
+```mermaid
+classDiagram
+class ReturnsService {
+-_ephemeris : EphemerisProvider
++__init__()
++calculate_return(natal_event, target_year, body_name, return_count)
++_estimate_start_time(natal_dt, target_year, body_name, count)
++_solve_exact_time(body_name, target_lon, start_estimate)
++_shortest_distance(a, b)
+}
+class EphemerisProvider {
++get_instance()
++get_geocentric_ecliptic_position(body_name, timestamp)
++get_extended_data(body_name, timestamp)
+}
+ReturnsService --> EphemerisProvider : "uses"
+```
+
+**Diagram sources**
+- [returns_service.py](file://src/pillars/astrology/services/returns_service.py)
+- [ephemeris_provider.py](file://src/pillars/astrology/repositories/ephemeris_provider.py)
+
+### synastry_service Analysis
+The synastry_service calculates relationship charts including Synastry (bi-wheel comparison), Composite (midpoint of corresponding planets), and Davison (chart cast for time/space midpoint). The service provides the mathematical foundation for relationship astrology.
+
+```mermaid
+classDiagram
+class SynastryService {
+-_openastro : OpenAstroService
++__init__(openastro_service)
++generate_chart(event)
++calculate_composite(result_a, result_b)
++calculate_davison(event_a, event_b)
+}
+class DavisonInfo {
++midpoint_time : datetime
++midpoint_latitude : float
++midpoint_longitude : float
+}
+class CompositeResult {
++planets : List[PlanetPosition]
++houses : List[HousePosition]
++julian_day : Optional[float]
+}
+class DavisonResult {
++chart : ChartResult
++info : DavisonInfo
+}
+SynastryService --> OpenAstroService : "uses"
+```
+
+**Diagram sources**
+- [synastry_service.py](file://src/pillars/astrology/services/synastry_service.py)
+- [openastro_service.py](file://src/pillars/astrology/services/openastro_service.py)
+
+### chariot_service Analysis
+The chariot_service calculates the Chariot Midpoints System, synthesizing planetary midpoints into Major Arcana correspondences, grouping them into functional Trios, deriving Axles of Will, and computing the ultimate Chariot Point. The service builds upon midpoints_service and maat_symbols_service.
+
+```mermaid
+classDiagram
+class ChariotService {
++midpoints_service : MidpointsService
++maat_service : MaatSymbolsService
++_definitions : Optional[Dict]
++__init__()
++_load_definitions()
++_degree_to_sign(longitude)
++_calculate_mean_longitude(longitudes)
++get_chariot_midpoints(planet_positions)
++calculate_axles(midpoints)
++calculate_chariot_point(axles)
++detect_fateful_positions(midpoints, axles, chariot_point)
++generate_chariot_report(chart)
++generate_from_positions(planet_positions)
+}
+class MidpointsService {
++calculate_midpoints(planet_positions, classic_only)
+}
+class MaatSymbolsService {
++get_symbol(degree)
+}
+ChariotService --> MidpointsService : "uses"
+ChariotService --> MaatSymbolsService : "uses"
+```
+
+**Diagram sources**
+- [chariot_service.py](file://src/pillars/astrology/services/chariot_service.py)
+- [midpoints_service.py](file://src/pillars/astrology/services/midpoints_service.py)
+- [maat_symbols_service.py](file://src/pillars/astrology/services/maat_symbols_service.py)
 
 ## Data Flow and Workflows
 
@@ -320,7 +499,7 @@ Storage-->>UI : Confirmation
 UI->>User : Display success message
 ```
 
-**Diagram sources **
+**Diagram sources**
 - [natal_chart_window.py](file://src/pillars/astrology/ui/natal_chart_window.py)
 - [openastro_service.py](file://src/pillars/astrology/services/openastro_service.py)
 - [chart_storage_service.py](file://src/pillars/astrology/services/chart_storage_service.py)
@@ -349,10 +528,133 @@ UI->>UI : Render transit planetary positions
 UI->>User : Display transit chart with current planetary positions
 ```
 
-**Diagram sources **
+**Diagram sources**
 - [current_transit_window.py](file://src/pillars/astrology/ui/current_transit_window.py)
 - [openastro_service.py](file://src/pillars/astrology/services/openastro_service.py)
 - [preferences.py](file://src/pillars/astrology/utils/preferences.py)
+
+### Progressions Workflow
+The progressions workflow allows users to calculate Secondary Progressions or Solar Arc Directions for a natal chart at a target date, providing insights into personal development and timing of events.
+
+```mermaid
+sequenceDiagram
+participant User as "User"
+participant UI as "progressions_window"
+participant Service as "progressions_service"
+participant Engine as "OpenAstro2"
+participant Storage as "chart_storage_service"
+User->>UI : Enter natal data and target date
+UI->>Service : calculate_secondary_progression() or calculate_solar_arc()
+Service->>Engine : Generate natal chart
+Engine-->>Service : Return natal chart data
+Service->>Engine : Calculate progressed chart
+Engine-->>Service : Return progressed chart data
+Service-->>UI : Return both charts
+UI->>UI : Render bi-wheel comparison
+User->>UI : Click "Save Chart"
+UI->>Storage : save_chart()
+Storage-->>UI : Confirmation
+UI->>User : Display success message
+```
+
+**Diagram sources**
+- [progressions_window.py](file://src/pillars/astrology/ui/progressions_window.py)
+- [progressions_service.py](file://src/pillars/astrology/services/progressions_service.py)
+- [openastro_service.py](file://src/pillars/astrology/services/openastro_service.py)
+- [chart_storage_service.py](file://src/pillars/astrology/services/chart_storage_service.py)
+
+### Returns Workflow
+The returns workflow calculates the exact time when a planet returns to its natal position, creating a chart for that moment which provides insights into the themes of the coming year (Solar Return) or month (Lunar Return).
+
+```mermaid
+sequenceDiagram
+participant User as "User"
+participant UI as "returns_window"
+participant Service as "returns_service"
+participant Engine as "OpenAstro2"
+participant Ephemeris as "EphemerisProvider"
+User->>UI : Enter natal data and target year
+UI->>Service : calculate_return()
+Service->>Ephemeris : Get natal longitude
+Ephemeris-->>Service : Return natal longitude
+Service->>Service : Estimate start time
+Service->>Ephemeris : Solve for exact return time
+Ephemeris-->>Service : Return exact time
+Service->>Engine : Generate chart for return time
+Engine-->>Service : Return chart data
+Service-->>UI : Return chart result
+UI->>UI : Render return chart
+UI->>User : Display return chart with planetary positions
+```
+
+**Diagram sources**
+- [returns_window.py](file://src/pillars/astrology/ui/returns_window.py)
+- [returns_service.py](file://src/pillars/astrology/services/returns_service.py)
+- [ephemeris_provider.py](file://src/pillars/astrology/repositories/ephemeris_provider.py)
+- [openastro_service.py](file://src/pillars/astrology/services/openastro_service.py)
+
+### Synastry Analysis Workflow
+The synastry analysis workflow enables users to compare two charts for relationship analysis, supporting three different models: Synastry (bi-wheel), Composite (midpoint chart), and Davison (time/space midpoint chart).
+
+```mermaid
+sequenceDiagram
+participant User as "User"
+participant UI as "synastry_window"
+participant Service as "synastry_service"
+participant Engine as "OpenAstro2"
+participant Storage as "chart_storage_service"
+User->>UI : Enter data for Person A and Person B
+UI->>Service : generate_chart() for both persons
+Service->>Engine : Generate chart for Person A
+Engine-->>Service : Return chart A
+Service->>Engine : Generate chart for Person B
+Engine-->>Service : Return chart B
+Service->>Service : Calculate composite or Davison chart
+Service-->>UI : Return all chart data
+UI->>UI : Render selected chart type
+User->>UI : Switch between Aspects, Midpoints, and Analysis tabs
+UI->>UI : Display cross-chart analysis
+```
+
+**Diagram sources**
+- [synastry_window.py](file://src/pillars/astrology/ui/synastry_window.py)
+- [synastry_service.py](file://src/pillars/astrology/services/synastry_service.py)
+- [openastro_service.py](file://src/pillars/astrology/services/openastro_service.py)
+
+### Chariot Analysis Workflow
+The chariot analysis workflow calculates the complete Chariot Midpoints system from a natal chart, including the 21 midpoints, 7 axles, and the Chariot Point, providing a synthesis of the soul's will and purpose.
+
+```mermaid
+sequenceDiagram
+participant User as "User"
+participant UI as "chariot_window"
+participant Service as "chariot_service"
+participant SubService as "midpoints_service"
+participant SymbolService as "maat_symbols_service"
+participant Engine as "OpenAstro2"
+participant Storage as "chart_storage_service"
+User->>UI : Load natal chart
+UI->>Storage : load_chart()
+Storage-->>UI : Return chart data
+UI->>Service : generate_chariot_report()
+Service->>SubService : calculate_midpoints()
+SubService-->>Service : Return midpoints
+Service->>Service : Group midpoints into trios
+Service->>Service : Calculate axles and chariot point
+Service->>SymbolService : get_symbol() for each position
+SymbolService-->>Service : Return degree symbols
+Service-->>UI : Return complete chariot report
+UI->>UI : Populate tree, summary, and symbol panels
+UI->>User : Display complete chariot analysis
+```
+
+**Diagram sources**
+- [chariot_window.py](file://src/pillars/astrology/ui/chariot_window.py)
+- [chariot_service.py](file://src/pillars/astrology/services/chariot_service.py)
+- [midpoints_service.py](file://src/pillars/astrology/services/midpoints_service.py)
+- [maat_symbols_service.py](file://src/pillars/astrology/services/maat_symbols_service.py)
+- [openastro_service.py](file://src/pillars/astrology/services/openastro_service.py)
+- [chart_storage_service.py](file://src/pillars/astrology/services/chart_storage_service.py)
 
 ## UI Components
 
@@ -392,11 +694,35 @@ Animate --> |Stop| End([Animation Stopped])
 Update --> |Reset| Start
 ```
 
-**Diagram sources **
+**Diagram sources**
 - [venus_rose_window.py](file://src/pillars/astrology/ui/venus_rose_window.py)
 
 **Section sources**
 - [venus_rose_window.py](file://src/pillars/astrology/ui/venus_rose_window.py)
+
+### Progressions Window
+The progressions window provides a focused interface for calculating Secondary Progressions and Solar Arc Directions. Users can input natal data and a target date to generate progressed charts, with options to display the results as a bi-wheel comparison with the natal chart.
+
+**Section sources**
+- [progressions_window.py](file://src/pillars/astrology/ui/progressions_window.py)
+
+### Returns Window
+The returns window enables users to calculate planetary returns such as Solar Returns and Lunar Returns. The interface allows for relocation of the return chart to a different location and provides precise calculation of the return moment.
+
+**Section sources**
+- [returns_window.py](file://src/pillars/astrology/ui/returns_window.py)
+
+### Synastry Window
+The synastry window provides a comprehensive interface for relationship astrology analysis. Users can input data for two individuals and choose between three analysis models: Synastry (bi-wheel), Composite (midpoint chart), and Davison (time/space midpoint chart). The window includes multiple tabs for different aspects of the analysis.
+
+**Section sources**
+- [synastry_window.py](file://src/pillars/astrology/ui/synastry_window.py)
+
+### Chariot Window
+The chariot window displays the complete Chariot Midpoints analysis, showing the 21 midpoints organized by their 7 Trios, the calculated Axles, the Chariot Point, and the Egyptian degree symbols from the Sacred Landscape. The interface features a tri-panel layout with a tree view, summary information, and degree symbol display.
+
+**Section sources**
+- [chariot_window.py](file://src/pillars/astrology/ui/chariot_window.py)
 
 ## Integration with Preferences System
 The Astrology pillar integrates with a preferences system that allows users to save and recall their default settings, particularly their default location for transit calculations. This system uses JSON-based persistence to store user preferences across sessions.
@@ -422,9 +748,13 @@ AstrologyPreferences --> DefaultLocation : "stores"
 natal_chart_window --> AstrologyPreferences : "uses"
 current_transit_window --> AstrologyPreferences : "uses"
 planetary_positions_window --> AstrologyPreferences : "uses"
+progressions_window --> AstrologyPreferences : "uses"
+returns_window --> AstrologyPreferences : "uses"
+synastry_window --> AstrologyPreferences : "uses"
+chariot_window --> AstrologyPreferences : "uses"
 ```
 
-**Diagram sources **
+**Diagram sources**
 - [preferences.py](file://src/pillars/astrology/utils/preferences.py)
 
 **Section sources**
@@ -432,9 +762,13 @@ planetary_positions_window --> AstrologyPreferences : "uses"
 - [natal_chart_window.py](file://src/pillars/astrology/ui/natal_chart_window.py)
 - [current_transit_window.py](file://src/pillars/astrology/ui/current_transit_window.py)
 - [planetary_positions_window.py](file://src/pillars/astrology/ui/planetary_positions_window.py)
+- [progressions_window.py](file://src/pillars/astrology/ui/progressions_window.py)
+- [returns_window.py](file://src/pillars/astrology/ui/returns_window.py)
+- [synastry_window.py](file://src/pillars/astrology/ui/synastry_window.py)
+- [chariot_window.py](file://src/pillars/astrology/ui/chariot_window.py)
 
 ## Connection to Esoteric Analysis
-The Astrology pillar connects to broader esoteric analysis through planetary correspondences in gematria and TQ systems. These connections are facilitated through shared data models and integration points that allow astrological data to be used in conjunction with other esoteric calculations.
+The Astrology pillar connects to broader esoteric analysis through planetary correspondences in gematria and TQ systems. These connections are facilitated through shared data models and integration points that allow astrological data to be used in conjunction with other esoteric calculations. The enhanced features deepen these connections, particularly through the Chariot system's integration with Egyptian degree symbols and the synastry analysis's connections to relationship dynamics in gematria.
 
 ```mermaid
 graph TD
@@ -449,13 +783,21 @@ A --> G[Zodiacal Signs]
 G --> D
 A --> H[Aspect Patterns]
 H --> D
+A --> I[Chariot Midpoints]
+I --> D
+A --> J[Synastry Aspects]
+J --> D
+A --> K[Progressions]
+K --> D
+A --> L[Returns]
+L --> D
 ```
 
-**Diagram sources **
+**Diagram sources**
 - [astrology_hub.py](file://src/pillars/astrology/ui/astrology_hub.py)
 
 **Section sources**
 - [astrology_hub.py](file://src/pillars/astrology/ui/astrology_hub.py)
 
 ## Conclusion
-The Astrology pillar of the isopgem application provides a robust and comprehensive platform for astrological analysis, integrating external calculation engines OpenAstro2 and pyswisseph to deliver accurate celestial calculations. The system's architecture features a clear separation of concerns with well-defined components for user interface, service logic, and data persistence. Key features include natal chart generation, transit analysis, planetary position tracking, and specialized visualizations like the Venus Rose. The integration with user preferences allows for personalized settings, while the connection to broader esoteric analysis systems enables holistic interpretation of astrological data. The pillar demonstrates a sophisticated approach to handling complex astronomical calculations while maintaining an accessible user interface for both novice and advanced practitioners.
+The Astrology pillar of the isopgem application provides a robust and comprehensive platform for astrological analysis, integrating external calculation engines OpenAstro2 and pyswisseph to deliver accurate celestial calculations. The system's architecture features a clear separation of concerns with well-defined components for user interface, service logic, and data persistence. Key features include natal chart generation, transit analysis, planetary position tracking, and specialized visualizations like the Venus Rose. Recent enhancements have significantly expanded the platform's capabilities with the addition of chariot midpoints, progressions, returns, and synastry analysis, each with corresponding UI windows and services. The integration with user preferences allows for personalized settings, while the connection to broader esoteric analysis systems enables holistic interpretation of astrological data. The pillar demonstrates a sophisticated approach to handling complex astronomical calculations while maintaining an accessible user interface for both novice and advanced practitioners.

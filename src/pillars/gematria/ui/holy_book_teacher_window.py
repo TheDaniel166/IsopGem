@@ -21,7 +21,7 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from PyQt6.QtWidgets import QHeaderView
+from PyQt6.QtWidgets import QHeaderView, QProgressDialog
 from PyQt6.QtWidgets import QMenu, QInputDialog
 from PyQt6.QtGui import QAction, QKeySequence
 
@@ -185,6 +185,26 @@ class HolyBookTeacherWindow(QMainWindow):
         self.history_view.setMaximumHeight(120)
         layout.addWidget(self.history_view)
         button_row.addWidget(self.save_btn)
+        
+        # Index to Concordance button
+        self.index_btn = QPushButton("📚 Index to Concordance")
+        self.index_btn.setToolTip("Index all words from curated verses into the TQ Lexicon concordance")
+        self.index_btn.setStyleSheet("""
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #059669, stop:1 #047857);
+                color: white;
+                border: 1px solid #065f46;
+                border-radius: 4px;
+                padding: 6px 12px;
+                font-weight: 600;
+            }
+            QPushButton:hover {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #047857, stop:1 #059669);
+            }
+        """)
+        self.index_btn.clicked.connect(self._index_to_concordance)
+        button_row.addWidget(self.index_btn)
+        
         close_btn = QPushButton("Close")
         close_btn.clicked.connect(self.close)
         button_row.addWidget(close_btn)
@@ -713,6 +733,91 @@ class HolyBookTeacherWindow(QMainWindow):
         if self._redo_stack:
             self.history_view.addItem(f"---- Redo available: {len(self._redo_stack)} ----")
 
+    # --- Concordance Indexing ---
+    
+    def _index_to_concordance(self):
+        """Index all words from curated verses to the TQ Lexicon concordance."""
+        if not self._current_payload or not self._current_payload.get('verses'):
+            QMessageBox.warning(
+                self, 
+                "No Verses", 
+                "No curated verses available. Save verses first before indexing."
+            )
+            return
+        
+        # Check if already indexed
+        from pillars.tq_lexicon.services.key_database import KeyDatabase
+        db = KeyDatabase()
+        already_indexed = db.is_document_indexed(self.document_id)
+        
+        reindex = False
+        if already_indexed:
+            reply = QMessageBox.question(
+                self,
+                "Already Indexed",
+                f"'{self.document_title}' is already indexed.\n\n"
+                "Do you want to re-index? This will clear existing occurrences for this document.",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+            if reply != QMessageBox.StandardButton.Yes:
+                return
+            reindex = True
+        
+        # Create progress dialog
+        verses = self._current_payload.get('verses', [])
+        self.progress_dlg = QProgressDialog(
+            f"Indexing {len(verses)} verses...",
+            "Cancel",
+            0,
+            len(verses),
+            self
+        )
+        self.progress_dlg.setWindowTitle("Indexing to Concordance")
+        self.progress_dlg.setWindowModality(Qt.WindowModality.WindowModal)
+        self.progress_dlg.setMinimumDuration(0)
+        self.progress_dlg.setValue(0)
+        
+        # Start worker
+        self.index_worker = ConcordanceIndexWorker(self.document_id, reindex=reindex)
+        self.index_worker.progress.connect(self._on_index_progress)
+        self.index_worker.finished.connect(self._on_index_finished)
+        self.index_worker.error.connect(self._on_index_error)
+        self.index_worker.start()
+        
+    def _on_index_progress(self, current, total, message):
+        if hasattr(self, 'progress_dlg') and self.progress_dlg:
+            self.progress_dlg.setMaximum(total)
+            self.progress_dlg.setValue(current)
+            self.progress_dlg.setLabelText(message)
+            
+    def _on_index_finished(self, result):
+        if hasattr(self, 'progress_dlg') and self.progress_dlg:
+            self.progress_dlg.close()
+        
+        # Show results
+        if result.errors:
+            error_summary = "\n".join(result.errors[:5])
+            if len(result.errors) > 5:
+                error_summary += f"\n... and {len(result.errors) - 5} more errors"
+        else:
+            error_summary = "No errors."
+        
+        QMessageBox.information(
+            self,
+            "Indexing Complete",
+            f"Concordance indexing complete for '{result.document_title}':\n\n"
+            f"• Verses processed: {result.total_verses}\n"
+            f"• Words indexed: {result.total_words}\n"
+            f"• New keys added: {result.new_keys_added}\n"
+            f"• Occurrences recorded: {result.occurrences_added}\n\n"
+            f"{error_summary}"
+        )
+        
+    def _on_index_error(self, error_msg):
+        if hasattr(self, 'progress_dlg') and self.progress_dlg:
+            self.progress_dlg.close()
+        QMessageBox.critical(self, "Indexing Error", f"Failed to index document:\n{error_msg}")
+
 
 class VerseEditorDialog(QDialog):
     """Standalone dialog for editing a verse and invoking common tools from HolyBookTeacherWindow."""
@@ -807,3 +912,35 @@ class VerseEditorDialog(QDialog):
 
     def _on_jump(self):
         self.teacher._jump_to_document(self.row)
+
+
+# --- Concordance Indexing Worker ---
+
+from PyQt6.QtCore import QThread, pyqtSignal as Signal
+
+class ConcordanceIndexWorker(QThread):
+    """Background worker for indexing a document to the concordance."""
+    progress = Signal(int, int, str)
+    finished = Signal(object)  # IndexingResult
+    error = Signal(str)
+    
+    def __init__(self, document_id: int, reindex: bool = False):
+        super().__init__()
+        self.document_id = document_id
+        self.reindex = reindex
+        
+    def run(self):
+        try:
+            from pillars.tq_lexicon.services.concordance_indexer_service import ConcordanceIndexerService
+            indexer = ConcordanceIndexerService()
+            result = indexer.index_from_verse_teacher(
+                document_id=self.document_id,
+                progress_callback=self._emit_progress,
+                reindex=self.reindex
+            )
+            self.finished.emit(result)
+        except Exception as e:
+            self.error.emit(str(e))
+            
+    def _emit_progress(self, current, total, message):
+        self.progress.emit(current, total, message)

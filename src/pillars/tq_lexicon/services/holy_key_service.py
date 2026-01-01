@@ -2,7 +2,7 @@ import re
 import logging
 from typing import List, Dict, Set, Optional, Tuple
 from .key_database import KeyDatabase
-from shared.services.gematria.tq_calculator import TQPositionCalculator
+from shared.services.gematria.tq_calculator import TQGematriaCalculator
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +15,7 @@ class HolyKeyService:
     
     def __init__(self, db_path: Optional[str] = None):
         self.db = KeyDatabase(db_path)
-        self.calculator = TQPositionCalculator() 
+        self.calculator = TQGematriaCalculator()
 
     def scan_text(self, text: str) -> List[str]:
         """
@@ -53,27 +53,55 @@ class HolyKeyService:
             
         return sorted(list(candidates))
 
-    def approve_candidate(self, word: str) -> int:
+    def approve_candidate(self, word: str, source: Optional[str] = None) -> int:
         """
         Approve a word for the Master Key.
-        Calculates its TQ value and adds it to the DB.
-        Returns the new Key ID.
+        Calculates TQ value, adds to Master Key,
+        and optionally adds a default 'Standard' definition with the Source.
         """
         # Calculate TQ Value
-        # value, breakdown = self.calculator.calculate(word)
-        # TQPositionCalculator.calculate returns (value, breakdown) or just value depending on implementation
-        # Let's check calculate method signature
         result = self.calculator.calculate(word)
         if isinstance(result, tuple):
              val = result[0]
         else:
              val = result
              
-        return self.db.add_word(word, val)
+        new_id = self.db.add_word(word, val)
+        
+        # If source provided, record it as an Occurrence (Concordance)
+        if source:
+            self.db.add_occurrence(
+                key_id=new_id,
+                doc_path=source,
+                line=0,
+                context="Imported from batch scan"
+            )
+            # Do NOT create a dummy definition per user request
+            
+        return new_id
 
     def ignore_candidate(self, word: str):
         """Add word to the Ignore (Opt-out) list."""
         self.db.ignore_word(word)
+
+    def get_undefined_keys(self) -> List[tuple]:
+        """
+        Return list of (id, word) for keys that have NO definitions.
+        Used for batch enrichment.
+        """
+        conn = self.db._get_conn()
+        cursor = conn.cursor()
+        
+        # Subquery to find keys not in definitions table
+        cursor.execute("""
+            SELECT id, word FROM master_key 
+            WHERE is_active = 1 
+            AND id NOT IN (SELECT DISTINCT key_id FROM definitions)
+        """)
+        
+        rows = cursor.fetchall()
+        conn.close()
+        return [(row['id'], row['word']) for row in rows]
 
     def get_lexicon_stats(self) -> Dict[str, int]:
         """Return stats for UI dashboard."""

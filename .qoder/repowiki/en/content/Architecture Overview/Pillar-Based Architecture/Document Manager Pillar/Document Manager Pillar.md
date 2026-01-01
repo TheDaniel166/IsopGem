@@ -9,14 +9,20 @@
 - [document_editor_window.py](file://src/pillars/document_manager/ui/document_editor_window.py)
 - [search_repository.py](file://src/pillars/document_manager/repositories/search_repository.py)
 - [rich_text_editor.py](file://src/pillars/document_manager/ui/rich_text_editor.py)
-- [mindscape_service.py](file://src/pillars/document_manager/services/mindscape_service.py)
-- [mindscape.py](file://src/pillars/document_manager/models/mindscape.py)
-- [document_repository.py](file://src/pillars/document_manager/repositories/document_repository.py)
-- [document_verse_repository.py](file://src/pillars/document_manager/repositories/document_verse_repository.py)
-- [mindscape_view.py](file://src/pillars/document_manager/ui/mindscape_view.py)
-- [parsers.py](file://src/pillars/document_manager/utils/parsers.py)
-- [verse_teacher_service.py](file://src/pillars/document_manager/services/verse_teacher_service.py)
+- [notebook.py](file://src/pillars/document_manager/models/notebook.py)
+- [notebook_service.py](file://src/pillars/document_manager/services/notebook_service.py)
+- [mindscape_tree.py](file://src/pillars/document_manager/ui/mindscape_tree.py)
+- [infinite_canvas.py](file://src/pillars/document_manager/ui/canvas/infinite_canvas.py)
+- [note_container.py](file://src/pillars/document_manager/ui/canvas/note_container.py)
 </cite>
+
+## Update Summary
+**Changes Made**   
+- Updated documentation to reflect new features: infinite canvas, notebooks, and mindscape tree visualization
+- Removed deprecated mindscape components and replaced with new notebook-based organization system
+- Added detailed sections for new components: infinite canvas, notebook service, and mindscape tree
+- Updated architecture overview to reflect new component relationships
+- Removed outdated mindscape concept section and replaced with notebook hierarchy explanation
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -24,34 +30,38 @@
 3. [Architecture Overview](#architecture-overview)
 4. [Detailed Component Analysis](#detailed-component-analysis)
 5. [Document Ingestion and Search](#document-ingestion-and-search)
-6. [Mindscape Concept](#mindscape-concept)
+6. [Notebook Hierarchy System](#notebook-hierarchy-system)
 7. [Holy Book Teacher Integration](#holy-book-teacher-integration)
 8. [Data Persistence Strategy](#data-persistence-strategy)
 9. [Conclusion](#conclusion)
 
 ## Introduction
 
-The Document Manager pillar of the isopgem application serves as a sophisticated document research environment designed for advanced text analysis, annotation, and knowledge organization. This comprehensive system provides researchers with powerful tools for document ingestion, full-text search, metadata visualization, and spatial organization through its innovative mindscape concept. The architecture is built around a central hub interface that orchestrates specialized components for document management, rich text editing, and relationship mapping.
+The Document Manager pillar of the isopgem application serves as a sophisticated document research environment designed for advanced text analysis, annotation, and knowledge organization. This comprehensive system provides researchers with powerful tools for document ingestion, full-text search, metadata visualization, and spatial organization through its innovative notebook hierarchy system. The architecture is built around a central hub interface that orchestrates specialized components for document management, rich text editing, and relationship mapping.
 
 The system supports verse-level tagging and annotation, making it particularly valuable for textual analysis of religious and esoteric works. Its integration with the Holy Book teacher functionality enables sophisticated gematria analysis of document content. The document manager implements a robust full-text search capability using the Whoosh library, combined with a metadata graph visualization system that allows users to explore connections between documents and concepts in an intuitive spatial interface.
 
+The recent update introduces three major new features: an infinite canvas workspace for free-form note organization, a notebook-based hierarchical organization system, and a mindscape tree visualization for navigating the document hierarchy. These features replace the deprecated mindscape components, providing a more structured and intuitive way to organize research materials.
+
 **Section sources**
-- [document_manager_hub.py](file://src/pillars/document_manager/ui/document_manager_hub.py#L1-L205)
+- [document_manager_hub.py](file://src/pillars/document_manager/ui/document_manager_hub.py#L1-L280)
 
 ## Core Components
 
-The Document Manager pillar is composed of several key components that work together to provide a comprehensive document research environment. At the architectural center is the `document_manager_hub`, which serves as the primary interface for accessing all document management tools. This hub provides launch points for the document editor, document library, search functionality, and the mindscape visualization system.
+The Document Manager pillar is composed of several key components that work together to provide a comprehensive document research environment. At the architectural center is the `document_manager_hub`, which serves as the primary interface for accessing all document management tools. This hub provides launch points for the document editor, document library, search functionality, and the new notebook-based organization system.
 
 The `document_service` handles the core business logic for document operations, including creation, retrieval, updating, and deletion of documents. It coordinates between the user interface components and the underlying data persistence layers. The data model is represented by two primary classes: `document` for the main document content and metadata, and `document_verse` for verse-level annotations and tagging.
 
-The user interface features specialized components including the `document_editor_window` for rich text editing, `graph_view` for metadata visualization, and `rich_text_editor` for formatted text manipulation. These UI components are designed to work seamlessly with the backend services to provide a cohesive user experience for document research and analysis.
+The user interface features specialized components including the `document_editor_window` for rich text editing, `infinite_canvas` for free-form workspace organization, `mindscape_tree` for hierarchical navigation, and `rich_text_editor` for formatted text manipulation. These UI components are designed to work seamlessly with the backend services to provide a cohesive user experience for document research and analysis.
 
 **Section sources**
-- [document_manager_hub.py](file://src/pillars/document_manager/ui/document_manager_hub.py#L1-L205)
-- [document_service.py](file://src/pillars/document_manager/services/document_service.py#L1-L257)
-- [document.py](file://src/pillars/document_manager/models/document.py#L1-L47)
-- [document_verse.py](file://src/pillars/document_manager/models/document_verse.py#L1-L104)
-- [document_editor_window.py](file://src/pillars/document_manager/ui/document_editor_window.py#L1-L329)
+- [document_manager_hub.py](file://src/pillars/document_manager/ui/document_manager_hub.py#L1-L280)
+- [document_service.py](file://src/pillars/document_manager/services/document_service.py#L1-L2)
+- [document.py](file://src/pillars/document_manager/models/document.py#L1-L2)
+- [document_verse.py](file://src/pillars/document_manager/models/document_verse.py#L1-L2)
+- [document_editor_window.py](file://src/pillars/document_manager/ui/document_editor_window.py#L1-L2)
+- [infinite_canvas.py](file://src/pillars/document_manager/ui/canvas/infinite_canvas.py#L1-L344)
+- [mindscape_tree.py](file://src/pillars/document_manager/ui/mindscape_tree.py#L1-L432)
 
 ## Architecture Overview
 
@@ -64,25 +74,24 @@ Hub[DocumentManagerHub]
 Editor[DocumentEditorWindow]
 Library[DocumentLibrary]
 Search[DocumentSearchWindow]
-Mindscape[MindscapeWindow]
+Canvas[InfiniteCanvas]
+Tree[MindscapeTree]
 end
 subgraph "Services"
 DocService[DocumentService]
-MindService[MindscapeService]
+NotebookService[NotebookService]
 VerseService[VerseTeacherService]
 end
 subgraph "Repositories"
 DocRepo[DocumentRepository]
 VerseRepo[DocumentVerseRepository]
 SearchRepo[DocumentSearchRepository]
-MindNodeRepo[MindNodeRepository]
-MindEdgeRepo[MindEdgeRepository]
 end
 subgraph "Data Models"
 DocModel[Document]
 VerseModel[DocumentVerse]
-MindNode[MindNode]
-MindEdge[MindEdge]
+NotebookModel[Notebook]
+SectionModel[Section]
 end
 subgraph "External Systems"
 Whoosh[Whoosh Search]
@@ -92,42 +101,40 @@ Hub --> DocService
 Editor --> DocService
 Library --> DocService
 Search --> DocService
-Mindscape --> MindService
+Canvas --> DocService
+Tree --> NotebookService
 DocService --> DocRepo
 DocService --> VerseRepo
 DocService --> SearchRepo
-MindService --> MindNodeRepo
-MindService --> MindEdgeRepo
+NotebookService --> DocRepo
+NotebookService --> DocModel
 VerseService --> DocRepo
 VerseService --> VerseRepo
 DocRepo --> DocModel
 VerseRepo --> VerseModel
-MindNodeRepo --> MindNode
-MindEdgeRepo --> MindEdge
 DocRepo --> SQLite
 VerseRepo --> SQLite
-MindNodeRepo --> SQLite
-MindEdgeRepo --> SQLite
-SearchRepo --> Whoosh
 DocModel --> SQLite
 VerseModel --> SQLite
-MindNode --> SQLite
-MindEdge --> SQLite
+NotebookModel --> SQLite
+SectionModel --> SQLite
+DocModel --> SQLite
+DocRepo --> Whoosh
 ```
 
-**Diagram sources **
-- [document_manager_hub.py](file://src/pillars/document_manager/ui/document_manager_hub.py#L1-L205)
-- [document_service.py](file://src/pillars/document_manager/services/document_service.py#L1-L257)
-- [document_repository.py](file://src/pillars/document_manager/repositories/document_repository.py#L1-L86)
-- [document_verse_repository.py](file://src/pillars/document_manager/repositories/document_verse_repository.py#L1-L90)
-- [search_repository.py](file://src/pillars/document_manager/repositories/search_repository.py#L1-L201)
-- [mindscape_service.py](file://src/pillars/document_manager/services/mindscape_service.py#L1-L310)
-- [mindscape.py](file://src/pillars/document_manager/models/mindscape.py#L1-L52)
+**Diagram sources**
+- [document_manager_hub.py](file://src/pillars/document_manager/ui/document_manager_hub.py#L1-L280)
+- [document_service.py](file://src/pillars/document_manager/services/document_service.py#L1-L2)
+- [document_repository.py](file://src/pillars/document_manager/repositories/document_repository.py#L1-L2)
+- [document_verse_repository.py](file://src/pillars/document_manager/repositories/document_verse_repository.py#L1-L2)
+- [search_repository.py](file://src/pillars/document_manager/repositories/search_repository.py#L1-L2)
+- [notebook_service.py](file://src/pillars/document_manager/services/notebook_service.py#L1-L2)
+- [notebook.py](file://src/pillars/document_manager/models/notebook.py#L1-L2)
 
 ## Detailed Component Analysis
 
 ### Document Manager Hub Analysis
-The `DocumentManagerHub` serves as the central interface for the Document Manager pillar, providing users with access to all document management tools through a clean, intuitive interface. The hub is implemented as a QWidget with a vertical layout containing buttons for key functionality: creating new documents, accessing the document library, searching documents, and opening the mindscape visualization.
+The `DocumentManagerHub` serves as the central interface for the Document Manager pillar, providing users with access to all document management tools through a clean, intuitive interface. The hub is implemented as a QWidget with a vertical layout containing buttons for key functionality: creating new documents, accessing the document library, searching documents, and opening the infinite canvas workspace.
 
 ```mermaid
 classDiagram
@@ -137,7 +144,9 @@ class DocumentManagerHub {
 -_open_document_editor()
 -_open_document_library()
 -_open_document_search()
--_open_mindscape()
+-_open_infinite_canvas()
+-_open_database_manager()
+-_open_font_manager()
 -_open_document_from_library(doc, search_term)
 -_open_document_by_id(doc_id, search_term)
 }
@@ -145,11 +154,13 @@ DocumentManagerHub --> WindowManager : "uses"
 DocumentManagerHub --> DocumentEditorWindow : "launches"
 DocumentManagerHub --> DocumentLibrary : "launches"
 DocumentManagerHub --> DocumentSearchWindow : "launches"
-DocumentManagerHub --> MindscapeWindow : "launches"
+DocumentManagerHub --> InfiniteCanvasView : "launches"
+DocumentManagerHub --> DatabaseManagerWindow : "launches"
+DocumentManagerHub --> FontManagerWindow : "launches"
 ```
 
-**Diagram sources **
-- [document_manager_hub.py](file://src/pillars/document_manager/ui/document_manager_hub.py#L1-L205)
+**Diagram sources**
+- [document_manager_hub.py](file://src/pillars/document_manager/ui/document_manager_hub.py#L1-L280)
 
 ### Document Service Analysis
 The `DocumentService` is the core business logic component that handles all document-related operations. It provides methods for importing documents, searching content, managing document metadata, and coordinating with the search index. The service uses a repository pattern to abstract data access, working with `DocumentRepository` for database operations and `DocumentSearchRepository` for full-text search functionality.
@@ -174,6 +185,7 @@ class DocumentService {
 +get_document_verses(doc_id, include_ignored)
 +replace_document_verses(doc_id, verses)
 +delete_document_verses(doc_id)
++get_document_with_images(doc_id)
 }
 DocumentService --> DocumentRepository : "uses"
 DocumentService --> DocumentVerseRepository : "uses"
@@ -181,8 +193,8 @@ DocumentService --> DocumentSearchRepository : "uses"
 DocumentService --> DocumentParser : "uses"
 ```
 
-**Diagram sources **
-- [document_service.py](file://src/pillars/document_manager/services/document_service.py#L1-L257)
+**Diagram sources**
+- [document_service.py](file://src/pillars/document_manager/services/document_service.py#L1-L2)
 
 ### Document and Document Verse Models Analysis
 The data model for the Document Manager pillar is centered around two primary classes: `Document` and `DocumentVerse`. The `Document` class represents the main document entity with fields for title, content, file metadata, and relationships to other documents through wiki-style links. The `DocumentVerse` class provides verse-level annotation capabilities, allowing for detailed tagging and analysis of specific text segments.
@@ -199,6 +211,7 @@ class Document {
 +tags : String
 +author : String
 +collection : String
++section_id : Integer
 +created_at : DateTime
 +updated_at : DateTime
 +outgoing_links : List[Document]
@@ -248,9 +261,9 @@ DocumentVerse --> VerseEditLog : "has"
 VerseRule --> VerseEditLog : "has"
 ```
 
-**Diagram sources **
-- [document.py](file://src/pillars/document_manager/models/document.py#L1-L47)
-- [document_verse.py](file://src/pillars/document_manager/models/document_verse.py#L1-L104)
+**Diagram sources**
+- [document.py](file://src/pillars/document_manager/models/document.py#L1-L2)
+- [document_verse.py](file://src/pillars/document_manager/models/document_verse.py#L1-L2)
 
 ### Rich Text Editor Analysis
 The `RichTextEditor` component provides a comprehensive rich text editing experience with a ribbon-style interface. It supports various formatting options including font selection, text styling (bold, italic, underline), alignment, lists, and table insertion. The editor also features a virtual keyboard for special characters and esoteric scripts, making it particularly suited for religious and mystical text analysis.
@@ -296,8 +309,47 @@ RichTextEditor --> ListFeature : "contains"
 RichTextEditor --> VirtualKeyboard : "uses"
 ```
 
-**Diagram sources **
-- [rich_text_editor.py](file://src/pillars/document_manager/ui/rich_text_editor.py#L1-L561)
+**Diagram sources**
+- [rich_text_editor.py](file://src/pillars/document_manager/ui/rich_text_editor.py#L1-L2)
+
+### Infinite Canvas Analysis
+The `InfiniteCanvasView` provides a boundless workspace for free-form note organization, inspired by OneNote's click-to-type interface. Users can create multiple note containers, position them freely, and connect them with shapes to visualize relationships. The canvas supports zooming, panning, and dynamic expansion as content grows.
+
+```mermaid
+classDiagram
+class InfiniteCanvasView {
++content_changed : pyqtSignal
++zoom_changed : pyqtSignal
++MIN_ZOOM : float
++MAX_ZOOM : float
++_scene : InfiniteCanvasScene
++_zoom_factor : float
++get_zoom()
++set_zoom(factor)
++zoom_in()
++zoom_out()
++zoom_reset()
++zoom_fit()
++wheelEvent(event)
++mouseDoubleClickEvent(event)
++add_note_container(x, y, content, width)
++clear_canvas()
++add_shape(shape)
++start_shape_insert(shape_type)
++cancel_shape_insert()
++get_json_data()
++get_searchable_text()
++load_json_data(json_str, reset_scroll)
+}
+InfiniteCanvasView --> QGraphicsView : "inherits"
+InfiniteCanvasView --> InfiniteCanvasScene : "contains"
+InfiniteCanvasView --> NoteContainerItemMovable : "creates"
+InfiniteCanvasView --> BaseShapeItem : "creates"
+```
+
+**Diagram sources**
+- [infinite_canvas.py](file://src/pillars/document_manager/ui/canvas/infinite_canvas.py#L1-L344)
+- [note_container.py](file://src/pillars/document_manager/ui/canvas/note_container.py#L1-L717)
 
 ## Document Ingestion and Search
 
@@ -320,8 +372,8 @@ ReturnExisting --> Complete
 The `DocumentParser` class supports multiple file formats including plain text (.txt), HTML (.html), Word documents (.docx), PDF files (.pdf), and RTF files (.rtf). For each format, the parser extracts both the plain text content for search indexing and the formatted content (HTML/RTF) for rich text editing preservation.
 
 **Section sources**
-- [document_service.py](file://src/pillars/document_manager/services/document_service.py#L50-L96)
-- [parsers.py](file://src/pillars/document_manager/utils/parsers.py#L1-L275)
+- [document_service.py](file://src/pillars/document_manager/services/document_service.py#L1-L2)
+- [parsers.py](file://src/pillars/document_manager/utils/parsers.py#L1-L2)
 
 ### Full-Text Search Implementation
 The Document Manager pillar implements a robust full-text search capability using the Whoosh library, which provides efficient indexing and querying of document content. The search functionality is exposed through the `DocumentSearchRepository` class, which manages the Whoosh index and provides methods for indexing documents, performing searches, and retrieving results with highlights.
@@ -345,94 +397,96 @@ Service-->>UI : Return ordered documents with highlights
 The search index includes multiple fields for comprehensive querying: document ID, title (with boosted weight), content, file type, tags, author, collection, and timestamps. The schema uses a StemmingAnalyzer to enable matching of word variants (e.g., "running" matches "run"). Search results include text highlights showing where the query terms appear in the document content.
 
 **Section sources**
-- [search_repository.py](file://src/pillars/document_manager/repositories/search_repository.py#L1-L201)
-- [document_service.py](file://src/pillars/document_manager/services/document_service.py#L98-L129)
+- [search_repository.py](file://src/pillars/document_manager/repositories/search_repository.py#L1-L2)
+- [document_service.py](file://src/pillars/document_manager/services/document_service.py#L1-L2)
 
-## Mindscape Concept
+## Notebook Hierarchy System
 
-### Mindscape Architecture
-The mindscape concept represents a spatial document organization system that visualizes documents and concepts as a dynamic, living graph. This innovative approach to knowledge organization allows users to explore relationships between ideas in an intuitive, visual manner. The mindscape is implemented as a force-directed graph with physics-based layout and interactive node manipulation.
+### Notebook Architecture
+The notebook hierarchy system represents a structured approach to document organization, replacing the deprecated mindscape components. This system organizes documents in a hierarchical structure: Notebook -> Section -> Page (Document), similar to OneNote's organization model. This approach provides a more intuitive and scalable way to manage large collections of research materials.
 
 ```mermaid
 classDiagram
-class MindscapeService {
+class NotebookService {
 +db : Session
-+create_node(title, type, content, tags, appearance, metadata_payload, icon)
-+update_node(node_id, data)
-+update_node_style(node_id, appearance)
-+update_node_position(node_id, x, y)
-+get_edge(edge_id)
-+update_edge(edge_id, data)
-+link_nodes(source_id, target_id, relation_type)
-+get_local_graph(focus_id)
-+delete_node(node_id)
-+get_home_node()
-+wipe_database()
++get_notebooks_with_structure()
++get_notebook(notebook_id)
++create_notebook(title, description)
++delete_notebook(notebook_id)
++create_section(notebook_id, title, color)
++delete_section(section_id)
++get_section_pages(section_id)
++create_page(section_id, title, content, raw_content)
++move_page(page_id, new_section_id)
++delete_page(page_id)
++rename_notebook(nb_id, new_title)
++rename_section(section_id, new_title)
++rename_page(page_id, new_title)
++adopt_document(document_id, section_id)
++search_global(query)
 }
-class MindNode {
+class Notebook {
 +id : Integer
 +title : String
-+type : String
-+content : Text
-+tags : Text
-+appearance : Text
-+metadata_payload : Text
-+icon : String
++description : String
 +created_at : DateTime
-+updated_at : DateTime
++sections : List[Section]
 }
-class MindEdge {
+class Section {
 +id : Integer
-+source_id : Integer
-+target_id : Integer
-+relation_type : String
-+appearance : Text
-+created_at : DateTime
++notebook_id : Integer
++title : String
++color : String
++pages : List[Document]
 }
-class MindEdgeType {
-+PARENT : "parent"
-+JUMP : "jump"
+class Document {
++id : Integer
++section_id : Integer
++title : String
++content : Text
++raw_content : Text
++file_type : String
 }
-MindscapeService --> MindNode : "manages"
-MindscapeService --> MindEdge : "manages"
-MindNode --> MindEdge : "source"
-MindNode --> MindEdge : "target"
-MindEdge --> MindEdgeType : "references"
+NotebookService --> Notebook : "manages"
+NotebookService --> Section : "manages"
+NotebookService --> Document : "manages"
+Notebook --> Section : "contains"
+Section --> Document : "contains"
 ```
 
-**Diagram sources **
-- [mindscape_service.py](file://src/pillars/document_manager/services/mindscape_service.py#L1-L310)
-- [mindscape.py](file://src/pillars/document_manager/models/mindscape.py#L1-L52)
+**Diagram sources**
+- [notebook_service.py](file://src/pillars/document_manager/services/notebook_service.py#L1-L2)
+- [notebook.py](file://src/pillars/document_manager/models/notebook.py#L1-L2)
 
-### Mindscape Interaction Flow
-The mindscape visualization provides an interactive experience where users can explore document relationships through a physics-based graph layout. The system implements a "Plex" algorithm that centers on a focus node and displays its immediate network of relationships.
+### Mindscape Tree Interaction Flow
+The mindscape tree visualization provides a hierarchical navigation interface for the notebook system. Users can browse notebooks, sections, and pages in a tree structure, with context menus for creating, renaming, and deleting items. The tree supports drag-and-drop operations for reorganizing pages between sections.
 
 ```mermaid
 sequenceDiagram
-participant UI as "MindscapeView"
-participant Service as "MindscapeService"
-participant Physics as "GraphPhysics"
-UI->>Service : load_graph(focus_id)
-Service->>Service : get_local_graph(focus_id)
-Service-->>UI : Return focus node, parents, children, jumps
-UI->>UI : Create node items for all nodes
-UI->>UI : Create edge items for all relationships
-UI->>Physics : Add nodes with initial positions
-UI->>Physics : Add edges with physics properties
-loop Every 16ms
-Physics->>Physics : tick()
-UI->>UI : Sync node positions from physics engine
-UI->>UI : Update edge paths
-end
-UI->>Physics : set_position(node_id, x, y) on drag
-Physics->>Service : update_node_position(node_id, x, y) on release
+participant UI as "MindscapeTreeWidget"
+participant Service as "NotebookService"
+UI->>Service : load_tree()
+Service->>Service : get_notebooks_with_structure()
+Service-->>UI : Return notebooks with sections
+UI->>UI : Create tree items for notebooks and sections
+UI->>Service : get_section_pages(section_id) on expand
+Service-->>UI : Return pages for section
+UI->>UI : Add page items to tree
+UI->>Service : create_notebook(title)
+Service->>Service : Create notebook in database
+Service-->>UI : Return new notebook
+UI->>UI : Add notebook to tree
+UI->>Service : adopt_document(doc_id, section_id)
+Service->>Service : Update document section_id
+Service-->>UI : Return updated document
+UI->>UI : Move document in tree
 ```
 
-The interaction model allows users to drag nodes to reposition them, with the new positions automatically saved to the database. The physics engine maintains a dynamic layout that responds to user interactions while preserving the overall structure of the graph.
+The interaction model allows users to create new notebooks, sections, and pages directly from the tree interface. Documents can be imported from external files or linked from the document library into specific sections. The tree automatically updates to reflect changes in the document hierarchy.
 
 **Section sources**
-- [mindscape_view.py](file://src/pillars/document_manager/ui/mindscape_view.py#L1-L297)
-- [mindscape_service.py](file://src/pillars/document_manager/services/mindscape_service.py#L1-L310)
+- [mindscape_tree.py](file://src/pillars/document_manager/ui/mindscape_tree.py#L1-L432)
+- [notebook_service.py](file://src/pillars/document_manager/services/notebook_service.py#L1-L2)
 
 ## Holy Book Teacher Integration
 
@@ -456,8 +510,8 @@ SaveCurated --> UpdateIndex["Update search index"]
 The system supports multiple verse statuses including "auto" (automatically detected), "curated" (user-verified), and "ignored" (suppressed). Confidence scores are assigned based on detection method and can be modified by user actions or rule applications.
 
 **Section sources**
-- [verse_teacher_service.py](file://src/pillars/document_manager/services/verse_teacher_service.py#L1-L352)
-- [document_verse.py](file://src/pillars/document_manager/models/document_verse.py#L1-L104)
+- [verse_teacher_service.py](file://src/pillars/document_manager/services/verse_teacher_service.py#L1-L2)
+- [document_verse.py](file://src/pillars/document_manager/models/document_verse.py#L1-L2)
 
 ### Gematria Analysis Integration
 The Document Manager pillar enables gematria analysis of document content through its integration with the gematria calculation system. When analyzing documents, particularly religious texts, the system can extract verse content and pass it to the gematria calculator for numerical analysis based on various systems (Hebrew, Greek, etc.).
@@ -480,8 +534,8 @@ Service-->>Editor : Display gematria results with verse context
 This integration allows researchers to explore numerical patterns in sacred texts, connecting the document management capabilities with the esoteric analysis features of the isopgem application.
 
 **Section sources**
-- [verse_teacher_service.py](file://src/pillars/document_manager/services/verse_teacher_service.py#L1-L352)
-- [document_service.py](file://src/pillars/document_manager/services/document_service.py#L240-L248)
+- [verse_teacher_service.py](file://src/pillars/document_manager/services/verse_teacher_service.py#L1-L2)
+- [document_service.py](file://src/pillars/document_manager/services/document_service.py#L1-L2)
 
 ## Data Persistence Strategy
 
@@ -531,9 +585,9 @@ DocumentService --> DocumentSearchRepository : "uses"
 The `DocumentRepository` handles CRUD operations for document entities, with optimized methods like `get_all_metadata()` that defer loading of large content fields. The `DocumentVerseRepository` manages verse-level annotations, providing batch operations for efficient updates. The `DocumentSearchRepository` manages the Whoosh search index, ensuring that document changes are reflected in search results.
 
 **Section sources**
-- [document_repository.py](file://src/pillars/document_manager/repositories/document_repository.py#L1-L86)
-- [document_verse_repository.py](file://src/pillars/document_manager/repositories/document_verse_repository.py#L1-L90)
-- [search_repository.py](file://src/pillars/document_manager/repositories/search_repository.py#L1-L201)
+- [document_repository.py](file://src/pillars/document_manager/repositories/document_repository.py#L1-L2)
+- [document_verse_repository.py](file://src/pillars/document_manager/repositories/document_verse_repository.py#L1-L2)
+- [search_repository.py](file://src/pillars/document_manager/repositories/search_repository.py#L1-L2)
 
 ### Data Model Relationships
 The data persistence strategy includes carefully designed relationships between entities to support the application's functionality. The primary relationship is between `Document` and `DocumentVerse`, where a document can contain multiple verse annotations. Additionally, documents can link to each other through wiki-style links, creating a network of interconnected texts.
@@ -550,6 +604,7 @@ text raw_content
 string tags
 string author
 string collection
+integer section_id FK
 timestamp created_at
 timestamp updated_at
 }
@@ -594,47 +649,40 @@ text payload
 text notes
 timestamp created_at
 }
-MIND_NODE {
+NOTEBOOK {
 integer id PK
 string title
-string type
-text content
-text tags
-text appearance
-text metadata_payload
-string icon
+string description
 timestamp created_at
-timestamp updated_at
 }
-MIND_EDGE {
+SECTION {
 integer id PK
-integer source_id FK
-integer target_id FK
-string relation_type
-text appearance
+integer notebook_id FK
+string title
+string color
 timestamp created_at
 }
 DOCUMENT ||--o{ DOCUMENT_VERSE : "contains"
 DOCUMENT_VERSE }o--|| VERSE_RULE : "applies"
 DOCUMENT_VERSE ||--o{ VERSE_EDIT_LOG : "has"
 VERSE_RULE ||--o{ VERSE_EDIT_LOG : "has"
-MIND_NODE ||--o{ MIND_EDGE : "source"
-MIND_NODE ||--o{ MIND_EDGE : "target"
+NOTEBOOK ||--o{ SECTION : "contains"
+SECTION ||--o{ DOCUMENT : "contains"
 ```
 
 The database schema includes appropriate indexes to optimize query performance, particularly on frequently searched fields like document title and verse number. Foreign key constraints ensure data integrity, with cascading deletes to maintain consistency when documents are removed.
 
 **Section sources**
-- [document.py](file://src/pillars/document_manager/models/document.py#L1-L47)
-- [document_verse.py](file://src/pillars/document_manager/models/document_verse.py#L1-L104)
-- [mindscape.py](file://src/pillars/document_manager/models/mindscape.py#L1-L52)
+- [document.py](file://src/pillars/document_manager/models/document.py#L1-L2)
+- [document_verse.py](file://src/pillars/document_manager/models/document_verse.py#L1-L2)
+- [notebook.py](file://src/pillars/document_manager/models/notebook.py#L1-L2)
 
 ## Conclusion
 
 The Document Manager pillar of the isopgem application provides a comprehensive and sophisticated environment for document research and analysis. Its architecture effectively separates concerns through a clean layering of user interface, business logic, and data access components, making the system maintainable and extensible. The central `document_manager_hub` provides intuitive access to all document management tools, while the `document_service` orchestrates complex operations across multiple repositories.
 
-Key strengths of the system include its robust full-text search implementation using Whoosh, which enables efficient discovery of content across large document collections. The mindscape concept offers an innovative approach to knowledge organization, transforming abstract relationships into a tangible, interactive spatial representation. The verse-level tagging system and integration with the Holy Book teacher functionality make this pillar particularly valuable for the analysis of religious and esoteric texts, supporting both automated parsing and manual curation.
+Key strengths of the system include its robust full-text search implementation using Whoosh, which enables efficient discovery of content across large document collections. The new notebook hierarchy system offers a structured approach to knowledge organization, replacing the deprecated mindscape components with a more intuitive and scalable organization model. The infinite canvas workspace provides a flexible environment for free-form note-taking and relationship mapping, while the mindscape tree visualization enables easy navigation of the document hierarchy.
 
-The data persistence strategy, based on the repository pattern and well-designed data models, ensures data integrity while providing efficient access patterns for common operations. The system's ability to integrate with the gematria analysis features extends its utility for esoteric research, connecting textual analysis with numerical interpretation.
+The verse-level tagging system and integration with the Holy Book teacher functionality make this pillar particularly valuable for the analysis of religious and esoteric texts, supporting both automated parsing and manual curation. The data persistence strategy, based on the repository pattern and well-designed data models, ensures data integrity while providing efficient access patterns for common operations. The system's ability to integrate with the gematria analysis features extends its utility for esoteric research, connecting textual analysis with numerical interpretation.
 
 Overall, the Document Manager pillar represents a powerful research tool that combines traditional document management capabilities with innovative features for knowledge exploration and analysis, making it a central component of the isopgem application's functionality.

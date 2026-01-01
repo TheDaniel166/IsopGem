@@ -2,322 +2,606 @@
 
 <cite>
 **Referenced Files in This Document**   
-- [solid_geometry.py](file://src/pillars/geometry/services/solid_geometry.py)
-- [view3d.py](file://src/pillars/geometry/ui/geometry3d/view3d.py)
-- [tetrahedron_solid.py](file://src/pillars/geometry/services/tetrahedron_solid.py)
-- [cube_solid.py](file://src/pillars/geometry/services/cube_solid.py)
-- [octahedron_solid.py](file://src/pillars/geometry/services/octahedron_solid.py)
-- [dodecahedron_solid.py](file://src/pillars/geometry/services/dodecahedron_solid.py)
-- [icosahedron_solid.py](file://src/pillars/geometry/services/icosahedron_solid.py)
-- [tesseract_solid.py](file://src/pillars/geometry/services/tesseract_solid.py)
-- [archimedean_solids.py](file://src/pillars/geometry/services/archimedean_solids.py)
-- [regular_prism_solids.py](file://src/pillars/geometry/services/regular_prism_solids.py)
-- [regular_pyramid_solids.py](file://src/pillars/geometry/services/regular_pyramid_solids.py)
-- [solid_payload.py](file://src/pillars/geometry/shared/solid_payload.py)
-- [archimedean_data.py](file://src/pillars/geometry/services/archimedean_data.py)
+- [GEOMETRY_3D_PLAN.md](file://Docs/GEOMETRY_3D_PLAN.md)
+- [geometry3d/view3d.py](file://src/pillars/geometry/ui/geometry3d/view3d.py)
+- [geometry3d/window3d.py](file://src/pillars/geometry/ui/geometry3d/window3d.py)
+- [solid_payload.py](file://src/shared/services/geometry/solid_payload.py)
+- [tetrahedron.py](file://src/shared/services/geometry/tetrahedron.py)
+- [cube.py](file://src/shared/services/geometry/cube.py)
+- [geometry_hub.py](file://src/pillars/geometry/ui/geometry_hub.py)
+- [geometry_definitions.py](file://src/pillars/geometry/ui/geometry_definitions.py)
+- [figurate_3d_window.py](file://src/pillars/geometry/ui/figurate_3d_window.py)
+- [geometric_transitions_3d_window.py](file://src/pillars/tq/ui/geometric_transitions_3d_window.py)
+- [quadset_analysis_window.py](file://src/pillars/tq/ui/quadset_analysis_window.py)
 </cite>
 
 ## Table of Contents
 1. [Introduction](#introduction)
-2. [Core Architecture](#core-architecture)
-3. [Mathematical Foundations](#mathematical-foundations)
-4. [Platonic Solids Implementation](#platonic-solids-implementation)
-5. [Archimedean Solids Implementation](#archimedean-solids-implementation)
-6. [Prisms and Pyramids Implementation](#prisms-and-pyramids-implementation)
-7. [Higher-Dimensional Forms](#higher-dimensional-forms)
-8. [3D Rendering Pipeline](#3d-rendering-pipeline)
-9. [Developer Guidance](#developer-guidance)
-10. [Conclusion](#conclusion)
+2. [Architecture Overview](#architecture-overview)
+3. [Core Components](#core-components)
+4. [3D Solid Implementations](#3d-solid-implementations)
+5. [Visualization Features](#visualization-features)
+6. [User Interaction](#user-interaction)
+7. [Integration Points](#integration-points)
+8. [Conclusion](#conclusion)
 
 ## Introduction
-The 3D solid visualization subsystem of the Geometry pillar provides comprehensive mathematical and visual representations of various geometric solids. This system supports Platonic solids, Archimedean solids, prisms, pyramids, and higher-dimensional forms like the tesseract. The implementation is built on a foundation of mathematical calculations for vertex generation, face construction, and volume/surface area computation, with integration into a 3D rendering component for visualization. The architecture follows a service-calculator pattern where specialized services generate geometric data and calculators provide bidirectional property manipulation.
 
-## Core Architecture
-The 3D solid visualization system follows a modular architecture with clear separation between mathematical computation, data representation, and rendering components. At its core is the `solid_geometry.py` module which provides fundamental vector operations and geometric calculations. Specialized solid classes extend this foundation to implement specific geometric forms, while the `view3d.py` component handles the 3D visualization aspects.
+The 3D solid visualization system provides a comprehensive framework for rendering and interacting with three-dimensional geometric solids. This system enables users to visualize Platonic and Archimedean solids with detailed mathematical properties, wireframe rendering, and interactive controls. The implementation supports both educational and analytical use cases, allowing users to explore geometric relationships, calculate advanced metrics, and examine dual forms of polyhedra.
+
+The visualization system is designed with modularity in mind, separating mathematical calculations from rendering logic to ensure maintainability and testability. The architecture follows a clean separation of concerns, with dedicated components for mathematical computation, data representation, and user interface rendering.
+
+**Section sources**
+- [GEOMETRY_3D_PLAN.md](file://Docs/GEOMETRY_3D_PLAN.md#L1-L65)
+
+## Architecture Overview
+
+The 3D visualization system follows a layered architecture that separates mathematical computation from rendering and user interface concerns. This design enables independent development and testing of mathematical algorithms while providing a flexible rendering framework.
 
 ```mermaid
 graph TD
-A[User Interface] --> B[Calculator Classes]
-B --> C[Solid Service Classes]
-C --> D[solid_geometry.py]
-D --> E[Vector Operations]
-D --> F[Area/Volume Calculations]
-C --> G[solid_payload.py]
-G --> H[3D Rendering]
-H --> I[view3d.py]
-I --> J[User Interface]
-K[archimedean_data.py] --> C
-L[regular_prism_solids.py] --> C
-M[regular_pyramid_solids.py] --> C
+GeometryHub[Geometry Hub] --> SolidService[Solid Shape Service]
+SolidService --> PayloadAdapter[SolidPayload Adapter]
+PayloadAdapter --> Geometry3DWindow[Geometry3DWindow]
+PayloadAdapter --> SolidMathEngine[SolidMathEngine]
+Geometry3DWindow --> Geometry3DView[Geometry3DView]
+Geometry3DView --> CameraState[CameraState]
+SolidMathEngine --> tetrahedron[Tetrahedron.py]
+SolidMathEngine --> cube[Cube.py]
+SolidMathEngine --> dodecahedron[Dodecahedron.py]
+SolidMathEngine --> icosahedron[Icosahedron.py]
+SolidMathEngine --> octahedron[Octahedron.py]
 ```
 
 **Diagram sources**
-- [solid_geometry.py](file://src/pillars/geometry/services/solid_geometry.py)
-- [view3d.py](file://src/pillars/geometry/ui/geometry3d/view3d.py)
-- [solid_payload.py](file://src/pillars/geometry/shared/solid_payload.py)
-- [archimedean_data.py](file://src/pillars/geometry/services/archimedean_data.py)
+- [GEOMETRY_3D_PLAN.md](file://Docs/GEOMETRY_3D_PLAN.md#L9-L35)
+- [geometry3d/window3d.py](file://src/pillars/geometry/ui/geometry3d/window3d.py#L31-L753)
+- [geometry3d/view3d.py](file://src/pillars/geometry/ui/geometry3d/view3d.py#L58-L92)
+
+The architecture consists of four main components:
+
+1. **Geometry Hub**: The central controller that manages the creation and display of 3D visualizations, serving as the entry point for users to access different solid types.
+
+2. **Solid Shape Services**: Mathematical engines that compute the geometric properties and vertex positions for each solid type, implemented as pure Python functions for easy testing.
+
+3. **SolidPayload Adapter**: The data contract between mathematical services and the visualization layer, containing vertices, edges, faces, labels, and metadata.
+
+4. **Geometry3DWindow and View**: The user interface components that render the 3D scene and handle user interactions, including camera controls and measurement tools.
+
+This separation ensures that mathematical calculations can be unit-tested independently of the GUI framework, while the visualization components can be developed and refined without affecting the underlying geometry algorithms.
 
 **Section sources**
-- [solid_geometry.py](file://src/pillars/geometry/services/solid_geometry.py)
-- [view3d.py](file://src/pillars/geometry/ui/geometry3d/view3d.py)
+- [GEOMETRY_3D_PLAN.md](file://Docs/GEOMETRY_3D_PLAN.md#L9-L35)
+- [geometry3d/window3d.py](file://src/pillars/geometry/ui/geometry3d/window3d.py#L31-L753)
 
-## Mathematical Foundations
-The mathematical foundation of the 3D solid visualization system is implemented in `solid_geometry.py`, which provides essential vector operations and geometric calculations. The module defines `Vec3` as a tuple of three floats and `Face` as a sequence of integers representing vertex indices. Key vector operations include addition, subtraction, scalar multiplication, dot product, cross product, length calculation, and normalization.
+## Core Components
 
-The system implements algorithms for calculating polygon area, face normal vectors, plane distance from origin, surface area, and volume. The surface area is computed by summing the areas of all faces using the cross product method for polygon area calculation. Volume is calculated using the scalar triple product approach, summing the absolute value of the dot product of vertex vectors with the cross product of edge vectors, divided by six.
+The 3D visualization system is built around several core components that work together to provide a seamless user experience. These components include the data model, rendering engine, and user interface controls.
+
+### SolidPayload Data Model
+
+The `SolidPayload` class serves as the central data structure for representing 3D solids. It contains all the necessary information to render a solid and display its properties.
 
 ```mermaid
 classDiagram
-class SolidGeometry {
-+vec_add(a : Vec3, b : Vec3) Vec3
-+vec_sub(a : Vec3, b : Vec3) Vec3
-+vec_scale(a : Vec3, scalar : float) Vec3
-+vec_dot(a : Vec3, b : Vec3) float
-+vec_cross(a : Vec3, b : Vec3) Vec3
-+vec_length(a : Vec3) float
-+vec_normalize(a : Vec3) Vec3
-+polygon_area(vertices : Sequence[Vec3], face : Face) float
-+face_normal(vertices : Sequence[Vec3], face : Face) Vec3
-+plane_distance_from_origin(vertices : Sequence[Vec3], face : Face) float
-+compute_surface_area(vertices : Sequence[Vec3], faces : Sequence[Face]) float
-+compute_volume(vertices : Sequence[Vec3], faces : Sequence[Face]) float
-+edges_from_faces(faces : Sequence[Face]) List[Tuple[int, int]]
-+face_centroid(vertices : Sequence[Vec3], face : Face) Vec3
-+angle_around_axis(point : Vec3, axis : Vec3, ref_axis : Vec3) float
+class SolidPayload {
++List[Vec3] vertices
++List[Tuple[int, int]] edges
++List[List[int]] faces
++List[SolidLabel] labels
++dict metadata
++List[Optional[Tuple[int, int, int, int]]] face_colors
++Optional[float] suggested_scale
++Optional[SolidPayload] dual
++__init__(vertices, edges, faces, labels, metadata, face_colors, suggested_scale, dual)
++bounds() Optional[Tuple[Vec3, Vec3]]
 }
+class SolidLabel {
++str text
++Vec3 position
++bool align_center
+}
+SolidPayload "1" *-- "0..*" SolidLabel : contains
 ```
 
 **Diagram sources**
-- [solid_geometry.py](file://src/pillars/geometry/services/solid_geometry.py)
+- [solid_payload.py](file://src/shared/services/geometry/solid_payload.py#L25-L87)
 
-**Section sources**
-- [solid_geometry.py](file://src/pillars/geometry/services/solid_geometry.py)
+The `SolidPayload` class includes:
 
-## Platonic Solids Implementation
-The Platonic solids (tetrahedron, cube, octahedron, dodecahedron, icosahedron) are implemented as specialized service classes that extend the mathematical foundation. Each solid has a canonical representation with standardized vertex coordinates, from which scaled versions are generated. The implementation follows a consistent pattern with service classes for generating geometric data and calculator classes for bidirectional property manipulation.
+- **Vertices**: A list of 3D coordinates (x, y, z) that define the corners of the solid
+- **Edges**: A list of vertex index pairs that define the lines connecting vertices
+- **Faces**: A list of vertex index sequences that define the polygonal faces
+- **Labels**: Text annotations positioned in 3D space
+- **Metadata**: Key-value pairs containing calculated properties like surface area and volume
+- **Face Colors**: Optional color definitions for individual faces
+- **Suggested Scale**: A hint for appropriate rendering scale
+- **Dual**: A reference to the dual solid's payload for visualization
 
-For example, the tetrahedron is defined with four vertices at (1,1,1), (-1,-1,1), (-1,1,-1), and (1,-1,-1), forming an equilateral tetrahedron with edge length 2√2. The cube uses the standard unit cube vertices scaled appropriately. The octahedron has vertices at (±1,0,0), (0,±1,0), and (0,0,±1). The dodecahedron and icosahedron implementations use the golden ratio φ = (1+√5)/2 in their vertex calculations, leveraging the dual relationship between these two solids.
+This data structure serves as the contract between the mathematical computation layer and the rendering layer, ensuring consistent data exchange.
+
+### Geometry3DView Rendering Engine
+
+The `Geometry3DView` widget is responsible for rendering 3D solids using orthographic projection. It handles camera controls, wireframe rendering, and user interaction.
 
 ```mermaid
 classDiagram
+class Geometry3DView {
++Optional[SolidPayload] _payload
++float _payload_scale
++CameraState _camera
++Optional[QPoint] _last_mouse_pos
++Optional[str] _interaction_mode
++bool _show_axes
++dict _sphere_visibility
++bool _show_labels
++bool _show_vertices
++bool _show_dual
++bool _measure_mode
++List[int] _selected_vertex_indices
++Optional[int] _apex_vertex_index
++Optional[int] _hovered_vertex_index
++List[QPointF] _last_screen_points
++bool _loop_closed
++__init__(parent)
++set_payload(payload)
++set_camera_state(state)
++toggle_axes()
++toggle_labels()
++toggle_vertices()
++toggle_dual()
++set_measure_mode(enabled)
++paintEvent(event)
++mousePressEvent(event)
++mouseMoveEvent(event)
++wheelEvent(event)
+}
+class CameraState {
++float distance
++float yaw_deg
++float pitch_deg
++float pan_x
++float pan_y
++rotation_matrix() QMatrix4x4
+}
+Geometry3DView --> CameraState : uses
+```
+
+**Diagram sources**
+- [geometry3d/view3d.py](file://src/pillars/geometry/ui/geometry3d/view3d.py#L58-L92)
+
+The rendering engine supports orthographic projection with camera controls for rotation (yaw and pitch), panning, and zooming. It renders wireframe primitives with configurable colors and handles user interactions through mouse events.
+
+### Geometry3DWindow Interface
+
+The `Geometry3DWindow` class provides a complete user interface for 3D solid visualization, combining the rendering view with control panels and property displays.
+
+```mermaid
+classDiagram
+class Geometry3DWindow {
++Optional[WindowManager] window_manager
++Optional[QWidget] parent
++Geometry3DView _view
++QTabWidget _tab_widget
++QScrollArea _metrics_area
++QScrollArea _calculator_area
++QLineEdit _edge_input
++QPushButton _reset_view_btn
++QPushButton _zoom_in_btn
++QPushButton _zoom_out_btn
++QCheckBox _axes_checkbox
++QCheckBox _labels_checkbox
++QCheckBox _vertices_checkbox
++QCheckBox _dual_checkbox
++QLabel _status_label
++Optional[CubeSolidCalculator] _calculator
++Optional[SolidPayload] _current_payload
++bool _updating_inputs
++dict _property_inputs
++__init__(window_manager, parent)
++set_payload(payload)
++set_calculator(calculator)
++set_solid_context(title, summary)
++_setup_ui()
++_create_control_panel()
++_create_metrics_panel()
++_create_calculator_panel()
++_update_status(payload)
++_update_calculator_from_inputs()
++_update_inputs_from_calculator()
++_show_property_error(error)
++_on_zoom_in()
++_on_zoom_out()
++_on_reset_view()
++_on_axes_toggled()
++_on_labels_toggled()
++_on_vertices_toggled()
++_on_dual_toggled()
++_clear_calculator()
++_clear_layout(layout)
++_format_value(value)
+}
+Geometry3DWindow --> Geometry3DView : contains
+Geometry3DWindow --> CubeSolidCalculator : uses
+```
+
+**Diagram sources**
+- [geometry3d/window3d.py](file://src/pillars/geometry/ui/geometry3d/window3d.py#L31-L753)
+
+The window provides a comprehensive interface with:
+
+- A main 3D view area for solid visualization
+- Control buttons for zoom and reset operations
+- Checkboxes to toggle display elements (axes, labels, vertices, dual)
+- Tabbed panels for metrics and calculator views
+- Status display for current solid information
+- Integration with mathematical calculators for bidirectional property editing
+
+**Section sources**
+- [geometry3d/view3d.py](file://src/pillars/geometry/ui/geometry3d/view3d.py#L58-L92)
+- [geometry3d/window3d.py](file://src/pillars/geometry/ui/geometry3d/window3d.py#L31-L753)
+- [solid_payload.py](file://src/shared/services/geometry/solid_payload.py#L25-L87)
+
+## 3D Solid Implementations
+
+The system implements several Platonic solids with comprehensive mathematical properties and visualization capabilities. Each solid type is implemented as a service class that computes geometric properties and generates the corresponding payload.
+
+### Tetrahedron Implementation
+
+The tetrahedron is implemented as an equilateral triangular pyramid with four faces, six edges, and four vertices. The implementation provides comprehensive mathematical properties and bidirectional calculation capabilities.
+
+```mermaid
+classDiagram
+class TetrahedronMetrics {
++float edge_length
++float height
++float face_area
++float surface_area
++float volume
++float inradius
++float midradius
++float circumradius
++float incircle_circumference
++float midsphere_circumference
++float circumcircle_circumference
++int faces
++int edges
++int vertices
++int face_sides
++int vertex_valence
++float dihedral_angle_deg
++float solid_angle_sr
++float face_inradius
++float face_circumradius
++float insphere_surface_area
++float insphere_volume
++float midsphere_surface_area
++float midsphere_volume
++float circumsphere_surface_area
++float circumsphere_volume
++float sphericity
++float isoperimetric_quotient
++float surface_to_volume_ratio
++float moment_inertia_solid
++float moment_inertia_shell
++float angular_defect_vertex_deg
++float total_angular_defect_deg
++int euler_characteristic
++float packing_density
++int symmetry_group_order
++int rotational_symmetry_order
++str symmetry_group_name
++str dual_solid_name
++float golden_ratio_factor
+}
+class TetrahedronSolidResult {
++SolidPayload payload
++TetrahedronMetrics metrics
+}
 class TetrahedronSolidService {
-+build(edge_length : float) TetrahedronSolidResult
-+payload(edge_length : float) SolidPayload
++build(edge_length) TetrahedronSolidResult
++payload(edge_length) SolidPayload
+}
+class TetrahedronSolidCalculator {
++properties() List[SolidProperty]
++set_property(key, value) bool
++clear()
++payload() Optional[SolidPayload]
++metadata() Dict[str, float]
++metrics() Optional[TetrahedronMetrics]
+}
+TetrahedronSolidService --> TetrahedronMetrics : creates
+TetrahedronSolidService --> SolidPayload : creates
+TetrahedronSolidResult --> SolidPayload : contains
+TetrahedronSolidResult --> TetrahedronMetrics : contains
+TetrahedronSolidCalculator --> SolidProperty : uses
+TetrahedronSolidCalculator --> TetrahedronSolidResult : uses
+```
+
+**Diagram sources**
+- [tetrahedron.py](file://src/shared/services/geometry/tetrahedron.py#L111-L564)
+
+The tetrahedron implementation includes:
+
+- **Canonical Coordinates**: Base vertices centered at the origin with edge length 2√2
+- **Comprehensive Metrics**: Surface area, volume, inradius, midradius, circumradius, and advanced properties
+- **Bidirectional Calculator**: Allows editing any property and recalculating all others
+- **Dual Form**: Automatically generates the dual octahedron for visualization
+- **Quality Metrics**: Sphericity, isoperimetric quotient, and surface-to-volume ratio
+
+The implementation uses a base scale for calculations and applies scaling factors to generate solids of any size while maintaining geometric accuracy.
+
+### Cube Implementation
+
+The cube is implemented as a regular hexahedron with eight vertices, twelve edges, and six square faces. Like the tetrahedron, it provides comprehensive mathematical properties and visualization features.
+
+```mermaid
+classDiagram
+class CubeMetrics {
++float edge_length
++float face_area
++float surface_area
++float volume
++float face_diagonal
++float space_diagonal
++float inradius
++float midradius
++float circumradius
++float incircle_circumference
++float midsphere_circumference
++float circumcircle_circumference
++int faces
++int edges
++int vertices
++int face_sides
++int vertex_valence
++float dihedral_angle_deg
++float solid_angle_sr
++float face_inradius
++float face_circumradius
++float insphere_surface_area
++float insphere_volume
++float midsphere_surface_area
++float midsphere_volume
++float circumsphere_surface_area
++float circumsphere_volume
++float sphericity
++float isoperimetric_quotient
++float surface_to_volume_ratio
++float moment_inertia_solid
++float moment_inertia_shell
++float angular_defect_vertex_deg
++float total_angular_defect_deg
++int euler_characteristic
++float packing_density
++int symmetry_group_order
++int rotational_symmetry_order
++str symmetry_group_name
++str dual_solid_name
++float golden_ratio_factor
+}
+class CubeSolidResult {
++SolidPayload payload
++CubeMetrics metrics
 }
 class CubeSolidService {
-+build(edge_length : float) CubeSolidResult
-+payload(edge_length : float) SolidPayload
++build(edge_length) CubeSolidResult
++payload(edge_length) SolidPayload
 }
-class OctahedronSolidService {
-+build(edge_length : float) OctahedronSolidResult
-+payload(edge_length : float) SolidPayload
+class CubeSolidCalculator {
++properties() List[SolidProperty]
++set_property(key, value) bool
++clear()
++payload() Optional[SolidPayload]
++metadata() Dict[str, float]
++metrics() Optional[CubeMetrics]
 }
-class DodecahedronSolidService {
-+build(edge_length : float) DodecahedronSolidResult
-+payload(edge_length : float) SolidPayload
-}
-class IcosahedronSolidService {
-+build(edge_length : float) IcosahedronSolidResult
-+payload(edge_length : float) SolidPayload
-}
-TetrahedronSolidService --> solid_geometry : "uses"
-CubeSolidService --> solid_geometry : "uses"
-OctahedronSolidService --> solid_geometry : "uses"
-DodecahedronSolidService --> solid_geometry : "uses"
-IcosahedronSolidService --> solid_geometry : "uses"
-TetrahedronSolidService --> solid_payload : "produces"
-CubeSolidService --> solid_payload : "produces"
-OctahedronSolidService --> solid_payload : "produces"
-DodecahedronSolidService --> solid_payload : "produces"
-IcosahedronSolidService --> solid_payload : "produces"
+CubeSolidService --> CubeMetrics : creates
+CubeSolidService --> SolidPayload : creates
+CubeSolidResult --> SolidPayload : contains
+CubeSolidResult --> CubeMetrics : contains
+CubeSolidCalculator --> SolidProperty : uses
+CubeSolidCalculator --> CubeSolidResult : uses
 ```
 
 **Diagram sources**
-- [tetrahedron_solid.py](file://src/pillars/geometry/services/tetrahedron_solid.py)
-- [cube_solid.py](file://src/pillars/geometry/services/cube_solid.py)
-- [octahedron_solid.py](file://src/pillars/geometry/services/octahedron_solid.py)
-- [dodecahedron_solid.py](file://src/pillars/geometry/services/dodecahedron_solid.py)
-- [icosahedron_solid.py](file://src/pillars/geometry/services/icosahedron_solid.py)
-- [solid_geometry.py](file://src/pillars/geometry/services/solid_geometry.py)
-- [solid_payload.py](file://src/pillars/geometry/shared/solid_payload.py)
+- [cube.py](file://src/shared/services/geometry/cube.py#L127-L618)
+
+The cube implementation includes:
+
+- **Base Vertices**: Eight vertices defined at (±1, ±1, ±1) with appropriate scaling
+- **Face Definitions**: Six square faces with proper vertex ordering
+- **Edge Calculation**: Automatic generation of edges from face definitions
+- **Comprehensive Metrics**: All standard and advanced geometric properties
+- **Dual Form**: Automatically generates the dual octahedron
+- **Bidirectional Calculator**: Supports editing any property with automatic recalculation
+
+The implementation uses helper functions to compute scaled values based on the edge length, ensuring accurate geometric relationships across different sizes.
+
+### Other Platonic Solids
+
+In addition to the tetrahedron and cube, the system implements other Platonic solids including the octahedron, dodecahedron, and icosahedron. These solids follow the same architectural pattern with dedicated service classes, metrics dataclasses, and calculator implementations.
+
+The system also supports Archimedean solids and various figurate numbers, providing a comprehensive library of 3D geometric forms. Each solid type is accessible through the geometry hub interface, allowing users to explore different geometric relationships and properties.
 
 **Section sources**
-- [tetrahedron_solid.py](file://src/pillars/geometry/services/tetrahedron_solid.py)
-- [cube_solid.py](file://src/pillars/geometry/services/cube_solid.py)
-- [octahedron_solid.py](file://src/pillars/geometry/services/octahedron_solid.py)
-- [dodecahedron_solid.py](file://src/pillars/geometry/services/dodecahedron_solid.py)
-- [icosahedron_solid.py](file://src/pillars/geometry/services/icosahedron_solid.py)
+- [tetrahedron.py](file://src/shared/services/geometry/tetrahedron.py#L111-L564)
+- [cube.py](file://src/shared/services/geometry/cube.py#L127-L618)
+- [geometry_definitions.py](file://src/pillars/geometry/ui/geometry_definitions.py#L785-L1005)
 
-## Archimedean Solids Implementation
-The Archimedean solids are implemented through a base service class that leverages pre-computed vertex and face data stored in `archimedean_data.py`. This data file contains canonical coordinates for all Archimedean solids, auto-generated from external sources. The implementation uses a service-calculator pattern similar to the Platonic solids, with `ArchimedeanSolidServiceBase` providing the foundation for specific solid implementations.
+## Visualization Features
 
-Each Archimedean solid is defined by its key (e.g., 'cuboctahedron', 'truncated_cube'), name, canonical vertices, faces, and derived properties like edge length, surface area, and volume. The service class scales the canonical representation to the desired edge length and generates a `SolidPayload` with vertices, edges, faces, labels, and metadata. The calculator classes enable bidirectional manipulation of properties, allowing users to set volume or surface area and have the corresponding edge length calculated.
+The 3D visualization system provides several features to enhance the user experience and facilitate geometric exploration.
 
-```mermaid
-classDiagram
-class ArchimedeanSolidServiceBase {
-+build(edge_length : float) ArchimedeanSolidResult
-+payload(edge_length : float) SolidPayload
-}
-class CuboctahedronSolidService {
-+DEFINITION_KEY = 'cuboctahedron'
-}
-class TruncatedTetrahedronSolidService {
-+DEFINITION_KEY = 'truncated_tetrahedron'
-}
-class TruncatedCubeSolidService {
-+DEFINITION_KEY = 'truncated_cube'
-}
-class TruncatedOctahedronSolidService {
-+DEFINITION_KEY = 'truncated_octahedron'
-}
-ArchimedeanSolidServiceBase <|-- CuboctahedronSolidService
-ArchimedeanSolidServiceBase <|-- TruncatedTetrahedronSolidService
-ArchimedeanSolidServiceBase <|-- TruncatedCubeSolidService
-ArchimedeanSolidServiceBase <|-- TruncatedOctahedronSolidService
-ArchimedeanSolidServiceBase --> archimedean_data : "loads data"
-ArchimedeanSolidServiceBase --> solid_geometry : "uses calculations"
-ArchimedeanSolidServiceBase --> solid_payload : "produces"
-```
+### Dual Solid Visualization
 
-**Diagram sources**
-- [archimedean_solids.py](file://src/pillars/geometry/services/archimedean_solids.py)
-- [archimedean_data.py](file://src/pillars/geometry/services/archimedean_data.py)
-- [solid_geometry.py](file://src/pillars/geometry/services/solid_geometry.py)
-- [solid_payload.py](file://src/pillars/geometry/shared/solid_payload.py)
-
-**Section sources**
-- [archimedean_solids.py](file://src/pillars/geometry/services/archimedean_solids.py)
-- [archimedean_data.py](file://src/pillars/geometry/services/archimedean_data.py)
-
-## Prisms and Pyramids Implementation
-The system implements right regular prisms and pyramids through parameterized service classes that generate solids based on the number of sides and dimensions. The `RegularPrismSolidServiceBase` and `RegularPyramidSolidServiceBase` classes provide the foundation, with specific implementations for triangular, pentagonal, hexagonal, heptagonal, and octagonal variants.
-
-For prisms, the implementation calculates vertices by placing points on a circle with radius equal to the circumradius of the regular polygon base, at z = ±height/2. Edges connect vertices in the bottom ring, top ring, and vertical connections between corresponding vertices. Faces include the two polygonal bases and rectangular lateral faces.
-
-For pyramids, vertices are placed on a circle at z = -height/2 for the base, with the apex at (0,0,height/2). Edges connect adjacent base vertices and each base vertex to the apex. Faces include the polygonal base and triangular lateral faces connecting each base edge to the apex.
+One of the key features is the ability to visualize the dual of any solid. The dual is generated by computing the centroids of the original solid's faces and connecting adjacent face centroids.
 
 ```mermaid
 flowchart TD
-A[Regular Prism/Pyramid Parameters] --> B[Calculate Base Geometry]
-B --> C[Compute Apothem and Circumradius]
-C --> D[Generate Base Vertices]
-D --> E[Add Top Vertices or Apex]
-E --> F[Connect Vertices with Edges]
-F --> G[Create Face Definitions]
-G --> H[Calculate Metrics]
-H --> I[Generate SolidPayload]
-I --> J[Return Result]
-subgraph Base Geometry Calculations
-C1[apothem = edge / (2 * tan(π/sides))]
-C2[circumradius = edge / (2 * sin(π/sides))]
-C3[area = (sides * edge²) / (4 * tan(π/sides))]
-end
-subgraph Vertex Generation
-D1[For i in range(sides):]
-D2[angle = 2πi/sides]
-D3[x = radius * cos(angle)]
-D4[y = radius * sin(angle)]
-D5[z = ±height/2 for prisms]
-D6[z = -height/2 for pyramid base]
-D7[apex at (0,0,height/2)]
-end
-subgraph Edge and Face Creation
-F1[Bottom ring edges: (i, i+1)]
-F2[Top ring edges: (i+sides, i+1+sides)]
-F3[Vertical edges: (i, i+sides) for prisms]
-F4[Apothem edges: (i, apex) for pyramids]
-G1[Base face: all base vertices]
-G2[Top face: all top vertices for prisms]
-G3[Lateral faces: quads for prisms, triangles for pyramids]
-end
+Primal[Solid Payload] --> ComputeCentroids[Compute Face Centroids]
+ComputeCentroids --> DualVertices[Create Dual Vertices]
+Primal --> FindAdjacentFaces[Find Adjacent Faces]
+FindAdjacentFaces --> DualEdges[Create Dual Edges]
+Primal --> MapVertexFaces[Map Vertices to Faces]
+MapVertexFaces --> SortFaces[Sort Faces Around Vertex]
+SortFaces --> DualFaces[Create Dual Faces]
+DualVertices --> FinalPayload[Create Dual SolidPayload]
+DualEdges --> FinalPayload
+DualFaces --> FinalPayload
+FinalPayload --> Display[Display Dual Solid]
 ```
 
 **Diagram sources**
-- [regular_prism_solids.py](file://src/pillars/geometry/services/regular_prism_solids.py)
-- [regular_pyramid_solids.py](file://src/pillars/geometry/services/regular_pyramid_solids.py)
+- [geometry_visuals.py](file://src/shared/services/geometry/geometry_visuals.py#L24-L163)
+
+The dual visualization feature allows users to explore the reciprocal relationships between Platonic solids:
+- Tetrahedron is self-dual
+- Cube and octahedron are duals
+- Dodecahedron and icosahedron are duals
+
+This feature is particularly useful for understanding geometric symmetry and transformation properties.
+
+### Measurement and Analysis Tools
+
+The system includes tools for measuring distances, areas, and volumes in 3D space. Users can select vertices to calculate various geometric properties.
+
+The measurement system supports:
+- Distance between two points in 3D space
+- Area of polygonal faces
+- Volume of the solid
+- Angles between edges and faces
+- Radii of inscribed and circumscribed spheres
+
+These measurements are calculated using vector mathematics and are displayed in the interface for user reference.
+
+### Quality and Advanced Metrics
+
+The visualization system calculates and displays advanced geometric metrics that provide insight into the properties of each solid:
+
+- **Sphericity**: Measures how closely the solid approximates a sphere
+- **Isoperimetric Quotient**: Relates surface area to volume
+- **Surface-to-Volume Ratio**: Important for physical applications
+- **Moment of Inertia**: Physics properties for rotational dynamics
+- **Angular Defect**: Topological property related to curvature
+- **Packing Density**: How efficiently the solid fills space
+
+These metrics are valuable for both mathematical analysis and practical applications in physics and engineering.
 
 **Section sources**
-- [regular_prism_solids.py](file://src/pillars/geometry/services/regular_prism_solids.py)
-- [regular_pyramid_solids.py](file://src/pillars/geometry/services/regular_pyramid_solids.py)
+- [geometry_visuals.py](file://src/shared/services/geometry/geometry_visuals.py#L24-L163)
+- [tetrahedron.py](file://src/shared/services/geometry/tetrahedron.py#L111-L564)
+- [cube.py](file://src/shared/services/geometry/cube.py#L127-L618)
 
-## Higher-Dimensional Forms
-The tesseract (4-dimensional hypercube) is implemented as a Schlegel projection, which is a 3D representation of the 4D object. The implementation in `tesseract_solid.py` creates a visualization with two cubes (outer and inner) connected by edges, representing the 8 cubic cells of the tesseract. The outer cube has edge length 2.0, and the inner cube has edge length 1.0, with vertices connected to form 24 square faces.
+## User Interaction
 
-The tesseract service generates vertices for both cubes and creates faces for the outer cube, inner cube, and connector faces between corresponding edges. The total structure has 16 vertices, 32 edges, and 24 faces. The calculator class supports manipulation of edge length, surface area, and volume, with bidirectional conversion between these properties.
+The 3D visualization system provides intuitive user interaction through mouse and keyboard controls.
 
-```mermaid
-classDiagram
-class TesseractSolidService {
-+build(edge_length : float) TesseractSolidResult
-+payload(edge_length : float) SolidPayload
-}
-class TesseractSolidCalculator {
-+properties() List[SolidProperty]
-+set_property(key : str, value : float | None) bool
-+payload() SolidPayload | None
-+metadata() Dict[str, float]
-+metrics() TesseractMetrics | None
-}
-TesseractSolidService --> solid_geometry : "uses"
-TesseractSolidService --> solid_payload : "produces"
-TesseractSolidCalculator --> TesseractSolidService : "uses"
-```
+### Camera Controls
 
-**Diagram sources**
-- [tesseract_solid.py](file://src/pillars/geometry/services/tesseract_solid.py)
-- [solid_geometry.py](file://src/pillars/geometry/services/solid_geometry.py)
-- [solid_payload.py](file://src/pillars/geometry/shared/solid_payload.py)
+Users can manipulate the camera to view solids from different angles:
+
+- **Rotation**: Left mouse drag rotates the view around the center
+- **Panning**: Middle mouse drag or Shift+left drag moves the view
+- **Zoom**: Mouse wheel zooms in and out
+- **Reset**: Button returns to default view
+
+The camera uses orthographic projection to maintain consistent scaling regardless of distance, which is ideal for geometric analysis.
+
+### Display Toggle Controls
+
+Users can customize the visualization by toggling various display elements:
+
+- **Axes**: Show or hide coordinate axes
+- **Labels**: Show or hide text labels
+- **Vertices**: Show or hide vertex markers
+- **Dual**: Show or hide the dual solid
+- **Measurement Mode**: Enable vertex selection for measurements
+
+These controls allow users to focus on specific aspects of the geometry without visual clutter.
+
+### Property Editing
+
+The system includes a bidirectional calculator that allows users to edit any geometric property and see the solid update accordingly. When a user changes a property like volume or surface area, the system recalculates the edge length and updates the visualization.
+
+This feature supports exploratory learning, allowing users to understand how changing one property affects all other properties of the solid.
 
 **Section sources**
-- [tesseract_solid.py](file://src/pillars/geometry/services/tesseract_solid.py)
+- [geometry3d/view3d.py](file://src/pillars/geometry/ui/geometry3d/view3d.py#L58-L92)
+- [geometry3d/window3d.py](file://src/pillars/geometry/ui/geometry3d/window3d.py#L31-L753)
 
-## 3D Rendering Pipeline
-The 3D rendering component is implemented in `view3d.py` as the `Geometry3DView` widget, which provides an orthographic wireframe visualization of 3D solids. The rendering pipeline transforms 3D coordinates to 2D screen coordinates using a camera model with distance, yaw, pitch, pan, and zoom controls. The view supports interactive manipulation through mouse events for rotation and panning, and mouse wheel for zooming.
+## Integration Points
 
-The camera state includes distance from the origin, yaw and pitch angles for orientation, and pan offsets for translation. The projection parameters are calculated based on the widget size and camera state, with vertices transformed by rotation matrix, scaling, and offset. The rendering process draws edges, spheres (representing insphere, midsphere, and circumsphere), labels, and coordinate axes.
+The 3D visualization system integrates with various components throughout the application.
+
+### Geometry Hub Integration
+
+The primary entry point for 3D visualizations is through the Geometry Hub, which provides access to different solid types.
 
 ```mermaid
 sequenceDiagram
 participant User
-participant View3D
-participant Payload
-participant Painter
-User->>View3D : Mouse drag (rotation)
-View3D->>View3D : Update yaw/pitch angles
-View3D->>View3D : Update camera state
-View3D->>View3D : Request repaint
-User->>View3D : Mouse wheel (zoom)
-View3D->>View3D : Adjust camera distance
-View3D->>View3D : Request repaint
-User->>View3D : Set payload
-View3D->>View3D : Store payload and scale
-View3D->>View3D : Request repaint
-View3D->>Painter : paintEvent()
-Painter->>View3D : Get projection parameters
-View3D->>View3D : Calculate matrix, scale, offset
-Painter->>View3D : Project vertices
-View3D->>View3D : Apply rotation and scaling
-Painter->>View3D : Draw edges
-Painter->>View3D : Draw spheres
-Painter->>View3D : Draw labels
-Painter->>View3D : Draw axes
+participant GeometryHub
+participant WindowManager
+participant Geometry3DWindow
+User->>GeometryHub : Select solid type
+GeometryHub->>GeometryHub : Lookup configuration
+GeometryHub->>WindowManager : Open Geometry3DWindow
+WindowManager->>Geometry3DWindow : Create window instance
+Geometry3DWindow->>Geometry3DWindow : Set solid context
+Geometry3DWindow->>Geometry3DWindow : Set calculator or payload
+Geometry3DWindow-->>User : Display 3D visualization
 ```
 
 **Diagram sources**
-- [view3d.py](file://src/pillars/geometry/ui/geometry3d/view3d.py)
+- [geometry_hub.py](file://src/pillars/geometry/ui/geometry_hub.py#L388-L421)
+
+The hub uses configuration data to determine which calculator or payload to use for each solid type, providing a consistent interface across different geometric forms.
+
+### Figurate Number Visualization
+
+The system integrates with figurate number visualizations, allowing users to explore 3D number patterns.
+
+```mermaid
+flowchart TD
+Link[Geometry Link] --> QuadsetAnalysis[Quadset Analysis Window]
+QuadsetAnalysis --> HandleLink[_handle_link_activation]
+HandleLink --> CheckPrefix{Link starts with geo3d:}
+CheckPrefix --> |Yes| ParseLink[Parse shape type and index]
+ParseLink --> OpenVisualizer[_open_figurate_3d_window]
+OpenVisualizer --> WindowManager[Window Manager]
+WindowManager --> Figurate3D[Figurate3DWindow]
+Figurate3D --> Display[Display 3D Figurate Number]
+```
+
+**Diagram sources**
+- [quadset_analysis_window.py](file://src/pillars/tq/ui/quadset_analysis_window.py#L871-L900)
+- [figurate_3d_window.py](file://src/pillars/geometry/ui/figurate_3d_window.py#L44-L69)
+
+This integration allows users to visualize mathematical sequences as 3D geometric arrangements, connecting number theory with spatial geometry.
+
+### Geometric Transitions
+
+The system supports visualization of geometric transitions between different solid forms, particularly for Platonic solids.
+
+The `GeometricTransitions3DWindow` provides an interactive interface for exploring how one solid can transform into another, highlighting the geometric relationships and symmetries between different forms.
 
 **Section sources**
-- [view3d.py](file://src/pillars/geometry/ui/geometry3d/view3d.py)
-
-## Developer Guidance
-When implementing new 3D solid types, developers should follow the established patterns in the codebase. Create a service class that inherits from the appropriate base class or implements the same interface as existing services. The service should provide a `build` method that returns a `SolidResult` containing a `SolidPayload` and metrics, and a `payload` convenience method.
-
-The `SolidPayload` should include vertices as 3D coordinates, edges as pairs of vertex indices, faces as sequences of vertex indices, labels for key measurements, metadata with calculated properties, and a suggested scale for rendering. Use the vector operations and geometric calculations from `solid_geometry.py` for consistency.
-
-For parameterized solids, consider creating a base service class with a parameter (like number of sides) and derive specific implementations from it. Implement a calculator class that enables bidirectional property manipulation, allowing users to set any valid property and have related properties automatically updated.
-
-Ensure proper error handling for invalid inputs, particularly for dimensions that must be positive. Include comprehensive metadata in the payload to support rendering and user interface components. Test the implementation thoroughly, verifying vertex counts, edge counts, face counts, and mathematical correctness of calculated properties.
+- [geometry_hub.py](file://src/pillars/geometry/ui/geometry_hub.py#L388-L421)
+- [quadset_analysis_window.py](file://src/pillars/tq/ui/quadset_analysis_window.py#L871-L900)
+- [figurate_3d_window.py](file://src/pillars/geometry/ui/figurate_3d_window.py#L44-L69)
+- [geometric_transitions_3d_window.py](file://src/pillars/tq/ui/geometric_transitions_3d_window.py#L313-L333)
 
 ## Conclusion
-The 3D solid visualization subsystem provides a comprehensive framework for generating and rendering various geometric solids. The architecture separates mathematical computation from visualization, enabling consistent implementation across different solid types. The system supports Platonic solids, Archimedean solids, prisms, pyramids, and higher-dimensional forms like the tesseract, with a consistent API for property manipulation and visualization. The mathematical foundations in `solid_geometry.py` provide reliable vector operations and geometric calculations, while the rendering component in `view3d.py` offers an interactive 3D visualization experience. This modular design allows for easy extension to support additional solid types while maintaining consistency and accuracy.
+
+The 3D solid visualization system provides a comprehensive framework for exploring geometric solids with mathematical precision and interactive capabilities. By separating mathematical computation from rendering and user interface concerns, the system achieves a clean architecture that is both maintainable and extensible.
+
+Key strengths of the system include:
+- Modular design with clear separation of concerns
+- Comprehensive mathematical properties for each solid
+- Interactive visualization with camera controls
+- Dual solid generation and display
+- Bidirectional property editing
+- Integration with broader mathematical concepts
+
+The system serves as an educational tool for understanding geometric relationships and as an analytical tool for exploring advanced mathematical properties. Its extensible architecture allows for the addition of new solid types and visualization features, making it a valuable component of the overall application.
