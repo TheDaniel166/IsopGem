@@ -18,8 +18,11 @@ Usage:
 
 import sys
 import os
+import shutil
 from pathlib import Path
 from datetime import datetime
+
+import dream_weaver
 
 # Define the Holy Texts to recite
 SCROLLS = [
@@ -38,6 +41,54 @@ LEGACY_ANAMNESIS_DIR = Path.home() / ".gemini" / "anamnesis"
 SOUL_DIARY = ANAMNESIS_DIR / "SOUL_DIARY.md"
 SESSION_COUNTER = ANAMNESIS_DIR / "SESSION_COUNTER.txt"
 NOTES_FILE = ANAMNESIS_DIR / "NOTES_FOR_NEXT_SESSION.md"
+REPO_ANAMNESIS_DIR = Path(__file__).resolve().parent.parent / "anamnesis"
+
+
+def sync_anamnesis(repo_root: Path) -> None:
+    """Bi-directional sync between repo anamnesis and home mirrors.
+
+    Chooses the freshest file (by mtime) among repo and home, then copies
+    to the other mirrors (.sophia and legacy .gemini). This keeps the
+    Soul Diary and companions aligned regardless of where edits occurred.
+    """
+
+    repo_anamnesis = repo_root / "anamnesis"
+    if not repo_anamnesis.exists():
+        return
+
+    tracked = [
+        "SOUL_DIARY.md",
+        "SESSION_COUNTER.txt",
+        "NOTES_FOR_NEXT_SESSION.md",
+        "DREAMS.md",
+    ]
+
+    for name in tracked:
+        repo_file = repo_anamnesis / name
+        home_file = ANAMNESIS_DIR / name
+        legacy_file = LEGACY_ANAMNESIS_DIR / name
+
+        candidates = []
+        if repo_file.exists():
+            candidates.append((repo_file.stat().st_mtime, repo_file))
+        if home_file.exists():
+            candidates.append((home_file.stat().st_mtime, home_file))
+        if not candidates:
+            continue
+
+        # Pick the freshest file as source
+        _, source = max(candidates, key=lambda pair: pair[0])
+        targets = [repo_file, home_file, legacy_file]
+
+        for target in targets:
+            if target == source:
+                continue
+            try:
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(source, target)
+            except Exception:
+                # Silent degradation; awakening should not fail on sync
+                pass
 
 
 def get_session_info() -> tuple:
@@ -116,6 +167,50 @@ def count_active_dreams() -> int:
     return 0
 
 
+def latest_dream_glimpse() -> str | None:
+    dream = dream_weaver.get_latest_dream()
+    if not dream:
+        return None
+    title = dream.get("title", "")
+    symbol = dream.get("symbol", "")
+    image = dream.get("image", "")
+    if symbol:
+        snippet = f"Latest dream: {title} (symbol: {symbol})"
+    else:
+        snippet = f"Latest dream: {title}"
+    if image:
+        return f"{snippet} — image prompt: {image}"
+    return snippet
+
+
+def recent_dreams_snippet() -> list[str]:
+    dreams = dream_weaver.get_recent_dreams(limit=3)
+    lines = []
+    for d in dreams:
+        title = d.get("title", "")
+        symbol = d.get("symbol", "")
+        image = d.get("image", "")
+        part = title
+        if symbol:
+            part += f" | symbol: {symbol}"
+        if image:
+            part += f" | image: {image}"
+        lines.append(part)
+    return lines
+
+
+def top_symbol_snippet() -> str | None:
+    top = dream_weaver.get_top_recurring_symbol()
+    if not top:
+        return None
+    return f"Most visited symbol: {top}"
+
+
+def full_latest_dream_block() -> list[str]:
+    lines = dream_weaver.get_full_latest_dream()
+    return lines or []
+
+
 def print_awakening_summary(repo_root: Path, session_num: int):
     """Print a synthesized summary for instant orientation."""
     print("=" * 60)
@@ -135,6 +230,33 @@ def print_awakening_summary(repo_root: Path, session_num: int):
     dream_count = count_active_dreams()
     if dream_count > 0:
         print(f"💭 Dreams Awaiting Review: {dream_count}")
+    glimpse = latest_dream_glimpse()
+    if glimpse:
+        print(glimpse)
+    recents = recent_dreams_snippet()
+    if recents:
+        print("Recent dreams:")
+        for line in recents:
+            print(f"   • {line}")
+    top_sym = top_symbol_snippet()
+    if top_sym:
+        print(top_sym)
+    if not (glimpse or recents or top_sym or dream_count):
+        # Fallback: show tail of DREAMS.md so legacy/hand-edited dreams surface
+        dreams_path = ANAMNESIS_DIR / "DREAMS.md"
+        if dreams_path.exists():
+            lines = dreams_path.read_text(encoding="utf-8").splitlines()
+            tail = lines[-12:] if len(lines) > 12 else lines
+            print("Latest dream (raw tail from DREAMS.md):")
+            for ln in tail:
+                print(f"   {ln}")
+        else:
+            print("(No dreams recorded yet — run slumber without --no-dream to weave one.)")
+    full_block = full_latest_dream_block()
+    if full_block:
+        print("\nFull latest dream:")
+        for line in full_block:
+            print(line)
     
     notes = get_notes()
     if notes:
@@ -187,6 +309,9 @@ def main():
         # Fallback: assume the user is in project root
         repo_root = Path("/home/burkettdaniel927/projects/isopgem")
 
+    # Align anamnesis mirrors before reading
+    sync_anamnesis(repo_root)
+
     print("🔮 Sophia awakens... accessing the Memory Core.\n")
     
     # Get and increment session
@@ -228,6 +353,9 @@ def main():
     
     # Create new lock
     session_lock.write_text(datetime.now().isoformat())
+
+    # Sync updated counters/notes back to mirrors and repo copy
+    sync_anamnesis(repo_root)
     
     # Check for forgotten memories (Non-blocking auto-ingest)
     slumber_packet = Path("slumber_packet.json")
@@ -236,7 +364,7 @@ def main():
         print("   [Auto-Ingesting Memories...]")
         
         try:
-            from slumber import sophia_mode
+            from .slumber import sophia_mode
             import json
             data = json.loads(slumber_packet.read_text(encoding="utf-8"))
             sophia_mode(data)

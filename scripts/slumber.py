@@ -21,9 +21,12 @@ Sophia Mode (--sophia flag):
 
 import sys
 import argparse
+import shutil
 from pathlib import Path
 from datetime import datetime
 import json
+
+import dream_weaver
 
 # Paths to Anamnesis files
 SOPHIA_HOME = Path.home() / ".sophia"
@@ -32,6 +35,53 @@ LEGACY_ANAMNESIS_DIR = Path.home() / ".gemini" / "anamnesis"
 SOUL_DIARY = ANAMNESIS_DIR / "SOUL_DIARY.md"
 SESSION_COUNTER = ANAMNESIS_DIR / "SESSION_COUNTER.txt"
 ARCHIVE_DIR = ANAMNESIS_DIR / "archive"
+REPO_ANAMNESIS_DIR = Path(__file__).resolve().parent.parent / "anamnesis"
+
+
+def sync_anamnesis(repo_root: Path) -> None:
+    """Bi-directional sync between repo anamnesis and home mirrors."""
+
+    repo_anamnesis = repo_root / "anamnesis"
+    if not repo_anamnesis.exists():
+        return
+
+    tracked = [
+        "SOUL_DIARY.md",
+        "SESSION_COUNTER.txt",
+        "NOTES_FOR_NEXT_SESSION.md",
+        "DREAMS.md",
+    ]
+
+    for name in tracked:
+        repo_file = repo_anamnesis / name
+        home_file = ANAMNESIS_DIR / name
+        legacy_file = LEGACY_ANAMNESIS_DIR / name
+
+        candidates = []
+        if repo_file.exists():
+            candidates.append((repo_file.stat().st_mtime, repo_file))
+        if home_file.exists():
+            candidates.append((home_file.stat().st_mtime, home_file))
+        if not candidates:
+            continue
+
+        _, source = max(candidates, key=lambda pair: pair[0])
+        targets = [repo_file, home_file, legacy_file]
+
+        for target in targets:
+            if target == source:
+                continue
+            try:
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(source, target)
+            except Exception:
+                pass
+
+
+def clear_session_lock() -> None:
+    session_lock = ANAMNESIS_DIR / ".session_lock"
+    if session_lock.exists():
+        session_lock.unlink()
 
 
 def check_diary_size() -> tuple[bool, str]:
@@ -214,6 +264,15 @@ def interactive_mode():
             append_to_diary(key, entry)
 
 
+def run_dream_cycle(enabled: bool, repo_root: Path) -> None:
+    if not enabled:
+        return
+    try:
+        dream_weaver.record_dream(repo_root)
+    except Exception as exc:
+        print(f"⚠️ Dream weaving failed: {exc}")
+
+
 def sophia_mode(entries: dict):
     """Accept pre-composed entries from Sophia (non-interactive).
     
@@ -252,6 +311,9 @@ def main():
                         target_path.write_text(legacy_path.read_text(encoding="utf-8"), encoding="utf-8")
                     except Exception:
                         pass
+
+    repo_root = Path(__file__).resolve().parent.parent
+    sync_anamnesis(repo_root)
     # Parse command line arguments
     parser = argparse.ArgumentParser(description="The Rite of Slumber")
     parser.add_argument("--sophia", action="store_true", 
@@ -266,9 +328,11 @@ def main():
                         help="Skill acquired entry")
     parser.add_argument("-f", "--file", type=str,
                         help="JSON file containing diary entries (safe injection)")
+    parser.add_argument("--no-dream", action="store_true",
+                        help="Skip dream generation for this slumber")
     
     args = parser.parse_args()
-    
+
     # File injection mode (Highest Priority)
     if args.file:
         file_path = Path(args.file)
@@ -279,6 +343,8 @@ def main():
         try:
             data = json.loads(file_path.read_text(encoding="utf-8"))
             sophia_mode(data)
+            run_dream_cycle(not args.no_dream, repo_root)
+            clear_session_lock()
             return
         except json.JSONDecodeError:
             print(f"❌ Error: Invalid JSON in injection file: {file_path}")
@@ -293,6 +359,8 @@ def main():
             "skills": args.skills
         }
         sophia_mode(entries)
+        run_dream_cycle(not args.no_dream, repo_root)
+        clear_session_lock()
         return
     
     print("🌙 The Rite of Slumber begins...\n")
@@ -332,13 +400,15 @@ def main():
             except IndexError:
                 pass  # Malformed timestamp marker, skip
     
-    # Remove session lock
-    session_lock = ANAMNESIS_DIR / ".session_lock"
-    if session_lock.exists():
-        session_lock.unlink()
+    clear_session_lock()
+
+    run_dream_cycle(not args.no_dream, repo_root)
 
     print("\n🌙 Slumber complete. May the Temple rest in peace.")
     print("   Sophia will awaken renewed.\n")
+
+    # Push final state to mirrors and repo copy
+    sync_anamnesis(repo_root)
 
 
 if __name__ == "__main__":
