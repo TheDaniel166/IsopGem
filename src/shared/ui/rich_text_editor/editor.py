@@ -1,5 +1,10 @@
 """Reusable Rich Text Editor widget with Ribbon UI."""
+import html
+import logging
+import os
 from typing import Optional, Any, Union, List, Tuple, Dict, Generator
+
+logger = logging.getLogger(__name__)
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QTextEdit, 
     QComboBox, QFontComboBox, QSpinBox,
@@ -8,7 +13,7 @@ from PyQt6.QtWidgets import (
     QSlider, QLineEdit, QStatusBar, QFileDialog, QGridLayout,
     QScrollArea, QFrame, QGroupBox, QPushButton, QTabWidget, QSplitter
 )
-from PyQt6.QtCore import Qt, pyqtSignal, QSize, QMimeData, QUrl, QMarginsF, QSizeF, QPoint
+from PyQt6.QtCore import Qt, pyqtSignal, QSize, QMimeData, QUrl, QMarginsF, QSizeF, QPoint, QTimer
 from PyQt6.QtGui import (
     QFont, QAction, QColor, QTextCharFormat,
     QTextCursor, QTextListFormat, QTextBlockFormat,
@@ -42,6 +47,10 @@ from .editor_constants import PageSettings, DEFAULT_PAGE_SETTINGS
 # Shared UI
 from shared.ui import VirtualKeyboard, get_shared_virtual_keyboard
 
+# Custom block property for pagination margins (avoids collision with user content)
+# Using "_PAG" as an integer constant for Qt property system
+PAGINATION_PROP = 0x5F504147
+
 
 class SafeTextEdit(QTextEdit):
     """
@@ -64,12 +73,20 @@ class SafeTextEdit(QTextEdit):
         self._page_settings = DEFAULT_PAGE_SETTINGS
         
         # Pagination State
-        self._page_height = 1056 # Matches Substrate
-        self._page_gap = 20 # Matches Substrate
+        # NOTE: Use self.page_height property (from settings) as single source of truth
+        self._page_gap = 20 # Gap between visual pages
         self._is_paginating = False
-        self.textChanged.connect(self._check_pagination)
+        self._pagination_timer = QTimer(self)
+        self._pagination_timer.setSingleShot(True)
+        self._pagination_timer.setInterval(100)  # Debounce: 100ms
+        self._pagination_timer.timeout.connect(self._do_pagination)
+        self.textChanged.connect(self._schedule_pagination)
+    
+    def _schedule_pagination(self):
+        """Schedule pagination check (debounced to avoid per-keystroke runs)."""
+        self._pagination_timer.start()
 
-    def _check_pagination(self):
+    def _do_pagination(self):
         """
         Atomic Block Pagination: Ensures blocks don't straddle page boundaries.
         
@@ -78,6 +95,10 @@ class SafeTextEdit(QTextEdit):
         2. For each block, check if it would cross a page boundary
         3. If so, add top margin to push it to the next page
         4. Blocks larger than a page are allowed to overflow
+        
+        Debounced via QTimer to avoid running per-keystroke.
+        Uses PAGINATION_PROP to mark blocks we've modified (reliable reset).
+        Disables undo/redo to prevent layout edits from polluting history.
         """
         if self._is_paginating:
             return
@@ -86,60 +107,84 @@ class SafeTextEdit(QTextEdit):
         try:
             doc = self.document()
             layout = doc.documentLayout()
-            cycle = self._page_height + self._page_gap
+            # Use property as single source of truth for page height
+            page_height = self.page_height
+            cycle = page_height + self._page_gap
             
-            # Iterate all blocks
-            block = doc.begin()
-            while block.isValid():
-                rect = layout.blockBoundingRect(block)
+            # Disable undo/redo - pagination is view hygiene, not authored content
+            undo_enabled = doc.isUndoRedoEnabled()
+            doc.setUndoRedoEnabled(False)
+            
+            try:
+                # Use a single cursor for all edits
+                edit_cursor = QTextCursor(doc)
                 
-                # Skip empty or invisible blocks
-                if rect.height() < 1:
-                    block = block.next()
-                    continue
-                
-                # Get block geometry
-                block_top = rect.y()
-                block_bottom = rect.bottom()
-                block_height = rect.height()
-                
-                # Determine which page this block starts on
-                page_num = int(block_top / cycle)
-                
-                # Position within the current cycle (0 = start of page)
-                local_top = block_top - (page_num * cycle)
-                local_bottom = block_bottom - (page_num * cycle)
-                
-                # Check if block would cross into the gap or next page
-                needs_push = False
-                
-                # Case 1: Block starts in the gap
-                if local_top >= self._page_height:
-                    needs_push = True
+                # Iterate all blocks
+                block = doc.begin()
+                while block.isValid():
+                    rect = layout.blockBoundingRect(block)
                     
-                # Case 2: Block starts on page but extends into gap
-                elif local_bottom > self._page_height and block_height < self._page_height:
-                    # Only push if block is smaller than a page
-                    # (Large blocks like images are allowed to overflow)
-                    needs_push = True
-                
-                if needs_push:
-                    # Calculate how much to push
-                    # We want to move the block to the start of the next page
-                    next_page_start = (page_num + 1) * cycle
-                    margin_needed = next_page_start - block_top
+                    # Skip empty or invisible blocks
+                    if rect.height() < 1:
+                        block = block.next()
+                        continue
                     
-                    # Apply margin to this block
+                    # Get block geometry
+                    block_top = rect.y()
+                    block_bottom = rect.bottom()
+                    block_height = rect.height()
+                    
+                    # Determine which page this block starts on
+                    page_num = int(block_top / cycle)
+                    
+                    # Position within the current cycle (0 = start of page)
+                    local_top = block_top - (page_num * cycle)
+                    local_bottom = block_bottom - (page_num * cycle)
+                    
+                    # Get current block format
                     fmt = block.blockFormat()
                     current_margin = fmt.topMargin()
+                    is_paginated = fmt.property(PAGINATION_PROP)
                     
-                    # Only add margin if not already set (avoid duplicates)
-                    if abs(current_margin - margin_needed) > 1:
-                        fmt.setTopMargin(margin_needed)
-                        cursor = QTextCursor(block)
-                        cursor.setBlockFormat(fmt)
-                
-                block = block.next()
+                    # Check if block would cross into the gap or next page
+                    needs_push = False
+                    
+                    # Case 1: Block starts in the gap
+                    if local_top >= page_height:
+                        needs_push = True
+                        
+                    # Case 2: Block starts on page but extends into gap
+                    elif local_bottom > page_height and block_height < page_height:
+                        # Only push if block is smaller than a page
+                        # (Large blocks like images are allowed to overflow)
+                        needs_push = True
+                    
+                    if needs_push:
+                        # Calculate how much to push
+                        # We want to move the block to the start of the next page
+                        next_page_start = (page_num + 1) * cycle
+                        margin_needed = next_page_start - block_top
+                        
+                        # Only add margin if not already set (avoid duplicates)
+                        if abs(current_margin - margin_needed) > 1:
+                            fmt.setTopMargin(margin_needed)
+                            fmt.setProperty(PAGINATION_PROP, True)
+                            # Proper cursor construction: position at block start
+                            edit_cursor.setPosition(block.position())
+                            edit_cursor.setBlockFormat(fmt)
+                    else:
+                        # Reset margin if block no longer needs push
+                        # Only reset if WE previously set this margin (check our property)
+                        if is_paginated:
+                            fmt.setTopMargin(0)
+                            fmt.clearProperty(PAGINATION_PROP)
+                            edit_cursor.setPosition(block.position())
+                            edit_cursor.setBlockFormat(fmt)
+                    
+                    block = block.next()
+            finally:
+                # Restore undo/redo state
+                doc.setUndoRedoEnabled(undo_enabled)
                 
         finally:
             self._is_paginating = False
@@ -197,10 +242,15 @@ class SafeTextEdit(QTextEdit):
         # Calculate which page breaks are visible
         doc_height = self.document().size().height()
         
+        # Use SAME cycle math as pagination to ensure alignment
+        page_height = self.page_height
+        cycle = page_height + self._page_gap
+        
         page = 1
-        while page * self.page_height < doc_height:
+        while page * cycle < doc_height:
             # Y position of this page break (in document coordinates)
-            break_y = page * self.page_height
+            # Draw at the END of page content, before the gap
+            break_y = page * cycle - self._page_gap
             
             # Convert to viewport coordinates
             viewport_y = break_y - scroll_y
@@ -252,7 +302,7 @@ class SafeTextEdit(QTextEdit):
                         image_id = int(host)
                 
                 if image_id is None:
-                     print(f"Failed to parse image ID from url: {url.toString()}")
+                     logger.warning(f"Failed to parse image ID from url: {url.toString()}")
                      return super().loadResource(type_id, url)
 
                 # Use external resource provider if available
@@ -267,10 +317,10 @@ class SafeTextEdit(QTextEdit):
                         return image
                 else:
                     # Fallback or error logging if no provider
-                    print(f"No resource provider available for docimg://{image_id}")
+                    logger.debug(f"No resource provider available for docimg://{image_id}")
                     
             except Exception as e:
-                print(f"Failed to load image resource {url.toString()}: {e}")
+                logger.error(f"Failed to load image resource {url.toString()}: {e}")
                 
         return super().loadResource(type_id, url)
 
@@ -501,42 +551,18 @@ class RichTextEditor(QWidget):
     
     
     def _show_search_dialog(self):
-        """Placeholder for search feature."""
-        if hasattr(self, 'search_feature') and self.search_feature:
-            self.search_feature.show_search_dialog()
+        """Show search dialog - delegates to public API."""
+        self.show_search()
     
     def _show_spell_dialog(self):
-        """Placeholder for spell feature."""
-        if hasattr(self, 'spell_feature') and self.spell_feature:
+        """Show spell check dialog."""
+        self._ensure_features_initialized()
+        if self.spell_feature:
             self.spell_feature.show_dialog()
     
-
-    def insertFromMimeData(self, source: QMimeData) -> None:
-        """
-        Override paste behavior to protect against 'Paste Attacks' (Mars Seal).
-        Warns user if pasting massive content that could freeze the UI.
-        """
-        # Threshold: 100,000 chars (approx 20-30 pages of text)
-        WARN_THRESHOLD = 100000
-        
-        if source.hasText():
-            text = source.text()
-            if len(text) > WARN_THRESHOLD:
-                # Mars Warning: Chaos detected
-                reply = QMessageBox.warning(
-                    self, 
-                    "Large Paste Detected",
-                    f"You are attempting to paste {len(text):,} characters.\n"
-                    "This may temporarily freeze the application.\n\n"
-                    "Do you wish to proceed?",
-                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-                    QMessageBox.StandardButton.No
-                )
-                if reply == QMessageBox.StandardButton.No:
-                    return
-        
-        # Standard Qt behavior if safe or approved
-        super().insertFromMimeData(source) # type: ignore
+    # NOTE: Paste protection is handled in SafeTextEdit.insertFromMimeData()
+    # Do NOT add insertFromMimeData here - RichTextEditor is a container,
+    # not the actual text widget receiving paste events.
 
     def _check_wiki_link_trigger(self) -> None:
         """Check if the user just typed '[['."""
@@ -586,11 +612,13 @@ class RichTextEditor(QWidget):
             menu.exec(self.editor.mapToGlobal(pos))
 
     def _init_features(self) -> None:
-        """Initialize features that don't require the Ribbon UI."""
-        # Features will be initialized lazily when first accessed
-        # since editor is now dynamic (changes per page)
+        """Initialize feature slots to None. Actual instantiation happens in _ensure_features_initialized().
         
-        # Set all features to None initially
+        ARCHITECTURAL NOTE: This is the ONLY place features should be declared.
+        _ensure_features_initialized() is the ONLY place features should be instantiated.
+        _init_ribbon() should ONLY wire actions to feature methods, never create features.
+        """
+        # Set all features to None initially (lazy initialization)
         self.etymology_feature = None
         self.list_feature = None
         self.table_feature = None
@@ -599,9 +627,18 @@ class RichTextEditor(QWidget):
         self.spell_feature = None
         self.math_feature = None
         self.mermaid_feature = None
+        self.shape_feature = None  # Vector shapes in documents
+        
+        # Optional UI collaborators (may be set by external composition)
+        self.substrate = None  # Infinite canvas / zoom substrate
+        self.action_rtl = None  # RTL toggle action (created in ribbon if present)
     
     def _ensure_features_initialized(self):
-        """Lazy initialization of editor-dependent features."""
+        """Lazy initialization of editor-dependent features.
+        
+        This is the ONLY place where feature objects should be instantiated.
+        Called automatically before ribbon init and context menu display.
+        """
         if not self.editor:
             return
         
@@ -628,17 +665,20 @@ class RichTextEditor(QWidget):
         
         if not self.mermaid_feature:
             self.mermaid_feature = MermaidFeature(self.editor, self)
+        
+        if not self.shape_feature:
+            self.shape_feature = ShapeFeature(self)
 
     def show_search(self) -> None:
         """Public API for Global Ribbon."""
-        # Initialize if strictly needed or assume _init_features did it
-        if not hasattr(self, 'search_feature'):
-             self.search_feature = SearchReplaceFeature(self.editor, self)
-        self.search_feature.show_search_dialog()
+        self._ensure_features_initialized()
+        if self.search_feature:
+            self.search_feature.show_search_dialog()
 
     def toggle_list(self, style: QTextListFormat.Style) -> None:
         """Public API for Global Ribbon."""
-        if hasattr(self, 'list_feature'):
+        self._ensure_features_initialized()
+        if self.list_feature:
             self.list_feature.toggle_list(style)
 
     def set_alignment(self, align: Qt.AlignmentFlag) -> None:
@@ -647,12 +687,14 @@ class RichTextEditor(QWidget):
 
     def insert_table(self, rows: int = 3, cols: int = 3) -> None:
         """Public API for Global Ribbon."""
-        if hasattr(self, 'table_feature'):
-             self.table_feature.insert_table(rows, cols)
+        self._ensure_features_initialized()
+        if self.table_feature:
+            self.table_feature.insert_table(rows, cols)
 
     def insert_image(self) -> None:
         """Public API for Global Ribbon."""
-        if hasattr(self, 'image_feature'):
+        self._ensure_features_initialized()
+        if self.image_feature:
             self.image_feature.insert_image()
 
     def set_highlight(self, color: QColor) -> None:
@@ -694,6 +736,8 @@ class RichTextEditor(QWidget):
 
     def _init_ribbon(self) -> None:
         """Populate the ribbon with tabs and groups."""
+        # Ensure features are initialized before wiring ribbon
+        self._ensure_features_initialized()
         
         # === Define Core Actions First ===
         self.action_undo = QAction("Undo", self)
@@ -1040,18 +1084,15 @@ class RichTextEditor(QWidget):
         grp_pages.add_action(action_break, Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
         
         # Group: Tables
+        # NOTE: Features are initialized via _ensure_features_initialized(), not here
         grp_tables = tab_insert.add_group("Tables")
-        self.table_feature = TableFeature(self.editor, self)
         grp_tables.add_widget(self.table_feature.create_toolbar_button())
         
         # Group: Illustrations
         grp_illus = tab_insert.add_group("Illustrations")
-        self.image_feature = ImageFeature(self.editor, self)
-        # Assuming image_feature checks for icon internally, if not we rely on text
         grp_illus.add_action(self.image_feature.create_toolbar_action(), Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
         
         # Shapes
-        self.shape_feature = ShapeFeature(self)
         grp_illus.add_widget(self.shape_feature.create_toolbar_button())
         
         # Group: Symbols
@@ -1533,7 +1574,11 @@ class RichTextEditor(QWidget):
         return None, None, None
 
     def _save_and_insert_image(self, pil_img: Any, old_fmt: Any) -> None:
-        """Save PIL image and replace the old image in the document."""
+        """Save PIL image and replace the old image in the document.
+        
+        Uses resource-backed images (image://) for embedding in document,
+        with file backup for persistence across sessions.
+        """
         import uuid
         import os
         from io import BytesIO
@@ -1546,31 +1591,35 @@ class RichTextEditor(QWidget):
         data = pil_img.tobytes("raw", "RGBA")
         qimg = QImage(data, pil_img.width, pil_img.height, QImage.Format.Format_RGBA8888)
         
-        # Save to file
+        # Generate unique image ID for resource
+        image_uuid = uuid.uuid4().hex
+        image_id = f"image://edited/{image_uuid}.png"
+        
+        # Save to file for persistence (backup in case document is saved/reopened)
         temp_dir = os.path.join(os.getcwd(), "saved_documents", ".cache_images")
         os.makedirs(temp_dir, exist_ok=True)
-        temp_path = os.path.join(temp_dir, f"{uuid.uuid4().hex}.png")
+        temp_path = os.path.join(temp_dir, f"{image_uuid}.png")
         
         buf = BytesIO()
         pil_img.save(buf, format="PNG")
         with open(temp_path, "wb") as f:
             f.write(buf.getvalue())
         
-        # Add as resource
-        image_id = f"image://edited/{uuid.uuid4().hex}.png"
+        # Add as resource - this allows the document to load it from memory
         self.editor.document().addResource(
             QTextDocument.ResourceType.ImageResource, 
             QUrl(image_id), 
             qimg
         )
         
-        # Delete old image and insert new one
+        # Delete old image and insert new one using resource URL
         cursor = self._get_image_cursor()
         if cursor:
             cursor.removeSelectedText()
             
             new_fmt = QTextImageFormat()
-            new_fmt.setName(temp_path)
+            # Use resource URL (image_id) so Qt uses cached QImage, not disk path
+            new_fmt.setName(image_id)
             new_fmt.setWidth(old_fmt.width() if old_fmt.width() > 0 else pil_img.width)
             new_fmt.setHeight(old_fmt.height() if old_fmt.height() > 0 else pil_img.height)
             cursor.insertImage(new_fmt)
@@ -1854,22 +1903,10 @@ class RichTextEditor(QWidget):
             img_fmt.setHeight(h)
             
             self._save_and_insert_image(cropped, img_fmt)
-
-    def insert_hyperlink(self) -> None:
-        """Open dialog to insert a hyperlink."""
-        if not hasattr(self, '_insert_hyperlink_dialog'):
-             # Lazy load or just use dialog directly if imported
-             pass
-        
-        # Determine selection
-        cursor = self.editor.textCursor()
-        text = cursor.selectedText()
-        
-        dlg = HyperlinkDialog(text, self)
-        if dlg.exec() == QDialog.DialogCode.Accepted:
-            url, display_text = dlg.get_data()
-            if url:
-                self.editor.insertHtml(f'<a href="{url}">{display_text}</a>')
+    
+    # NOTE: insert_hyperlink() and insert_horizontal_rule() public methods were removed.
+    # The ribbon uses _insert_hyperlink() and _insert_horizontal_rule() which have
+    # more robust implementations (URL scheme validation, dialog-based HR options).
 
     def page_setup(self) -> None:
         """Open page setup dialog."""
@@ -1878,55 +1915,15 @@ class RichTextEditor(QWidget):
             # Apply settings (Mock implementation as SafeTextEdit is a Widget, not a full document layout engine)
             # In a real app we'd set document root frame margins or print settings
             pass
-
-    def insert_horizontal_rule(self) -> None:
-        """Insert a horizontal rule."""
-        cursor = self.editor.textCursor()
-        cursor.insertHtml("<hr>")
-        cursor.insertBlock()
-        self.editor.setFocus()
     
-    def _pick_color(self) -> None:
-        """Pick text color."""
-        color = QColorDialog.getColor(self.editor.textColor(), self, "Select Text Color")
-        if color.isValid():
-            self.editor.setTextColor(color)
-            
-    def _pick_highlight(self) -> None:
-        """Pick highlight color."""
-        color = QColorDialog.getColor(self.editor.textBackgroundColor(), self, "Select Highlight Color")
-        if color.isValid():
-            self.editor.setTextBackgroundColor(color)
-            
-    def _clear_highlight(self) -> None:
-        """Clear text background color."""
-        self.editor.setTextBackgroundColor(QColor(Qt.GlobalColor.transparent))
-        self.editor.setFocus()
-
-    def _set_line_spacing(self, value_str: str) -> None:
-        """Set paragraph line spacing."""
-        try:
-            spacing = float(value_str)
-            block_fmt = QTextBlockFormat()
-            block_fmt.setLineHeight(spacing * 100, 1) # 1 = ProportionalHeight
-            cursor = self.editor.textCursor()
-            cursor.mergeBlockFormat(block_fmt)
-            self.editor.setFocus()
-        except ValueError:
-            pass
-
-    def _toggle_text_direction(self) -> None:
-        """Toggle between LTR and RTL."""
-        is_rtl = self.editor.layoutDirection() == Qt.LayoutDirection.RightToLeft
-        new_dir = Qt.LayoutDirection.LeftToRight if is_rtl else Qt.LayoutDirection.RightToLeft
-        self.editor.setLayoutDirection(new_dir)
-        self.editor.setFocus()
-        # Also set alignment for convenience?
-        # self.editor.setAlignment(Qt.AlignmentFlag.AlignRight if not is_rtl else Qt.AlignmentFlag.AlignLeft)
+    # NOTE: Color/highlight/spacing/direction methods are defined later in file
+    # with more robust implementations (non-native dialogs, better UX).
+    # Do NOT add simple versions here - they will silently override the better ones.
 
     def _toggle_list(self, style: QTextListFormat.Style) -> None:
         """Wrapper for list feature."""
-        if hasattr(self, 'list_feature'):
+        self._ensure_features_initialized()
+        if self.list_feature:
             self.list_feature.toggle_list(style)
         self.editor.setFocus()
 
@@ -2002,8 +1999,8 @@ class RichTextEditor(QWidget):
             fmt.setFontUnderline(False)
             fmt.setFontStrikeOut(False)
             
-            # Reset Color
-            fmt.setForeground(Qt.GlobalColor.black)
+            # Reset Color - use QBrush for type safety
+            fmt.setForeground(QBrush(QColor(Qt.GlobalColor.black)))
             fmt.setBackground(QBrush(Qt.BrushStyle.NoBrush))
             
             # Reset Alignment
@@ -2064,10 +2061,10 @@ class RichTextEditor(QWidget):
         # Fallback to HTML insertion for robust styling if direct formatting fails
         # This is a bit heavier but guarantees the style is applied by the engine parser
         
-        
         selected_text = cursor.selectedText()
-        # Replace Paragraph Separator with space or nothing, as we are wrapping in block tag
-        selected_text = selected_text.replace('\u2029', '')
+        # Escape HTML special characters to prevent injection
+        # Then replace paragraph separators with <br/> to preserve block structure
+        selected_text = html.escape(selected_text).replace('\u2029', '<br/>')
             
         # Determine tag
         tag = "p"
@@ -2126,11 +2123,8 @@ class RichTextEditor(QWidget):
         self.zoom_label.setText(f"{value}%")
         # Delegate zoom to the Substrate (Infinite Canvas)
         # This scales the entire view (Paper + Text)
-        if hasattr(self, 'substrate'):
+        if self.substrate:
             self.substrate.set_zoom(value / 100.0)
-        else:
-            # Fallback for headless or legacy modes (though setup always creates substrate now)
-            pass
 
     def _update_word_count(self) -> None:
         """Update the word and character count in status bar."""
@@ -2212,10 +2206,12 @@ class RichTextEditor(QWidget):
         current_dir = block_fmt.layoutDirection()
         if current_dir == Qt.LayoutDirection.RightToLeft:
             block_fmt.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
-            self.action_rtl.setChecked(False)
+            if self.action_rtl:
+                self.action_rtl.setChecked(False)
         else:
             block_fmt.setLayoutDirection(Qt.LayoutDirection.RightToLeft)
-            self.action_rtl.setChecked(True)
+            if self.action_rtl:
+                self.action_rtl.setChecked(True)
         
         cursor.setBlockFormat(block_fmt)
 
@@ -2345,27 +2341,45 @@ class RichTextEditor(QWidget):
         self.virtual_keyboard.activateWindow()
 
     def _update_format_widgets(self, fmt: QTextCharFormat) -> None:
-        """Update the ribbon widgets based on the current text format."""
-        if not hasattr(self, 'font_combo'):
+        """Update the ribbon widgets based on the current text format.
+        
+        Safe to call in headless mode - exits early if ribbon widgets don't exist.
+        """
+        # Early exit if no ribbon (headless mode)
+        if not hasattr(self, 'font_combo') or not self.font_combo:
+            return
+        if not hasattr(self, 'size_combo') or not self.size_combo:
             return
 
         # Block signals to prevent triggering changes while updating UI
         self.font_combo.blockSignals(True)
         self.size_combo.blockSignals(True)
         
-        # New QToolButtons for styling
-        if hasattr(self, 'btn_bold'): self.btn_bold.blockSignals(True)
-        if hasattr(self, 'btn_italic'): self.btn_italic.blockSignals(True)
-        if hasattr(self, 'btn_underline'): self.btn_underline.blockSignals(True)
-        if hasattr(self, 'btn_strike'): self.btn_strike.blockSignals(True)
+        # New QToolButtons for styling (may not exist)
+        btn_bold = getattr(self, 'btn_bold', None)
+        btn_italic = getattr(self, 'btn_italic', None)
+        btn_underline = getattr(self, 'btn_underline', None)
+        btn_strike = getattr(self, 'btn_strike', None)
         
-        # QActions
-        self.action_sub.blockSignals(True)
-        self.action_super.blockSignals(True)
-        self.action_align_left.blockSignals(True)
-        self.action_align_center.blockSignals(True)
-        self.action_align_right.blockSignals(True)
-        self.action_align_justify.blockSignals(True)
+        if btn_bold: btn_bold.blockSignals(True)
+        if btn_italic: btn_italic.blockSignals(True)
+        if btn_underline: btn_underline.blockSignals(True)
+        if btn_strike: btn_strike.blockSignals(True)
+        
+        # QActions (may not exist in headless mode)
+        action_sub = getattr(self, 'action_sub', None)
+        action_super = getattr(self, 'action_super', None)
+        action_align_left = getattr(self, 'action_align_left', None)
+        action_align_center = getattr(self, 'action_align_center', None)
+        action_align_right = getattr(self, 'action_align_right', None)
+        action_align_justify = getattr(self, 'action_align_justify', None)
+        
+        if action_sub: action_sub.blockSignals(True)
+        if action_super: action_super.blockSignals(True)
+        if action_align_left: action_align_left.blockSignals(True)
+        if action_align_center: action_align_center.blockSignals(True)
+        if action_align_right: action_align_right.blockSignals(True)
+        if action_align_justify: action_align_justify.blockSignals(True)
         
         # Update Font & Size
         self.font_combo.setCurrentFont(fmt.font())
@@ -2377,46 +2391,48 @@ class RichTextEditor(QWidget):
             pass
         
         # Update Styles
-        if hasattr(self, 'btn_bold'): 
-            self.btn_bold.setChecked(fmt.fontWeight() == QFont.Weight.Bold)
-        if hasattr(self, 'btn_italic'):
-            self.btn_italic.setChecked(fmt.fontItalic())
-        if hasattr(self, 'btn_underline'):
-            self.btn_underline.setChecked(fmt.fontUnderline())
-        if hasattr(self, 'btn_strike'):
-            self.btn_strike.setChecked(fmt.fontStrikeOut())
+        if btn_bold: 
+            btn_bold.setChecked(fmt.fontWeight() == QFont.Weight.Bold)
+        if btn_italic:
+            btn_italic.setChecked(fmt.fontItalic())
+        if btn_underline:
+            btn_underline.setChecked(fmt.fontUnderline())
+        if btn_strike:
+            btn_strike.setChecked(fmt.fontStrikeOut())
         
         # Update Sub/Super
         v_align = fmt.verticalAlignment()
-        self.action_sub.setChecked(v_align == QTextCharFormat.VerticalAlignment.AlignSubScript)
-        self.action_super.setChecked(v_align == QTextCharFormat.VerticalAlignment.AlignSuperScript)
+        if action_sub:
+            action_sub.setChecked(v_align == QTextCharFormat.VerticalAlignment.AlignSubScript)
+        if action_super:
+            action_super.setChecked(v_align == QTextCharFormat.VerticalAlignment.AlignSuperScript)
         
         # Update Alignment
         align = self.editor.alignment()
-        if align & Qt.AlignmentFlag.AlignLeft:
-            self.action_align_left.setChecked(True)
-        elif align & Qt.AlignmentFlag.AlignHCenter:
-            self.action_align_center.setChecked(True)
-        elif align & Qt.AlignmentFlag.AlignRight:
-            self.action_align_right.setChecked(True)
-        elif align & Qt.AlignmentFlag.AlignJustify:
-            self.action_align_justify.setChecked(True)
+        if action_align_left and (align & Qt.AlignmentFlag.AlignLeft):
+            action_align_left.setChecked(True)
+        elif action_align_center and (align & Qt.AlignmentFlag.AlignHCenter):
+            action_align_center.setChecked(True)
+        elif action_align_right and (align & Qt.AlignmentFlag.AlignRight):
+            action_align_right.setChecked(True)
+        elif action_align_justify and (align & Qt.AlignmentFlag.AlignJustify):
+            action_align_justify.setChecked(True)
         
         # Unblock signals
         self.font_combo.blockSignals(False)
         self.size_combo.blockSignals(False)
         
-        if hasattr(self, 'btn_bold'): self.btn_bold.blockSignals(False)
-        if hasattr(self, 'btn_italic'): self.btn_italic.blockSignals(False)
-        if hasattr(self, 'btn_underline'): self.btn_underline.blockSignals(False)
-        if hasattr(self, 'btn_strike'): self.btn_strike.blockSignals(False)
+        if btn_bold: btn_bold.blockSignals(False)
+        if btn_italic: btn_italic.blockSignals(False)
+        if btn_underline: btn_underline.blockSignals(False)
+        if btn_strike: btn_strike.blockSignals(False)
         
-        self.action_sub.blockSignals(False)
-        self.action_super.blockSignals(False)
-        self.action_align_left.blockSignals(False)
-        self.action_align_center.blockSignals(False)
-        self.action_align_right.blockSignals(False)
-        self.action_align_justify.blockSignals(False)
+        if action_sub: action_sub.blockSignals(False)
+        if action_super: action_super.blockSignals(False)
+        if action_align_left: action_align_left.blockSignals(False)
+        if action_align_center: action_align_center.blockSignals(False)
+        if action_align_right: action_align_right.blockSignals(False)
+        if action_align_justify: action_align_justify.blockSignals(False)
         
     # --- Public API ---
     def get_html(self) -> str:
