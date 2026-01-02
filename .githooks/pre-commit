@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Sync Covenant mirrors and pointer before commit to prevent drift.
+# Enable with: git config core.hooksPath .githooks
+
+repo_root="$(cd -- "$(dirname "$0")"/.. && pwd)"
+python_bin="$repo_root/.venv/bin/python"
+sync_script="$repo_root/workflow_scripts/sync_covenant.py"
+
+if [[ ! -x "$python_bin" ]]; then
+    echo "[pre-commit] Skipping covenant sync: $python_bin not found (activate venv)." >&2
+    exit 0
+fi
+
+if [[ ! -f "$sync_script" ]]; then
+    echo "[pre-commit] Skipping covenant sync: $sync_script not found." >&2
+    exit 0
+fi
+
+"$python_bin" "$sync_script"
+
+# If sync produced changes, require re-staging to ensure mirrors are committed.
+if ! git -C "$repo_root" diff --quiet -- .github/instructions/Sophia.instructions.md .github/instructions/covenant; then
+    echo "[pre-commit] Covenant mirrors updated. Please git add the changes and re-run commit." >&2
+    exit 1
+fi

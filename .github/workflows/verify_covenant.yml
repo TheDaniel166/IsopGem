@@ -1,0 +1,30 @@
+name: verify-covenant
+
+on:
+  push:
+    branches: ["main", "master"]
+  pull_request:
+
+jobs:
+  covenant:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Sync covenant mirrors
+        run: |
+          python workflow_scripts/sync_covenant.py
+
+      - name: Ensure no drift after sync
+        run: |
+          git diff --exit-code
+
+      - name: Verify covenant alignment
+        run: |
+          python workflow_scripts/verify_sentinel.py
