@@ -649,7 +649,7 @@ def func_astro(engine: FormulaEngine, body: str, property_: str):
     
     try:
         # Get ephemeris provider
-        from pillars.astrology.repositories.ephemeris_provider import EphemerisProvider, EphemerisNotLoadedError
+        from shared.services.ephemeris_provider import EphemerisProvider, EphemerisNotLoadedError
         
         ephemeris = EphemerisProvider.get_instance()
         

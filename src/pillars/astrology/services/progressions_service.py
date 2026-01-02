@@ -8,7 +8,7 @@ from typing import List, Dict, Any, Optional
 import copy
 
 from ..models.chart_models import AstrologyEvent, ChartResult, PlanetPosition, ChartRequest
-from ..repositories.ephemeris_provider import EphemerisProvider
+from shared.services.ephemeris_provider import EphemerisProvider
 from .openastro_service import OpenAstroService
 
 class ProgressionsService:

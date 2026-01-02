@@ -75,7 +75,7 @@ from shared.ui.theme import COLORS
 from ..ui.chart_picker_dialog import ChartPickerDialog
 from .astro_settings_dialog import AstroSettingsDialog
 from .location_search_dialog import LocationSearchDialog
-from pillars.tq.ui.quadset_analysis_window import SubstrateWidget
+from shared.ui.substrate_widget import SubstrateWidget
     
     
 class NatalChartWindow(QMainWindow):

@@ -9,8 +9,8 @@ import logging
 from typing import List, Dict, Optional, Tuple, Callable, Any, Sequence
 from dataclasses import dataclass, field
 
-from .key_database import KeyDatabase
-from .holy_key_service import HolyKeyService
+from shared.repositories.lexicon.key_database import KeyDatabase
+from shared.services.lexicon.holy_key_service import HolyKeyService
 from shared.services.gematria.tq_calculator import TQGematriaCalculator
 
 logger = logging.getLogger(__name__)

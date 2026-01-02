@@ -341,7 +341,7 @@ class InterlinearDocumentView(QWidget):
         
     def _on_word_clicked(self, word: str, tq_value: int, key_id: int):
         """Show word details dialog."""
-        from pillars.tq_lexicon.services.holy_key_service import HolyKeyService
+        from shared.services.lexicon.holy_key_service import HolyKeyService
         
         if not self.key_service:
             self.key_service = HolyKeyService()

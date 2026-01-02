@@ -27,8 +27,6 @@ from PyQt6.QtWidgets import (
     QComboBox,
     QCheckBox,
     QMessageBox,
-    QDialog,
-    QScrollArea,
     QFrame,
 )
 
@@ -59,11 +57,9 @@ class ParseAndIndexWorker(QThread):
         
     def run(self):
         try:
-            from pillars.tq_lexicon.services.concordance_indexer_service import (
+            from shared.services.lexicon.concordance_indexer_service import (
                 ConcordanceIndexerService,
             )
-            from pillars.tq_lexicon.services.holy_key_service import HolyKeyService
-            from shared.services.document_manager.document_service import DocumentService
             
             indexer = ConcordanceIndexerService()
             result = indexer.parse_and_index(
@@ -102,7 +98,7 @@ class HolyBookConcordanceWindow(QMainWindow):
         self.setWindowTitle("Holy Book Concordance [DEPRECATED - Use Unified Window]")
         self.resize(1100, 750)
         
-        from pillars.tq_lexicon.services.holy_key_service import HolyKeyService
+        from shared.services.lexicon.holy_key_service import HolyKeyService
         from shared.services.document_manager.document_service import DocumentService
 
         self.service = HolyKeyService()
@@ -286,24 +282,7 @@ class HolyBookConcordanceWindow(QMainWindow):
         
         self.parse_and_index_btn = QPushButton("🚀 Parse && Index")
         self.parse_and_index_btn.setToolTip("Parse document AND index all words to concordance")
-        self.parse_and_index_btn.setStyleSheet("""
-            QPushButton {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #2563eb, stop:1 #1d4ed8);
-                color: white;
-                border: 1px solid #1e40af;
-                border-radius: 4px;
-                padding: 8px 16px;
-                font-weight: 600;
-                font-size: 11pt;
-            }
-            QPushButton:hover {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #1d4ed8, stop:1 #2563eb);
-            }
-            QPushButton:disabled {
-                background: #94a3b8;
-                border-color: #64748b;
-            }
-        """)
+        self.parse_and_index_btn.setProperty("archetype", "magus")
         self.parse_and_index_btn.clicked.connect(self._on_parse_and_index)
         self.parse_and_index_btn.setEnabled(False)
         btn_row.addWidget(self.parse_and_index_btn)
@@ -333,7 +312,7 @@ class HolyBookConcordanceWindow(QMainWindow):
         try:
             from shared.database import get_db_session
             from shared.repositories.document_manager.document_repository import DocumentRepository
-            from pillars.tq_lexicon.services.concordance_indexer_service import ConcordanceIndexerService
+            from shared.services.lexicon.concordance_indexer_service import ConcordanceIndexerService
             
             indexer = ConcordanceIndexerService()
             
@@ -382,13 +361,10 @@ class HolyBookConcordanceWindow(QMainWindow):
             # Indexed status
             if doc['is_indexed']:
                 status = "✓"
-                color = "#059669"
             elif doc['has_curated']:
                 status = "○"
-                color = "#d97706"
             else:
                 status = "—"
-                color = "#94a3b8"
             status_item = QTableWidgetItem(status)
             status_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             status_item.setForeground(Qt.GlobalColor.darkGreen if doc['is_indexed'] else Qt.GlobalColor.gray)
@@ -478,7 +454,7 @@ class HolyBookConcordanceWindow(QMainWindow):
             return
             
         try:
-            from pillars.tq_lexicon.services.concordance_indexer_service import ConcordanceIndexerService
+            from shared.services.lexicon.concordance_indexer_service import ConcordanceIndexerService
             
             self._set_processing(True)
             self.progress_label.setText("Parsing...")
@@ -641,31 +617,32 @@ class HolyBookConcordanceWindow(QMainWindow):
     def _open_lexicon_manager(self):
         """Open the Lexicon Manager window."""
         try:
-            from pillars.tq_lexicon.ui.lexicon_manager_window import LexiconManagerWindow
-            
-            self.lexicon_window = LexiconManagerWindow(parent=self)
-            self.lexicon_window.show()
+            from shared.signals.navigation_bus import navigation_bus
+            navigation_bus.request_window.emit("lexicon_manager", {})
         except Exception as e:
             logger.exception("Failed to open Lexicon Manager")
             QMessageBox.critical(self, "Error", f"Failed to open Lexicon Manager:\n{e}")
-            
+
     def _open_teacher_window(self):
-        """Open the detailed verse teacher window for advanced curation."""
+        """Open the detailed verse teacher window via NavigationBus."""
+            
         doc = self._get_selected_document()
         if not doc:
             return
             
         try:
-            from pillars.gematria.ui.holy_book_teacher_window import HolyBookTeacherWindow
+            from shared.signals.navigation_bus import navigation_bus
             
-            self.teacher_window = HolyBookTeacherWindow(
-                document_id=doc['id'],
-                document_title=doc['title'],
-                allow_inline=self.inline_check.isChecked(),
-                parent=self,
-            )
-            self.teacher_window.verses_saved.connect(self._load_documents)
-            self.teacher_window.show()
+            navigation_bus.request_window.emit("holy_book_teacher", {
+                "document_id": doc['id'],
+                "document_title": doc['title'],
+                "allow_inline": self.inline_check.isChecked()
+            })
+            
+            # Note: We can't connect to signals easily via bus (yet), 
+            # so autorefresh might need a general 'document_updated' signal on the bus later.
+            # For now, user can click refresh.
+            
         except Exception as e:
-            logger.exception("Failed to open Teacher window")
+            logger.exception("Failed to request Teacher window")
             QMessageBox.critical(self, "Error", f"Failed to open Teacher window:\n{e}")

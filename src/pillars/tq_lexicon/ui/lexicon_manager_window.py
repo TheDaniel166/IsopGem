@@ -10,8 +10,8 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QTimer, QThread, pyqtSignal
 from PyQt6.QtGui import QAction, QFont, QColor
 
-from ..services.holy_key_service import HolyKeyService
-from ..services.enrichment_service import EnrichmentService
+from shared.services.lexicon.holy_key_service import HolyKeyService
+from shared.services.lexicon.enrichment_service import EnrichmentService
 
 logger = logging.getLogger(__name__)
 

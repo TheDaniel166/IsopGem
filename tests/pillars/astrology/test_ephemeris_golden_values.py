@@ -11,8 +11,8 @@ from pathlib import Path
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parents[3] / "src"))
 
-from pillars.astrology.repositories.ephemeris_provider import EphemerisProvider
-from pillars.astrology.models.chart_models import GeoLocation
+from shared.services.ephemeris_provider import EphemerisProvider
+from shared.models.geo_location import GeoLocation
 
 
 class TestPlanetaryPositions:

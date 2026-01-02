@@ -4,18 +4,15 @@ Main window for the 27x27 Kamea grid with 2D/3D view switching, dimension filter
 """
 from PyQt6.QtWidgets import (
     QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QLabel, QStatusBar,
-    QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QLabel, QStatusBar,
-    QToolBar, QComboBox, QCheckBox
+    QToolBar, QComboBox, QCheckBox, QStackedLayout
 )
 from PyQt6.QtGui import QAction
-from PyQt6.QtCore import Qt
 from ..services.kamea_grid_service import KameaGridService
 from .kamea_grid_view import KameaGridView
 from .kamea_fractal_view import KameaFractalView
 from .fractal_network_dialog import FractalNetworkDialog
 from .nuclear_mutation_panel import NuclearMutationPanel
 from .baphomet_panel import BaphometPanel
-from PyQt6.QtWidgets import QStackedLayout
 
 class KameaWindow(QMainWindow):
     """
@@ -90,33 +87,21 @@ class KameaWindow(QMainWindow):
 
     def _setup_toolbar(self):
         toolbar = QToolBar("Kamea Controls")
-        toolbar.setStyleSheet("""
-            QToolBar {
-                background-color: #1a1a2e;
-                border: none;
-                border-bottom: 2px solid #555;
-            }
-            QLabel { color: #a0a0ff; font-weight: bold; margin-right: 10px; }
-            QComboBox {
-                background-color: #050510;
-                color: white;
-                border: 1px solid #555;
-                padding: 5px;
-            }
-        """)
         self.addToolBar(toolbar)
         
         # View Mode Label
-        toolbar.addWidget(QLabel("   View Mode:"))
+        toolbar.addWidget(QLabel("View Mode: "))
         
         # View Mode Combo
         self.view_combo = QComboBox()
         self.view_combo.addItems(["Decimal", "Ternary"])
         self.view_combo.currentTextChanged.connect(self._on_view_mode_changed)
         toolbar.addWidget(self.view_combo)
+        
+        toolbar.addSeparator()
 
         # Dimension Filter Label
-        toolbar.addWidget(QLabel("   Hypercube Filter:"))
+        toolbar.addWidget(QLabel("Hypercube Filter: "))
 
         # Dimension Combo
         self.dim_combo = QComboBox()
@@ -129,7 +114,7 @@ class KameaWindow(QMainWindow):
         self.dim_combo.addItem("1D Lines (192)", 1)
         self.dim_combo.addItem("0D Leaves (64)", 0)
         self.dim_combo.currentIndexChanged.connect(self._on_filter_changed)
-        self.dim_combo.currentIndexChanged.connect(self._on_filter_changed)
+        # Removed duplicate connect
         toolbar.addWidget(self.dim_combo)
         
         # 3D Toggle Action
@@ -141,7 +126,6 @@ class KameaWindow(QMainWindow):
         
         # Fractal Tree Toggle (Checkbox)
         self.tree_check = QCheckBox("Show Fractal Tree")
-        self.tree_check.setStyleSheet("color: #a0a0ff; margin-left: 10px;")
         self.tree_check.toggled.connect(self._on_tree_toggled)
         self.tree_check.setEnabled(False) # Disabled in 2D mode
         toolbar.addWidget(self.tree_check)

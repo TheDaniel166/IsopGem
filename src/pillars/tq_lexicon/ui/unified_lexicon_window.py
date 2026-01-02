@@ -23,9 +23,9 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtGui import QColor, QFont
 
-from ..services.holy_key_service import HolyKeyService
-from ..services.enrichment_service import EnrichmentService
-from ..services.concordance_indexer_service import ConcordanceIndexerService
+from shared.services.lexicon.holy_key_service import HolyKeyService
+from shared.services.lexicon.enrichment_service import EnrichmentService
+from shared.services.lexicon.concordance_indexer_service import ConcordanceIndexerService
 
 logger = logging.getLogger(__name__)
 
@@ -860,24 +860,23 @@ class UnifiedLexiconWindow(QMainWindow):
     # =========================================================================
 
     def _open_teacher_window(self):
-        """Open the detailed verse teacher window for advanced curation."""
+        """Open the detailed verse teacher window via NavigationBus."""
         if not self._active_document:
             return
             
+        doc = self._active_document
+        
         try:
-            from pillars.gematria.ui.holy_book_teacher_window import HolyBookTeacherWindow
+            from shared.signals.navigation_bus import navigation_bus
             
-            doc = self._active_document
-            self.teacher_window = HolyBookTeacherWindow(
-                document_id=doc['id'],
-                document_title=doc['title'],
-                allow_inline=self.chk_inline.isChecked(),
-                parent=self,
-            )
-            self.teacher_window.verses_saved.connect(self._load_documents)
-            self.teacher_window.show()
+            navigation_bus.request_window.emit("holy_book_teacher", {
+                "document_id": doc['id'],
+                "document_title": doc['title'],
+                "allow_inline": self.chk_inline.isChecked()
+            })
+            
         except Exception as e:
-            logger.exception("Failed to open Teacher window")
+            logger.exception("Failed to request Teacher window")
             QMessageBox.critical(self, "Error", f"Failed to open Teacher window:\n{e}")
 
     # =========================================================================

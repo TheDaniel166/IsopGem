@@ -289,6 +289,7 @@ class GreatHarvestWindow(QMainWindow):
                 background-color: #b45309;
             }
         """)
+        self.import_button.setProperty("archetype", "seeker")
         self.import_button.clicked.connect(self._import_file)
         file_layout.addWidget(self.import_button)
         
@@ -415,6 +416,7 @@ class GreatHarvestWindow(QMainWindow):
                 color: #ef4444; /* Expulsion Red on hover */
             }
         """)
+        self.cancel_button.setProperty("archetype", "destroyer")
         self.cancel_button.clicked.connect(self.close)
         button_layout.addWidget(self.cancel_button)
         
@@ -443,6 +445,7 @@ class GreatHarvestWindow(QMainWindow):
             }
         """)
         self.send_button.setEnabled(False)
+        self.send_button.setProperty("archetype", "scribe")
         self.send_button.clicked.connect(self._send_to_emerald)
         button_layout.addWidget(self.send_button)
 
@@ -480,6 +483,7 @@ class GreatHarvestWindow(QMainWindow):
                 color: #94a3b8;
             }
         """)
+        self.process_button.setProperty("archetype", "magus")
         self.process_button.clicked.connect(self._process_batch)
         button_layout.addWidget(self.process_button)
         

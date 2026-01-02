@@ -8,7 +8,7 @@ import math
 from typing import Optional, Tuple
 
 from ..models.chart_models import AstrologyEvent, ChartRequest, GeoLocation
-from ..repositories.ephemeris_provider import EphemerisProvider
+from shared.services.ephemeris_provider import EphemerisProvider
 
 class ReturnsService:
     """

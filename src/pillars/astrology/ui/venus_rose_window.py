@@ -10,9 +10,9 @@ from typing import List
 from datetime import datetime, timedelta, timezone
 
 from pillars.astrology.utils.conversions import to_zodiacal_string
-from pillars.astrology.repositories.ephemeris_provider import EphemerisProvider, EphemerisNotLoadedError
+from shared.services.ephemeris_provider import EphemerisProvider
 
-from PyQt6.QtCore import Qt, QTimer, QRectF, QPointF
+from PyQt6.QtCore import Qt, QTimer, QPointF, QThread, pyqtSignal, QObject
 from PyQt6.QtGui import (
     QBrush, 
     QColor, 
@@ -22,7 +22,6 @@ from PyQt6.QtGui import (
     QRadialGradient,
 )
 from PyQt6.QtWidgets import (
-    QGraphicsItem,
     QGraphicsScene,
     QGraphicsView,
     QHBoxLayout,
@@ -34,7 +33,6 @@ from PyQt6.QtWidgets import (
     QGraphicsEllipseItem,
     QGraphicsLineItem,
     QGraphicsTextItem,
-    QSlider,
     QTableWidget,
     QTableWidgetItem,
     QHeaderView,
@@ -90,16 +88,7 @@ class PlanetItem(QGraphicsEllipseItem):
 
 class GlowingParticle(QGraphicsEllipseItem):
     """A glowing highlight for conjunction points."""
-    def __init__(self, x, y, is_inferior=True):
-        """
-          init   logic.
-        
-        Args:
-            x: Description of x.
-            y: Description of y.
-            is_inferior: Description of is_inferior.
-        
-        """
+    def __init__(self, x, y, is_inferior=True, event_data=None):
         size = 20 if is_inferior else 15
         super().__init__(-size/2, -size/2, size, size)
         self.setPos(x, y)
@@ -111,6 +100,26 @@ class GlowingParticle(QGraphicsEllipseItem):
         grad.setColorAt(1.0, Qt.GlobalColor.transparent)
         self.setBrush(QBrush(grad))
         self.setPen(QPen(Qt.GlobalColor.transparent))
+        
+        # Gnostic Inspector: Tooltip
+        if event_data:
+            dt, evt_type, helio, geo = event_data
+            # Format tooltip with HTML
+            # Check context to see which sign to show? Or show both?
+            # User has a toggle. But particle persistence means it might have been created
+            # when mode was different. Let's just show what we have.
+            # actually, passed event_data is (dt, type, helio, geo)
+            
+            tooltip = (
+                f"<div style='background-color: #101015; color: #E0E0E0; padding: 4px;'>"
+                f"<b>{evt_type}</b><br/>"
+                f"Date: {dt.strftime('%Y-%m-%d')}<br/>"
+                f"Helio: {helio}<br/>"
+                f"Geo: {geo}"
+                f"</div>"
+            )
+            self.setToolTip(tooltip)
+        self.setAcceptHoverEvents(True)
 
 class RoseScene(QGraphicsScene):
     """
@@ -223,16 +232,13 @@ class RoseScene(QGraphicsScene):
         while len(self.trace_lines) > limit:
             self.removeItem(self.trace_lines.pop(0))
 
-    def add_highlight(self, is_inferior):
+    def add_highlight(self, event_data):
         # Place highlight at current Venus position
-        """
-        Add highlight logic.
+        # event_data is (dt, type, helio, geo)
+        evt_type = event_data[1]
+        is_inferior = "Inf" in evt_type
         
-        Args:
-            is_inferior: Description of is_inferior.
-        
-        """
-        h = GlowingParticle(self.venus.x(), self.venus.y(), is_inferior)
+        h = GlowingParticle(self.venus.x(), self.venus.y(), is_inferior, event_data)
         self.addItem(h)
         self.highlights.append(h)
         if len(self.highlights) > 20: # Keep last 20
@@ -251,35 +257,226 @@ class RoseScene(QGraphicsScene):
         self.highlights.clear()
 
 
+class ConjunctionWorker(QObject):
+    """
+    Worker for calculating future conjunction events in a background thread.
+    prevents UI freeze during heavy Ephemeris calculations.
+    """
+    finished = pyqtSignal(list)
+    error = pyqtSignal(str)
+
+    def calculate(self, start_date: datetime, is_real_physics: bool):
+        try:
+            events = self._calculate_future_events(start_date, is_real_physics)
+            self.finished.emit(events)
+        except Exception as e:
+            self.error.emit(str(e))
+
+    def _calculate_future_events(self, start_date, is_real_physics):
+        # Approximate next events
+        deg_per_day_e = 360.0 / P_EARTH
+        
+        # Determine Venus speed based on current physics mode
+        if is_real_physics:
+            deg_per_day_v = 360.0 / P_VENUS
+        else:
+            deg_per_day_v = (13.0 * 360.0) / (8.0 * P_EARTH)
+            
+        rel_v = deg_per_day_v - deg_per_day_e # deg/day gain
+        
+        # Current Longitudes
+        delta = start_date - J2000
+        days = delta.total_seconds() / 86400.0
+        curr_e = (L_EARTH_J2000 + days * deg_per_day_e) % 360
+        curr_v = (L_VENUS_J2000 + days * deg_per_day_v) % 360
+        
+        diff = (curr_v - curr_e) % 360
+        # Time to Inferior (0 deg diff) -> Need to gain (360 - diff)
+        days_to_inf = (360 - diff) / rel_v
+        
+        # Time to Superior (180 deg diff) -> Need to gain (180 - diff) % 360
+        days_to_sup = ((180 - diff) % 360) / rel_v
+        
+        synodic_period = 360.0 / rel_v
+        
+        t_inf = start_date + timedelta(days=days_to_inf)
+        t_sup = start_date + timedelta(days=days_to_sup)
+        
+        raw_events = []
+        for i in range(20): # Next 20 events
+            # Inferior
+            d_inf = t_inf + timedelta(days=i * synodic_period)
+            raw_events.append((d_inf, "Petal Point (Inf)"))
+            # Superior
+            d_sup = t_sup + timedelta(days=i * synodic_period)
+            raw_events.append((d_sup, "Outer Point (Sup)"))
+            
+        raw_events.sort(key=lambda x: x[0])
+        
+        final_events = []
+        for dt, evt_type in raw_events:
+            helio_sign = "--"
+            geo_sign = "--"
+            
+            if is_real_physics:
+                # Real Physics: Refine Date to True Conjunction
+                is_sup = "Sup" in evt_type
+                try:
+                    dt = self._refine_conjunction_date(dt, is_superior=is_sup)
+                    
+                    # Calculate Zodiac Signs HERE in background
+                    # Need to convert datetime to UTC for EphemerisProvider
+                    t_calc = dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+                    provider = EphemerisProvider.get_instance()
+                    
+                    # Heliocentric
+                    v_lon_h = provider.get_heliocentric_ecliptic_position('venus', t_calc)
+                    helio_sign = to_zodiacal_string(v_lon_h)
+                    
+                    # Geocentric
+                    v_lon_g = provider.get_geocentric_ecliptic_position('venus', t_calc)
+                    geo_sign = to_zodiacal_string(v_lon_g)
+                    
+                except Exception as e:
+                    print(f"Refinement error: {e}")
+                    helio_sign = "Error"
+                    geo_sign = "Error"
+            else:
+                # Ideal Math
+                deg_per_day_v = (13.0 * 360.0) / (8.0 * P_EARTH)
+                d_delta = dt - J2000
+                d_days = d_delta.total_seconds() / 86400.0
+                mean_long_v = (L_VENUS_J2000 + d_days * deg_per_day_v) % 360.0
+                helio_sign = to_zodiacal_string(mean_long_v)
+                
+                # For Ideal Geocentric:
+                # Conjunction means Earth and Venus are aligned.
+                # Inferior: Sun -> Venus -> Earth. Geo Longitude = Helio Longitude + 180 ?
+                # No, Inferior: Venus is between Earth and Sun.
+                # Earth is at L_Earth. Sun is at L_Earth + 180.
+                # Venus is at L_Venus = L_Earth.
+                # So Geo Longitude (Earth->Venus) is same as Earth->Sun? No.
+                # Earth->Sun is L_Sun.
+                # Earth->Venus is L_Sun (cuz Venus is in front of Sun).
+                # So Geo Long of Venus = Geo Long of Sun.
+                
+                # Superior: Sun -> Earth -> Venus? No. Earth -> Sun -> Venus.
+                # Geo Long of Venus = Geo Long of Sun.
+                
+                # Wait, simply put: At conjunction, Geo Longitude of Venus ~= Geo Longitude of Sun.
+                # Geo Lon Sun = Helio Lon Earth + 180.
+                
+                # Let's calculate Mean Earth
+                deg_per_day_e = 360.0 / P_EARTH
+                mean_long_e = (L_EARTH_J2000 + d_days * deg_per_day_e) % 360.0
+                geo_sun_lon = (mean_long_e + 180.0) % 360.0
+                geo_sign = to_zodiacal_string(geo_sun_lon)
+
+            final_events.append((dt, evt_type, helio_sign, geo_sign))
+            
+        return final_events
+
+    def _refine_conjunction_date(self, approx_dt: datetime, is_superior: bool = False) -> datetime:
+        """
+        Refine the date to find the exact moment of Heliocentric Conjunction.
+        """
+        if approx_dt.tzinfo is None:
+            approx_dt = approx_dt.replace(tzinfo=timezone.utc)
+            
+        provider = EphemerisProvider.get_instance()
+        if not provider.is_loaded():
+             return approx_dt
+        
+        def get_diff(t):
+            v_lon = provider.get_heliocentric_ecliptic_position('venus', t)
+            e_lon = provider.get_heliocentric_ecliptic_position('earth', t)
+            
+            diff = abs(v_lon - e_lon)
+            if diff > 180: diff = 360 - diff
+            
+            if is_superior:
+                # Target is 180 diff
+                return abs(diff - 180)
+            else:
+                # Target is 0 diff
+                return diff
+
+        # Coarse Search: +/- 5 days, 4 hour steps
+        best_dt = approx_dt
+        min_err = 999.0
+        
+        start_t = approx_dt - timedelta(days=5)
+        for i in range(60): # 10 days * 6 steps/day = 60
+            t = start_t + timedelta(hours=i*4)
+            err = get_diff(t)
+            if err < min_err:
+                min_err = err
+                best_dt = t
+                
+        # Fine Search: +/- 6 hours, 10 min steps
+        start_t = best_dt - timedelta(hours=6)
+        for i in range(72): # 12 hours * 6 steps/hour = 72
+            t = start_t + timedelta(minutes=i*10)
+            err = get_diff(t)
+            if err < min_err:
+                min_err = err
+                best_dt = t
+                
+        # Ultra-Fine Search: +/- 20 mins, 1 min steps
+        start_t = best_dt - timedelta(minutes=20)
+        for i in range(40):
+            t = start_t + timedelta(minutes=i)
+            err = get_diff(t)
+            if err < min_err:
+                min_err = err
+                best_dt = t
+                
+        return best_dt
+
+
 class RoseView(QGraphicsView):
     """
-    Rose View class definition.
-    
+    Rose View class definition with Chrono-Scrubbing.
     """
+    time_scrubbed = pyqtSignal(float) # days to add/subtract
+
     def __init__(self, scene):
-        """
-          init   logic.
-        
-        Args:
-            scene: Description of scene.
-        
-        """
         super().__init__(scene)
         self.setRenderHint(QPainter.RenderHint.Antialiasing)
-        self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
+        # We handle dragging manually for scrubbing
+        self.setDragMode(QGraphicsView.DragMode.NoDrag) 
         self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
         self.scale(0.8, 0.8)
+        
+        self._last_mouse_pos = None
+        self._is_scrubbing = False
 
     def wheelEvent(self, event: QWheelEvent):
-        """
-        Wheelevent logic.
-        
-        Args:
-            event: Description of event.
-        
-        """
         factor = 1.1 if event.angleDelta().y() > 0 else 0.9
         self.scale(factor, factor)
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self._is_scrubbing = True
+            self._last_mouse_pos = event.pos()
+            self.setCursor(Qt.CursorShape.ClosedHandCursor)
+        super().mousePressEvent(event)
+
+    def mouseMoveEvent(self, event):
+        if self._is_scrubbing and self._last_mouse_pos:
+            delta_x = event.pos().x() - self._last_mouse_pos.x()
+            # Sensitivity: 1 pixel = 1 day?
+            days_delta = delta_x * 2.0 
+            self.time_scrubbed.emit(days_delta)
+            
+            self._last_mouse_pos = event.pos()
+        super().mouseMoveEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self._is_scrubbing = False
+            self.setCursor(Qt.CursorShape.ArrowCursor)
+        super().mouseReleaseEvent(event)
 
 
 class VenusRoseWindow(QMainWindow):
@@ -297,8 +494,12 @@ class VenusRoseWindow(QMainWindow):
         table: Description of table.
         events: Description of events.
         step_days: Description of step_days.
-    
+        
+    Signals:
+        request_calculation(datetime, bool): Signal to request background calculation.
     """
+    request_calculation = pyqtSignal(datetime, bool)
+
     def __init__(self, parent=None):
         """
           init   logic.
@@ -314,9 +515,24 @@ class VenusRoseWindow(QMainWindow):
         # Start at NOW
         self.current_date = datetime.now(timezone.utc)
         self.is_real_physics = False
+        self.is_geocentric = True # Default to Geocentric (Standard Astrology)
+        
         
         self.scene = RoseScene()
         self.view = RoseView(self.scene)
+        self.view.time_scrubbed.connect(self._on_scrub)
+        
+        # Threading Setup
+        self._thread = QThread()
+        self._worker = ConjunctionWorker()
+        self._worker.moveToThread(self._thread)
+        
+        # Connections
+        self.request_calculation.connect(self._worker.calculate)
+        self._worker.finished.connect(self._on_calculation_finished)
+        self._worker.error.connect(self._on_calculation_error)
+        
+        self._thread.start()
         
         # Layouts
         central = QWidget()
@@ -337,25 +553,35 @@ class VenusRoseWindow(QMainWindow):
         
         self.btn_physics = QPushButton("Physics: Ideal")
         self.btn_physics.setCheckable(True)
+        self.btn_physics.setProperty("archetype", "seeker")
         self.btn_physics.clicked.connect(self._toggle_physics)
         ctrl_layout.addWidget(self.btn_physics)
+
+        self.btn_coords = QPushButton("View: Geocentric")
+        self.btn_coords.setProperty("archetype", "seeker")
+        self.btn_coords.clicked.connect(self._toggle_coords)
+        ctrl_layout.addWidget(self.btn_coords)
         
         self.timer = QTimer()
         self.timer.timeout.connect(self._animate)
         
         btn_play = QPushButton("Weave")
+        btn_play.setProperty("archetype", "magus")
         btn_play.clicked.connect(self._start_animation)
         ctrl_layout.addWidget(btn_play)
         
         btn_turbo = QPushButton("Century Turbo")
+        btn_turbo.setProperty("archetype", "magus")
         btn_turbo.clicked.connect(self._start_turbo)
         ctrl_layout.addWidget(btn_turbo)
         
         btn_stop = QPushButton("Pause")
+        btn_stop.setProperty("archetype", "navigator")
         btn_stop.clicked.connect(self.timer.stop)
         ctrl_layout.addWidget(btn_stop)
         
         btn_reset = QPushButton("Reset")
+        btn_reset.setProperty("archetype", "destroyer")
         btn_reset.clicked.connect(self._reset)
         ctrl_layout.addWidget(btn_reset)
         
@@ -364,8 +590,8 @@ class VenusRoseWindow(QMainWindow):
         
         # Right: Data Pane
         self.table = QTableWidget()
-        self.table.setColumnCount(7)
-        self.table.setHorizontalHeaderLabels(["Date", "Type", "Helio Sign", "Lat", "Speed", "Elong.", "Motion"])
+        self.table.setColumnCount(3)
+        self.table.setHorizontalHeaderLabels(["Date", "Type", "Helio Sign"])
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.table.customContextMenuRequested.connect(self._show_context_menu)
@@ -377,140 +603,45 @@ class VenusRoseWindow(QMainWindow):
         self.step_days = 2.0 # Days per tick
 
     def _calculate_future_events(self):
-        """Predict next conjunctions."""
-        self.events = []
+        """Predict next conjunctions (Async)."""
         self.table.setRowCount(0)
+        # Show loading state
+        self.table.setRowCount(1)
+        self.table.setItem(0, 0, QTableWidgetItem("Calculating..."))
+        self.table.setItem(0, 1, QTableWidgetItem("Please wait"))
         
-        # Approximate next events
-        start_date = self.current_date
-        deg_per_day_e = 360.0 / P_EARTH
-        
-        # Determine Venus speed based on current physics mode
-        if self.is_real_physics:
-            deg_per_day_v = 360.0 / P_VENUS
-        else:
-            deg_per_day_v = (13.0 * 360.0) / (8.0 * P_EARTH)
-            
-        rel_v = deg_per_day_v - deg_per_day_e # deg/day gain
-        
-        # Current Longitudes
-        # Note: We calculate current positions based on the SAME speed to ensure consistency
-        delta = start_date - J2000
-        days = delta.total_seconds() / 86400.0
-        curr_e = (L_EARTH_J2000 + days * deg_per_day_e) % 360
-        curr_v = (L_VENUS_J2000 + days * deg_per_day_v) % 360
-        
-        diff = (curr_v - curr_e) % 360
-        # Time to Inferior (0 deg diff) -> Need to gain (360 - diff)
-        days_to_inf = (360 - diff) / rel_v
-        
-        # Time to Superior (180 deg diff) -> Need to gain (180 - diff) % 360
-        # If diff < 180 (e.g. 10), need 170. 
-        # If diff > 180 (e.g. 350), need 190.
-        days_to_sup = ((180 - diff) % 360) / rel_v
-        
-        # Generate list
-        # We start with the closest ones and step by Synodic Period
-        # Calculate Synodic Period dynamically based on rates
-        synodic_period = 360.0 / rel_v
-        
-        t_inf = start_date + timedelta(days=days_to_inf)
-        t_sup = start_date + timedelta(days=days_to_sup)
-        
-        raw_events = []
-        for i in range(20): # Next 20 events
-            # Inferior
-            d_inf = t_inf + timedelta(days=i * synodic_period)
-            raw_events.append((d_inf, "Petal Point (Inf)"))
-            # Superior
-            d_sup = t_sup + timedelta(days=i * synodic_period)
-            raw_events.append((d_sup, "Outer Point (Sup)"))
-            
-        raw_events.sort(key=lambda x: x[0])
-        
-        self.events = raw_events
-        self.table.setRowCount(len(raw_events))
-        for i, (dt, evt_type) in enumerate(raw_events):
-            
-            # Real Physics: Refine Date to True Conjunction
-            if self.is_real_physics:
-                # Determine if superior or inferior based on type string or loop index logic
-                # 'Petal Point (Inf)' vs 'Outer Point (Sup)'
-                is_sup = "Sup" in evt_type
-                try:
-                    dt = self._refine_conjunction_date(dt, is_superior=is_sup)
-                    self.events[i] = (dt, evt_type) 
-                except EphemerisNotLoadedError:
-                    # Retry in 1 second
-                    QTimer.singleShot(1000, self._calculate_future_events)
-                    # Mark all as loading and break
-                    for r in range(self.table.rowCount()):
-                        self.table.setItem(r, 2, QTableWidgetItem("Loading..."))
-                    return
-                except Exception as e:
-                    print(f"Date refinement failed: {e}")
+        # Emit signal to worker
+        self.request_calculation.emit(self.current_date, self.is_real_physics)
 
-            self.table.setItem(i, 0, QTableWidgetItem(dt.strftime("%Y-%m-%d %H:%M")))
-            self.table.setItem(i, 1, QTableWidgetItem(evt_type))
-            
-            # Calculate Venus Sign at this event
-            sign_str = "--"
-            lat_str = "--"
-            speed_str = "--"
-            elong_str = "--"
-            motion_str = "--"
+    def _on_calculation_error(self, err_msg):
+        print(f"Calculation Error: {err_msg}")
+        self.table.setRowCount(0)
 
-            if self.is_real_physics:
-                try:
-                    provider = EphemerisProvider.get_instance()
-                    if dt.tzinfo is None:
-                        dt = dt.replace(tzinfo=timezone.utc)
-                    
-                    # HELIOCENTRIC + Extended
-                    data = provider.get_extended_data('venus', dt)
-                    
-                    sign_str = to_zodiacal_string(data['helio_lon'])
-                    lat_str = f"{data['helio_lat']:.2f}°"
-                    speed_str = f"{data['helio_speed']:.3f}°/d"
-                    elong_str = f"{data['elongation']:.1f}°"
-                    motion_str = "Rx" if data['is_retrograde'] else "D"
-                    
-                except EphemerisNotLoadedError:
-                     sign_str = "Loading..."
-                     # Logic above (in Refine) handles the retry loop, 
-                     # but if refinement is skipped (Ideal mode?) we might need it here?
-                     # Actually Physics toggle handles mode. 
-                     # Refine block returns early if loading.
-                     # So logic here is only reached if Refine block succeeded OR skipped.
-                     # Wait, Refine block is inside `if self.is_real_physics`.
-                     # So if Refine block returns, we exit function.
-                     pass 
-                except Exception as e:
-                    print(f"Error calculating skyfield position: {e}")
-                    sign_str = "Error"
-            else:
-                # Ideal Math (Heliocentric - Simple Circular)
-                # This is just the raw angle of Venus around the Sun
-                d_delta = dt - J2000
-                d_days = d_delta.total_seconds() / 86400.0
-                
-                mean_long_v = (L_VENUS_J2000 + d_days * deg_per_day_v) % 360.0
-                sign_str = to_zodiacal_string(mean_long_v)
-                
-                # Ideal Speed is constant 360/224.7 = ~1.602
-                speed_str = f"{deg_per_day_v:.3f}°/d"
-                # Ideal Lat is 0
-                lat_str = "0.00°"
-                # Ideal Elongation requires Earth calculation... maybe skip for Ideal?
-                # Or implement simple ideal math. 
-                # Let's leave Elongation blank for Ideal to emphasize it's a simplification.
-                motion_str = "D" # Mean motion is always direct
-            
-            self.table.setItem(i, 2, QTableWidgetItem(sign_str))
-            self.table.setItem(i, 3, QTableWidgetItem(lat_str))
-            self.table.setItem(i, 4, QTableWidgetItem(speed_str))
-            self.table.setItem(i, 5, QTableWidgetItem(elong_str))
-            self.table.setItem(i, 6, QTableWidgetItem(motion_str))
+    def _on_calculation_finished(self, events):
+        """Handle results from worker."""
+        # Store full events: (dt, type, helio, geo)
+        self.events = events
+        self._update_table_display()
+
+    def _update_table_display(self):
+        """Update table based on current events and view settings."""
+        if not self.events:
+            self.table.setRowCount(0)
+            return
+
+        self.table.setRowCount(len(self.events))
+        
+        # Update Header
+        sign_header = "Geo Sign" if self.is_geocentric else "Helio Sign"
+        self.table.setHorizontalHeaderLabels(["Date", "Type", sign_header])
+        
+        # Populate table
+        for i, (dt, evt_type, helio_sign, geo_sign) in enumerate(self.events):
+             self.table.setItem(i, 0, QTableWidgetItem(dt.strftime("%Y-%m-%d %H:%M")))
+             self.table.setItem(i, 1, QTableWidgetItem(evt_type))
+             
+             sign_str = geo_sign if self.is_geocentric else helio_sign
+             self.table.setItem(i, 2, QTableWidgetItem(sign_str))
 
     def _show_context_menu(self, pos: QPointF):
         index = self.table.indexAt(pos)
@@ -565,7 +696,7 @@ class VenusRoseWindow(QMainWindow):
                 
                 # Set the date
                 # NatalChartWindow -> self.datetime_input (QDateTimeEdit)
-                from PyQt6.QtCore import QDateTime, Qt, QTimeZone
+                from PyQt6.QtCore import QDateTime, QTimeZone
                 qdt = QDateTime(evt_dt)
                 if evt_dt.tzinfo:
                     qdt.setTimeZone(QTimeZone.utc())
@@ -578,89 +709,21 @@ class VenusRoseWindow(QMainWindow):
         except Exception as e:
             print(f"Error casting chart: {e}")
 
-    def _refine_conjunction_date(self, approx_dt: datetime, is_superior: bool = False) -> datetime:
-        """
-        Refine the date to find the exact moment of Heliocentric Conjunction.
-        Objective: Minimize abs(Ven_Lon - Earth_Lon) for Inferior, 
-                   or abs(abs(Ven_Lon - Earth_Lon) - 180) for Superior.
-        Range: +/- 5 days from approx_dt.
-        """
-        if approx_dt.tzinfo is None:
-            approx_dt = approx_dt.replace(tzinfo=timezone.utc)
-            
-        provider = EphemerisProvider.get_instance()
-        
-        def get_diff(t):
-            """
-            Retrieve diff logic.
-            
-            Args:
-                t: Description of t.
-            
-            Returns:
-                Result of get_diff operation.
-            """
-            d = provider.get_extended_data('venus', t)
-            # We need Earth's longitude too. 
-            # Ideally extended_data would return it, but we can fetch separately for now
-            # or optimize provider. simpler to fetch separately or just assume alignment logic
-            # Let's trust provider's get_heliocentric_ecliptic_position for earth?
-            # actually provider only takes body_name.
-            # Let's peek provider again? 
-            # Actually get_heliocentric_ecliptic_position works for 'earth' too if we pass it?
-            # Wait, EphemerisProvider code:
-            # sun.at(t).observe(planets[body_name])
-            # So yes, we can pass 'earth'.
-            
-            v_lon = d['helio_lon']
-            e_lon = provider.get_heliocentric_ecliptic_position('earth', t)
-            
-            diff = abs(v_lon - e_lon)
-            if diff > 180: diff = 360 - diff
-            
-            if is_superior:
-                # Target is 180 diff
-                return abs(diff - 180)
-            else:
-                # Target is 0 diff
-                return diff
-
-        # Coarse Search: +/- 5 days, 4 hour steps
-        best_dt = approx_dt
-        min_err = 999.0
-        
-        start_t = approx_dt - timedelta(days=5)
-        for i in range(60): # 10 days * 6 steps/day = 60
-            t = start_t + timedelta(hours=i*4)
-            err = get_diff(t)
-            if err < min_err:
-                min_err = err
-                best_dt = t
-                
-        # Fine Search: +/- 6 hours, 10 min steps
-        start_t = best_dt - timedelta(hours=6)
-        for i in range(72): # 12 hours * 6 steps/hour = 72
-            t = start_t + timedelta(minutes=i*10)
-            err = get_diff(t)
-            if err < min_err:
-                min_err = err
-                best_dt = t
-                
-        # Ultra-Fine Search: +/- 20 mins, 1 min steps
-        start_t = best_dt - timedelta(minutes=20)
-        for i in range(40):
-            t = start_t + timedelta(minutes=i)
-            err = get_diff(t)
-            if err < min_err:
-                min_err = err
-                best_dt = t
-                
-        return best_dt
+    def closeEvent(self, event):
+        """Clean up thread on close."""
+        self._thread.quit()
+        self._thread.wait()
+        super().closeEvent(event)
 
     def _toggle_physics(self):
         self.is_real_physics = self.btn_physics.isChecked()
         self.btn_physics.setText("Physics: REAL" if self.is_real_physics else "Physics: Ideal")
         self._reset()
+
+    def _toggle_coords(self):
+        self.is_geocentric = not self.is_geocentric
+        self.btn_coords.setText("View: Geocentric" if self.is_geocentric else "View: Heliocentric")
+        self._update_table_display()
 
     def _start_animation(self):
         self.step_days = 2.0
@@ -680,14 +743,28 @@ class VenusRoseWindow(QMainWindow):
         if self.events:
             next_evt = self.events[0]
             # If current date is AFTER next event
+            # If current date is AFTER next event
             if self.current_date > next_evt[0]:
                 evt = self.events.pop(0)
-                is_inf = "Inf" in evt[1]
-                self.scene.add_highlight(is_inf)
+                self.scene.add_highlight(evt)
                 # Scroll table? logic
                 
                 # For now just pop visual
                 self.table.removeRow(0)
+    
+    def _on_scrub(self, days_delta):
+        """Handle manual time scrubbing."""
+        self.current_date += timedelta(days=days_delta)
+        self.scene.update_positions_by_date(self.current_date, self.is_real_physics)
+        self.label_date.setText(f"Date: {self.current_date.strftime('%Y-%m-%d')}")
+        
+        # We might miss events if we scrub too fast, or need to pop them
+        # simple logic: if we scrub forward past an event, trigger it
+        # But scrubbing backwards? That's harder with the current event queue.
+        # For now, let's just update the visual positions and date.
+        # Re-syncing the event queue would require re-calculating or keeping a full history.
+        # Given complexity, let's just accept visual update for position.
+        pass
 
     def _reset(self):
         self.timer.stop()

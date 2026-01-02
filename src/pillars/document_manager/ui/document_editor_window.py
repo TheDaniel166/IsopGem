@@ -103,12 +103,14 @@ class DocumentEditorWindow(QMainWindow):
         self.btn_prev_match = QPushButton("◀ Prev")
         self.btn_prev_match.setStyleSheet(nav_btn_style)
         self.btn_prev_match.setShortcut("Shift+F3")
+        self.btn_prev_match.setProperty("archetype", "navigator")
         self.btn_prev_match.clicked.connect(self._on_prev_match)
         nav_layout.addWidget(self.btn_prev_match)
         
         self.btn_next_match = QPushButton("Next ▶")
         self.btn_next_match.setStyleSheet(nav_btn_style)
         self.btn_next_match.setShortcut("F3")
+        self.btn_next_match.setProperty("archetype", "navigator")
         self.btn_next_match.clicked.connect(self._on_next_match)
         nav_layout.addWidget(self.btn_next_match)
         
@@ -172,6 +174,7 @@ class DocumentEditorWindow(QMainWindow):
                 background: #2563eb;
             }
         """)
+        self.btn_toggle_mode.setProperty("archetype", "magus")
         self.btn_toggle_mode.clicked.connect(self._toggle_edit_mode)
         mode_layout.addWidget(self.btn_toggle_mode)
         

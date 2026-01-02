@@ -250,7 +250,7 @@ class NeoAubreyWindow(QMainWindow):
         self.resize(1200, 850)
         
         # Services
-        from ..repositories.ephemeris_provider import EphemerisProvider
+        from shared.services.ephemeris_provider import EphemerisProvider
         self.ephemeris = EphemerisProvider.get_instance()
         self.location_lookup = LocationLookupService()
         self.current_time = datetime.now(timezone.utc)

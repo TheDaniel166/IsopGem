@@ -1,23 +1,24 @@
+
 """
 Exegesis Main Window - The Scriptural Inquiry.
 Main window for text analysis with multi-document tabs, search, and verse parsing.
 """
 from PyQt6.QtWidgets import (
-    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QSplitter,
-    QLabel, QPushButton, QComboBox, QCheckBox, QStackedWidget,
-    QMessageBox, QInputDialog, QTabWidget, QFileDialog, QFrame,
-    QGraphicsDropShadowEffect
+    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QComboBox,
+    QPushButton, QLabel, QCheckBox, QMessageBox, QTabWidget,
+    QSplitter, QFileDialog, QFrame, QGraphicsDropShadowEffect,
+    QInputDialog
 )
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor
-from typing import List, Optional, Any, Dict
+from typing import List
 from pathlib import Path
 
 from ...services.base_calculator import GematriaCalculator
 from ...services import CalculationService
 from ...services.text_analysis_service import TextAnalysisService
 from shared.services.document_manager.document_service import document_service_context
-from shared.models.document_manager.document import Document
+
 
 # Components
 from .search_panel import SearchPanel
@@ -26,7 +27,7 @@ from .stats_panel import StatsPanel
 from .smart_filter_dialog import SmartFilterDialog
 from ..holy_book_teacher_window import HolyBookTeacherWindow
 
-import logging
+
 
 class ExegesisWindow(QMainWindow):
     """
@@ -144,17 +145,7 @@ class ExegesisWindow(QMainWindow):
         
         open_btn = QPushButton("Open Scroll")
         open_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        open_btn.setStyleSheet("""
-            QPushButton {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #f59e0b, stop:1 #d97706);
-                color: white;
-                border: 1px solid #b45309;
-                font-weight: 700;
-            }
-            QPushButton:hover {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #d97706, stop:1 #f59e0b);
-            }
-        """)
+        open_btn.setProperty("archetype", "seeker")
         open_btn.clicked.connect(self._on_open_document)
         toolbar.addWidget(open_btn)
         
@@ -196,22 +187,7 @@ class ExegesisWindow(QMainWindow):
         self.teach_btn = QPushButton("Train Scribe")
         self.teach_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.teach_btn.setEnabled(False) # Enable if tab active
-        self.teach_btn.setStyleSheet("""
-            QPushButton {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #8b5cf6, stop:1 #7c3aed);
-                color: white;
-                border: 1px solid #6d28d9;
-                font-weight: 700;
-            }
-            QPushButton:hover {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #7c3aed, stop:1 #8b5cf6);
-            }
-            QPushButton:disabled {
-                background: #e5e5e5;
-                color: #a3a3a3;
-                border-color: #d4d4d4;
-            }
-        """)
+        self.teach_btn.setProperty("archetype", "scribe")
         self.teach_btn.clicked.connect(self._open_teacher)
         toolbar.addWidget(self.teach_btn)
         
@@ -219,17 +195,7 @@ class ExegesisWindow(QMainWindow):
         self.concordance_btn = QPushButton("📚 Concordance")
         self.concordance_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.concordance_btn.setToolTip("Open Holy Book Concordance - parse and index documents")
-        self.concordance_btn.setStyleSheet("""
-            QPushButton {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #059669, stop:1 #047857);
-                color: white;
-                border: 1px solid #065f46;
-                font-weight: 700;
-            }
-            QPushButton:hover {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #047857, stop:1 #059669);
-            }
-        """)
+        self.concordance_btn.setProperty("archetype", "navigator")
         self.concordance_btn.clicked.connect(self._open_concordance)
         toolbar.addWidget(self.concordance_btn)
         
@@ -634,10 +600,13 @@ class ExegesisWindow(QMainWindow):
                 self.concordance_window.activateWindow()
                 return
 
-            from pillars.tq_lexicon.ui.unified_lexicon_window import UnifiedLexiconWindow
-            
-            self.concordance_window = UnifiedLexiconWindow(parent=None)
-            self.concordance_window.show()
+            # Use navigation bus to request the sovereign window
+            from shared.signals.navigation_bus import navigation_bus
+            if self.window_manager:
+                navigation_bus.request_window.emit(
+                    "lexicon_manager",
+                    {"window_manager": self.window_manager}
+                )
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to open Lexicon:\n{e}")
         

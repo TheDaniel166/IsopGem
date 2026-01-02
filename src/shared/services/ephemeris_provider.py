@@ -5,17 +5,17 @@ Singleton interface to Skyfield for calculating geocentric/heliocentric planetar
 from datetime import datetime, timezone, timedelta
 import math
 import os
+import threading
+from typing import Optional, Union, Dict, Any, Tuple
+
 from skyfield.api import load
 from skyfield.framelib import ecliptic_frame
 
-import threading
-from typing import Optional, Union, Dict, Any, Tuple
-from ..models.chart_models import GeoLocation
+from shared.models.geo_location import GeoLocation
 
 class EphemerisNotLoadedError(Exception):
     """
     Ephemeris Not Loaded Error class definition.
-    
     """
     pass
 
@@ -78,7 +78,7 @@ class EphemerisProvider:
 
     def _load_data(self):
         # Look for de421.bsp in likely locations
-        base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../"))
+        base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../"))
         candidates = [
             "de441.bsp",
             "data/de441.bsp",

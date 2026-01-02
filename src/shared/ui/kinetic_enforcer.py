@@ -27,7 +27,7 @@ class KineticEnforcer(QObject):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self._animations = {} # Keep references to prevent GC
+        # No longer tracking animations manually; relying on Qt parenting logic.
 
     def eventFilter(self, obj: QObject, event: QEvent) -> bool:
         if event.type() == QEvent.Type.Enter:
@@ -77,13 +77,12 @@ class KineticEnforcer(QObject):
 
     def _animate_aura_color(self, effect, target_color):
         """Animate the shadow color to the target."""
-        anim = QPropertyAnimation(effect, b"color", self)
+        # CRITICAL FIX: Parent the animation to the effect (or button)
+        # Previously parented to 'self' (Enforcer), which kept the animation alive
+        # after the button/effect was destroyed, causing Segmentation Faults.
+        anim = QPropertyAnimation(effect, b"color", effect) 
         anim.setStartValue(effect.color())
         anim.setEndValue(target_color)
         anim.setDuration(150) 
         anim.setEasingCurve(QEasingCurve.Type.OutQuad)
-        anim.start()
-        
-        # Store ref to prevent GC
-        self._animations[id(effect)] = anim
-        anim.finished.connect(lambda: self._animations.pop(id(effect), None))
+        anim.start(QPropertyAnimation.DeletionPolicy.DeleteWhenStopped)

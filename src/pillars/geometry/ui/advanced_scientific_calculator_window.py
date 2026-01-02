@@ -872,20 +872,7 @@ class AdvancedScientificCalculatorWindow(QMainWindow):
 
         swap_btn = QPushButton("Swap")
         swap_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        swap_btn.setStyleSheet(
-            """
-            QPushButton {
-                background-color: #1f2937;
-                color: #e2e8f0;
-                border: 1px solid #1e293b;
-                border-radius: 8px;
-                padding: 8px 10px;
-                font-size: 10pt;
-            }
-            QPushButton:hover { background-color: #334155; }
-            QPushButton:pressed { background-color: #0b1729; }
-            """
-        )
+        swap_btn.setProperty("archetype", "navigator")
         swap_btn.clicked.connect(self._swap_time_units)
         to_row.addWidget(swap_btn)
         layout.addLayout(to_row)
@@ -925,21 +912,7 @@ class AdvancedScientificCalculatorWindow(QMainWindow):
         self.copy_time_result_btn = QPushButton("Copy Result")
         self.copy_time_result_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.copy_time_result_btn.setEnabled(False)
-        self.copy_time_result_btn.setStyleSheet(
-            """
-            QPushButton {
-                background-color: #334155;
-                color: #e2e8f0;
-                border: 1px solid #1e293b;
-                border-radius: 8px;
-                padding: 8px 10px;
-                font-size: 10pt;
-            }
-            QPushButton:hover { background-color: #475569; }
-            QPushButton:pressed { background-color: #0b1729; }
-            QPushButton:disabled { color: #94a3b8; background-color: #1f2937; }
-            """
-        )
+        self.copy_time_result_btn.setProperty("archetype", "scribe")
         self.copy_time_result_btn.clicked.connect(self._copy_time_result)
         actions_row.addWidget(self.copy_time_result_btn)
         layout.addLayout(actions_row)
@@ -1018,8 +991,6 @@ class AdvancedScientificCalculatorWindow(QMainWindow):
 
     def _add_system_group(self, combo: QComboBox, system_name: str, units: List[Dict[str, object]]) -> None:
         """Add a group header and its units to the combo box."""
-        from PyQt6.QtGui import QStandardItem
-        from PyQt6.QtCore import Qt as QtCore
 
         # Get the model to add styled items
         model = combo.model()
@@ -1241,20 +1212,7 @@ class AdvancedScientificCalculatorWindow(QMainWindow):
         # Copy button
         copy_btn = QPushButton("Copy Selected")
         copy_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        copy_btn.setStyleSheet(
-            """
-            QPushButton {
-                background-color: #334155;
-                color: #e2e8f0;
-                border: 1px solid #1e293b;
-                border-radius: 8px;
-                padding: 8px 10px;
-                font-size: 10pt;
-            }
-            QPushButton:hover { background-color: #475569; }
-            QPushButton:pressed { background-color: #0b1729; }
-            """
-        )
+        copy_btn.setProperty("archetype", "scribe")
         copy_btn.clicked.connect(self._copy_base_result)
         layout.addWidget(copy_btn)
 
@@ -1502,41 +1460,14 @@ class AdvancedScientificCalculatorWindow(QMainWindow):
         # Insert to calculator button
         insert_btn = QPushButton("Insert to Calculator")
         insert_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        insert_btn.setStyleSheet(
-            """
-            QPushButton {
-                background-color: #059669;
-                color: #e2e8f0;
-                border: 1px solid #047857;
-                border-radius: 8px;
-                padding: 8px 10px;
-                font-size: 10pt;
-                font-weight: 600;
-            }
-            QPushButton:hover { background-color: #10b981; }
-            QPushButton:pressed { background-color: #047857; }
-            """
-        )
+        insert_btn.setProperty("archetype", "magus")
         insert_btn.clicked.connect(self._insert_constant_to_calc)
         btn_row.addWidget(insert_btn)
 
         # Copy button
         copy_btn = QPushButton("Copy Value")
         copy_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        copy_btn.setStyleSheet(
-            """
-            QPushButton {
-                background-color: #334155;
-                color: #e2e8f0;
-                border: 1px solid #1e293b;
-                border-radius: 8px;
-                padding: 8px 10px;
-                font-size: 10pt;
-            }
-            QPushButton:hover { background-color: #475569; }
-            QPushButton:pressed { background-color: #0b1729; }
-            """
-        )
+        copy_btn.setProperty("archetype", "scribe")
         copy_btn.clicked.connect(self._copy_constant_value)
         btn_row.addWidget(copy_btn)
 
@@ -1827,7 +1758,6 @@ class AdvancedScientificCalculatorWindow(QMainWindow):
             for _ in range(n):
                 a, b = b, a + b
             # Also show ratio approaching phi
-            phi = (1 + 5**0.5) / 2
             if n >= 2:
                 ratio = b / a if a != 0 else 0
                 self.fib_result.setText(f"F({n}) = {a}    (F({n})/F({n-1}) = {ratio:.10g} → φ)")
@@ -2147,7 +2077,7 @@ class AdvancedScientificCalculatorWindow(QMainWindow):
         units = sys.get("units", ("", ""))
 
         detail = f"<b>{sys.get('name', '')}</b><br><br>"
-        detail += f"<b>Coordinates:</b><br>"
+        detail += "<b>Coordinates:</b><br>"
         detail += f"  • {coords[0]}: {units[0]}<br>"
         detail += f"  • {coords[1]}: {units[1]}<br><br>"
         detail += f"<i>{sys.get('note', '')}</i>"
@@ -2684,7 +2614,7 @@ class AdvancedScientificCalculatorWindow(QMainWindow):
         if idx < 0:
             return
 
-        end = idx + 1
+
         has_digit = False
         while idx >= 0:
             ch = text[idx]

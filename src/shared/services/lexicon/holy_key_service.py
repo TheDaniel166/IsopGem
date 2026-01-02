@@ -1,7 +1,7 @@
 import re
 import logging
 from typing import List, Dict, Set, Optional, Tuple
-from .key_database import KeyDatabase
+from shared.repositories.lexicon.key_database import KeyDatabase
 from shared.services.gematria.tq_calculator import TQGematriaCalculator
 
 logger = logging.getLogger(__name__)

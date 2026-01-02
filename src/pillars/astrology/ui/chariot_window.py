@@ -25,7 +25,7 @@ from ..services.chariot_service import ChariotService
 from ..services.maat_symbols_service import MaatSymbol
 from ..services.chart_storage_service import ChartStorageService
 from .chart_picker_dialog import ChartPickerDialog
-from pillars.tq.ui.quadset_analysis_window import SubstrateWidget
+from shared.ui.substrate_widget import SubstrateWidget
 
 # Path to the Merkabah substrate background
 SUBSTRATE_PATH = Path(__file__).parent.parent.parent.parent / "assets" / "backgrounds" / "chariot_merkabah.png"

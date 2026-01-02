@@ -269,7 +269,7 @@ class DocumentTab(QWidget):
             
         # Get key service for concordance lookup
         try:
-            from pillars.tq_lexicon.services.holy_key_service import HolyKeyService
+            from shared.services.lexicon.holy_key_service import HolyKeyService
             key_service = HolyKeyService()
         except ImportError:
             key_service = None

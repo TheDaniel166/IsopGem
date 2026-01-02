@@ -746,7 +746,7 @@ class HolyBookTeacherWindow(QMainWindow):
             return
         
         # Check if already indexed
-        from pillars.tq_lexicon.services.key_database import KeyDatabase
+        from shared.repositories.lexicon.key_database import KeyDatabase
         db = KeyDatabase()
         already_indexed = db.is_document_indexed(self.document_id)
         
@@ -931,7 +931,7 @@ class ConcordanceIndexWorker(QThread):
         
     def run(self):
         try:
-            from pillars.tq_lexicon.services.concordance_indexer_service import ConcordanceIndexerService
+            from shared.services.lexicon.concordance_indexer_service import ConcordanceIndexerService
             indexer = ConcordanceIndexerService()
             result = indexer.index_from_verse_teacher(
                 document_id=self.document_id,
