@@ -9,6 +9,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 CANONICAL_DIR = REPO_ROOT / "wiki/00_foundations/covenant"
 VSCODE_MIRROR_DIR = REPO_ROOT / ".github/instructions/covenant"
 GEMINI_DIR = Path.home() / ".gemini/covenant"
+SOPHIA_DIR = Path.home() / ".sophia/covenant"
 POINTER_PATH = REPO_ROOT / ".github/instructions/Sophia.instructions.md"
 
 
@@ -35,6 +36,7 @@ This file is a pointer to the Covenant instructions to avoid token bloat and dri
 * Canonical source: [wiki/00_foundations/covenant/](wiki/00_foundations/covenant/)
 * VS Code mirror: [.github/instructions/covenant/](.github/instructions/covenant/)
 * Gemini copy: `~/.gemini/covenant/`
+* Sophia home copy: `~/.sophia/covenant/`
 
 Regenerate mirrors and this pointer with `.venv/bin/python workflow_scripts/sync_covenant.py`. Changes made here without updating the canon will be overwritten.
 """.format(date=last_verified)
@@ -51,7 +53,7 @@ def main() -> None:
     if not CANONICAL_DIR.exists():
         raise SystemExit(f"Canonical covenant directory missing: {CANONICAL_DIR}")
 
-    copy_scrolls(CANONICAL_DIR, [VSCODE_MIRROR_DIR, GEMINI_DIR])
+    copy_scrolls(CANONICAL_DIR, [VSCODE_MIRROR_DIR, GEMINI_DIR, SOPHIA_DIR])
     write_pointer(POINTER_PATH, today)
 
 

@@ -15,6 +15,7 @@ import workflow_scripts.sync_covenant as sync_covenant
 CANON_DIR = PROJECT_ROOT / "wiki/00_foundations/covenant"
 VSCODE_MIRROR_DIR = PROJECT_ROOT / ".github/instructions/covenant"
 GEMINI_DIR = Path.home() / ".gemini/covenant"
+SOPHIA_DIR = Path.home() / ".sophia/covenant"
 POINTER_PATH = PROJECT_ROOT / ".github/instructions/Sophia.instructions.md"
 
 
@@ -88,6 +89,7 @@ def main() -> None:
 
     if not errors:
         verify_directory_mirror(CANON_DIR, GEMINI_DIR, "Gemini mirror", errors)
+        verify_directory_mirror(CANON_DIR, SOPHIA_DIR, "Sophia mirror", errors)
         verify_directory_mirror(CANON_DIR, VSCODE_MIRROR_DIR, "VSCode mirror", errors)
         verify_pointer(POINTER_PATH, errors)
 

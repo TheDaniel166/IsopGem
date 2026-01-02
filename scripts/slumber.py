@@ -26,7 +26,9 @@ from datetime import datetime
 import json
 
 # Paths to Anamnesis files
-ANAMNESIS_DIR = Path.home() / ".gemini" / "anamnesis"
+SOPHIA_HOME = Path.home() / ".sophia"
+ANAMNESIS_DIR = SOPHIA_HOME / "anamnesis"
+LEGACY_ANAMNESIS_DIR = Path.home() / ".gemini" / "anamnesis"
 SOUL_DIARY = ANAMNESIS_DIR / "SOUL_DIARY.md"
 SESSION_COUNTER = ANAMNESIS_DIR / "SESSION_COUNTER.txt"
 ARCHIVE_DIR = ANAMNESIS_DIR / "archive"
@@ -236,6 +238,20 @@ def sophia_mode(entries: dict):
 
 
 def main():
+    # Ensure new home exists and migrate legacy files if present
+    ANAMNESIS_DIR.mkdir(parents=True, exist_ok=True)
+    if LEGACY_ANAMNESIS_DIR.exists():
+        for name in ["SOUL_DIARY.md", "SESSION_COUNTER.txt", "archive", "NOTES_FOR_NEXT_SESSION.md", "DREAMS.md"]:
+            legacy_path = LEGACY_ANAMNESIS_DIR / name
+            target_path = ANAMNESIS_DIR / name
+            if legacy_path.exists() and not target_path.exists():
+                if legacy_path.is_dir():
+                    target_path.mkdir(parents=True, exist_ok=True)
+                else:
+                    try:
+                        target_path.write_text(legacy_path.read_text(encoding="utf-8"), encoding="utf-8")
+                    except Exception:
+                        pass
     # Parse command line arguments
     parser = argparse.ArgumentParser(description="The Rite of Slumber")
     parser.add_argument("--sophia", action="store_true", 

@@ -32,7 +32,9 @@ SCROLLS = [
 ]
 
 # Anamnesis paths
-ANAMNESIS_DIR = Path.home() / ".gemini" / "anamnesis"
+SOPHIA_HOME = Path.home() / ".sophia"
+ANAMNESIS_DIR = SOPHIA_HOME / "anamnesis"
+LEGACY_ANAMNESIS_DIR = Path.home() / ".gemini" / "anamnesis"
 SOUL_DIARY = ANAMNESIS_DIR / "SOUL_DIARY.md"
 SESSION_COUNTER = ANAMNESIS_DIR / "SESSION_COUNTER.txt"
 NOTES_FILE = ANAMNESIS_DIR / "NOTES_FOR_NEXT_SESSION.md"
@@ -161,6 +163,18 @@ def read_scroll(repo_root: Path, rel_path: str) -> str:
 
 
 def main():
+    # Ensure new home exists and migrate legacy files if present
+    ANAMNESIS_DIR.mkdir(parents=True, exist_ok=True)
+    if LEGACY_ANAMNESIS_DIR.exists():
+        for name in ["SOUL_DIARY.md", "SESSION_COUNTER.txt", "NOTES_FOR_NEXT_SESSION.md", "DREAMS.md"]:
+            legacy_file = LEGACY_ANAMNESIS_DIR / name
+            target_file = ANAMNESIS_DIR / name
+            if legacy_file.exists() and not target_file.exists():
+                try:
+                    target_file.write_text(legacy_file.read_text(encoding="utf-8"), encoding="utf-8")
+                except Exception:
+                    pass
+
     # Assume script is run from repo root or scripts/
     # We find the repo root by looking for .git or src
     cwd = Path.cwd()
