@@ -4,16 +4,19 @@ from PyQt6.QtWidgets import (
     QDialogButtonBox, QFileDialog, QWidget, QTextEdit,
     QMenu, QMessageBox, QLabel, QPushButton, QHBoxLayout,
     QSlider, QCheckBox, QGroupBox, QSizePolicy, QScrollArea,
-    QComboBox, QRubberBand
+    QComboBox, QRubberBand, QStyle, QStyleOption
 )
 from PyQt6.QtGui import (
     QTextCursor, QTextImageFormat, QIcon, QAction,
-    QPixmap, QImage, QTextDocument
+    QPixmap, QImage, QTextDocument, QPainter
 )
-from PyQt6.QtCore import Qt, QBuffer, QByteArray, QIODevice, QUrl, QRect, QPoint, pyqtSignal, QSize, QObject, QThread
+from PyQt6.QtCore import Qt, QBuffer, QByteArray, QIODevice, QUrl, QRect, QPoint, pyqtSignal, QSize, QObject, QThread, QRectF
 import qtawesome as qta
 import os
 import uuid
+from typing import Optional, TYPE_CHECKING
+if TYPE_CHECKING:
+    from .image_gateway import ImageGateway
 
 
 class CropPreviewLabel(QLabel):
@@ -22,41 +25,73 @@ class CropPreviewLabel(QLabel):
     selection_changed = pyqtSignal(QRect)  # Emits normalized rect relative to display_rect
 
     def __init__(self, *args, **kwargs):
-        """
-          init   logic.
-        
-        """
         super().__init__(*args, **kwargs)
         self.setMouseTracking(True)
         self.rubber_band = QRubberBand(QRubberBand.Shape.Rectangle, self)
         self.display_rect = QRect()
         self.origin = QPoint()
-        self.pending_selection = QRect()  # Store the pending crop selection
+        self.selection_relative = None # QRectF (0..1, 0..1) relative to display_rect
+        self.pending_selection = QRect()
+        self._is_dragging = False
 
     def set_display_rect(self, rect: QRect):
-        """
-        Configure display rect logic.
-        
-        Args:
-            rect: Description of rect.
-        
-        """
         self.display_rect = rect
-        # Clear selection when display rect changes (e.g., after other edits)
-        self.clear_selection()
+        if self.selection_relative:
+            # Re-project selection
+            w = rect.width()
+            h = rect.height()
+            rx = self.selection_relative.x()
+            ry = self.selection_relative.y()
+            rw = self.selection_relative.width()
+            rh = self.selection_relative.height()
+            
+            new_rect = QRect(
+                rect.x() + int(rx * w),
+                rect.y() + int(ry * h),
+                int(rw * w),
+                int(rh * h)
+            )
+            self.rubber_band.setGeometry(new_rect)
+            self.rubber_band.show()
+            self.pending_selection = new_rect
+        else:
+            self.rubber_band.hide()
 
     def clear_selection(self):
-        """Clear the current crop selection."""
+        self.selection_relative = None
         self.pending_selection = QRect()
         self.rubber_band.hide()
 
     def has_selection(self) -> bool:
-        """Check if there's a valid pending selection."""
-        return self.pending_selection.isValid() and self.pending_selection.width() > 1 and self.pending_selection.height() > 1
+        return self.selection_relative is not None
 
     def get_selection(self) -> QRect:
-        """Get the pending selection rect (normalized to display_rect origin)."""
-        return self.pending_selection
+        if not self.selection_relative or not self.display_rect:
+            return QRect()
+        
+        # We need to return rect relative to the image pixel origin (0,0 of the image visual)
+        # Mouse events generate selection in Widget coords
+        # display_rect is the rect of the image in Widget coords
+        
+        # Calculate rect in widget coords from relative
+        w = self.display_rect.width()
+        h = self.display_rect.height()
+        rx = self.selection_relative.x()
+        ry = self.selection_relative.y()
+        rw = self.selection_relative.width()
+        rh = self.selection_relative.height()
+        
+        widget_rect = QRect(
+            self.display_rect.x() + int(rx * w),
+            self.display_rect.y() + int(ry * h),
+            int(rw * w),
+            int(rh * h)
+        )
+        
+        # Translate to be relative to display_rect top-left
+        normalized = QRect(widget_rect)
+        normalized.translate(-self.display_rect.left(), -self.display_rect.top())
+        return normalized
 
     def mousePressEvent(self, event):  # type: ignore[override]
         """
@@ -68,6 +103,7 @@ class CropPreviewLabel(QLabel):
         """
         if not self.display_rect.contains(event.pos()):
             return
+        self._is_dragging = True
         self.origin = event.pos()
         self.rubber_band.setGeometry(QRect(self.origin, QPoint()))
         self.rubber_band.show()
@@ -80,7 +116,7 @@ class CropPreviewLabel(QLabel):
             event: Description of event.
         
         """
-        if self.rubber_band.isVisible():
+        if self._is_dragging and self.rubber_band.isVisible():
             rect = QRect(self.origin, event.pos()).normalized()
             self.rubber_band.setGeometry(rect)
 
@@ -92,21 +128,43 @@ class CropPreviewLabel(QLabel):
             event: Description of event.
         
         """
+        self._is_dragging = False
         if self.rubber_band.isVisible():
             rect = self.rubber_band.geometry().normalized()
             selection = rect.intersected(self.display_rect)
             if selection.isValid() and selection.width() > 1 and selection.height() > 1:
-                # Keep rubber band visible to show the selection
                 self.rubber_band.setGeometry(selection)
-                # Normalize to display rect origin for the pending selection
+                self.pending_selection = selection
+                
+                # Calculate relative
+                if self.display_rect.width() > 0 and self.display_rect.height() > 0:
+                    rx = (selection.x() - self.display_rect.x()) / self.display_rect.width()
+                    ry = (selection.y() - self.display_rect.y()) / self.display_rect.height()
+                    rw = selection.width() / self.display_rect.width()
+                    rh = selection.height() / self.display_rect.height()
+                    self.selection_relative = QRectF(rx, ry, rw, rh)
+                
+                # Normalize logic for signal
                 normalized = QRect(selection)
                 normalized.translate(-self.display_rect.left(), -self.display_rect.top())
-                self.pending_selection = normalized
                 self.selection_changed.emit(normalized)
             else:
-                self.rubber_band.hide()
-                self.pending_selection = QRect()
+                self.clear_selection()
                 self.selection_changed.emit(QRect())
+
+    def paintEvent(self, event):
+        """Explicitly draw pixmap at calculated display_rect to ensure sync."""
+        # Draw standard widget background
+        painter = QPainter(self)
+        opt = QStyleOption()
+        opt.initFrom(self)
+        self.style().drawPrimitive(QStyle.PrimitiveElement.PE_Widget, opt, painter, self)
+        
+        # Draw pixmap if exists
+        if self.display_rect.isValid() and self.pixmap() and not self.pixmap().isNull():
+            painter.drawPixmap(self.display_rect.topLeft(), self.pixmap())
+
+
 class ImagePropertiesDialog(QDialog):
     """Dialog for quick width/height edits after insertion."""
     def __init__(self, fmt: QTextImageFormat, parent=None):
@@ -206,73 +264,56 @@ class ImageEditorDialog(QDialog):
         self.current_image = None  # With brightness/contrast
         self.aspect_locked = True
         self.loader_thread = None
+        self.zoom_level = None # None = Fit, float = scale
         self._setup_ui()
 
+    def set_image(self, pil_image):
+        """Pre-load an existing image for editing."""
+        if pil_image.mode != "RGBA":
+             pil_image = pil_image.convert("RGBA")
+        self.orig_image = pil_image
+        self.base_image = pil_image.copy()
+        self.current_image = pil_image.copy()  # Ensure current_image is set
+        
+        # Sync UI
+        self._sync_size_spins()
+        self.btn_ok.setEnabled(True)
+        self.controls_box.setEnabled(True)
+        self._update_preview()
+        
+        self.lbl_file.setText("Editing Image")
+
     def _setup_ui(self):
-        layout = QVBoxLayout(self)
-
-        # File row
-        file_row = QHBoxLayout()
-        self.btn_choose = QPushButton("Choose Image…")
-        self.btn_choose.clicked.connect(self._choose_image)
-        self.lbl_file = QLabel("No file selected")
-        self.lbl_file.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
-        file_row.addWidget(self.btn_choose)
-        file_row.addWidget(self.lbl_file)
-        layout.addLayout(file_row)
+        # 2-Pane Layout: Left=Controls, Right=Viewport
+        self.resize(1000, 700) # Default larger size
         
-        # Loading indicator
-        self.lbl_loading = QLabel("Loading...")
-        self.lbl_loading.setVisible(False)
-        self.lbl_loading.setStyleSheet("color: #2563eb; font-weight: bold;")
-        layout.addWidget(self.lbl_loading)
-
-        # Preview inside scroll area to avoid huge images overflowing
-        self.preview_label = CropPreviewLabel()
-        self.preview_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.preview_label.setMinimumSize(320, 240)
-        self.preview_label.setStyleSheet("border: 1px solid #ddd; background: #fafafa;")
-        self.preview_label.selection_changed.connect(self._on_crop_selection_changed)
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setWidget(self.preview_label)
-        layout.addWidget(scroll)
-
-        # Crop confirmation row (hidden initially)
-        self.crop_row = QHBoxLayout()
-        self.lbl_crop_info = QLabel("")
-        self.lbl_crop_info.setStyleSheet("color: #2563eb; font-weight: bold;")
-        self.btn_apply_crop = QPushButton("Apply Crop")
-        self.btn_apply_crop.setStyleSheet("background-color: #22c55e; color: white; font-weight: bold; padding: 5px 15px;")
-        self.btn_apply_crop.clicked.connect(self._apply_pending_crop)
-        self.btn_cancel_crop = QPushButton("Cancel Selection")
-        self.btn_cancel_crop.clicked.connect(self._cancel_crop_selection)
-        self.crop_row.addWidget(self.lbl_crop_info)
-        self.crop_row.addStretch()
-        self.crop_row.addWidget(self.btn_apply_crop)
-        self.crop_row.addWidget(self.btn_cancel_crop)
+        main_layout = QHBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
         
-        # Create a widget to hold the crop row so we can show/hide it
-        self.crop_widget = QWidget()
-        self.crop_widget.setLayout(self.crop_row)
-        self.crop_widget.setVisible(False)
-        layout.addWidget(self.crop_widget)
-
-        controls_box = QGroupBox("Adjustments")
-        # Disable controls initially
-        self.controls_box = controls_box 
-        self.controls_box.setEnabled(False)
+        # --- LEFT PANEL: CONTROLS ---
+        left_panel = QWidget()
+        left_panel.setFixedWidth(320)
+        left_panel.setStyleSheet("background-color: #f8fafc; border-right: 1px solid #e2e8f0; color: #1e2937;")
+        left_layout = QVBoxLayout(left_panel)
+        left_layout.setSpacing(10)
+        left_layout.setContentsMargins(15, 15, 15, 15)
         
-        controls_layout = QVBoxLayout()
-
+        # Adjustments Group
+        self.controls_box = QGroupBox("Adjustments")
+        # Reuse existing structure but compact
+        ctrl_layout = QVBoxLayout()
+        ctrl_layout.setSpacing(8)
+        
+        # Size
         size_row = QHBoxLayout()
         self.width_spin = QSpinBox()
-        self.width_spin.setRange(1, 4000)
+        self.width_spin.setRange(1, 8000)
         self.width_spin.valueChanged.connect(self._on_width_changed)
         self.height_spin = QSpinBox()
-        self.height_spin.setRange(1, 4000)
+        self.height_spin.setRange(1, 8000)
         self.height_spin.valueChanged.connect(self._on_height_changed)
-        self.chk_lock = QCheckBox("Lock aspect")
+        self.chk_lock = QCheckBox("Lock")
         self.chk_lock.setChecked(True)
         self.chk_lock.stateChanged.connect(self._on_lock_changed)
         size_row.addWidget(QLabel("W:"))
@@ -280,169 +321,195 @@ class ImageEditorDialog(QDialog):
         size_row.addWidget(QLabel("H:"))
         size_row.addWidget(self.height_spin)
         size_row.addWidget(self.chk_lock)
-        controls_layout.addLayout(size_row)
-
+        ctrl_layout.addLayout(size_row)
+        
+        # Rotate
         rot_row = QHBoxLayout()
-        btn_rot_left = QPushButton("Rotate -90")
-        btn_rot_left.clicked.connect(lambda: self._rotate(-90))
-        btn_rot_right = QPushButton("Rotate +90")
-        btn_rot_right.clicked.connect(lambda: self._rotate(90))
+        btn_rot_l = QPushButton("-90°")
+        btn_rot_l.clicked.connect(lambda: self._rotate(-90))
+        btn_rot_r = QPushButton("+90°")
+        btn_rot_r.clicked.connect(lambda: self._rotate(90))
         btn_flip_h = QPushButton("Flip H")
         btn_flip_h.clicked.connect(self._flip_h)
         btn_flip_v = QPushButton("Flip V")
         btn_flip_v.clicked.connect(self._flip_v)
-        rot_row.addWidget(btn_rot_left)
-        rot_row.addWidget(btn_rot_right)
+        rot_row.addWidget(btn_rot_l)
+        rot_row.addWidget(btn_rot_r)
         rot_row.addWidget(btn_flip_h)
         rot_row.addWidget(btn_flip_v)
-        controls_layout.addLayout(rot_row)
+        ctrl_layout.addLayout(rot_row)
+        
+        # Sliders
+        def add_slider(label, attr):
+            row = QHBoxLayout()
+            row.addWidget(QLabel(label))
+            slider = QSlider(Qt.Orientation.Horizontal)
+            slider.setRange(0, 200) if "Sharpness" in label else slider.setRange(10, 300)
+            if "Saturation" in label or "Sharpness" in label: slider.setRange(0, 300)
+            slider.setValue(100)
+            slider.valueChanged.connect(self._update_preview)
+            setattr(self, attr, slider)
+            row.addWidget(slider)
+            ctrl_layout.addLayout(row)
 
-        bright_row = QHBoxLayout()
-        bright_row.addWidget(QLabel("Brightness"))
-        self.slider_brightness = QSlider(Qt.Orientation.Horizontal)
-        self.slider_brightness.setRange(10, 300)
-        self.slider_brightness.setValue(100)
-        self.slider_brightness.valueChanged.connect(self._update_preview)
-        bright_row.addWidget(self.slider_brightness)
-        controls_layout.addLayout(bright_row)
-
-        contrast_row = QHBoxLayout()
-        contrast_row.addWidget(QLabel("Contrast"))
-        self.slider_contrast = QSlider(Qt.Orientation.Horizontal)
-        self.slider_contrast.setRange(10, 300)
-        self.slider_contrast.setValue(100)
-        self.slider_contrast.valueChanged.connect(self._update_preview)
-        contrast_row.addWidget(self.slider_contrast)
-        controls_layout.addLayout(contrast_row)
-
-        # Saturation slider
-        saturation_row = QHBoxLayout()
-        saturation_row.addWidget(QLabel("Saturation"))
-        self.slider_saturation = QSlider(Qt.Orientation.Horizontal)
-        self.slider_saturation.setRange(0, 300)
-        self.slider_saturation.setValue(100)
-        self.slider_saturation.valueChanged.connect(self._update_preview)
-        saturation_row.addWidget(self.slider_saturation)
-        controls_layout.addLayout(saturation_row)
-
-        # Sharpness slider
-        sharpness_row = QHBoxLayout()
-        sharpness_row.addWidget(QLabel("Sharpness"))
-        self.slider_sharpness = QSlider(Qt.Orientation.Horizontal)
-        self.slider_sharpness.setRange(0, 300)
-        self.slider_sharpness.setValue(100)
-        self.slider_sharpness.valueChanged.connect(self._update_preview)
-        sharpness_row.addWidget(self.slider_sharpness)
-        controls_layout.addLayout(sharpness_row)
-
-        # Filter dropdown
+        add_slider("Brightness", "slider_brightness")
+        add_slider("Contrast", "slider_contrast")
+        add_slider("Saturation", "slider_saturation")
+        add_slider("Sharpness", "slider_sharpness")
+        
+        # Filter
         filter_row = QHBoxLayout()
-        filter_row.addWidget(QLabel("Filter"))
+        filter_row.addWidget(QLabel("Filter:"))
         self.filter_combo = QComboBox()
         self.filter_combo.addItems([
-            "None",
-            "--- Color Effects ---",
-            "Grayscale",
-            "Sepia",
-            "Warm",
-            "Cool",
-            "Vintage",
-            "Invert",
-            "Posterize",
-            "Solarize",
-            "--- Blur & Smooth ---",
-            "Blur",
-            "Gaussian Blur",
-            "Box Blur",
-            "Smooth",
-            "Smooth More",
-            "--- Sharpen & Detail ---",
-            "Sharpen",
-            "Detail",
-            "Edge Enhance",
-            "Edge Enhance More",
-            "Unsharp Mask",
-            "--- Artistic ---",
-            "Emboss",
-            "Contour",
-            "Find Edges",
-            "--- Auto Adjustments ---",
-            "Auto Contrast",
-            "Equalize",
+            "None", "--- Color ---", "Grayscale", "Sepia", "Warm", "Cool", "Vintage", "Invert",
+            "--- Blur/Sharp ---", "Blur", "Sharpen", "Emboss", "Find Edges", 
+            "--- Auto ---", "Auto Contrast"
         ])
         self.filter_combo.currentTextChanged.connect(self._update_preview)
         filter_row.addWidget(self.filter_combo)
-        filter_row.addStretch()
-        controls_layout.addLayout(filter_row)
-
-        reset_row = QHBoxLayout()
-        self.btn_reset = QPushButton("Reset")
-        self.btn_reset.clicked.connect(self._reset_image)
-        reset_row.addWidget(self.btn_reset)
-        reset_row.addStretch()
-        controls_layout.addLayout(reset_row)
-
-        controls_box.setLayout(controls_layout)
-        layout.addWidget(controls_box)
-
+        ctrl_layout.addLayout(filter_row)
+        
+        # Reset
+        btn_reset = QPushButton("Reset All")
+        btn_reset.clicked.connect(self._reset_image)
+        ctrl_layout.addWidget(btn_reset)
+        
+        self.controls_box.setLayout(ctrl_layout)
+        self.controls_box.setEnabled(False) # Default disabled
+        left_layout.addWidget(self.controls_box)
+        
+        # Layout Group
         layout_box = QGroupBox("Layout on Insert")
-        layout_layout = QVBoxLayout()
-
-        preset_row = QHBoxLayout()
-        preset_row.addWidget(QLabel("Display size"))
+        l_layout = QVBoxLayout()
         self.display_combo = QComboBox()
         self.display_combo.addItems(["100%", "75%", "50%", "25%"])
-        self.display_combo.setCurrentIndex(0)
-        preset_row.addWidget(self.display_combo)
-        preset_row.addStretch()
-        layout_layout.addLayout(preset_row)
-
-        align_row = QHBoxLayout()
-        align_row.addWidget(QLabel("Alignment"))
+        l_layout.addWidget(QLabel("Display Size:"))
+        l_layout.addWidget(self.display_combo)
+        
         self.align_combo = QComboBox()
         self.align_combo.addItems(["Left", "Center", "Right"])
-        align_row.addWidget(self.align_combo)
-        align_row.addStretch()
-        layout_layout.addLayout(align_row)
-
-        margin_row = QHBoxLayout()
-        margin_row.addWidget(QLabel("Left margin"))
-        self.margin_left = QSpinBox()
-        self.margin_left.setRange(0, 400)
-        self.margin_left.setValue(0)
-        margin_row.addWidget(self.margin_left)
-
-        margin_row.addWidget(QLabel("Right margin"))
-        self.margin_right = QSpinBox()
-        self.margin_right.setRange(0, 400)
-        self.margin_right.setValue(0)
-        margin_row.addWidget(self.margin_right)
-
-        margin_row.addWidget(QLabel("Top margin"))
-        self.margin_top = QSpinBox()
-        self.margin_top.setRange(0, 400)
-        self.margin_top.setValue(0)
-        margin_row.addWidget(self.margin_top)
-
-        margin_row.addWidget(QLabel("Bottom margin"))
-        self.margin_bottom = QSpinBox()
-        self.margin_bottom.setRange(0, 400)
-        self.margin_bottom.setValue(0)
-        margin_row.addWidget(self.margin_bottom)
-
-        layout_layout.addLayout(margin_row)
-        layout_box.setLayout(layout_layout)
-        layout.addWidget(layout_box)
-
-        buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok |
-            QDialogButtonBox.StandardButton.Cancel
-        )
-        self.btn_ok = buttons.button(QDialogButtonBox.StandardButton.Ok)
+        l_layout.addWidget(QLabel("Alignment:"))
+        l_layout.addWidget(self.align_combo)
+        
+        # Margins (compact)
+        margin_grid = QHBoxLayout()
+        self.margin_left = QSpinBox(); self.margin_left.setSuffix("px")
+        self.margin_right = QSpinBox(); self.margin_right.setSuffix("px")
+        self.margin_top = QSpinBox(); self.margin_top.setSuffix("px")
+        self.margin_bottom = QSpinBox(); self.margin_bottom.setSuffix("px")
+        margin_grid.addWidget(QLabel("L:")); margin_grid.addWidget(self.margin_left)
+        margin_grid.addWidget(QLabel("R:")); margin_grid.addWidget(self.margin_right)
+        margin_grid.addWidget(QLabel("T:")); margin_grid.addWidget(self.margin_top)
+        margin_grid.addWidget(QLabel("B:")); margin_grid.addWidget(self.margin_bottom)
+        l_layout.addLayout(margin_grid)
+        
+        layout_box.setLayout(l_layout)
+        left_layout.addWidget(layout_box)
+        
+        # Buttons
+        left_layout.addStretch()
+        self.btn_ok = QPushButton("Insert") # Rename OK to Insert for clarity
+        self.btn_ok.clicked.connect(self.accept)
         self.btn_ok.setEnabled(False)
-        buttons.accepted.connect(self.accept)
-        buttons.rejected.connect(self.reject)
-        layout.addWidget(buttons)
+        btn_cancel = QPushButton("Cancel")
+        btn_cancel.clicked.connect(self.reject)
+        
+        btn_row = QHBoxLayout()
+        btn_row.addWidget(self.btn_ok)
+        btn_row.addWidget(btn_cancel)
+        left_layout.addLayout(btn_row)
+        
+        main_layout.addWidget(left_panel)
+        
+        # --- RIGHT PANEL: PREVIEW ---
+        right_panel = QWidget()
+        right_panel.setStyleSheet("background-color: #111827; color: #f3f4f6;")
+        right_layout = QVBoxLayout(right_panel)
+        right_layout.setContentsMargins(10, 10, 10, 10)
+        
+        # Toolbar
+        toolbar = QHBoxLayout()
+        self.btn_choose = QPushButton("Change Image")
+        self.btn_choose.clicked.connect(self._choose_image)
+        self.btn_choose.setStyleSheet("background: #4b5563; border: none; padding: 5px 10px; border-radius: 4px;")
+        
+        self.lbl_file = QLabel("No file")
+        self.lbl_file.setStyleSheet("color: #9ca3af;")
+        
+        toolbar.addWidget(self.lbl_file)
+        toolbar.addWidget(self.btn_choose)
+        
+        self.lbl_loading = QLabel("Loading...")
+        self.lbl_loading.setVisible(False)
+        self.lbl_loading.setStyleSheet("color: #3b82f6; font-weight: bold; margin-left: 10px;")
+        toolbar.addWidget(self.lbl_loading)
+        
+        toolbar.addStretch()
+        
+        # Zoom
+        toolbar.addWidget(QLabel("Zoom:"))
+        btn_fit = QPushButton("Fit")
+        btn_fit.setToolTip("Fit image to view")
+        btn_fit.clicked.connect(self._zoom_fit)
+        btn_fit.setStyleSheet("background: #374151; padding: 4px 8px; border-radius: 4px;")
+        
+        btn_100 = QPushButton("100%")
+        btn_100.clicked.connect(self._zoom_100)
+        btn_100.setStyleSheet("background: #374151; padding: 4px 8px; border-radius: 4px;")
+        
+        toolbar.addWidget(btn_fit)
+        toolbar.addWidget(btn_100)
+        
+        right_layout.addLayout(toolbar)
+        
+        # Viewport
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True) # Start in Fit mode
+        self.scroll_area.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.scroll_area.setStyleSheet("border: 1px solid #374151; background: #000000;")
+        
+        self.preview_label = CropPreviewLabel()
+        self.preview_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.preview_label.selection_changed.connect(self._on_crop_selection_changed)
+        
+        self.scroll_area.setWidget(self.preview_label)
+        right_layout.addWidget(self.scroll_area)
+        
+        # Crop Widget
+        self.crop_widget = QWidget()
+        crop_layout = QHBoxLayout(self.crop_widget)
+        self.lbl_crop_info = QLabel("Crop Selection")
+        btn_apply = QPushButton("Apply Crop")
+        btn_apply.setStyleSheet("background: #10b981; color: white;")
+        btn_apply.clicked.connect(self._apply_pending_crop)
+        btn_cancel_crop = QPushButton("X")
+        btn_cancel_crop.clicked.connect(self._cancel_crop_selection)
+        crop_layout.addWidget(self.lbl_crop_info)
+        crop_layout.addWidget(btn_apply)
+        crop_layout.addWidget(btn_cancel_crop)
+        self.crop_widget.setVisible(False)
+        self.crop_widget.setStyleSheet("background: #1f2937; border-top: 1px solid #374151; padding: 5px;")
+        right_layout.addWidget(self.crop_widget)
+        
+        main_layout.addWidget(right_panel, stretch=1)
+        
+    def _zoom_fit(self):
+        self.zoom_level = None
+        self.scroll_area.setWidgetResizable(True)
+        self._update_preview()
+        
+    def _zoom_100(self):
+        self.zoom_level = 1.0
+        self.scroll_area.setWidgetResizable(False) # Allow resize to be dictated by content
+        self._update_preview()
+        
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        if event.oldSize() == event.size():
+            return
+        if self.zoom_level is None:
+            self._update_preview()
 
     # --- UI handlers ---
     def _choose_image(self):
@@ -548,6 +615,8 @@ class ImageEditorDialog(QDialog):
         if not disp_rect or disp_rect.width() == 0 or disp_rect.height() == 0:
             self.crop_widget.setVisible(False)
             return
+            self.crop_widget.setVisible(False)
+            return
         
         # Calculate actual pixel dimensions of the crop
         scale_x = self.base_image.width / disp_rect.width()
@@ -579,6 +648,7 @@ class ImageEditorDialog(QDialog):
         h = max(1, int(rect.height() * scale_y))
         
         self._apply_crop_rect(x, y, w, h)
+        self.preview_label.clear_selection()
         self.crop_widget.setVisible(False)
 
     def _cancel_crop_selection(self):
@@ -874,17 +944,42 @@ class ImageEditorDialog(QDialog):
 
     def _set_preview_pixmap(self, pil_img):
         data = pil_img.tobytes("raw", "RGBA")
-        qimg = QImage(data, pil_img.width, pil_img.height, QImage.Format.Format_RGBA8888)
+        qimg = QImage(data, pil_img.width, pil_img.height, QImage.Format.Format_RGBA8888).copy()
         pix = QPixmap.fromImage(qimg)
-        avail = self.preview_label.size()
-        avail = QSize(int(avail.width() * 0.95), int(avail.height() * 0.95))
-        target_size = pix.size().scaled(avail, Qt.AspectRatioMode.KeepAspectRatio)
-        disp_pix = pix.scaled(target_size, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+        
+        if self.zoom_level is None:
+             # Fit mode: Scale to viewport size
+             avail = self.scroll_area.viewport().size()
+             # Subtract a small margin
+             avail = QSize(max(10, avail.width() - 20), max(10, avail.height() - 20))
+             target_size = pix.size().scaled(avail, Qt.AspectRatioMode.KeepAspectRatio)
+             disp_pix = pix.scaled(target_size, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+        else:
+             # Zoom mode: Scale by factor
+             target_size = pix.size() * self.zoom_level
+             disp_pix = pix.scaled(target_size, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+             
         self.preview_label.setPixmap(disp_pix)
-        # Compute display rect within the label for hit-testing crop selection
-        offset_x = max(0, (self.preview_label.width() - target_size.width()) // 2)
-        offset_y = max(0, (self.preview_label.height() - target_size.height()) // 2)
-        disp_rect = QRect(offset_x, offset_y, target_size.width(), target_size.height())
+        
+        # Calculate display rect logic for crop
+        # If fit, rect is centered in viewport?
+        # preview_label alignment is center.
+        # But for crop math, we need rect relative to label.
+        
+        # If preview_label.resizable is True (Fit), label size == viewport size approx.
+        # Pixmap is centered.
+        
+        # If Zoom, label size == pixmap size.
+        
+        label_w = self.preview_label.width()
+        label_h = self.preview_label.height()
+        pix_w = disp_pix.width()
+        pix_h = disp_pix.height()
+        
+        offset_x = max(0, (label_w - pix_w) // 2)
+        offset_y = max(0, (label_h - pix_h) // 2)
+        
+        disp_rect = QRect(offset_x, offset_y, pix_w, pix_h)
         self._last_display_rect = disp_rect
         self.preview_label.set_display_rect(disp_rect)
 
@@ -909,7 +1004,7 @@ class ImageEditorDialog(QDialog):
         if not self.current_image:
             return None
         data = self.current_image.tobytes("raw", "RGBA")
-        return QImage(data, self.current_image.width, self.current_image.height, QImage.Format.Format_RGBA8888)
+        return QImage(data, self.current_image.width, self.current_image.height, QImage.Format.Format_RGBA8888).copy()
 
     def get_final_bytes_png(self):
         """
@@ -925,46 +1020,132 @@ class ImageEditorDialog(QDialog):
         self.current_image.save(buf, format="PNG")
         return buf.getvalue()
 
-class ImageFeature:
-    """Manages image operations for the RichTextEditor."""
+
+class ImageInsertFeature(QObject):
+    """
+    Manages image insertion flow: Pick -> Edit -> Persist -> Insert.
     
-    def __init__(self, editor: QTextEdit, parent: QWidget):
-        """
-          init   logic.
-        
-        Args:
-            editor: Description of editor.
-            parent: Description of parent.
-        
-        """
+    Delegates persistence and insertion plumbing to ImageGateway.
+    """
+    
+    def __init__(self, editor: QTextEdit, parent: QWidget, gateway: "ImageGateway"):
+        super().__init__(parent)
         self.editor = editor
-        self.parent = parent
-        self._init_actions()
-
-    def _init_actions(self):
-        self.action_insert = QAction("Edit && Insert Image...", self.parent)
-        self.action_insert.setToolTip("Open image editor before inserting")
-        self.action_insert.triggered.connect(self.insert_image)
-        self.action_insert.setIcon(qta.icon("fa5s.image", color="#1e293b"))
-        
-        self.action_props = QAction("Image Properties...", self.parent)
-        self.action_props.triggered.connect(self._edit_image_properties)
-        self.action_props.setIcon(qta.icon("fa5s.sliders-h", color="#1e293b"))
-
+        self.gateway = gateway
+        self.action_insert_image = None
+    
     def create_toolbar_action(self) -> QAction:
         """Return the insert image action for the toolbar."""
-        return self.action_insert
+        self.action_insert_image = QAction("Image", self.editor)
+        self.action_insert_image.setIcon(qta.icon("fa5s.image", color="#1e293b"))
+        self.action_insert_image.triggered.connect(self.insert_image)
+        return self.action_insert_image
+
+    def insert_image(self):
+        """
+        Execute the insert image flow.
+        
+        1. Open ImageEditorDialog (which handles file picking internally)
+        2. On accept, get final image bytes and options
+        3. Persist via gateway
+        4. Insert via gateway
+        """
+        # Parent to the active top-level window to ensure it appears above everything
+        from PyQt6.QtWidgets import QApplication
+        parent_widget = QApplication.activeWindow()
+
+        dialog = ImageEditorDialog(parent_widget)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            # Get final processed image data (as PNG bytes)
+            img_data = dialog.get_final_bytes_png()
+            if not img_data:
+                return
+
+            # Persist: Get canonical URL
+            # Persist always returns a persistent ID (docimg://) or fallback
+            url, resource_name = self.gateway.persist_image(img_data, "PNG")
+
+            # Register live resource for instant display
+            final_qimage = dialog.get_final_qimage()
+            if final_qimage:
+                self.gateway.register_resource(url, final_qimage)
+
+            # Build format
+            fmt = QTextImageFormat()
+            fmt.setName(resource_name)
+            
+            # Apply layout options from dialog
+            width = dialog.width_spin.value()
+            height = dialog.height_spin.value()
+            
+            # Apply scaling factor if one was selected
+            factor = self._display_factor(dialog)
+            if factor != 1.0:
+                width = int(width * factor)
+                height = int(height * factor)
+                
+            fmt.setWidth(width)
+            fmt.setHeight(height)
+            
+            # Insert via gateway
+            self.gateway.insert_image_at_cursor(fmt)
+            
+            # Handle alignment (requires block format logic)
+            align = self._parse_alignment(dialog)
+            if align:
+                cursor = self.editor.textCursor()
+                block_fmt = cursor.blockFormat()
+                block_fmt.setAlignment(align)
+                # Apply margins if any
+                block_fmt.setLeftMargin(dialog.margin_left.value())
+                block_fmt.setRightMargin(dialog.margin_right.value())
+                block_fmt.setTopMargin(dialog.margin_top.value())
+                block_fmt.setBottomMargin(dialog.margin_bottom.value())
+                cursor.mergeBlockFormat(block_fmt)
+
+    def _parse_alignment(self, dialog: "ImageEditorDialog"):
+        txt = dialog.align_combo.currentText()
+        if txt == "Left": return Qt.AlignmentFlag.AlignLeft
+        if txt == "Right": return Qt.AlignmentFlag.AlignRight
+        if txt == "Center": return Qt.AlignmentFlag.AlignCenter
+        return None
+
+    def _display_factor(self, dialog: "ImageEditorDialog"):
+        txt = dialog.display_combo.currentText()
+        if txt == "100%": return 1.0
+        if txt == "75%": return 0.75
+        if txt == "50%": return 0.50
+        if txt == "25%": return 0.25
+        return 1.0
+
+
+class ImageEditFeature(QObject):
+    """
+    Manages post-insertion image editing (properties, resizing).
+    
+    Delegates resolution and replacement to ImageGateway.
+    """
+    
+    def __init__(self, editor: QTextEdit, parent: QWidget, gateway: "ImageGateway"):
+        super().__init__(parent)
+        self.editor = editor
+        self.gateway = gateway
+        self.action_props = QAction("Image Properties...", self.editor)
+        self.action_props.triggered.connect(self._edit_image_properties)
+        self.action_props.setIcon(qta.icon("fa5s.sliders-h", color="#1e293b"))
+        
+        self.action_edit = QAction("Edit Image", self.editor)
+        self.action_edit.triggered.connect(self.edit_image)
+        self.action_edit.setIcon(qta.icon("fa5s.pen", color="#1e293b"))
 
     def extend_context_menu(self, menu: QMenu):
-        """Add image actions to context menu if applicable."""
-        # Check if we are near an image
+        """Add image actions to context menu if an image is selected."""
         cursor = self.editor.textCursor()
         
-        # Check char before
+        # Check if cursor is on an image or near one
         fmt_before = cursor.charFormat()
         is_img_before = fmt_before.isImageFormat()
         
-        # Check char after
         cursor_after = QTextCursor(cursor)
         cursor_after.movePosition(QTextCursor.MoveOperation.Right)
         fmt_after = cursor_after.charFormat()
@@ -972,132 +1153,101 @@ class ImageFeature:
         
         if is_img_before or is_img_after:
             menu.addSeparator()
+            menu.addAction(self.action_edit)
             menu.addAction(self.action_props)
+    
+    def edit_image(self) -> None:
+        """Full image editor (Crop, Rotate, Filter)."""
+        if not self.gateway:
+            return
+            
+        qimg, name_url, fmt = self.gateway.get_selected_image()
+        if not qimg or not fmt:
+            return
 
-    def insert_image(self):
-        # Ensure Pillow is available
-        """
-        Insert image logic.
+        # Convert QImage to PIL for the dialog
+        try:
+            from PIL import Image
+            from io import BytesIO
+            data = self.gateway.qimage_to_bytes(qimg)
+            pil_img = Image.open(BytesIO(data))
+        except Exception as e:
+            return
+
+        dialog = ImageEditorDialog(self.parent())
+        dialog.set_image(pil_img)
         
-        """
-        try:
-            import PIL  # noqa: F401
-        except ImportError:
-            QMessageBox.critical(self.parent, "Missing dependency", "Pillow is required for image editing. Please install pillow.")
-            return
-
-        # Parent to the active top-level window to ensure it appears above everything
-        from PyQt6.QtWidgets import QApplication
-        parent_widget = QApplication.activeWindow()
+        # Configure dialog initial size/params if needed?
+        # Creating a new dialog instance resets state, which is fine.
         
-        dialog = ImageEditorDialog(parent_widget)
-        if not dialog.exec():
-            return
-
-        qimg = dialog.get_final_qimage()
-        if qimg is None:
-            return
-
-        # Persist to a temp PNG so exported HTML has a path; also add as in-memory resource
-        png_bytes = dialog.get_final_bytes_png()
-        image_id = f"image://edited/{uuid.uuid4().hex}.png"
-        temp_dir = os.path.join(os.getcwd(), "saved_documents", ".cache_images")
-        os.makedirs(temp_dir, exist_ok=True)
-        temp_path = os.path.join(temp_dir, f"{uuid.uuid4().hex}.png")
-        try:
-            with open(temp_path, "wb") as f:
-                f.write(png_bytes)
-        except OSError:
-            # Best effort; continue with memory resource
-            temp_path = None
-
-        doc = self.editor.document()
-        doc.addResource(QTextDocument.ResourceType.ImageResource, QUrl(image_id), qimg)
-
-        cursor = self.editor.textCursor()
-
-        # Apply block alignment and margins for the image block
-        block_fmt = cursor.blockFormat()
-        align_choice = self._parse_alignment(dialog)
-        block_fmt.setAlignment(align_choice)
-        block_fmt.setLeftMargin(dialog.margin_left.value())
-        block_fmt.setRightMargin(dialog.margin_right.value())
-        block_fmt.setTopMargin(dialog.margin_top.value())
-        block_fmt.setBottomMargin(dialog.margin_bottom.value())
-        cursor.mergeBlockFormat(block_fmt)
-
-        factor = self._display_factor(dialog)
-        image_fmt = QTextImageFormat()
-        image_fmt.setName(temp_path if temp_path else image_id)
-        image_fmt.setWidth(qimg.width() * factor)
-        image_fmt.setHeight(qimg.height() * factor)
-        cursor.insertImage(image_fmt)
-
-    def _parse_alignment(self, dialog: "ImageEditorDialog"):
-        text = dialog.align_combo.currentText()
-        if text == "Center":
-            return Qt.AlignmentFlag.AlignHCenter
-        if text == "Right":
-            return Qt.AlignmentFlag.AlignRight
-        return Qt.AlignmentFlag.AlignLeft
-
-    def _display_factor(self, dialog: "ImageEditorDialog") -> float:
-        text = dialog.display_combo.currentText().replace("%", "")
-        try:
-            val = float(text)
-        except ValueError:
-            return 1.0
-        return max(0.05, min(4.0, val / 100.0))
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            # Get resulting image (modified)
+            final_qimg = dialog.get_final_qimage()
+            if final_qimg:
+                # Persist as new resource
+                new_url, name = self.gateway.persist_image(
+                    self.gateway.qimage_to_bytes(final_qimg), "PNG"
+                )
+                
+                # Register resource
+                self.gateway.register_resource(new_url, final_qimg)
+                
+                # Create format
+                new_fmt = QTextImageFormat()
+                new_fmt.setName(new_url.toString())
+                # Should we preserve original width/height if not resized?
+                # Dialog handles resize, so we trust dialog's result?
+                # But dialog.get_final_qimage() has the final dimensions.
+                new_fmt.setWidth(final_qimg.width())
+                new_fmt.setHeight(final_qimg.height())
+                
+                self.gateway.replace_image_at_cursor(new_fmt)
 
     def _edit_image_properties(self):
+        """Edit properties of the currently selected image."""
         cursor = self.editor.textCursor()
         
-        # Determine which image we are editing and select it
+        # Smart selection of image near cursor
         fmt_before = cursor.charFormat()
-        
-        cursor_after = QTextCursor(cursor)
-        cursor_after.movePosition(QTextCursor.MoveOperation.Right)
-        fmt_after = cursor_after.charFormat()
-        
         target_fmt = None
         
         if fmt_before.isImageFormat():
             target_fmt = fmt_before.toImageFormat()
-            # Select the character before
             cursor.movePosition(QTextCursor.MoveOperation.Left, QTextCursor.MoveMode.KeepAnchor)
-        elif fmt_after.isImageFormat():
-            target_fmt = fmt_after.toImageFormat()
-            # Select the character after
-            cursor.movePosition(QTextCursor.MoveOperation.Right, QTextCursor.MoveMode.KeepAnchor)
+        else:
+             cursor_after = QTextCursor(cursor)
+             cursor_after.movePosition(QTextCursor.MoveOperation.Right)
+             fmt_after = cursor_after.charFormat()
+             if fmt_after.isImageFormat():
+                 target_fmt = fmt_after.toImageFormat()
+                 cursor.movePosition(QTextCursor.MoveOperation.Right, QTextCursor.MoveMode.KeepAnchor)
+        
+        if not target_fmt or not target_fmt.isValid():
+            return
+
+        dialog = ImagePropertiesDialog(target_fmt, self.editor)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            # Apply changes to the format object (in memory)
+            dialog.apply_to_format(target_fmt)
             
-        if target_fmt:
-            parent_widget = self.parent.window() if self.parent else None
-            dialog = ImagePropertiesDialog(target_fmt, parent_widget)
-            if dialog.exec():
-                dialog.apply_to_format(target_fmt)
-                # Apply the updated format to the selection
-                # Note: We need to ensure the cursor has the selection we made above
-                # But wait, 'cursor' is a copy if we got it from textCursor()?
-                # Yes, textCursor() returns a copy. We need to set it back to the editor 
-                # OR use the editor's cursor to make the selection.
-                
-                # Let's do this properly:
-                # 1. Create a cursor that selects the image
-                # 2. Apply format
-                
-                edit_cursor = self.editor.textCursor()
-                # Re-detect position logic since we are in a new scope/cursor
-                # Actually, we can just use the logic we just did but on the editor's cursor
-                
-                f_before = edit_cursor.charFormat()
-                c_after = QTextCursor(edit_cursor)
-                c_after.movePosition(QTextCursor.MoveOperation.Right)
-                f_after = c_after.charFormat()
-                
-                if f_before.isImageFormat():
-                    edit_cursor.movePosition(QTextCursor.MoveOperation.Left, QTextCursor.MoveMode.KeepAnchor)
-                elif f_after.isImageFormat():
-                    edit_cursor.movePosition(QTextCursor.MoveOperation.Right, QTextCursor.MoveMode.KeepAnchor)
-                
-                # Now apply
-                edit_cursor.setCharFormat(target_fmt)
+            # Apply back to document
+            # We must use the editor's cursor to ensure undo/redo stack works
+            edit_cursor = self.editor.textCursor()
+            # Logic to select the image again (or assume our previous move logic was reliable enough logic for current cursor?)
+            # The 'cursor' variable above was local. We need to reproduce the selection on the main cursor or use the one we moved if it's attached?
+            # textCursor() returns a copy.
+            
+            # Simplified: Use the selection strategies again on the actual editor cursor
+            current_cursor = self.editor.textCursor()
+            f_before = current_cursor.charFormat()
+            if f_before.isImageFormat():
+                current_cursor.movePosition(QTextCursor.MoveOperation.Left, QTextCursor.MoveMode.KeepAnchor)
+            else:
+                 c_after = QTextCursor(current_cursor)
+                 c_after.movePosition(QTextCursor.MoveOperation.Right)
+                 if c_after.charFormat().isImageFormat():
+                     current_cursor.movePosition(QTextCursor.MoveOperation.Right, QTextCursor.MoveMode.KeepAnchor)
+            
+            # Merge the updated format
+            current_cursor.mergeCharFormat(target_fmt)
+            self.editor.setTextCursor(current_cursor)

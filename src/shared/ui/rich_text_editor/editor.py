@@ -1,8 +1,9 @@
 """Reusable Rich Text Editor widget with Ribbon UI."""
-import html
+import html as html_module
 import logging
 import os
-from typing import Optional, Any, Union, List, Tuple, Dict, Generator
+from typing import Optional, Any, Union, List, Tuple, Dict, Generator, Callable
+from collections import OrderedDict
 
 logger = logging.getLogger(__name__)
 from PyQt6.QtWidgets import (
@@ -18,14 +19,15 @@ from PyQt6.QtGui import (
     QFont, QAction, QColor, QTextCharFormat,
     QTextCursor, QTextListFormat, QTextBlockFormat,
     QActionGroup, QBrush, QDesktopServices, QPageSize, QPageLayout, QKeySequence,
-    QTextDocument
+    QTextDocument, QPaintEvent
 )
 import qtawesome as qta
 from PyQt6.QtPrintSupport import QPrinter, QPrintDialog, QPrintPreviewDialog
 
 # Feature modules
 from .table_features import TableFeature
-from .image_features import ImageFeature
+from .image_features import ImageInsertFeature, ImageEditFeature
+from .image_gateway import ImageGateway
 from .list_features import ListFeature
 from .search_features import SearchReplaceFeature
 from .shape_features import ShapeFeature
@@ -38,7 +40,7 @@ from .mermaid_feature import MermaidFeature
 # Dialog modules (extracted for modularity)
 from .dialogs import (
     HyperlinkDialog, HorizontalRuleDialog, PageSetupDialog,
-    SpecialCharactersDialog, ExportPdfDialog
+    SpecialCharactersDialog, ExportPdfDialog, PageModeDialog
 )
 
 # Page settings and constants
@@ -50,27 +52,93 @@ from shared.ui import VirtualKeyboard, get_shared_virtual_keyboard
 # Custom block property for pagination margins (avoids collision with user content)
 # Using "_PAG" as an integer constant for Qt property system
 PAGINATION_PROP = 0x5F504147
+PAGINATION_ORIG_PROP = 0x5F504F52  # _PAG_ORIGINAL
+PAGEBREAK_PROP = 0x5F504247  # _PBG - Sovereign page break marker
+
+
+# =============================================================================
+# Unified Pagination Mode System
+# =============================================================================
+from enum import Enum, auto
+from dataclasses import dataclass, field
+
+
+class PageMode(Enum):
+    """
+    Pagination display and enforcement modes.
+    
+    Presets provide opinionated defaults; CUSTOM allows granular control.
+    """
+    FREEFLOW = auto()      # No guides, no enforcement (fast free-flow editor)
+    GUIDES_ONLY = auto()   # Show page break lines + gap fill, no enforcement
+    ENFORCE_ONLY = auto()  # Enforce pagination, no visual guides
+    PAGED = auto()         # Both guides and enforcement (full document mode)
+    CUSTOM = auto()        # Manual control via PageModeOptions
+
+
+@dataclass
+class PageModeOptions:
+    """
+    Granular pagination control for CUSTOM mode or preset overrides.
+    
+    Presets determine default values; these can be explicitly overridden.
+    Option slots include future hooks for guide intensity, page numbers, etc.
+    """
+    # Core toggles
+    show_guides: bool = False        # Dashed lines at page breaks
+    show_gap_fill: bool = False      # Shaded gutter between pages
+    enforce_pagination: bool = False # Block margin enforcement
+    scroll_anchor: bool = True       # Anchor-based scroll restoration
+    
+    # Coupling policy
+    couple_guides_and_enforcement: bool = False  # When True, guides <-> enforcement sync
+    
+    # Visual tuning
+    page_gap: Optional[int] = None   # Override gutter size (None = use default)
+    
+    # Future hooks (reserved slots)
+    # guide_style: str = "dashed"    # Future: solid, dashed, dotted
+    # guide_opacity: float = 1.0     # Future: intensity tuning
+    # show_page_numbers: bool = False # Future: page numbers in gutter
 
 
 class SafeTextEdit(QTextEdit):
     """
-    A hardened QTextEdit that protects against 'Paste Attacks' (Mars Seal).
-    Also supports visual page break indicators.
+    A hardened QTextEdit implementing the Mars Seal defensive pattern.
+    
+    Provides two critical fortifications:
+    1. **Paste Protection**: Intercepts large clipboard payloads (text, HTML, images)
+       and prompts user confirmation before inserting potentially freezing content.
+    2. **Atomic Block Pagination**: Ensures text blocks don't straddle page boundaries
+       by dynamically adjusting top margins, creating clean visual page breaks.
+    
+    Also handles custom `docimg://` resource URLs for database-backed image loading.
     """
     
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         """
-          init   logic.
+        Initialize the hardened text editor with pagination and resource handling.
+        
+        Sets up debounced pagination timers, scroll guards to prevent layout edits
+        during active scrolling, and connects the docimg:// resource protocol.
+        
+        **Pagination Sovereignty**: Pagination is intentionally opt-in (default: disabled).
+        This preserves stability for simple text editing while allowing the Magus to
+        awaken deeper layout rites via `enable_pagination(True)` when needed. This is
+        sovereign design, not incompleteness.
         
         Args:
-            parent: Description of parent.
-        
-        Returns:
-            Result of __init__ operation.
+            parent: Parent widget for Qt ownership hierarchy.
         """
         super().__init__(parent)
+        self.resource_provider: Optional[Callable[[int], Optional[Tuple[bytes, str]]]] = None
+        self.resource_saver: Optional[Callable[[bytes, str], Optional[int]]] = None
         self._show_page_breaks = False
         self._page_settings = DEFAULT_PAGE_SETTINGS
+        self._docimg_cache: "OrderedDict[int, Any]" = OrderedDict()
+        
+        # Pagination Sovereignty: opt-in by design (see enable_pagination())
+        self.pagination_enabled = False
         
         # Pagination State
         # NOTE: Use self.page_height property (from settings) as single source of truth
@@ -78,13 +146,234 @@ class SafeTextEdit(QTextEdit):
         self._is_paginating = False
         self._pagination_timer = QTimer(self)
         self._pagination_timer.setSingleShot(True)
-        self._pagination_timer.setInterval(100)  # Debounce: 100ms
+        self._pagination_timer.setInterval(400)  # Debounce: slower to avoid post-scroll churn
         self._pagination_timer.timeout.connect(self._do_pagination)
         self.textChanged.connect(self._schedule_pagination)
+        
+        # Monotonic pagination counter (sovereign, not relying on Qt's revision)
+        self._pagination_generation = 0
+        self._last_paginated_generation = -1
+
+        # Scroll guard to avoid pagination/layout edits mid-scroll
+        self._is_scrolling = False
+        self._scroll_timer = QTimer(self)
+        self._scroll_timer.setSingleShot(True)
+        self._scroll_timer.setInterval(350)
+        self._scroll_timer.timeout.connect(self._end_scroll)
+        
+        # Anchor-based scroll restoration (toggle off with one line if needed)
+        self.scroll_anchor_enabled = True
+        scrollbar = self.verticalScrollBar()
+        if scrollbar is not None:
+            scrollbar.valueChanged.connect(self._on_scroll)
     
     def _schedule_pagination(self):
         """Schedule pagination check (debounced to avoid per-keystroke runs)."""
+        if not getattr(self, "pagination_enabled", True):
+            return
+        if getattr(self, "_is_paginating", False):
+            return
+        if getattr(self, "_is_scrolling", False):
+            return
         self._pagination_timer.start()
+    
+    def enable_pagination(self, enabled: bool = True) -> None:
+        """
+        Awaken or suspend the pagination rite.
+        
+        Pagination is intentionally opt-in—guarded for stability by sovereign design.
+        When enabled, the editor ensures text blocks do not straddle page boundaries,
+        providing clean page break visualization for document layout.
+        
+        **Why Opt-In**: Pagination involves layout mutation that can interact with
+        scrolling, undo/redo, and large content in complex ways. Keeping it disabled
+        by default ensures smooth operation for simple text editing, while allowing
+        explicit activation when deeper layout rites are needed.
+        
+        Args:
+            enabled: True to awaken pagination, False to suspend.
+        
+        Example:
+            editor.enable_pagination(True)  # Awaken for document layout
+            editor.enable_pagination(False)  # Suspend for simple editing
+        """
+        self.pagination_enabled = enabled
+        if enabled:
+            # Trigger immediate pagination check
+            self._schedule_pagination()
+    
+    def set_page_mode(self, mode: PageMode, opts: Optional[PageModeOptions] = None) -> None:
+        """
+        Set pagination mode with unified control.
+        
+        This is the sovereign entry point for all pagination state changes.
+        Presets provide opinionated defaults; CUSTOM mode allows full granular control.
+        
+        Args:
+            mode: The PageMode preset to apply
+            opts: Optional PageModeOptions for overrides (required for CUSTOM mode)
+        
+        Example:
+            editor.set_page_mode(PageMode.PAGED)  # Full document mode
+            editor.set_page_mode(PageMode.FREEFLOW)  # Fast free-flow editing
+            editor.set_page_mode(PageMode.CUSTOM, PageModeOptions(
+                show_guides=True,
+                show_gap_fill=False,
+                enforce_pagination=True
+            ))
+        """
+        # Resolve preset to base options
+        if mode == PageMode.FREEFLOW:
+            resolved = PageModeOptions(
+                show_guides=False,
+                show_gap_fill=False,
+                enforce_pagination=False,
+                scroll_anchor=True
+            )
+        elif mode == PageMode.GUIDES_ONLY:
+            resolved = PageModeOptions(
+                show_guides=True,
+                show_gap_fill=True,
+                enforce_pagination=False,
+                scroll_anchor=True
+            )
+        elif mode == PageMode.ENFORCE_ONLY:
+            resolved = PageModeOptions(
+                show_guides=False,
+                show_gap_fill=False,
+                enforce_pagination=True,
+                scroll_anchor=True
+            )
+        elif mode == PageMode.PAGED:
+            resolved = PageModeOptions(
+                show_guides=True,
+                show_gap_fill=True,
+                enforce_pagination=True,
+                scroll_anchor=True
+            )
+        elif mode == PageMode.CUSTOM:
+            if opts is None:
+                # CUSTOM requires explicit options
+                resolved = PageModeOptions()
+            else:
+                resolved = opts
+        else:
+            resolved = PageModeOptions()
+        
+        # Apply overrides from opts if provided (for preset customization)
+        if opts is not None and mode != PageMode.CUSTOM:
+            # Override only explicitly set values (non-default check would require more logic)
+            # For simplicity, CUSTOM mode uses opts directly; presets ignore opts currently
+            pass
+        
+        # Handle coupling policy
+        if resolved.couple_guides_and_enforcement:
+            # Sync enforcement to guides state
+            resolved.enforce_pagination = resolved.show_guides
+        
+        # Apply page_gap override if specified
+        if resolved.page_gap is not None:
+            self._page_gap = resolved.page_gap
+        
+        # Commit state to concrete flags
+        self._show_page_breaks = resolved.show_guides or resolved.show_gap_fill
+        self._show_gap_fill = resolved.show_gap_fill  # Add flag if not exists
+        self.pagination_enabled = resolved.enforce_pagination
+        self.scroll_anchor_enabled = resolved.scroll_anchor
+        
+        # Store current mode for introspection
+        self._current_page_mode = mode
+        self._current_page_options = resolved
+        
+        # Trigger updates
+        if resolved.enforce_pagination:
+            self._schedule_pagination()
+        
+        # Repaint for visual changes
+        viewport = self.viewport()
+        if viewport is not None:
+            viewport.update()
+
+    def _on_scroll(self):
+        """Mark scrolling active and debounce end marker."""
+        self._is_scrolling = True
+        if self._pagination_timer.isActive():
+            self._pagination_timer.stop()
+        self._scroll_timer.start()
+
+    def _end_scroll(self):
+        """End scroll window to allow pagination to resume."""
+        self._is_scrolling = False
+
+    def _find_visible_anchor_block_pos(self) -> Optional[int]:
+        """
+        Return the document position() of the block at the viewport top.
+        
+        Uses cursorForPosition() to find the cursor at the top-left of the viewport,
+        which is stable across margin changes, DPI scaling, and layout mutations.
+        """
+        from PyQt6.QtCore import QPoint
+        
+        # Get cursor at top-left corner of viewport (pixel 1,1 to be safe)
+        cur = self.cursorForPosition(QPoint(1, 1))
+        block = cur.block()
+        return int(block.position()) if block.isValid() else None
+
+    def _get_block_viewport_offset_by_pos(self, block_pos: int) -> float:
+        """
+        Get the block's current vertical offset from the viewport top.
+        
+        Uses cursorRect() for viewport-stable coordinates rather than mixing
+        document layout coords with scrollbar values.
+        """
+        from PyQt6.QtGui import QTextCursor
+        
+        doc = self.document()
+        if doc is None:
+            return 0.0
+        
+        block = doc.findBlock(block_pos)
+        if not block.isValid():
+            return 0.0
+        
+        # Create a cursor positioned at the block start
+        cur = QTextCursor(block)
+        # cursorRect gives us viewport coordinates directly
+        r = self.cursorRect(cur)
+        return float(r.top())
+
+    def _calculate_anchor_scroll_by_pos(self, block_pos: int, target_offset: float) -> Optional[int]:
+        """
+        Compute scrollbar adjustment to restore the block at its original viewport offset.
+        
+        Returns the raw desired scroll position. Caller should clamp to the
+        scrollbar's current min/max range before applying.
+        """
+        from PyQt6.QtGui import QTextCursor
+        
+        doc = self.document()
+        if doc is None:
+            return None
+        
+        block = doc.findBlock(block_pos)
+        if not block.isValid():
+            return None
+        
+        scrollbar = self.verticalScrollBar()
+        if scrollbar is None:
+            return None
+        
+        # Create a cursor at the block and get its current viewport position
+        cur = QTextCursor(block)
+        current_rect = self.cursorRect(cur)
+        current_offset = float(current_rect.top())
+        
+        # How much do we need to scroll to move from current_offset to target_offset?
+        # If current_offset > target_offset, we need to scroll UP (decrease scroll value)
+        # If current_offset < target_offset, we need to scroll DOWN (increase scroll value)
+        delta = current_offset - target_offset
+        desired = scrollbar.value() + int(delta)
+        return desired
 
     def _do_pagination(self):
         """
@@ -100,13 +389,43 @@ class SafeTextEdit(QTextEdit):
         Uses PAGINATION_PROP to mark blocks we've modified (reliable reset).
         Disables undo/redo to prevent layout edits from polluting history.
         """
-        if self._is_paginating:
+        if not getattr(self, "pagination_enabled", True):
+            return
+        if self._is_paginating or self._is_scrolling:
+            return
+        doc = self.document()
+        if doc is None:
+            return
+        
+        # Monotonic generation gate (sovereign counter, not Qt revision)
+        if self._pagination_generation == self._last_paginated_generation:
             return
             
         self._is_paginating = True
+        changed = False  # Initialize before try to prevent UnboundLocalError in finally
         try:
             doc = self.document()
+            if doc is None:
+                return
             layout = doc.documentLayout()
+            if layout is None:
+                return
+            scrollbar = self.verticalScrollBar()
+            saved_scroll = scrollbar.value() if scrollbar is not None else None
+            
+            # Anchor-based scroll restoration: capture visible block position
+            anchor_pos: Optional[int] = None
+            anchor_offset = 0.0
+            if getattr(self, "scroll_anchor_enabled", True) and scrollbar is not None:
+                anchor_pos = self._find_visible_anchor_block_pos()
+                if anchor_pos is not None:
+                    anchor_offset = self._get_block_viewport_offset_by_pos(anchor_pos)
+            
+            # Capture the revision after any edits we make below
+            current_rev = doc.revision()
+            margin_offset = 0.0
+            if hasattr(doc, "documentMargin"):
+                margin_offset = float(doc.documentMargin())
             # Use property as single source of truth for page height
             page_height = self.page_height
             cycle = page_height + self._page_gap
@@ -119,169 +438,253 @@ class SafeTextEdit(QTextEdit):
                 # Use a single cursor for all edits
                 edit_cursor = QTextCursor(doc)
                 
-                # Iterate all blocks
-                block = doc.begin()
-                while block.isValid():
-                    rect = layout.blockBoundingRect(block)
+                edit_cursor.beginEditBlock()
+                try:
+                    # Iterate all blocks
+                    block = doc.begin()
+                    while block.isValid():
+                        rect = layout.blockBoundingRect(block)
                     
-                    # Skip empty or invisible blocks
-                    if rect.height() < 1:
-                        block = block.next()
-                        continue
-                    
-                    # Get block geometry
-                    block_top = rect.y()
-                    block_bottom = rect.bottom()
-                    block_height = rect.height()
-                    
-                    # Determine which page this block starts on
-                    page_num = int(block_top / cycle)
-                    
-                    # Position within the current cycle (0 = start of page)
-                    local_top = block_top - (page_num * cycle)
-                    local_bottom = block_bottom - (page_num * cycle)
-                    
-                    # Get current block format
-                    fmt = block.blockFormat()
-                    current_margin = fmt.topMargin()
-                    is_paginated = fmt.property(PAGINATION_PROP)
-                    
-                    # Check if block would cross into the gap or next page
-                    needs_push = False
-                    
-                    # Case 1: Block starts in the gap
-                    if local_top >= page_height:
-                        needs_push = True
+                        # Skip empty or invisible blocks
+                        if rect.height() < 1:
+                            block = block.next()
+                            continue
                         
-                    # Case 2: Block starts on page but extends into gap
-                    elif local_bottom > page_height and block_height < page_height:
-                        # Only push if block is smaller than a page
-                        # (Large blocks like images are allowed to overflow)
-                        needs_push = True
-                    
-                    if needs_push:
-                        # Calculate how much to push
-                        # We want to move the block to the start of the next page
-                        next_page_start = (page_num + 1) * cycle
-                        margin_needed = next_page_start - block_top
+                        # Get block geometry
+                        block_top = rect.y() - margin_offset
+                        block_bottom = rect.bottom() - margin_offset
+                        block_height = rect.height()
                         
-                        # Only add margin if not already set (avoid duplicates)
-                        if abs(current_margin - margin_needed) > 1:
+                        # Determine which page this block starts on
+                        page_num = int(block_top / cycle)
+                        
+                        # Position within the current cycle (0 = start of page)
+                        local_top = block_top - (page_num * cycle)
+                        local_bottom = block_bottom - (page_num * cycle)
+                        
+                        # Get current block format
+                        fmt = block.blockFormat()
+                        current_margin = fmt.topMargin()
+                        # Deterministic boolean read (QVariant can return None/0/False)
+                        is_paginated = fmt.property(PAGINATION_PROP) is True
+                        orig_margin = fmt.property(PAGINATION_ORIG_PROP)
+                        
+                        # Check if block would cross into the gap or next page
+                        needs_push = False
+                        
+                        # Case 1: Block starts in the gap
+                        if local_top >= page_height:
+                            needs_push = True
+                            
+                        # Case 2: Block starts on page but extends into gap
+                        elif local_bottom > page_height and block_height < page_height:
+                            # Only push if block is smaller than a page
+                            # (Large blocks like images are allowed to overflow)
+                            needs_push = True
+                        
+                        if needs_push:
+                            # Calculate how much to push
+                            # We want to move the block to the start of the next page
+                            next_page_start = (page_num + 1) * cycle
+                            margin_needed = next_page_start - block_top
+                            
+                            # Idempotent guard: skip if already in perfect paginated state
+                            already_correct = (
+                                is_paginated and
+                                abs(current_margin - margin_needed) <= 1 and
+                                orig_margin is not None
+                            )
+                            if already_correct:
+                                block = block.next()
+                                continue
+                            
+                            # Apply pagination margin
+                            if not is_paginated:
+                                fmt.setProperty(PAGINATION_ORIG_PROP, current_margin)
                             fmt.setTopMargin(margin_needed)
                             fmt.setProperty(PAGINATION_PROP, True)
-                            # Proper cursor construction: position at block start
                             edit_cursor.setPosition(block.position())
                             edit_cursor.setBlockFormat(fmt)
-                    else:
-                        # Reset margin if block no longer needs push
-                        # Only reset if WE previously set this margin (check our property)
-                        if is_paginated:
-                            fmt.setTopMargin(0)
-                            fmt.clearProperty(PAGINATION_PROP)
-                            edit_cursor.setPosition(block.position())
-                            edit_cursor.setBlockFormat(fmt)
-                    
-                    block = block.next()
+                            changed = True
+                        else:
+                            # Reset margin if block no longer needs push
+                            # Only reset if WE previously set this margin (check our property)
+                            if is_paginated:
+                                restore_margin = 0.0
+                                if orig_margin is not None:
+                                    try:
+                                        restore_margin = float(orig_margin)
+                                    except Exception:
+                                        restore_margin = 0.0
+                                
+                                # Idempotent guard: skip if already restored
+                                if abs(current_margin - restore_margin) <= 1:
+                                    # Margin already correct, just clear properties
+                                    fmt.clearProperty(PAGINATION_PROP)
+                                    fmt.clearProperty(PAGINATION_ORIG_PROP)
+                                else:
+                                    fmt.setTopMargin(restore_margin)
+                                    fmt.clearProperty(PAGINATION_PROP)
+                                    fmt.clearProperty(PAGINATION_ORIG_PROP)
+                                edit_cursor.setPosition(block.position())
+                                edit_cursor.setBlockFormat(fmt)
+                                changed = True
+                        
+                        block = block.next()
+                finally:
+                    edit_cursor.endEditBlock()
             finally:
                 # Restore undo/redo state
                 doc.setUndoRedoEnabled(undo_enabled)
+                if changed:
+                    # Advance sovereign generation counter
+                    self._pagination_generation += 1
+                    # Restore scroll using anchor (semantic) or fallback to raw position
+                    if scrollbar is not None:
+                        restored = False
+                        if getattr(self, "scroll_anchor_enabled", True) and anchor_pos is not None:
+                            new_scroll = self._calculate_anchor_scroll_by_pos(anchor_pos, anchor_offset)
+                            if new_scroll is not None:
+                                # Clamp to current scrollbar range (min and max may shift after reflow)
+                                clamped = max(scrollbar.minimum(), min(new_scroll, scrollbar.maximum()))
+                                scrollbar.setValue(clamped)
+                                restored = True
+                        if not restored and saved_scroll is not None:
+                            # Fallback also clamped for safety
+                            clamped = max(scrollbar.minimum(), min(saved_scroll, scrollbar.maximum()))
+                            scrollbar.setValue(clamped)
+                
+                # Always update seen generation (whether changed or not, to avoid re-running)
+                self._last_paginated_generation = self._pagination_generation
                 
         finally:
             self._is_paginating = False
     
     @property
     def page_height(self) -> int:
-        """Get page height from settings."""
+        """
+        The effective content height per page in pixels.
+        
+        Derived from page settings (paper size minus margins). Used as the
+        single source of truth for pagination calculations and page break rendering.
+        
+        Returns:
+            Page content height in pixels.
+        """
         return self._page_settings.content_height_pixels
     
     @property
     def show_page_breaks(self) -> bool:
         """
-        Display page breaks logic.
+        Whether visual page break indicators are displayed.
+        
+        When True, dashed horizontal lines and page numbers are painted
+        at page boundaries during the paint event.
         
         Returns:
-            Result of show_page_breaks operation.
+            True if page break lines are visible.
         """
         return self._show_page_breaks
     
     @show_page_breaks.setter
-    def show_page_breaks(self, value: bool):
+    def show_page_breaks(self, value: bool) -> None:
         """
-        Display page breaks logic.
+        Toggle visibility of page break indicators.
         
         Args:
-            value: Description of value.
-        
+            value: True to show dashed page break lines, False to hide them.
         """
         self._show_page_breaks = value
-        self.viewport().update()
+        viewport = self.viewport()
+        if viewport:
+            viewport.update()
     
-    def paintEvent(self, event: Any) -> None:
-        """Paint the text, then overlay page break lines."""
-        # Let the base class paint the text first
-        super().paintEvent(event)
-        
+    def paintEvent(self, e: Optional[QPaintEvent]) -> None:  # type: ignore[override]
+        """Paint the text, then overlay visible page break lines and gap fills."""
+        super().paintEvent(e)
+
         if not self._show_page_breaks:
             return
-        
-        # Paint page break lines
-        from PyQt6.QtGui import QPainter, QPen
-        
-        painter = QPainter(self.viewport())
-        
-        # Dashed line style
-        pen = QPen(QColor("#94a3b8"))  # Light gray
+
+        from PyQt6.QtGui import QPainter, QPen, QBrush
+        from PyQt6.QtCore import QRectF
+
+        viewport = self.viewport()
+        if viewport is None:
+            return
+
+        scrollbar = self.verticalScrollBar()
+        if scrollbar is None:
+            return
+
+        doc = self.document()
+        if doc is None:
+            return
+
+        painter = QPainter(viewport)
+
+        # Define gap fill color (subtle semi-transparent shade)
+        gap_fill_color = QColor("#e2e8f0")  # Soft slate-200
+        gap_fill_color.setAlpha(80)  # Semi-transparent
+        gap_brush = QBrush(gap_fill_color)
+
+        # Dashed line pen for break markers
+        pen = QPen(QColor("#94a3b8"))
         pen.setStyle(Qt.PenStyle.DashLine)
         pen.setWidth(1)
-        painter.setPen(pen)
-        
-        # Get scroll position
-        scroll_y = self.verticalScrollBar().value()
-        viewport_height = self.viewport().height()
-        
-        # Calculate which page breaks are visible
-        doc_height = self.document().size().height()
-        
-        # Use SAME cycle math as pagination to ensure alignment
+
+        scroll_y = scrollbar.value()
+        viewport_height = viewport.height()
+
         page_height = self.page_height
         cycle = page_height + self._page_gap
-        
-        page = 1
-        while page * cycle < doc_height:
-            # Y position of this page break (in document coordinates)
-            # Draw at the END of page content, before the gap
+        if cycle <= 0:
+            painter.end()
+            return
+
+        doc_height = doc.size().height()
+
+        # Draw only visible page breaks (small padded window)
+        pad = 20
+        first_page = max(0, int((scroll_y - pad) / cycle))
+        last_page = int((scroll_y + viewport_height + pad) / cycle) + 2
+        max_page = int(doc_height / cycle) + 2
+        last_page = min(last_page, max_page)
+
+        for page in range(first_page, last_page):
+            if page <= 0:
+                continue
+
+            # Gap region: from break_y to break_y + _page_gap
             break_y = page * cycle - self._page_gap
-            
-            # Convert to viewport coordinates
-            viewport_y = break_y - scroll_y
-            
-            # Only draw if visible
-            if -10 < viewport_y < viewport_height + 10:
-                # Draw the line
-                painter.drawLine(10, int(viewport_y), self.viewport().width() - 10, int(viewport_y))
+            gap_start_viewport = break_y - scroll_y
+            gap_end_viewport = gap_start_viewport + self._page_gap
+
+            # Fill the gap region with subtle background
+            if gap_end_viewport > -10 and gap_start_viewport < viewport_height + 10:
+                gap_rect = QRectF(0, gap_start_viewport, viewport.width(), self._page_gap)
+                painter.fillRect(gap_rect, gap_brush)
                 
-                # Draw page number label
-                painter.drawText(15, int(viewport_y) - 5, f"─ Page {page + 1} ─")
-            
-            page += 1
-        
+                # Draw dashed line at the top of the gap (page break marker)
+                painter.setPen(pen)
+                painter.drawLine(10, int(gap_start_viewport), viewport.width() - 10, int(gap_start_viewport))
+                painter.drawText(15, int(gap_start_viewport) - 5, f"─ Page {page + 1} ─")
+
         painter.end()
     
-    def loadResource(self, type_id: int, url: QUrl) -> Any:
-        """
-        Handle custom resource loading, specifically for docimg:// scheme.
-        """
-        if url.scheme() == "docimg":
+    def loadResource(self, type: int, name: QUrl) -> Any:  # type: ignore[override]
+        """Handle custom resource loading, specifically for docimg:// scheme."""
+        if name.scheme() == "docimg":
             # Check for mermaid or other named resources
             # Accessing url.path() might return /mermaid/uuid
-            if "mermaid" in url.toString():
-                 # Default handling should find it in the resource cache
-                 return super().loadResource(type_id, url)
+            if "mermaid" in name.toString():
+                # Default handling should find it in the resource cache
+                return super().loadResource(type, name)
             
             try:
                 # Extract image ID
-                path = url.path().strip('/')
-                host = url.host()
+                path = name.path().strip('/')
+                host = name.host()
                 
                 image_id = None
                 
@@ -302,39 +705,57 @@ class SafeTextEdit(QTextEdit):
                         image_id = int(host)
                 
                 if image_id is None:
-                     logger.warning(f"Failed to parse image ID from url: {url.toString()}")
-                     return super().loadResource(type_id, url)
+                    logger.warning(f"Failed to parse image ID from url: {name.toString()}")
+                    return super().loadResource(type, name)
+                if image_id < 1 or image_id > 2_147_483_647:
+                    logger.warning(f"docimg id out of range: {image_id}")
+                    return super().loadResource(type, name)
+
+                # Cache lookup
+                cache = self._docimg_cache
+                if image_id in cache:
+                    cached = cache.pop(image_id)
+                    cache[image_id] = cached  # move to end
+                    return cached
 
                 # Use external resource provider if available
                 # This decouples the editor from the document manager pillar
                 if hasattr(self, 'resource_provider') and self.resource_provider:
-                     result = self.resource_provider(image_id)
-                     if result:
+                    result = self.resource_provider(image_id)
+                    if result:
                         data, mime_type = result
+                        if len(data) > 25 * 1024 * 1024:
+                            logger.warning(f"docimg {image_id} rejected: payload too large ({len(data)} bytes)")
+                            return super().loadResource(type, name)
                         from PyQt6.QtGui import QImage
                         image = QImage()
                         image.loadFromData(data)
+                        cache[image_id] = image
+                        if len(cache) > 32:
+                            cache.popitem(last=False)
                         return image
                 else:
                     # Fallback or error logging if no provider
                     logger.debug(f"No resource provider available for docimg://{image_id}")
                     
             except Exception as e:
-                logger.error(f"Failed to load image resource {url.toString()}: {e}")
-                
-        return super().loadResource(type_id, url)
+                logger.error(f"Failed to load image resource {name.toString()}: {e}")
+        
+        return super().loadResource(type, name)
 
-    def insertFromMimeData(self, source: QMimeData) -> None:
-        """
-        Override paste behavior to protect against freezing.
-        """
-        # Threshold: 100,000 chars (approx 20-30 pages of text)
-        WARN_THRESHOLD = 100000
+    def insertFromMimeData(self, source: Optional[QMimeData]) -> None:  # type: ignore[override]
+        """Override paste behavior to protect against freezing."""
+        if source is None:
+            return
+        # Thresholds
+        TEXT_WARN = 100000  # approx 20-30 pages of text
+        HTML_WARN = 75000   # large HTML payload warning
+        MAX_IMAGE_PIXELS = 12_000_000  # ~12 MP
+        MAX_IMAGE_BYTES = 12 * 1024 * 1024  # 12 MB
         
         if source.hasText():
             text = source.text()
-            if len(text) > WARN_THRESHOLD:
-                # Mars Warning: Chaos detected
+            if len(text) > TEXT_WARN:
                 reply = QMessageBox.warning(
                     self, 
                     "Large Paste Detected",
@@ -346,6 +767,59 @@ class SafeTextEdit(QTextEdit):
                 )
                 if reply == QMessageBox.StandardButton.No:
                     return
+
+        if source.hasHtml():
+            html_payload = source.html()
+            if len(html_payload) > HTML_WARN:
+                reply = QMessageBox.warning(
+                    self,
+                    "Large HTML Paste",
+                    f"The HTML content is {len(html_payload):,} characters.\n"
+                    "This may be slow to render. Paste anyway?",
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                    QMessageBox.StandardButton.No
+                )
+                if reply == QMessageBox.StandardButton.No:
+                    return
+            if "data:image" in html_payload and "base64," in html_payload:
+                marker = html_payload.find("base64,")
+                b64_fragment = html_payload[marker + 7:]
+                terminators = [b64_fragment.find(t) for t in ('"', "'", ')', '>') if b64_fragment.find(t) != -1]
+                end_idx = min(terminators) if terminators else len(b64_fragment)
+                b64_data = b64_fragment[:end_idx]
+                approx_bytes = int(len(b64_data) * 0.75)
+                if approx_bytes > MAX_IMAGE_BYTES:
+                    reply = QMessageBox.warning(
+                        self,
+                        "Large Data URI Image",
+                        f"Embedded data URI image is ~{approx_bytes/1024/1024:.1f} MB.\n"
+                        "This may slow the editor. Paste anyway?",
+                        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                        QMessageBox.StandardButton.No
+                    )
+                    if reply == QMessageBox.StandardButton.No:
+                        return
+
+        if source.hasImage():
+            try:
+                img = source.imageData()
+            except Exception:
+                img = None
+            if img is not None and hasattr(img, 'size'):
+                size = img.size()
+                pixel_count = size.width() * size.height()
+                approx_bytes = pixel_count * 4
+                if pixel_count > MAX_IMAGE_PIXELS or approx_bytes > MAX_IMAGE_BYTES:
+                    reply = QMessageBox.warning(
+                        self,
+                        "Large Image Paste",
+                        f"The image is {size.width()}×{size.height()} (~{approx_bytes/1024/1024:.1f} MB).\n"
+                        "This may slow the editor. Paste anyway?",
+                        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                        QMessageBox.StandardButton.No
+                    )
+                    if reply == QMessageBox.StandardButton.No:
+                        return
         
         super().insertFromMimeData(source)
 
@@ -373,18 +847,22 @@ class RichTextEditor(QWidget):
     
     def __init__(self, parent: Optional[QWidget] = None, placeholder_text: str = "Start typing...", show_ui: bool = True) -> None:
         """
-          init   logic.
+        Initialize the rich text editor with ribbon UI and feature modules.
+        
+        Creates a SafeTextEdit as the core editing surface, optionally wrapped
+        with a full ribbon interface (Home, Insert, Page Layout, Reference tabs)
+        and status bar with word count and zoom controls.
         
         Args:
-            parent: Description of parent.
-            placeholder_text: Description of placeholder_text.
-            show_ui: Description of show_ui.
-        
-        Returns:
-            Result of __init__ operation.
+            parent: Parent widget for Qt ownership hierarchy.
+            placeholder_text: Placeholder shown when editor is empty.
+            show_ui: If False, creates a headless editor without ribbon/status bar
+                     (useful for testing or embedding in custom layouts).
         """
         super().__init__(parent)
         self.virtual_keyboard: VirtualKeyboard | None = None
+        self.page_count_label: QLabel | None = None
+        self.word_count_label: QLabel | None = None
         
         # Styles Definition
         self.styles = {
@@ -395,9 +873,6 @@ class RichTextEditor(QWidget):
             "Heading 3": {"size": 14, "weight": QFont.Weight.Bold, "family": "Arial"},
             "Code": {"size": 10, "weight": QFont.Weight.Normal, "family": "Courier New"},
         }
-        
-        # Initialize self.editor to None (will be set by _on_active_page_changed)
-        self.editor = None
         
         # Initialize features FIRST (sets attributes to None)
         self._init_features()
@@ -421,7 +896,7 @@ class RichTextEditor(QWidget):
             layout.addWidget(self.ribbon)
         
         # --- Text Editor ---
-        self.editor = SafeTextEdit(self)
+        self.editor: SafeTextEdit = SafeTextEdit(self)
         self.editor.setPlaceholderText(placeholder_text)
         layout.addWidget(self.editor, 1)  # Stretch to fill
         
@@ -433,6 +908,8 @@ class RichTextEditor(QWidget):
         self.editor.textChanged.connect(self.text_changed.emit)
         self.editor.textChanged.connect(self._check_wiki_link_trigger)
         self.editor.currentCharFormatChanged.connect(self._update_format_widgets)
+        self.editor.cursorPositionChanged.connect(lambda: self._update_format_widgets(self.editor.currentCharFormat()))
+        self.editor.selectionChanged.connect(lambda: self._update_format_widgets(self.editor.currentCharFormat()))
         
         # Context menu
         self.editor.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
@@ -543,6 +1020,11 @@ class RichTextEditor(QWidget):
             # Initialize ribbon tabs and groups
             self._init_ribbon()
             
+            # Sync page mode state: combo defaults to PAGED, so activate it
+            if hasattr(self, 'page_mode_combo'):
+                # Trigger initial mode application
+                self._on_page_mode_changed(self.page_mode_combo.currentIndex())
+            
             # Update ribbon state to match current format
             self._update_format_widgets(self.editor.currentCharFormat())
             
@@ -601,8 +1083,8 @@ class RichTextEditor(QWidget):
                 self.spell_feature.extend_context_menu(menu, pos)
             if hasattr(self, 'table_feature') and self.table_feature:
                 self.table_feature.extend_context_menu(menu)
-            if hasattr(self, 'image_feature') and self.image_feature:
-                self.image_feature.extend_context_menu(menu)
+            if getattr(self, 'image_edit_feature', None):
+                self.image_edit_feature.extend_context_menu(menu)
             if hasattr(self, 'etymology_feature') and self.etymology_feature:
                 self.etymology_feature.extend_context_menu(menu)
             if hasattr(self, 'math_feature') and self.math_feature:
@@ -651,8 +1133,18 @@ class RichTextEditor(QWidget):
         if not self.table_feature:
             self.table_feature = TableFeature(self.editor, self)
         
-        if not self.image_feature:
-            self.image_feature = ImageFeature(self.editor, self)
+        if not getattr(self, 'image_gateway', None):
+            self.image_gateway = ImageGateway(
+                self.editor,
+                resource_saver=getattr(self, 'resource_saver', None),
+                resource_provider=getattr(self, 'resource_provider', None)
+            )
+
+        if not getattr(self, 'image_insert_feature', None):
+            self.image_insert_feature = ImageInsertFeature(self.editor, self, self.image_gateway)
+
+        if not getattr(self, 'image_edit_feature', None):
+            self.image_edit_feature = ImageEditFeature(self.editor, self, self.image_gateway)
         
         if not self.search_feature:
             self.search_feature = SearchReplaceFeature(self.editor, self)
@@ -694,8 +1186,8 @@ class RichTextEditor(QWidget):
     def insert_image(self) -> None:
         """Public API for Global Ribbon."""
         self._ensure_features_initialized()
-        if self.image_feature:
-            self.image_feature.insert_image()
+        if getattr(self, 'image_insert_feature', None):
+            self.image_insert_feature.insert_image()
 
     def set_highlight(self, color: QColor) -> None:
         """Public API for Global Ribbon."""
@@ -709,28 +1201,28 @@ class RichTextEditor(QWidget):
 
     def toggle_strikethrough(self) -> None:
         """
-        Toggle strikethrough logic.
+        Toggle strikethrough formatting on the current selection.
         
-        Returns:
-            Result of toggle_strikethrough operation.
+        Flips the fontStrikeOut property of the current character format.
+        Returns focus to the editor after applying.
         """
         self._toggle_strikethrough()
 
     def toggle_subscript(self) -> None:
         """
-        Toggle subscript logic.
+        Toggle subscript vertical alignment on the current selection.
         
-        Returns:
-            Result of toggle_subscript operation.
+        Delegates to _toggle_subscript() which handles mutual exclusivity
+        with superscript formatting.
         """
         self._toggle_subscript()
 
     def toggle_superscript(self) -> None:
         """
-        Toggle superscript logic.
+        Toggle superscript vertical alignment on the current selection.
         
-        Returns:
-            Result of toggle_superscript operation.
+        Delegates to _toggle_superscript() which handles mutual exclusivity
+        with subscript formatting.
         """
         self._toggle_superscript()
 
@@ -738,6 +1230,16 @@ class RichTextEditor(QWidget):
         """Populate the ribbon with tabs and groups."""
         # Ensure features are initialized before wiring ribbon
         self._ensure_features_initialized()
+        assert self.list_feature is not None
+        assert self.table_feature is not None
+        assert self.image_insert_feature is not None
+        assert self.image_edit_feature is not None
+        assert self.search_feature is not None
+        assert self.spell_feature is not None
+        assert self.math_feature is not None
+        assert self.mermaid_feature is not None
+        assert self.shape_feature is not None
+        assert self.etymology_feature is not None
         
         # === Define Core Actions First ===
         self.action_undo = QAction("Undo", self)
@@ -814,11 +1316,16 @@ class RichTextEditor(QWidget):
         
         # Helper to create buttons (using add_action directly where possible for layout)
         # Bold
+        self.action_bold = QAction("Bold", self)
+        self.action_bold.setShortcut(QKeySequence.StandardKey.Bold)
+        self.action_bold.setIcon(qta.icon("fa5s.bold", color="#1e293b"))
+        self.action_bold.setToolTip("Bold (Ctrl+B)")
+        self.action_bold.setCheckable(True)
+        self.action_bold.triggered.connect(lambda _: self._toggle_bold())
+        self.addAction(self.action_bold)
+
         self.btn_bold = QToolButton()
-        self.btn_bold.setIcon(qta.icon("fa5s.bold", color="#1e293b"))
-        self.btn_bold.setToolTip("Bold (Ctrl+B)")
-        self.btn_bold.setCheckable(True)
-        self.btn_bold.setShortcut("Ctrl+B")
+        self.btn_bold.setDefaultAction(self.action_bold)
         self.btn_bold.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.btn_bold.setStyleSheet("""
             QToolButton:checked {
@@ -826,15 +1333,19 @@ class RichTextEditor(QWidget):
                 border: 1px solid #3b82f6;
             }
         """)
-        self.btn_bold.clicked.connect(self._toggle_bold)
         grp_basic.add_widget(self.btn_bold)
         
         # Italic
+        self.action_italic = QAction("Italic", self)
+        self.action_italic.setShortcut(QKeySequence.StandardKey.Italic)
+        self.action_italic.setIcon(qta.icon("fa5s.italic", color="#1e293b"))
+        self.action_italic.setToolTip("Italic (Ctrl+I)")
+        self.action_italic.setCheckable(True)
+        self.action_italic.triggered.connect(lambda checked: (self.editor.setFontItalic(checked), self.editor.setFocus()))
+        self.addAction(self.action_italic)
+
         self.btn_italic = QToolButton()
-        self.btn_italic.setIcon(qta.icon("fa5s.italic", color="#1e293b"))
-        self.btn_italic.setToolTip("Italic (Ctrl+I)")
-        self.btn_italic.setCheckable(True)
-        self.btn_italic.setShortcut("Ctrl+I")
+        self.btn_italic.setDefaultAction(self.action_italic)
         self.btn_italic.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.btn_italic.setStyleSheet("""
             QToolButton:checked {
@@ -842,15 +1353,19 @@ class RichTextEditor(QWidget):
                 border: 1px solid #3b82f6;
             }
         """)
-        self.btn_italic.clicked.connect(lambda checked: (self.editor.setFontItalic(checked), self.editor.setFocus()))
         grp_basic.add_widget(self.btn_italic)
 
         # Underline
+        self.action_underline = QAction("Underline", self)
+        self.action_underline.setShortcut(QKeySequence.StandardKey.Underline)
+        self.action_underline.setIcon(qta.icon("fa5s.underline", color="#1e293b"))
+        self.action_underline.setToolTip("Underline (Ctrl+U)")
+        self.action_underline.setCheckable(True)
+        self.action_underline.triggered.connect(lambda checked: (self.editor.setFontUnderline(checked), self.editor.setFocus()))
+        self.addAction(self.action_underline)
+
         self.btn_underline = QToolButton()
-        self.btn_underline.setIcon(qta.icon("fa5s.underline", color="#1e293b"))
-        self.btn_underline.setToolTip("Underline (Ctrl+U)")
-        self.btn_underline.setCheckable(True)
-        self.btn_underline.setShortcut("Ctrl+U")
+        self.btn_underline.setDefaultAction(self.action_underline)
         self.btn_underline.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.btn_underline.setStyleSheet("""
             QToolButton:checked {
@@ -858,7 +1373,6 @@ class RichTextEditor(QWidget):
                 border: 1px solid #3b82f6;
             }
         """)
-        self.btn_underline.clicked.connect(lambda checked: (self.editor.setFontUnderline(checked), self.editor.setFocus()))
         grp_basic.add_widget(self.btn_underline)
         
         # --- Group: Advanced Formatting ---
@@ -882,20 +1396,44 @@ class RichTextEditor(QWidget):
         # Subscript
         self.action_sub = QAction("", self)
         self.action_sub.setCheckable(True)
-        self.action_sub.setToolTip("Subscript")
-        self.action_sub.triggered.connect(self._toggle_subscript)
+        self.action_sub.setShortcut(QKeySequence("Ctrl+="))
+        self.action_sub.setToolTip("Subscript (Ctrl+=)")
+        self.action_sub.toggled.connect(self._toggle_subscript)
         self.action_sub.setIcon(qta.icon("fa5s.subscript", color="#1e293b"))
-        # Note: QAction styling handled by ribbon widget
-        grp_adv.add_action(self.action_sub, Qt.ToolButtonStyle.ToolButtonIconOnly)
+        self.addAction(self.action_sub)
+        # Mirror bold/italic/underline button styling so checked state is visible
+        self.btn_sub = QToolButton()
+        self.btn_sub.setDefaultAction(self.action_sub)
+        self.btn_sub.setCheckable(True)
+        self.btn_sub.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.btn_sub.setStyleSheet("""
+            QToolButton:checked {
+                background-color: #bfdbfe;
+                border: 1px solid #3b82f6;
+            }
+        """)
+        grp_adv.add_widget(self.btn_sub)
 
         # Superscript
         self.action_super = QAction("", self)
         self.action_super.setCheckable(True)
-        self.action_super.setToolTip("Superscript")
-        self.action_super.triggered.connect(self._toggle_superscript)
+        self.action_super.setShortcut(QKeySequence("Ctrl+Shift+="))
+        self.action_super.setToolTip("Superscript (Ctrl+Shift+=)")
+        self.action_super.toggled.connect(self._toggle_superscript)
         self.action_super.setIcon(qta.icon("fa5s.superscript", color="#1e293b"))
-        # Note: QAction styling handled by ribbon widget
-        grp_adv.add_action(self.action_super, Qt.ToolButtonStyle.ToolButtonIconOnly)
+        self.addAction(self.action_super)
+
+        self.btn_super = QToolButton()
+        self.btn_super.setDefaultAction(self.action_super)
+        self.btn_super.setCheckable(True)
+        self.btn_super.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.btn_super.setStyleSheet("""
+            QToolButton:checked {
+                background-color: #bfdbfe;
+                border: 1px solid #3b82f6;
+            }
+        """)
+        grp_adv.add_widget(self.btn_super)
         
         # Clear Formatting
         self.action_clear = QAction("", self)
@@ -975,6 +1513,8 @@ class RichTextEditor(QWidget):
         
         # Bullet List Button with Dropdown
         from .list_features import LIST_STYLES, BULLET_STYLES, NUMBER_STYLES
+        lf = self.list_feature
+        assert lf is not None
         
         self.bullet_btn = QToolButton()
         self.bullet_btn.setIcon(qta.icon("fa5s.list-ul", color="#1e293b"))
@@ -986,6 +1526,8 @@ class RichTextEditor(QWidget):
         bullet_menu = QMenu(self)
         for name in BULLET_STYLES:
             act = bullet_menu.addAction(name)
+            if act is None:
+                continue
             style = LIST_STYLES[name]
             act.triggered.connect(lambda checked, s=style: self._toggle_list(s))
         self.bullet_btn.setMenu(bullet_menu)
@@ -1002,32 +1544,35 @@ class RichTextEditor(QWidget):
         number_menu = QMenu(self)
         for name in NUMBER_STYLES:
             act = number_menu.addAction(name)
+            if act is None:
+                continue
             style = LIST_STYLES[name]
             act.triggered.connect(lambda checked, s=style: self._toggle_list(s))
         number_menu.addSeparator()
         act_start = number_menu.addAction("Set Start Number...")
-        act_start.triggered.connect(lambda: self.list_feature.show_start_number_dialog())
+        if act_start:
+            act_start.triggered.connect(lambda lf=lf: lf.show_start_number_dialog())
         self.number_btn.setMenu(number_menu)
         grp_lists.add_widget(self.number_btn)
         
         # Checklist Button
         act_checklist = QAction(qta.icon("fa5s.check-square", color="#1e293b"), "Checklist", self)
         act_checklist.setToolTip("Toggle Checklist")
-        act_checklist.triggered.connect(lambda: self.list_feature.toggle_checklist())
+        act_checklist.triggered.connect(lambda lf=lf: lf.toggle_checklist())
         grp_lists.add_action(act_checklist, Qt.ToolButtonStyle.ToolButtonIconOnly)
         
         # Indent/Outdent
         act_indent = QAction(qta.icon("fa5s.indent", color="#1e293b"), "Increase Indent", self)
-        act_indent.triggered.connect(lambda: self.list_feature.indent())
+        act_indent.triggered.connect(lambda lf=lf: lf.indent())
         grp_lists.add_action(act_indent, Qt.ToolButtonStyle.ToolButtonIconOnly)
         
         act_outdent = QAction(qta.icon("fa5s.outdent", color="#1e293b"), "Decrease Indent", self)
-        act_outdent.triggered.connect(lambda: self.list_feature.outdent())
+        act_outdent.triggered.connect(lambda lf=lf: lf.outdent())
         grp_lists.add_action(act_outdent, Qt.ToolButtonStyle.ToolButtonIconOnly)
         
         # Remove List
         act_remove_list = QAction(qta.icon("fa5s.times-circle", color="#dc2626"), "Remove List", self)
-        act_remove_list.triggered.connect(lambda: self.list_feature.remove_list())
+        act_remove_list.triggered.connect(lambda lf=lf: lf.remove_list())
         grp_lists.add_action(act_remove_list, Qt.ToolButtonStyle.ToolButtonIconOnly)
         
         # --- Group: Styles (Gallery) ---
@@ -1057,7 +1602,9 @@ class RichTextEditor(QWidget):
         
         # Replace
         action_replace = QAction("Replace", self)
-        action_replace.triggered.connect(lambda: self.search_feature.show_search_dialog())
+        sf = self.search_feature
+        assert sf is not None
+        action_replace.triggered.connect(lambda checked, sf=sf: sf.show_search_dialog())
         action_replace.setIcon(qta.icon("fa5s.sync-alt", color="#1e293b"))
         grp_edit.add_action(action_replace, Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
         
@@ -1090,7 +1637,7 @@ class RichTextEditor(QWidget):
         
         # Group: Illustrations
         grp_illus = tab_insert.add_group("Illustrations")
-        grp_illus.add_action(self.image_feature.create_toolbar_action(), Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
+        grp_illus.add_action(self.image_insert_feature.create_toolbar_action(), Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
         
         # Shapes
         grp_illus.add_widget(self.shape_feature.create_toolbar_button())
@@ -1106,15 +1653,17 @@ class RichTextEditor(QWidget):
         
         # Group: Math
         grp_math = tab_insert.add_group("Math")
-        if hasattr(self, 'math_feature'):
-            grp_math.add_action(self.math_feature.action_insert_math, Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
-            grp_math.add_action(self.math_feature.action_render_doc, Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
+        mf = self.math_feature
+        if mf:
+            grp_math.add_action(mf.action_insert_math, Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
+            grp_math.add_action(mf.action_render_doc, Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
 
         # Group: Diagrams
         grp_diag = tab_insert.add_group("Diagrams")
-        if hasattr(self, 'mermaid_feature'):
-            grp_diag.add_action(self.mermaid_feature.action_insert_mermaid, Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
-            grp_diag.add_action(self.mermaid_feature.action_render_doc, Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
+        mer = self.mermaid_feature
+        if mer:
+            grp_diag.add_action(mer.action_insert_mermaid, Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
+            grp_diag.add_action(mer.action_render_doc, Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
 
         # Group: Links
         grp_links = tab_insert.add_group("Links")
@@ -1157,13 +1706,21 @@ class RichTextEditor(QWidget):
         # Group: Page View
         grp_view = tab_page.add_group("View")
         
-        self.action_page_breaks = QAction("Page Breaks", self)
-        self.action_page_breaks.setToolTip("Show/Hide Page Break Lines")
-        self.action_page_breaks.setIcon(qta.icon("fa5s.grip-lines", color="#1e293b"))
-        self.action_page_breaks.setCheckable(True)
-        self.action_page_breaks.setChecked(True)  # Default: show page breaks
-        self.action_page_breaks.triggered.connect(self._toggle_page_breaks)
-        grp_view.add_action(self.action_page_breaks, Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
+        # Page Mode Dropdown (replacing simple toggle)
+        self.page_mode_combo = QComboBox()
+        self.page_mode_combo.setToolTip("Select Page View Mode")
+        self.page_mode_combo.addItem("Freeflow (Fast)", PageMode.FREEFLOW)
+        self.page_mode_combo.addItem("Guides Only", PageMode.GUIDES_ONLY)
+        self.page_mode_combo.addItem("Enforce Only", PageMode.ENFORCE_ONLY)
+        self.page_mode_combo.addItem("Paged Mode", PageMode.PAGED)
+        self.page_mode_combo.insertSeparator(4)
+        self.page_mode_combo.addItem("Advanced...", PageMode.CUSTOM)
+        
+        # Select Paged Mode by default (to match previous default)
+        self.page_mode_combo.setCurrentIndex(3)
+        
+        self.page_mode_combo.currentIndexChanged.connect(self._on_page_mode_changed)
+        grp_view.add_widget(self.page_mode_combo)
 
         # =========================================================================
         # TAB: REFERENCE
@@ -1174,16 +1731,20 @@ class RichTextEditor(QWidget):
         grp_lang = tab_ref.add_group("Language")
         
         # Use existing etymology_feature instance (created in _setup_ui)
-        grp_lang.add_action(self.etymology_feature.create_action(self), Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
+        ety = self.etymology_feature
+        assert ety is not None
+        grp_lang.add_action(ety.create_action(self), Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
 
         # Group: Proofing
         grp_proof = tab_ref.add_group("Proofing")
         
         # Spell Check button
-        grp_proof.add_action(self.spell_feature.create_ribbon_action(self), Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
+        sp = self.spell_feature
+        assert sp is not None
+        grp_proof.add_action(sp.create_ribbon_action(self), Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
         
         # Spell Check toggle
-        grp_proof.add_action(self.spell_feature.create_toggle_action(self), Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        grp_proof.add_action(sp.create_toggle_action(self), Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
 
         # =========================================================================
         # CONTEXT CATEGORIES
@@ -1191,166 +1752,82 @@ class RichTextEditor(QWidget):
         
         # === CONTEXT CATEGORY: Table Tools ===
         self.ctx_table = self.ribbon.add_context_category("Table Tools", Qt.GlobalColor.darkYellow)
+        tf = self.table_feature
+        assert tf is not None
         
         # Layout Group - Insert/Delete
         grp_tbl_layout = self.ctx_table.add_group("Layout")
         
         act_ins_row = QAction(qta.icon("fa5s.plus", color="#1e293b"), "Insert Row", self)
-        act_ins_row.triggered.connect(lambda: self.table_feature._insert_row_below() if hasattr(self, 'table_feature') else None)
+        act_ins_row.triggered.connect(lambda tf=tf: tf._insert_row_below())
         grp_tbl_layout.add_action(act_ins_row, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         
         act_ins_col = QAction(qta.icon("fa5s.plus", color="#1e293b"), "Insert Col", self)
-        act_ins_col.triggered.connect(lambda: self.table_feature._insert_col_right() if hasattr(self, 'table_feature') else None)
+        act_ins_col.triggered.connect(lambda tf=tf: tf._insert_col_right())
         grp_tbl_layout.add_action(act_ins_col, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         
         grp_tbl_layout.add_separator()
         
         act_del_row = QAction(qta.icon("fa5s.minus", color="#dc2626"), "Delete Row", self)
-        act_del_row.triggered.connect(lambda: self.table_feature._delete_row() if hasattr(self, 'table_feature') else None)
+        act_del_row.triggered.connect(lambda tf=tf: tf._delete_row())
         grp_tbl_layout.add_action(act_del_row, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         
         act_del_col = QAction(qta.icon("fa5s.minus", color="#dc2626"), "Delete Col", self)
-        act_del_col.triggered.connect(lambda: self.table_feature._delete_col() if hasattr(self, 'table_feature') else None)
+        act_del_col.triggered.connect(lambda tf=tf: tf._delete_col())
         grp_tbl_layout.add_action(act_del_col, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         
         act_del_table = QAction(qta.icon("fa5s.trash", color="#dc2626"), "Delete Table", self)
-        act_del_table.triggered.connect(lambda: self.table_feature._delete_table() if hasattr(self, 'table_feature') else None)
+        act_del_table.triggered.connect(lambda tf=tf: tf._delete_table())
         grp_tbl_layout.add_action(act_del_table, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         
         # Merge/Split Group
         grp_tbl_merge = self.ctx_table.add_group("Merge")
         
         act_merge = QAction(qta.icon("fa5s.object-group", color="#1e293b"), "Merge Cells", self)
-        act_merge.triggered.connect(lambda: self.table_feature._merge_cells() if hasattr(self, 'table_feature') else None)
+        act_merge.triggered.connect(lambda tf=tf: tf._merge_cells())
         grp_tbl_merge.add_action(act_merge, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         
         act_split = QAction(qta.icon("fa5s.object-ungroup", color="#1e293b"), "Split Cells", self)
-        act_split.triggered.connect(lambda: self.table_feature._split_cells() if hasattr(self, 'table_feature') else None)
+        act_split.triggered.connect(lambda tf=tf: tf._split_cells())
         grp_tbl_merge.add_action(act_split, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         
         act_distribute = QAction(qta.icon("fa5s.arrows-alt-h", color="#1e293b"), "Distribute", self)
-        act_distribute.triggered.connect(lambda: self.table_feature._distribute_columns() if hasattr(self, 'table_feature') else None)
+        act_distribute.triggered.connect(lambda tf=tf: tf._distribute_columns())
         grp_tbl_merge.add_action(act_distribute, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         
         # Style Group
         grp_tbl_style = self.ctx_table.add_group("Style")
         
         act_cell_bg = QAction(qta.icon("fa5s.fill-drip", color="#1e293b"), "Cell Color", self)
-        act_cell_bg.triggered.connect(lambda: self.table_feature._set_cell_background() if hasattr(self, 'table_feature') else None)
+        act_cell_bg.triggered.connect(lambda tf=tf: tf._set_cell_background())
         grp_tbl_style.add_action(act_cell_bg, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         
         act_cell_border = QAction(qta.icon("fa5s.border-style", color="#1e293b"), "Borders", self)
-        act_cell_border.triggered.connect(lambda: self.table_feature._edit_cell_borders() if hasattr(self, 'table_feature') else None)
+        act_cell_border.triggered.connect(lambda tf=tf: tf._edit_cell_borders())
         grp_tbl_style.add_action(act_cell_border, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         
         act_cell_props = QAction(qta.icon("fa5s.sliders-h", color="#1e293b"), "Cell Props", self)
-        act_cell_props.triggered.connect(lambda: self.table_feature._edit_cell_properties() if hasattr(self, 'table_feature') else None)
+        act_cell_props.triggered.connect(lambda tf=tf: tf._edit_cell_properties())
         grp_tbl_style.add_action(act_cell_props, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         
         act_table_props = QAction(qta.icon("fa5s.cog", color="#1e293b"), "Table Props", self)
-        act_table_props.triggered.connect(lambda: self.table_feature._edit_table_properties() if hasattr(self, 'table_feature') else None)
+        act_table_props.triggered.connect(lambda tf=tf: tf._edit_table_properties())
         grp_tbl_style.add_action(act_table_props, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
 
         # === CONTEXT CATEGORY: Image Tools ===
         self.ctx_image = self.ribbon.add_context_category("Image Tools", Qt.GlobalColor.magenta)
         
-        # Adjust Group - Size, Crop
-        grp_img_adj = self.ctx_image.add_group("Adjust")
+        # Tools Group
+        grp_img_tools = self.ctx_image.add_group("Tools")
         
-        act_props = QAction(qta.icon("fa5s.expand-alt", color="#1e293b"), "Size", self)
-        act_props.triggered.connect(lambda: self._edit_image_size())
-        grp_img_adj.add_action(act_props, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-        
-        act_crop = QAction(qta.icon("fa5s.crop", color="#1e293b"), "Crop", self)
-        act_crop.triggered.connect(lambda: self._crop_image())
-        grp_img_adj.add_action(act_crop, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-        
-        # Transform Group
-        grp_img_transform = self.ctx_image.add_group("Transform")
-        
-        act_align_left = QAction(qta.icon("fa5s.align-left", color="#1e293b"), "Left", self)
-        act_align_left.triggered.connect(lambda: self._align_image(Qt.AlignmentFlag.AlignLeft))
-        grp_img_transform.add_action(act_align_left, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-        
-        act_align_center = QAction(qta.icon("fa5s.align-center", color="#1e293b"), "Center", self)
-        act_align_center.triggered.connect(lambda: self._align_image(Qt.AlignmentFlag.AlignHCenter))
-        grp_img_transform.add_action(act_align_center, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-        
-        act_align_right = QAction(qta.icon("fa5s.align-right", color="#1e293b"), "Right", self)
-        act_align_right.triggered.connect(lambda: self._align_image(Qt.AlignmentFlag.AlignRight))
-        grp_img_transform.add_action(act_align_right, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-        
-        # Manage Group
-        grp_img_manage = self.ctx_image.add_group("Manage")
-        
-        act_replace = QAction(qta.icon("fa5s.exchange-alt", color="#1e293b"), "Replace", self)
-        act_replace.triggered.connect(lambda: self._replace_image())
-        grp_img_manage.add_action(act_replace, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-        
-        act_delete = QAction(qta.icon("fa5s.trash", color="#dc2626"), "Delete", self)
-        act_delete.triggered.connect(lambda: self._delete_selected_image())
-        grp_img_manage.add_action(act_delete, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-        
-        # Color Effects Group
-        grp_img_color = self.ctx_image.add_group("Color")
-        
-        act_grayscale = QAction(qta.icon("fa5s.adjust", color="#1e293b"), "Grayscale", self)
-        act_grayscale.triggered.connect(lambda: self._apply_image_filter("Grayscale"))
-        grp_img_color.add_action(act_grayscale, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-        
-        act_sepia = QAction(qta.icon("fa5s.sun", color="#b45309"), "Sepia", self)
-        act_sepia.triggered.connect(lambda: self._apply_image_filter("Sepia"))
-        grp_img_color.add_action(act_sepia, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-        
-        act_warm = QAction(qta.icon("fa5s.fire", color="#f97316"), "Warm", self)
-        act_warm.triggered.connect(lambda: self._apply_image_filter("Warm"))
-        grp_img_color.add_action(act_warm, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-        
-        act_cool = QAction(qta.icon("fa5s.snowflake", color="#0ea5e9"), "Cool", self)
-        act_cool.triggered.connect(lambda: self._apply_image_filter("Cool"))
-        grp_img_color.add_action(act_cool, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-        
-        act_vintage = QAction(qta.icon("fa5s.film", color="#78716c"), "Vintage", self)
-        act_vintage.triggered.connect(lambda: self._apply_image_filter("Vintage"))
-        grp_img_color.add_action(act_vintage, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-        
-        act_invert = QAction(qta.icon("fa5s.exchange-alt", color="#1e293b"), "Invert", self)
-        act_invert.triggered.connect(lambda: self._apply_image_filter("Invert"))
-        grp_img_color.add_action(act_invert, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-        
-        # Artistic Effects Group
-        grp_img_art = self.ctx_image.add_group("Artistic")
-        
-        act_blur = QAction(qta.icon("fa5s.water", color="#1e293b"), "Blur", self)
-        act_blur.triggered.connect(lambda: self._apply_image_filter("Blur"))
-        grp_img_art.add_action(act_blur, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-        
-        act_sharpen = QAction(qta.icon("fa5s.search-plus", color="#1e293b"), "Sharpen", self)
-        act_sharpen.triggered.connect(lambda: self._apply_image_filter("Sharpen"))
-        grp_img_art.add_action(act_sharpen, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-        
-        act_emboss = QAction(qta.icon("fa5s.stamp", color="#1e293b"), "Emboss", self)
-        act_emboss.triggered.connect(lambda: self._apply_image_filter("Emboss"))
-        grp_img_art.add_action(act_emboss, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-        
-        act_edge = QAction(qta.icon("fa5s.border-style", color="#1e293b"), "Edges", self)
-        act_edge.triggered.connect(lambda: self._apply_image_filter("Find Edges"))
-        grp_img_art.add_action(act_edge, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-        
-        act_auto = QAction(qta.icon("fa5s.magic", color="#1e293b"), "Auto", self)
-        act_auto.triggered.connect(lambda: self._apply_image_filter("Auto Contrast"))
-        grp_img_art.add_action(act_auto, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-        
-        # Rotate Group
-        grp_img_rotate = self.ctx_image.add_group("Rotate")
-        
-        act_rot_left = QAction(qta.icon("fa5s.undo", color="#1e293b"), "↶ 90°", self)
-        act_rot_left.triggered.connect(lambda: self._rotate_image(-90))
-        grp_img_rotate.add_action(act_rot_left, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-        
-        act_rot_right = QAction(qta.icon("fa5s.redo", color="#1e293b"), "↷ 90°", self)
-        act_rot_right.triggered.connect(lambda: self._rotate_image(90))
-        grp_img_rotate.add_action(act_rot_right, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        if getattr(self, 'image_edit_feature', None):
+            # Edit Action (Crop/Filter/Rotate)
+            if hasattr(self.image_edit_feature, 'action_edit'):
+                grp_img_tools.add_action(self.image_edit_feature.action_edit, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+            
+            # Properties Action
+            if hasattr(self.image_edit_feature, 'action_props'):
+                grp_img_tools.add_action(self.image_edit_feature.action_props, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         
         # Connect cursor/selection change to context switches
         self.editor.cursorPositionChanged.connect(self._update_context_tabs)
@@ -1372,537 +1849,6 @@ class RichTextEditor(QWidget):
         else:
             self.ribbon.hide_context_category(self.ctx_image)
 
-    def _get_image_cursor(self) -> QTextCursor:
-        """Get a cursor positioned to select the current image, or None."""
-        from PyQt6.QtGui import QTextCursor
-        cursor = self.editor.textCursor()
-        
-        # Check if cursor is on or near an image
-        fmt_before = cursor.charFormat()
-        if fmt_before.isImageFormat():
-            cursor.movePosition(QTextCursor.MoveOperation.Left, QTextCursor.MoveMode.KeepAnchor)
-            return cursor
-            
-        cursor_after = QTextCursor(cursor)
-        cursor_after.movePosition(QTextCursor.MoveOperation.Right)
-        fmt_after = cursor_after.charFormat()
-        if fmt_after.isImageFormat():
-            cursor.movePosition(QTextCursor.MoveOperation.Right, QTextCursor.MoveMode.KeepAnchor)
-            return cursor
-            
-        return None
-
-    def _edit_image_size(self) -> None:
-        """Open a dialog to resize the selected image."""
-        from PyQt6.QtWidgets import QDialog, QVBoxLayout, QFormLayout, QSpinBox, QDialogButtonBox, QCheckBox
-        from PyQt6.QtGui import QTextImageFormat
-        
-        cursor = self.editor.textCursor()
-        
-        # Find the image format
-        fmt = cursor.charFormat()
-        if not fmt.isImageFormat():
-            # Try character after
-            test_cursor = QTextCursor(cursor)
-            test_cursor.movePosition(QTextCursor.MoveOperation.Right)
-            fmt = test_cursor.charFormat()
-            if not fmt.isImageFormat():
-                return
-        
-        img_fmt = fmt.toImageFormat()
-        current_w = int(img_fmt.width()) if img_fmt.width() > 0 else 100
-        current_h = int(img_fmt.height()) if img_fmt.height() > 0 else 100
-        
-        # Create resize dialog
-        dialog = QDialog(self)
-        dialog.setWindowTitle("Image Size")
-        dialog.setMinimumWidth(250)
-        
-        layout = QVBoxLayout(dialog)
-        form = QFormLayout()
-        
-        width_spin = QSpinBox()
-        width_spin.setRange(10, 4000)
-        width_spin.setValue(current_w)
-        width_spin.setSuffix(" px")
-        form.addRow("Width:", width_spin)
-        
-        height_spin = QSpinBox()
-        height_spin.setRange(10, 4000)
-        height_spin.setValue(current_h)
-        height_spin.setSuffix(" px")
-        form.addRow("Height:", height_spin)
-        
-        lock_aspect = QCheckBox("Lock aspect ratio")
-        lock_aspect.setChecked(True)
-        form.addRow(lock_aspect)
-        
-        aspect_ratio = current_w / current_h if current_h > 0 else 1.0
-        
-        def on_width_changed(val):
-            """
-            Handle width changed logic.
-            
-            Args:
-                val: Description of val.
-            
-            """
-            if lock_aspect.isChecked():
-                height_spin.blockSignals(True)
-                height_spin.setValue(int(val / aspect_ratio))
-                height_spin.blockSignals(False)
-        
-        def on_height_changed(val):
-            """
-            Handle height changed logic.
-            
-            Args:
-                val: Description of val.
-            
-            """
-            if lock_aspect.isChecked():
-                width_spin.blockSignals(True)
-                width_spin.setValue(int(val * aspect_ratio))
-                width_spin.blockSignals(False)
-        
-        width_spin.valueChanged.connect(on_width_changed)
-        height_spin.valueChanged.connect(on_height_changed)
-        
-        layout.addLayout(form)
-        
-        buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok |
-            QDialogButtonBox.StandardButton.Cancel
-        )
-        buttons.accepted.connect(dialog.accept)
-        buttons.rejected.connect(dialog.reject)
-        layout.addWidget(buttons)
-        
-        if dialog.exec() == QDialog.DialogCode.Accepted:
-            new_w = width_spin.value()
-            new_h = height_spin.value()
-            
-            # Apply new size - need to select the image and update its format
-            edit_cursor = self.editor.textCursor()
-            f = edit_cursor.charFormat()
-            if not f.isImageFormat():
-                edit_cursor.movePosition(QTextCursor.MoveOperation.Right, QTextCursor.MoveMode.KeepAnchor)
-                f = edit_cursor.charFormat()
-            else:
-                edit_cursor.movePosition(QTextCursor.MoveOperation.Left, QTextCursor.MoveMode.KeepAnchor)
-            
-            if f.isImageFormat():
-                new_fmt = f.toImageFormat()
-                new_fmt.setWidth(new_w)
-                new_fmt.setHeight(new_h)
-                edit_cursor.setCharFormat(new_fmt)
-
-    def _align_image(self, alignment: Qt.AlignmentFlag) -> None:
-        """Align the image block to the specified alignment."""
-        cursor = self._get_image_cursor()
-        if cursor:
-            block_fmt = cursor.blockFormat()
-            block_fmt.setAlignment(alignment)
-            cursor.mergeBlockFormat(block_fmt)
-
-    def _delete_selected_image(self) -> None:
-        """Delete the currently selected image."""
-        cursor = self._get_image_cursor()
-        if cursor:
-            cursor.removeSelectedText()
-
-    def _replace_image(self) -> None:
-        """Replace the current image with a new one."""
-        cursor = self._get_image_cursor()
-        if cursor:
-            # Delete the old image first
-            cursor.removeSelectedText()
-            # Then insert a new one using the image feature
-            if hasattr(self, 'image_feature'):
-                self.image_feature.insert_image()
-
-    def _get_current_image_data(self) -> Tuple[Optional[Any], Optional[QTextCursor], Optional[Any]]:
-        """Get the current image as PIL Image, cursor, and format."""
-        try:
-            from PIL import Image
-            from io import BytesIO
-        except ImportError:
-            return None, None, None
-        
-        from PyQt6.QtGui import QTextDocument, QTextCursor
-        from PyQt6.QtCore import QUrl, QBuffer, QIODevice
-        
-        cursor = self.editor.textCursor()
-        fmt = cursor.charFormat()
-        
-        if not fmt.isImageFormat():
-            test_cursor = QTextCursor(cursor)
-            test_cursor.movePosition(QTextCursor.MoveOperation.Right)
-            fmt = test_cursor.charFormat()
-            if not fmt.isImageFormat():
-                return None, None, None
-        
-        img_fmt = fmt.toImageFormat()
-        img_name = img_fmt.name()
-        
-        # Load the image from the document's resources
-        doc = self.editor.document()
-        resource = doc.resource(QTextDocument.ResourceType.ImageResource, QUrl(img_name))
-        
-        if resource.isNull():
-            # Try loading from file path
-            try:
-                pil_img = Image.open(img_name)
-                return pil_img, cursor, img_fmt
-            except:
-                return None, None, None
-        
-        # Convert QImage to PIL
-        qimg = resource
-        if hasattr(qimg, 'toImage'):
-            qimg = qimg.toImage()
-        
-        # Convert to bytes
-        buffer = QBuffer()
-        buffer.open(QIODevice.OpenModeFlag.WriteOnly)
-        from PyQt6.QtGui import QImage
-        if isinstance(qimg, QImage):
-            qimg.save(buffer, "PNG")
-            pil_img = Image.open(BytesIO(buffer.data()))
-            return pil_img, cursor, img_fmt
-        
-        return None, None, None
-
-    def _save_and_insert_image(self, pil_img: Any, old_fmt: Any) -> None:
-        """Save PIL image and replace the old image in the document.
-        
-        Uses resource-backed images (image://) for embedding in document,
-        with file backup for persistence across sessions.
-        """
-        import uuid
-        import os
-        from io import BytesIO
-        from PyQt6.QtGui import QImage, QTextImageFormat, QTextDocument
-        from PyQt6.QtCore import QUrl
-        
-        # Convert PIL to QImage
-        if pil_img.mode != "RGBA":
-            pil_img = pil_img.convert("RGBA")
-        data = pil_img.tobytes("raw", "RGBA")
-        qimg = QImage(data, pil_img.width, pil_img.height, QImage.Format.Format_RGBA8888)
-        
-        # Generate unique image ID for resource
-        image_uuid = uuid.uuid4().hex
-        image_id = f"image://edited/{image_uuid}.png"
-        
-        # Save to file for persistence (backup in case document is saved/reopened)
-        temp_dir = os.path.join(os.getcwd(), "saved_documents", ".cache_images")
-        os.makedirs(temp_dir, exist_ok=True)
-        temp_path = os.path.join(temp_dir, f"{image_uuid}.png")
-        
-        buf = BytesIO()
-        pil_img.save(buf, format="PNG")
-        with open(temp_path, "wb") as f:
-            f.write(buf.getvalue())
-        
-        # Add as resource - this allows the document to load it from memory
-        self.editor.document().addResource(
-            QTextDocument.ResourceType.ImageResource, 
-            QUrl(image_id), 
-            qimg
-        )
-        
-        # Delete old image and insert new one using resource URL
-        cursor = self._get_image_cursor()
-        if cursor:
-            cursor.removeSelectedText()
-            
-            new_fmt = QTextImageFormat()
-            # Use resource URL (image_id) so Qt uses cached QImage, not disk path
-            new_fmt.setName(image_id)
-            new_fmt.setWidth(old_fmt.width() if old_fmt.width() > 0 else pil_img.width)
-            new_fmt.setHeight(old_fmt.height() if old_fmt.height() > 0 else pil_img.height)
-            cursor.insertImage(new_fmt)
-
-    def _apply_image_filter(self, filter_name: str):
-        """Apply a filter to the current image."""
-        try:
-            from PIL import Image, ImageFilter, ImageOps, ImageEnhance
-        except ImportError:
-            return
-        
-        pil_img, cursor, img_fmt = self._get_current_image_data()
-        if pil_img is None:
-            return
-        
-        # Ensure RGBA
-        if pil_img.mode != "RGBA":
-            pil_img = pil_img.convert("RGBA")
-        
-        r, g, b, a = pil_img.split()
-        
-        if filter_name == "Grayscale":
-            gray = pil_img.convert("L")
-            pil_img = Image.merge("RGBA", (gray, gray, gray, a))
-        
-        elif filter_name == "Sepia":
-            # Sepia transformation
-            def sepia_pixel(r, g, b):
-                """
-                Sepia pixel logic.
-                
-                Args:
-                    r: Description of r.
-                    g: Description of g.
-                    b: Description of b.
-                
-                """
-                tr = int(0.393 * r + 0.769 * g + 0.189 * b)
-                tg = int(0.349 * r + 0.686 * g + 0.168 * b)
-                tb = int(0.272 * r + 0.534 * g + 0.131 * b)
-                return min(255, tr), min(255, tg), min(255, tb)
-            
-            pixels = list(zip(r.getdata(), g.getdata(), b.getdata()))
-            new_r, new_g, new_b = [], [], []
-            for pr, pg, pb in pixels:
-                sr, sg, sb = sepia_pixel(pr, pg, pb)
-                new_r.append(sr)
-                new_g.append(sg)
-                new_b.append(sb)
-            
-            r.putdata(new_r)
-            g.putdata(new_g)
-            b.putdata(new_b)
-            pil_img = Image.merge("RGBA", (r, g, b, a))
-        
-        elif filter_name == "Warm":
-            # Shift colors warmer (more red, less blue)
-            def shift_channel(channel, shift):
-                """
-                Shift channel logic.
-                
-                Args:
-                    channel: Description of channel.
-                    shift: Description of shift.
-                
-                """
-                return channel.point(lambda x: max(0, min(255, x + shift)))
-            r = shift_channel(r, 20)
-            b = shift_channel(b, -20)
-            pil_img = Image.merge("RGBA", (r, g, b, a))
-        
-        elif filter_name == "Cool":
-            # Shift colors cooler (more blue, less red)
-            def shift_channel(channel, shift):
-                """
-                Shift channel logic.
-                
-                Args:
-                    channel: Description of channel.
-                    shift: Description of shift.
-                
-                """
-                return channel.point(lambda x: max(0, min(255, x + shift)))
-            r = shift_channel(r, -20)
-            b = shift_channel(b, 20)
-            pil_img = Image.merge("RGBA", (r, g, b, a))
-        
-        elif filter_name == "Vintage":
-            # Reduce saturation, add warm tint, slight contrast boost
-            pil_img = ImageEnhance.Color(pil_img).enhance(0.7)
-            r, g, b, a = pil_img.split()
-            def shift_channel(channel, shift):
-                """
-                Shift channel logic.
-                
-                Args:
-                    channel: Description of channel.
-                    shift: Description of shift.
-                
-                """
-                return channel.point(lambda x: max(0, min(255, x + shift)))
-            r = shift_channel(r, 15)
-            g = shift_channel(g, 5)
-            b = shift_channel(b, -10)
-            pil_img = Image.merge("RGBA", (r, g, b, a))
-            pil_img = ImageEnhance.Contrast(pil_img).enhance(1.1)
-        
-        elif filter_name == "Invert":
-            rgb = Image.merge("RGB", (r, g, b))
-            rgb = ImageOps.invert(rgb)
-            r, g, b = rgb.split()
-            pil_img = Image.merge("RGBA", (r, g, b, a))
-        
-        elif filter_name == "Blur":
-            pil_img = pil_img.filter(ImageFilter.GaussianBlur(radius=2))
-        
-        elif filter_name == "Sharpen":
-            pil_img = pil_img.filter(ImageFilter.SHARPEN)
-        
-        elif filter_name == "Emboss":
-            pil_img = pil_img.filter(ImageFilter.EMBOSS)
-        
-        elif filter_name == "Find Edges":
-            pil_img = pil_img.filter(ImageFilter.FIND_EDGES)
-        
-        elif filter_name == "Auto Contrast":
-            rgb = Image.merge("RGB", (r, g, b))
-            rgb = ImageOps.autocontrast(rgb)
-            r, g, b = rgb.split()
-            pil_img = Image.merge("RGBA", (r, g, b, a))
-        
-        self._save_and_insert_image(pil_img, img_fmt)
-
-    def _rotate_image(self, degrees: int) -> None:
-        """Rotate the current image by the specified degrees."""
-        try:
-            from PIL import Image
-        except ImportError:
-            return
-        
-        pil_img, cursor, img_fmt = self._get_current_image_data()
-        if pil_img is None:
-            return
-        
-        pil_img = pil_img.rotate(-degrees, expand=True)  # Negative for clockwise
-        
-        # Swap width/height for 90 degree rotations
-        new_fmt = img_fmt
-        if abs(degrees) == 90:
-            old_w = img_fmt.width()
-            old_h = img_fmt.height()
-            new_fmt.setWidth(old_h)
-            new_fmt.setHeight(old_w)
-        
-        self._save_and_insert_image(pil_img, new_fmt)
-
-    def _crop_image(self) -> None:
-        """Open a crop dialog to crop the current image."""
-        from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QFormLayout, 
-                                      QSpinBox, QDialogButtonBox, QLabel, QGroupBox)
-        from PyQt6.QtGui import QPixmap, QImage
-        from PyQt6.QtCore import Qt
-        
-        try:
-            from PIL import Image
-        except ImportError:
-            return
-        
-        pil_img, cursor, img_fmt = self._get_current_image_data()
-        if pil_img is None:
-            return
-        
-        img_w, img_h = pil_img.size
-        
-        # Create crop dialog
-        dialog = QDialog(self)
-        dialog.setWindowTitle("Crop Image")
-        dialog.setMinimumWidth(400)
-        
-        layout = QVBoxLayout(dialog)
-        
-        # Preview label
-        preview_label = QLabel()
-        preview_label.setFixedSize(300, 200)
-        preview_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        preview_label.setStyleSheet("border: 1px solid #ccc; background: #f0f0f0;")
-        
-        # Convert PIL to QPixmap for preview
-        if pil_img.mode != "RGBA":
-            pil_img = pil_img.convert("RGBA")
-        data = pil_img.tobytes("raw", "RGBA")
-        qimg = QImage(data, pil_img.width, pil_img.height, QImage.Format.Format_RGBA8888)
-        pix = QPixmap.fromImage(qimg)
-        scaled_pix = pix.scaled(280, 180, Qt.AspectRatioMode.KeepAspectRatio, 
-                                 Qt.TransformationMode.SmoothTransformation)
-        preview_label.setPixmap(scaled_pix)
-        layout.addWidget(preview_label)
-        
-        # Size info
-        info_label = QLabel(f"Original size: {img_w} × {img_h} px")
-        layout.addWidget(info_label)
-        
-        # Crop region inputs
-        crop_group = QGroupBox("Crop Region")
-        crop_layout = QHBoxLayout(crop_group)
-        
-        form1 = QFormLayout()
-        x_spin = QSpinBox()
-        x_spin.setRange(0, img_w - 1)
-        x_spin.setValue(0)
-        x_spin.setSuffix(" px")
-        form1.addRow("X:", x_spin)
-        
-        y_spin = QSpinBox()
-        y_spin.setRange(0, img_h - 1)
-        y_spin.setValue(0)
-        y_spin.setSuffix(" px")
-        form1.addRow("Y:", y_spin)
-        crop_layout.addLayout(form1)
-        
-        form2 = QFormLayout()
-        w_spin = QSpinBox()
-        w_spin.setRange(1, img_w)
-        w_spin.setValue(img_w)
-        w_spin.setSuffix(" px")
-        form2.addRow("Width:", w_spin)
-        
-        h_spin = QSpinBox()
-        h_spin.setRange(1, img_h)
-        h_spin.setValue(img_h)
-        h_spin.setSuffix(" px")
-        form2.addRow("Height:", h_spin)
-        crop_layout.addLayout(form2)
-        
-        layout.addWidget(crop_group)
-        
-        # Clamp width/height when X/Y changes
-        def update_w_range():
-            """
-            Update w range logic.
-            
-            """
-            max_w = img_w - x_spin.value()
-            w_spin.setMaximum(max_w)
-            if w_spin.value() > max_w:
-                w_spin.setValue(max_w)
-        
-        def update_h_range():
-            """
-            Update h range logic.
-            
-            """
-            max_h = img_h - y_spin.value()
-            h_spin.setMaximum(max_h)
-            if h_spin.value() > max_h:
-                h_spin.setValue(max_h)
-        
-        x_spin.valueChanged.connect(update_w_range)
-        y_spin.valueChanged.connect(update_h_range)
-        
-        # OK/Cancel buttons
-        buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok |
-            QDialogButtonBox.StandardButton.Cancel
-        )
-        buttons.accepted.connect(dialog.accept)
-        buttons.rejected.connect(dialog.reject)
-        layout.addWidget(buttons)
-        
-        if dialog.exec() == QDialog.DialogCode.Accepted:
-            x = x_spin.value()
-            y = y_spin.value()
-            w = w_spin.value()
-            h = h_spin.value()
-            
-            # Apply crop
-            cropped = pil_img.crop((x, y, x + w, y + h))
-            
-            # Update format dimensions
-            img_fmt.setWidth(w)
-            img_fmt.setHeight(h)
-            
-            self._save_and_insert_image(cropped, img_fmt)
     
     # NOTE: insert_hyperlink() and insert_horizontal_rule() public methods were removed.
     # The ribbon uses _insert_hyperlink() and _insert_horizontal_rule() which have
@@ -1928,11 +1874,40 @@ class RichTextEditor(QWidget):
         self.editor.setFocus()
 
     def _insert_page_break(self) -> None:
-        """Insert a page break marker."""
-        # HTML/RTF page breaks are tricky. We use a CSS break-after or special char.
-        # For visual purpose in editor:
+        """
+        Insert a sovereign page break marker.
+        
+        Uses a custom block property (PAGEBREAK_PROP) to mark the block as a 
+        dedicated page break. This is immutable in the sense that the property
+        persists with the block and can be detected/preserved during export.
+        The visual is a minimal empty block with distinctive formatting.
+        """
         cursor = self.editor.textCursor()
-        cursor.insertHtml('<br><hr style="border-top: 1px dashed #ccc;"/><br>')
+        
+        # Insert a new block for the page break
+        cursor.insertBlock()
+        
+        # Configure the block format with page break property
+        block_fmt = cursor.blockFormat()
+        block_fmt.setProperty(PAGEBREAK_PROP, True)
+        block_fmt.setTopMargin(0)
+        block_fmt.setBottomMargin(0)
+        # Set fixed height to create a visible but minimal break line
+        block_fmt.setLineHeight(1, QTextBlockFormat.LineHeightTypes.FixedHeight)
+        block_fmt.setBackground(QBrush(QColor("#64748b")))  # Slate-500 for visibility
+        cursor.setBlockFormat(block_fmt)
+        
+        # Insert a minimal content marker (non-breaking space) to ensure block persists
+        cursor.insertText("\u00A0")  # NBSP
+        
+        # Move past the break and insert a new normal block
+        cursor.insertBlock()
+        # Clear the page break property on the new block
+        normal_fmt = QTextBlockFormat()
+        normal_fmt.clearProperty(PAGEBREAK_PROP)
+        cursor.setBlockFormat(normal_fmt)
+        
+        self.editor.setTextCursor(cursor)
         self.editor.setFocus()
 
 
@@ -1959,24 +1934,49 @@ class RichTextEditor(QWidget):
         self.editor.mergeCurrentCharFormat(fmt)
         self.editor.setFocus()
 
-    def _toggle_subscript(self) -> None:
-        """Toggle subscript, exclusive with superscript."""
+    def _toggle_subscript(self, checked: Optional[bool] = None) -> None:
+        """Toggle subscript; uncheck superscript when enabled."""
+        # If invoked programmatically without a state, flip the action to drive consistency
+        if checked is None and hasattr(self, 'action_sub') and self.action_sub:
+            checked = not self.action_sub.isChecked()
+            self.action_sub.setChecked(checked)
+            return
+
         fmt = self.editor.currentCharFormat()
-        if fmt.verticalAlignment() == QTextCharFormat.VerticalAlignment.AlignSubScript:
-            fmt.setVerticalAlignment(QTextCharFormat.VerticalAlignment.AlignNormal)
-        else:
+        if checked:
             fmt.setVerticalAlignment(QTextCharFormat.VerticalAlignment.AlignSubScript)
+            if hasattr(self, 'action_super') and self.action_super:
+                self.action_super.blockSignals(True)
+                self.action_super.setChecked(False)
+                self.action_super.blockSignals(False)
+        else:
+            if fmt.verticalAlignment() == QTextCharFormat.VerticalAlignment.AlignSubScript:
+                fmt.setVerticalAlignment(QTextCharFormat.VerticalAlignment.AlignNormal)
         self.editor.mergeCurrentCharFormat(fmt)
+        # Force UI sync because Qt may not emit currentCharFormatChanged for verticalAlignment changes
+        self._update_format_widgets(self.editor.currentCharFormat())
         self.editor.setFocus()
 
-    def _toggle_superscript(self) -> None:
-        """Toggle superscript, exclusive with subscript."""
+    def _toggle_superscript(self, checked: Optional[bool] = None) -> None:
+        """Toggle superscript; uncheck subscript when enabled."""
+        if checked is None and hasattr(self, 'action_super') and self.action_super:
+            checked = not self.action_super.isChecked()
+            self.action_super.setChecked(checked)
+            return
+
         fmt = self.editor.currentCharFormat()
-        if fmt.verticalAlignment() == QTextCharFormat.VerticalAlignment.AlignSuperScript:
-            fmt.setVerticalAlignment(QTextCharFormat.VerticalAlignment.AlignNormal)
-        else:
+        if checked:
             fmt.setVerticalAlignment(QTextCharFormat.VerticalAlignment.AlignSuperScript)
+            if hasattr(self, 'action_sub') and self.action_sub:
+                self.action_sub.blockSignals(True)
+                self.action_sub.setChecked(False)
+                self.action_sub.blockSignals(False)
+        else:
+            if fmt.verticalAlignment() == QTextCharFormat.VerticalAlignment.AlignSuperScript:
+                fmt.setVerticalAlignment(QTextCharFormat.VerticalAlignment.AlignNormal)
         self.editor.mergeCurrentCharFormat(fmt)
+        # Force UI sync because Qt may not emit currentCharFormatChanged for verticalAlignment changes
+        self._update_format_widgets(self.editor.currentCharFormat())
         self.editor.setFocus()
 
     def _clear_formatting(self) -> None:
@@ -2026,9 +2026,10 @@ class RichTextEditor(QWidget):
         
         # UX Improvement: If color is Black (Value 0), the picker opens in "The Abyss" (Slider at bottom).
         # We default to Red to force the Value Slider to Max, allowing immediate color selection.
-        initial_color = current_color
-        if current_color.lightness() == 0:
-            initial_color = Qt.GlobalColor.red
+        current_qcolor = QColor(current_color)
+        initial_color: QColor | Qt.GlobalColor = current_qcolor
+        if current_qcolor.lightness() == 0:
+            initial_color = QColor(Qt.GlobalColor.red)
             
         dialog = QColorDialog(initial_color, self)
         dialog.setWindowTitle("Select Text Color")
@@ -2045,7 +2046,12 @@ class RichTextEditor(QWidget):
                 self.editor.setFocus()
 
     def _apply_style(self, style_name: str) -> None:
-        """Apply a semantic style to the current selection/block."""
+        """
+        Apply a semantic style to the current selection/block.
+        
+        Uses direct format merging instead of HTML insertion to preserve
+        document structure (lists, tables, images) while applying styling.
+        """
         if style_name not in self.styles:
             return
             
@@ -2056,41 +2062,22 @@ class RichTextEditor(QWidget):
         if not cursor.hasSelection():
             cursor.select(QTextCursor.SelectionType.BlockUnderCursor)
         
+        # Apply character formatting via merge (preserves structure)
+        char_fmt = QTextCharFormat()
+        char_fmt.setFont(QFont(style["family"], style["size"], style["weight"]))
+        cursor.mergeCharFormat(char_fmt)
         
+        # Apply block formatting for headings/titles (margins)
+        if style_name.startswith("Heading") or style_name == "Title":
+            block_fmt = cursor.blockFormat()
+            block_fmt.setTopMargin(10)
+            block_fmt.setBottomMargin(5)
+            cursor.setBlockFormat(block_fmt)
         
-        # Fallback to HTML insertion for robust styling if direct formatting fails
-        # This is a bit heavier but guarantees the style is applied by the engine parser
-        
-        selected_text = cursor.selectedText()
-        # Escape HTML special characters to prevent injection
-        # Then replace paragraph separators with <br/> to preserve block structure
-        selected_text = html.escape(selected_text).replace('\u2029', '<br/>')
-            
-        # Determine tag
-        tag = "p"
-        if style_name == "Heading 1": tag = "h1"
-        elif style_name == "Heading 2": tag = "h2"
-        elif style_name == "Heading 3": tag = "h3"
-        elif style_name == "Title": tag = "h1" # Title as h1 for now
-        elif style_name == "Code": tag = "pre"
-        
-        # Build HTML with inline style to enforce our specific look (font, size)
-        # Note: h1 in Qt might have default margins, we can override if needed
-        pt_size = style["size"]
-        family = style["family"]
-        # font-weight is handled by h1 usually, but we enforce specific
-        weight_css = "bold" if style["weight"] == QFont.Weight.Bold else "normal"
-        
-        # We need to ensure the styling applies. 
-        # Using a span inside the block tag often helps Qt parser.
-        html = f'<{tag} style="margin-top: 10px; margin-bottom: 5px;"><span style="font-family: {family}; font-size: {pt_size}pt; font-weight: {weight_css};">{selected_text}</span></{tag}>'
-        
-        self.editor.blockSignals(True)
-        cursor.insertHtml(html)
-        self.editor.blockSignals(False)
+        self.editor.setTextCursor(cursor)
         self.editor.setFocus()
         
-        # Update combo boxes manually to reflect the change visually in toolbar
+        # Update combo boxes to reflect the change visually in toolbar
         self.size_combo.setCurrentText(str(style["size"]))
         self.font_combo.setCurrentFont(QFont(style["family"]))
 
@@ -2115,8 +2102,12 @@ class RichTextEditor(QWidget):
                 self.editor.setFocus()
 
     def _clear_highlight(self) -> None:
-        """Clear the background highlight."""
-        self.editor.setTextBackgroundColor(QColor(Qt.GlobalColor.transparent))
+        """Clear the background highlight without leaving sticky format state."""
+        from PyQt6.QtGui import QTextCharFormat, QBrush
+        fmt = QTextCharFormat()
+        fmt.setBackground(QBrush(Qt.BrushStyle.NoBrush))
+        self.editor.mergeCurrentCharFormat(fmt)
+        self.editor.setFocus()
 
     def _on_zoom_changed(self, value: int):
         """Handle zoom slider change."""
@@ -2128,6 +2119,8 @@ class RichTextEditor(QWidget):
 
     def _update_word_count(self) -> None:
         """Update the word and character count in status bar."""
+        if not self.word_count_label:
+            return
         text = self.editor.toPlainText()
         char_count = len(text)
         # Word count: split by whitespace, filter empty
@@ -2146,14 +2139,17 @@ class RichTextEditor(QWidget):
         if not hasattr(self, 'page_count_label'):
             return
         
-        # Calculate pages based on document height vs page height
+        # Calculate pages based on document height vs page height plus gap
         doc = self.editor.document()
+        if doc is None:
+            return
         doc_height = doc.size().height()
         
-        # Get page height from editor settings
         page_height = self.editor.page_height
-        
-        self._total_pages = max(1, int(doc_height / page_height) + (1 if doc_height % page_height > 50 else 0))
+        cycle = page_height + getattr(self.editor, "_page_gap", 0)
+        if cycle <= 0:
+            return
+        self._total_pages = max(1, int((doc_height + cycle - 1) / cycle))
         self._update_page_label()
     
     def _update_current_page(self) -> None:
@@ -2164,23 +2160,63 @@ class RichTextEditor(QWidget):
         cursor = self.editor.textCursor()
         cursor_rect = self.editor.cursorRect(cursor)
         
-        # Calculate which "page" the cursor is on using editor settings
+        # Calculate which "page" the cursor is on using editor settings and gap
         page_height = self.editor.page_height
-        cursor_y = cursor_rect.top() + self.editor.verticalScrollBar().value()
+        cycle = page_height + getattr(self.editor, "_page_gap", 0)
+        scrollbar = self.editor.verticalScrollBar()
+        if scrollbar is None or cycle <= 0:
+            return
+        cursor_y = cursor_rect.top() + scrollbar.value()
         
-        self._current_page = max(1, min(int(cursor_y / page_height) + 1, getattr(self, '_total_pages', 1)))
+        self._current_page = max(1, min(int(cursor_y / cycle) + 1, getattr(self, '_total_pages', 1)))
         self._update_page_label()
     
     def _update_page_label(self) -> None:
         """Update the page label text."""
-        if hasattr(self, 'page_count_label'):
+        if hasattr(self, 'page_count_label') and self.page_count_label:
             current = getattr(self, '_current_page', 1)
             total = getattr(self, '_total_pages', 1)
             self.page_count_label.setText(f"Page {current} of {total}")
 
+    def _on_page_mode_changed(self, index: int):
+        """Handle page mode selection from ribbon dropdown."""
+        mode = self.page_mode_combo.currentData()
+        
+        if mode == PageMode.CUSTOM:
+            # Open advanced options dialog
+            current_opts = getattr(self.editor, '_current_page_options', PageModeOptions())
+            dialog = PageModeDialog(self, current_opts)
+            if dialog.exec() == QDialog.DialogCode.Accepted:
+                new_opts = dialog.get_options()
+                self.editor.set_page_mode(PageMode.CUSTOM, new_opts)
+            else:
+                # Revert combo to previous mode if cancelled
+                # (simple approach: revert to Freeflow or just stay on Advanced but don't apply)
+                # Better: find the index matching current mode
+                current_mode = getattr(self.editor, '_current_page_mode', PageMode.FREEFLOW)
+                # Find index for this mode (0-3)
+                idx = 0
+                if current_mode == PageMode.FREEFLOW: idx = 0
+                elif current_mode == PageMode.GUIDES_ONLY: idx = 1
+                elif current_mode == PageMode.ENFORCE_ONLY: idx = 2
+                elif current_mode == PageMode.PAGED: idx = 3
+                # Block signals to avoid loop
+                self.page_mode_combo.blockSignals(True)
+                self.page_mode_combo.setCurrentIndex(idx)
+                self.page_mode_combo.blockSignals(False)
+        else:
+            # Apply preset directly
+            self.editor.set_page_mode(mode)
+            
     def _toggle_page_breaks(self, checked: bool):
-        """Toggle visibility of page break lines."""
-        self.editor.show_page_breaks = checked
+        # Deprecated: kept for compatibility if called programmatically, syncs UI
+        mode = PageMode.PAGED if checked else PageMode.FREEFLOW
+        self.editor.set_page_mode(mode)
+        # Sync combo
+        idx = 3 if checked else 0
+        self.page_mode_combo.blockSignals(True)
+        self.page_mode_combo.setCurrentIndex(idx)
+        self.page_mode_combo.blockSignals(False)
 
     def _set_line_spacing(self, spacing_str: str) -> None:
         """Set line spacing for the current paragraph."""
@@ -2195,7 +2231,7 @@ class RichTextEditor(QWidget):
         # Qt uses line height as percentage (100 = single, 150 = 1.5, etc.)
         # Or we can use setLineHeight with specific type
         from PyQt6.QtGui import QTextBlockFormat
-        block_fmt.setLineHeight(spacing * 100, QTextBlockFormat.LineHeightTypes.ProportionalHeight.value)
+        block_fmt.setLineHeight(spacing * 100, QTextBlockFormat.LineHeightTypes.ProportionalHeight)
         cursor.setBlockFormat(block_fmt)
 
     def _toggle_text_direction(self) -> None:
@@ -2216,23 +2252,31 @@ class RichTextEditor(QWidget):
         cursor.setBlockFormat(block_fmt)
 
     def _insert_hyperlink(self) -> None:
-        """Insert a hyperlink at the current cursor position."""
+        """Insert a hyperlink at the current cursor position without HTML parsing."""
+        from PyQt6.QtGui import QTextCharFormat
+
         cursor = self.editor.textCursor()
         selected_text = cursor.selectedText() if cursor.hasSelection() else ""
         
         dialog = HyperlinkDialog(selected_text, self)
-        if dialog.exec():
-            url = dialog.url_input.text().strip()
-            display_text = dialog.text_input.text().strip() or url
-            
-            if url:
-                # Ensure URL has a scheme
-                if not url.startswith(('http://', 'https://', 'mailto:', 'file://')):
-                    url = 'https://' + url
-                
-                # Insert as HTML anchor
-                html = f'<a href="{url}">{display_text}</a>'
-                cursor.insertHtml(html)
+        if not dialog.exec():
+            return
+
+        url = dialog.url_input.text().strip()
+        display_text = (dialog.text_input.text().strip() or url).strip()
+        if not url or not display_text:
+            return
+
+        allowed_schemes = ("https://", "mailto:", "note://", "app://")
+        if not url.startswith(allowed_schemes):
+            QMessageBox.warning(self, "Link", "Unsupported link scheme. Allowed: https, mailto, note://, app://")
+            return
+
+        fmt = QTextCharFormat()
+        fmt.setAnchor(True)
+        fmt.setAnchorHref(url)
+        fmt.setFontUnderline(True)
+        cursor.insertText(display_text, fmt)
 
     def _insert_horizontal_rule(self) -> None:
         """Insert a horizontal rule at the current cursor position."""
@@ -2289,7 +2333,10 @@ class RichTextEditor(QWidget):
             printer.setPageLayout(page_layout)
             
             # Print document to PDF
-            self.editor.document().print(printer)
+            doc = self.editor.document()
+            if doc is None:
+                return
+            doc.print(printer)
             
             QMessageBox.information(self, "Export PDF", f"Document exported to:\n{file_path}")
 
@@ -2309,7 +2356,10 @@ class RichTextEditor(QWidget):
         
         dialog = QPrintDialog(printer, self)
         if dialog.exec() == QPrintDialog.DialogCode.Accepted:
-            self.editor.document().print(printer)
+            doc = self.editor.document()
+            if doc is None:
+                return
+            doc.print(printer)
 
     def _print_preview(self) -> None:
         """Show print preview dialog."""
@@ -2328,8 +2378,16 @@ class RichTextEditor(QWidget):
         preview = QPrintPreviewDialog(printer, self)
         preview.setMinimumSize(800, 600)
         preview.resize(1000, 750)
-        preview.paintRequested.connect(lambda p: self.editor.document().print(p))
+        preview.paintRequested.connect(lambda p: self._print_doc_safe(p))
         preview.exec()
+
+
+    def _print_doc_safe(self, printer: QPrinter) -> None:
+        """Print the current document if available."""
+        doc = self.editor.document()
+        if doc is None:
+            return
+        doc.print(printer)
 
 
 
@@ -2360,11 +2418,17 @@ class RichTextEditor(QWidget):
         btn_italic = getattr(self, 'btn_italic', None)
         btn_underline = getattr(self, 'btn_underline', None)
         btn_strike = getattr(self, 'btn_strike', None)
+        action_bold = getattr(self, 'action_bold', None)
+        action_italic = getattr(self, 'action_italic', None)
+        action_underline = getattr(self, 'action_underline', None)
         
         if btn_bold: btn_bold.blockSignals(True)
         if btn_italic: btn_italic.blockSignals(True)
         if btn_underline: btn_underline.blockSignals(True)
         if btn_strike: btn_strike.blockSignals(True)
+        if action_bold: action_bold.blockSignals(True)
+        if action_italic: action_italic.blockSignals(True)
+        if action_underline: action_underline.blockSignals(True)
         
         # QActions (may not exist in headless mode)
         action_sub = getattr(self, 'action_sub', None)
@@ -2385,18 +2449,30 @@ class RichTextEditor(QWidget):
         self.font_combo.setCurrentFont(fmt.font())
         try:
             current_size = int(fmt.fontPointSize())
-            if current_size <= 0: current_size = 12 # Default fallback
+            if current_size <= 0:
+                current_size = 12  # Default fallback
             self.size_combo.setCurrentText(str(current_size))
-        except:
-            pass
+        except ValueError as e:
+            logger.debug("Font size parsing failed: %s. Keeping current selection.", e)
         
         # Update Styles
-        if btn_bold: 
-            btn_bold.setChecked(fmt.fontWeight() == QFont.Weight.Bold)
+        bold_checked = fmt.fontWeight() == QFont.Weight.Bold
+        italic_checked = fmt.fontItalic()
+        underline_checked = fmt.fontUnderline()
+
+        if action_bold:
+            action_bold.setChecked(bold_checked)
+        if action_italic:
+            action_italic.setChecked(italic_checked)
+        if action_underline:
+            action_underline.setChecked(underline_checked)
+
+        if btn_bold:
+            btn_bold.setChecked(bold_checked)
         if btn_italic:
-            btn_italic.setChecked(fmt.fontItalic())
+            btn_italic.setChecked(italic_checked)
         if btn_underline:
-            btn_underline.setChecked(fmt.fontUnderline())
+            btn_underline.setChecked(underline_checked)
         if btn_strike:
             btn_strike.setChecked(fmt.fontStrikeOut())
         
@@ -2426,6 +2502,9 @@ class RichTextEditor(QWidget):
         if btn_italic: btn_italic.blockSignals(False)
         if btn_underline: btn_underline.blockSignals(False)
         if btn_strike: btn_strike.blockSignals(False)
+        if action_bold: action_bold.blockSignals(False)
+        if action_italic: action_italic.blockSignals(False)
+        if action_underline: action_underline.blockSignals(False)
         
         if action_sub: action_sub.blockSignals(False)
         if action_super: action_super.blockSignals(False)
@@ -2435,24 +2514,36 @@ class RichTextEditor(QWidget):
         if action_align_justify: action_align_justify.blockSignals(False)
         
     # --- Public API ---
+    def set_page_mode(self, mode: PageMode, opts: Optional[PageModeOptions] = None) -> None:
+        """
+        Set pagination mode with unified control (app-level entry point).
+        
+        Delegates to SafeTextEdit.set_page_mode() where state is enacted.
+        
+        Args:
+            mode: The PageMode preset to apply
+            opts: Optional PageModeOptions for overrides
+        """
+        self.editor.set_page_mode(mode, opts)
+    
     def get_html(self) -> str:
         """
-        Retrieve html logic.
+        Export the document content as HTML.
         
         Returns:
-            Result of get_html operation.
+            Complete HTML representation including formatting, images, and tables.
         """
         return self.editor.toHtml()
         
     def set_html(self, html: str) -> None:
         """
-        Configure html logic.
+        Load HTML content into the editor.
+        
+        Replaces all current content. Forces LTR layout direction after loading
+        to prevent auto-detection issues with mixed-direction content.
         
         Args:
-            html: Description of html.
-        
-        Returns:
-            Result of set_html operation.
+            html: HTML string to load (can include images, tables, formatting).
         """
         self.editor.setHtml(html)
         # Ensure LTR is maintained after setting content
@@ -2460,22 +2551,24 @@ class RichTextEditor(QWidget):
         
     def get_text(self) -> str:
         """
-        Retrieve text logic.
+        Export the document content as plain text.
+        
+        Strips all formatting, returning only the text content.
         
         Returns:
-            Result of get_text operation.
+            Plain text content without any formatting.
         """
         return self.editor.toPlainText()
         
     def set_text(self, text: str) -> None:
         """
-        Configure text logic.
+        Load plain text content into the editor.
+        
+        Replaces all current content. Use set_html or set_markdown for
+        formatted content.
         
         Args:
-            text: Description of text.
-        
-        Returns:
-            Result of set_text operation.
+            text: Plain text string to load.
         """
         self.editor.setPlainText(text)
 
@@ -2487,14 +2580,17 @@ class RichTextEditor(QWidget):
 
     def get_markdown(self) -> str:
         """Get the editor content as Markdown."""
-        return self.editor.document().toMarkdown()
+        doc = self.editor.document()
+        if doc is None:
+            return ""
+        return doc.toMarkdown()
         
     def clear(self) -> None:
         """
-        Clear logic.
+        Remove all content from the editor.
         
-        Returns:
-            Result of clear operation.
+        Clears text, images, tables, and formatting. Does not prompt for
+        unsaved changes (use new_document() for that behavior).
         """
         self.editor.clear()
 
@@ -2545,9 +2641,12 @@ class RichTextEditor(QWidget):
     def _center_cursor_in_view(self) -> None:
         """Scroll the viewport to center the cursor vertically."""
         cursor_rect = self.editor.cursorRect()
-        viewport_height = self.editor.viewport().height()
-        # Calculate scroll position to center the cursor
+        viewport = self.editor.viewport()
         scrollbar = self.editor.verticalScrollBar()
+        if viewport is None or scrollbar is None:
+            return
+        viewport_height = viewport.height()
+        # Calculate scroll position to center the cursor
         current_scroll = scrollbar.value()
         cursor_y = cursor_rect.top()
         # Center: move cursor to middle of viewport
@@ -2613,7 +2712,8 @@ class RichTextEditor(QWidget):
 
     def new_document(self) -> None:
         """Clear the editor for a new document."""
-        if self.editor.document().isModified():
+        doc = self.editor.document()
+        if doc is not None and doc.isModified():
             ans = QMessageBox.question(
                 self, "Unsaved Changes",
                 "You have unsaved changes. Are you sure you want to clear the document?",
@@ -2643,7 +2743,9 @@ class RichTextEditor(QWidget):
             else:
                 self.editor.setPlainText(content)
                 
-            self.editor.document().setModified(False)
+            doc = self.editor.document()
+            if doc is not None:
+                doc.setModified(False)
             
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Could not open file:\n{e}")
@@ -2658,10 +2760,14 @@ class RichTextEditor(QWidget):
             return
 
         try:
+            doc = self.editor.document()
+            if doc is None:
+                return
+
             if file_path.endswith('.md'):
                 # Convert to Markdown
                 # Note: Qt's toMarkdown features are basic but standard compliant.
-                content = self.editor.document().toMarkdown()
+                content = doc.toMarkdown()
             elif file_path.endswith('.html'):
                 content = self.editor.toHtml()
             else:
@@ -2669,8 +2775,8 @@ class RichTextEditor(QWidget):
 
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(content)
-                
-            self.editor.document().setModified(False)
+            
+            doc.setModified(False)
             QMessageBox.information(self, "Saved", f"Document saved to {os.path.basename(file_path)}")
             
         except Exception as e:

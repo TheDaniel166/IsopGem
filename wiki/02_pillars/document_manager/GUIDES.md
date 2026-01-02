@@ -46,3 +46,38 @@ Use **Thoth's Scribe** (The Rich Text Editor) to weave your research.
 2.  **Query**: Enter a keyword or phrase.
 3.  **Advanced Modes**: Use **Wildcards** (`ELOH*`) or **Fuzzy Search** to find variations.
 4.  **Results**: Click any search snippet to open the document directly to that specific line.
+
+---
+
+## 📄 Pagination in Thoth's Scribe
+
+**Pagination is intentionally opt-in** — guarded for stability by sovereign design.
+
+### Why Opt-In?
+
+The `SafeTextEdit` component provides atomic block pagination that ensures text blocks don't straddle page boundaries. However, pagination involves layout mutation that can interact with scrolling, undo/redo, and large content in complex ways. Keeping it disabled by default ensures smooth operation for simple text editing.
+
+### How to Enable
+
+```python
+# From any SafeTextEdit or RichTextEditor instance:
+editor.enable_pagination(True)   # Awaken pagination rites
+editor.enable_pagination(False)  # Suspend for simple editing
+```
+
+### What Pagination Does
+
+When enabled, the editor:
+1. **Prevents page-straddling blocks**: Adds top margins to push blocks that would cross page boundaries to the next page
+2. **Preserves user formatting**: Original margins are stored and restored when pagination is disabled
+3. **Anchor-based scroll restoration**: Viewport remains stable during layout changes
+4. **Debounced execution**: Runs every 400ms to avoid per-keystroke overhead
+
+### Advanced Controls
+
+```python
+editor.scroll_anchor_enabled = True   # Enable semantic scroll anchoring (default)
+editor.show_page_breaks = True        # Display visual page break indicators
+```
+
+> **Note**: This is sovereign design, not incompleteness. The pagination machinery is fully implemented but awaits explicit activation by the Magus.

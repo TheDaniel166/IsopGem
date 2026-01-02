@@ -5,6 +5,7 @@ from .horizontal_rule_dialog import HorizontalRuleDialog
 from .page_setup_dialog import PageSetupDialog
 from .special_characters_dialog import SpecialCharactersDialog
 from .export_pdf_dialog import ExportPdfDialog
+from .page_mode_dialog import PageModeDialog
 
 __all__ = [
     'BaseEditorDialog',
@@ -13,4 +14,5 @@ __all__ = [
     'PageSetupDialog',
     'SpecialCharactersDialog',
     'ExportPdfDialog',
+    'PageModeDialog',
 ]
