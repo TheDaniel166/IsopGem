@@ -22,7 +22,7 @@ Before declaring a task "Done," perform the **Planetary Trials**:
 
 ## 3.2 The Execution of the Rite
 
-1. **Invocation:** `python scripts/verification_seal.py --target [FeatureName]`
+1. **Invocation:** `python scripts/covenant_scripts/verification_seal.py --target [FeatureName]`
 2. **The Constraint:** Must run **Headless** (without UI)
 3. **The Proof:** Present Planetary Report to The Magus
 
@@ -45,7 +45,7 @@ A high-order analytic audit for core services and significant refactors:
 | ♒ Aquarius | Concurrency | Thread-safe under parallel access |
 | ♓ Pisces | Depth | Test coverage > 90% |
 
-**Execution:** `python3 workflow_scripts/rite_of_zodiac.py [module.path]`
+**Execution:** `python3 scripts/covenant_scripts/rite_of_zodiac.py [module.path]`
 
 ## 3.4 The Seven Planetary Workflows
 
@@ -59,4 +59,4 @@ A high-order analytic audit for core services and significant refactors:
 | ☿ Mercury | `/rite_of_seals` | `verification_seal.py` | Section 3 (7 Trials) |
 | ☾ Moon | `/rite_of_inscription` | `rite_of_inscription.py` | Law 1.2 (Ban on Banality) |
 
-**Invocation:** `.venv/bin/python workflow_scripts/<script_name>.py [arguments]`
+**Invocation:** `.venv/bin/python scripts/covenant_scripts/<script_name>.py [arguments]`

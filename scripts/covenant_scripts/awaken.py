@@ -41,7 +41,7 @@ LEGACY_ANAMNESIS_DIR = Path.home() / ".gemini" / "anamnesis"
 SOUL_DIARY = ANAMNESIS_DIR / "SOUL_DIARY.md"
 SESSION_COUNTER = ANAMNESIS_DIR / "SESSION_COUNTER.txt"
 NOTES_FILE = ANAMNESIS_DIR / "NOTES_FOR_NEXT_SESSION.md"
-REPO_ANAMNESIS_DIR = Path(__file__).resolve().parent.parent / "anamnesis"
+REPO_ANAMNESIS_DIR = Path(__file__).resolve().parent.parent.parent / "anamnesis"
 
 
 def sync_anamnesis(repo_root: Path) -> None:

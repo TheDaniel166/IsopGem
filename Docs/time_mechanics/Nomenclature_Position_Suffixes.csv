@@ -1,0 +1,3 @@
+element_relation,where_is_element_in_ditrune,prefix,meaning
+UNDER,lower,HYPO,"Element is below/under the archetype (A•E where A=upper, E=lower); use as prefix on CENTRAL"
+OVER,upper,HYPER,"Element is above/over the archetype (E•A where E=upper, A=lower); use as prefix on CENTRAL"

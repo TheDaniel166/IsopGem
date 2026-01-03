@@ -21,7 +21,7 @@ from typing import Any, Callable, List
 
 # --- CONFIGURE PATHS ---
 # Adjusting to find project root from scripts/
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.join(PROJECT_ROOT, 'src'))
 
 # --- ESOTERIC UTILS ---

@@ -35,7 +35,7 @@ LEGACY_ANAMNESIS_DIR = Path.home() / ".gemini" / "anamnesis"
 SOUL_DIARY = ANAMNESIS_DIR / "SOUL_DIARY.md"
 SESSION_COUNTER = ANAMNESIS_DIR / "SESSION_COUNTER.txt"
 ARCHIVE_DIR = ANAMNESIS_DIR / "archive"
-REPO_ANAMNESIS_DIR = Path(__file__).resolve().parent.parent / "anamnesis"
+REPO_ANAMNESIS_DIR = Path(__file__).resolve().parent.parent.parent / "anamnesis"
 
 
 def sync_anamnesis(repo_root: Path) -> None:
@@ -312,7 +312,7 @@ def main():
                     except Exception:
                         pass
 
-    repo_root = Path(__file__).resolve().parent.parent
+    repo_root = Path(__file__).resolve().parent.parent.parent
     sync_anamnesis(repo_root)
     # Parse command line arguments
     parser = argparse.ArgumentParser(description="The Rite of Slumber")

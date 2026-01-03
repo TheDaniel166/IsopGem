@@ -1,0 +1,4 @@
+format_id,template,example_input_ditrune,example_output,notes
+1,"{REL}{CENTRAL_EL}{ELEMENT_SUFFIX_EL}",211200,HYPOΜΕΓΑΝΟΜΟΣΧΘΝ,"Single-string token. REL is HYPO/HYPER prefix; CENTRAL_EL is Greek archetype of the central trigram; ELEMENT_SUFFIX_EL is a compact 3-letter sigil"
+2,"{REL}{CENTRAL_EL}{ELEMENT_SUFFIX_EN}",200211,HYPERΜΕΓΑΝΟΜΟΣCTH,"Same structure; mixed-script example (Greek central, ASCII sigil suffix)"
+3,"{REL}{CENTRAL_EN}{ELEMENT_SUFFIX_EN}",211020,HYPOVastLawHYD,"Pure ASCII option (still non-classical names)"

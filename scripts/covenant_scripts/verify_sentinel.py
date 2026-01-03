@@ -5,11 +5,11 @@ import re
 import sys
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-import workflow_scripts.sync_covenant as sync_covenant
+import scripts.covenant_scripts.sync_covenant as sync_covenant
 
 
 CANON_DIR = PROJECT_ROOT / "wiki/00_foundations/covenant"
@@ -97,7 +97,7 @@ def main() -> None:
         print("🔴 Covenant divergence detected:")
         for e in errors:
             print(f" - {e}")
-        print("\nResolve by running .venv/bin/python workflow_scripts/sync_covenant.py and re-run this sentinel.")
+        print("\nResolve by running .venv/bin/python scripts/covenant_scripts/sync_covenant.py and re-run this sentinel.")
         sys.exit(1)
 
     print("✅ Covenant harmony: canon, Gemini, VS Code mirror, and pointer are aligned.")

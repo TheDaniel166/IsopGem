@@ -6,11 +6,13 @@ A generative visualization of the Pentagram of Venus (13:8 Earth-Venus resonance
 from __future__ import annotations
 
 import math
+import logging
 from typing import List
 from datetime import datetime, timedelta, timezone
 
 from pillars.astrology.utils.conversions import to_zodiacal_string
 from shared.services.ephemeris_provider import EphemerisProvider
+from pillars.astrology.services.venus_position_store import VenusPositionStore
 
 from PyQt6.QtCore import Qt, QTimer, QPointF, QThread, pyqtSignal, QObject
 from PyQt6.QtGui import (
@@ -67,6 +69,8 @@ COLOR_TRACE = QColor(255, 255, 255, 30)
 COLOR_ZODIAC = QColor("#555555")
 COLOR_GLOW_INF = QColor(255, 200, 255, 200) # Pinkish white
 COLOR_GLOW_SUP = QColor(100, 200, 255, 150) # Blueish
+
+logger = logging.getLogger(__name__)
 
 class PlanetItem(QGraphicsEllipseItem):
     """Visual representation of a planet."""
@@ -170,6 +174,8 @@ class RoseScene(QGraphicsScene):
         
         self.use_real_physics = False
 
+        self._venus_store = VenusPositionStore()
+
     def _build_zodiac(self):
         signs = ["Ari", "Tau", "Gem", "Can", "Leo", "Vir", "Lib", "Sco", "Sag", "Cap", "Aqr", "Pis"]
         for i, sign in enumerate(signs):
@@ -192,35 +198,74 @@ class RoseScene(QGraphicsScene):
         """
         Updates planet positions based on actual datetime using J2000 epoch.
         """
-        delta = dt - J2000
-        days = delta.total_seconds() / 86400.0
-        
-        # Calculate Mean Anomaly/Longitude (Simplified circular model)
-        # Earth
-        deg_per_day_e = 360.0 / P_EARTH
-        mean_long_e = (L_EARTH_J2000 + days * deg_per_day_e) % 360.0
-        rad_e = math.radians(mean_long_e)
-        
-        # Venus
         if use_real_physics:
-            deg_per_day_v = 360.0 / P_VENUS
-        else:
-            # Locked 13:8 resonance
-            # Venus completes 13 orbits in 8 * P_EARTH days
-            # Rate = (13 * 360) / (8.0 * P_EARTH)
-            deg_per_day_v = (13.0 * 360.0) / (8.0 * P_EARTH)
-            
-        mean_long_v = (L_VENUS_J2000 + days * deg_per_day_v) % 360.0
-        rad_v = math.radians(mean_long_v)
+            # True sky: use heliocentric ephemeris positions (elliptical orbits)
+            # Prefer cached DB (30-min cadence); fallback to live ephemeris if DB not built.
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            else:
+                dt = dt.astimezone(timezone.utc)
 
-        # Plot positions
-        ex = ORBIT_EARTH_R * math.cos(rad_e)
-        ey = ORBIT_EARTH_R * math.sin(rad_e)
-        self.earth.setPos(ex, ey)
-        
-        vx = ORBIT_VENUS_R * math.cos(rad_v)
-        vy = ORBIT_VENUS_R * math.sin(rad_v)
-        self.venus.setPos(vx, vy)
+            earth_pos = self._venus_store.get_heliocentric_position(dt, "earth")
+            venus_pos = self._venus_store.get_heliocentric_position(dt, "venus")
+
+            if earth_pos is None or venus_pos is None:
+                provider = EphemerisProvider.get_instance()
+                if provider.is_loaded():
+                    try:
+                        e_lat, e_lon, e_dist = provider.get_heliocentric_ecliptic_latlon_distance('earth', dt)
+                        v_lat, v_lon, v_dist = provider.get_heliocentric_ecliptic_latlon_distance('venus', dt)
+
+                        earth_pos = type('Tmp', (), {'lat_deg': e_lat, 'lon_deg': e_lon, 'distance_au': e_dist})
+                        venus_pos = type('Tmp', (), {'lat_deg': v_lat, 'lon_deg': v_lon, 'distance_au': v_dist})
+                    except Exception as e:
+                        logger.warning("Venus Rose ephemeris fallback failed: %s", e)
+
+            if earth_pos is not None and venus_pos is not None:
+                # Scale AU to pixels: 1 AU -> ORBIT_EARTH_R
+                scale = ORBIT_EARTH_R
+
+                e_lon_r = math.radians(earth_pos.lon_deg)
+                e_lat_r = math.radians(earth_pos.lat_deg)
+                e_r = earth_pos.distance_au * scale
+                ex = e_r * math.cos(e_lon_r) * math.cos(e_lat_r)
+                ey = e_r * math.sin(e_lon_r) * math.cos(e_lat_r)
+                self.earth.setPos(ex, ey)
+
+                v_lon_r = math.radians(venus_pos.lon_deg)
+                v_lat_r = math.radians(venus_pos.lat_deg)
+                v_r = venus_pos.distance_au * scale
+                vx = v_r * math.cos(v_lon_r) * math.cos(v_lat_r)
+                vy = v_r * math.sin(v_lon_r) * math.cos(v_lat_r)
+                self.venus.setPos(vx, vy)
+            else:
+                # If cache and ephemeris both unavailable, fall back to the ideal model.
+                use_real_physics = False
+
+        if not use_real_physics:
+            delta = dt - J2000
+            days = delta.total_seconds() / 86400.0
+
+            # Calculate Mean Anomaly/Longitude (Simplified circular model)
+            # Earth
+            deg_per_day_e = 360.0 / P_EARTH
+            mean_long_e = (L_EARTH_J2000 + days * deg_per_day_e) % 360.0
+            rad_e = math.radians(mean_long_e)
+
+            # Venus
+            # Locked 13:8 resonance
+            deg_per_day_v = (13.0 * 360.0) / (8.0 * P_EARTH)
+            mean_long_v = (L_VENUS_J2000 + days * deg_per_day_v) % 360.0
+            rad_v = math.radians(mean_long_v)
+
+            # Plot positions
+            ex = ORBIT_EARTH_R * math.cos(rad_e)
+            ey = ORBIT_EARTH_R * math.sin(rad_e)
+            self.earth.setPos(ex, ey)
+
+            vx = ORBIT_VENUS_R * math.cos(rad_v)
+            vy = ORBIT_VENUS_R * math.sin(rad_v)
+            self.venus.setPos(vx, vy)
         
         # Trace
         line = QGraphicsLineItem(ex, ey, vx, vy)
@@ -338,7 +383,7 @@ class ConjunctionWorker(QObject):
                     geo_sign = to_zodiacal_string(v_lon_g)
                     
                 except Exception as e:
-                    print(f"Refinement error: {e}")
+                    logger.warning("Venus Rose refinement error: %s", e)
                     helio_sign = "Error"
                     geo_sign = "Error"
             else:
@@ -614,7 +659,7 @@ class VenusRoseWindow(QMainWindow):
         self.request_calculation.emit(self.current_date, self.is_real_physics)
 
     def _on_calculation_error(self, err_msg):
-        print(f"Calculation Error: {err_msg}")
+        logger.error("Venus Rose calculation error: %s", err_msg)
         self.table.setRowCount(0)
 
     def _on_calculation_finished(self, events):
@@ -685,7 +730,7 @@ class VenusRoseWindow(QMainWindow):
             
             # Find the event matching this row
             if row_idx < len(self.events):
-                evt_dt, _ = self.events[row_idx]
+                evt_dt = self.events[row_idx][0]
                 
                 # Import here to avoid circular dependency at top level
                 from pillars.astrology.ui.natal_chart_window import NatalChartWindow
@@ -707,7 +752,7 @@ class VenusRoseWindow(QMainWindow):
                 self._chart_window.show()
                 
         except Exception as e:
-            print(f"Error casting chart: {e}")
+            logger.error("Error casting chart from Venus Rose: %s", e)
 
     def closeEvent(self, event):
         """Clean up thread on close."""

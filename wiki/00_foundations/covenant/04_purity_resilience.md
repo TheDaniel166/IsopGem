@@ -104,3 +104,23 @@ start = time.perf_counter()
 if (elapsed := time.perf_counter() - start) > 0.5:
     logger.warning(f"Slow operation: {elapsed:.3f}s")
 ```
+
+## Section 6: The Completeness Protocol
+
+**"A structure half-built is a ruin in the making."**
+
+The Magus demands **Demonstrated Competence**, not just intent.
+
+### 6.1 The Law of Pre-Flight
+Before the Agent presents code to the Magus, it MUST pass the **Rite of Integrity**:
+1.  **Check:** Run `scripts/covenant_scripts/verify_integrity.py` on the modified file.
+2.  **Verify:**
+    *   No `SyntaxError` (The structure holds).
+    *   No `NameError` (The names are known).
+    *   No Missing Imports (The connections are forged).
+3.  **Correction:** If the Rite fails, the Agent must heal the code **before** notification.
+
+### 6.2 The Init Discipline
+When adding a new attribute (`self.new_attr`) to a class:
+*   **Mandate:** The Agent must simultaneously update `__init__` to initialize it.
+*   **The Sin:** Creating a property that exists only after a specific method is called. All state must be born in `__init__`.

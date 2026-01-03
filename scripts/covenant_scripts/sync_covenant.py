@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Iterable
 
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = Path(__file__).resolve().parents[2]
 CANONICAL_DIR = REPO_ROOT / "wiki/00_foundations/covenant"
 VSCODE_MIRROR_DIR = REPO_ROOT / ".github/instructions/covenant"
 GEMINI_DIR = Path.home() / ".gemini/covenant"
@@ -38,7 +38,7 @@ This file is a pointer to the Covenant instructions to avoid token bloat and dri
 * Gemini copy: `~/.gemini/covenant/`
 * Sophia home copy: `~/.sophia/covenant/`
 
-Regenerate mirrors and this pointer with `.venv/bin/python workflow_scripts/sync_covenant.py`. Changes made here without updating the canon will be overwritten.
+regenerate mirrors and this pointer with `.venv/bin/python scripts/covenant_scripts/sync_covenant.py`. Changes made here without updating the canon will be overwritten.
 """.format(date=last_verified)
 
 

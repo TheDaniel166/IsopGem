@@ -23,6 +23,11 @@ dist/
 *.sqlite3
 src/data/
 
+# Generated ephemeris caches (local only)
+data/venus_positions.db
+data/venus_positions.db-wal
+data/venus_positions.db-shm
+
 # Saved documents and local data
 src/saved_documents/
 

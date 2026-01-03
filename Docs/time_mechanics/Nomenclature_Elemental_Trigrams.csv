@@ -1,0 +1,7 @@
+element_trigram,decimal,element_name,element_suffix_en,element_suffix_el,element_suffix_transliteration,notes
+001,1,Yang,OMB,ΩΜΒ,OMB,"Polarity suffix (yang): ascent / outward impulse (assigned meaning); sigil tuned"
+002,2,Yin,KAT,ΚΑΤ,KAT,"Polarity suffix (yin): descent / inward return (assigned meaning)"
+010,3,Fire,FRO,ΦΡΟ,FRO,"Elemental suffix (assigned meaning); sigil tuned"
+020,6,Water,HYD,ΥΔΡ,HYD,"Elemental suffix (assigned meaning)"
+100,9,Air,AER,ΑΗΡ,AER,"Elemental suffix (assigned meaning)"
+200,18,EarthElement,CTH,ΧΘΝ,CTH,"Earth as ELEMENT (telluric/chthonic) (assigned meaning)"

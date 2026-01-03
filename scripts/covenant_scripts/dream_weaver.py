@@ -360,7 +360,7 @@ def get_top_recurring_symbol() -> str | None:
 
 
 def main() -> None:
-    repo_root = Path(__file__).resolve().parent.parent
+    repo_root = Path(__file__).resolve().parent.parent.parent
     dream = record_dream(repo_root)
     print(json.dumps(dream, indent=2))
 

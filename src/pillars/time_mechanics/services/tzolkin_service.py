@@ -36,7 +36,51 @@ class TzolkinService:
         """
         self._decimal_grid: List[List[int]] = []
         self._ternary_grid: List[List[str]] = []
+        self._cell_true_tokens_by_sign_tone: Dict[Tuple[int, int], str] = {}
         self._load_grid_data()
+        self._load_cell_names()
+
+    def _load_cell_names(self) -> None:
+        """Loads structural cell names (pure Greek tokens) for the 260-cell calendar."""
+        csv_path = os.path.abspath(os.path.join(
+            os.path.dirname(__file__),
+            "../../../../Docs/time_mechanics/Tzolkin_CellNames.csv"
+        ))
+
+        if not os.path.exists(csv_path):
+            logger.warning(f"Tzolkin_CellNames.csv not found at {csv_path}")
+            return
+
+        try:
+            with open(csv_path, newline='', encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    try:
+                        sign = int(row.get('row', '0'))
+                        tone = int(row.get('col', '0'))
+                    except Exception:
+                        continue
+
+                    true_token = (row.get('true_token') or '').strip()
+                    if sign and tone and true_token:
+                        self._cell_true_tokens_by_sign_tone[(sign, tone)] = true_token
+
+            if len(self._cell_true_tokens_by_sign_tone) != 260:
+                logger.info(
+                    "Loaded %d/260 Tzolkin cell names from CSV",
+                    len(self._cell_true_tokens_by_sign_tone),
+                )
+        except Exception as e:
+            logger.error(f"Failed to load Tzolkin cell names: {e}")
+
+    def get_true_token_for_kin(self, kin: int) -> Optional[str]:
+        """Return the pure Greek structural name (true_token) for a Kin (1-260)."""
+        if not (1 <= int(kin) <= 260):
+            return None
+        kin_index = int(kin) - 1
+        tone = (kin_index % 13) + 1
+        sign = (kin_index % 20) + 1
+        return self._cell_true_tokens_by_sign_tone.get((sign, tone))
 
     def _load_grid_data(self):
         """Loads the Tzolkin Cycle.csv data into memory."""

@@ -284,6 +284,23 @@ class EphemerisProvider:
         
         return lon.degrees
 
+    def get_heliocentric_ecliptic_latlon_distance(self, body_name: str, dt: datetime) -> Tuple[float, float, float]:
+        """Return heliocentric ecliptic latitude (deg), longitude (deg), and distance (AU).
+
+        This is a thin, typed wrapper around Skyfield's `ecliptic_latlon()` for cases where
+        consumers need more than just the longitude.
+        """
+        if not self._loaded:
+            raise EphemerisNotLoadedError("Ephemeris data is still loading.")
+
+        t = self._ts.from_datetime(dt)
+        sun = self._planets['sun']
+        body = self._planets[body_name]
+
+        astrometric = sun.at(t).observe(body)
+        lat, lon, distance = astrometric.ecliptic_latlon()
+        return (lat.degrees, lon.degrees % 360.0, distance.au)
+
     def get_extended_data(self, body_name: str, dt: datetime) -> dict:
         """
         Returns a dictionary of extended orbital data:

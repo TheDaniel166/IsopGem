@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import List, Dict, Optional, Any
 
 # Ensure we can import from src/
-PROJECT_ROOT = Path(__file__).parent.parent
+PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from mcp.server.fastmcp import FastMCP

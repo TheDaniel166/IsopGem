@@ -13,7 +13,7 @@ import sys
 from pathlib import Path
 from typing import List, Tuple, Set
 
-PROJECT_ROOT = Path(__file__).parent.parent
+PROJECT_ROOT = Path(__file__).parent.parent.parent
 PILLARS_DIR = PROJECT_ROOT / "src" / "pillars"
 
 # These are the sovereign territories
