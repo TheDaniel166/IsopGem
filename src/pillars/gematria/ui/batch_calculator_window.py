@@ -1,4 +1,5 @@
 """Great Harvest window for sowing seeds (importing) and reaping calculations."""
+import logging
 import csv
 from typing import List, Dict, Optional
 from pathlib import Path
@@ -19,6 +20,8 @@ from PyQt6.QtGui import QFont, QCloseEvent, QColor, QPalette, QBrush, QImage, QP
 
 from ..services import CalculationService
 from ..services.base_calculator import GematriaCalculator
+
+logger = logging.getLogger(__name__)
 
 
 class BatchProcessThread(QThread):
@@ -176,9 +179,9 @@ class GreatHarvestWindow(QMainWindow):
                 palette.setBrush(QPalette.ColorRole.Window, QBrush(img))
                 self.setPalette(palette)
             else:
-                 print(f"Error: Failed to load image at {bg_path}")
+                 logger.warning("Failed to load background pattern image at %s", bg_path)
         else:
-            print("Error: Background pattern not found.")
+            logger.warning("Background pattern not found")
             # Fallback to Cloud color if texture missing
             self.setStyleSheet("QMainWindow { background-color: #f8fafc; }")
 

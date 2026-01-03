@@ -2,6 +2,7 @@
 Kamea Color Service - The Chromatic Resolver.
 Calculates 5-face color assignments for Adyton Kamea cells using Trigram, Zodiac, and Baphomet mappings.
 """
+import logging
 from pathlib import Path
 from typing import Dict, List, Tuple
 from PyQt6.QtGui import QColor
@@ -9,6 +10,8 @@ from PyQt6.QtGui import QColor
 from shared.services.tq.ternary_service import TernaryService
 from shared.services.tq.baphomet_color_service import BaphometColorService
 from pillars.adyton.models.kamea_cell import KameaCell
+
+logger = logging.getLogger(__name__)
 
 class KameaColorService:
     """
@@ -45,7 +48,7 @@ class KameaColorService:
         mapping: Dict[int, QColor] = {}
         
         if not trigram_path.exists():
-            print(f"Warning: Trigram map not found at {trigram_path}")
+            logger.warning("Trigram map not found at %s", trigram_path)
             return {}
             
         with trigram_path.open("r", encoding="utf-8") as f:

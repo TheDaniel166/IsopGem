@@ -4,6 +4,18 @@ import os
 import signal
 import logging
 
+logger = logging.getLogger(__name__)
+
+
+def _configure_logging() -> None:
+    level_name = os.environ.get("ISOPGEM_LOG_LEVEL", "WARNING").upper()
+    level = getattr(logging, level_name, logging.WARNING)
+    logging.basicConfig(
+        level=level,
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+        force=True,
+    )
+
 # Force Qt to use X11 instead of Wayland (more stable with PyQt6)
 os.environ['QT_QPA_PLATFORM'] = 'xcb'
 
@@ -12,6 +24,8 @@ os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = "--disable-gpu --single-process"
 
 # Suppress Qt Wayland warnings if desired
 # os.environ['QT_LOGGING_RULES'] = '*.debug=false;qt.qpa.*=false'
+
+_configure_logging()
 
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QTabWidget, QVBoxLayout, QWidget, 
@@ -391,12 +405,6 @@ class IsopGemMainWindow(QMainWindow):
 
 def main():
     """Initialize and run the application."""
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-        force=True,
-    )
-
     # Initialize Database
     init_db()
 
@@ -425,7 +433,7 @@ def main():
     # Set up signal handler for Ctrl+C
     def signal_handler(sig, frame):
         """Handle interrupt signal (Ctrl+C)."""
-        print("\nReceived interrupt signal, shutting down...")
+        logger.info("Received interrupt signal, shutting down...")
         app.quit()
     
     signal.signal(signal.SIGINT, signal_handler)

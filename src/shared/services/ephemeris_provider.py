@@ -3,6 +3,7 @@ Ephemeris Provider - The Celestial Engine.
 Singleton interface to Skyfield for calculating geocentric/heliocentric planetary positions and lunar nodes.
 """
 from datetime import datetime, timezone, timedelta
+import logging
 import math
 import os
 import threading
@@ -12,6 +13,8 @@ from skyfield.api import load
 from skyfield.framelib import ecliptic_frame
 
 from shared.models.geo_location import GeoLocation
+
+logger = logging.getLogger(__name__)
 
 class EphemerisNotLoadedError(Exception):
     """
@@ -103,12 +106,12 @@ class EphemerisProvider:
         if not found:
             # Prefer big file for new installs or updates
             file_path = "de441.bsp"
-            
-        print(f"Loading ephemeris from: {file_path}")
+
+        logger.info("Loading ephemeris from: %s", file_path)
         self._ts = load.timescale()
         self._planets = load(file_path) # This will download if missing
         self._loaded = True
-        print("Ephemeris loaded successfully.")
+        logger.info("Ephemeris loaded successfully.")
 
     def get_osculating_north_node(self, dt: datetime) -> float:
         """

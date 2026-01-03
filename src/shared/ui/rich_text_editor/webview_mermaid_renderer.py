@@ -3,10 +3,13 @@ Offline Mermaid Renderer using QtWebEngine.
 Renders Mermaid diagrams using a local JS library and a hidden WebEngineView.
 """
 import os
+import logging
 from PyQt6.QtCore import QUrl, QSize, QEventLoop, QTimer, Qt
 from PyQt6.QtGui import QImage, QPainter
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtWebEngineCore import QWebEngineSettings
+
+logger = logging.getLogger(__name__)
 
 class WebViewMermaidRenderer:
     """
@@ -58,8 +61,8 @@ class WebViewMermaidRenderer:
         js_path = os.path.join(src_dir, "assets/mermaid.min.js")
         
         if not os.path.exists(js_path):
-             print(f"MermaidRenderer Error: JS not found at {js_path}")
-             return None
+            logger.error("MermaidRenderer: JS not found at %s", js_path)
+            return None
 
         js_url = QUrl.fromLocalFile(js_path).toString()
         
@@ -107,7 +110,7 @@ class WebViewMermaidRenderer:
         loop.exec()
         
         if not timer.isActive():
-            print("Mermaid Renderer: Load timed out")
+            logger.warning("MermaidRenderer: load timed out")
             view.deleteLater()
             return None
         timer.stop()
@@ -197,8 +200,8 @@ class WebViewMermaidRenderer:
         js_path = os.path.join(src_dir, "assets/mermaid.min.js")
         
         if not os.path.exists(js_path):
-             print(f"MermaidRenderer Error: JS not found at {js_path}")
-             return None
+            logger.error("MermaidRenderer: JS not found at %s", js_path)
+            return None
 
         js_url = QUrl.fromLocalFile(js_path).toString()
         escaped_code = code.replace("<", "&lt;").replace(">", "&gt;")
@@ -240,7 +243,7 @@ class WebViewMermaidRenderer:
         loop.exec()
         
         if not timer.isActive():
-            print("Mermaid Renderer: Load timed out")
+            logger.warning("MermaidRenderer: load timed out")
             view.deleteLater()
             return None
         timer.stop()

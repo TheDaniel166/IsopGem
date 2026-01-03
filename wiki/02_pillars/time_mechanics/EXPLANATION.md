@@ -7,7 +7,7 @@ The **Time Mechanics** pillar is the **Sovereign Domain of Cycles**. While the A
 
 ## The Core Logic (Services)
 
-### **[tzolkin_service.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/time_mechanics/services/tzolkin_service.py)**
+### **tzolkin_service.py** (`src/pillars/time_mechanics/services/tzolkin_service.py`)
 *   **Architectural Role**: Sovereign Service (The Timekeeper)
 *   **The Purpose**: Manages the 260-day harmonic Tzolkin cycle, converting Gregorian dates to Kins, Tones, and Signs.
 *   **Key Logic**:
@@ -22,7 +22,7 @@ The **Time Mechanics** pillar is the **Sovereign Domain of Cycles**. While the A
 
 ## The Presentation Layer (UI)
 
-### **[time_mechanics_hub.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/time_mechanics/ui/time_mechanics_hub.py)**
+### **time_mechanics_hub.py** (`src/pillars/time_mechanics/ui/time_mechanics_hub.py`)
 *   **Architectural Role**: View (The Diplomat)
 *   **The Purpose**: The single entry point for the Magus to access temporal tools.
 *   **Key Logic**:

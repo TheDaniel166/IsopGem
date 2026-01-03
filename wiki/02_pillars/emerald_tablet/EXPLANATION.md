@@ -7,7 +7,7 @@ The **Emerald Tablet** is the **Grid of Equivalences**. It is a full-featured sp
 
 ## The Core Logic (Services)
 
-### **[formula_engine.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/correspondences/services/formula_engine.py)**
+### **formula_engine.py** (`src/pillars/correspondences/services/formula_engine.py`)
 *   **Architectural Role**: Sovereign Service (The Interpreter)
 *   **The Purpose**: A complete expression parser and evaluator. Formulas beginning with `=` are parsed into tokens, built into an AST, and evaluated.
 *   **Key Logic**:
@@ -17,7 +17,7 @@ The **Emerald Tablet** is the **Grid of Equivalences**. It is a full-featured sp
     *   **Gematria Integration**: Links to all ciphers via `_CIPHER_REGISTRY` (Hebrew, Greek, TQ variants).
 *   **Dependencies**: `CalculationService`, all Gematria calculators.
 
-### **[undo_commands.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/correspondences/services/undo_commands.py)**
+### **undo_commands.py** (`src/pillars/correspondences/services/undo_commands.py`)
 *   **Architectural Role**: Service (The Memory)
 *   **The Purpose**: Implements the Command Pattern for full Undo/Redo support using Qt's `QUndoCommand` framework.
 *   **Key Logic**:
@@ -26,26 +26,26 @@ The **Emerald Tablet** is the **Grid of Equivalences**. It is a full-featured sp
     *   `InsertColumnsCommand` / `RemoveColumnsCommand`: Column manipulation with header updates.
     *   `SortRangeCommand`: Captures entire block state before/after sort.
 
-### **[conditional_formatting.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/correspondences/services/conditional_formatting.py)**
+    ### **conditional_formatting.py** (`src/pillars/correspondences/services/conditional_formatting.py`)
 *   **Architectural Role**: Service (The Highlighter)
 *   **The Purpose**: Evaluates rules against cell values to apply dynamic styling.
 *   **Key Logic**:
     *   `ConditionalRule`: Dataclass defining rule type (`GT`, `LT`, `EQ`, `CONTAINS`), threshold, and format style.
     *   `ConditionalManager.get_style`: Iterates rules in order, returns first matching format.
 
-### **[ingestion_service.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/correspondences/services/ingestion_service.py)**
+    ### **ingestion_service.py** (`src/pillars/correspondences/services/ingestion_service.py`)
 *   **Architectural Role**: Service (The Importer)
 *   **The Purpose**: Parses external files (CSV, Excel) into the internal JSON structure used by `SpreadsheetModel`.
 
-### **[formula_helper.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/correspondences/services/formula_helper.py)**
+    ### **formula_helper.py** (`src/pillars/correspondences/services/formula_helper.py`)
 *   **Architectural Role**: Handmaiden Utility
 *   **The Purpose**: Exposes `FormulaRegistry` metadata for the Formula Wizard UI.
 
-### **[border_engine.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/correspondences/services/border_engine.py)**
+    ### **border_engine.py** (`src/pillars/correspondences/services/border_engine.py`)
 *   **Architectural Role**: Handmaiden Utility
 *   **The Purpose**: Handles border style calculations for cells (style, width, color per side).
 
-### **[table_service.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/correspondences/services/table_service.py)**
+    ### **table_service.py** (`src/pillars/correspondences/services/table_service.py`)
 *   **Architectural Role**: Service (The Steward)
 *   **The Purpose**: Mediates between the UI and the Repository for CRUD operations.
 *   **Key Logic**:
@@ -54,7 +54,7 @@ The **Emerald Tablet** is the **Grid of Equivalences**. It is a full-featured sp
 
 ## The Presentation Layer (UI)
 
-### **[correspondence_hub.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/correspondences/ui/correspondence_hub.py)**
+### **correspondence_hub.py** (`src/pillars/correspondences/ui/correspondence_hub.py`)
 *   **Architectural Role**: View (The Gateway)
 *   **The Purpose**: The sovereign entry point for the Emerald Tablet. Displays a list of saved Tables and provides actions to create, import, rename, or delete them.
 *   **Key Logic**:
@@ -63,7 +63,7 @@ The **Emerald Tablet** is the **Grid of Equivalences**. It is a full-featured sp
     *   `receive_import`: Public API for other Pillars to send data (e.g., Astrology → Emerald Tablet).
 *   **Signal Flow**: Launches `SpreadsheetWindow` via `WindowManager.open_window`.
 
-### **[spreadsheet_window.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/correspondences/ui/spreadsheet_window.py)**
+### **spreadsheet_window.py** (`src/pillars/correspondences/ui/spreadsheet_window.py`)
 *   **Architectural Role**: View (The Altar)
 *   **The Purpose**: The main editing window hosting the Grid and the Toolbar.
 *   **Key Logic**:
@@ -75,7 +75,7 @@ The **Emerald Tablet** is the **Grid of Equivalences**. It is a full-featured sp
     *   **Listens to**: `selectionChanged`, `dataChanged`.
     *   **Emits**: Saves to `TableRepository` on close.
 
-### **[spreadsheet_view.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/correspondences/ui/spreadsheet_view.py)**
+    ### **spreadsheet_view.py** (`src/pillars/correspondences/ui/spreadsheet_view.py`)
 *   **Architectural Role**: View (The Canvas)
 *   **The Purpose**: The `QTableView` subclass that displays the grid, plus the `SpreadsheetModel` that adapts JSON data.
 *   **Key Logic**:
@@ -83,7 +83,7 @@ The **Emerald Tablet** is the **Grid of Equivalences**. It is a full-featured sp
     *   **RichTextDelegate**: Custom item delegate for HTML rendering, border painting, and inline editing.
     *   **Context Menu**: Right-click for Insert/Delete rows/columns, Sort Range.
 
-### **[formula_wizard.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/correspondences/ui/formula_wizard.py)**
+    ### **formula_wizard.py** (`src/pillars/correspondences/ui/formula_wizard.py`)
 *   **Architectural Role**: View (The Oracle)
 *   **The Purpose**: A two-stage dialog for guided formula insertion.
 *   **Key Logic**:
@@ -93,14 +93,14 @@ The **Emerald Tablet** is the **Grid of Equivalences**. It is a full-featured sp
 
 ## Data Structures (Models)
 
-### **[correspondence_models.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/correspondences/models/correspondence_models.py)**
+### **correspondence_models.py** (`src/pillars/correspondences/models/correspondence_models.py`)
 *   **Architectural Role**: Domain Model
 *   **The Purpose**: SQLAlchemy entity for persisting Tables.
 *   **Key Logic**: Stores `name`, `content` (JSON blob with columns, rows, and cell data).
 
 ## Infrastructure (Repositories)
 
-### **[table_repository.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/correspondences/repos/table_repository.py)**
+### **table_repository.py** (`src/pillars/correspondences/repos/table_repository.py`)
 *   **Architectural Role**: Persistence Layer
 *   **The Purpose**: CRUD operations for Table entities.
 *   **Key Logic**:

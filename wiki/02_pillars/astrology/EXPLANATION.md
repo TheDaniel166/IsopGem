@@ -7,7 +7,7 @@ The **Astrology Engine** is the **Keeper of Time**. Its sovereign duty is to cal
 
 ## The Core Logic (Services)
 
-### **[openastro_service.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/astrology/services/openastro_service.py)**
+### **openastro_service.py** (`src/pillars/astrology/services/openastro_service.py`)
 *   **Architectural Role**: Sovereign Service (The Bridge)
 *   **The Purpose**: It is the Diplomat to the external world. It integrates the `OpenAstro2` library into our Temple, translating our internal requests into the language of the Swisseph/PyEphem kernels.
 *   **Key Logic**:
@@ -17,7 +17,7 @@ The **Astrology Engine** is the **Keeper of Time**. Its sovereign duty is to cal
     *   **Emits**: `ChartData` (Dict)
 *   **Dependencies**: `OpenAstro2`, `swisseph`, `pyephem`.
 
-### **[chart_storage_service.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/astrology/services/chart_storage_service.py)**
+### **chart_storage_service.py** (`src/pillars/astrology/services/chart_storage_service.py`)
 *   **Architectural Role**: Handmaiden Utility (The Archivist)
 *   **The Purpose**: Persists the frozen moments of time (Natal Charts) into the database. It ensures that a "Birth" is never forgotten.
 *   **Key Logic**:
@@ -26,12 +26,12 @@ The **Astrology Engine** is the **Keeper of Time**. Its sovereign duty is to cal
 *   **Signal Flow**: None (Synchronous).
 *   **Dependencies**: `shared.database.SessionLocal`, `ChartRepository`.
 
-### **[location_lookup.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/astrology/services/location_lookup.py)**
+### **location_lookup.py** (`src/pillars/astrology/services/location_lookup.py`)
 *   **Architectural Role**: Handmaiden Utility (The Navigator)
 *   **The Purpose**: Resolves human-readable strings (e.g., "Athens, Greece") into terrestrial coordinates (Latitude/Longitude).
 *   **Dependencies**: `geopy` (implied/optional).
 
-### **[arabic_parts_service.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/astrology/services/arabic_parts_service.py)**
+### **arabic_parts_service.py** (`src/pillars/astrology/services/arabic_parts_service.py`)
 *   **Architectural Role**: Service (The Alchemist)
 *   **The Purpose**: Calculates the "Lots" (Arabic Parts) such as Fortune, Spirit, and Eros.
 *   **Key Logic**:
@@ -39,28 +39,28 @@ The **Astrology Engine** is the **Keeper of Time**. Its sovereign duty is to cal
     *   **Sect Awareness**: Automatically reverses formulae for Night Charts (e.g., Fortune = ASC + Sun - Moon).
     *   **Categories**: Hermetic, Esoteric, and Traditional Lots.
 
-### **[fixed_stars_service.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/astrology/services/fixed_stars_service.py)**
+### **fixed_stars_service.py** (`src/pillars/astrology/services/fixed_stars_service.py`)
 *   **Architectural Role**: Service (The Stellar Map)
 *   **The Purpose**: Computes the exact positions of fixed stars (Sirius, Algol, Regulus) using the Swiss Ephemeris.
 *   **Key Logic**:
     *   **Notable Stars**: Tracks ~25 specific stars of esoteric significance.
     *   **Conjunctions**: Finds planets within a tight orb (default 1.5°) of these stars.
 
-### **[maat_symbols_service.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/astrology/services/maat_symbols_service.py)**
+### **maat_symbols_service.py** (`src/pillars/astrology/services/maat_symbols_service.py`)
 *   **Architectural Role**: Service (The Oracle)
 *   **The Purpose**: Retrieves the "Maat Symbol" (Egyptian Degree Symbol) for any given zodiacal degree.
 *   **Key Logic**:
     *   **The Heavens**: Maps the 360° wheel into distinct "Heavens" (e.g., "Workshop of Ptah", "Library of Thoth").
     *   **Lookup**: Returns the poetic image and spiritual meaning for the specific degree.
 
-### **[aspects_service.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/astrology/services/aspects_service.py)**
+### **aspects_service.py** (`src/pillars/astrology/services/aspects_service.py`)
 *   **Architectural Role**: Service (The Geometer)
 *   **The Purpose**: Calculates the angular relationships between planets.
 *   **Key Logic**:
     *   **Tiers**: Supports Major (Conjunction, Square...), Minor (Quintile, Septile...), and Harmonic aspects.
     *   **Orbs**: configurable rigidity for aspect validity.
 
-### **[harmonics_service.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/astrology/services/harmonics_service.py)**
+### **harmonics_service.py** (`src/pillars/astrology/services/harmonics_service.py`)
 *   **Architectural Role**: Service (The Amplifier)
 *   **The Purpose**: Calculates Harmonic Charts (H-Charts).
 *   **Key Logic**:
@@ -69,7 +69,7 @@ The **Astrology Engine** is the **Keeper of Time**. Its sovereign duty is to cal
 
 ## The Presentation Layer (UI)
 
-### **[astrology_hub.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/astrology/ui/astrology_hub.py)**
+### **astrology_hub.py** (`src/pillars/astrology/ui/astrology_hub.py`)
 *   **Architectural Role**: View (The Gateway)
 *   **The Purpose**: The single entry point for the Magus to access the Star Tools.
 *   **Key Logic**:
@@ -78,7 +78,7 @@ The **Astrology Engine** is the **Keeper of Time**. Its sovereign duty is to cal
 *   **Signal Flow**: Emits nothing; calls `WindowManager.open_window`.
 *   **Dependencies**: `shared.ui.WindowManager`.
 
-### **[natal_chart_window.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/astrology/ui/natal_chart_window.py)**
+### **natal_chart_window.py** (`src/pillars/astrology/ui/natal_chart_window.py`)
 *   **Architectural Role**: View (The Mirror)
 *   **The Purpose**: An interactive interface for casting charts.
 *   **Key Logic**:
@@ -88,14 +88,14 @@ The **Astrology Engine** is the **Keeper of Time**. Its sovereign duty is to cal
     *   **Emits**: `chart_saved`, `calculation_requested`.
 *   **Dependencies**: `OpenAstroService`, `ChartStorageService`.
 
-### **[planetary_positions_window.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/astrology/ui/planetary_positions_window.py)**
+### **planetary_positions_window.py** (`src/pillars/astrology/ui/planetary_positions_window.py`)
 *   **Architectural Role**: View (The Ephemeris)
 *   **The Purpose**: A raw data viewer that displays the exact zodiacal degrees of the planets.
 *   **Key Logic**:
     *   `_generate_ephemeris`: Loop over a date range, calling calculation service for each day, and populating the `QTableWidget`.
 *   **Dependencies**: `utils.conversions.to_zodiacal_string`.
 
-### **[venus_rose_window.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/astrology/ui/venus_rose_window.py)**
+### **venus_rose_window.py** (`src/pillars/astrology/ui/venus_rose_window.py`)
 *   **Architectural Role**: View (The Dance)
 *   **The Purpose**: A generative art visualization demonstrating the 13:8 orbital resonance between Earth and Venus.
 *   **Key Logic**:
@@ -104,7 +104,7 @@ The **Astrology Engine** is the **Keeper of Time**. Its sovereign duty is to cal
     *   **Drift Calculation**: "Real Physics" mode applies the 1.5° drift per 8-year cycle.
 *   **Signal Flow**: Internal animation loop (`QTimer`).
 
-### **[neo_aubrey_window.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/astrology/ui/neo_aubrey_window.py)**
+### **neo_aubrey_window.py** (`src/pillars/astrology/ui/neo_aubrey_window.py`)
 *   **Architectural Role**: View (The Neolithic Computer)
 *   **The Purpose**: Simulates the Aubrey Holes at Stonehenge for Eclipse prediction.
 *   **Key Logic**:
@@ -112,7 +112,7 @@ The **Astrology Engine** is the **Keeper of Time**. Its sovereign duty is to cal
     *   **Aubrey Ring**: 56 holes tracking the Lunar Nodes.
 *   **Dependencies**: `QGraphicsScene`.
 
-### **[current_transit_window.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/astrology/ui/current_transit_window.py)**
+### **current_transit_window.py** (`src/pillars/astrology/ui/current_transit_window.py`)
 *   **Architectural Role**: View (The Watcher)
 *   **The Purpose**: Displays the current real-time position of the planets (The "Now").
 *   **Key Logic**:
@@ -121,14 +121,14 @@ The **Astrology Engine** is the **Keeper of Time**. Its sovereign duty is to cal
 
 ## Data Structures (Models)
 
-### **[chart_record.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/astrology/models/chart_record.py)**
+### **chart_record.py** (`src/pillars/astrology/models/chart_record.py`)
 *   **Architectural Role**: Domain Model (The Entity)
 *   **The Purpose**: The SQLAlchemy definition of a Chart.
 *   **Key Logic**: Maps python attributes to the `charts` table.
 
 ## Infrastructure (Repositories)
 
-### **[chart_repository.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/astrology/repositories/chart_repository.py)**
+### **chart_repository.py** (`src/pillars/astrology/repositories/chart_repository.py`)
 *   **Architectural Role**: Persistence Layer
 *   **The Purpose**: Handles the raw SQL interactions for Charts.
 *   **Key Logic**:

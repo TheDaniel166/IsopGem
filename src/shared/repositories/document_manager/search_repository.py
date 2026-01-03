@@ -1,4 +1,5 @@
 """Whoosh-based repository for searching documents."""
+import logging
 import os
 from pathlib import Path
 from typing import List, Optional, Dict
@@ -11,6 +12,8 @@ from whoosh.query import Term
 from whoosh.analysis import StemmingAnalyzer
 
 from shared.models.document_manager.document import Document
+
+logger = logging.getLogger(__name__)
 
 class DocumentSearchRepository:
     """Repository for managing document search index using Whoosh."""
@@ -55,7 +58,11 @@ class DocumentSearchRepository:
                 current_fields = set(self.ix.schema.names())
                 target_fields = set(self.schema.names())
                 if current_fields != target_fields:
-                    print(f"Schema mismatch detected. Recreating index. Old: {current_fields}, New: {target_fields}")
+                    logger.warning(
+                        "Schema mismatch detected. Recreating index. Old: %s, New: %s",
+                        current_fields,
+                        target_fields,
+                    )
                     self.ix = index.create_in(str(self.index_dir), self.schema)
             except Exception:
                 # Schema mismatch or corruption, recreate

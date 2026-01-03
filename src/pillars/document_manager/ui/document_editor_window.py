@@ -2,6 +2,7 @@
 Document Editor Window - The Scribe's Sanctum.
 Main window for rich text document editing with file I/O, printing, and search capabilities.
 """
+import logging
 import os
 from typing import Optional, Any
 from pathlib import Path
@@ -16,6 +17,8 @@ from PyQt6.QtPrintSupport import QPrinter
 from .rich_text_editor import RichTextEditor
 from pillars.document_manager.services.document_service import document_service_context
 from pillars.document_manager.models.document import Document
+
+logger = logging.getLogger(__name__)
 
 class DocumentEditorWindow(QMainWindow):
     """Window for editing documents using the RichTextEditor."""
@@ -207,7 +210,7 @@ class DocumentEditorWindow(QMainWindow):
             with document_service_context() as service:
                 return service.get_image(image_id)
         except Exception as e:
-            print(f"Error fetching image resource {image_id}: {e}")
+            logger.exception("Error fetching image resource %s", image_id)
             return None
 
     def _show_wiki_link_selector(self) -> None:
@@ -216,7 +219,8 @@ class DocumentEditorWindow(QMainWindow):
             with document_service_context() as service:
                 docs = service.get_all_documents_metadata()
         except Exception as e:
-            print(f"Error fetching docs: {e}")
+            logger.exception("Error fetching docs")
+            QMessageBox.warning(self, "Load Documents Failed", str(e))
             return
 
         # Create a simple selection dialog

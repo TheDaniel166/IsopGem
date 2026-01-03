@@ -68,7 +68,7 @@ class AstrologyPreferences:
         data["default_location"] = asdict(location)
         self._write(data)
 
-    def load_favorites(self) -> list:
+    def load_favorites(self) -> list[DefaultLocation]:
         """
         Load favorite locations from preferences.
         
@@ -77,7 +77,7 @@ class AstrologyPreferences:
         """
         data = self._read()
         favorites_data = data.get("favorites", [])
-        favorites = []
+        favorites: list[DefaultLocation] = []
         for item in favorites_data:
             try:
                 favorites.append(DefaultLocation(**item))

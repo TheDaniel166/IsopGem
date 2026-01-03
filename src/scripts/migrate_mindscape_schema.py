@@ -1,7 +1,10 @@
+import logging
 import sqlite3
 import os
 
 DB_PATH = "data/isopgem.db"
+
+logger = logging.getLogger(__name__)
 
 def migrate_mindscape():
     """
@@ -9,10 +12,10 @@ def migrate_mindscape():
     
     """
     if not os.path.exists(DB_PATH):
-        print(f"Database not found at {DB_PATH}")
+        logger.error("Database not found at %s", DB_PATH)
         return
 
-    print(f"Migrating Mindscape Schema in {DB_PATH}...")
+    logger.info("Migrating Mindscape Schema in %s...", DB_PATH)
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
@@ -43,14 +46,14 @@ def migrate_mindscape():
         
         """
         if not column_exists(table, col):
-            print(f"Adding {col} to {table}...")
+            logger.info("Adding %s to %s...", col, table)
             try:
                 cursor.execute(f"ALTER TABLE {table} ADD COLUMN {col} {type_def}")
-                print(f"  Success: Added {col}")
+                logger.info("  Success: Added %s", col)
             except Exception as e:
-                print(f"  Error adding {col}: {e}")
+                logger.exception("  Error adding %s", col)
         else:
-            print(f"Skipping {col} (already exists in {table})")
+            logger.info("Skipping %s (already exists in %s)", col, table)
 
     # MindNodes Migration
     add_column("mind_nodes", "content", "TEXT")
@@ -64,7 +67,8 @@ def migrate_mindscape():
 
     conn.commit()
     conn.close()
-    print("Migration Complete.")
+    logger.info("Migration Complete.")
 
 if __name__ == "__main__":
+	logging.basicConfig(level=logging.INFO, format="%(message)s")
     migrate_mindscape()

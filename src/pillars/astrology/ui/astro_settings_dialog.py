@@ -1,11 +1,11 @@
 """Astrology Settings Dialog - Configuration for chart calculation options."""
 from PyQt6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QComboBox,
-    QPushButton, QFormLayout, QGroupBox, QFrame
+    QWidget, QDialog, QVBoxLayout, QHBoxLayout, QLabel, QComboBox,
+    QPushButton, QFormLayout, QGroupBox
 )
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtGui import QFont
-from typing import Dict, Any
+from typing import Any
 
 from shared.ui.theme import COLORS
 
@@ -49,7 +49,11 @@ class AstroSettingsDialog(QDialog):
         ("Porphyry", "O"),
     ]
     
-    def __init__(self, current_settings: Dict[str, Any] = None, parent=None):
+    def __init__(
+        self,
+        current_settings: dict[str, Any] | None = None,
+        parent: QWidget | None = None,
+    ):
         """
         Initialize the settings dialog.
         
@@ -62,7 +66,7 @@ class AstroSettingsDialog(QDialog):
         self.setMinimumWidth(400)
         self.setModal(True)
         
-        self._current_settings = current_settings or {}
+        self._current_settings: dict[str, Any] = current_settings or {}
         self._setup_ui()
         self._load_current_settings()
         self._connect_signals()
@@ -242,7 +246,7 @@ class AstroSettingsDialog(QDialog):
         self.settings_changed.emit(settings)
         self.accept()
     
-    def get_settings(self) -> Dict[str, Any]:
+    def get_settings(self) -> dict[str, Any]:
         """Return the currently selected settings."""
         return {
             "astrocfg": {

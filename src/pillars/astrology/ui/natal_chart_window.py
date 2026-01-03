@@ -1,6 +1,7 @@
 """Interactive UI for generating natal charts through OpenAstro2."""
 from __future__ import annotations
 
+import logging
 import json
 import math
 import os
@@ -45,6 +46,8 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+
+logger = logging.getLogger(__name__)
 
 from ..models import AstrologyEvent, ChartRequest, ChartResult, GeoLocation
 from ..models.chart_models import PlanetPosition, HousePosition
@@ -509,7 +512,7 @@ class NatalChartWindow(QMainWindow):
              if switch_tab:
                  QMessageBox.critical(self, "Interpretation Error", str(e))
              else:
-                 print(f"Auto-interpretation failed: {e}")
+                 logger.exception("Auto-interpretation failed")
         finally:
             if switch_tab:
                 QApplication.restoreOverrideCursor()

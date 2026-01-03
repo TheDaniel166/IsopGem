@@ -7,11 +7,14 @@ Provides lookup methods for Conrune pairs by:
 - Zodiacal position
 """
 import csv
+import logging
 import os
 from typing import Dict, List, Optional
 from pathlib import Path
 
 from shared.models.time.thelemic_calendar_models import ConrunePair
+
+logger = logging.getLogger(__name__)
 
 
 class ThelemicCalendarService:
@@ -54,7 +57,7 @@ class ThelemicCalendarService:
         csv_path = Path(csv_path)
         
         if not csv_path.exists():
-            print(f"[WARNING] Thelemic Calendar not found: {csv_path}")
+            logger.warning("Thelemic Calendar not found: %s", csv_path)
             return False
         
         try:
@@ -92,7 +95,7 @@ class ThelemicCalendarService:
             return True
             
         except Exception as e:
-            print(f"[ERROR] Failed to load Thelemic Calendar: {e}")
+            logger.exception("Failed to load Thelemic Calendar")
             return False
     
     def ensure_loaded(self) -> None:

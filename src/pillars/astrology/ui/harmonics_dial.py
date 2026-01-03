@@ -5,7 +5,7 @@ import math
 from typing import List, Optional
 
 from PyQt6.QtCore import Qt, QRectF, QPointF
-from PyQt6.QtGui import QPainter, QColor, QPen, QBrush, QFont, QRadialGradient
+from PyQt6.QtGui import QPainter, QColor, QPen, QBrush, QFont, QRadialGradient, QMouseEvent, QPaintEvent
 from PyQt6.QtWidgets import QWidget, QToolTip
 
 
@@ -67,9 +67,12 @@ class HarmonicsDial(QWidget):
         self._harmonic_number = harmonic
         self.update()
 
-    def mouseMoveEvent(self, event) -> None:
+    def mouseMoveEvent(self, a0: QMouseEvent | None) -> None:
         """Handle mouse move for tooltips."""
-        pos = event.position()
+        if a0 is None:
+            return
+
+        pos: QPointF = a0.position()
         
         for rect, name, degree in self._planet_hitboxes:
             if rect.contains(pos):
@@ -78,7 +81,7 @@ class HarmonicsDial(QWidget):
                 sign_deg = degree % 30
                 sign = self.ZODIAC_SIGNS[sign_idx]
                 tooltip = f"{name}: {sign_deg:.1f}° {sign}"
-                QToolTip.showText(event.globalPosition().toPoint(), tooltip, self)
+                QToolTip.showText(a0.globalPosition().toPoint(), tooltip, self)
                 self._hovered_planet = (name, degree)
                 self.update()
                 return
@@ -87,12 +90,12 @@ class HarmonicsDial(QWidget):
         QToolTip.hideText()
         self.update()
 
-    def paintEvent(self, event) -> None:
+    def paintEvent(self, a0: QPaintEvent | None) -> None:
         """
         Paintevent logic.
         
         Args:
-            event: Description of event.
+            a0: Qt paint event.
         
         Returns:
             Result of paintEvent operation.

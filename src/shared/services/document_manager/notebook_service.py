@@ -310,7 +310,15 @@ class NotebookService:
                     else:
                         # Match likely in title, just show start of content
                         snippet = doc.content[:80] + "..." if len(doc.content) > 80 else doc.content
-                except:
+                except (AttributeError, TypeError) as e:
+                    logger.debug(
+                        "Notebook search snippet fallback (%s): %s",
+                        type(e).__name__,
+                        e,
+                    )
+                    snippet = "..."
+                except Exception:
+                    logger.exception("Unexpected error generating notebook search snippet")
                     snippet = "..."
             
             search_results.append(SearchResult(

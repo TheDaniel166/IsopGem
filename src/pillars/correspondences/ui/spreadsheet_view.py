@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QAbstractTableModel, QModelIndex, pyqtSignal, QEvent, QItemSelectionModel, QPoint, QRect, QSize, QTimer
 from PyQt6.QtGui import QTextDocument, QAbstractTextDocumentLayout, QColor, QAction, QUndoStack, QPen, QFont, QKeyEvent, QKeySequence, QBrush, QTextOption
 import re
+import logging
 
 from shared.ui.rich_text_editor import RichTextEditor
 
@@ -23,6 +24,8 @@ from pillars.correspondences.services.undo_commands import (
 )
 
 from pillars.correspondences.services.conditional_formatting import ConditionalManager
+
+logger = logging.getLogger(__name__)
 
 # Custom Roles
 BorderRole = Qt.ItemDataRole.UserRole + 1
@@ -54,8 +57,13 @@ class SpreadsheetModel(QAbstractTableModel):
             try:
                 r, c = map(int, k.split(","))
                 self._styles[(r, c)] = v
-            except:
-                pass
+            except (TypeError, ValueError) as e:
+                logger.debug(
+                    "SpreadsheetModel: skipping invalid style key %r (%s): %s",
+                    k,
+                    type(e).__name__,
+                    e,
+                )
 
         # Run Sanitization to migrate old HTML content to Plain Text
         self._sanitize_data()
@@ -489,7 +497,12 @@ class SpreadsheetModel(QAbstractTableModel):
                 s_val = str(val).strip()
                 f_val = float(s_val)
                 return (0, f_val) # (Type Priority 0=Num, Value)
-            except:
+            except (TypeError, ValueError) as e:
+                logger.debug(
+                    "SpreadsheetModel: numeric sort parse fallback (%s): %s",
+                    type(e).__name__,
+                    e,
+                )
                 # String
                 return (1, str(val).lower()) # (Type Priority 1=Str, Value)
 

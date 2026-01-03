@@ -2,6 +2,7 @@
 Geometry Calculator Window - The Orchestrator.
 Main window combining input, viewport, and controls panes for shape calculations.
 """
+import logging
 from typing import Optional
 from PyQt6.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QSplitter
 from PyQt6.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QSplitter, QApplication
@@ -16,6 +17,9 @@ from .panes.viewport_pane import ViewportPane
 from .panes.controls_pane import ControlsPane
 from shared.ui import WindowManager
 from ....tq.ui.quadset_analysis_window import QuadsetAnalysisWindow
+
+
+logger = logging.getLogger(__name__)
 
 
 
@@ -132,9 +136,9 @@ class GeometryCalculatorWindow(QMainWindow):
         clipboard = QApplication.clipboard()
         clipboard.setPixmap(pixmap)
         
-        # Temporary feedback (could be a toast, for now just console log or flashing button)
-        # TODO: Add toast notification system
-        print("Snapshot copied to clipboard")
+        # User-facing feedback without console noise
+        self.statusBar().showMessage("Snapshot copied to clipboard", 2000)
+        logger.debug("GeometryCalculator: snapshot copied to clipboard")
         
     def _handle_copy_measurements(self):
         """Copy current shape properties to clipboard."""
@@ -147,7 +151,8 @@ class GeometryCalculatorWindow(QMainWindow):
         text = "\n".join(lines)
         clipboard = QApplication.clipboard()
         clipboard.setText(text)
-        print("Measurements copied to clipboard")
+        self.statusBar().showMessage("Measurements copied to clipboard", 2000)
+        logger.debug("GeometryCalculator: measurements copied to clipboard")
         
     def _set_input_visible(self, visible: bool):
         """Toggle input pane visibility."""
@@ -171,10 +176,12 @@ class GeometryCalculatorWindow(QMainWindow):
     def _handle_quadset_request(self, value: float):
         """Open Quadset Analysis window with the value."""
         if not self.window_manager:
-            print("WindowManager not available for integration.")
+            self.statusBar().showMessage("Integration unavailable (WindowManager missing)", 4000)
+            logger.warning("GeometryCalculator: WindowManager missing; cannot open quadset analysis")
             return
 
-        print(f"Opening Quadset Analysis for value: {value}")
+        logger.info("GeometryCalculator: opening quadset analysis for value=%s", value)
+        self.statusBar().showMessage(f"Opening Quadset Analysis for value: {int(value)}", 2000)
         
         # Open the window
         # We use a unique ID per value? Or shared?

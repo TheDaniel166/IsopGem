@@ -6,14 +6,16 @@ Scans ui/ directories for imports of forbidden libraries.
 UI files must remain "hollow" - no heavy logic imports.
 
 Usage:
-    python3 scripts/rite_of_contamination.py
+    python3 scripts/covenant_scripts/rite_of_contamination.py
 """
 import ast
 import sys
 from pathlib import Path
 from typing import List, Tuple, Set
 
-PROJECT_ROOT = Path(__file__).parent.parent
+# This file lives at: <repo>/scripts/covenant_scripts/rite_of_contamination.py
+# so repo root is two levels up from this file's parent.
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 SRC_DIR = PROJECT_ROOT / "src"
 
 # Forbidden imports in UI files

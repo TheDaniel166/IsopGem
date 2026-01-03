@@ -1,4 +1,5 @@
 """Document Library UI."""
+from datetime import datetime
 from pathlib import Path
 import time
 import logging
@@ -506,10 +507,12 @@ class DocumentLibrary(QMainWindow):
         # This gives a better default view (newest first)
         try:
             docs.sort(key=lambda d: d.updated_at or datetime.min, reverse=True)
-        except:
-            pass # Fallback if no updated_at
-
-        from datetime import datetime
+        except (AttributeError, TypeError) as e:
+            logger.debug(
+                "DocumentLibrary: sort fallback (%s): %s",
+                type(e).__name__,
+                e,
+            )
         
         for idx, doc in enumerate(docs, start=1):
             row = self.table.rowCount()

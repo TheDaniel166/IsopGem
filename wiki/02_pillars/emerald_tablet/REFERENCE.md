@@ -76,7 +76,7 @@ This manifest dissects the "Spreadsheet of the Stars," mapping the logic of corr
 
 **Consumers (Who Needs It):**
 * `src/pillars/correspondences/services/table_service.py`
-* `src/pillars/correspondences/repositories/table_repository.py`
+* `src/pillars/correspondences/repos/table_repository.py`
 
 **Key Interactions:**
 * **Downstream:** Serves as the persistence skeleton for SQL transactions.

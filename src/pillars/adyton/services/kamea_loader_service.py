@@ -3,9 +3,12 @@ Kamea Loader Service - The Grid Parser.
 Loads the 27x27 Kamea of Maut from CSV, mapping coordinates to Ditrunes, Octants, and Enochian Tablets.
 """
 import csv
+import logging
 import os
 from typing import List, Dict, Tuple
 from pillars.adyton.models.kamea_cell import KameaCell
+
+logger = logging.getLogger(__name__)
 
 class KameaLoaderService:
     """
@@ -176,7 +179,7 @@ class KameaLoaderService:
         mapping = {}
         
         if not os.path.exists(path):
-            print(f"Warning: Wall map file not found at {path}")
+            logger.warning("Wall map file not found at %s", path)
             return mapping
 
         try:
@@ -211,6 +214,6 @@ class KameaLoaderService:
                                 continue
                                 
         except Exception as e:
-            print(f"Error loading zodiacal_heptagon.csv: {e}")
+            logger.exception("Error loading zodiacal_heptagon.csv")
             
         return mapping

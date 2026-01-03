@@ -4,12 +4,15 @@ Manages JSON file persistence for geometry calculation history and notes.
 """
 import json
 import os
+import logging
 from typing import List, Dict, Optional
 from datetime import datetime
 
 from .base_shape import GeometricShape
 
 HISTORY_FILE = os.path.expanduser("~/.isopgem/geometry_history.json")
+
+logger = logging.getLogger(__name__)
 
 class PersistenceService:
     """
@@ -86,8 +89,12 @@ class PersistenceService:
             if updated:
                 with open(HISTORY_FILE, 'w') as f:
                     json.dump(history, f, indent=2)
-        except Exception as e:
-            print(f"Failed to update note: {e}")
+        except (OSError, json.JSONDecodeError, TypeError) as e:
+            logger.warning(
+                "Failed to update geometry note (%s): %s",
+                type(e).__name__,
+                e,
+            )
 
     @staticmethod
     def delete_calculation(timestamp: str):
@@ -104,8 +111,12 @@ class PersistenceService:
                 with open(HISTORY_FILE, 'w') as f:
                     json.dump(new_history, f, indent=2)
                     
-        except Exception as e:
-            print(f"Failed to delete history item: {e}")
+        except (OSError, json.JSONDecodeError, TypeError) as e:
+            logger.warning(
+                "Failed to delete geometry history item (%s): %s",
+                type(e).__name__,
+                e,
+            )
 
     @staticmethod
     def get_recent_calculations() -> List[Dict]:
@@ -114,7 +125,12 @@ class PersistenceService:
         try:
             with open(HISTORY_FILE, 'r') as f:
                 return json.load(f)
-        except:
+        except (FileNotFoundError, json.JSONDecodeError, OSError) as e:
+            logger.warning(
+                "Failed to read geometry history (%s): %s",
+                type(e).__name__,
+                e,
+            )
             return []
 
     @staticmethod

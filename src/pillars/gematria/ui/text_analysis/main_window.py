@@ -3,6 +3,8 @@
 Exegesis Main Window - The Scriptural Inquiry.
 Main window for text analysis with multi-document tabs, search, and verse parsing.
 """
+import logging
+
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QComboBox,
     QPushButton, QLabel, QCheckBox, QMessageBox, QTabWidget,
@@ -26,6 +28,8 @@ from .document_tab import DocumentTab
 from .stats_panel import StatsPanel
 from .smart_filter_dialog import SmartFilterDialog
 from ..holy_book_teacher_window import HolyBookTeacherWindow
+
+logger = logging.getLogger(__name__)
 
 
 
@@ -91,7 +95,7 @@ class ExegesisWindow(QMainWindow):
         self.setCentralWidget(central)
         
         if bg_path:
-            print(f"[DEBUG] Found background pattern at: {bg_path}")
+            logger.debug("Found background pattern at: %s", bg_path)
             # Use absolute path for CSS
             abs_path = bg_path.absolute().as_posix()
             central.setStyleSheet(f"""
@@ -102,7 +106,7 @@ class ExegesisWindow(QMainWindow):
                 }}
             """)
         else:
-             print("[ERROR] Background pattern not found. Using fallback color.")
+             logger.warning("Background pattern not found; using fallback color")
              central.setStyleSheet("QWidget#CentralContainer { background-color: #fdfbf7; }")
         
         # Main Layout with Padding for Floating Panels

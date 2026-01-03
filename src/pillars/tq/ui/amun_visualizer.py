@@ -6,6 +6,9 @@ from PyQt6.QtWidgets import QWidget
 from PyQt6.QtCore import Qt, QTimer, QRectF, QPointF
 from PyQt6.QtGui import QPainter, QColor, QPen, QBrush, QRadialGradient, QPainterPath
 import math
+import logging
+
+logger = logging.getLogger(__name__)
 
 class AmunVisualizer(QWidget):
     """
@@ -62,9 +65,15 @@ class AmunVisualizer(QWidget):
         red_key = params.get('red_val', '00') 
         # Convert base-3 string to int? '00'=0, '01'=1... '22'=8
         try:
-             val = int(red_key, 3)
-        except:
-             val = 0
+            val = int(red_key, 3)
+        except (TypeError, ValueError) as e:
+            logger.debug(
+                "AmunVisualizer: invalid red_val %r (%s): %s",
+                red_key,
+                type(e).__name__,
+                e,
+            )
+            val = 0
         self.sides = val + 3
         
         # Layers (Density - Blue Channel)

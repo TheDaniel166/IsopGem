@@ -1,6 +1,9 @@
 from PyQt6.QtWidgets import QMessageBox
 from PyQt6.QtCore import Qt
+import logging
 from ...services.formula_helper import cell_address
+
+logger = logging.getLogger(__name__)
 
 try:
     from ..find_replace_dialog import FindReplaceDialog
@@ -71,8 +74,12 @@ class SearchHandler:
             try:
                 start_idx = (start_from.row() * cols) + start_from.column()
                 all_indexes = all_indexes[start_idx+1:] + all_indexes[:start_idx+1]
-            except:
-                pass
+            except (AttributeError, TypeError, ValueError) as e:
+                logger.debug(
+                    "SearchHandler: unable to compute start index (%s): %s",
+                    type(e).__name__,
+                    e,
+                )
                  
         for idx in all_indexes:
             val = self.model.data(idx, Qt.ItemDataRole.DisplayRole)

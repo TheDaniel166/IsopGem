@@ -1,9 +1,12 @@
 """File parsing utilities for document import."""
+import logging
 import os
 from pathlib import Path
 import base64
 from html.parser import HTMLParser
 import io
+
+logger = logging.getLogger(__name__)
 
 # Optional imports for file support
 try:
@@ -131,7 +134,7 @@ class DocumentParser:
                         b64 = base64.b64encode(image_data).decode('utf-8')
                         image_htmls.append(f'<img src="data:{mime};base64,{b64}" />')
                     except Exception as e:
-                        print(f"Failed to extract image: {e}")
+                        logger.debug("Failed to extract image from DOCX run", exc_info=True)
         return image_htmls
 
     @staticmethod
@@ -588,7 +591,7 @@ class DocumentParser:
             html = "\n".join(html_parts)
             
         except Exception as e:
-            print(f"Custom DOCX parsing failed, falling back to mammoth: {e}")
+            logger.exception("Custom DOCX parsing failed; falling back")
             if mammoth:
                 if hasattr(source, 'read'):
                     source.seek(0)
@@ -623,7 +626,10 @@ class DocumentParser:
                 # SAFEGUARD: Skip pdf2docx for large files (>10MB) to prevent hanging/OOM
                 file_size = os.path.getsize(path)
                 if file_size > 10 * 1024 * 1024: # 10MB
-                    print(f"PDF > 10MB ({file_size} bytes), skipping high-fidelity conversion. Using fallback.")
+                    logger.info(
+                        "PDF > 10MB (%s bytes), skipping high-fidelity conversion. Using fallback.",
+                        file_size,
+                    )
                     raise ValueError("File too large for expensive conversion")
 
                 # OPTIMIZATION: Use in-memory ByteIO stream instead of temp file
@@ -646,7 +652,7 @@ class DocumentParser:
                 return text, html, 'pdf', metadata
                 
             except Exception as e:
-                print(f"pdf2docx stream conversion failed, falling back to fitz: {e}")
+                logger.exception("pdf2docx stream conversion failed; falling back")
                 # Fall through to fitz/pypdf fallback
 
         # Use PyMuPDF (fitz) for HTML with images
@@ -673,7 +679,7 @@ class DocumentParser:
                 doc.close()
             except Exception as e:
                 # Handle encrypted pdfs etc
-                print(f"PyMuPDF failed: {e}")
+                logger.exception("PyMuPDF failed")
                 raise ValueError(f"Failed to parse PDF: {e}")
                 
         elif pypdf:

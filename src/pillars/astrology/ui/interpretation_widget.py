@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QTextEdit, QLabel
-from PyQt6.QtCore import Qt
 
 from pillars.astrology.models.interpretation_models import InterpretationReport
 from shared.ui.theme import COLORS
@@ -22,12 +21,12 @@ class InterpretationWidget(QWidget):
         self._init_ui()
 
     def _init_ui(self) -> None:
-        self.layout = QVBoxLayout(self)
-        self.layout.setContentsMargins(10, 10, 10, 10)
+        self._layout = QVBoxLayout(self)
+        self._layout.setContentsMargins(10, 10, 10, 10)
         
         self.header_label = QLabel("Interpretation")
         self.header_label.setStyleSheet("font-size: 18px; font-weight: bold;")
-        self.layout.addWidget(self.header_label)
+        self._layout.addWidget(self.header_label)
 
         self.text_view = QTextEdit()
         self.text_view.setReadOnly(True)
@@ -43,7 +42,7 @@ class InterpretationWidget(QWidget):
         """)
         # Custom Placeholder
         self.text_view.setPlaceholderText("Generate a chart to see the interpretation here.")
-        self.layout.addWidget(self.text_view)
+        self._layout.addWidget(self.text_view)
 
     def display_report(self, report: InterpretationReport) -> None:
         """Render the report into the text view."""

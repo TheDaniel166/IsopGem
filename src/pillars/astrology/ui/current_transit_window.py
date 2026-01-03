@@ -42,6 +42,8 @@ from ..services import (
     ChartComputationError,
     LocationLookupError,
     LocationLookupService,
+    LocationResult,
+    OpenAstroNotAvailableError,
     OpenAstroService,
 )
 from ..utils import AstrologyPreferences, DefaultLocation
@@ -207,28 +209,6 @@ class CurrentTransitWindow(QMainWindow):
         self.planets_table.setHorizontalHeaderLabels(["Body", "Position"])
         layout.addWidget(self.planets_table)
         return group
-    
-    # ... existing code ...
-
-    def _render_planets(self, result: ChartResult) -> None:
-        self.planets_table.setRowCount(0)
-        for position in result.planet_positions:
-            row = self.planets_table.rowCount()
-            self.planets_table.insertRow(row)
-            self.planets_table.setItem(row, 0, QTableWidgetItem(position.name))
-            
-            formatted_pos = to_zodiacal_string(position.degree)
-            self.planets_table.setItem(row, 1, QTableWidgetItem(formatted_pos))
-
-    def _render_houses(self, result: ChartResult) -> None:
-        self.houses_table.setRowCount(0)
-        for house in result.house_positions:
-            row = self.houses_table.rowCount()
-            self.houses_table.insertRow(row)
-            self.houses_table.setItem(row, 0, QTableWidgetItem(str(house.number)))
-            
-            formatted_pos = to_zodiacal_string(house.degree)
-            self.houses_table.setItem(row, 1, QTableWidgetItem(formatted_pos))
 
     def _build_misc_group(self) -> QWidget:
         container = QWidget()
@@ -372,10 +352,12 @@ class CurrentTransitWindow(QMainWindow):
             )
         )
 
-    def _select_result(self, results):
+    def _select_result(self, results: list[LocationResult]) -> LocationResult | None:
         if len(results) == 1:
             return results[0]
-        options = [f"{entry.label} ({entry.latitude:.2f}, {entry.longitude:.2f})" for entry in results]
+        options: list[str] = [
+            f"{entry.label} ({entry.latitude:.2f}, {entry.longitude:.2f})" for entry in results
+        ]
         choice, accepted = QInputDialog.getItem(
             self,
             "Select Location",

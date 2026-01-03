@@ -52,8 +52,8 @@ class WindowManager:
         window_type: str,
         window_class: Type[QWidget], 
         allow_multiple: bool = True,
-        *args, 
-        **kwargs
+        *args: object,
+        **kwargs: object,
     ) -> QWidget:
         """
         Open a tool window, allowing multiple instances if specified.

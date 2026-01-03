@@ -3,10 +3,13 @@ Conditional Formatting - The Rule Engine.
 Applies conditional cell styles based on value comparisons (GT, LT, EQ, CONTAINS).
 """
 
+import logging
 from dataclasses import dataclass
 from typing import List, Optional, Dict, Any
 from PyQt6.QtCore import QRect
 from PyQt6.QtGui import QColor
+
+logger = logging.getLogger(__name__)
 
 @dataclass
 class ConditionalRule:
@@ -85,7 +88,8 @@ class ConditionalManager:
             try:
                 v_num = float(value)
                 t_num = float(rule.value)
-            except: pass
+            except (TypeError, ValueError):
+                pass
 
             rt = rule.rule_type.upper()
             
@@ -101,6 +105,11 @@ class ConditionalManager:
             elif rt == "CONTAINS":
                 return str(rule.value).lower() in str(value).lower()
                 
-        except:
+        except (AttributeError, TypeError, ValueError) as e:
+            logger.debug(
+                "Conditional formatting condition failed (%s): %s",
+                type(e).__name__,
+                e,
+            )
             return False
         return False

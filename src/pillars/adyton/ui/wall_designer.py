@@ -5,6 +5,7 @@ Visualizes the 13×8 planetary wall grids with asterism lines, Grimoire data, an
 import sys
 import os
 import json
+import logging
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, 
     QPushButton, QLabel, QFrame, QFileDialog, QMessageBox,
@@ -12,6 +13,8 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt, QSize, pyqtSignal, QPoint
 from PyQt6.QtGui import QColor, QPainter, QPixmap, QAction
+
+logger = logging.getLogger(__name__)
 
 class ConstellationGrid(QFrame):
     """
@@ -336,7 +339,11 @@ class WallDesignerWindow(QMainWindow):
                 with open(json_path, 'r', encoding='utf-8') as f:
                     return json.load(f)
             except Exception as e:
-                print(f"[WARN] Could not load mythos data: {e}")
+                logger.warning(
+                    "WallDesigner: could not load mythos data (%s): %s",
+                    type(e).__name__,
+                    e,
+                )
         return {}
 
     def load_lattices(self):
@@ -347,16 +354,18 @@ class WallDesignerWindow(QMainWindow):
         import json
         import os
         path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "mods", "data", "planetary_lattices.json"))
-        print(f"[DEBUG] Loading lattices from: {path}")
+        logger.debug("WallDesigner: loading lattices from %s", path)
         if os.path.exists(path):
             try:
                 with open(path, 'r') as f:
                     self.planetary_lattices = json.load(f)
-                print(f"[DEBUG] Loaded {len(self.planetary_lattices)} planetary lattices.")
+                logger.info("WallDesigner: loaded %s planetary lattices", len(self.planetary_lattices))
             except Exception as e:
-                print(f"[ERROR] Failed to load JSON: {e}")
+                logger.exception("WallDesigner: failed to load planetary lattices JSON")
+                self.statusBar().showMessage("Failed to load planetary lattices", 6000)
         else:
-            print("[ERROR] Planetary lattices file not found!")
+            logger.warning("WallDesigner: planetary lattices file not found at %s", path)
+            self.statusBar().showMessage("Planetary lattices file not found", 6000)
 
     def init_ui(self):
         """
@@ -562,7 +571,10 @@ class WallDesignerWindow(QMainWindow):
         # src/pillars/adyton/ui/wall_designer.py -> ... -> isopgem/Docs
         # 1: ui -> adyton, 2: adyton -> pillars, 3: pillars -> src, 4: src -> isopgem
         path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "Docs", "adyton_walls", fname))
-        print(f"[DEBUG] Loading wall values from: {path}")
+        logger.debug("WallDesigner: loading wall values from %s", path)
+        if not os.path.exists(path):
+            logger.warning("WallDesigner: wall values file not found at %s", path)
+            self.statusBar().showMessage("Wall values file not found", 6000)
         
         self.current_wall_values = []
         if os.path.exists(path):
@@ -574,7 +586,12 @@ class WallDesignerWindow(QMainWindow):
                         int_row = [int(x) for x in row if x.strip()]
                         self.current_wall_values.append(int_row)
             except Exception as e:
-                print(f"Error loading wall values: {e}")
+                logger.warning(
+                    "WallDesigner: error loading wall values (%s): %s",
+                    type(e).__name__,
+                    e,
+                )
+                self.statusBar().showMessage("Error loading wall values", 6000)
         
         # Verify 8x13
         # Assign to cells? Or just keep in memory lookup?
@@ -601,7 +618,14 @@ class WallDesignerWindow(QMainWindow):
         # Identify Group
         try:
             gid = self.current_wall_lattice[row][col]
-        except:
+        except (IndexError, TypeError) as e:
+            logger.debug(
+                "WallDesigner: invalid lattice access at (%s,%s) (%s): %s",
+                row,
+                col,
+                type(e).__name__,
+                e,
+            )
             return
             
         # Find all cells in this group
@@ -679,7 +703,14 @@ class WallDesignerWindow(QMainWindow):
         # Identify Group
         try:
             gid = self.current_wall_lattice[row][col]
-        except:
+        except (IndexError, TypeError) as e:
+            logger.debug(
+                "WallDesigner: invalid lattice access at (%s,%s) (%s): %s",
+                row,
+                col,
+                type(e).__name__,
+                e,
+            )
             return
             
         if gid < 0:
@@ -819,8 +850,14 @@ class WallDesignerWindow(QMainWindow):
                 if grid and show:
                     try:
                         group_id = grid[r][c]
-                    except:
-                        pass
+                    except (IndexError, TypeError) as e:
+                        if not getattr(self, "_overlay_index_error_logged", False):
+                            logger.warning(
+                                "WallDesigner: grid overlay index error (%s): %s",
+                                type(e).__name__,
+                                e,
+                            )
+                            self._overlay_index_error_logged = True
                 
                 # Update cell visual
                 tint = tints[group_id % 13] if group_id >= 0 else None

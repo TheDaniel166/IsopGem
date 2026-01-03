@@ -2,22 +2,24 @@
 Neo-Aubrey Window - The Eclipse Clock Simulator.
 Interactive Stonehenge-inspired dual-ring visualizer for eclipse prediction using DE441 ephemeris.
 """
-from ..services.location_lookup import LocationLookupService, LocationLookupError, LocationResult
+from __future__ import annotations
+
+from ..services.location_lookup import LocationLookupService
 from ..utils.conversions import to_zodiacal_string
 
 import math
 from datetime import datetime, timedelta, timezone
-from typing import List, Optional
+from typing import List
 
 from PyQt6.QtWidgets import (
     QGraphicsScene, QGraphicsEllipseItem, QGraphicsItem, QGraphicsLineItem, 
     QGraphicsTextItem, QGraphicsView, QMainWindow, QWidget, QVBoxLayout, 
-    QHBoxLayout, QLabel, QPushButton, QSlider, QLineEdit, QFormLayout, 
+    QHBoxLayout, QLabel, QPushButton, QLineEdit, QFormLayout, 
     QInputDialog, QMessageBox, QApplication, QListWidget, QListWidgetItem
 )
-from PyQt6.QtCore import Qt, QTimer, QRectF, QPointF
+from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import (
-    QBrush, QColor, QFont, QPainter, QPainterPath, QPen, QWheelEvent, QPolygonF
+    QBrush, QColor, QPainter, QPen, QWheelEvent
 )
 
 # Constants
@@ -121,7 +123,8 @@ class EclipseClockScene(QGraphicsScene):
         
         # Center marker
         center = self.addEllipse(-5, -5, 10, 10, QPen(Qt.GlobalColor.gray), QBrush(Qt.GlobalColor.gray))
-        center.setZValue(-1)
+        if center is not None:
+            center.setZValue(-1)
 
     def _build_rings(self):
         # Build Saros Ring (Outer)
@@ -188,7 +191,7 @@ class ZoomableGraphicsView(QGraphicsView):
     Zoomable Graphics View class definition.
     
     """
-    def __init__(self, scene):
+    def __init__(self, scene: QGraphicsScene) -> None:
         """
           init   logic.
         
@@ -203,7 +206,7 @@ class ZoomableGraphicsView(QGraphicsView):
         self.scale(0.8, 0.8) # Initial zoom out
         self.setStyleSheet("border: none;")
 
-    def wheelEvent(self, event: QWheelEvent):
+    def wheelEvent(self, event: QWheelEvent | None) -> None:  # noqa: N802
         """
         Wheelevent logic.
         
@@ -211,18 +214,11 @@ class ZoomableGraphicsView(QGraphicsView):
             event: Description of event.
         
         """
+        if event is None:
+            return
         zoom_in = event.angleDelta().y() > 0
         factor = 1.1 if zoom_in else 0.9
         self.scale(factor, factor)
-
-
-from PyQt6.QtWidgets import (
-    QGraphicsScene, QGraphicsEllipseItem, QGraphicsItem, QGraphicsLineItem, 
-    QGraphicsTextItem, QGraphicsView, QMainWindow, QWidget, QVBoxLayout, 
-    QHBoxLayout, QLabel, QPushButton, QSlider, QLineEdit, QFormLayout
-)
-
-# ... (Previous imports and classes unchanged) ...
 
 class NeoAubreyWindow(QMainWindow):
     """
@@ -237,7 +233,7 @@ class NeoAubreyWindow(QMainWindow):
         timer: Description of timer.
     
     """
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None):
         """
           init   logic.
         
@@ -449,9 +445,9 @@ class NeoAubreyWindow(QMainWindow):
             if dt.tzinfo is None:
                 dt = dt.replace(tzinfo=timezone.utc)
 
-            sun_lon = self.ephemeris.get_geocentric_ecliptic_position("sun", dt)
-            moon_lon = self.ephemeris.get_geocentric_ecliptic_position("moon", dt)
-            node_lon = self.ephemeris.get_osculating_north_node(dt)
+            sun_lon = float(self.ephemeris.get_geocentric_ecliptic_position("sun", dt))
+            moon_lon = float(self.ephemeris.get_geocentric_ecliptic_position("moon", dt))
+            node_lon = float(self.ephemeris.get_osculating_north_node(dt))
             
             # Saros calculation (approximate day count from J2000 epoch)
             delta = dt - J2000
@@ -459,7 +455,7 @@ class NeoAubreyWindow(QMainWindow):
             saros_idx = (days / SYNODIC_MONTH) % SAROS_HOLES
             
             # Update Scene
-            s_pos, m_pos, n_pos, sn_pos = self.scene.set_markers(sun_lon, moon_lon, node_lon, saros_idx)
+            _ = self.scene.set_markers(sun_lon, moon_lon, node_lon, saros_idx)
             
             # 4. Eclipse Detection
             self._check_eclipse(sun_lon, moon_lon, node_lon, saros_idx)
@@ -513,7 +509,7 @@ class NeoAubreyWindow(QMainWindow):
                 
             if event_type:
                 # Helper to get Aubrey Stone Index (1-56)
-                def get_stone_idx(lon):
+                def get_stone_idx(lon: float) -> int:
                     # Map 0-360 -> 0-56, then +1 for 1-based index
                     """
                     Retrieve stone idx logic.
@@ -528,7 +524,6 @@ class NeoAubreyWindow(QMainWindow):
                 
                 sun_stone = get_stone_idx(sun)
                 moon_stone = get_stone_idx(moon)
-                node_stone = get_stone_idx(node)
                 saros_stone = int(saros_idx) + 1
                 
                 # Determine which node is involved
@@ -543,7 +538,7 @@ class NeoAubreyWindow(QMainWindow):
                 # Simple duplicate check - if last item has same date
                 if self.log_list.count() > 0:
                     last_item = self.log_list.item(0)
-                    if date_str in last_item.text():
+                    if last_item is not None and date_str in last_item.text():
                         return
 
                 log_msg = (

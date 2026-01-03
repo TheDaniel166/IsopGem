@@ -3,9 +3,12 @@ Cipher Repository - The Base-27 Lookup.
 Loads and provides access to the TQ cipher correspondence table from CSV data.
 """
 import csv
+import logging
 import os
 from typing import List, Optional, Dict
 from ..models.cipher_token import CipherToken
+
+logger = logging.getLogger(__name__)
 
 class CipherRepository:
     """
@@ -30,7 +33,7 @@ class CipherRepository:
         data_path = os.path.join(current_dir, "..", "data", "cipher_correspondence.csv")
         
         if not os.path.exists(data_path):
-            print(f"[WARNING] Cipher data not found at {data_path}")
+            logger.warning("Cipher data not found at %s", data_path)
             return
 
         with open(data_path, mode='r', encoding='utf-8') as f:

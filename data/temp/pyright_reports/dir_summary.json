@@ -1,0 +1,132 @@
+[
+  {
+    "path": "src/pillars/astrology/ui/venus_rose_window.py",
+    "errors": 167,
+    "warnings": 0
+  },
+  {
+    "path": "src/pillars/astrology/ui/synastry_window.py",
+    "errors": 129,
+    "warnings": 0
+  },
+  {
+    "path": "src/pillars/astrology/ui/chart_canvas.py",
+    "errors": 87,
+    "warnings": 0
+  },
+  {
+    "path": "src/pillars/astrology/ui/natal_chart_window.py",
+    "errors": 81,
+    "warnings": 0
+  },
+  {
+    "path": "src/pillars/astrology/ui/planetary_positions_window.py",
+    "errors": 61,
+    "warnings": 0
+  },
+  {
+    "path": "src/pillars/astrology/ui/chariot_differentials_window.py",
+    "errors": 50,
+    "warnings": 0
+  },
+  {
+    "path": "src/pillars/astrology/ui/chariot_canvas.py",
+    "errors": 41,
+    "warnings": 0
+  },
+  {
+    "path": "src/pillars/astrology/ui/progressions_window.py",
+    "errors": 35,
+    "warnings": 0
+  },
+  {
+    "path": "src/pillars/astrology/ui/chariot_window.py",
+    "errors": 32,
+    "warnings": 0
+  },
+  {
+    "path": "src/pillars/astrology/ui/synastry_aspects_widget.py",
+    "errors": 31,
+    "warnings": 0
+  },
+  {
+    "path": "src/pillars/astrology/ui/differential_natal_window.py",
+    "errors": 30,
+    "warnings": 0
+  },
+  {
+    "path": "src/pillars/astrology/ui/returns_window.py",
+    "errors": 27,
+    "warnings": 0
+  },
+  {
+    "path": "src/pillars/astrology/ui/neo_aubrey_window.py",
+    "errors": 27,
+    "warnings": 0
+  },
+  {
+    "path": "src/pillars/astrology/ui/synastry_midpoints_widget.py",
+    "errors": 0,
+    "warnings": 0
+  },
+  {
+    "path": "src/pillars/astrology/ui/synastry_davison_widget.py",
+    "errors": 0,
+    "warnings": 0
+  },
+  {
+    "path": "src/pillars/astrology/ui/midpoints_dial.py",
+    "errors": 0,
+    "warnings": 0
+  },
+  {
+    "path": "src/pillars/astrology/ui/location_search_dialog.py",
+    "errors": 0,
+    "warnings": 0
+  },
+  {
+    "path": "src/pillars/astrology/ui/interpretation_widget.py",
+    "errors": 0,
+    "warnings": 0
+  },
+  {
+    "path": "src/pillars/astrology/ui/harmonics_dial.py",
+    "errors": 0,
+    "warnings": 0
+  },
+  {
+    "path": "src/pillars/astrology/ui/current_transit_window.py",
+    "errors": 0,
+    "warnings": 0
+  },
+  {
+    "path": "src/pillars/astrology/ui/conversions.py",
+    "errors": 0,
+    "warnings": 0
+  },
+  {
+    "path": "src/pillars/astrology/ui/composite_chart_window.py",
+    "errors": 0,
+    "warnings": 0
+  },
+  {
+    "path": "src/pillars/astrology/ui/chart_picker_dialog.py",
+    "errors": 0,
+    "warnings": 0
+  },
+  {
+    "path": "src/pillars/astrology/ui/astrology_hub.py",
+    "errors": 0,
+    "warnings": 0
+  },
+  {
+    "path": "src/pillars/astrology/ui/astro_settings_dialog.py",
+    "errors": 0,
+    "warnings": 0
+  },
+  {
+    "path": "src/pillars/astrology/ui/advanced_analysis_panel.py",
+    "errors": 0,
+    "warnings": 0
+  }
+]

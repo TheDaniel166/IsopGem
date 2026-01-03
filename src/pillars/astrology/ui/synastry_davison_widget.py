@@ -5,10 +5,8 @@ Displays the time/space midpoint used for Davison chart calculation.
 from typing import Dict, Optional, Any
 from datetime import datetime
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QGroupBox, QFormLayout
+    QWidget, QVBoxLayout, QLabel, QGroupBox, QFormLayout
 )
-from PyQt6.QtCore import Qt
-
 
 class SynastryDavisonWidget(QWidget):
     """Widget displaying Davison time/space midpoint information."""

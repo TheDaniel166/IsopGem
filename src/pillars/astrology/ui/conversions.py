@@ -2,8 +2,6 @@
 Conversions (UI) - Zodiacal String Formatter.
 Helper functions for converting ecliptic degrees to human-readable zodiacal notation.
 """
-from typing import Tuple
-
 ZODIAC_SIGNS = [
     "Aries",
     "Taurus",

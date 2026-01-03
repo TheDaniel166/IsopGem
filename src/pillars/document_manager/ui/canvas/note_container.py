@@ -2,11 +2,15 @@
 Note Container - The Canvas Fragment.
 Movable, resizable note containers with rich text editing for the Infinite Canvas.
 """
+import logging
+
 from PyQt6.QtWidgets import (
     QGraphicsProxyWidget, QTextEdit, QWidget, QVBoxLayout, QFrame, QLabel, QStyleOptionGraphicsItem, QSizeGrip
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QRectF, QPointF, QSize
 from PyQt6.QtGui import QPainter, QColor, QPen, QBrush
+
+logger = logging.getLogger(__name__)
 
 
 class ResizeGripWidget(QWidget):
@@ -141,7 +145,7 @@ class NoteContainerWidget(QWidget):
             with document_service_context() as service:
                 return service.get_image(image_id)
         except Exception as e:
-            print(f"Error fetching image resource {image_id}: {e}")
+            logger.exception("Error fetching image resource %s", image_id)
             return None
         
     def _on_resize_delta(self, dx: float, dy: float):

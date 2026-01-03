@@ -1,13 +1,15 @@
-"""
-Synastry Midpoints Widget — Planet and House midpoint analysis.
+"""Synastry Midpoints Widget — Planet and House midpoint analysis.
+
 Displays midpoints between corresponding bodies/houses in two charts.
 """
+
+from __future__ import annotations
+
 from typing import List, Optional
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QTableWidget, QTableWidgetItem,
-    QHeaderView, QPushButton, QLabel, QGroupBox
+    QWidget, QVBoxLayout, QTableWidget, QTableWidgetItem,
+    QHeaderView, QGroupBox
 )
-from PyQt6.QtCore import Qt
 
 from ..models.chart_models import PlanetPosition, HousePosition
 
@@ -58,7 +60,7 @@ class SynastryMidpointsWidget(QWidget):
         self._midpoint_houses: List[HousePosition] = []
         self._setup_ui()
     
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         layout = QVBoxLayout(self)
         layout.setContentsMargins(8, 8, 8, 8)
         
@@ -92,8 +94,13 @@ class SynastryMidpointsWidget(QWidget):
         house_layout.addWidget(self.house_table)
         layout.addWidget(house_group)
     
-    def set_data(self, planets_a: List[PlanetPosition], planets_b: List[PlanetPosition],
-                 houses_a: List[HousePosition], houses_b: List[HousePosition]):
+    def set_data(
+        self,
+        planets_a: List[PlanetPosition],
+        planets_b: List[PlanetPosition],
+        houses_a: List[HousePosition],
+        houses_b: List[HousePosition],
+    ) -> None:
         """Set the chart data and calculate midpoints."""
         self._planets_a = planets_a or []
         self._planets_b = planets_b or []
@@ -102,7 +109,7 @@ class SynastryMidpointsWidget(QWidget):
         self._calculate_midpoints()
         self._populate_tables()
     
-    def _calculate_midpoints(self):
+    def _calculate_midpoints(self) -> None:
         """Calculate all midpoints and store for composite chart."""
         self._midpoint_planets = []
         self._midpoint_houses = []
@@ -130,13 +137,13 @@ class SynastryMidpointsWidget(QWidget):
                 mid_deg = calculate_midpoint(house_lookup_a[i].degree, house_lookup_b[i].degree)
                 self._midpoint_houses.append(HousePosition(number=i, degree=mid_deg))
     
-    def _populate_tables(self):
+    def _populate_tables(self) -> None:
         """Populate both tables with midpoint data."""
         # Planet table
         lookup_a = {p.name.lower(): p for p in self._planets_a}
         lookup_b = {p.name.lower(): p for p in self._planets_b}
         
-        rows = []
+        rows: list[tuple[str, float, float]] = []
         for name in self.PLANET_ORDER:
             key = name.lower()
             if key in lookup_a and key in lookup_b:
@@ -154,7 +161,7 @@ class SynastryMidpointsWidget(QWidget):
         house_lookup_a = {h.number: h for h in self._houses_a}
         house_lookup_b = {h.number: h for h in self._houses_b}
         
-        house_rows = []
+        house_rows: list[tuple[int, float, float]] = []
         for i in range(1, 13):
             if i in house_lookup_a and i in house_lookup_b:
                 house_rows.append((i, house_lookup_a[i].degree, house_lookup_b[i].degree))
@@ -167,7 +174,7 @@ class SynastryMidpointsWidget(QWidget):
             self.house_table.setItem(r, 2, QTableWidgetItem(degree_to_zodiac(deg_b)))
             self.house_table.setItem(r, 3, QTableWidgetItem(degree_to_zodiac(mid)))
     
-    def get_midpoint_data(self):
+    def get_midpoint_data(self) -> tuple[list[PlanetPosition], list[HousePosition]]:
         """Return calculated midpoint positions."""
         return self._midpoint_planets, self._midpoint_houses
 

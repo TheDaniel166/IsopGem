@@ -2,6 +2,8 @@
 Ternary Sound Widget - The Amun Sound System Interface.
 Main widget for the Amun Sound Calculator and Composer, integrating audio playback and real-time visualization.
 """
+import logging
+
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
                              QLineEdit, QPushButton, QTextEdit, QFrame, 
                              QTabWidget, QPlainTextEdit, QListWidget, QSplitter,
@@ -13,6 +15,8 @@ from ..services.amun_audio_service import AmunAudioService
 from ..services.kamea_symphony_service import KameaSymphonyService
 from ..services.kamea_grid_service import KameaGridService
 from .amun_visualizer import AmunVisualizer
+
+logger = logging.getLogger(__name__)
 
 class CalculatorTab(QWidget):
     """Tab for calculating single Ditrunes."""
@@ -162,7 +166,7 @@ class CalculatorTab(QWidget):
             try:
                 nucleation = self.current_result.get('nucleation')
                 if not nucleation:
-                     print("Error: Nucleation data missing.")
+                     logger.warning("Nucleation data missing; cannot play in Grand mode")
                      return
                 
                 path = self.kamea_service.generate_wav_file(nucleation)
@@ -171,7 +175,7 @@ class CalculatorTab(QWidget):
                 self.player.play()
                 return
             except Exception as e:
-                print(f"Grand Play Error: {e}")
+                logger.exception("Grand play error")
                 return
 
         # Standard Engine (AmunAudioService)
@@ -188,7 +192,7 @@ class CalculatorTab(QWidget):
             self.audio_output.setVolume(75)
             self.player.play()
         except Exception as e:
-            print(f"Play Error: {e}")
+            logger.exception("Play error")
 
 class ComposerTab(QWidget):
     """Tab for composing sequences."""
@@ -308,7 +312,7 @@ class ComposerTab(QWidget):
                 # Extract nucleations
                 nucleations = [s.get('nucleation') for s in self.sequence_data if s.get('nucleation')]
                 if not nucleations:
-                    print("No nucleation data for Grand Mode")
+                    logger.warning("No nucleation data for Grand Mode")
                     return
                 path = self.kamea_service.generate_sequence(nucleations, duration=0.5)
             else:
@@ -322,7 +326,7 @@ class ComposerTab(QWidget):
             # TODO: Animate visualizer through sequence? 
             # That requires synchronization. For now, Visualizer shows last item or static.
         except Exception as e:
-            print(f"Seq Play Error: {e}")
+            logger.exception("Sequence play error")
 
     def play_chord(self):
         """Play all notes simultaneously."""
@@ -343,10 +347,10 @@ class ComposerTab(QWidget):
                  self.audio_output.setVolume(80)
                  self.player.play()
             else:
-                 print("Chord requires valid data (Nucleation missing?).")
+                  logger.warning("Chord requires valid data (Nucleation missing?)")
 
         except Exception as e:
-            print(f"Chord Play Error: {e}")
+            logger.exception("Chord play error")
 
     def map_chord(self):
         """
@@ -363,7 +367,8 @@ class ComposerTab(QWidget):
                 if 0 <= val <= 728:
                     seed = val
                     break
-            except: continue
+            except ValueError:
+                continue
             
         if seed is not None:
             # Get Chord Values
@@ -375,7 +380,7 @@ class ComposerTab(QWidget):
                 # Auto-parse to update list
                 self.parse_sequence()
             except Exception as e:
-                print(f"Map Chord Error: {e}")
+                logger.exception("Map chord error")
         else:
              self.txt_input.setPlaceholderText("Enter a seed number first (e.g. 10)")
 

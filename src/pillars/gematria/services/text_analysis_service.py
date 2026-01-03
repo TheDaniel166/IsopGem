@@ -2,9 +2,12 @@
 Text Analysis Service - The Resonance Scanner.
 Service for value matching, text statistics, and verse parsing in gematria analysis.
 """
+import logging
 from typing import List, Tuple, Optional, Any, Dict
 from ..services.base_calculator import GematriaCalculator
 from ..utils.numeric_utils import sum_numeric_face_values
+
+logger = logging.getLogger(__name__)
 
 class TextAnalysisService:
     """Service for handling text analysis operations."""
@@ -51,8 +54,12 @@ class TextAnalysisService:
                         if include_face_values:
                             val += sum_numeric_face_values(current_word)
                         token_data.append((val, start_pos, i))
-                    except:
-                        pass # Skip invalid words
+                    except (AttributeError, TypeError) as e:
+                        logger.debug(
+                            "TextAnalysisService: skipping token (%s): %s",
+                            type(e).__name__,
+                            e,
+                        )
                     current_word = ""
             else:
                 if not current_word:
@@ -66,8 +73,12 @@ class TextAnalysisService:
                 if include_face_values:
                     val += sum_numeric_face_values(current_word)
                 token_data.append((val, start_pos, len(text)))
-            except:
-                pass
+            except (AttributeError, TypeError) as e:
+                logger.debug(
+                    "TextAnalysisService: skipping trailing token (%s): %s",
+                    type(e).__name__,
+                    e,
+                )
                 
         # 2. Integer Sliding Window
         n_tokens = len(token_data)
@@ -144,8 +155,12 @@ class TextAnalysisService:
         for w in words:
             try:
                 total_value += calculator.calculate(w)
-            except:
-                pass
+            except (AttributeError, TypeError) as e:
+                logger.debug(
+                    "TextAnalysisService: skipping word in stats (%s): %s",
+                    type(e).__name__,
+                    e,
+                )
                 
         avg = total_value / word_count if word_count > 0 else 0
         

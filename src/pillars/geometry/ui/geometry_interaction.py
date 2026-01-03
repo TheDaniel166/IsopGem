@@ -1,6 +1,8 @@
 """Interaction manager and UI components for geometry windows."""
 from __future__ import annotations
 
+import logging
+
 from dataclasses import dataclass, field
 from typing import Dict, List, Set, Optional, Callable
 
@@ -12,6 +14,8 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QObject, QPoint
 from PyQt6.QtGui import QColor, QAction, QIcon
+
+logger = logging.getLogger(__name__)
 
 @dataclass
 class Connection:
@@ -180,7 +184,7 @@ class GeometryInteractionManager(QObject):
             self.current_draw_start = None
             self.draw_start_changed.emit(None)
         else:
-            print(f"[DEBUG] Manager: connecting {self.current_draw_start} -> {index}")
+            logger.debug("GeometryInteraction: connecting %s -> %s", self.current_draw_start, index)
             self.add_connection(self.current_draw_start, index)
             # Continuous drawing: existing end becomes new start
             self.current_draw_start = index

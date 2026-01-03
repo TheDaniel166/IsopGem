@@ -7,7 +7,7 @@ The **Document Manager** is the **Scribe of the Akaschic Record**. It is respons
 
 ## The Core Logic (Services)
 
-### **[document_service.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/document_manager/services/document_service.py)**
+### **document_service.py** (`src/pillars/document_manager/services/document_service.py`)
 *   **Architectural Role**: Sovereign Service (The Librarian)
 *   **The Purpose**: Manages the lifecycle of a Document. It is the single point of truth for importing, updating, and retrieving texts.
 *   **Key Logic**:
@@ -17,7 +17,7 @@ The **Document Manager** is the **Scribe of the Akaschic Record**. It is respons
     *   **Emits**: `document_imported`, `document_updated`.
 *   **Dependencies**: `DocumentRepository`, `DocumentSearchRepository`.
 
-### **[verse_teacher_service.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/document_manager/services/verse_teacher_service.py)**
+### **verse_teacher_service.py** (`src/pillars/document_manager/services/verse_teacher_service.py`)
 *   **Architectural Role**: Sovereign Service (The Rate)
 *   **The Purpose**: Facilitates the segmentation of "Holy Books" into canonical verses (e.g., "Genesis 1:1").
 *   **Key Logic**:
@@ -25,20 +25,20 @@ The **Document Manager** is the **Scribe of the Akaschic Record**. It is respons
     *   **Learning**: Adjusts rules based on Magus feedback during the "Teaching" phase.
 *   **Dependencies**: `VerseRuleRepository`, `VerseEditLogRepository`.
 
-### **[etymology_service.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/document_manager/services/etymology_service.py)**
+### **etymology_service.py** (`src/pillars/document_manager/services/etymology_service.py`)
 *   **Architectural Role**: Service (The Linguist)
 *   **The Purpose**: Fetches word origins, auto-detecting the script language.
 *   **Key Logic**:
     *   **Heuristic Detection**: Identifies Hebrew, Greek, or Latin script blocks.
     *   **Routing**: Sends Hebrew to Sefaria/Wiktionary, Greek to Wiktionary Ancient Greek, and English to `ety-python`.
 
-### **[notebook_service.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/document_manager/services/notebook_service.py)**
+### **notebook_service.py** (`src/pillars/document_manager/services/notebook_service.py`)
 *   **Architectural Role**: Sovereign Service (The Scribe)
 *   **The Purpose**: Manages the hierarchical organization of user content.
 *   **Structure**: `Notebook` -> `Section` -> `Page` (Document).
 *   **Key Logic**: Eager loading of sections for performant tree views.
 
-### **[spell_service.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/document_manager/services/spell_service.py)**
+### **spell_service.py** (`src/pillars/document_manager/services/spell_service.py`)
 *   **Architectural Role**: Service (The Editor)
 *   **The Purpose**: Wraps `pyenchant` to provide spell-checking and suggestions.
 *   **Key Logic**:
@@ -47,7 +47,7 @@ The **Document Manager** is the **Scribe of the Akaschic Record**. It is respons
 
 ## The Presentation Layer (UI)
 
-### **[mindscape_window.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/document_manager/ui/mindscape_window.py)**
+### **mindscape_window.py** (`src/pillars/document_manager/ui/mindscape_window.py`)
 *   **Architectural Role**: View (The Living Graph)
 *   **The Purpose**: The visual interface for the Mindscape.
 *   **Key Logic**:
@@ -57,31 +57,31 @@ The **Document Manager** is the **Scribe of the Akaschic Record**. It is respons
 *   **Signal Flow**:
     *   **Listens to**: `node_double_clicked` (Navigates to document).
 
-### **[rich_text_editor.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/document_manager/ui/rich_text_editor.py)**
+### **rich_text_editor.py** (`src/pillars/document_manager/ui/rich_text_editor.py`)
 *   **Architectural Role**: View (The Quill)
 *   **The Purpose**: A specialized "Ribbon-style" editor for composing and formatting text.
 *   **Key Logic**:
     *   **Formatting**: Handlers for Bold, Italic, Underline, and Semantic Styles (Header, Quote).
-    *   **Extensions**: Integrates `[image_features.py](file:///home/burkettdaniel927/projects/isopgem/src/shared/ui/rich_text_editor/image_features.py)`, `[table_features.py](file:///home/burkettdaniel927/projects/isopgem/src/shared/ui/rich_text_editor/table_features.py)`, and `[search_features.py](file:///home/burkettdaniel927/projects/isopgem/src/shared/ui/rich_text_editor/search_features.py)` mixins.
+    *   **Extensions**: Integrates `image_features.py` (`src/shared/ui/rich_text_editor/image_features.py`), `table_features.py` (`src/shared/ui/rich_text_editor/table_features.py`), and `search_features.py` (`src/shared/ui/rich_text_editor/search_features.py`) mixins.
     *   `_apply_style`: Applies `QTextCharFormat` to the cursor selection.
-*   **Dependencies**: `[ribbon_widget.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/document_manager/ui/ribbon_widget.py)`
+*   **Dependencies**: `ribbon_widget.py` (`src/pillars/document_manager/ui/ribbon_widget.py`)
 
-### **[document_search_window.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/document_manager/ui/document_search_window.py)**
+### **document_search_window.py** (`src/pillars/document_manager/ui/document_search_window.py`)
 *   **Architectural Role**: View (The Finder)
 *   **The Purpose**: Dedicated searching interface.
 
-### **[search_results_panel.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/document_manager/ui/search_results_panel.py)**
+### **search_results_panel.py** (`src/pillars/document_manager/ui/search_results_panel.py`)
 *   **Architectural Role**: View (The Oracle)
 *   **The Purpose**: Displays `Whoosh` search hits with context snippets.
 *   **Key Logic**:
     *   `load_results`: Renders HTML snippets highlighting the search term.
     *   **Interaction**: Double-click jumps to the exact text location in the Editor.
 
-### **[document_editor_window.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/document_manager/ui/document_editor_window.py)**
+### **document_editor_window.py** (`src/pillars/document_manager/ui/document_editor_window.py`)
 *   **Architectural Role**: View (The Desk)
 *   **The Purpose**: The container window for the `RichTextEditor`.
 
-### **[graph_physics.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/document_manager/ui/graph_physics.py)**
+### **graph_physics.py** (`src/pillars/document_manager/ui/graph_physics.py`)
 *   **Architectural Role**: Business Logic (Physics Engine)
 *   **The Purpose**: Calculates the layout of the Mindscape nodes.
 *   **Key Logic**:
@@ -90,26 +90,26 @@ The **Document Manager** is the **Scribe of the Akaschic Record**. It is respons
 
 ## Data Structures (Models)
 
-### **[document.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/document_manager/models/document.py)**
+### **document.py** (`src/pillars/document_manager/models/document.py`)
 *   **Architectural Role**: Domain Model
 *   **The Purpose**: SQL entity for a file.
 *   **Key Logic**: Stores `content` (blob), `metadata` (JSON), and `tags`.
 
-### **[document_verse.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/document_manager/models/document_verse.py)**
+### **document_verse.py** (`src/pillars/document_manager/models/document_verse.py`)
 *   **Architectural Role**: Domain Model
 *   **The Purpose**: SQL entity for a single verse within a Holy Book.
 
 ## Infrastructure
 
-### **[document_repository.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/document_manager/repositories/document_repository.py)**
+### **document_repository.py** (`src/pillars/document_manager/repositories/document_repository.py`)
 *   **Architectural Role**: Persistence Layer
 *   **The Purpose**: Database access for Document metadata and content.
 
-### **[verse_rule_repository.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/document_manager/repositories/verse_rule_repository.py)**
+### **verse_rule_repository.py** (`src/pillars/document_manager/repositories/verse_rule_repository.py`)
 *   **Architectural Role**: Persistence Layer
 *   **The Purpose**: Storage for regex rules used by the Verse Teacher.
 
-### **[search_repository.py](file:///home/burkettdaniel927/projects/isopgem/src/pillars/document_manager/repositories/search_repository.py)**
+### **search_repository.py** (`src/pillars/document_manager/repositories/search_repository.py`)
 *   **Architectural Role**: Persistence Layer (Search Engine)
 *   **The Purpose**: Interface to the `Whoosh` full-text search library.
 *   **Key Logic**:

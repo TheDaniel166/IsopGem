@@ -8,6 +8,9 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import pyqtSignal, Qt
 from typing import Dict, Any, List
+import logging
+
+logger = logging.getLogger(__name__)
 
 class VerseList(QWidget):
     """
@@ -118,7 +121,12 @@ class VerseList(QWidget):
             if include_face_values:
                 from ...utils.numeric_utils import sum_numeric_face_values
                 val += sum_numeric_face_values(verse['text'])
-        except:
+        except (AttributeError, TypeError) as e:
+            logger.debug(
+                "VerseList: value calculation fallback (%s): %s",
+                type(e).__name__,
+                e,
+            )
             val = 0
             
         val_lbl = QLabel(f"Value: {val}")

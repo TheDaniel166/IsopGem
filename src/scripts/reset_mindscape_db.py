@@ -1,7 +1,10 @@
 import argparse
+import logging
 
 from shared.database import engine, Base
 from sqlalchemy import text
+
+logger = logging.getLogger(__name__)
 
 
 def reset_mindscape(force: bool = False):
@@ -13,10 +16,10 @@ def reset_mindscape(force: bool = False):
     
     """
     if not force:
-        print("Refusing to reset Mindscape without --force. Aborting.")
+        logger.error("Refusing to reset Mindscape without --force. Aborting.")
         return
 
-    print("Resetting Mindscape Tables...")
+    logger.info("Resetting Mindscape Tables...")
     with engine.connect() as conn:
         conn.execute(text("PRAGMA foreign_keys = OFF"))
         conn.execute(text("DROP TABLE IF EXISTS mind_edges"))
@@ -26,10 +29,11 @@ def reset_mindscape(force: bool = False):
     
     # Recreate
     Base.metadata.create_all(bind=engine)
-    print("Mindscape Tables Recreated.")
+    logger.info("Mindscape Tables Recreated.")
 
 
 if __name__ == "__main__":
+	logging.basicConfig(level=logging.INFO, format="%(message)s")
     parser = argparse.ArgumentParser(description="Drop and recreate Mindscape tables.")
     parser.add_argument("--force", action="store_true", help="Confirm irreversible reset.")
     args = parser.parse_args()

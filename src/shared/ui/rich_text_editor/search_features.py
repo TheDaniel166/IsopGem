@@ -2,6 +2,7 @@
 Search and Replace features for RichTextEditor.
 Encapsulates logic for finding text and managing the search UI.
 """
+import logging
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, 
     QLineEdit, QPushButton, QCheckBox, QMessageBox,
@@ -9,6 +10,8 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QTextDocument, QTextCursor
+
+logger = logging.getLogger(__name__)
 
 class SearchDialog(QDialog):
     """
@@ -367,10 +370,15 @@ class SearchReplaceFeature:
             
             # Calculate target position to center constraints
             target_y = current_val + cursor_rect.top() - (viewport_height // 2) + (cursor_rect.height() // 2)
-            print(f"[Search] Centering cursor: Rect={cursor_rect}, Scroll={current_val} -> {target_y}")
+            logger.debug(
+                "Search: centering cursor rect=%s scroll=%s -> %s",
+                cursor_rect,
+                current_val,
+                target_y,
+            )
             scrollbar.setValue(int(target_y))
         except Exception as e:
-            print(f"[Search] Centering failed: {e}")
+            logger.debug("Search: centering failed (%s): %s", type(e).__name__, e)
 
     def apply_highlight(self) -> None:
         """Apply a temporary light blue background highlight to the current selection."""
@@ -378,22 +386,28 @@ class SearchReplaceFeature:
         from PyQt6.QtGui import QColor, QTextFormat
 
         cursor = self.editor.textCursor()
-        print(f"[ApplyHighlight] Has Selection: {cursor.hasSelection()}")
-        print(f"[ApplyHighlight] Selected Text: '{cursor.selectedText()}'")
+        logger.debug(
+            "ApplyHighlight: selection=%s selectedTextLen=%s",
+            cursor.hasSelection(),
+            len(cursor.selectedText() or ""),
+        )
         
         if not cursor.hasSelection():
-            print("[ApplyHighlight] No selection to highlight!")
+            logger.debug("ApplyHighlight: no selection to highlight")
             return
             
         selection = QTextEdit.ExtraSelection()
         selection.cursor = cursor
         # Use a slightly stronger blue for visibility
         color = QColor("#93c5fd")
-        print(f"[ApplyHighlight] Setting background to {color.name()}")
+        logger.debug("ApplyHighlight: background=%s", color.name())
         selection.format.setBackground(color) 
         
         self.editor.setExtraSelections([selection])
-        print(f"[ApplyHighlight] Applied extra selections. Count: {len(self.editor.extraSelections())}")
+        logger.debug(
+            "ApplyHighlight: applied extraSelections=%s",
+            len(self.editor.extraSelections()),
+        )
 
     def clear_highlight(self) -> None:
         """Clear the temporary search highlight."""

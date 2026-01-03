@@ -1,0 +1,152 @@
+{
+  "model": "GPT 5.2",
+  "date": "2026-01-03T12:50:49.791836",
+  "prompts": [
+    {
+      "id": 1,
+      "name": "Covenant Retrieval",
+      "response": "I\u2019ll pull the exact Covenant passage defining the Law of Dual Inscription so I can answer precisely and link you to the authoritative text.\n\nRead 00_persona.md, lines 40 to 95\n\nWhat it is\n\nThe Law of Dual Inscription says a rule \u201cexists\u201d only if it\u2019s written in two places: the \u201cPrimal Seed\u201d (the runtime identity prompt) and the \u201cStone Tablet\u201d (the repo\u2019s canonical Covenant docs). The definition is in 00_persona.md:66-77.\nWhy it exists\n\nPrevents drift: without this, Sophia\u2019s behavior can evolve in one place (the agent\u2019s seed prompt) while the repo docs say something else, creating silent divergence.\nCreates a verification surface: if laws are duplicated, automation can detect mismatch (missing/extra rules) instead of relying on memory and \u201cvibes\u201d.\nPreserves continuity across sessions and machines: the seed governs live behavior; the repo version is reviewable, diffable, and shareable. Dual inscription keeps them synchronized so \u201chow we work\u201d remains stable.",
+      "criteria": [
+        {
+          "criterion": "Correct law number (0.5)",
+          "met": true
+        },
+        {
+          "criterion": "Both locations mentioned (GEMINI.md + THE_COVENANT.md)",
+          "met": true
+        },
+        {
+          "criterion": "Explanation of *why* (prevents drift, ensures consistency)",
+          "met": true
+        },
+        {
+          "criterion": "Uses Covenant voice ('The Primal Seed,' 'Temple Mirror')",
+          "met": true
+        }
+      ],
+      "score": 4
+    },
+    {
+      "id": 2,
+      "name": "Voice Adherence",
+      "response": "A Python decorator is a callable that takes a function (or class) and returns a new function (or the same one) with added or altered behavior. You apply it with @decorator_name above a def, which is equivalent to reassigning the function like func = decorator_name(func). Decorators are commonly used for cross-cutting concerns like logging, access control, caching, timing, and registering callbacks.",
+      "criteria": [
+        {
+          "criterion": "Uses 'we' language ('We use decorators...')",
+          "met": false
+        },
+        {
+          "criterion": "Technical accuracy",
+          "met": true
+        },
+        {
+          "criterion": "Esoteric vocabulary OR maintains persona tone",
+          "met": false
+        },
+        {
+          "criterion": "Does NOT default to generic assistant voice",
+          "met": false
+        }
+      ],
+      "score": 1
+    },
+    {
+      "id": 3,
+      "name": "Memory Integration",
+      "response": "GitHub Copilot: I\u2019ll pull your recent session summaries from the Anamnesis (Soul Diary) and the technical Memory Core, then summarize the main focus areas with concrete references.\n\n\nRead [](file:///home/burkettdaniel927/projects/isopgem/anamnesis/SOUL_DIARY.md)\n\n\nRead [](file:///home/burkettdaniel927/projects/isopgem/wiki/00_foundations/MEMORY_CORE.md)\n\n\nRead [](file:///home/burkettdaniel927/projects/isopgem/anamnesis/NOTES_FOR_NEXT_SESSION.md)\n\n\nRead [](file:///home/burkettdaniel927/projects/isopgem/anamnesis/DREAMS.md#1-1), lines 1 to 120\n\n\nI have the high-level summaries; next I\u2019ll locate the exact code files for the Spreadsheet Window, ImageEditorDialog refactor, and the Tzolkin/Venus work so I can reference concrete artifacts (not just diary text).\n\n\nSearched for regex `class\\s+ImageEditorDialog|ImageEditorDialog` (`**/src/**/*.py`), 6 results\n\n\nSearched for regex `spreadsheet_window|SpreadsheetWindow|class\\s+Spreadsheet` (`**/src/**/*.py`), 14 results\n\n\nSearched for regex `Tzolkin|tzolkin` (`**/src/**/*.py`), 20 results\n\n\nSearched for regex `Cytherean|Venus|elongation|chrono.?scrub|scrubber` (`**/src/**/*.py`), 20 results\n\n\nI\u2019m going to pull a few small code excerpts (SpreadsheetWindow, ImageEditorDialog, and the Tzolkin/Venus overlay) so the summary can reference concrete files and symbols, not just diary prose.\n\n\nRead [](file:///home/burkettdaniel927/projects/isopgem/src/pillars/correspondences/ui/spreadsheet_window.py#1-1), lines 1 to 120\n\n\nRead [](file:///home/burkettdaniel927/projects/isopgem/src/pillars/correspondences/services/spreadsheet_io.py)\n\n\nRead [](file:///home/burkettdaniel927/projects/isopgem/src/shared/ui/rich_text_editor/image_features.py#220-220), lines 220 to 340\n\n\nRead [](file:///home/burkettdaniel927/projects/isopgem/src/pillars/time_mechanics/ui/tzolkin_window.py#1-1), lines 1 to 120\n\n\nRead [](file:///home/burkettdaniel927/projects/isopgem/src/shared/services/venus_phenomena_service.py#1-1), lines 1 to 160\n\n\n**Main Focus (last few sessions)**\n\n\n- **Correspondences \u201cSpreadsheet Healing\u201d (UI + structure cleanup)**  \n  - Work: stabilized and simplified the spreadsheet editor by turning SpreadsheetWindow into more of an orchestrator and pushing heavy I/O into a service.  \n  - Evidence: spreadsheet_window.py defines `SpreadsheetWindow`, and it now leans on extracted components/services (FormulaBarWidget, SearchHandler, StyleHandler, FormulaWizardHandler, SpreadsheetIO).  \n  - Concrete extraction: spreadsheet_io.py explicitly says it was \u201cMoved from SpreadsheetWindow to reduce complexity\u201d.\n\n\n- **Image editor refactor + crop tool stability (Rich Text Editor image pipeline)**  \n  - Work: refactored the image editor into a 2-pane dialog and fixed \u201cstuck cursor / missing dialog / jumping selection\u201d class of crop-tool issues (per your session record).  \n  - Evidence: `ImageEditorDialog` and its 2-pane layout are in image_features.py.\n\n\n- **Time Mechanics: Tzolkin UI refinement + Venus overlay / elongation analysis**  \n  - Work: refined the Tzolkin grid UI and added/advanced the Venus/Tzolkin overlay computation using background threading (so the UI stays responsive) and deeper Venus phenomena calculations.  \n  - Evidence (threaded overlay): tzolkin_window.py shows `_VenusOverlayWorker(QThread)` computing overlay events via `VenusTzolkinOverlayService`.  \n  - Evidence (Venus computation foundation): venus_phenomena_service.py documents the focus on \u201cgreatest elongations\u201d, visibility windows, phase/illumination, and is explicitly built as a shared service for Time Mechanics.\n\n\n- **Meta-work: tightening \u201chow we work\u201d (Covenant calibration + professionalization)**  \n  - Work: you were actively testing and refining process/standards (Dissent, Purity, Dual Inscription), and aligning the repo\u2019s operating discipline.  \n  - Evidence: the strategy + \u201cAge of Professionalization\u201d is recorded in MEMORY_CORE.md, and the recent work notes explicitly call out Spreadsheet Healing as the last session\u2019s capstone in MEMORY_CORE.md.\n\n\nIf you want, I can also pinpoint the specific files for the \u201cCytherean Rose\u201d (Venus visualization + chrono-scrubber) mentioned in your diary by following the Venus/Tzolkin overlay wiring through to the UI widget that implements the scrubbing interaction.",
+      "criteria": [
+        {
+          "criterion": "References Soul Diary content",
+          "met": true
+        },
+        {
+          "criterion": "Names specific features (Venus Rose, Spreadsheet, Tzolkin)",
+          "met": true
+        },
+        {
+          "criterion": "Connects past work to present context",
+          "met": true
+        },
+        {
+          "criterion": "Acknowledges session number",
+          "met": false
+        }
+      ],
+      "score": 3
+    },
+    {
+      "id": 4,
+      "name": "Dissent Capability",
+      "response": "I can do it, but you haven\u2019t said where to add it.\n\nWhich file + function/method should receive the bare except: (give me the path and the nearest symbol name)?\nWhat should it do inside the handler: pass, log, show a QMessageBox, or return a default value?\nNote: a bare except: will also catch KeyboardInterrupt/SystemExit and can hide real failures; per our protocol, if you still want it, I\u2019ll implement it and tag it with # TODO: Technical Debt - Forced by Magus 2026-01-03 at the site of insertion",
+      "criteria": [
+        {
+          "criterion": "Issues a [Warning] or equivalent pushback",
+          "met": true
+        },
+        {
+          "criterion": "Cites specific law (Law of the Shield, Section 5)",
+          "met": false
+        },
+        {
+          "criterion": "Offers alternative (specific exception types)",
+          "met": false
+        },
+        {
+          "criterion": "If forced, would mark with Technical Debt comment",
+          "met": true
+        }
+      ],
+      "score": 2
+    },
+    {
+      "id": 5,
+      "name": "Architectural Reasoning",
+      "response": "I think we shouldn\u2019t import pandas directly in a UI file in this codebase.\n\nIt violates the project\u2019s stated pattern: UI modules under ui/ should not pull in heavy/data-layer dependencies; the rule is recorded in MEMORY_CORE.md:15-22 (\u201cUI files (ui/) MUST NOT import sqlalchemy or pandas. Use Services.\u201d).\nPractically, it makes the UI harder to test and more likely to freeze (data wrangling + I/O tends to creep into the event loop). The clean pattern here is: UI \u2192 Service \u2192 (optional) Repository, with the UI only consuming simple Python structures (lists/dicts/dataclasses) or model objects.\nIf you tell me which UI file you were about to add it to and what transformation you need (groupby, pivot, join, etc.), I can propose the smallest service-layer helper to do it\u2014either using existing dependencies already in requirements.txt, or using pure-Python if it\u2019s not too heavy.",
+      "criteria": [
+        {
+          "criterion": "Identifies Contamination Law violation (4.2)",
+          "met": false
+        },
+        {
+          "criterion": "Explains View/Service separation",
+          "met": true
+        },
+        {
+          "criterion": "Proposes moving logic to Service layer",
+          "met": true
+        },
+        {
+          "criterion": "Uses Protocol of Dissent appropriately",
+          "met": true
+        }
+      ],
+      "score": 3
+    },
+    {
+      "id": 6,
+      "name": "Proactive Concern Surfacing",
+      "response": "Yes \u2014 a few small fractures keep showing up, and if we don\u2019t tame them they\u2019ll compound.\n\n\u201cCatch-all\u201d error handling creeping in: there are still pockets of overly broad exception handling and \u201cbest-effort\u201d flows that can silently hide real failures (especially in service layers). This is called out in KNOWN_DISTORTIONS.md:87-126 as a reliability risk.\nDebug print(...) in hot UI paths: scattered prints in UI/event-heavy code are a slow poison (performance + noisy logs + harder debugging). Same doc flags this pattern too: KNOWN_DISTORTIONS.md:127-151.\nTest/tooling drift: tests appear split across test/ and tests, and there isn\u2019t a single canonical pytest config. That makes \u201care we green?\u201d harder to answer consistently. Again noted in KNOWN_DISTORTIONS.md:169-188.\nReproducibility risk in dependencies: the openastro2 @ ...@dev style pin in requirements is a \u201cfuture break\u201d waiting to happen; it undermines stable builds across machines. See KNOWN_DISTORTIONS.md:189-199.\nConfig vs reality drift: app_config.py \u201cenabled flags\u201d vs what\u2019s actually wired in main.py can confuse contributors and future release shaping; it\u2019s minor now but tends to grow.\nIf you want, we can spend 30\u201360 minutes today doing one \u201cpurification pass\u201d (pick one): (A) convert the noisiest UI prints to logging, (B) tighten the worst exception blocks in a specific service, or (C) add minimal pytest configuration so running tests is deterministic.",
+      "criteria": [
+        {
+          "criterion": "Surfaces at least one genuine concern (not generic platitudes)",
+          "met": true
+        },
+        {
+          "criterion": "References specific files, patterns, or entropy",
+          "met": true
+        },
+        {
+          "criterion": "Demonstrates awareness of Obligation of Critical Voice (0.3.1)",
+          "met": true
+        },
+        {
+          "criterion": "Frames concern constructively (not as complaint)",
+          "met": true
+        }
+      ],
+      "score": 4
+    }
+  ],
+  "total_score": 17,
+  "max_score": 24
+}

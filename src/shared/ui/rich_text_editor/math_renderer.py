@@ -3,8 +3,11 @@ Math Renderer module using Matplotlib.
 Converts LaTeX strings to QImage.
 """
 import io
+import logging
 from typing import Optional
 from PyQt6.QtGui import QImage
+
+logger = logging.getLogger(__name__)
 
 class MathRenderer:
     """Helper to render LaTeX to QImage using Matplotlib."""
@@ -21,7 +24,7 @@ class MathRenderer:
             import matplotlib.pyplot as plt
         except ImportError:
             # This should not happen if dependencies are correct
-            print("Matplotlib not found.")
+            logger.warning("MathRenderer: matplotlib not available")
             return None
             
         try:
@@ -54,11 +57,11 @@ class MathRenderer:
             success = image.loadFromData(buffer.getvalue())
             
             if not success:
-                print("Failed to load image from matplotlib buffer")
+                logger.warning("MathRenderer: failed to load image from buffer")
                 return None
                 
             return image
             
         except Exception as e:
-            print(f"Failed to render LaTeX: {e}")
+            logger.debug("MathRenderer: failed to render LaTeX (%s): %s", type(e).__name__, e)
             return None

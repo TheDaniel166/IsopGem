@@ -14,8 +14,6 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, pyqtSignal, QTimer
 from PyQt6.QtGui import QFont
 from typing import Optional, List
-import json
-from pathlib import Path
 
 from shared.ui.theme import COLORS
 from ..services import LocationLookupService, LocationLookupError, LocationResult
@@ -27,7 +25,7 @@ class LocationSearchDialog(QDialog):
     
     location_selected = pyqtSignal(object)  # Emits LocationResult or DefaultLocation
     
-    def __init__(self, preferences: AstrologyPreferences, parent=None):
+    def __init__(self, preferences: AstrologyPreferences, parent: QWidget | None = None):
         """
         Initialize the location search dialog.
         
@@ -371,10 +369,10 @@ class LocationSearchDialog(QDialog):
         
         self._load_favorites()
     
-    def _load_favorites(self):
+    def _load_favorites(self) -> None:
         """Load favorites from preferences."""
         self._favorites_list.clear()
-        self._favorites = self._preferences.load_favorites() if hasattr(self._preferences, 'load_favorites') else []
+        self._favorites = self._preferences.load_favorites()
         
         if self._favorites:
             for fav in self._favorites:
@@ -555,7 +553,7 @@ class LocationSearchDialog(QDialog):
             QApplication.restoreOverrideCursor()
         
         if results:
-            self._reverse_location = results[0] if isinstance(results, list) else results
+            self._reverse_location = results[0]
             self._reverse_name.setText(self._reverse_location.label)
             self._reverse_coords.setText(f"{self._reverse_location.latitude:.4f}°, {self._reverse_location.longitude:.4f}°")
             self._select_reverse_btn.setEnabled(True)

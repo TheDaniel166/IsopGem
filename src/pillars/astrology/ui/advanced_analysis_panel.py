@@ -15,13 +15,13 @@ ProgressionsWindow, ReturnsWindow, or any other chart display window.
 from __future__ import annotations
 
 import logging
-from typing import List, Optional, Dict, Any, TYPE_CHECKING
+from collections.abc import Sequence
+from typing import List, Optional, Any, cast
 
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QTabWidget, QTableWidget, QTableWidgetItem,
     QHeaderView, QLabel, QSpinBox, QComboBox, QCheckBox, QSlider, QPushButton,
-    QTreeWidget, QTreeWidgetItem, QGroupBox, QFrame, QListWidget, QStackedWidget,
-    QGraphicsDropShadowEffect
+    QTreeWidget, QTreeWidgetItem, QFrame, QListWidget, QStackedWidget,
 )
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor, QFont, QFontDatabase
@@ -31,14 +31,10 @@ from ..models.chart_models import PlanetPosition, HousePosition, ChartResult
 from ..services.arabic_parts_service import ArabicPartsService
 from ..services.harmonics_service import HarmonicsService
 from ..services.maat_symbols_service import MaatSymbolsService
-from ..services.midpoints_service import MidpointsService
+from ..services.midpoints_service import MidpointsService, Midpoint
 from ..services.aspects_service import AspectsService
 from ..services.fixed_stars_service import FixedStarsService
 from ..utils.conversions import to_zodiacal_string
-
-if TYPE_CHECKING:
-    from .midpoints_dial import MidpointsDial
-    from .harmonics_dial import HarmonicsDial
 
 logger = logging.getLogger(__name__)
 
@@ -485,7 +481,11 @@ class AdvancedAnalysisPanel(QWidget):
             btn.setToolTip(f"Harmonic {h}")
             btn.setMinimumWidth(40)
             btn.setMaximumWidth(50)
-            btn.clicked.connect(lambda checked, hval=h: self._set_harmonic(hval))
+
+            def _on_preset_clicked(checked: bool, hval: int = h) -> None:
+                self._set_harmonic(hval)
+
+            btn.clicked.connect(_on_preset_clicked)
             controls.addWidget(btn)
         
         controls.addStretch()
@@ -677,7 +677,7 @@ class AdvancedAnalysisPanel(QWidget):
             
         # Calculate aspects
         planet_lons = [(p.name, p.degree) for p in self._planets]
-        hits_by_star = {}
+        hits_by_star: dict[str, list[str]] = {}
         try:
             # find_aspects returns (planet_name, star, aspect_name, orb)
             found_list = self._fixed_stars_service.find_aspects(
@@ -685,7 +685,7 @@ class AdvancedAnalysisPanel(QWidget):
             ) 
             
             for pname, star, aspect_name, orb_val in found_list:
-                sname = star.name
+                sname = str(getattr(star, "name", star))
                 if sname not in hits_by_star:
                     hits_by_star[sname] = []
                 
@@ -700,7 +700,7 @@ class AdvancedAnalysisPanel(QWidget):
             row = self.fixed_stars_table.rowCount()
             self.fixed_stars_table.insertRow(row)
             
-            name = getattr(star, 'name', str(star))
+            name = str(getattr(star, "name", star))
             degree = getattr(star, 'degree', getattr(star, 'longitude', 0)) # handle both models
             
             self.fixed_stars_table.setItem(row, 0, QTableWidgetItem(name))
@@ -748,10 +748,10 @@ class AdvancedAnalysisPanel(QWidget):
             return
         
         try:
-            planet_lons = {p.name.strip(): p.degree for p in self._planets}
+            planet_lons: dict[str, float] = {p.name.strip(): p.degree for p in self._planets}
             classic_only = self.classic7_checkbox.isChecked()
             
-            midpoints = self._midpoints_service.calculate_midpoints(planet_lons, classic_only)
+            midpoints: list[Midpoint] = self._midpoints_service.calculate_midpoints(planet_lons, classic_only)
             
             for mp in midpoints:
                 row = self.midpoints_table.rowCount()
@@ -769,19 +769,21 @@ class AdvancedAnalysisPanel(QWidget):
             
             # Update dial
             if hasattr(self, 'midpoints_dial'):
-                dial_data = [(mp.planet_a, mp.planet_b, mp.longitude) for mp in midpoints]
+                dial_data: list[tuple[str, str, float]] = [
+                    (mp.planet_a, mp.planet_b, mp.longitude) for mp in midpoints
+                ]
                 filtered_lons = {k: v for k, v in planet_lons.items() if k.lower() in self.CLASSIC_7}
                 self.midpoints_dial.set_data(dial_data, filtered_lons)
                 
         except Exception as exc:
             logger.warning(f"Midpoints calculation failed: {exc}")
     
-    def _render_midpoints_tree(self, midpoints):
+    def _render_midpoints_tree(self, midpoints: Sequence[Midpoint]) -> None:
         """Populate midpoints tree view grouped by planet."""
         self.midpoints_tree.clear()
         
         # Group by planet
-        grouped: Dict[str, list] = {}
+        grouped: dict[str, list[Midpoint]] = {}
         for mp in midpoints:
             if mp.planet_a not in grouped:
                 grouped[mp.planet_a] = []
@@ -961,8 +963,10 @@ class AdvancedAnalysisPanel(QWidget):
             # Prepare headers with symbols
             if self._astro_font_family != "Arial":
                 header_font = QFont(self._astro_font_family, 12)
-                self.aspects_grid.horizontalHeader().setFont(header_font)
-                self.aspects_grid.verticalHeader().setFont(header_font)
+                horizontal_header = cast(QHeaderView, self.aspects_grid.horizontalHeader())
+                vertical_header = cast(QHeaderView, self.aspects_grid.verticalHeader())
+                horizontal_header.setFont(header_font)
+                vertical_header.setFont(header_font)
                 
                 headers = [self._get_planet_display(p) for p in planets]
                 self.aspects_grid.setHorizontalHeaderLabels(headers)
@@ -1019,9 +1023,6 @@ class AdvancedAnalysisPanel(QWidget):
                         
                         # Get color
                         color_hex = self.ASPECT_COLORS.get(best.aspect.name, COLORS['text_secondary'])
-                        # If aspect def has specific color override (or default to dict)
-                        if hasattr(best.aspect, 'color') and best.aspect.color:
-                             color_hex = best.aspect.color
                              
                         item.setForeground(QColor(color_hex))
                         self.aspects_grid.setItem(i, j, item)
@@ -1041,12 +1042,9 @@ class AdvancedAnalysisPanel(QWidget):
     
     def _render_aspects_legend(self):
         """Populate Aspects legend."""
-        if not hasattr(self._aspects_service, 'ASPECT_DEFS'):
-            return
-        
         self.aspects_legend.setRowCount(0)
-        
-        for def_obj in self._aspects_service.definitions:
+
+        for def_obj in self._aspects_service.get_aspect_definitions(include_minor=True):
             row = self.aspects_legend.rowCount()
             self.aspects_legend.insertRow(row)
             

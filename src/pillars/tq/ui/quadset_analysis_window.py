@@ -22,6 +22,10 @@ from shared.signals.navigation_bus import navigation_bus
 from shared.models.gematria import CalculationEntity
 from shared.ui.theme import COLORS, get_card_style, get_app_stylesheet
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 
 from shared.ui.substrate_widget import SubstrateWidget
@@ -839,7 +843,8 @@ class QuadsetAnalysisWindow(QMainWindow):
                 index = int(index_str)
                 self._open_figurate_3d_window(shape_type, index)
             except ValueError:
-                print(f"Invalid 3D geometry link: {link}")
+                logger.warning("QuadsetAnalysisWindow: invalid 3D geometry link %r", link)
+                self.statusBar().showMessage("Invalid 3D geometry link", 4000)
             return
             
         if not link.startswith("geo:"):
@@ -851,14 +856,16 @@ class QuadsetAnalysisWindow(QMainWindow):
             index = int(index_str)
             self._open_geometry_window(sides, index, mode)
         except ValueError:
-            print(f"Invalid geometry link: {link}")
+            logger.warning("QuadsetAnalysisWindow: invalid geometry link %r", link)
+            self.statusBar().showMessage("Invalid geometry link", 4000)
 
     def _open_figurate_3d_window(self, shape_type: str, index: int):
         """Open the 3D figurate visualizer with pre-filled values."""
     def _open_figurate_3d_window(self, shape_type: str, index: int):
         """Open the 3D figurate visualizer with pre-filled values."""
         if not self.window_manager:
-            print("No window manager found, cannot open visualizer")
+            logger.warning("QuadsetAnalysisWindow: no window manager; cannot open 3D visualizer")
+            self.statusBar().showMessage("Visualizer unavailable (no WindowManager)", 5000)
             return
 
         # Use signal bus
@@ -921,7 +928,8 @@ class QuadsetAnalysisWindow(QMainWindow):
     def _open_geometry_window(self, sides: int, index: int, mode: str):
         """Open the geometry visualizer with pre-filled values."""
         if not self.window_manager:
-            print("No window manager found, cannot open visualizer")
+            logger.warning("QuadsetAnalysisWindow: no window manager; cannot open visualizer")
+            self.statusBar().showMessage("Visualizer unavailable (no WindowManager)", 5000)
             return
 
         navigation_bus.request_window.emit(
@@ -1388,14 +1396,19 @@ class QuadsetAnalysisWindow(QMainWindow):
                     methods.add(entry.method)
                     # Tags
                     tags_str = entry.tags
+                    import json
                     try:
-                        import json
                         tags_list = json.loads(tags_str)
                         if isinstance(tags_list, list):
                             tags_display = ", ".join(tags_list)
                         else:
                             tags_display = str(tags_str)
-                    except:
+                    except (json.JSONDecodeError, TypeError) as e:
+                        logger.debug(
+                            "QuadsetAnalysisWindow: tags parse fallback (%s): %s",
+                            type(e).__name__,
+                            e,
+                        )
                         tags_display = str(tags_str)
 
                     table.setItem(row, 2, QTableWidgetItem(tags_display))
@@ -1441,7 +1454,7 @@ class QuadsetAnalysisWindow(QMainWindow):
                     method_combo.blockSignals(False)
                     
         except Exception as e:
-            print(f"Error fetching gematria for {value}: {e}")
+            logger.exception("Error fetching gematria for %s", value)
             pass # Fail gracefully
 
     def _apply_gematria_filters(self, table: QTableWidget, lang_combo: QComboBox, method_combo: QComboBox):

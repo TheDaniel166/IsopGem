@@ -1,10 +1,14 @@
 """Astrology pillar hub - launcher interface for astrology tools."""
+from __future__ import annotations
+
+from collections.abc import Callable
+
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QLabel, QFrame, 
     QGridLayout, QGraphicsDropShadowEffect, QScrollArea
 )
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QColor
+from PyQt6.QtGui import QColor, QMouseEvent
 from shared.ui import WindowManager
 from .natal_chart_window import NatalChartWindow
 from .current_transit_window import CurrentTransitWindow
@@ -22,7 +26,7 @@ from ..services.openastro_service import OpenAstroService
 class AstrologyHub(QWidget):
     """Hub widget for Astrology pillar - displays available tools."""
     
-    def __init__(self, window_manager: WindowManager):
+    def __init__(self, window_manager: WindowManager) -> None:
         """
           init   logic.
         
@@ -31,10 +35,10 @@ class AstrologyHub(QWidget):
         
         """
         super().__init__()
-        self.window_manager = window_manager
+        self.window_manager: WindowManager = window_manager
         self._setup_ui()
     
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         """Set up the hub interface."""
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
@@ -104,7 +108,14 @@ class AstrologyHub(QWidget):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.addWidget(scroll)
     
-    def _create_tool_card(self, icon: str, title: str, description: str, accent_color: str, callback) -> QFrame:
+    def _create_tool_card(
+        self,
+        icon: str,
+        title: str,
+        description: str,
+        accent_color: str,
+        callback: Callable[[], None],
+    ) -> QFrame:
         """Create a modern tool card."""
         card = QFrame()
         card.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -171,7 +182,10 @@ class AstrologyHub(QWidget):
         
         card_layout.addStretch()
         
-        card.mousePressEvent = lambda e: callback()
+        def _on_card_press(a0: QMouseEvent | None) -> None:
+            callback()
+
+        card.mousePressEvent = _on_card_press
         
         return card
 

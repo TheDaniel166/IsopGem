@@ -4,9 +4,12 @@ Image Loader Utility.
 Handles loading of image assets, providing support for formats 
 not natively supported by Qt (e.g., TIFF) via Pillow.
 """
+import logging
 from pathlib import Path
 from typing import Optional
 import sys
+
+logger = logging.getLogger(__name__)
 
 # Try to import PIL from the environment
 try:
@@ -15,7 +18,7 @@ try:
     HAS_PILLOW = True
 except ImportError:
     HAS_PILLOW = False
-    print("Warning: Pillow not found. TIFF support disabled.", file=sys.stderr)
+    logger.warning("Pillow not found. TIFF support disabled.")
 
 from PyQt6.QtGui import QPixmap, QImage
 
@@ -59,7 +62,7 @@ def load_pixmap(path: str) -> QPixmap:
                 
             except Exception as e:
                 # If Pillow fails, we can't do anything else
-                print(f"Error loading image '{path}' with Pillow: {e}", file=sys.stderr)
+                logger.exception("Error loading image %r with Pillow", path)
                 pass
                 
     return QPixmap()

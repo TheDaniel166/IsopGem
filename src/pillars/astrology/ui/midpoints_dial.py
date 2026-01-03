@@ -5,7 +5,7 @@ import math
 from typing import List, Optional, Dict
 
 from PyQt6.QtCore import Qt, QRectF, QPointF
-from PyQt6.QtGui import QPainter, QColor, QPen, QBrush, QFont, QRadialGradient
+from PyQt6.QtGui import QPainter, QColor, QPen, QBrush, QFont, QRadialGradient, QMouseEvent, QPaintEvent
 from PyQt6.QtWidgets import QWidget, QToolTip
 
 
@@ -53,7 +53,7 @@ class MidpointsDial(QWidget):
         self._planet_positions = planet_positions
         self.update()
 
-    def mouseMoveEvent(self, event) -> None:
+    def mouseMoveEvent(self, a0: QMouseEvent | None) -> None:
         """
         Mousemoveevent logic.
         
@@ -63,7 +63,10 @@ class MidpointsDial(QWidget):
         Returns:
             Result of mouseMoveEvent operation.
         """
-        pos = event.position()
+        if a0 is None:
+            return
+
+        pos: QPointF = a0.position()
         
         for rect, p_a, p_b, degree in self._midpoint_hitboxes:
             if rect.contains(pos):
@@ -82,7 +85,7 @@ class MidpointsDial(QWidget):
                     if diff <= 2.0:  # 2° orb
                         tooltip += f"\n⚠ {pname} on midpoint!"
                 
-                QToolTip.showText(event.globalPosition().toPoint(), tooltip, self)
+                QToolTip.showText(a0.globalPosition().toPoint(), tooltip, self)
                 self._hovered_midpoint = (p_a, p_b, degree)
                 self.update()
                 return
@@ -91,7 +94,7 @@ class MidpointsDial(QWidget):
         QToolTip.hideText()
         self.update()
 
-    def paintEvent(self, event) -> None:
+    def paintEvent(self, a0: QPaintEvent | None) -> None:
         """
         Paintevent logic.
         
@@ -159,7 +162,7 @@ class MidpointsDial(QWidget):
             
             # Check if any planet is on this midpoint
             planet_on_mp = False
-            for pname, plon in self._planet_positions.items():
+            for _pname, plon in self._planet_positions.items():
                 diff = abs(plon - degree)
                 if diff > 180:
                     diff = 360 - diff
