@@ -55,22 +55,22 @@
     "warnings": 0
   },
   {
-    "path": "src/pillars/astrology/ui/returns_window.py",
-    "errors": 27,
-    "warnings": 0
-  },
-  {
-    "path": "src/pillars/astrology/ui/neo_aubrey_window.py",
-    "errors": 27,
-    "warnings": 0
-  },
-  {
     "path": "src/pillars/astrology/ui/synastry_midpoints_widget.py",
     "errors": 0,
     "warnings": 0
   },
   {
     "path": "src/pillars/astrology/ui/synastry_davison_widget.py",
+    "errors": 0,
+    "warnings": 0
+  },
+  {
+    "path": "src/pillars/astrology/ui/returns_window.py",
+    "errors": 0,
+    "warnings": 0
+  },
+  {
+    "path": "src/pillars/astrology/ui/neo_aubrey_window.py",
     "errors": 0,
     "warnings": 0
   },

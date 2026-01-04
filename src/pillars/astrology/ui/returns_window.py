@@ -2,7 +2,6 @@
 Sovereign Window for Planetary Returns (Solar/Lunar).
 """
 from datetime import datetime
-from typing import Optional
 
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
@@ -23,7 +22,7 @@ class ReturnsWindow(QMainWindow):
     Focused window for Solar/Lunar Returns.
     """
     
-    def __init__(self, service: OpenAstroService, parent=None):
+    def __init__(self, service: OpenAstroService, parent: QWidget | None = None):
         super().__init__(parent)
         self._service = service # For chart generation
         self._returns_service = ReturnsService() # For calculating the time
@@ -33,8 +32,9 @@ class ReturnsWindow(QMainWindow):
         
         self.main_widget = QWidget()
         self.setCentralWidget(self.main_widget)
-        self.layout = QHBoxLayout(self.main_widget)
-        self.layout.setSpacing(0); self.layout.setContentsMargins(0,0,0,0)
+        self._layout = QHBoxLayout(self.main_widget)
+        self._layout.setSpacing(0)
+        self._layout.setContentsMargins(0, 0, 0, 0)
         
         # 1. Sidebar
         self.sidebar = QWidget()
@@ -96,18 +96,18 @@ class ReturnsWindow(QMainWindow):
         self.canvas = ChartCanvas()
         self.content_layout.addWidget(self.canvas)
         
-        self.layout.addWidget(self.sidebar)
-        self.layout.addWidget(self.content)
+        self._layout.addWidget(self.sidebar)
+        self._layout.addWidget(self.content)
 
-    def _toggle_relocation(self, state):
-        enabled = (state == Qt.CheckState.Checked.value) or (state == 2) # Qt6 enum
+    def _toggle_relocation(self, state: int) -> None:
+        enabled = state == Qt.CheckState.Checked.value
         self.loc_r.setEnabled(enabled)
         self.lat_r.setEnabled(enabled)
         self.lon_r.setEnabled(enabled)
         if enabled:
             self.loc_r.setFocus()
 
-    def _on_calculate(self):
+    def _on_calculate(self) -> None:
         try:
             natal_event = self._build_natal_event()
             
@@ -136,7 +136,9 @@ class ReturnsWindow(QMainWindow):
         worker.signals.result.connect(self._on_result)
         worker.signals.error.connect(self._on_error)
         worker.signals.finished.connect(self._on_finished)
-        QThreadPool.globalInstance().start(worker)
+        pool = QThreadPool.globalInstance()
+        if pool is not None:
+            pool.start(worker)
 
     def _build_natal_event(self) -> AstrologyEvent:
         try:
@@ -167,12 +169,14 @@ class ReturnsWindow(QMainWindow):
         req = ChartRequest(return_event, chart_type="Radix") # Returns are just radix charts at a specific time
         return self._service.generate_chart(req)
 
-    def _on_result(self, result: ChartResult):
+    def _on_result(self, result: ChartResult) -> None:
         self.canvas.set_data(result.planet_positions, result.house_positions)
         
-    def _on_error(self, err):
-        QMessageBox.critical(self, "Calculation Error", str(err[1]))
+    def _on_error(self, err: tuple[object, object, object]) -> None:
+        # err is (exctype, value, traceback_str)
+        value = err[1]
+        QMessageBox.critical(self, "Calculation Error", str(value))
 
-    def _on_finished(self):
+    def _on_finished(self) -> None:
         self.calc_btn.setText("Calculate Return")
         self.calc_btn.setEnabled(True)
