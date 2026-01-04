@@ -142,7 +142,7 @@ class EsotericWisdomService:
             
             # Correspondences
             correspondences = defn.get('correspondences', {})
-            for k, v in correspondences.items():
+            for k, v in correspondences.items():  # type: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownVariableType]
                 searchable_text += f"{k} {v} "
             
             # Meditation
@@ -154,13 +154,13 @@ class EsotericWisdomService:
                 summary = defn.get('summary', '')
                 
                 # Create snippet
-                idx = summary.lower().find(query_lower)
+                idx = summary.lower().find(query_lower)  # type: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownVariableType]
                 if idx >= 0:
                     start = max(0, idx - 30)
                     end = min(len(summary), idx + 50)
-                    snippet = "..." + summary[start:end] + "..."
+                    snippet = "..." + summary[start:end] + "..."  # type: ignore[reportArgumentType, reportOperatorIssue, reportUnknownVariableType]
                 else:
-                    snippet = summary[:80] + "..." if len(summary) > 80 else summary
+                    snippet = summary[:80] + "..." if len(summary) > 80 else summary  # type: ignore[reportArgumentType, reportOperatorIssue, reportUnknownVariableType]
                 
                 results.append((shape_name, title, snippet))
         

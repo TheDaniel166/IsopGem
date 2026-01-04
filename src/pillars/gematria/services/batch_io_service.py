@@ -58,7 +58,7 @@ class BatchIOService:
             else:
                 df = pd.read_excel(file_path).fillna('')
                 
-            return [{str(k).lower(): str(v) for k, v in row.items()} for row in df.to_dict('records')]
+            return [{str(k).lower(): str(v) for k, v in row.items()} for row in df.to_dict('records')]  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType, reportUnknownVariableType]
         except ImportError as e:
              # Repackage import errors for clarity
              raise ImportError(str(e))
@@ -73,7 +73,7 @@ class BatchIOService:
         if self.pandas_available and pd is not None:
             try:
                 df = pd.read_csv(file_path, delimiter=delimiter).fillna('')
-                return [{str(k).lower(): str(v) for k, v in row.items()} for row in df.to_dict('records')]
+                return [{str(k).lower(): str(v) for k, v in row.items()} for row in df.to_dict('records')]  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType, reportUnknownVariableType]
             except Exception:
                 # Fallback to csv module if pandas fails on simple text
                 pass

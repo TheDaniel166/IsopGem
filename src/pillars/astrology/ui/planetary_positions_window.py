@@ -416,10 +416,10 @@ class PlanetaryPositionsWindow(QMainWindow):
         if isinstance(retro_seq, list):
             for idx, flag in enumerate(retro_seq):
                 if idx < len(result.planet_positions):
-                    key = self._canonical_name(result.planet_positions[idx].name)
+                    key = self._canonical_name(result.planet_positions[idx].name)  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
                     data[key] = bool(flag)
         detail = payload.get("planets_detail") or {}
-        for name, info in detail.items():
+        for name, info in detail.items():  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
             flag = info.get("planets_retrograde")
             if flag is not None:
                 data[self._canonical_name(name)] = bool(flag)
@@ -429,9 +429,9 @@ class PlanetaryPositionsWindow(QMainWindow):
         payload = result.raw_payload or {}
         detail = payload.get("planets_detail") or {}
         speeds: Dict[str, float] = {}
-        for name, info in detail.items():
+        for name, info in detail.items():  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
             try:
-                speeds[self._canonical_name(name)] = float(info.get("planets_speed"))
+                speeds[self._canonical_name(name)] = float(info.get("planets_speed"))  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
             except (TypeError, ValueError):
                 continue
         return speeds
@@ -532,7 +532,7 @@ class PlanetaryPositionsWindow(QMainWindow):
         hub = self.window_manager.get_active_windows().get("emerald_tablet")
         
         if hasattr(hub, "receive_import"):
-            hub.receive_import(export_data["name"], export_data["data"])
+            hub.receive_import(export_data["name"], export_data["data"])  # type: ignore[reportAttributeAccessIssue, reportOptionalMemberAccess, reportUnknownMemberType]
             self._set_status("Sent data to Emerald Tablet.")
 
     def _canonical_name(self, name: str) -> str:

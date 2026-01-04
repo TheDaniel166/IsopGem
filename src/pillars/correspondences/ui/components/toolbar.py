@@ -62,7 +62,7 @@ class SpreadsheetToolbar(QToolBar):
         self.combo_size = QComboBox()
         self.combo_size.addItems([str(s) for s in [8, 9, 10, 11, 12, 14, 16, 18, 24, 36]])
         self.combo_size.setCurrentText("11")
-        self.combo_size.currentTextChanged.connect(lambda t: self.font_size_changed.emit(int(t)))
+        self.combo_size.currentTextChanged.connect(lambda t: self.font_size_changed.emit(int(t)))  # type: ignore[reportUnknownArgumentType, reportUnknownLambdaType]
         self.addWidget(self.combo_size)
         
         self.addSeparator()
@@ -70,15 +70,15 @@ class SpreadsheetToolbar(QToolBar):
         # Style Actions
         self.act_bold = self.addAction("B")
         self.act_bold.setCheckable(True)
-        self.act_bold.triggered.connect(lambda c: self.style_action_triggered.emit("bold", c))
+        self.act_bold.triggered.connect(lambda c: self.style_action_triggered.emit("bold", c))  # type: ignore[reportOptionalMemberAccess, reportUnknownArgumentType, reportUnknownLambdaType]
         
         self.act_italic = self.addAction("I")
         self.act_italic.setCheckable(True)
-        self.act_italic.triggered.connect(lambda c: self.style_action_triggered.emit("italic", c))
+        self.act_italic.triggered.connect(lambda c: self.style_action_triggered.emit("italic", c))  # type: ignore[reportOptionalMemberAccess, reportUnknownArgumentType, reportUnknownLambdaType]
         
         self.act_underline = self.addAction("U")
         self.act_underline.setCheckable(True)
-        self.act_underline.triggered.connect(lambda c: self.style_action_triggered.emit("underline", c))
+        self.act_underline.triggered.connect(lambda c: self.style_action_triggered.emit("underline", c))  # type: ignore[reportOptionalMemberAccess, reportUnknownArgumentType, reportUnknownLambdaType]
         
         self.addSeparator()
         

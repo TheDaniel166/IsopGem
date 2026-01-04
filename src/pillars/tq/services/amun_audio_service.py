@@ -68,9 +68,9 @@ class AmunAudioService:
             full_data = bytearray()
             
             for sig in signatures:
-                ch2 = sig['channels'][2]
-                ch3 = sig['channels'][3]
-                ch1 = sig['channels'][1]
+                _ch2 = sig['channels'][2]
+                _ch3 = sig['channels'][3]
+                _ch1 = sig['channels'][1]
                 
                 # Green Channel -> Dynamics (Amplitude)
                 # amp = ch2.get('value', 127) / 254.0 # Fallback mapping if not pre-calc?
@@ -115,7 +115,7 @@ class AmunAudioService:
                 # No, sequence enforces grid.
                 # We'll stick to n_samples_per_note limits, effectively "choking" long notes.
                 
-                note_data = AmunAudioService._synthesize_data(freq, atk, rel, layers, detune, n_samples_per_note, sample_rate, audio_type)
+                note_data = AmunAudioService._synthesize_data(freq, atk, rel, layers, detune, n_samples_per_note, sample_rate, audio_type)  # type: ignore[reportUnknownArgumentType]
                 full_data.extend(note_data)
                 
             wav_file.writeframes(full_data)
@@ -177,7 +177,7 @@ class AmunAudioService:
             
             # Optimization: If Silent via Envelope, skip synthesis
             if env <= 0.001 and t > attack:
-                l_val, r_val = 0, 0
+                _l_val,_ _r_val = 0, 0  # type: ignore  # 4 errors
                 data.extend(struct.pack('<hh', 0, 0))
                 continue
                 

@@ -35,7 +35,7 @@ class ProgressionsWindow(QMainWindow):
         self.main_widget = QWidget()
         self.setCentralWidget(self.main_widget)
         self.layout = QHBoxLayout(self.main_widget)
-        self.layout.setSpacing(0); self.layout.setContentsMargins(0,0,0,0)
+        self.layout.setSpacing(0); self.layout.setContentsMargins(0,0,0,0)  # type: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
         
         # 1. Sidebar
         self.sidebar = QWidget()
@@ -149,7 +149,7 @@ class ProgressionsWindow(QMainWindow):
                 natal_res.house_positions # Keep Natal Houses as frame of reference usually
             )
         else:
-            self.canvas.set_data(prog_res.planet_positions, prog_res.house_positions)
+            self.canvas.set_data(prog_res.planet_positions, prog_res.house_positions)  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
         
     def _on_error(self, err):
         QMessageBox.critical(self, "Error", str(err[1]))

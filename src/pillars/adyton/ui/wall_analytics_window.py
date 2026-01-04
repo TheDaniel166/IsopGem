@@ -106,7 +106,7 @@ class WallAnalyticsWindow(QMainWindow):
         table = QTableWidget(9, 14)
         table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         table.customContextMenuRequested.connect(
-            lambda pos, t=table: self._show_context_menu(t, pos)
+            lambda pos, t=table: self._show_context_menu(t, pos)  # type: ignore[reportUnknownArgumentType, reportUnknownLambdaType, reportUnknownMemberType]
         )
 
         # Headers
@@ -168,7 +168,7 @@ class WallAnalyticsWindow(QMainWindow):
         table = QTableWidget(8, 13)
         table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         table.customContextMenuRequested.connect(
-            lambda pos, t=table: self._show_context_menu(t, pos)
+            lambda pos, t=table: self._show_context_menu(t, pos)  # type: ignore[reportUnknownArgumentType, reportUnknownLambdaType, reportUnknownMemberType]
         )
 
         col_headers = [f"C{i+1}" for i in range(13)]
@@ -207,7 +207,7 @@ class WallAnalyticsWindow(QMainWindow):
         table = QTableWidget(8, 8)
         table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         table.customContextMenuRequested.connect(
-            lambda pos, t=table: self._show_context_menu(t, pos)
+            lambda pos, t=table: self._show_context_menu(t, pos)  # type: ignore[reportUnknownArgumentType, reportUnknownLambdaType, reportUnknownMemberType]
         )
 
         col_headers = WALL_NAMES + ["Total"]
@@ -249,7 +249,7 @@ class WallAnalyticsWindow(QMainWindow):
         table = QTableWidget(7, 2)
         table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         table.customContextMenuRequested.connect(
-            lambda pos, t=table: self._show_context_menu(t, pos)
+            lambda pos, t=table: self._show_context_menu(t, pos)  # type: ignore[reportUnknownArgumentType, reportUnknownLambdaType, reportUnknownMemberType]
         )
 
         table.setHorizontalHeaderLabels(["Wall", "Total"])

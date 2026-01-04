@@ -106,7 +106,7 @@ class KameaPyramidCell(QWidget):
         self.update()
         super().enterEvent(event)
 
-    def leaveEvent(self, event):
+    def leaveEvent(self, event):  # type: ignore[reportIncompatibleMethodOverride, reportMissingParameterType, reportUnknownParameterType]
         """
         Leaveevent logic.
         
@@ -118,7 +118,7 @@ class KameaPyramidCell(QWidget):
         self.update()
         super().leaveEvent(event)
         
-    def mousePressEvent(self, event):
+    def mousePressEvent(self, event):  # type: ignore[reportIncompatibleMethodOverride, reportMissingParameterType, reportUnknownParameterType]
         """
         Mousepressevent logic.
         
@@ -129,7 +129,7 @@ class KameaPyramidCell(QWidget):
         self.clicked.emit()
         super().mousePressEvent(event)
 
-    def paintEvent(self, event):
+    def paintEvent(self, event):  # type: ignore[reportIncompatibleMethodOverride, reportMissingParameterType, reportUnknownParameterType]
         """
         Paintevent logic.
         
@@ -144,7 +144,7 @@ class KameaPyramidCell(QWidget):
         h = self.height()
         
         # Geometry Constants
-        margin = 0 # No margin for seamless tiling
+        _margin = 0 # No margin for seamless tiling
         cap_ratio = 0.4  # Cap is 40% of the width
         
         # Outer Rect

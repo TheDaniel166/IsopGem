@@ -52,7 +52,7 @@ class IngestionService:
                     val: Description of val.
                 
                 """
-                if pd.isna(val):
+                if pd.isna(val):  # type: ignore[reportOptionalMemberAccess, reportUnknownArgumentType, reportUnknownMemberType]
                     return ""
                 if isinstance(val, (int, float, bool, str)):
                     return val

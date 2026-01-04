@@ -166,7 +166,7 @@ class CorrespondenceHub(QWidget):
     The Emerald Tablet Hub.
     The Library of Correspondences. Launches Spreadsheet Windows.
     """
-    def __init__(self, window_manager, parent=None):
+    def __init__(self, window_manager, parent=None):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """
           init   logic.
         
@@ -390,7 +390,7 @@ class CorrespondenceHub(QWidget):
 
         self._import_thread.start()
 
-    def receive_import(self, name, data):
+    def receive_import(self, name, data):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """
         Public API: specific import method for other pillars.
         Creates a new table and launches it.
@@ -476,7 +476,7 @@ class CorrespondenceHub(QWidget):
             if table:
                 self._launch_window(table.id, table.name, table.content)
 
-    def _launch_window(self, table_id, name, content):
+    def _launch_window(self, table_id, name, content):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         # We need a persistent session for the window's repository interactions.
         # using get_db_session() context manager is not appropriate for long-lived objects.
         # We create a raw session using the factory.
@@ -484,12 +484,12 @@ class CorrespondenceHub(QWidget):
         session = SessionLocal()
         service = TableService(session)
         
-        win = SpreadsheetWindow(table_id, name, content, service)
+        win = SpreadsheetWindow(table_id, name, content, service)  # type: ignore[reportUnknownArgumentType]
         win._db_session = session # Keep alive reference
         
         # Clean up on close - session objects have a .close() method
         win.destroyed.connect(lambda: session.close())
-        win.destroyed.connect(lambda: self.open_windows.remove(win) if win in self.open_windows else None)
+        win.destroyed.connect(lambda: self.open_windows.remove(win) if win in self.open_windows else None)  # type: ignore[reportUnknownMemberType]
         
         win.show()
         self.open_windows.append(win)

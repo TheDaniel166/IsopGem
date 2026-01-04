@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple  # type: ignore[reportUnusedImport]
 
 
 @dataclass(slots=True)
@@ -156,7 +156,7 @@ class ArabicPartsService:
 
         # Sort by category then name
         category_order = {"hermetic": 0, "esoteric": 1, "traditional": 2}
-        results.sort(key=lambda p: (category_order.get(p.category, 99), p.name))
+        results.sort(key=lambda p: (category_order.get(p.category, 99), p.name))  # type: ignore[reportUnknownArgumentType, reportUnknownLambdaType, reportUnknownMemberType]
         return results
 
     def _calc_part_longitude(

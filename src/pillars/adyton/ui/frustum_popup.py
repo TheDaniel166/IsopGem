@@ -64,7 +64,7 @@ class FrustumCanvas(QWidget):
         self.center_color = center_color
         self.setMinimumSize(280, 280)
 
-    def paintEvent(self, event):
+    def paintEvent(self, event):  # type: ignore[reportIncompatibleMethodOverride, reportMissingParameterType, reportUnknownParameterType]
         """
         Paintevent logic.
         

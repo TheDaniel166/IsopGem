@@ -61,7 +61,7 @@ class ELSSearchWindow(QMainWindow):
     - Right pane: Clickable search results
     """
     
-    def __init__(self, window_manager=None, parent=None):
+    def __init__(self, window_manager=None, parent=None):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """
           init   logic.
         
@@ -663,7 +663,7 @@ class ELSSearchWindow(QMainWindow):
                     elif document and document.content:
                         # Strip HTML if raw_content not available
                         import re
-                        text = re.sub(r'<[^>]+>', '', document.content)
+                        text = re.sub(r'<[^>]+>', '', document.content)  # type: ignore[reportArgumentType, reportCallIssue, reportUnknownVariableType]
                         self._load_text(text, source=document.title or "Database Document")
                     else:
                         QMessageBox.warning(self, "Error", "Document has no text content")
@@ -906,9 +906,9 @@ class ELSSearchWindow(QMainWindow):
             )
             
             # Find the window instance
-            count = self.window_manager._window_counters.get("document_editor", 0)
+            count = self.window_manager._window_counters.get("document_editor", 0)  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
             win_id = f"document_editor_{count}"
-            editor_window = self.window_manager.get_window(win_id)
+            editor_window = self.window_manager.get_window(win_id)  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
             
             if editor_window and hasattr(editor_window, 'editor'):
                 editor_window.setWindowTitle(f"ELS Report - {term}")

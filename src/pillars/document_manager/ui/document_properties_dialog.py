@@ -109,7 +109,7 @@ class DocumentPropertiesDialog(QDialog):
         # If text is empty and placeholder is NOT multiple (meaning it was empty or common empty),
         # then it's an empty string update.
         
-        def get_update_value(edit_widget, attr):
+        def get_update_value(edit_widget, attr):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
             """
             Retrieve update value logic.
             

@@ -20,7 +20,7 @@ from shared.signals.navigation_bus import navigation_bus
 class TransitionsWindow(QMainWindow):
     """Window for Ternary Transition System analysis."""
     
-    def __init__(self, window_manager=None, parent=None):
+    def __init__(self, window_manager=None, parent=None):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """Initialize the window."""
         super().__init__(parent)
         self.window_manager = window_manager
@@ -88,7 +88,7 @@ class TransitionsWindow(QMainWindow):
         
         self.input_a_dec = QLineEdit()
         self.input_a_dec.setPlaceholderText("Decimal...")
-        self.input_a_dec.textChanged.connect(lambda t: self._on_decimal_changed(t, self.input_a_tern))
+        self.input_a_dec.textChanged.connect(lambda t: self._on_decimal_changed(t, self.input_a_tern))  # type: ignore[reportUnknownArgumentType, reportUnknownLambdaType]
         inputs_layout.addWidget(self.input_a_dec, 1, 1)
         
         lbl_a_tern = QLabel("Ternary:")
@@ -97,7 +97,7 @@ class TransitionsWindow(QMainWindow):
         
         self.input_a_tern = QLineEdit()
         self.input_a_tern.setPlaceholderText("Ternary...")
-        self.input_a_tern.textChanged.connect(lambda t: self._on_ternary_changed(t, self.input_a_dec))
+        self.input_a_tern.textChanged.connect(lambda t: self._on_ternary_changed(t, self.input_a_dec))  # type: ignore[reportUnknownArgumentType, reportUnknownLambdaType]
         inputs_layout.addWidget(self.input_a_tern, 1, 3)
         
         # Input B (Modifier)
@@ -107,7 +107,7 @@ class TransitionsWindow(QMainWindow):
         
         self.input_b_dec = QLineEdit()
         self.input_b_dec.setPlaceholderText("Decimal...")
-        self.input_b_dec.textChanged.connect(lambda t: self._on_decimal_changed(t, self.input_b_tern))
+        self.input_b_dec.textChanged.connect(lambda t: self._on_decimal_changed(t, self.input_b_tern))  # type: ignore[reportUnknownArgumentType, reportUnknownLambdaType]
         inputs_layout.addWidget(self.input_b_dec, 2, 1)
         
         lbl_b_tern = QLabel("Ternary:")
@@ -116,7 +116,7 @@ class TransitionsWindow(QMainWindow):
         
         self.input_b_tern = QLineEdit()
         self.input_b_tern.setPlaceholderText("Ternary...")
-        self.input_b_tern.textChanged.connect(lambda t: self._on_ternary_changed(t, self.input_b_dec))
+        self.input_b_tern.textChanged.connect(lambda t: self._on_ternary_changed(t, self.input_b_dec))  # type: ignore[reportUnknownArgumentType, reportUnknownLambdaType]
         inputs_layout.addWidget(self.input_b_tern, 2, 3)
         
         layout.addWidget(inputs_card)
@@ -275,7 +275,7 @@ class TransitionsWindow(QMainWindow):
         
         # 3. Retrieve instance and send data (Logic coupled to instance existence for now)
         # Since request_window is synchronous in our architecture, we can try to retrieve it immediately
-        hub = self.window_manager.get_active_windows().get("emerald_tablet")
+        hub = self.window_manager.get_active_windows().get("emerald_tablet")  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
         
         if hub and hasattr(hub, "receive_import"):
             name = f"Transformation_{self.input_a_tern.text()}_by_{self.input_b_tern.text()}"
@@ -368,7 +368,7 @@ class TransitionsWindow(QMainWindow):
 
 
 
-    def _set_row(self, row, step, t1, t2, res, dec_res):
+    def _set_row(self, row, step, t1, t2, res, dec_res):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """Helper to set table row data."""
         self.table.setItem(row, 0, QTableWidgetItem(str(step)))
         self.table.setItem(row, 1, QTableWidgetItem(t1))

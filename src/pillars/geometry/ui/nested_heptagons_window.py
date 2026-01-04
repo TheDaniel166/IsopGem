@@ -53,7 +53,7 @@ class HeptagonCanvas(QWidget):
         self.circumcircle_color = QColor(200, 200, 255, 150)
         self.incircle_color = QColor(255, 200, 200, 150)
     
-    def paintEvent(self, event) -> None:
+    def paintEvent(self, event) -> None:  # type: ignore[reportIncompatibleMethodOverride, reportMissingParameterType, reportUnknownParameterType]
         """Paint the nested heptagons visualization."""
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
@@ -135,7 +135,7 @@ class HeptagonCanvas(QWidget):
                 # Short diagonal (skip 1 vertex)
                 j = (i + 2) % 7
                 x2, y2 = scaled_verts[j]
-                painter.drawLine(QPointF(x1, y1), QPointF(x2, y2))
+                painter.drawLine(QPointF(x1, y1), QPointF(x2, y2))  # type: ignore[reportUnknownArgumentType]
         
         # Draw vertex labels
         if self.show_labels:
@@ -143,10 +143,10 @@ class HeptagonCanvas(QWidget):
             font = QFont("Georgia", 9)
             painter.setFont(font)
             
-            for i, (x, y) in enumerate(scaled_verts):
+            for i, (x, y) in enumerate(scaled_verts):  # type: ignore[reportUnknownArgumentType, reportUnknownVariableType]
                 # Offset label outward
                 v = vertices[i]
-                mag = math.sqrt(v.x**2 + v.y**2)
+                mag = math.sqrt(v.x**2 + v.y**2)  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
                 if mag > 0:
                     ox = v.x / mag * 15
                     oy = v.y / mag * 15
@@ -475,7 +475,7 @@ class NestedHeptagonsWindow(QWidget):
     
     def _update_property_display(self, widget: QWidget, props) -> None:
         """Update a property form with new values."""
-        labels = widget.labels
+        labels = widget.labels  # type: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownVariableType]
         labels["Edge Length"].setText(f"{props.edge_length:.6f}")
         labels["Perimeter"].setText(f"{props.perimeter:.6f}")
         labels["Area"].setText(f"{props.area:.6f}")

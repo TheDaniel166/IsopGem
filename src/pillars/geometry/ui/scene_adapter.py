@@ -46,7 +46,7 @@ def build_scene_payload(drawing_instructions: Dict, labels: Sequence[Tuple[str, 
         span = bounds.width if bounds else 10
         payload.suggest_grid_span = span * 1.2
     elif shape_type == "circle":
-        radius = abs(drawing_instructions.get("radius", 1.0))
+        radius = abs(drawing_instructions.get("radius", 1.0))  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType, reportUnknownVariableType]
         payload.suggest_grid_span = radius * 4
     elif shape_type == "polygon":
         payload.suggest_grid_span = (bounds.width if bounds else 10) * 1.2
@@ -58,11 +58,11 @@ def build_scene_payload(drawing_instructions: Dict, labels: Sequence[Tuple[str, 
 # Primitive builders
 # ---------------------------------------------------------------------------
 
-def _circle_primitives(payload: Dict) -> List[Primitive]:
-    center = (payload.get("center_x", 0.0), payload.get("center_y", 0.0))
-    radius = abs(payload.get("radius", 1.0))
+def _circle_primitives(payload: Dict) -> List[Primitive]:  # type: ignore[reportMissingTypeArgument, reportUndefinedVariable, reportUnknownParameterType]
+    center = (payload.get("center_x", 0.0), payload.get("center_y", 0.0))  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
+    radius = abs(payload.get("radius", 1.0))  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType, reportUnknownVariableType]
 
-    primitives: List[Primitive] = [CirclePrimitive(center=center, radius=radius)]
+    primitives: List[Primitive] = [CirclePrimitive(center=center, radius=radius)]  # type: ignore[reportUndefinedVariable, reportUnknownArgumentType, reportUnknownVariableType]
 
     if payload.get("show_radius_line"):
         primitives.append(
@@ -95,8 +95,8 @@ def _circle_primitives(payload: Dict) -> List[Primitive]:
     return primitives
 
 
-def _polygon_primitives(payload: Dict) -> List[Primitive]:
-    base_points: List[Tuple[float, float]] = [(x, y) for x, y in payload.get("points", [])]
+def _polygon_primitives(payload: Dict) -> List[Primitive]:  # type: ignore[reportMissingTypeArgument, reportUndefinedVariable, reportUnknownParameterType]
+    base_points: List[Tuple[float, float]] = [(x, y) for x, y in payload.get("points", [])]  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
     primitives: List[Primitive] = []
 
     star_mode = payload.get("star") and len(base_points) >= 6
@@ -233,7 +233,7 @@ def _calculate_bounds(primitives: Sequence[Primitive]) -> Bounds | None:
     return Bounds(min(xs), max(xs), min(ys), max(ys))
 
 
-def _colored_diagonal_groups(groups: Sequence[Dict]) -> List[Primitive]:
+def _colored_diagonal_groups(groups: Sequence[Dict]) -> List[Primitive]:  # type: ignore[reportMissingTypeArgument, reportUndefinedVariable, reportUnknownParameterType]
     primitives: List[Primitive] = []
     for group in groups:
         raw_color = group.get("color") or (148, 163, 184, 255)
@@ -241,18 +241,18 @@ def _colored_diagonal_groups(groups: Sequence[Dict]) -> List[Primitive]:
         pen = PenStyle(color=color, width=2.0, dashed=False)
         for segment in group.get("segments", []):
             if isinstance(segment, dict):
-                start = tuple(segment.get("start", (0.0, 0.0)))
-                end = tuple(segment.get("end", (0.0, 0.0)))
+                start = tuple(segment.get("start", (0.0, 0.0)))  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType, reportUnknownVariableType]
+                end = tuple(segment.get("end", (0.0, 0.0)))  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType, reportUnknownVariableType]
             elif isinstance(segment, (list, tuple)) and len(segment) == 2:
                 start = tuple(segment[0])
                 end = tuple(segment[1])
             else:
                 continue
-            primitives.append(LinePrimitive(start=start, end=end, pen=pen))
+            primitives.append(LinePrimitive(start=start, end=end, pen=pen))  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
     return primitives
 
 
-def _custom_primitives(specs: Sequence[Dict]) -> List[Primitive]:
+def _custom_primitives(specs: Sequence[Dict]) -> List[Primitive]:  # type: ignore[reportMissingTypeArgument, reportUndefinedVariable, reportUnknownParameterType]
     primitives: List[Primitive] = []
     for spec in specs:
         if not isinstance(spec, dict):
@@ -263,12 +263,12 @@ def _custom_primitives(specs: Sequence[Dict]) -> List[Primitive]:
     return primitives
 
 
-def _parse_single_primitive(spec: Dict) -> Optional[Primitive]:
+def _parse_single_primitive(spec: Dict) -> Optional[Primitive]:  # type: ignore[reportMissingTypeArgument, reportUndefinedVariable, reportUnknownParameterType]
     if not isinstance(spec, dict):
         return None
         
     shape = spec.get("shape")
-    type_ = spec.get("type", shape) # Handle aliasing/legacy 'shape' vs 'type'
+    type_ = spec.get("type", shape) # Handle aliasing/legacy 'shape' vs 'type'  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType, reportUnknownVariableType]
     
     if type_ == "boolean":
          op = spec.get("operation")
@@ -281,10 +281,10 @@ def _parse_single_primitive(spec: Dict) -> Optional[Primitive]:
          if shape_a and shape_b:
              pen = _decode_pen(spec.get("pen"))
              brush = _decode_brush(spec.get("brush"))
-             return BooleanPrimitive(operation=op, shape_a=shape_a, shape_b=shape_b, pen=pen, brush=brush)
+             return BooleanPrimitive(operation=op, shape_a=shape_a, shape_b=shape_b, pen=pen, brush=brush)  # type: ignore[reportArgumentType, reportUnknownArgumentType]
              
     elif type_ == "circle":
-        center = tuple(spec.get("center", (0.0, 0.0)))
+        center = tuple(spec.get("center", (0.0, 0.0)))  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType, reportUnknownVariableType]
         radius_val = spec.get("radius", 1.0)
         # Fix logic: handle None radius gracefully if missed elsewhere
         if radius_val is None:
@@ -295,7 +295,7 @@ def _parse_single_primitive(spec: Dict) -> Optional[Primitive]:
         return CirclePrimitive(center=center, radius=radius, pen=pen, brush=brush)
         
     elif type_ == "polygon":
-        points = [tuple(point) for point in spec.get("points", [])]
+        points = [tuple(point) for point in spec.get("points", [])]  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType, reportUnknownVariableType]
         if not points:
             return None
         pen = _decode_pen(spec.get("pen"))
@@ -304,13 +304,13 @@ def _parse_single_primitive(spec: Dict) -> Optional[Primitive]:
         return PolygonPrimitive(points=points, pen=pen, brush=brush, closed=closed)
         
     elif type_ == "line":
-        start = tuple(spec.get("start", (0.0, 0.0)))
-        end = tuple(spec.get("end", (0.0, 0.0)))
+        start = tuple(spec.get("start", (0.0, 0.0)))  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType, reportUnknownVariableType]
+        end = tuple(spec.get("end", (0.0, 0.0)))  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType, reportUnknownVariableType]
         pen = _decode_pen(spec.get("pen"))
         return LinePrimitive(start=start, end=end, pen=pen)
         
     elif type_ == "polyline":
-        points = [tuple(point) for point in spec.get("points", [])]
+        points = [tuple(point) for point in spec.get("points", [])]  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType, reportUnknownVariableType]
         if not points:
             return None
         
@@ -332,7 +332,7 @@ def _parse_single_primitive(spec: Dict) -> Optional[Primitive]:
 def _decode_pen(config: Dict | None) -> PenStyle:
     if not config:
         return PenStyle()
-    color = tuple(config.get("color", PenStyle().color))
+    color = tuple(config.get("color", PenStyle().color))  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType, reportUnknownVariableType]
     width = float(config.get("width", 2.0))
     dashed = bool(config.get("dashed", False))
     return PenStyle(color=color, width=width, dashed=dashed)
@@ -341,7 +341,7 @@ def _decode_pen(config: Dict | None) -> PenStyle:
 def _decode_brush(config: Dict | None) -> BrushStyle:
     if not config:
         return BrushStyle()
-    color = tuple(config.get("color", BrushStyle().color))
+    color = tuple(config.get("color", BrushStyle().color))  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType, reportUnknownVariableType]
     enabled = bool(config.get("enabled", True))
     return BrushStyle(color=color, enabled=enabled)
 

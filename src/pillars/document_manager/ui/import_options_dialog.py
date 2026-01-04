@@ -15,7 +15,7 @@ class ImportOptionsDialog(QDialog):
         existing_collections: Description of existing_collections.
     
     """
-    def __init__(self, existing_collections=None, parent=None):
+    def __init__(self, existing_collections=None, parent=None):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """
           init   logic.
         
@@ -38,7 +38,7 @@ class ImportOptionsDialog(QDialog):
         self.collection_combo.setEditable(True)
         self.collection_combo.setPlaceholderText("Select or type new collection...")
         self.collection_combo.addItem("") # Empty option
-        for coll in sorted(self.existing_collections):
+        for coll in sorted(self.existing_collections):  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType, reportUnknownVariableType]
             self.collection_combo.addItem(coll)
         form.addRow("Collection:", self.collection_combo)
 

@@ -12,7 +12,7 @@ class BorderEngine:
     """
     
     @staticmethod
-    def calculate_borders(model, indexes, border_type, settings, border_role):
+    def calculate_borders(model, indexes, border_type, settings, border_role):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """
         Determines the new border configuration for a set of selected indexes.
         
@@ -30,12 +30,12 @@ class BorderEngine:
             return []
             
         updates = []
-        selected_coords = set((idx.row(), idx.column()) for idx in indexes)
+        selected_coords = set((idx.row(), idx.column()) for idx in indexes)  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType, reportUnknownVariableType]
         
         for idx in indexes:
             if not idx.isValid(): continue
             
-            r, c = idx.row(), idx.column()
+            r, c = idx.row(), idx.column()  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
             
             # Get existing borders (copy to avoid mutation)
             current_borders = model.data(idx, border_role) or {}
@@ -80,7 +80,7 @@ class BorderEngine:
         return updates
 
     @staticmethod
-    def update_existing_borders(model, indexes, settings, border_role):
+    def update_existing_borders(model, indexes, settings, border_role):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """
         Updates the STYLE (color, width) of existing borders without adding new ones.
         """

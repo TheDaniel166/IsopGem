@@ -104,7 +104,7 @@ class SynastryAspectsWidget(QWidget):
             header.setSectionResizeMode(4, QHeaderView.ResizeMode.Fixed)
             header.resizeSection(4, 30)
         
-        for row, (pa, pb, name, glyph, orb, color) in enumerate(self._aspects_data):
+        for row, (pa, pb, name, glyph, orb, color) in enumerate(self._aspects_data):  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType, reportUnknownVariableType]
             self.table.setItem(row, 0, QTableWidgetItem(pa))
             
             aspect_item = QTableWidgetItem(f"{glyph} {name}")
@@ -135,8 +135,8 @@ class SynastryAspectsWidget(QWidget):
         
         # Build lookup
         aspect_lookup = {}
-        for pa, pb, name, glyph, orb, color in self._aspects_data:
-            aspect_lookup[(pa, pb)] = (glyph, color)
+        for pa, pb, _name, glyph,_ orb, color in self._aspects_data:  # type: ignore[reportUnknownMemberType, reportUnknownVariableType, reportUnusedVariable]
+            aspect_lookup[(pa, pb)] = (glyph, color)  # type: ignore[reportPossiblyUnboundVariable, reportUnboundVariable, unknown]
         
         for r, pa in enumerate(self._planets_a):
             for c, pb in enumerate(self._planets_b):

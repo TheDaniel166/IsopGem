@@ -19,7 +19,7 @@ from ..services.esoteric_wisdom_service import get_esoteric_wisdom_service
 class EsotericWisdomWindow(QWidget):
     """Window for browsing the Esoteric Wisdom of Sacred Geometry."""
     
-    def __init__(self, window_manager: WindowManager = None, **kwargs):
+    def __init__(self, window_manager: WindowManager = None, **kwargs):  # type: ignore[reportArgumentType, reportMissingParameterType, reportUnknownParameterType]
         """
           init   logic.
         
@@ -300,8 +300,8 @@ class EsotericWisdomWindow(QWidget):
             empty.setStyleSheet("color: #94a3b8; font-size: 12pt; font-style: italic;")
             self.content_layout.addWidget(empty)
         else:
-            for shape_name, title, snippet in results:
-                result_card = self._create_result_card(shape_name, title, snippet)
+            for shape_name, title, snippet in results:  # type: ignore[reportUnknownVariableType]
+                result_card = self._create_result_card(shape_name, title, snippet)  # type: ignore[reportUnknownArgumentType]
                 self.content_layout.addWidget(result_card)
         
         self.content_layout.addStretch()

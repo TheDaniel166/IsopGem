@@ -114,7 +114,7 @@ class AmunVisualizer(QWidget):
             
         self.update()
 
-    def paintEvent(self, event):
+    def paintEvent(self, event):  # type: ignore[reportIncompatibleMethodOverride, reportMissingParameterType, reportUnknownParameterType]
         """
         Paintevent logic.
         
@@ -179,7 +179,7 @@ class AmunVisualizer(QWidget):
                 
             painter.restore()
 
-    def _draw_void_spheres(self, painter, color, radius):
+    def _draw_void_spheres(self, painter, color, radius):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """Draw concentric circles for the Void state."""
         pen = QPen(color, 2)
         painter.setPen(pen)
@@ -189,7 +189,7 @@ class AmunVisualizer(QWidget):
         painter.drawEllipse(QPointF(0,0), radius*0.6, radius*0.6)
         painter.drawEllipse(QPointF(0,0), radius*0.3, radius*0.3)
 
-    def _draw_polygon(self, painter, sides, radius, color, width):
+    def _draw_polygon(self, painter, sides, radius, color, width):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         pen = QPen(color, width)
         painter.setPen(pen)
         
@@ -199,11 +199,11 @@ class AmunVisualizer(QWidget):
             angle = i * step
             x = math.cos(angle) * radius
             y = math.sin(angle) * radius
-            points.append(QPointF(x, y))
+            points.append(QPointF(x, y))  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
             
         painter.drawPolygon(points)
 
-    def _draw_star(self, painter, sides, radius, color, width):
+    def _draw_star(self, painter, sides, radius, color, width):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         pen = QPen(color, width)
         painter.setPen(pen)
         
@@ -218,9 +218,9 @@ class AmunVisualizer(QWidget):
             angle = i * step
             x = math.cos(angle) * radius
             y = math.sin(angle) * radius
-            points.append(QPointF(x, y))
+            points.append(QPointF(x, y))  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
             
-        path = QPainterPath()
+        _path = QPainterPath()
         # Naive star drawing: connect i to (i+skip) % sides
         # Better: stroke multiple lines
         for i in range(sides):

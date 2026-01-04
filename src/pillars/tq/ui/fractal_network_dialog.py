@@ -90,13 +90,13 @@ class FractalNetworkDialog(QDialog):
             # Current digit value (for ID)
             # 6D has no "ID"
             if i == 0:
-                step_id = "ROOT"
+                _step_id = "ROOT"
             else:
                 # The ID is usually the value of the last exposed digit?
                 # Or just use the masked value itself.
                 # Let's show the value added.
                 new_digit = ternary[i-1] if i > 0 else "-"
-                step_id = f"Step {i} (+{new_digit})"
+                _step_id = f"Step {i} (+{new_digit})"
 
             label, desc_base, color = dims[i]
             
@@ -106,7 +106,7 @@ class FractalNetworkDialog(QDialog):
                 
             self._add_step(label, val, desc_base, color)
         
-    def _add_step(self, label, value, desc, color):
+    def _add_step(self, label, value, desc, color):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         container = QFrame()
         container.setStyleSheet(f"border: 1px solid {color}; border-radius: 5px; background-color: rgba(255,255,255,0.05);")
         l = QVBoxLayout(container)

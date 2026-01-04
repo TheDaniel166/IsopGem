@@ -73,11 +73,11 @@ def tetrahedral_points(n: int, spacing: float = 1.0) -> List[Tuple[float, float,
         if not layer_points:
             continue
             
-        avg_x = sum(p[0] for p in layer_points) / len(layer_points)
-        avg_y = sum(p[1] for p in layer_points) / len(layer_points)
+        avg_x = sum(p[0] for p in layer_points) / len(layer_points)  # type: ignore[reportUnknownArgumentType, reportUnknownVariableType]
+        avg_y = sum(p[1] for p in layer_points) / len(layer_points)  # type: ignore[reportUnknownArgumentType, reportUnknownVariableType]
         
         # 3. Center the layer
-        for lx, ly, lz in layer_points:
+        for lx, ly, lz in layer_points:  # type: ignore[reportUnknownVariableType]
             points.append((lx - avg_x, ly - avg_y, lz))
     
     return points
@@ -285,7 +285,7 @@ def project_dynamic(
         # 2. Pitch (Camera Tilt)
         # Rotate around X axis
         # y becomes depth, z becomes screen Y
-        y2 = y1 * cp - z1 * sp
+        _y2 = y1 * cp - z1 * sp
         z2 = y1 * sp + z1 * cp
         
         # 3. Project Orthographically
@@ -397,13 +397,13 @@ def stellated_octahedron_points(n: int, spacing: float = 1.0) -> List[Tuple[floa
     # 3. Generate Downward Tetrahedron (Dual)
     # Reflect through the origin (-x, -y, -z)
     # This creates the opposing tetrahedron intersecting the first.
-    for x, y, z in centered_up:
+    for x, y, z in centered_up:  # type: ignore[reportUnknownVariableType]
         points.append((-x, -y, -z))
 
     # Dedup
     unique_map = {}
     for p in points:
-        key = (round(p[0], 4), round(p[1], 4), round(p[2], 4))
+        key = (round(p[0], 4), round(p[1], 4), round(p[2], 4))  # type: ignore[reportUnknownArgumentType, reportUnknownVariableType]
         unique_map[key] = p
         
     return list(unique_map.values())
@@ -449,7 +449,7 @@ def icosahedral_points(n: int, spacing: float = 1.0) -> List[Tuple[float, float,
     
     # We will define 12 vertices explicitly to index them for faces.
     # Using index convention for standard icosahedron.
-    raw_verts = [
+    _raw_verts = [
         (0, 1, PHI), (0, -1, PHI), (0, 1, -PHI), (0, -1, -PHI),  # 0-3
         (1, PHI, 0), (-1, PHI, 0), (1, -PHI, 0), (-1, -PHI, 0),  # 4-7
         (PHI, 0, 1), (PHI, 0, -1), (-PHI, 0, 1), (-PHI, 0, -1)   # 8-11: Wait, fixed typo
@@ -479,7 +479,7 @@ def icosahedral_points(n: int, spacing: float = 1.0) -> List[Tuple[float, float,
     # A generic triangulation is safer if we don't want to debug indices:
     # Use distance check to build faces once.
     
-    faces = []
+    _faces = []
     num_v = 12
     # Threshold for edge length 2 (squared 4)
     # Distances are 4, or 4*PHI^2? 
@@ -514,7 +514,7 @@ def icosahedral_points(n: int, spacing: float = 1.0) -> List[Tuple[float, float,
         
         # For each face
         for t_idx in triangles:
-            i, j, m_idx = t_idx # m is taken, use m_idx
+            i, j, m_idx = t_idx # m is taken, use m_idx  # type: ignore[reportUnknownVariableType]
             A = verts[i]
             B = verts[j]
             C = verts[m_idx]
@@ -542,7 +542,7 @@ def icosahedral_points(n: int, spacing: float = 1.0) -> List[Tuple[float, float,
         # Because edges are shared by 2 faces, vertices by 5 faces.
         for p in shell_points:
             # Round for key
-            key = (round(p[0], 4), round(p[1], 4), round(p[2], 4))
+            key = (round(p[0], 4), round(p[1], 4), round(p[2], 4))  # type: ignore[reportUnknownArgumentType, reportUnknownVariableType]
             if key not in seen_points:
                 seen_points.add(key)
                 # Scale by spacing
@@ -652,7 +652,7 @@ def dodecahedral_points(n: int, spacing: float = 1.0) -> List[Tuple[float, float
     # Interpolate those 5 verts.
     
     # Icosa Verts (normalized) are Face Centers.
-    ico_verts = []
+    _ico_verts = []
     # (0, ±1, ±phi) perms
     raw_ico = [
         (0, 1, phi), (0, -1, phi), (0, 1, -phi), (0, -1, -phi),
@@ -668,13 +668,13 @@ def dodecahedral_points(n: int, spacing: float = 1.0) -> List[Tuple[float, float
         # For each face (defined by ico_vert center)
         for cx, cy, cz in raw_ico:
             # Find 5 vertices of Dodeca nearest to (cx, cy, cz)
-            face_verts = []
+            _face_verts = []
             # Brute force 20
             dists = []
-            for idx, v in enumerate(verts):
+            for _idx, v in enumerate(verts):  # type: ignore[reportUnknownArgumentType, reportUnknownVariableType, reportUnusedVariable]
                 d2 = (v[0]-cx)**2 + (v[1]-cy)**2 + (v[2]-cz)**2
                 dists.append((d2, v))
-            dists.sort(key=lambda x: x[0])
+            dists.sort(key=lambda x: x[0])  # type: ignore[reportUnknownLambdaType, reportUnknownMemberType]
             # Top 5 are the face
             pentagon = [d[1] for d in dists[:5]]
             
@@ -696,7 +696,7 @@ def dodecahedral_points(n: int, spacing: float = 1.0) -> List[Tuple[float, float
                 (pentagon[0], pentagon[3], pentagon[4])
             ]
             
-            for A, B, C in sub_tris:
+            for A, B, C in sub_tris:  # type: ignore[reportUnknownVariableType]
                 # Fill triangle at scale k
                 for r in range(k + 1):
                     for s in range(k - r + 1):
@@ -706,7 +706,7 @@ def dodecahedral_points(n: int, spacing: float = 1.0) -> List[Tuple[float, float
                         pz = (r * A[2] + s * B[2] + t * C[2]) / k
                         
                         # Add to set
-                        key = (round(px, 4), round(py, 4), round(pz, 4))
+                        key = (round(px, 4), round(py, 4), round(pz, 4))  # type: ignore[reportUnknownArgumentType, reportUnknownVariableType]
                         if key not in seen_points:
                             seen_points.add(key)
                             points.append((px*spacing, py*spacing, pz*spacing))

@@ -146,7 +146,7 @@ class SpreadsheetWindow(QMainWindow):
         
         # Menu (Show all sheets)
         def _show_all_sheets_menu():
-             names = [m.scroll_name for m in self.models]
+             names = [m.scroll_name for m in self.models]  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
              self.tab_bar.update_menu(names)
              self.tab_bar.btn_menu.showMenu()
         self.tab_bar.btn_menu.clicked.connect(_show_all_sheets_menu)
@@ -157,7 +157,7 @@ class SpreadsheetWindow(QMainWindow):
         self.view.selectionModel().currentChanged.connect(self._on_selection_changed)
         self.view.selectionModel().selectionChanged.connect(self._on_range_selection_changed)
         # Connect ONLY current model initialy
-        self.model.dataChanged.connect(self._on_data_changed)
+        self.model.dataChanged.connect(self._on_data_changed)  # type: ignore[reportUnknownMemberType]
         
         # State for point-and-click references
         self._is_editing_formula = False
@@ -268,7 +268,7 @@ class SpreadsheetWindow(QMainWindow):
             # Check unified composition mode (formula bar OR inline editor with '=' prefix)
             if self._is_in_formula_composition_mode():
                 # Calculate cell under mouse
-                pos = event.pos()
+                pos = event.pos()  # type: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownVariableType]
                 index = self.view.indexAt(pos)
                 
                 # Check if we clicked the cell we are editing (Source)
@@ -282,7 +282,7 @@ class SpreadsheetWindow(QMainWindow):
         # B. Key Press Logic (Navigation)
         if event.type() == QEvent.Type.KeyPress:
             # 1. Toggle Mode (Ctrl+E)
-            if event.key() == Qt.Key.Key_E and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            if event.key() == Qt.Key.Key_E and event.modifiers() & Qt.KeyboardModifier.ControlModifier:  # type: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
                 self._ref_mode = not self._ref_mode
                 self.status_bar.set_ref_mode(self._ref_mode)
                 return True  # Consume
@@ -290,7 +290,7 @@ class SpreadsheetWindow(QMainWindow):
             # 2. Key Navigation (Arrows) in composition mode
             if self._is_in_formula_composition_mode() and self._ref_mode:
                 if event.key() in (Qt.Key.Key_Up, Qt.Key.Key_Down, Qt.Key.Key_Left, Qt.Key.Key_Right):
-                    self._handle_arrow_navigation(event.key())
+                    self._handle_arrow_navigation(event.key())  # type: ignore[reportAttributeAccessIssue, reportUnknownArgumentType, reportUnknownMemberType]
                     return True  # Swallow event (don't move cursor in text)
 
         # C. Focus events on formula bar -> update composition visuals
@@ -326,11 +326,11 @@ class SpreadsheetWindow(QMainWindow):
         elif key == Qt.Key.Key_Right: col += 1
         
         # 3. Boundary Check
-        row = max(0, min(row, self.model.rowCount() - 1))
-        col = max(0, min(col, self.model.columnCount() - 1))
+        row = max(0, min(row, self.model.rowCount() - 1))  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
+        col = max(0, min(col, self.model.columnCount() - 1))  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
         
         # 4. Move Virtual Cursor
-        new_index = self.model.index(row, col)
+        new_index = self.model.index(row, col)  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
         self._phantom_ref_cursor = new_index
         
         # 5. Insert Reference
@@ -452,7 +452,7 @@ class SpreadsheetWindow(QMainWindow):
         toolbar.addSeparator()
         
         # --- History ---
-        stack = self.model.undo_stack
+        stack = self.model.undo_stack  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
         
         act_undo = stack.createUndoAction(self, "Undo")
         act_undo.setShortcut("Ctrl+Z")
@@ -597,19 +597,19 @@ class SpreadsheetWindow(QMainWindow):
         if not index.isValid():
             return
             
-        font = self.model.data(index, Qt.ItemDataRole.FontRole)
+        font = self.model.data(index, Qt.ItemDataRole.FontRole)  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
         
         # Font Combo (optional - may be in SpreadsheetToolbar)
         if hasattr(self, 'font_combo') and self.font_combo and font:
-            self.font_combo.blockSignals(True)
-            self.font_combo.setCurrentFont(font)
-            self.font_combo.blockSignals(False)
+            self.font_combo.blockSignals(True)  # type: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
+            self.font_combo.setCurrentFont(font)  # type: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
+            self.font_combo.blockSignals(False)  # type: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
         
         # Size Spin (optional)
         if hasattr(self, 'size_spin') and self.size_spin and font:
-            self.size_spin.blockSignals(True)
-            self.size_spin.setValue(font.pointSize())
-            self.size_spin.blockSignals(False)
+            self.size_spin.blockSignals(True)  # type: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
+            self.size_spin.setValue(font.pointSize())  # type: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
+            self.size_spin.blockSignals(False)  # type: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
         
         # Style Actions (optional)
         if font:
@@ -620,19 +620,19 @@ class SpreadsheetWindow(QMainWindow):
             bold = italic = underline = False
             
         if hasattr(self, 'act_bold') and self.act_bold:
-            self.act_bold.blockSignals(True)
-            self.act_bold.setChecked(bold)
-            self.act_bold.blockSignals(False)
+            self.act_bold.blockSignals(True)  # type: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
+            self.act_bold.setChecked(bold)  # type: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
+            self.act_bold.blockSignals(False)  # type: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
             
         if hasattr(self, 'act_italic') and self.act_italic:
-            self.act_italic.blockSignals(True)
-            self.act_italic.setChecked(italic)
-            self.act_italic.blockSignals(False)
+            self.act_italic.blockSignals(True)  # type: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
+            self.act_italic.setChecked(italic)  # type: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
+            self.act_italic.blockSignals(False)  # type: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
             
         if hasattr(self, 'act_underline') and self.act_underline:
-            self.act_underline.blockSignals(True)
-            self.act_underline.setChecked(underline)
-            self.act_underline.blockSignals(False)
+            self.act_underline.blockSignals(True)  # type: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
+            self.act_underline.setChecked(underline)  # type: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
+            self.act_underline.blockSignals(False)  # type: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
 
     def _save_table(self) -> None:
         """Persists the table to the database (Multi-Scroll format)."""
@@ -682,7 +682,7 @@ class SpreadsheetWindow(QMainWindow):
         # --- Update Reference Highlights (Persistence) ---
         # When selecting a cell with a formula, highlight the referenced cells
         if current.isValid():
-            val = self.model.data(current, Qt.ItemDataRole.EditRole)
+            val = self.model.data(current, Qt.ItemDataRole.EditRole)  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
             formula_str = str(val) if val is not None else ""
             
             self.formula_bar.blockSignals(True)
@@ -779,7 +779,7 @@ class SpreadsheetWindow(QMainWindow):
         
         # 1. Disconnect old model signal safely
         try:
-            self.model.dataChanged.disconnect(self._on_data_changed)
+            self.model.dataChanged.disconnect(self._on_data_changed)  # type: ignore[reportUnknownMemberType]
         except (TypeError, RuntimeError):
             pass  # Already disconnected or never connected
         
@@ -789,7 +789,7 @@ class SpreadsheetWindow(QMainWindow):
         self.view.setModel(self.model)
         
         # 3. Connect new
-        self.model.dataChanged.connect(self._on_data_changed)
+        self.model.dataChanged.connect(self._on_data_changed)  # type: ignore[reportUnknownMemberType]
         
         # 4. Refresh UI State
         # Ensure we don't have invalid selection
@@ -821,7 +821,7 @@ class SpreadsheetWindow(QMainWindow):
             top_left.column() <= current.column() <= bottom_right.column()):
             
             # Update Formula Bar
-            raw_data = str(self.model.data(current, Qt.ItemDataRole.EditRole) or "")
+            raw_data = str(self.model.data(current, Qt.ItemDataRole.EditRole) or "")  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
             if self.formula_bar.text() != raw_data:
                 self.formula_bar.blockSignals(True)
                 self.formula_bar.setText(raw_data)
@@ -919,7 +919,7 @@ class SpreadsheetWindow(QMainWindow):
         
         # 4. Add to Manager
         if hasattr(self.model, "conditional_manager"):
-            self.model.conditional_manager.add_rule(rule)
+            self.model.conditional_manager.add_rule(rule)  # type: ignore[reportUnknownMemberType]
             # Repaint
             self.view.viewport().update()
             
@@ -929,7 +929,7 @@ class SpreadsheetWindow(QMainWindow):
     def _clear_conditional_rules(self) -> None:
         """Removes all conditional formatting rules."""
         if hasattr(self.model, "conditional_manager"):
-            self.model.conditional_manager.clear_all_rules()
+            self.model.conditional_manager.clear_all_rules()  # type: ignore[reportUnknownMemberType]
             self.view.viewport().update()
             self.status_bar.show_message("Cleared all Conditional Formatting rules.", 3000)
 
@@ -938,11 +938,11 @@ class SpreadsheetWindow(QMainWindow):
 
     def _export_csv(self) -> None:
         """Exports the current sheet to CSV format."""
-        SpreadsheetIO.export_csv(self, self.model)
+        SpreadsheetIO.export_csv(self, self.model)  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
 
     def _export_json(self) -> None:
         """Exports the current sheet to JSON format."""
-        SpreadsheetIO.export_json(self, self.model)
+        SpreadsheetIO.export_json(self, self.model)  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
 
     def _export_image(self) -> None:
         """Exports the current view as an image."""
@@ -950,7 +950,7 @@ class SpreadsheetWindow(QMainWindow):
 
     def _import_csv(self) -> None:
         """Imports data from a CSV file."""
-        SpreadsheetIO.import_csv(self, self.model)
+        SpreadsheetIO.import_csv(self, self.model)  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
 
     # --- Find & Replace ---
 

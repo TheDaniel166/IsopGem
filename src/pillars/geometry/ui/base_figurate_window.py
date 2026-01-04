@@ -173,7 +173,7 @@ class BaseFigurateWindow(QMainWindow):
             self.view.setCursor(Qt.CursorShape.ArrowCursor)
             self.view.set_selection_mode(False)
 
-    def _handle_dot_click(self, index: int, modifiers, button):
+    def _handle_dot_click(self, index: int, modifiers, button):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """Handle clicks for both drawing and grouping."""
         is_drawing = self.interaction_manager.drawing_active
         if is_drawing and button == Qt.MouseButton.LeftButton:
@@ -192,18 +192,18 @@ class BaseFigurateWindow(QMainWindow):
             return
             
         # Handle 1-based indexing
-        if conn.start_index > len(self._current_points) or conn.end_index > len(self._current_points):
+        if conn.start_index > len(self._current_points) or conn.end_index > len(self._current_points):  # type: ignore[reportAttributeAccessIssue, reportUnknownArgumentType, reportUnknownMemberType]
             return
             
-        p1 = self._current_points[conn.start_index - 1]
-        p2 = self._current_points[conn.end_index - 1]
+        p1 = self._current_points[conn.start_index - 1]  # type: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownVariableType]
+        p2 = self._current_points[conn.end_index - 1]  # type: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownVariableType]
         
         # For 3D window, points might be different structure? 
         # Actually 3D window has separate logic for projection.
         # But this base logic assumes 2D points are available.
         # We will make sure 3D window overrides if needed or stores 2D points in _current_points.
         
-        qt_pen = QPen(conn.color, conn.width)
+        qt_pen = QPen(conn.color, conn.width)  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
         qt_pen.setCapStyle(Qt.PenCapStyle.RoundCap)
         qt_pen.setCosmetic(True)
         self.scene.add_connection_line(p1, p2, qt_pen)
@@ -224,8 +224,8 @@ class BaseFigurateWindow(QMainWindow):
         start_index = self.interaction_manager.current_draw_start
         if start_index is not None and hasattr(self, '_current_points'):
             # Check range
-            if 1 <= start_index <= len(self._current_points):
-                pt = self._current_points[start_index - 1]
+            if 1 <= start_index <= len(self._current_points):  # type: ignore[reportAttributeAccessIssue, reportUnknownArgumentType, reportUnknownMemberType]
+                pt = self._current_points[start_index - 1]  # type: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownVariableType]
                 start_pos = QPointF(pt[0], pt[1])
                 
                 # If hovering over a dot, snap to it?
@@ -251,7 +251,7 @@ class BaseFigurateWindow(QMainWindow):
     def _refresh_highlights(self, _=None):
         """Re-apply visual highlights for groups and active tools."""
         # 1. Groups
-        for name, group in self.interaction_manager.groups.items():
+        for _name, group in self.interaction_manager.groups.items():
             self.scene.highlight_dots(list(group.indices), group.color)
             
         # 2. Active Draw Start (Pen Color)

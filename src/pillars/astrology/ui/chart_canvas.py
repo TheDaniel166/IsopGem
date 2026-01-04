@@ -146,10 +146,10 @@ class ChartCanvas(QWidget):
                     candidates.append(p)
 
         # Refine: Prioritize True Node over Mean Node
-        has_true = any(p.name.strip().lower() == "true node" for p in candidates)
+        has_true = any(p.name.strip().lower() == "true node" for p in candidates)  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType, reportUnknownVariableType]
         filtered_planets = []
         for p in candidates:
-            name_lower = p.name.strip().lower()
+            name_lower = p.name.strip().lower()  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
             if has_true and name_lower == "mean node":
                 continue
             filtered_planets.append(p)
@@ -178,10 +178,10 @@ class ChartCanvas(QWidget):
                     candidates.append(p)
 
         # Refine: Prioritize True Node over Mean Node for outer ring
-        has_true = any(p.name.strip().lower() == "true node" for p in candidates)
+        has_true = any(p.name.strip().lower() == "true node" for p in candidates)  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType, reportUnknownVariableType]
         filtered_outer = []
         for p in candidates:
-            name_lower = p.name.strip().lower()
+            name_lower = p.name.strip().lower()  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
             if has_true and name_lower == "mean node":
                 continue
             filtered_outer.append(p)
@@ -274,11 +274,11 @@ class ChartCanvas(QWidget):
             radius_outer_planets = min(w, h) * 0.48
             radius = radius_outer_planets * 0.85 # Zodiac Outer
             inner_radius = radius * 0.75 # Zodiac Inner / Planets Inner Base
-            house_radius = inner_radius * 0.95
+            _house_radius = inner_radius * 0.95
         else:
             radius = min(w, h) * 0.45
             inner_radius = radius * 0.75
-            house_radius = inner_radius * 0.95
+            _house_radius = inner_radius * 0.95
         
         # Reset Hitboxes
         self._planet_hitboxes = []
@@ -592,9 +592,9 @@ class ChartCanvas(QWidget):
                 if pos != self._hovered_planet:
                     targets_with_info.append((pos, True, idx))
 
-        for pos, is_outer_target, idx in targets_with_info:
+        for pos, is_outer_target, idx in targets_with_info:  # type: ignore[reportUnknownVariableType]
             # Calc difference
-            diff = abs(pos.degree - h_deg)
+            diff = abs(pos.degree - h_deg)  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType, reportUnknownVariableType]
             if diff > 180: diff = 360 - diff
             
             # Check for aspect

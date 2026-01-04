@@ -158,12 +158,12 @@ class CrescentShape(GeometricShape):
         self.properties["perimeter"].value = perimeter
 
     @staticmethod
-    def _has_valid_geometry(outer, inner, offset) -> bool:
+    def _has_valid_geometry(outer, inner, offset) -> bool:  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         if outer is None or inner is None or offset is None:
             return False
         if outer <= inner:
             return False
-        return CrescentShape._is_valid_offset(outer, inner, offset)
+        return CrescentShape._is_valid_offset(outer, inner, offset)  # type: ignore[reportUnknownArgumentType]
 
     @staticmethod
     def _is_valid_offset(outer: float, inner: float, offset: float) -> bool:

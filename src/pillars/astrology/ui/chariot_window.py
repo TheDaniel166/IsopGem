@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Optional, Dict, List
 
 from PyQt6.QtCore import Qt, QSize
-from PyQt6.QtGui import QFont, QColor, QPainter, QPixmap, QPalette, QBrush
+from PyQt6.QtGui import QFont, QColor, QPainter, QPixmap, QPalette, QBrush  # type: ignore[reportUnusedImport]
 from PyQt6.QtWidgets import QGraphicsDropShadowEffect
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QSplitter,
@@ -452,7 +452,7 @@ class ChariotWindow(QWidget):
             trio_item.setData(0, Qt.ItemDataRole.UserRole, ("trio", trio_id, axle))
             
             for mp in midpoints:
-                symbol = report.midpoint_symbols.get(mp.id)
+                _symbol = report.midpoint_symbols.get(mp.id)
                 mp_item = QTreeWidgetItem([f"  {mp.name}: {mp.sign} {mp.sign_degree:.1f}°"])
                 mp_item.setFont(0, QFont("Georgia", 10))
                 mp_item.setData(0, Qt.ItemDataRole.UserRole, ("midpoint", mp.id, mp))
@@ -490,7 +490,7 @@ class ChariotWindow(QWidget):
         if not data or not self._current_report:
             return
         
-        item_type, item_id, obj = data
+        item_type, _item_id, obj = data
         report = self._current_report
         
         if item_type == "midpoint":

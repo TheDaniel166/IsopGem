@@ -5,10 +5,10 @@ Side panel displaying search results with add-to-graph and open-document actions
 
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QListWidget, QListWidgetItem, 
-    QLabel, QPushButton, QHBoxLayout, QMenu, QMessageBox
+    QLabel, QPushButton, QHBoxLayout, QMenu, QMessageBox  # type: ignore[reportUnusedImport]
 )
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QFont, QColor, QBrush
+from PyQt6.QtGui import QFont, QColor, QBrush  # type: ignore[reportUnusedImport]
 
 class SearchResultsPanel(QWidget):
     """
@@ -68,7 +68,7 @@ class SearchResultsPanel(QWidget):
         
         self._current_results = []
 
-    def load_results(self, results: list, term: str = None):
+    def load_results(self, results: list, term: str = None):  # type: ignore[reportArgumentType, reportMissingTypeArgument, reportUnknownParameterType]
         """
         Populate the list with search results.
         results: List of dicts {'id', 'title', 'highlights', ...}

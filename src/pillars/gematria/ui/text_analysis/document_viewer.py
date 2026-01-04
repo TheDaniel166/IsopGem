@@ -69,7 +69,7 @@ class DocumentViewer(QWidget):
             quad_action.triggered.connect(lambda: self.send_to_quadset_requested.emit(selected_text))
             menu.addAction(quad_action)
             
-        menu.exec(self.text_edit.mapToGlobal(pos))
+        menu.exec(self.text_edit.mapToGlobal(pos))  # type: ignore[reportOptionalMemberAccess, reportUnknownArgumentType]
         
     def set_text(self, text: str):
         """

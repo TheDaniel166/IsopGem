@@ -156,7 +156,7 @@ from ..services import (
 
 from .esoteric_definitions import ESOTERIC_DEFINITIONS
 
-def _category(name: str, icon: str, tagline: str, shapes: List[dict], menu: Optional[List[Any]] = None) -> dict:
+def _category(name: str, icon: str, tagline: str, shapes: List[dict], menu: Optional[List[Any]] = None) -> dict:  # type: ignore[reportMissingTypeArgument, reportUnknownParameterType]
     return {
         'name': name,
         'icon': icon,
@@ -1303,7 +1303,7 @@ SOLID_VIEWER_CONFIG: Dict[str, dict] = {
     'twisted_icosahedral_antiprism': {
         'title': 'Twisted Icosahedral Antiprism',
         'summary': 'A decagonal (n=10) antiprism representing high-order prismatic twisting.',
-        'builder': lambda **kwargs: GeneralAntiprismSolidService.build_dynamic(sides=10, **kwargs),
-        'calculator': lambda **kwargs: GeneralAntiprismSolidCalculator(sides=10, **kwargs),
+        'builder': lambda **kwargs: GeneralAntiprismSolidService.build_dynamic(sides=10, **kwargs),  # type: ignore[reportUnknownArgumentType, reportUnknownLambdaType]
+        'calculator': lambda **kwargs: GeneralAntiprismSolidCalculator(sides=10, **kwargs),  # type: ignore[reportUnknownArgumentType, reportUnknownLambdaType]
     },
 }

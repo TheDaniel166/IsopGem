@@ -299,7 +299,7 @@ class HolyBookTeacherWindow(QMainWindow):
         if missing:
             parts.append(f"Missing numbers: {missing}")
         if overlaps:
-            formatted = [f"{item.get('previous')}→{item.get('current')}" for item in overlaps]
+            formatted = [f"{item.get('previous')}→{item.get('current')}" for item in overlaps]  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
             parts.append(f"Overlaps: {formatted}")
         if not parts:
             parts.append("No anomalies detected.")
@@ -525,7 +525,7 @@ class HolyBookTeacherWindow(QMainWindow):
             _TextAnalysisWindow = None
         if _TextAnalysisWindow is not None and isinstance(parent, _TextAnalysisWindow):
             try:
-                parent._jump_to_range(int(verse.get('start') or 0), int(verse.get('end') or 0))
+                parent._jump_to_range(int(verse.get('start') or 0), int(verse.get('end') or 0))  # type: ignore[reportAttributeAccessIssue, reportOptionalMemberAccess, reportUnknownMemberType]
             except Exception:
                 pass
 
@@ -538,9 +538,9 @@ class HolyBookTeacherWindow(QMainWindow):
         if not parent or _TextAnalysisWindow is None or not isinstance(parent, _TextAnalysisWindow):
             QMessageBox.information(self, 'No Editor', 'Main editor not available')
             return
-        cursor = parent.text_display.textCursor()
+        cursor = parent.text_display.textCursor()  # type: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownVariableType]
         if cursor.hasSelection():
-            start = min(cursor.selectionStart(), cursor.selectionEnd())
+            start = min(cursor.selectionStart(), cursor.selectionEnd())  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType, reportUnknownVariableType]
             verse = self._get_verse(row)
             if verse:
                 self._push_undo_state(description=f"Set start for {verse.get('number')} to {start}")
@@ -559,9 +559,9 @@ class HolyBookTeacherWindow(QMainWindow):
         if not parent or _TextAnalysisWindow is None or not isinstance(parent, _TextAnalysisWindow):
             QMessageBox.information(self, 'No Editor', 'Main editor not available')
             return
-        cursor = parent.text_display.textCursor()
+        cursor = parent.text_display.textCursor()  # type: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownVariableType]
         if cursor.hasSelection():
-            end = max(cursor.selectionStart(), cursor.selectionEnd())
+            end = max(cursor.selectionStart(), cursor.selectionEnd())  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType, reportUnknownVariableType]
             verse = self._get_verse(row)
             if verse:
                 self._push_undo_state(description=f"Set end for {verse.get('number')} to {end}")
@@ -666,7 +666,7 @@ class HolyBookTeacherWindow(QMainWindow):
             _TextAnalysisWindow = None
         if _TextAnalysisWindow is not None and isinstance(parent, _TextAnalysisWindow):
             try:
-                parent._jump_to_range(int(verse.get('start') or 0), int(verse.get('end') or 0))
+                parent._jump_to_range(int(verse.get('start') or 0), int(verse.get('end') or 0))  # type: ignore[reportAttributeAccessIssue, reportOptionalMemberAccess, reportUnknownMemberType]
             except Exception:
                 pass
 
@@ -695,7 +695,7 @@ class HolyBookTeacherWindow(QMainWindow):
             return
         # push current state onto redo
         self._redo_stack.append((self._capture_state_copy(), "Undid"))
-        last, desc = self._undo_stack.pop()
+        last, _desc = self._undo_stack.pop()
         if self._current_payload is None:
             self._current_payload = {"verses": []}
         self._current_payload['verses'] = last
@@ -708,7 +708,7 @@ class HolyBookTeacherWindow(QMainWindow):
             return
         # push current onto undo
         self._undo_stack.append((self._capture_state_copy(), "Redo"))
-        state, desc = self._redo_stack.pop()
+        state, _desc = self._redo_stack.pop()
         if self._current_payload is None:
             self._current_payload = {"verses": []}
         self._current_payload['verses'] = state
@@ -727,7 +727,7 @@ class HolyBookTeacherWindow(QMainWindow):
             return
         self.history_view.clear()
         # Display undo stack (most recent last -> invert)
-        for s, desc in reversed(self._undo_stack[-self._undo_limit:]):
+        for _s, desc in reversed(self._undo_stack[-self._undo_limit:]):
             self.history_view.addItem(desc)
         # Show a delimiter and redo stack count for clarity
         if self._redo_stack:
@@ -784,7 +784,7 @@ class HolyBookTeacherWindow(QMainWindow):
         self.index_worker.error.connect(self._on_index_error)
         self.index_worker.start()
         
-    def _on_index_progress(self, current, total, message):
+    def _on_index_progress(self, current, total, message):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         if hasattr(self, 'progress_dlg') and self.progress_dlg:
             self.progress_dlg.setMaximum(total)
             self.progress_dlg.setValue(current)
@@ -942,5 +942,5 @@ class ConcordanceIndexWorker(QThread):
         except Exception as e:
             self.error.emit(str(e))
             
-    def _emit_progress(self, current, total, message):
+    def _emit_progress(self, current, total, message):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         self.progress.emit(current, total, message)

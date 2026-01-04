@@ -190,7 +190,7 @@ class Figurate3DWindow(BaseFigurateWindow):
         ctrl_layout.addStretch()
         return controls
 
-    def eventFilter(self, source, event):
+    def eventFilter(self, source, event):  # type: ignore[reportIncompatibleMethodOverride, reportMissingParameterType, reportUnknownParameterType]
         """
         Eventfilter logic.
         
@@ -200,21 +200,21 @@ class Figurate3DWindow(BaseFigurateWindow):
         
         """
         if source is self.view.viewport():
-            if event.type() == event.Type.MouseButtonPress:
+            if event.type() == event.Type.MouseButtonPress:  # type: ignore[reportUnknownMemberType]
                 if event.button() == Qt.MouseButton.RightButton:
                     self._rotating = True
                     self._last_mouse_pos = event.pos()
                     self.view.setCursor(Qt.CursorShape.ClosedHandCursor)
                     return True
-            elif event.type() == event.Type.MouseButtonRelease:
+            elif event.type() == event.Type.MouseButtonRelease:  # type: ignore[reportUnknownMemberType]
                 if event.button() == Qt.MouseButton.RightButton:
                     self._rotating = False
                     self._last_mouse_pos = None
                     self.view.setCursor(Qt.CursorShape.ArrowCursor)
                     return True
-            elif event.type() == event.Type.MouseMove:
+            elif event.type() == event.Type.MouseMove:  # type: ignore[reportUnknownMemberType]
                 if self._rotating and self._last_mouse_pos:
-                    delta = event.pos() - self._last_mouse_pos
+                    delta = event.pos() - self._last_mouse_pos  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
                     self._last_mouse_pos = event.pos()
                     
                     self.camera_yaw += delta.x() * 0.5
@@ -305,8 +305,8 @@ class Figurate3DWindow(BaseFigurateWindow):
         else:
             z_to_layer = {}
 
-        for idx, ((x2d, y2d), (x3d, y3d, z3d)) in enumerate(zip(points_2d, points_3d), start=1):
-            layer_idx = z_to_layer.get(round(z3d / spacing), 0)
+        for idx, ((x2d, y2d), (_x3d,_ y3d, z3d)) in enumerate(zip(points_2d, points_3d), start=1):  # type: ignore[unknown]
+            layer_idx = z_to_layer.get(round(z3d / spacing), 0)  # type: ignore[reportUndefinedVariable, reportUnknownArgumentType, unknown]
             
             if use_layer_colors:
                 color = LAYER_COLORS[layer_idx % len(LAYER_COLORS)]
@@ -317,7 +317,7 @@ class Figurate3DWindow(BaseFigurateWindow):
                 brush = BrushStyle(color=(191, 219, 254, 220), enabled=True)
 
             primitives.append(CirclePrimitive(
-                center=(x2d, y2d),
+                center=(x2d, y2d),  # type: ignore[reportUndefinedVariable, reportUnknownArgumentType]
                 radius=dot_radius,
                 pen=pen,
                 brush=brush,
@@ -325,7 +325,7 @@ class Figurate3DWindow(BaseFigurateWindow):
             ))
             labels.append(LabelPrimitive(
                 text=str(idx),
-                position=(x2d, y2d),
+                position=(x2d, y2d),  # type: ignore[reportUndefinedVariable, reportUnknownArgumentType]
                 align_center=True,
                 metadata={"index": idx}
             ))

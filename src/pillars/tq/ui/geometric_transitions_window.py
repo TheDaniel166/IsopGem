@@ -170,7 +170,7 @@ class GeometricTransitionsWindow(QMainWindow):
 
     RESULT_COLUMN_INDEX = 5
 
-    def __init__(self, window_manager=None, parent: Optional[QWidget] = None, initial_values: Optional[List[int]] = None, **kwargs):
+    def __init__(self, window_manager=None, parent: Optional[QWidget] = None, initial_values: Optional[List[int]] = None, **kwargs):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """
           init   logic.
         
@@ -567,7 +567,7 @@ class GeometricTransitionsWindow(QMainWindow):
             summary_widget.setStyleSheet("color: #4b5563; font-style: italic;")
             summary_widget.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
             summary_widget.customContextMenuRequested.connect(
-                lambda pos, label=summary_widget: self._show_summary_context_menu(label, pos)
+                lambda pos, label=summary_widget: self._show_summary_context_menu(label, pos)  # type: ignore[reportUnknownArgumentType, reportUnknownLambdaType, reportUnknownMemberType]
             )
             tab_layout.addWidget(summary_widget)
 
@@ -592,7 +592,7 @@ class GeometricTransitionsWindow(QMainWindow):
             table.setStyleSheet("font-family: 'JetBrains Mono', monospace;")
             table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
             table.customContextMenuRequested.connect(
-                lambda pos, tbl=table: self._show_result_context_menu(tbl, pos)
+                lambda pos, tbl=table: self._show_result_context_menu(tbl, pos)  # type: ignore[reportUnknownArgumentType, reportUnknownLambdaType, reportUnknownMemberType]
             )
 
             for row, transition in enumerate(transitions):
@@ -612,7 +612,7 @@ class GeometricTransitionsWindow(QMainWindow):
                 table.setItem(row, 5, QTableWidgetItem(str(transition.result_decimal)))
 
             table.itemSelectionChanged.connect(
-                lambda skip=skip, tbl=table: self._handle_table_selection(skip, tbl)
+                lambda skip=skip, tbl=table: self._handle_table_selection(skip, tbl)  # type: ignore[reportUnknownArgumentType, reportUnknownLambdaType]
             )
             table.resizeColumnsToContents()
             tab_layout.addWidget(table)
@@ -646,7 +646,7 @@ class GeometricTransitionsWindow(QMainWindow):
         self.special_summary_label.setStyleSheet("color: #4b5563; font-style: italic;")
         self.special_summary_label.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.special_summary_label.customContextMenuRequested.connect(
-            lambda pos, lbl=self.special_summary_label: self._show_special_summary_context_menu(lbl, pos)
+            lambda pos, lbl=self.special_summary_label: self._show_special_summary_context_menu(lbl, pos)  # type: ignore[reportUnknownArgumentType, reportUnknownLambdaType, reportUnknownMemberType]
         )
         layout.addWidget(self.special_summary_label)
 
@@ -864,12 +864,12 @@ class GeometricTransitionsWindow(QMainWindow):
 
         send_action = QAction("Send to Quadset Analysis", menu)
         send_action.triggered.connect(
-            lambda _, value=numeric_value: self._send_value_to_quadset(value)
+            lambda _, value=numeric_value: self._send_value_to_quadset(value)  # type: ignore[reportUnknownArgumentType, reportUnknownLambdaType]
         )
 
         lookup_action = QAction("Look up in Database", menu)
         lookup_action.triggered.connect(
-            lambda _, value=numeric_value: self._lookup_value_in_database(value)
+            lambda _, value=numeric_value: self._lookup_value_in_database(value)  # type: ignore[reportUnknownArgumentType, reportUnknownLambdaType]
         )
 
         if not self.window_manager:

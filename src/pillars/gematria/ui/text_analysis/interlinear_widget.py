@@ -97,7 +97,7 @@ class WordLabel(QLabel):
             tooltip_text = f"<b>{self.word}</b> (TQ: {self.tq_value})<br/>"
             if self.frequency > 0:
                 tooltip_text += f"<i>Appears {self.frequency}x in corpus</i><br/><br/>"
-            for i, d in enumerate(self.definitions[:3]):
+            for _i, d in enumerate(self.definitions[:3]):
                 tooltip_text += f"• {d[:80]}...<br/>" if len(d) > 80 else f"• {d}<br/>"
             if len(self.definitions) > 3:
                 tooltip_text += f"<i>...and {len(self.definitions) - 3} more</i>"
@@ -114,7 +114,7 @@ class InterlinearVerseWidget(QWidget):
     """
     word_clicked = pyqtSignal(str, int, int)  # word, tq_value, key_id
     
-    def __init__(self, calculator=None, key_service=None, parent=None):
+    def __init__(self, calculator=None, key_service=None, parent=None):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         super().__init__(parent)
         self.calculator = calculator
         self.key_service = key_service
@@ -223,13 +223,13 @@ class InterlinearVerseWidget(QWidget):
         # Look up in key database
         if self.key_service:
             try:
-                key_entry = self.key_service.db.get_word(word.lower())
+                key_entry = self.key_service.db.get_word(word.lower())  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
                 if key_entry:
                     result['key_id'] = key_entry.id
                     result['frequency'] = key_entry.frequency
                     
                     # Get definitions
-                    defs = self.key_service.db.get_definitions(key_entry.id)
+                    defs = self.key_service.db.get_definitions(key_entry.id)  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
                     result['definitions'] = [d.content for d in defs]
             except Exception as e:
                 logger.debug(f"Error looking up word '{word}': {e}")
@@ -260,7 +260,7 @@ class InterlinearDocumentView(QWidget):
     """
     Full document view with interlinear display for all verses.
     """
-    def __init__(self, calculator=None, key_service=None, parent=None):
+    def __init__(self, calculator=None, key_service=None, parent=None):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         super().__init__(parent)
         self.calculator = calculator
         self.key_service = key_service
@@ -361,7 +361,7 @@ class InterlinearDocumentView(QWidget):
         # Definitions
         layout.addWidget(QLabel("<b>Definitions:</b>"))
         def_list = QListWidget()
-        definitions = self.key_service.db.get_definitions(key_id)
+        definitions = self.key_service.db.get_definitions(key_id)  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
         for d in definitions:
             def_list.addItem(QListWidgetItem(f"[{d.type}] {d.content}"))
         if not definitions:
@@ -371,7 +371,7 @@ class InterlinearDocumentView(QWidget):
         # Occurrences
         layout.addWidget(QLabel("<b>Occurrences:</b>"))
         occ_list = QListWidget()
-        occurrences = self.key_service.db.get_word_occurrences(key_id)
+        occurrences = self.key_service.db.get_word_occurrences(key_id)  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
         for occ in occurrences[:10]:
             verse_ref = f"Verse {occ.verse_number}" if occ.verse_number else "(prose)"
             occ_list.addItem(QListWidgetItem(f"{occ.document_title} - {verse_ref}"))

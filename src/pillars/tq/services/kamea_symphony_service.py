@@ -59,7 +59,7 @@ class KameaSymphonyService:
         for v in voices:
             # Pad if shorter
             if len(v) < max_len:
-                v = np.pad(v, ((0, max_len - len(v)), (0, 0)))
+                v = np.pad(v, ((0, max_len - len(v)), (0, 0)))  # type: ignore[reportUnknownArgumentType, reportUnknownVariableType]
             mix += v
             
         # Normalize Mix
@@ -98,7 +98,7 @@ class KameaSymphonyService:
 
         for detune in detunes:
             f = freq * (1 + detune)
-            layer = self._generate_voice(nuc.core, f, duration)
+            layer = self._generate_voice(nuc.core, f, duration)  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType, reportUnknownVariableType]
             
             # Panning Logic based on X coordinate (-13 to 13)
             # Map -13..13 to 0.0..1.0 (Left..Right)
@@ -189,7 +189,7 @@ class KameaSymphonyService:
 
         return np.zeros_like(t)
 
-    def _envelope(self, length, attack_s, release_s):
+    def _envelope(self, length, attack_s, release_s):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         a_samp = int(attack_s * self.SAMPLE_RATE)
         r_samp = int(release_s * self.SAMPLE_RATE)
         s_samp = length - a_samp - r_samp
@@ -202,11 +202,11 @@ class KameaSymphonyService:
         ])
         return env[:length] if len(env) > length else np.pad(env, (0, length - len(env)))
 
-    def _sawtooth(self, freq, t):
+    def _sawtooth(self, freq, t):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         return 2 * (t * freq - np.floor(t * freq + 0.5))
 
-    def _triangle(self, freq, t):
-        return 2 * np.abs(self._sawtooth(freq, t)) - 1
+    def _triangle(self, freq, t):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
+        return 2 * np.abs(self._sawtooth(freq, t)) - 1  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
 
     def _generate_reverb_impulse(self):
         """Generates a synthetic reverb tail."""

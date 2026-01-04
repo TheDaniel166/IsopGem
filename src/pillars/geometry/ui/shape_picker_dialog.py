@@ -23,7 +23,7 @@ class ShapeCard(QFrame):
     
     clicked = pyqtSignal(dict)  # Emits the shape definition
     
-    def __init__(self, shape_def: dict, accent_color: str, parent=None):
+    def __init__(self, shape_def: dict, accent_color: str, parent=None):  # type: ignore[reportMissingParameterType, reportMissingTypeArgument, reportUnknownParameterType]
         """
           init   logic.
         
@@ -44,7 +44,7 @@ class ShapeCard(QFrame):
         self.setMinimumWidth(180)
         
         # Check if shape is "Coming Soon"
-        is_disabled = self._shape_def.get('status') == 'Coming Soon'
+        is_disabled = self._shape_def.get('status') == 'Coming Soon'  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
         
         if is_disabled:
             self.setStyleSheet(f"""
@@ -82,7 +82,7 @@ class ShapeCard(QFrame):
         layout.setSpacing(4)
         
         # Title
-        name = self._shape_def.get('name', 'Unknown')
+        name = self._shape_def.get('name', 'Unknown')  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
         title = QLabel(name)
         title.setStyleSheet(f"""
             QLabel {{
@@ -95,7 +95,7 @@ class ShapeCard(QFrame):
         layout.addWidget(title)
         
         # Summary
-        summary_text = self._shape_def.get('summary', '')
+        summary_text = self._shape_def.get('summary', '')  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
         if is_disabled:
             summary_text = "Coming Soon"
         summary = QLabel(summary_text)
@@ -112,7 +112,7 @@ class ShapeCard(QFrame):
         
         self._is_disabled = is_disabled
         
-    def mousePressEvent(self, event):
+    def mousePressEvent(self, event):  # type: ignore[reportIncompatibleMethodOverride, reportMissingParameterType, reportUnknownParameterType]
         """
         Mousepressevent logic.
         
@@ -151,7 +151,7 @@ class ShapePickerDialog(QDialog):
         'Hypercube': '#7c3aed',
     }
     
-    def __init__(self, category: dict, parent=None):
+    def __init__(self, category: dict, parent=None):  # type: ignore[reportMissingParameterType, reportMissingTypeArgument, reportUnknownParameterType]
         """
           init   logic.
         
@@ -207,7 +207,7 @@ class ShapePickerDialog(QDialog):
         self._grid_layout.setSpacing(12)
         self._grid_layout.setContentsMargins(0, 0, 0, 0)
         
-        self._populate_grid(self._shapes)
+        self._populate_grid(self._shapes)  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
         
         scroll.setWidget(self._grid_container)
         layout.addWidget(scroll, 1)
@@ -224,8 +224,8 @@ class ShapePickerDialog(QDialog):
         header_layout.setSpacing(4)
         
         # Category icon + name
-        cat_name = self._category.get('name', 'Shapes')
-        cat_icon = self._category.get('icon', '◯')
+        cat_name = self._category.get('name', 'Shapes')  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
+        cat_icon = self._category.get('icon', '◯')  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
         
         title_row = QHBoxLayout()
         
@@ -254,7 +254,7 @@ class ShapePickerDialog(QDialog):
         header_layout.addLayout(title_row)
         
         # Tagline
-        tagline = QLabel(self._category.get('tagline', ''))
+        tagline = QLabel(self._category.get('tagline', ''))  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
         tagline.setStyleSheet(f"""
             QLabel {{
                 font-size: 10pt;
@@ -284,7 +284,7 @@ class ShapePickerDialog(QDialog):
                 color: {LiturgyColors.VOID};
             }}
             QLineEdit:focus {{
-                border-color: {self.CATEGORY_COLORS.get(self._category.get('name', ''), '#64748b')};
+                border-color: {self.CATEGORY_COLORS.get(self._category.get('name', ''), '#64748b')};  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
             }}
         """)
         self._search_input.textChanged.connect(self._on_search_changed)
@@ -322,7 +322,7 @@ class ShapePickerDialog(QDialog):
                 item.widget().setParent(None)
         
         # Get accent color for this category
-        cat_name = self._category.get('name', '')
+        cat_name = self._category.get('name', '')  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
         accent = self.CATEGORY_COLORS.get(cat_name, '#64748b')
         
         # Add shape cards (3 columns)
@@ -339,13 +339,13 @@ class ShapePickerDialog(QDialog):
     def _on_search_changed(self, text: str):
         """Filter shapes based on search text."""
         if not text.strip():
-            self._populate_grid(self._shapes)
+            self._populate_grid(self._shapes)  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
             return
             
         query = text.lower()
         filtered = [
             s for s in self._shapes
-            if query in s.get('name', '').lower() or query in s.get('summary', '').lower()
+            if query in s.get('name', '').lower() or query in s.get('summary', '').lower()  # type: ignore[reportUnknownMemberType]
         ]
         self._populate_grid(filtered)
         

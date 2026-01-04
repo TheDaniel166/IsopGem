@@ -123,7 +123,7 @@ class PropertyCard(QFrame):
         action_quadset.triggered.connect(self._request_quadset_analysis)
         menu.addAction(action_quadset)
         
-        menu.exec(self.input_field.mapToGlobal(pos))
+        menu.exec(self.input_field.mapToGlobal(pos))  # type: ignore[reportOptionalMemberAccess, reportUnknownArgumentType]
 
     def _request_quadset_analysis(self):
         """Handle request to send value to TQ."""

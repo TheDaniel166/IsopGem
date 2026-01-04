@@ -1066,8 +1066,8 @@ class CyclicQuadrilateralShape(GeometricShape):
 			self._points = None
 			return True
 
-		s = 0.5 * (a + b + c + d)
-		area_sq = (s - a) * (s - b) * (s - c) * (s - d)
+		s = 0.5 * (a + b + c + d)  # type: ignore[reportOperatorIssue, reportUnknownVariableType]
+		area_sq = (s - a) * (s - b) * (s - c) * (s - d)  # type: ignore[reportOperatorIssue, reportUnknownVariableType]
 		if area_sq <= 0:
 			return False
 		area = math.sqrt(area_sq)
@@ -1075,7 +1075,7 @@ class CyclicQuadrilateralShape(GeometricShape):
 		self.properties['perimeter'].value = 2 * s
 		self.properties['semiperimeter'].value = s
 
-		numerator = (a * b + c * d) * (a * c + b * d) * (a * d + b * c)
+		numerator = (a * b + c * d) * (a * c + b * d) * (a * d + b * c)  # type: ignore[reportOperatorIssue, reportUnknownVariableType]
 		denominator = 16 * area_sq
 		circumradius = math.sqrt(max(numerator / denominator, 0.0)) if denominator > EPSILON else None
 		self.properties['circumradius'].value = circumradius
@@ -1210,9 +1210,9 @@ class TangentialQuadrilateralShape(GeometricShape):
 
 		sides = [a, b, c, d]
 		if all(val is not None for val in sides):
-			if abs((a + c) - (b + d)) > 1e-4:
+			if abs((a + c) - (b + d)) > 1e-4:  # type: ignore[reportOperatorIssue, reportUnknownArgumentType]
 				return False
-			s = 0.5 * (a + b + c + d)
+			s = 0.5 * (a + b + c + d)  # type: ignore[reportOperatorIssue, reportUnknownVariableType]
 			self.properties['perimeter'].value = 2 * s
 			self.properties['semiperimeter'].value = s
 			if r:
@@ -1229,9 +1229,9 @@ class TangentialQuadrilateralShape(GeometricShape):
 
 		# Simple symmetric depiction when enough info present.
 		if all(val is not None for val in sides):
-			base = max(a, c)
-			top = min(a, c)
-			height = r * 2 if r else min(a, c) / 2
+			base = max(a, c)  # type: ignore[reportArgumentType, reportUnknownVariableType]
+			top = min(a, c)  # type: ignore[reportArgumentType, reportUnknownVariableType]
+			height = r * 2 if r else min(a, c) / 2  # type: ignore[reportArgumentType, reportUnknownVariableType]
 			offset = (base - top) / 2
 			self._points = (
 				(0.0, 0.0),
@@ -1366,11 +1366,11 @@ class BicentricQuadrilateralShape(GeometricShape):
 			self._points = None
 			return True
 
-		if abs((a + c) - (b + d)) > 1e-4:
+		if abs((a + c) - (b + d)) > 1e-4:  # type: ignore[reportOperatorIssue, reportUnknownArgumentType]
 			return False
 
-		s = 0.5 * (a + b + c + d)
-		area_sq = (s - a) * (s - b) * (s - c) * (s - d)
+		s = 0.5 * (a + b + c + d)  # type: ignore[reportOperatorIssue, reportUnknownVariableType]
+		area_sq = (s - a) * (s - b) * (s - c) * (s - d)  # type: ignore[reportOperatorIssue, reportUnknownVariableType]
 		if area_sq <= 0:
 			return False
 		area = math.sqrt(area_sq)
@@ -1381,7 +1381,7 @@ class BicentricQuadrilateralShape(GeometricShape):
 		self.properties['inradius'].value = inradius
 		self.properties['incircle_circumference'].value = 2 * math.pi * inradius
 
-		numerator = (a * b + c * d) * (a * c + b * d) * (a * d + b * c)
+		numerator = (a * b + c * d) * (a * c + b * d) * (a * d + b * c)  # type: ignore[reportOperatorIssue, reportUnknownVariableType]
 		denominator = 16 * area_sq
 		circumradius = math.sqrt(max(numerator / denominator, 0.0)) if denominator > EPSILON else None
 		if circumradius is None:

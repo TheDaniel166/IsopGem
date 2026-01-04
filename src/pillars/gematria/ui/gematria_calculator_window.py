@@ -195,7 +195,7 @@ class GematriaCalculatorWindow(QMainWindow):
         for name in list(self.calculators.keys()):
             if "Hebrew" in name:
                 action = hebrew_menu.addAction(name.replace("Hebrew ", ""))
-                action.triggered.connect(lambda checked, n=name: self._select_calculator(n))
+                action.triggered.connect(lambda checked, n=name: self._select_calculator(n))  # type: ignore[reportOptionalMemberAccess, reportUnknownArgumentType, reportUnknownLambdaType]
 
         # Greek submenu
         greek_menu = self.system_menu.addMenu("🔤 Greek")
@@ -204,7 +204,7 @@ class GematriaCalculatorWindow(QMainWindow):
         for name in list(self.calculators.keys()):
             if "Greek" in name:
                 action = greek_menu.addAction(name.replace("Greek ", ""))
-                action.triggered.connect(lambda checked, n=name: self._select_calculator(n))
+                action.triggered.connect(lambda checked, n=name: self._select_calculator(n))  # type: ignore[reportOptionalMemberAccess, reportUnknownArgumentType, reportUnknownLambdaType]
 
         # English submenu
         english_menu = self.system_menu.addMenu("🔡 English")
@@ -213,7 +213,7 @@ class GematriaCalculatorWindow(QMainWindow):
         for name in list(self.calculators.keys()):
             if "English" in name or "TQ" in name:
                 action = english_menu.addAction(name.replace("English ", ""))
-                action.triggered.connect(lambda checked, n=name: self._select_calculator(n))
+                action.triggered.connect(lambda checked, n=name: self._select_calculator(n))  # type: ignore[reportOptionalMemberAccess, reportUnknownArgumentType, reportUnknownLambdaType]
 
         self.system_button.setMenu(self.system_menu)
         
@@ -433,7 +433,7 @@ class GematriaCalculatorWindow(QMainWindow):
         # Prepare Export Data (Breakdown)
         rows = []
         if breakdown:
-            for i, (char, val) in enumerate(breakdown):
+            for _i, (char, val) in enumerate(breakdown):  # type: ignore[reportUnknownArgumentType, reportUnknownVariableType, reportUnusedVariable]
                 rows.append([char, str(val)])
             # Add Total Row
             rows.append(["TOTAL", str(total)])
@@ -630,7 +630,7 @@ class GematriaCalculatorWindow(QMainWindow):
             """
             # DocumentEditorWindow uses 'editor' attribute (RichTextEditor)
             if hasattr(win, "editor"):
-                win.editor.set_html(res_str)
+                win.editor.set_html(res_str)  # type: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
             win.raise_()
             win.activateWindow()
 
@@ -645,11 +645,11 @@ class GematriaCalculatorWindow(QMainWindow):
     def _ms_insert_current(self):
         """Insert total into current Mindscape page."""
         ms = self._find_active_mindscape()
-        if not ms or not ms.page or not ms.page.current_doc_id:
+        if not ms or not ms.page or not ms.page.current_doc_id:  # type: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
             QMessageBox.warning(self, "MindScape", "No active Mindscape page found. Open a page first.")
             return
         
-        self._ms_add_note(ms.page, self.current_value)
+        self._ms_add_note(ms.page, self.current_value)  # type: ignore[reportAttributeAccessIssue, reportUnknownArgumentType, reportUnknownMemberType]
 
     def _ms_add_note(self, page_widget, value: int):
         """Add the gematria result as a note to a page."""
@@ -695,8 +695,8 @@ class GematriaCalculatorWindow(QMainWindow):
                 # Open/Get Mindscape
                 ms = self.window_manager.open_window_by_key("mindscape")
                 if ms:
-                    ms.page.load_node(doc_id)
-                    self._ms_add_note(ms.page, self.current_value)
+                    ms.page.load_node(doc_id)  # type: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
+                    self._ms_add_note(ms.page, self.current_value)  # type: ignore[reportAttributeAccessIssue, reportUnknownArgumentType, reportUnknownMemberType]
                     ms.raise_()
 
     def _ms_create_page(self):
@@ -730,9 +730,9 @@ class GematriaCalculatorWindow(QMainWindow):
             # Open and insert
             ms = self.window_manager.open_window_by_key("mindscape")
             if ms:
-                ms.tree.load_tree() # Refresh tree to show new page
-                ms.page.load_node(new_page.id)
-                self._ms_add_note(ms.page, self.current_value)
+                ms.tree.load_tree() # Refresh tree to show new page  # type: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
+                ms.page.load_node(new_page.id)  # type: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
+                self._ms_add_note(ms.page, self.current_value)  # type: ignore[reportAttributeAccessIssue, reportUnknownArgumentType, reportUnknownMemberType]
                 ms.raise_()
 
     def _ms_new_notebook(self):
@@ -744,7 +744,7 @@ class GematriaCalculatorWindow(QMainWindow):
             QMessageBox.information(self, "MindScape", f"Notebook '{title}' created.")
             # Refresh Mindscape if open
             ms = self._find_active_mindscape()
-            if ms: ms.tree.load_tree()
+            if ms: ms.tree.load_tree()  # type: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
 
     def _ms_new_section(self):
         """Create a new section in a chosen notebook."""
@@ -768,4 +768,4 @@ class GematriaCalculatorWindow(QMainWindow):
                 service.create_section(nb_map[nb_choice], sec_title)
                 QMessageBox.information(self, "MindScape", f"Section '{sec_title}' created.")
                 ms = self._find_active_mindscape()
-                if ms: ms.tree.load_tree()
+                if ms: ms.tree.load_tree()  # type: ignore[reportAttributeAccessIssue, reportUnknownMemberType]

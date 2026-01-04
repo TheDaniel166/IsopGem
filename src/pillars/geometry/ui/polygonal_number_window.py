@@ -200,8 +200,8 @@ class PolygonalNumberWindow(BaseFigurateWindow):
         self.thread_pool.start(worker)
 
     def _on_async_finished(self, payload_points_value_mode_error):
-        payload, points, value, mode, error = payload_points_value_mode_error
-        self._apply_render_result(payload, points, value, mode, error)
+        payload, points, value, mode, error = payload_points_value_mode_error  # type: ignore[reportUnknownVariableType]
+        self._apply_render_result(payload, points, value, mode, error)  # type: ignore[reportUnknownArgumentType]
         self._set_busy(False)
 
     def _apply_render_result(self, payload: GeometryScenePayload, points: List[Tuple[float, float]], value: int, mode: str, error: Optional[str]):

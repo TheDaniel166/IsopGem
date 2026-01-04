@@ -85,7 +85,7 @@ class LocationLookupService:
             "format": "json",
         }
         try:
-            response = self._session.get(self.API_URL, params=params, timeout=10)
+            response = self._session.get(self.API_URL, params=params, timeout=10)  # type: ignore[reportOptionalMemberAccess, reportUnknownMemberType, reportUnknownVariableType]
             response.raise_for_status()
             payload = response.json()
         except requests.RequestException as exc:  # pragma: no cover - network errors

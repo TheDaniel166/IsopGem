@@ -468,7 +468,7 @@ class NatalChartWindow(QMainWindow):
 
     def _on_service_error(self, err_tuple):
         """Handle async error."""
-        exctype, value, traceback_str = err_tuple
+        _exctype, value,_ traceback_str = err_tuple  # type: ignore[reportUnknownVariableType, reportUnusedVariable]
         QMessageBox.critical(self, "Calculation Error", str(value))
         self._set_status(f"Error: {value}")
 
@@ -543,7 +543,7 @@ class NatalChartWindow(QMainWindow):
         # Merge user-selected calculation settings (from Settings dialog)
         if self._chart_settings:
             astrocfg = settings.get("astrocfg", {})
-            dialog_cfg = self._chart_settings.get("astrocfg", {})
+            dialog_cfg = self._chart_settings.get("astrocfg", {})  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
             astrocfg.update(dialog_cfg)
             settings["astrocfg"] = astrocfg
         
@@ -603,7 +603,7 @@ class NatalChartWindow(QMainWindow):
             )
 
         if hasattr(self, 'chart_canvas'):
-            self.chart_canvas.set_data(result.planet_positions, result.house_positions)
+            self.chart_canvas.set_data(result.planet_positions, result.house_positions)  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
 
     def _render_planets(self, result) -> None:
         self.planets_table.setRowCount(0)

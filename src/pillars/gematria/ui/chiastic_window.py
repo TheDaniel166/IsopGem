@@ -18,7 +18,7 @@ class ChiasticWindow(QWidget):
         calculators: Description of calculators.
     
     """
-    def __init__(self, window_manager=None, parent=None):
+    def __init__(self, window_manager=None, parent=None):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """
           init   logic.
         
@@ -265,7 +265,7 @@ class ChiasticWindow(QWidget):
         # Left side printed: 0 to len(left)-1.
         # Center printed.
         # Right side starts at: len(left) + (1 if center else 0).
-        start_right = len(p.left_indices) + (1 if p.center_index is not None else 0)
+        start_right = len(p.left_indices) + (1 if p.center_index is not None else 0)  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
         
         # We want to traverse this remainder of the list.
         # The remainder equates to B_r, A_r (Inner -> Outer).

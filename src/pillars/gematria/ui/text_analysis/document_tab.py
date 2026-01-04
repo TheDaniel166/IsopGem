@@ -260,7 +260,7 @@ class DocumentTab(QWidget):
         verses = result.get('verses', [])
         source = result.get('source', '')
         
-        self.verse_list.render_verses(verses, self.current_calculator, self.include_numbers, f"Source: {source}")
+        self.verse_list.render_verses(verses, self.current_calculator, self.include_numbers, f"Source: {source}")  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
     
     def _refresh_interlinear_view(self):
         """Refresh the interlinear view with verses from the document."""
@@ -363,7 +363,7 @@ class DocumentTab(QWidget):
         val = self.analysis_service.calculate_text(txt, self.current_calculator, self.include_numbers)
         self.sel_result_lbl.setText(f"Value: {val}")
         
-    def _on_verse_jump(self, start, end):
+    def _on_verse_jump(self, start, end):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         # Switch to text view and highlight
         # We need to tell parent to switch toggle? Or just switch locally?
         # Creating a seamless experience implies switching locally but sync might be needed.
@@ -385,13 +385,13 @@ class DocumentTab(QWidget):
         # We can just run the calculation logic
         if not text or not self.current_calculator:
             return
-        val = self.analysis_service.calculate_text(text, self.current_calculator, self.include_numbers)
+        val = self.analysis_service.calculate_text(text, self.current_calculator, self.include_numbers)  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
         self.sel_result_lbl.setText(f"Value: {val}")
 
     def _on_viewer_quadset(self, text):
         if not text or not self.current_calculator:
             return
-        val = self.analysis_service.calculate_text(text, self.current_calculator, self.include_numbers)
+        val = self.analysis_service.calculate_text(text, self.current_calculator, self.include_numbers)  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
         self.open_quadset_requested.emit(val)
 
     # --- Signal Handling ---

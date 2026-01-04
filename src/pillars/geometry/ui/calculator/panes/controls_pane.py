@@ -109,7 +109,7 @@ class ControlsPane(QWidget):
         
         for entry in recent:
             if entry.get("shape_name") == current_shape:
-                timestamp = entry.get("timestamp", "").split("T")[1][:8] # HH:MM:SS
+                timestamp = entry.get("timestamp", "").split("T")[1][:8] # HH:MM:SS  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
                 summary = entry.get("summary", "No details")
                 note = entry.get("note", "")
                 

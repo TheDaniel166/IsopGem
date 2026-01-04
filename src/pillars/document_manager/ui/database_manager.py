@@ -137,7 +137,7 @@ class DatabaseManagerWindow(QMainWindow):
             with document_service_context() as service:
                 stats = service.get_database_stats()
                 
-            for key, label in self.stats_labels.items():
+            for key, label in self.stats_labels.items():  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
                 val = stats.get(key, 0)
                 if isinstance(val, (int, float)):
                     label.setText(f"{val:,}")

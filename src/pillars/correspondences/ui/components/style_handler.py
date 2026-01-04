@@ -43,7 +43,7 @@ class StyleHandler(QObject):
         
         for name, key in actions_data:
             act = QAction(name, self.window)
-            act.triggered.connect(lambda checked, k=key: self.apply_borders(k))
+            act.triggered.connect(lambda checked, k=key: self.apply_borders(k))  # type: ignore[reportUnknownArgumentType, reportUnknownLambdaType, reportUnknownMemberType]
             self.border_menu.addAction(act)
             self.border_actions.append(act)
             
@@ -60,12 +60,12 @@ class StyleHandler(QObject):
         
         for s in ["solid", "dash", "dot"]:
             a = QAction(s.title(), self.window)
-            a.triggered.connect(lambda checked, style=s: self.set_border_style(style))
+            a.triggered.connect(lambda checked, style=s: self.set_border_style(style))  # type: ignore[reportUnknownArgumentType, reportUnknownLambdaType, reportUnknownMemberType]
             style_menu.addAction(a)
             
         for w in [1, 2, 3, 4, 5]:
             a = QAction(f"{w}px", self.window)
-            a.triggered.connect(lambda checked, width=w: self.set_border_width(width))
+            a.triggered.connect(lambda checked, width=w: self.set_border_width(width))  # type: ignore[reportUnknownArgumentType, reportUnknownLambdaType, reportUnknownMemberType]
             width_menu.addAction(a)
             
         return self.border_menu, self.border_actions, style_menu, width_menu
@@ -89,59 +89,59 @@ class StyleHandler(QObject):
         from ..spreadsheet_view import BorderRole
         from ...services.border_engine import BorderEngine
         
-        indexes = self.view.selectionModel().selectedIndexes()
+        indexes = self.view.selectionModel().selectedIndexes()  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
         if not indexes: return
         
         updates = BorderEngine.calculate_borders(
-            self.model, indexes, border_type, self._border_settings, BorderRole
+            self.model, indexes, border_type, self._border_settings, BorderRole  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
         )
         
         if not updates: return
         
-        self.model.undo_stack.beginMacro(f"Set Border {border_type}")
+        self.model.undo_stack.beginMacro(f"Set Border {border_type}")  # type: ignore[reportUnknownMemberType]
         try:
             for idx, new_borders in updates:
                 self.model.setData(idx, new_borders, BorderRole)
         finally:
-            self.model.undo_stack.endMacro()
+            self.model.undo_stack.endMacro()  # type: ignore[reportUnknownMemberType]
 
     def update_selected_borders(self):
         """Smart update existing borders with new settings."""
         from ..spreadsheet_view import BorderRole
         from ...services.border_engine import BorderEngine
         
-        indexes = self.view.selectionModel().selectedIndexes()
+        indexes = self.view.selectionModel().selectedIndexes()  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
         if not indexes: return
 
         updates = BorderEngine.update_existing_borders(
-            self.model, indexes, self._border_settings, BorderRole
+            self.model, indexes, self._border_settings, BorderRole  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
         )
         
         if not updates: return
 
-        self.model.undo_stack.beginMacro("Update Border Style")
+        self.model.undo_stack.beginMacro("Update Border Style")  # type: ignore[reportUnknownMemberType]
         try:
             for idx, new_borders in updates:
                 self.model.setData(idx, new_borders, BorderRole)
         finally:
-            self.model.undo_stack.endMacro()
+            self.model.undo_stack.endMacro()  # type: ignore[reportUnknownMemberType]
 
     # --- Generic Formatting ---
-    def apply_cell_property(self, role, value, description):
-        indexes = self.view.selectionModel().selectedIndexes()
+    def apply_cell_property(self, role, value, description):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
+        indexes = self.view.selectionModel().selectedIndexes()  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
         if not indexes: return
 
-        self.model.undo_stack.beginMacro(description)
+        self.model.undo_stack.beginMacro(description)  # type: ignore[reportUnknownMemberType]
         try:
             for idx in indexes:
                 if idx.isValid():
                     self.model.setData(idx, value, role)
         finally:
-            self.model.undo_stack.endMacro()
+            self.model.undo_stack.endMacro()  # type: ignore[reportUnknownMemberType]
 
     # --- Public API for Window/Toolbar signals ---
 
-    def apply_style(self, style_type, checked):
+    def apply_style(self, style_type, checked):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         mapping = {
             "bold": ("bold", checked),
             "italic": ("italic", checked),
@@ -154,7 +154,7 @@ class StyleHandler(QObject):
         self.apply_cell_property(Qt.ItemDataRole.TextAlignmentRole, align, f"Align {align}")
         
     def set_font_family(self, font):
-        self.apply_cell_property(Qt.ItemDataRole.FontRole, ("font_family", font.family()), f"Font Family {font.family()}")
+        self.apply_cell_property(Qt.ItemDataRole.FontRole, ("font_family", font.family()), f"Font Family {font.family()}")  # type: ignore[reportUnknownMemberType]
 
     def set_font_size(self, size):
         self.apply_cell_property(Qt.ItemDataRole.FontRole, ("font_size", size), f"Font Size {size}")

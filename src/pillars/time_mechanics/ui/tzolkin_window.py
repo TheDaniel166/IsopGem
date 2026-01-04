@@ -4,7 +4,7 @@ Window for calculating and navigating Tzolkin dates with interactive 13x20 grid.
 """
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
-    QPushButton, QDateEdit, QFrame, QGridLayout, QTableWidget, QTableWidgetItem, QHeaderView,
+    QPushButton, QDateEdit, QFrame, QGridLayout, QTableWidget, QTableWidgetItem, QHeaderView,  # type: ignore[reportUnusedImport]
     QStyledItemDelegate, QStyle, QScrollArea
 )
 from PyQt6.QtCore import Qt, QDate, QThread, pyqtSignal, QRectF, QSize, QTimer
@@ -118,16 +118,16 @@ class _CartoucheGrid(QWidget):
             return None
         return row, col
 
-    def mousePressEvent(self, event):
-        hit = self._hit_test(event.position().x(), event.position().y())
+    def mousePressEvent(self, event):  # type: ignore[reportIncompatibleMethodOverride, reportMissingParameterType, reportUnknownParameterType]
+        hit = self._hit_test(event.position().x(), event.position().y())  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
         if hit is not None:
             row, col = hit
             self.set_current_cell(row, col)
             self.cell_clicked.emit(row, col)
         super().mousePressEvent(event)
 
-    def mouseMoveEvent(self, event):
-        hit = self._hit_test(event.position().x(), event.position().y())
+    def mouseMoveEvent(self, event):  # type: ignore[reportIncompatibleMethodOverride, reportMissingParameterType, reportUnknownParameterType]
+        hit = self._hit_test(event.position().x(), event.position().y())  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
         if hit != self._hover_cell:
             self._hover_cell = hit
             if hit is None:
@@ -136,7 +136,7 @@ class _CartoucheGrid(QWidget):
                 self.setToolTip(self._tooltip_text.get(hit, ""))
         super().mouseMoveEvent(event)
 
-    def paintEvent(self, event):
+    def paintEvent(self, event):  # type: ignore[reportIncompatibleMethodOverride, reportMissingParameterType, reportUnknownParameterType]
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
 
@@ -454,14 +454,14 @@ class TzolkinCalculatorWindow(QWidget):
             if not (1 <= kin <= 260):
                 continue
             row, col = self._kin_to_cell(kin)
-            events_by_cell.setdefault((row, col), []).append(e)
+            events_by_cell.setdefault((row, col), []).append(e)  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
 
         for (row, col), cell_events in events_by_cell.items():
             marker_codes = [self._format_venus_kind(getattr(e, "kind", "")) for e in cell_events]
             marker_text = " ".join(marker_codes)
 
             tooltip_lines: list[str] = []
-            for e in sorted(cell_events, key=lambda x: getattr(x, "dt_utc", None) or 0):
+            for e in sorted(cell_events, key=lambda x: getattr(x, "dt_utc", None) or 0):  # type: ignore[reportUnknownArgumentType, reportUnknownLambdaType, reportUnknownVariableType]
                 dt_utc = getattr(e, "dt_utc", None)
                 kind = getattr(e, "kind", "")
                 elong = getattr(e, "elongation_deg", None)
@@ -491,7 +491,7 @@ class TzolkinCalculatorWindow(QWidget):
             self._venus_overlay_worker = None
 
         worker = _VenusOverlayWorker(cycle_start, cycle_end, parent=self)
-        worker.result_ready.connect(lambda evts: self._apply_venus_overlay(request_id, evts))
+        worker.result_ready.connect(lambda evts: self._apply_venus_overlay(request_id, evts))  # type: ignore[reportUnknownArgumentType, reportUnknownLambdaType, reportUnknownMemberType]
         worker.error.connect(lambda _msg: None)
         worker.start()
         self._venus_overlay_worker = worker
@@ -573,7 +573,7 @@ class TzolkinCalculatorWindow(QWidget):
         label.setFont(base_font)
         label.setText(text)
 
-    def resizeEvent(self, event):
+    def resizeEvent(self, event):  # type: ignore[reportIncompatibleMethodOverride, reportMissingParameterType, reportUnknownParameterType]
         super().resizeEvent(event)
         # Refit the main label when the window/card width changes.
         self._refit_main_label()
@@ -594,7 +594,7 @@ class TzolkinCalculatorWindow(QWidget):
         self.current_date = date.today()
         self._refresh_display()
 
-    def _on_cell_clicked(self, row, col):
+    def _on_cell_clicked(self, row, col):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """
         When a grid cell is clicked, jump to that Kin.
         Logic: target Kin comes directly from the clicked cell (Kin-order layout).

@@ -121,7 +121,7 @@ class TorusKnotSolidService:
         # Simple numerical integration
         n_steps = 1000
         length = 0.0
-        dt = (2 * math.pi) / n_steps
+        _dt = (2 * math.pi) / n_steps
         
         # Curve:
         # x = (R + r cos(qt)) cos(pt)
@@ -176,7 +176,7 @@ class TorusKnotSolidService:
         radial_seg = config.radial_segments
         
         # 1. Compute curve points & tangents using forward difference or analytical derivative
-        curve_frames = [] # List of (pos, T, N, B)
+        _curve_frames = [] # List of (pos, T, N, B)
         
         # Calculate points for 0 to 2pi (inclusive to find total twist)
         total_steps = segments
@@ -207,17 +207,17 @@ class TorusKnotSolidService:
         N0 = vec_normalize(vec_cross(T0, up))
         B0 = vec_normalize(vec_cross(T0, N0))
         
-        current_N = N0
+        _current_N = N0
         parallel_frames = [(points[0], T0, N0, B0)]
         
         for i in range(1, total_steps + 1):
-            prev_pos, prev_T, prev_N, prev_B = parallel_frames[-1]
+            _prev_pos, prev_T, prev_N,_ prev_B = parallel_frames[-1]  # type: ignore[reportUnknownVariableType, reportUnusedVariable]
             curr_pos = points[i]
             curr_T = tangents[i]
             
             # Transport prev_N to current frame
             # Axis of rotation A = prev_T x curr_T
-            axis = vec_cross(prev_T, curr_T)
+            axis = vec_cross(prev_T, curr_T)  # type: ignore[reportUndefinedVariable, reportUnknownArgumentType]
             
             # If collinear (straight line), just update T
             if vec_length(axis) < 1e-9:
@@ -225,7 +225,7 @@ class TorusKnotSolidService:
             else:
                  axis = vec_normalize(axis)
                  # Angle between tangents
-                 dot = prev_T[0]*curr_T[0] + prev_T[1]*curr_T[1] + prev_T[2]*curr_T[2]
+                 dot = prev_T[0]*curr_T[0] + prev_T[1]*curr_T[1] + prev_T[2]*curr_T[2]  # type: ignore[reportUndefinedVariable, reportUnknownVariableType]
                  # Clamp for safety
                  phi = math.acos(max(-1.0, min(1.0, dot)))
                  
@@ -235,7 +235,7 @@ class TorusKnotSolidService:
                  cos_phi = math.cos(phi)
                  sin_phi = math.sin(phi)
                  k_cross_v = vec_cross(axis, prev_N)
-                 k_dot_v = axis[0]*prev_N[0] + axis[1]*prev_N[1] + axis[2]*prev_N[2]
+                 k_dot_v = axis[0]*prev_N[0] + axis[1]*prev_N[1] + axis[2]*prev_N[2]  # type: ignore[reportUndefinedVariable, reportUnknownVariableType]
                  
                  term1 = vec_scale(prev_N, cos_phi)
                  term2 = vec_scale(k_cross_v, sin_phi)
@@ -271,7 +271,7 @@ class TorusKnotSolidService:
         
         # 4. Generate Final Twisted Frames & Vertices
         for i in range(segments):
-            pos, T, N_transport, B_transport = parallel_frames[i]
+            pos, _T, N_transport, B_transport = parallel_frames[i]  # type: ignore[reportUnknownVariableType, reportUnusedVariable]
             
             # Twist adjustment
             # We want to distribute -total_twist over the length

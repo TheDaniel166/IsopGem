@@ -407,9 +407,9 @@ class ZodiacalCircleWindow(QWidget):
         divisors = self.circle_widget.get_divisors()
         
         # Sort by angle (largest first = most common aspects first)
-        sorted_divisors = sorted(divisors.items(), key=lambda x: x[1][2], reverse=True)
+        sorted_divisors = sorted(divisors.items(), key=lambda x: x[1][2], reverse=True)  # type: ignore[reportUnknownArgumentType, reportUnknownLambdaType, reportUnknownVariableType]
         
-        for divisor, (color_hex, name, angle) in sorted_divisors:
+        for divisor, (color_hex, name, angle) in sorted_divisors:  # type: ignore[reportUnknownVariableType]
             checkbox = QCheckBox(f"{name} ({angle}°)")
             checkbox.setStyleSheet(f"""
                 QCheckBox {{
@@ -439,7 +439,7 @@ class ZodiacalCircleWindow(QWidget):
     def _on_aspect_changed(self) -> None:
         """Handle aspect checkbox changes."""
         active = []
-        for divisor, checkbox in self._divisor_checkboxes.items():
+        for divisor, checkbox in self._divisor_checkboxes.items():  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
             if checkbox.isChecked():
                 active.append(divisor)
         
@@ -548,7 +548,7 @@ class ZodiacalCircleWindow(QWidget):
             if divisor not in divisors:
                 continue
             
-            color_hex, name, angle = divisors[divisor]
+            color_hex, name, angle = divisors[divisor]  # type: ignore[reportUnknownVariableType]
             
             # Section header
             header = QLabel(f"▸ {name} ({angle}°)")
@@ -679,7 +679,7 @@ class ZodiacalCircleWindow(QWidget):
             for divisor in self.circle_widget._active_divisors:
                 if divisor not in divisors:
                     continue
-                _, name, angle = divisors[divisor]
+                _, name, angle = divisors[divisor]  # type: ignore[reportUnknownVariableType]
                 
                 for i in range(1, divisor):
                     related_deg = (selected_deg + i * angle) % 360

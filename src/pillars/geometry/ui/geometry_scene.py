@@ -817,7 +817,7 @@ class GeometryScene(QGraphicsScene):
         
         # Determined brush style
         brush = self._qt_brush(primitive.brush)
-        if primitive.metadata and primitive.metadata.get('style') == 'sphere' and primitive.brush.enabled:
+        if primitive.metadata and primitive.metadata.get('style') == 'sphere' and primitive.brush.enabled:  # type: ignore[reportUnknownMemberType]
             # Create a radial gradient for 3D sphere effect
             base_color = QColor(*primitive.brush.color)
             gradient = QRadialGradient(cx - radius * 0.3, cy - radius * 0.3, radius * 1.5)
@@ -883,13 +883,13 @@ class GeometryScene(QGraphicsScene):
             groups[key].append((item, label))
 
         # 2. Process groups and stack if needed
-        for pos_key, group in groups.items():
-            total_height = sum(item.boundingRect().height() for item, _ in group)
+        for _pos_key, group in groups.items():  # type: ignore[reportUnknownVariableType, reportUnusedVariable]
+            total_height = sum(item.boundingRect().height() for item, _ in group)  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType, reportUnknownVariableType]
             # Center the entire stack
             current_y_offset = -total_height / 2 if len(group) > 1 else 0
             
             for item, label in group:
-                item.setPos(label.position[0], label.position[1])
+                item.setPos(label.position[0], label.position[1])  # type: ignore[reportUnknownMemberType]
                 rect = item.boundingRect()
                 w = rect.width()
                 h = rect.height()
@@ -906,7 +906,7 @@ class GeometryScene(QGraphicsScene):
                     # Single mode: Respect align_center
                     off_y = -h / 2 if label.align_center else 0
                 
-                item.setTransform(QTransform().translate(off_x, off_y))
+                item.setTransform(QTransform().translate(off_x, off_y))  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
                 self.addItem(item)
                 label_items.append(item)
                 
@@ -950,7 +950,7 @@ class GeometryScene(QGraphicsScene):
             })
 
         # Sort by screen Y then X
-        projections.sort(key=lambda p: (p['screen_y'], p['screen_x']))
+        projections.sort(key=lambda p: (p['screen_y'], p['screen_x']))  # type: ignore[reportUnknownLambdaType, reportUnknownMemberType]
         
         # Group by screen proximity (Cluster)
         threshold_x = 24.0 # pixels
@@ -999,7 +999,7 @@ class GeometryScene(QGraphicsScene):
             # item.setPos has set logic, we adjust offset
             # QGraphicsSimpleTextItem origin is top-left.
             # We translate to center it.
-            item.setTransform(QTransform().translate(-w/2, -h/2))
+            item.setTransform(QTransform().translate(-w/2, -h/2))  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
 
         logger.debug("Label layout updated: scale=%.2f, visible_groups=%d", 
                      scale, len(active_groups))

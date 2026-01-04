@@ -33,7 +33,7 @@ class SubstrateWidget(QWidget):
         self._pixmap = QPixmap(image_path)
         self._bg_color = QColor(COLORS['background'])
     
-    def paintEvent(self, event):
+    def paintEvent(self, event):  # type: ignore[reportIncompatibleMethodOverride, reportMissingParameterType, reportUnknownParameterType]
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
         
@@ -539,7 +539,7 @@ class ChariotDifferentialsWindow(QWidget):
             self.results_table.setItem(row, 0, subtotal_label)
             self.results_table.setItem(row, 1, QTableWidgetItem(""))
             
-            for col, total in [(2, sum(axle_diffs)), (3, sum(axle_ditrunes)), (4, sum(axle_contrunes))]:
+            for col, total in [(2, sum(axle_diffs)), (3, sum(axle_ditrunes)), (4, sum(axle_contrunes))]:  # type: ignore[reportUnknownArgumentType]
                 item = QTableWidgetItem(str(total))
                 item.setFont(QFont("Georgia", 10, QFont.Weight.Bold))
                 item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -678,7 +678,7 @@ class ChariotDifferentialsWindow(QWidget):
         
         # Get the row name for display
         row_name_item = self.results_table.item(row, 0)
-        row_name = row_name_item.text() if row_name_item else f"Row {row}"
+        _row_name = row_name_item.text() if row_name_item else f"Row {row}"
         col_names = {2: "Difference", 3: "Ditrune", 4: "Contrune"}
         col_name = col_names.get(col, "Value")
         
@@ -711,7 +711,7 @@ class ChariotDifferentialsWindow(QWidget):
             contrune_action.triggered.connect(lambda: self._send_axles_to_geometry("contrune"))
             menu.addAction(contrune_action)
         
-        menu.exec(self.results_table.viewport().mapToGlobal(position))
+        menu.exec(self.results_table.viewport().mapToGlobal(position))  # type: ignore[reportOptionalMemberAccess, reportUnknownArgumentType]
     
     def _send_value_to_quadset(self, value: int) -> None:
         """Send a value to Quadset Analysis."""

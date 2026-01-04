@@ -9,7 +9,7 @@ from PyQt6.QtGui import QPainter, QBrush, QColor, QMouseEvent
 from .note_container import NoteContainerItemMovable
 from ..shape_item import (
     BaseShapeItem, RectShapeItem, EllipseShapeItem,
-    TriangleShapeItem, LineShapeItem, ArrowShapeItem,
+    TriangleShapeItem, LineShapeItem, ArrowShapeItem,  # type: ignore[reportUnusedImport]
     create_shape_from_dict
 )
 import json
@@ -142,7 +142,7 @@ class InfiniteCanvasView(QGraphicsView):
         else:
             super().mouseDoubleClickEvent(event)
 
-    def add_note_container(self, x, y, content="", width=400):
+    def add_note_container(self, x, y, content="", width=400):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """
         Add note container logic.
         
@@ -236,7 +236,7 @@ class InfiniteCanvasView(QGraphicsView):
             # Check for polygon with custom config
             if self._insert_shape_type.__name__ == "PolygonShapeItem" and hasattr(self, '_polygon_config') and self._polygon_config:
                 from ..shape_item import PolygonShapeItem
-                sides, skip = self._polygon_config
+                sides, skip = self._polygon_config  # type: ignore[reportGeneralTypeIssues, reportUnknownVariableType]
                 shape = PolygonShapeItem(scene_pos.x(), scene_pos.y(), 100, 100, sides, skip)
                 self._polygon_config = None
             else:

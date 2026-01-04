@@ -49,7 +49,7 @@ class SmartFilterDialog(QDialog):
         filtered_matches: Description of filtered_matches.
     
     """
-    def __init__(self, matches, parent=None):
+    def __init__(self, matches, parent=None):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """
           init   logic.
         

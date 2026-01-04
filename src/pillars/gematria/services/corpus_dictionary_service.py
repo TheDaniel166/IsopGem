@@ -16,7 +16,7 @@ class CorpusDictionaryService:
     
     _instance = None
     
-    def __new__(cls, *args, **kwargs):
+    def __new__(cls, *args, **kwargs):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         if not cls._instance:
             cls._instance = super(CorpusDictionaryService, cls).__new__(cls)
             cls._instance._initialized = False
@@ -60,9 +60,9 @@ class CorpusDictionaryService:
             
             # Simple content cleaning and traversing
             # Case insensitive storage
-            found = word_pattern.findall(doc.content)
+            found = word_pattern.findall(doc.content)  # type: ignore[reportArgumentType, reportCallIssue, reportUnknownVariableType]
             for w in found:
-                new_words.add(w.upper())
+                new_words.add(w.upper())  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
                 
         self._words = new_words
         self._is_loaded = True

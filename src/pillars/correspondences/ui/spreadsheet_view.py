@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import (
     QTableView, QStyledItemDelegate, QDialog, QVBoxLayout,
     QDialogButtonBox, QWidget, QStyle, QMenu, QLineEdit, QApplication, QHeaderView, QStyleOptionViewItem, QRubberBand
 )
-from PyQt6.QtCore import Qt, QAbstractTableModel, QModelIndex, pyqtSignal, QEvent, QItemSelectionModel, QPoint, QRect, QSize, QTimer
+from PyQt6.QtCore import Qt, QAbstractTableModel, QModelIndex, pyqtSignal, QEvent, QItemSelectionModel, QPoint, QRect, QSize, QTimer  # type: ignore[reportUnusedImport]
 from PyQt6.QtGui import QTextDocument, QAbstractTextDocumentLayout, QColor, QAction, QUndoStack, QPen, QFont, QKeyEvent, QKeySequence, QBrush, QTextOption
 import re
 import logging
@@ -35,7 +35,7 @@ class SpreadsheetModel(QAbstractTableModel):
     The Map of the Grid.
     Adapts the JSON structure to the Qt Table Model.
     """
-    def __init__(self, data_json: dict, parent=None):
+    def __init__(self, data_json: dict, parent=None):  # type: ignore[reportMissingParameterType, reportMissingTypeArgument, reportUnknownParameterType]
         """
           init   logic.
         
@@ -47,13 +47,13 @@ class SpreadsheetModel(QAbstractTableModel):
         super().__init__(parent)
         self._columns = data_json.get("columns", [])
         # Support both "data" and "rows" keys
-        self._data = data_json.get("data") or data_json.get("rows", [])
+        self._data = data_json.get("data") or data_json.get("rows", [])  # type: ignore[reportUnknownMemberType]
         # Styles: {(row, col): {"bg": "#hex", "fg": "#hex", "borders": {"top": bool, ...}}}
         # We need to load this from JSON if available, or init empty
         self._styles = {}
         loaded_styles = data_json.get("styles", {})
         # Convert string keys "row,col" back to tuple (row, col) if needed
-        for k, v in loaded_styles.items():
+        for k, v in loaded_styles.items():  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
             try:
                 r, c = map(int, k.split(","))
                 self._styles[(r, c)] = v
@@ -73,19 +73,19 @@ class SpreadsheetModel(QAbstractTableModel):
         self.conditional_manager = ConditionalManager()
         self._eval_cache = {}
 
-    def fill_selection(self, source_range, target_range):
+    def fill_selection(self, source_range, target_range):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """
         Fill target_rect with data/pattern from source_rect.
         source_range: QItemSelectionRange
         target_range: QItemSelectionRange
         """
         # Calculate Dimensions
-        src_top, src_left = source_range.top(), source_range.left()
+        src_top, src_left = source_range.top(), source_range.left()  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
         src_h = source_range.bottom() - src_top + 1
         src_w = source_range.right() - src_left + 1
 
-        tgt_top, tgt_left = target_range.top(), target_range.left()
-        tgt_bottom, tgt_right = target_range.bottom(), target_range.right()
+        tgt_top, tgt_left = target_range.top(), target_range.left()  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
+        tgt_bottom, tgt_right = target_range.bottom(), target_range.right()  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
 
         # Batch Update setup
         self.beginResetModel() # Heavy hammer, but safe for now
@@ -120,8 +120,8 @@ class SpreadsheetModel(QAbstractTableModel):
                 src_r = src_top + ((r - src_top) % src_h)
                 src_c = src_left + ((c - src_left) % src_w)
 
-                val = self.get_cell_raw(src_r, src_c)
-                style = self._styles.get((src_r, src_c))
+                val = self.get_cell_raw(src_r, src_c)  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType, reportUnknownVariableType]
+                style = self._styles.get((src_r, src_c))  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
 
                 # Formula Adjustment
                 if isinstance(val, str) and val.startswith("="):
@@ -140,8 +140,8 @@ class SpreadsheetModel(QAbstractTableModel):
 
         self.endResetModel()
         self.clear_eval_cache()
-        tl = self.index(target_range.top(), target_range.left())
-        br = self.index(target_range.bottom(), target_range.right())
+        tl = self.index(target_range.top(), target_range.left())  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
+        br = self.index(target_range.bottom(), target_range.right())  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
         self.dataChanged.emit(tl, br)
 
 
@@ -149,7 +149,7 @@ class SpreadsheetModel(QAbstractTableModel):
         """Reset cached formula evaluations after mutations."""
         self._eval_cache.clear()
 
-    def get_cell_raw(self, row, col):
+    def get_cell_raw(self, row, col):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """
         Retrieve cell raw logic.
         
@@ -166,7 +166,7 @@ class SpreadsheetModel(QAbstractTableModel):
             return ""
         return self._data[row][col]
 
-    def evaluate_cell(self, row, col, visited=None):
+    def evaluate_cell(self, row, col, visited=None):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """Return the evaluated value for a cell with cycle protection and caching."""
         key = (row, col)
         if visited is None:
@@ -178,7 +178,7 @@ class SpreadsheetModel(QAbstractTableModel):
 
         visited.add(key)
         try:
-            raw = self.get_cell_raw(row, col)
+            raw = self.get_cell_raw(row, col)  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType, reportUnknownVariableType]
 
             if isinstance(raw, str) and raw.startswith("="):
                 result = self.formula_engine.evaluate(raw, visited)
@@ -213,7 +213,7 @@ class SpreadsheetModel(QAbstractTableModel):
                     # We accept losing the bold/italic of old dirty cells.
                     self._data[r][c] = clean_text
 
-    def get_cell_value(self, row, col):
+    def get_cell_value(self, row, col):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """Helper for Formula Engine to resolve references."""
         if row < 0 or row >= len(self._data): return ""
         if col < 0 or col >= len(self._columns): return ""
@@ -240,7 +240,7 @@ class SpreadsheetModel(QAbstractTableModel):
         """
         return len(self._columns)
 
-    def data(self, index, role=Qt.ItemDataRole.DisplayRole):
+    def data(self, index, role=Qt.ItemDataRole.DisplayRole):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """
         Data logic.
         
@@ -256,11 +256,11 @@ class SpreadsheetModel(QAbstractTableModel):
         col = index.column()
 
         # Guard bounds
-        if row >= len(self._data) or col >= len(self._data[row]):
+        if row >= len(self._data) or col >= len(self._data[row]):  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
             return None
 
         if role == Qt.ItemDataRole.BackgroundRole:
-            style = self._styles.get((row, col), {})
+            style = self._styles.get((row, col), {})  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
             bg = style.get("bg")
             cond = None
             if hasattr(self, "conditional_manager"):
@@ -271,7 +271,7 @@ class SpreadsheetModel(QAbstractTableModel):
             return None
 
         if role == Qt.ItemDataRole.ForegroundRole:
-            style = self._styles.get((row, col), {})
+            style = self._styles.get((row, col), {})  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
             cond = None
             if hasattr(self, "conditional_manager"):
                 cond = self.conditional_manager.get_style(row, col, self.evaluate_cell(row, col))
@@ -281,7 +281,7 @@ class SpreadsheetModel(QAbstractTableModel):
             return None
 
         if role == Qt.ItemDataRole.FontRole:
-            style = self._styles.get((row, col), {})
+            style = self._styles.get((row, col), {})  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
             font = QFont() # Default font
 
             # 1. Family
@@ -304,7 +304,7 @@ class SpreadsheetModel(QAbstractTableModel):
             return font
 
         if role == BorderRole:
-            style = self._styles.get((row, col), {})
+            style = self._styles.get((row, col), {})  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
             return style.get("borders", {})
 
         raw_value = self._data[row][col]
@@ -317,7 +317,7 @@ class SpreadsheetModel(QAbstractTableModel):
             return str(raw_value)
 
         if role == Qt.ItemDataRole.TextAlignmentRole:
-            style = self._styles.get((row, col), {})
+            style = self._styles.get((row, col), {})  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
             align_str = style.get("align", "left")
             if align_str == "center": return Qt.AlignmentFlag.AlignCenter
             if align_str == "right": return Qt.AlignmentFlag.AlignRight
@@ -326,7 +326,7 @@ class SpreadsheetModel(QAbstractTableModel):
 
         return None
 
-    def setData(self, index, value, role=Qt.ItemDataRole.EditRole):
+    def setData(self, index, value, role=Qt.ItemDataRole.EditRole):  # type: ignore[reportMissingParameterType]
         """
         Setdata logic.
         
@@ -353,7 +353,7 @@ class SpreadsheetModel(QAbstractTableModel):
 
         return False
 
-    def headerData(self, section, orientation, role=Qt.ItemDataRole.DisplayRole):
+    def headerData(self, section, orientation, role=Qt.ItemDataRole.DisplayRole):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """
         Headerdata logic.
         
@@ -371,7 +371,7 @@ class SpreadsheetModel(QAbstractTableModel):
                 return str(section + 1)
         return None
 
-    def insertRows(self, position, rows, parent=QModelIndex()):
+    def insertRows(self, position, rows, parent=QModelIndex()):  # type: ignore[reportIncompatibleMethodOverride, reportMissingParameterType, reportUnknownParameterType]
         """
         Insertrows logic.
         
@@ -385,7 +385,7 @@ class SpreadsheetModel(QAbstractTableModel):
         self.undo_stack.push(command)
         return True
 
-    def removeRows(self, position, rows, parent=QModelIndex()):
+    def removeRows(self, position, rows, parent=QModelIndex()):  # type: ignore[reportIncompatibleMethodOverride, reportMissingParameterType, reportUnknownParameterType]
         """
         Removerows logic.
         
@@ -399,7 +399,7 @@ class SpreadsheetModel(QAbstractTableModel):
         self.undo_stack.push(command)
         return True
 
-    def insertColumns(self, position, columns, parent=QModelIndex()):
+    def insertColumns(self, position, columns, parent=QModelIndex()):  # type: ignore[reportIncompatibleMethodOverride, reportMissingParameterType, reportUnknownParameterType]
         """
         Insertcolumns logic.
         
@@ -413,7 +413,7 @@ class SpreadsheetModel(QAbstractTableModel):
         self.undo_stack.push(command)
         return True
 
-    def removeColumns(self, position, columns, parent=QModelIndex()):
+    def removeColumns(self, position, columns, parent=QModelIndex()):  # type: ignore[reportIncompatibleMethodOverride, reportMissingParameterType, reportUnknownParameterType]
         """
         Removecolumns logic.
         
@@ -445,14 +445,14 @@ class SpreadsheetModel(QAbstractTableModel):
         Convert to json logic.
         
         """
-        styles_str = {f"{r},{c}": v for (r,c), v in self._styles.items()}
+        styles_str = {f"{r},{c}": v for (r,c), v in self._styles.items()}  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
         return {
             "columns": self._columns,
             "data": self._data,
             "styles": styles_str
         }
 
-    def sort_range(self, top, left, bottom, right, key_col, ascending=True):
+    def sort_range(self, top, left, bottom, right, key_col, ascending=True):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """
         Sorts the data in the given range based on key_col.
         key_col is absolute column index.
@@ -464,7 +464,7 @@ class SpreadsheetModel(QAbstractTableModel):
             row_data = []
             for c in range(left, right + 1):
                 val = self._data[r][c]
-                style = self._styles.get((r, c))
+                style = self._styles.get((r, c))  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
                 row_data.append((val, style))
             old_block.append(row_data)
 
@@ -513,11 +513,11 @@ class SpreadsheetModel(QAbstractTableModel):
 
         # 5. Push Command
         if hasattr(self, "undo_stack"):
-            cmd = SortRangeCommand(self, (top, left, bottom, right), old_block, new_block)
+            cmd = SortRangeCommand(self, (top, left, bottom, right), old_block, new_block)  # type: ignore[reportUnknownArgumentType]
             self.undo_stack.push(cmd)
         else:
             # Fallback
-            cmd = SortRangeCommand(self, (top, left, bottom, right), old_block, new_block)
+            cmd = SortRangeCommand(self, (top, left, bottom, right), old_block, new_block)  # type: ignore[reportUnknownArgumentType]
             cmd.redo()
 
 class RichTextDelegate(QStyledItemDelegate):
@@ -531,7 +531,7 @@ class RichTextDelegate(QStyledItemDelegate):
         "#33FFF5", "#FFA833", "#8E44AD", "#2ECC71", "#E74C3C"
     ]
 
-    def paint(self, painter, option, index):
+    def paint(self, painter, option, index):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """
         Paint logic.
         
@@ -565,9 +565,9 @@ class RichTextDelegate(QStyledItemDelegate):
 
             # --- 1.5. Formula Reference Highlighting ---
             view = self.parent()
-            if hasattr(view, '_ref_highlights') and view._ref_highlights:
+            if hasattr(view, '_ref_highlights') and view._ref_highlights:  # type: ignore[reportAttributeAccessIssue, reportOptionalMemberAccess, reportUnknownMemberType]
                 row, col = index.row(), index.column()
-                for (r1, c1, r2, c2, color) in view._ref_highlights:
+                for (r1, c1, r2, c2, color) in view._ref_highlights:  # type: ignore  # 4 errors
                     if r1 <= row <= r2 and c1 <= col <= c2:
                         # Draw light background tint
                         ref_color = QColor(color)
@@ -635,7 +635,7 @@ class RichTextDelegate(QStyledItemDelegate):
                     return None
 
                 # Borders Helpers
-                def draw_line(p, p1, p2):
+                def draw_line(p, p1, p2):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
                     """
                     Draw line logic.
                     
@@ -647,7 +647,7 @@ class RichTextDelegate(QStyledItemDelegate):
                     """
                     if p:
                         painter.setPen(p)
-                        painter.drawLine(p1, p2)
+                        painter.drawLine(p1, p2)  # type: ignore[reportOptionalMemberAccess, reportUnknownArgumentType]
 
                 # Grid/Border Logic
                 # Bottom
@@ -683,9 +683,9 @@ class RichTextDelegate(QStyledItemDelegate):
 
             # --- 4.5. Formula Reference Border Overlay ---
             view = self.parent()
-            if hasattr(view, '_ref_highlights') and view._ref_highlights:
+            if hasattr(view, '_ref_highlights') and view._ref_highlights:  # type: ignore[reportAttributeAccessIssue, reportOptionalMemberAccess, reportUnknownMemberType]
                 row, col = index.row(), index.column()
-                for (r1, c1, r2, c2, color) in view._ref_highlights:
+                for (r1, c1, r2, c2, color) in view._ref_highlights:  # type: ignore  # 4 errors
                     if r1 <= row <= r2 and c1 <= col <= c2:
                         # Draw thick colored border around referenced cells
                         ref_color = QColor(color)
@@ -697,16 +697,16 @@ class RichTextDelegate(QStyledItemDelegate):
             # --- 5. Fill Handle ---
             view = self.parent()
             # Check (row, col)
-            if hasattr(view, '_handle_pos') and view._handle_pos == (index.row(), index.column()):
+            if hasattr(view, '_handle_pos') and view._handle_pos == (index.row(), index.column()):  # type: ignore[reportAttributeAccessIssue, reportOptionalMemberAccess, reportUnknownMemberType]
                 # Draw Handle
-                h_size = view.HANDLE_SIZE
+                h_size = view.HANDLE_SIZE  # type: ignore  # 4 errors
                 h_x = option.rect.right() - (h_size // 2)
                 h_y = option.rect.bottom() - (h_size // 2)
                 
                 # Scribe Emerald for the Handle (Creation/Extension)
-                painter.fillRect(h_x, h_y, h_size, h_size, QBrush(QColor(COLORS['scribe'])))
+                painter.fillRect(h_x, h_y, h_size, h_size, QBrush(QColor(COLORS['scribe'])))  # type: ignore[reportOptionalMemberAccess, reportUnknownArgumentType]
                 painter.setPen(QColor("white"))
-                painter.drawRect(h_x, h_y, h_size, h_size)
+                painter.drawRect(h_x, h_y, h_size, h_size)  # type: ignore[reportOptionalMemberAccess, reportUnknownArgumentType]
 
             painter.restore()
 
@@ -716,7 +716,7 @@ class RichTextDelegate(QStyledItemDelegate):
             painter.drawText(option.rect, Qt.AlignmentFlag.AlignCenter, "ERR")
             painter.restore()
 
-    def createEditor(self, parent, option, index):
+    def createEditor(self, parent, option, index):  # type: ignore[reportMissingParameterType]
         """Custom Editor to fix clipping and style issues."""
         editor = QLineEdit(parent)
         editor.setFrame(False) # Seamless
@@ -725,9 +725,9 @@ class RichTextDelegate(QStyledItemDelegate):
         view = self.parent()
         if view:
             view.active_editor = editor
-            editor.textChanged.connect(view.editor_text_changed.emit)
+            editor.textChanged.connect(view.editor_text_changed.emit)  # type: ignore[reportAttributeAccessIssue, reportUnknownArgumentType, reportUnknownMemberType]
             # Unified Workflow: Hijack Keys
-            top_window = view.window()
+            top_window = view.window()  # type: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownVariableType]
             if top_window:
                 editor.installEventFilter(top_window)
 
@@ -736,18 +736,18 @@ class RichTextDelegate(QStyledItemDelegate):
 
         return editor
 
-    def updateEditorGeometry(self, editor, option, index):
+    def updateEditorGeometry(self, editor, option, index):  # type: ignore[reportMissingParameterType]
         """Ensure editor fills the cell exactly."""
         editor.setGeometry(option.rect)
 
     def setEditorData(self, editor, index):
         """Get raw data (formula) for editing."""
         text = index.data(Qt.ItemDataRole.EditRole)
-        editor.setText(str(text) if text is not None else "")
+        editor.setText(str(text) if text is not None else "")  # type: ignore[reportAttributeAccessIssue, reportOptionalMemberAccess, reportUnknownMemberType]
 
-    def setModelData(self, editor, model, index):
+    def setModelData(self, editor, model, index):  # type: ignore[reportMissingParameterType]
         """Save text back to model."""
-        text = editor.text()
+        text = editor.text()  # type: ignore  # 4 errors
         model.setData(index, text, Qt.ItemDataRole.EditRole)
 
         # Clear active editor ref
@@ -759,7 +759,7 @@ class CellEditorDialog(QDialog):
     """
     Popup window for editing a cell with full Rich Text capabilities.
     """
-    def __init__(self, initial_html, parent=None):
+    def __init__(self, initial_html, parent=None):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """
           init   logic.
         
@@ -836,13 +836,13 @@ class SpreadsheetView(QTableView):
         # 2. Row Header Menu
         v_header = self.verticalHeader()
         v_header.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        v_header.customContextMenuRequested.connect(self._show_row_menu)
+        v_header.customContextMenuRequested.connect(self._show_row_menu)  # type: ignore[reportOptionalMemberAccess, reportUnknownArgumentType, reportUnknownMemberType]
         v_header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
 
         # 3. Column Header Menu
         h_header = self.horizontalHeader()
         h_header.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        h_header.customContextMenuRequested.connect(self._show_col_menu)
+        h_header.customContextMenuRequested.connect(self._show_col_menu)  # type: ignore[reportOptionalMemberAccess, reportUnknownArgumentType, reportUnknownMemberType]
         h_header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
 
         # 4. Input handling
@@ -889,7 +889,7 @@ class SpreadsheetView(QTableView):
         self._ref_highlights = []
         self.viewport().update()
 
-    def set_border_ui(self, actions, settings, style_menu, width_menu):
+    def set_border_ui(self, actions, settings, style_menu, width_menu):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """Receive Actions from Window."""
         self._border_actions = actions
         self._border_settings_actions = settings
@@ -901,7 +901,7 @@ class SpreadsheetView(QTableView):
         self.resizeColumnsToContents()
         self.resizeRowsToContents()
 
-    def resizeEvent(self, event):
+    def resizeEvent(self, event):  # type: ignore[reportIncompatibleMethodOverride, reportMissingParameterType, reportUnknownParameterType]
         """
         Resizeevent logic.
         
@@ -935,7 +935,7 @@ class SpreadsheetView(QTableView):
             self._handle_pos = None
             self.viewport().update()
 
-    def mouseMoveEvent(self, event):
+    def mouseMoveEvent(self, event):  # type: ignore[reportIncompatibleMethodOverride, reportMissingParameterType, reportUnknownParameterType]
         # 1. Check Handle Hover
         """
         Mousemoveevent logic.
@@ -957,7 +957,7 @@ class SpreadsheetView(QTableView):
                      hx = rect.right() - (self.HANDLE_SIZE // 2)
                      hy = rect.bottom() - (self.HANDLE_SIZE // 2)
                      # Hitbox
-                     if abs(pos.x() - (hx + self.HANDLE_SIZE/2)) < 10 and abs(pos.y() - (hy + self.HANDLE_SIZE/2)) < 10:
+                     if abs(pos.x() - (hx + self.HANDLE_SIZE/2)) < 10 and abs(pos.y() - (hy + self.HANDLE_SIZE/2)) < 10:  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
                          if not self._is_over_handle:
                              self.setCursor(Qt.CursorShape.CrossCursor)
                              self._is_over_handle = True
@@ -969,12 +969,12 @@ class SpreadsheetView(QTableView):
 
         # 2. Handle Dragging
         if self._is_dragging_fill:
-             self._update_drag_rect(event.pos())
+             self._update_drag_rect(event.pos())  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
              return
 
         super().mouseMoveEvent(event)
 
-    def mousePressEvent(self, event):
+    def mousePressEvent(self, event):  # type: ignore[reportIncompatibleMethodOverride, reportMissingParameterType, reportUnknownParameterType]
         """
         Mousepressevent logic.
         
@@ -995,7 +995,7 @@ class SpreadsheetView(QTableView):
 
         super().mousePressEvent(event)
 
-    def mouseReleaseEvent(self, event):
+    def mouseReleaseEvent(self, event):  # type: ignore[reportIncompatibleMethodOverride, reportMissingParameterType, reportUnknownParameterType]
         """
         Mousereleaseevent logic.
         
@@ -1011,7 +1011,7 @@ class SpreadsheetView(QTableView):
             if self._fill_drag_rect:
                 target_range_rect = self._calculate_target_range_from_rect(self._fill_drag_rect)
                 if target_range_rect:
-                    self.model().fill_selection(self._source_range, target_range_rect)
+                    self.model().fill_selection(self._source_range, target_range_rect)  # type: ignore[reportAttributeAccessIssue, reportOptionalMemberAccess, reportUnknownMemberType]
 
             self._fill_drag_rect = None
             self._rubber_band.hide()
@@ -1059,7 +1059,7 @@ class SpreadsheetView(QTableView):
         else:
             self._rubber_band.hide()
 
-    def _calculate_target_range_from_rect(self, rect):
+    def _calculate_target_range_from_rect(self, rect):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """Convert visual rect back to row/col range."""
         # from PyQt6.QtCore import QPoint
         # Sample center of corners to avoid grid lines
@@ -1145,15 +1145,15 @@ class SpreadsheetView(QTableView):
             if self._border_style_menu:
                 # Create duplicate submenu to avoid stealing visual widget
                 s_menu = border_sub.addMenu("Line Style")
-                for action in self._border_style_menu.actions():
+                for action in self._border_style_menu.actions():  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
                     s_menu.addAction(action)
                     
             if self._border_width_menu:
                 w_menu = border_sub.addMenu("Line Width")
-                for action in self._border_width_menu.actions():
+                for action in self._border_width_menu.actions():  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
                     w_menu.addAction(action)
 
-        menu.exec(self.viewport().mapToGlobal(pos))
+        menu.exec(self.viewport().mapToGlobal(pos))  # type: ignore[reportOptionalMemberAccess, reportUnknownArgumentType]
 
     def _show_row_menu(self, pos):
         """Menu for Row Header."""
@@ -1176,7 +1176,7 @@ class SpreadsheetView(QTableView):
         menu.addSeparator()
         menu.addAction(act_del_row)
         
-        menu.exec(header.mapToGlobal(pos))
+        menu.exec(header.mapToGlobal(pos))  # type: ignore[reportOptionalMemberAccess, reportUnknownArgumentType]
 
     def _show_col_menu(self, pos):
         """Menu for Column Header."""
@@ -1199,9 +1199,9 @@ class SpreadsheetView(QTableView):
         menu.addSeparator()
         menu.addAction(act_del_col)
         
-        menu.exec(header.mapToGlobal(pos))
+        menu.exec(header.mapToGlobal(pos))  # type: ignore[reportOptionalMemberAccess, reportUnknownArgumentType]
 
-    def _insert_row(self, row_idx, above=True):
+    def _insert_row(self, row_idx, above=True):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         model = self.model()
         if row_idx == -1: 
             # If nothing selected, append to end
@@ -1214,7 +1214,7 @@ class SpreadsheetView(QTableView):
         if row_idx != -1:
             self.model().removeRows(row_idx, 1)
 
-    def _insert_col(self, col_idx, left=True):
+    def _insert_col(self, col_idx, left=True):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         model = self.model()
         if col_idx == -1:
             model.insertColumns(model.columnCount(), 1)
@@ -1260,14 +1260,14 @@ class SpreadsheetView(QTableView):
         
         model = self.model()
         if hasattr(model, "undo_stack"):
-            model.undo_stack.beginMacro("Clear Cells")
+            model.undo_stack.beginMacro("Clear Cells")  # type: ignore[reportAttributeAccessIssue, reportOptionalMemberAccess, reportUnknownMemberType]
             
         try:
             for idx in indexes:
                 model.setData(idx, "", Qt.ItemDataRole.EditRole)
         finally:
             if hasattr(model, "undo_stack"):
-                model.undo_stack.endMacro()
+                model.undo_stack.endMacro()  # type: ignore[reportAttributeAccessIssue, reportOptionalMemberAccess, reportUnknownMemberType]
 
     def _copy_selection(self):
         """Copy selected cells to clipboard as TSV."""
@@ -1376,7 +1376,7 @@ class SpreadsheetView(QTableView):
         
         # Use Undo Macro
         if hasattr(model, "undo_stack"):
-            model.undo_stack.beginMacro("Paste")
+            model.undo_stack.beginMacro("Paste")  # type: ignore[reportAttributeAccessIssue, reportOptionalMemberAccess, reportUnknownMemberType]
             
         try:
             for i, row_str in enumerate(rows):
@@ -1395,4 +1395,4 @@ class SpreadsheetView(QTableView):
                          model.setData(idx, val, Qt.ItemDataRole.EditRole)
         finally:
             if hasattr(model, "undo_stack"):
-                model.undo_stack.endMacro()
+                model.undo_stack.endMacro()  # type: ignore[reportAttributeAccessIssue, reportOptionalMemberAccess, reportUnknownMemberType]

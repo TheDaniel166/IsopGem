@@ -47,7 +47,7 @@ PLANET_SYMBOLS = {
 class DifferentialNatalWindow(QWidget):
     """Window for calculating Differential Natal Charts."""
     
-    def __init__(self, parent: Optional[QWidget] = None, window_manager=None, **kwargs):
+    def __init__(self, parent: Optional[QWidget] = None, window_manager=None, **kwargs):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """
           init   logic.
         
@@ -529,7 +529,7 @@ class DifferentialNatalWindow(QWidget):
         heptagon_action.triggered.connect(self._send_to_heptagon)
         menu.addAction(heptagon_action)
         
-        menu.exec(self.results_table.viewport().mapToGlobal(position))
+        menu.exec(self.results_table.viewport().mapToGlobal(position))  # type: ignore[reportOptionalMemberAccess, reportUnknownArgumentType]
     
     def _send_to_quadset(self) -> None:
         """Send total Difference to Quadset Analysis."""

@@ -72,7 +72,7 @@ class InterpretationRepository:
         if isinstance(raw, dict):
             # Safe extraction with defaults
             return RichInterpretationContent(
-                text=raw.get("text", "") or raw.get("body", "") or raw.get("essence", "No text available."),
+                text=raw.get("text", "") or raw.get("body", "") or raw.get("essence", "No text available."),  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
                 archetype=raw.get("archetype"),
                 essence=raw.get("essence"),
                 shadow=raw.get("shadow"),
@@ -125,7 +125,7 @@ class InterpretationRepository:
         Get text for a transiting planet aspecting a natal planet.
         """
         data = self._load_json("transits.json")
-        key = f"{transiting_planet}:{aspect_name}:{natal_planet}".lower().replace(" ", "_")
+        _key = f"{transiting_planet}:{aspect_name}:{natal_planet}".lower().replace(" ", "_")
         # Structure is usually key-value or nested. 
         # For simplicity in Phase 3, we try nested: transiting -> aspect -> natal
         # Or flattened key. Let's try nested.

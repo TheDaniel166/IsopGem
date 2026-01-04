@@ -178,7 +178,7 @@ class ConeSolidCalculator:
             h = value
         elif key == 'slant_height':
             # Solve for height keeping radius constant
-            h = math.sqrt(max(0, value**2 - r**2))
+            h = math.sqrt(max(0, value**2 - r**2))  # type: ignore[reportOptionalOperand, reportUnknownArgumentType]
         elif key == 'base_circumference':
             r = value / (2 * math.pi)
         elif key == 'base_area':
@@ -231,7 +231,7 @@ class ConeSolidCalculator:
 
         elif key == 'volume':
             # Solve for height keeping radius constant
-            h = (3 * value) / (math.pi * r**2)
+            h = (3 * value) / (math.pi * r**2)  # type: ignore[reportOperatorIssue, reportOptionalOperand, reportUnknownVariableType]
             
         self._properties['radius'].value = r
         self._properties['height'].value = h

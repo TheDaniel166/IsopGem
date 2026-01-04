@@ -52,7 +52,7 @@ class CalculationService:
             The saved calculation record
         """
         # Convert breakdown to JSON string
-        breakdown_data = [{"char": char, "value": val} for char, val in breakdown]
+        breakdown_data = [{"char": char, "value": val} for char, val in breakdown]  # type: ignore[reportUnknownVariableType]
         breakdown_json = json.dumps(breakdown_data, ensure_ascii=False)
         
         # Get normalized text

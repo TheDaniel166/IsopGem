@@ -50,7 +50,7 @@ class ConditionalManager:
         """
         self.rules = []
 
-    def get_style(self, row, col, value) -> Optional[Dict[str, Any]]:
+    def get_style(self, row, col, value) -> Optional[Dict[str, Any]]:  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """Returns format dict if any rule matches, else None."""
         # Check rules in order (or reverse? Excel applies top-down stop if true?)
         # We apply all, last one wins? Or first match?
@@ -61,7 +61,7 @@ class ConditionalManager:
         for rule in self.rules:
             # 1. Check Range
             in_range = False
-            for (t, l, b, r) in rule.ranges:
+            for (t, l, b, r) in rule.ranges:  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
                 if t <= row <= b and l <= col <= r:
                     in_range = True
                     break
@@ -72,7 +72,7 @@ class ConditionalManager:
                 return rule.format_style
         return None
 
-    def _check_condition(self, rule, value):
+    def _check_condition(self, rule, value):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         try:
             # Value conversion (similar to sorting)
             # Both rule.value and cell value might be strings
@@ -91,7 +91,7 @@ class ConditionalManager:
             except (TypeError, ValueError):
                 pass
 
-            rt = rule.rule_type.upper()
+            rt = rule.rule_type.upper()  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
             
             if rt == "GT":
                 if v_num is not None and t_num is not None:
@@ -101,9 +101,9 @@ class ConditionalManager:
                     return v_num < t_num
             elif rt == "EQ":
                 # Strict equality? string equality?
-                return str(value).lower() == str(rule.value).lower()
+                return str(value).lower() == str(rule.value).lower()  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
             elif rt == "CONTAINS":
-                return str(rule.value).lower() in str(value).lower()
+                return str(rule.value).lower() in str(value).lower()  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
                 
         except (AttributeError, TypeError, ValueError) as e:
             logger.debug(

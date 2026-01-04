@@ -151,7 +151,7 @@ class ChartRepository:
     def _resolve_tags(self, names: Sequence[str]) -> List[ChartTag]:
         return self._resolve_terms(ChartTag, names)
 
-    def _resolve_terms(self, model, names: Sequence[str]):
+    def _resolve_terms(self, model, names: Sequence[str]):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         normalized = [name.strip() for name in names if name.strip()]
         if not normalized:
             return []
@@ -161,7 +161,7 @@ class ChartRepository:
             .filter(func.lower(model.name).in_([name.lower() for name in normalized]))
             .all()
         )
-        existing_map = {item.name.lower(): item for item in existing}
+        existing_map = {item.name.lower(): item for item in existing}  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
 
         resolved: List = []
         for name in normalized:

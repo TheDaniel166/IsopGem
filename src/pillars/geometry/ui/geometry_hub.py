@@ -12,7 +12,7 @@ from PyQt6.QtWidgets import (
     QFrame, QGridLayout, QGraphicsDropShadowEffect, QScrollArea,
 )
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QColor, QPixmap, QPainter, QBrush
+from PyQt6.QtGui import QColor, QPixmap, QPainter, QBrush  # type: ignore[reportUnusedImport]
 
 from shared.ui import WindowManager
 from .advanced_scientific_calculator_window import AdvancedScientificCalculatorWindow
@@ -343,7 +343,7 @@ class GeometryHub(QWidget):
     def _open_shape_calculator(self, shape):
         """Open geometry calculator for a shape."""
         self.window_manager.open_window(
-            window_type=f"geometry_{shape.name.lower().replace(' ', '_')}",
+            window_type=f"geometry_{shape.name.lower().replace(' ', '_')}",  # type: ignore[reportUnknownMemberType]
             window_class=GeometryCalculatorWindow,
             allow_multiple=True,
             shape=shape,
@@ -359,7 +359,7 @@ class GeometryHub(QWidget):
     
     def _prompt_custom_polygon(self):
         """Prompt for custom polygon sides and open calculator."""
-        sides, ok = QInputDialog.getInt(
+        sides, ok = QInputDialog.getInt(  # type: ignore[reportUndefinedVariable, reportUnknownMemberType, reportUnknownVariableType]
             self,
             "Regular n-gon",
             "Number of sides (n ≥ 3):",
@@ -394,7 +394,7 @@ class GeometryHub(QWidget):
         
         if window:
             window.setWindowTitle(f"{config.get('title', solid_id.title())} • 3D Viewer")
-            window.set_solid_context(title=config.get('title'), summary=config.get('summary'))
+            window.set_solid_context(title=config.get('title'), summary=config.get('summary'))  # type: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
             if calculator is not None:
                 window.set_calculator(calculator)
             else:

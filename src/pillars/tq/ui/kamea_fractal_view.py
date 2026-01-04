@@ -136,7 +136,7 @@ class KameaFractalView(QGraphicsView):
             for level in range(7):
                 # Mask: First i digits, rest 0
                 val = ternary[:level] + "0" * (6-level)
-                v_pos, v_pyx, v_col = self._calculate_coord(val)
+                v_pos, _v_pyx, v_col = self._calculate_coord(val)
                 steps.append( (v_pos, v_col) )
             
             # Create Lines between steps
@@ -178,7 +178,7 @@ class KameaFractalView(QGraphicsView):
         
         # 1. Update Points
         # Collect all points to project in batch
-        all_vecs = [pt['vec'] for pt in self.points_3d]
+        all_vecs = [pt['vec'] for pt in self.points_3d]  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
         
         # Project using Service (returns rotated x, y, z tuples)
         projected = self.math_service.project_points(all_vecs, self.rotation_x, self.rotation_y)
@@ -193,7 +193,7 @@ class KameaFractalView(QGraphicsView):
              sy = -py * self.base_scale
              
              # Visibility / Opacity Logic
-             ternary = point_data['info'].split('\n')[0].split(': ')[1]
+             ternary = point_data['info'].split('\n')[0].split(': ')[1]  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
              opacity = 1.0
              
              if self.focused_ditrune:
@@ -211,8 +211,8 @@ class KameaFractalView(QGraphicsView):
         visible_lines = self._get_visible_lines()
         
         if visible_lines:
-             starts = [start for _, start, end in visible_lines]
-             ends = [end for _, start, end in visible_lines]
+             starts = [start for _, start, _end in visible_lines]  # type: ignore[reportUnknownVariableType, reportUnusedVariable]
+             ends = [end for _, _start, end in visible_lines]  # type: ignore[reportUnknownVariableType, reportUnusedVariable]
              
              proj_starts = self.math_service.project_points(starts, self.rotation_x, self.rotation_y)
              proj_ends = self.math_service.project_points(ends, self.rotation_x, self.rotation_y)
@@ -223,7 +223,7 @@ class KameaFractalView(QGraphicsView):
                  pen_std = QPen(QColor(255, 255, 255, 150))
                  pen_std.setWidthF(2.0)
              
-             for idx, (line_item, _, _) in enumerate(visible_lines):
+             for idx, (line_item, _, _) in enumerate(visible_lines):  # type: ignore[reportUnknownArgumentType, reportUnknownVariableType]
                  s = proj_starts[idx]
                  e = proj_ends[idx]
                  
@@ -251,7 +251,7 @@ class KameaFractalView(QGraphicsView):
     def _get_visible_lines(self):
         visible = []
         if self.focused_ditrune:
-             for ternary, lines in self.tree_paths.items():
+             for ternary, lines in self.tree_paths.items():  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
                  if self._is_descendant(self.focused_ditrune, ternary):
                      visible.extend(lines)
         elif self.show_connections:
@@ -361,7 +361,7 @@ class KameaFractalView(QGraphicsView):
         # Hide all lines first to clean slate
         # (This is inefficient but safe)
         for sublist in self.tree_paths.values():
-            for line_item, _, _ in sublist:
+            for line_item, _, _ in sublist:  # type: ignore[reportUnknownVariableType]
                 line_item.setVisible(False)
                 
         self._update_projection()

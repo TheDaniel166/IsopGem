@@ -86,7 +86,7 @@ class TextAnalysisService:
             return []
 
         # Optimization: Single word check
-        for val, start, end in token_data:
+        for val, start, end in token_data:  # type: ignore[reportUnknownVariableType]
             if val == target_value:
                 matches.append((text[start:end], start, end))
 
@@ -109,7 +109,7 @@ class TextAnalysisService:
                 if i + j >= n_tokens:
                     break
                     
-                next_val, _, end = token_data[i + j]
+                next_val, _, end = token_data[i + j]  # type: ignore[reportUnknownVariableType]
                 current_sum += next_val
                 
                 if current_sum == target_value:

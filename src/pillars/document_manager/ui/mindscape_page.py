@@ -206,11 +206,11 @@ class MindscapePageWidget(QWidget):
     def _show_polygon_dialog(self) -> None:
         """Show polygon configuration dialog."""
         from .shape_features import PolygonConfigDialog
-        from .shape_item import PolygonShapeItem
+        from .shape_item import PolygonShapeItem  # type: ignore[reportAttributeAccessIssue, reportUnknownVariableType, reportUnusedImport]
         
         dialog = PolygonConfigDialog(self)
         if dialog.exec():
-            sides, skip = dialog.get_config()
+            sides, skip = dialog.get_config()  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
             # Create custom insert handler for configured polygon
             self._pending_polygon = (sides, skip)
             self._start_polygon_insert()
@@ -221,7 +221,7 @@ class MindscapePageWidget(QWidget):
 
         from .shape_item import PolygonShapeItem
         
-        sides, skip = self._pending_polygon
+        sides, skip = self._pending_polygon  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
         self.canvas._insert_mode = True
         self.canvas._insert_shape_type = PolygonShapeItem
         self.canvas._polygon_config = (sides, skip)

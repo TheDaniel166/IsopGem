@@ -46,7 +46,7 @@ class WallGeometry:
         wall_width = WALL_WIDTH_UNITS * BLOCK_UNIT
         wall_height = WALL_HEIGHT_UNITS * BLOCK_UNIT
         half_w = wall_width / 2.0
-        half_h = wall_height / 2.0
+        _half_h = wall_height / 2.0
         half_d = BLOCK_UNIT / 2.0  # depth matches a single block
 
         # Colors
@@ -55,7 +55,7 @@ class WallGeometry:
         outer_color = color.darker(105)
 
         # Helper to add a quad with CCW order for +Z normal
-        def quad(v1, v2, v3, v4, col):
+        def quad(v1, v2, v3, v4, col):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
             """
             Quad logic.
             

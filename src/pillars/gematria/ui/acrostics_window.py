@@ -17,7 +17,7 @@ class AcrosticsWindow(QWidget):
         dict_service: Description of dict_service.
     
     """
-    def __init__(self, window_manager=None, parent=None):
+    def __init__(self, window_manager=None, parent=None):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """
           init   logic.
         
@@ -117,14 +117,14 @@ class AcrosticsWindow(QWidget):
 
         layout.addWidget(self.results_table)
 
-    def on_result_double_clicked(self, row, col):
+    def on_result_double_clicked(self, row, col):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """Opens the highlight dialog for the selected result."""
         if row < 0:
             return
             
         if hasattr(self, 'current_results') and row < len(self.current_results):
             res = self.current_results[row]
-            dialog = AcrosticHighlightDialog(res.source_text_units, res.method, self)
+            dialog = AcrosticHighlightDialog(res.source_text_units, res.method, self)  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
             dialog.exec()
 
     def load_dictionary(self):

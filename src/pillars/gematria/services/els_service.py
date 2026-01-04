@@ -90,7 +90,7 @@ class ELSSearchService:
                     factors.add((w, rows))
         
         # Sort by "squareness" (prefer grids closer to square shape)
-        result = sorted(factors, key=lambda x: abs(x[0] - x[1]))
+        result = sorted(factors, key=lambda x: abs(x[0] - x[1]))  # type: ignore[reportUnknownArgumentType, reportUnknownLambdaType, reportUnknownVariableType]
         return result
     
     def suggest_better_counts(self, n: int, search_range: int = 10) -> List[Tuple[int, int]]:
@@ -122,7 +122,7 @@ class ELSSearchService:
                 suggestions.append((candidate, factor_count, offset))
         
         # Sort by factor count (descending), then by closeness to original
-        suggestions.sort(key=lambda x: (-x[1], abs(x[2])))
+        suggestions.sort(key=lambda x: (-x[1], abs(x[2])))  # type: ignore[reportUnknownArgumentType, reportUnknownLambdaType, reportUnknownMemberType]
         return [(s[0], s[1]) for s in suggestions[:5]]  # Top 5
     
     def search_els(

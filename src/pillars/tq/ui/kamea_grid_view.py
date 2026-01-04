@@ -12,7 +12,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QRectF, pyqtSignal, QPointF
 from PyQt6.QtGui import (
     QBrush, QPen, QColor, QPainter, QRadialGradient, QFont,
-    QMouseEvent, QTransform, QFontMetrics
+    QMouseEvent, QTransform, QFontMetrics  # type: ignore[reportUnusedImport]
 )
 from PyQt6.QtWidgets import QGraphicsSimpleTextItem
 from ..models.kamea_cell import KameaCell
@@ -212,11 +212,11 @@ class KameaGridView(QGraphicsView):
         self.item_map = {}
         
         self.initialize_scene()
-        self.scene.selectionChanged.connect(self._on_selection_changed)
+        self.scene.selectionChanged.connect(self._on_selection_changed)  # type: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
 
     def _on_selection_changed(self):
         """Handle cell selection to visualize Quadsets."""
-        selected_items = self.scene.selectedItems()
+        selected_items = self.scene.selectedItems()  # type: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownVariableType]
         if not selected_items:
             self._clear_highlights()
             return
@@ -250,7 +250,7 @@ class KameaGridView(QGraphicsView):
             if cell.x == primary_item.cell.x and cell.y == primary_item.cell.y:
                 continue
                 
-            item = self.item_map.get((cell.x, cell.y))
+            item = self.item_map.get((cell.x, cell.y))  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
             if item:
                 item.set_highlight('sibling')
 

@@ -134,7 +134,7 @@ class ChariotService:
         
         # Map to Chariot midpoints using definitions
         chariot_midpoints = []
-        for defn in self._definitions.get("midpoints", []):
+        for defn in self._definitions.get("midpoints", []):  # type: ignore[reportOptionalMemberAccess, reportUnknownMemberType, reportUnknownVariableType]
             pair_key = frozenset({defn["planet_a"], defn["planet_b"]})
             
             # Find the calculated longitude for this pair
@@ -189,7 +189,7 @@ class ChariotService:
         
         # Calculate each axle
         axles = []
-        for trio_def in self._definitions.get("trios", []):
+        for trio_def in self._definitions.get("trios", []):  # type: ignore[reportOptionalMemberAccess, reportUnknownMemberType, reportUnknownVariableType]
             trio_id = trio_def["id"]
             trio_midpoints = trio_groups.get(trio_id, [])
             
@@ -258,7 +258,7 @@ class ChariotService:
         Returns:
             List of FatefulDegreePosition objects for any matches
         """
-        fateful_info = self._definitions.get("fateful_degrees", {})
+        fateful_info = self._definitions.get("fateful_degrees", {})  # type: ignore[reportOptionalMemberAccess, reportUnknownMemberType, reportUnknownVariableType]
         results = []
         
         # Check all positions against fateful degrees
@@ -268,7 +268,7 @@ class ChariotService:
         ]
         
         for position, longitude in all_positions:
-            abs_degree = int(longitude) % 360
+            _abs_degree = int(longitude) % 360
             
             for fateful_deg in self.FATEFUL_DEGREES:
                 orb = min(

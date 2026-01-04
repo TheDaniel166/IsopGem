@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple, Type
+from typing import Dict, List, Optional, Tuple, Type  # type: ignore[reportUnusedImport]
 
 from ..shared.solid_payload import SolidPayload
 from .regular_pyramid_solids import (
@@ -28,7 +28,7 @@ class GeneralPyramidSolidService(RegularPyramidSolidServiceBase):
             height: Description of height.
         
         """
-        from .regular_pyramid_solids import _compute_metrics, _build_vertices, _build_edges, _build_faces
+        from .regular_pyramid_solids import _compute_metrics, _build_vertices, _build_edges, _build_faces  # type: ignore[reportPrivateUsage]
         from ..shared.solid_payload import SolidLabel, SolidPayload
 
         if sides < 3:
@@ -132,7 +132,7 @@ class GeneralPyramidSolidCalculator(RegularPyramidSolidCalculatorBase):
     def _handle_dynamic_property_set(self, key: str, value: float) -> bool:
         sides = self._sides
         # Import helpers locally to avoid code dupe or just use them from module imports
-        from .regular_pyramid_solids import _apothem, _edge_from_apothem, _edge_from_area, _base_area
+        from .regular_pyramid_solids import _apothem, _edge_from_apothem, _edge_from_area, _base_area  # type: ignore[reportPrivateUsage, reportUnusedImport]
         
         if key == 'base_edge':
             self._apply_dimensions(value, self._height, sides)

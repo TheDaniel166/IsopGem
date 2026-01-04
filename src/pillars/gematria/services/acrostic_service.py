@@ -1,7 +1,7 @@
 """Service for discovering acrostics and telestichs in text."""
 import re
 import logging
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Optional, Tuple  # type: ignore[reportUnusedImport]
 from pillars.gematria.services.corpus_dictionary_service import CorpusDictionaryService
 
 logger = logging.getLogger(__name__)
@@ -118,7 +118,7 @@ class AcrosticService:
                 if self.dictionary_service.is_word(full_sequence):
                     # Map indices to source units
                     source_units = [units[i] for i in valid_indices]
-                    results.append(AcrosticResult(full_sequence, f"{method_name} ({mode})", valid_indices, source_units, True))
+                    results.append(AcrosticResult(full_sequence, f"{method_name} ({mode})", valid_indices, source_units, True))  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
                 continue
 
             # Check for any valid sub-words
@@ -146,6 +146,6 @@ class AcrosticService:
             if not found_any:
                  # Map indices to source units
                  source_units = [units[i] for i in valid_indices]
-                 results.append(AcrosticResult(full_sequence, f"{method_name} (Raw)", valid_indices, source_units, False))
+                 results.append(AcrosticResult(full_sequence, f"{method_name} (Raw)", valid_indices, source_units, False))  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
         
         return results

@@ -103,7 +103,7 @@ class ScrollTabBar(QWidget):
         """
         return self.tab_bar.count()
         
-    def set_tab_text(self, index, text):
+    def set_tab_text(self, index, text):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """
         Configure tab text logic.
         

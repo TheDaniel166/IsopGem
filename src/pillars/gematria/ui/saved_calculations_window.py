@@ -29,7 +29,7 @@ class NumericTableWidgetItem(QTableWidgetItem):
 class SavedCalculationsWindow(QMainWindow):
     """Window for browsing and managing saved calculations."""
     
-    def __init__(self, window_manager=None, parent=None, initial_value=None, **kwargs):
+    def __init__(self, window_manager=None, parent=None, initial_value=None, **kwargs):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """Initialize the saved calculations browser."""
         super().__init__(parent)
         self.window_manager = window_manager
@@ -548,10 +548,10 @@ class SavedCalculationsWindow(QMainWindow):
         
         # Standard Actions
         copy_text_action = menu.addAction("📋 Copy Text")
-        copy_text_action.triggered.connect(lambda: QApplication.clipboard().setText(self.selected_record.text))
+        copy_text_action.triggered.connect(lambda: QApplication.clipboard().setText(self.selected_record.text))  # type: ignore[reportOptionalMemberAccess]
         
         copy_value_action = menu.addAction("🔢 Copy Value")
-        copy_value_action.triggered.connect(lambda: QApplication.clipboard().setText(str(self.selected_record.value)))
+        copy_value_action.triggered.connect(lambda: QApplication.clipboard().setText(str(self.selected_record.value)))  # type: ignore[reportOptionalMemberAccess]
         
         menu.addSeparator()
         
@@ -593,7 +593,7 @@ class SavedCalculationsWindow(QMainWindow):
         form_layout.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
         form_layout.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
         
-        def add_field(label, value):
+        def add_field(label, value):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
             """
             Add field logic.
             

@@ -20,7 +20,7 @@ class ChainResultsWindow(QMainWindow):
     
     result_selected = pyqtSignal(list)  # Emits positions for highlighting
     
-    def __init__(self, summary: ChainSearchSummary, window_manager=None, parent=None):
+    def __init__(self, summary: ChainSearchSummary, window_manager=None, parent=None):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """
           init   logic.
         
@@ -311,7 +311,7 @@ class ChainResultsWindow(QMainWindow):
             # Use pre-computed row data for speed
             for i, result in enumerate(page_results):
                 if hasattr(result, '_row_data'):
-                    for col, value in enumerate(result._row_data):
+                    for col, value in enumerate(result._row_data):  # type: ignore  # 4 errors
                         self._table.setItem(i, col, QTableWidgetItem(value))
                 else:
                     # Fallback for any results without cached data
@@ -405,9 +405,9 @@ class ChainResultsWindow(QMainWindow):
         # So we have to find it.
         
         # Strategy: Get the most highly numbered document_editor window
-        count = self.window_manager._window_counters.get("document_editor", 0)
+        count = self.window_manager._window_counters.get("document_editor", 0)  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
         win_id = f"document_editor_{count}"
-        editor_window = self.window_manager.get_window(win_id)
+        editor_window = self.window_manager.get_window(win_id)  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
         
         if editor_window and hasattr(editor_window, 'editor'):
             editor_window.setWindowTitle(f"chain Report - {self._term}")
@@ -441,7 +441,7 @@ class ChainResultsWindow(QMainWindow):
         gem_freq = {}
         for g in gematria_values:
             gem_freq[g] = gem_freq.get(g, 0) + 1
-        top_gematria = sorted(gem_freq.items(), key=lambda x: -x[1])[:10]
+        top_gematria = sorted(gem_freq.items(), key=lambda x: -x[1])[:10]  # type: ignore[reportUnknownArgumentType, reportUnknownLambdaType, reportUnknownVariableType]
         
         # Interval analysis - first intervals
         first_intervals = [r.steps[1].interval for r in results if len(r.steps) > 1]

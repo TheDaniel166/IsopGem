@@ -1002,7 +1002,7 @@ class AdvancedScientificCalculatorWindow(QMainWindow):
 
         # Make header unselectable and styled
         if model and hasattr(model, 'item'):
-            header_item = model.item(header_idx)
+            header_item = model.item(header_idx)  # type: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownVariableType]
             if header_item:
                 header_item.setEnabled(False)
                 header_item.setSelectable(False)
@@ -1493,7 +1493,7 @@ class AdvancedScientificCalculatorWindow(QMainWindow):
             item.setData(Qt.ItemDataRole.UserRole, const)
             self.constants_list.addItem(item)
 
-    def _show_constant_detail(self, current, previous) -> None:
+    def _show_constant_detail(self, current, previous) -> None:  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """Display details for the selected constant."""
         if not current:
             self.constant_detail.setText("Select a constant to see details.")
@@ -1721,7 +1721,7 @@ class AdvancedScientificCalculatorWindow(QMainWindow):
             item.setData(Qt.ItemDataRole.UserRole, entry)
             self.sacred_list.addItem(item)
 
-    def _show_sacred_detail(self, current, previous) -> None:
+    def _show_sacred_detail(self, current, previous) -> None:  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """Display details for the selected sacred geometry entry."""
         if not current:
             self.sacred_detail.setText("Select a ratio to see details.")
@@ -2037,7 +2037,7 @@ class AdvancedScientificCalculatorWindow(QMainWindow):
         sign_deg = deg - sign_idx * 30.0
         d = int(sign_deg)
         m = int((sign_deg - d) * 60)
-        symbol, name = ZODIAC_SIGNS[sign_idx % 12]
+        symbol, _name = ZODIAC_SIGNS[sign_idx % 12]
         return f"{d}°{symbol}{m:02d}'"
 
     def _update_angle_conversions(self, *_) -> None:
@@ -2064,7 +2064,7 @@ class AdvancedScientificCalculatorWindow(QMainWindow):
         self.coord_results_list.addItem(f"Turns: {degrees / 360.0:.8g}")
         self.coord_results_list.addItem(f"Gradians: {degrees * 400.0 / 360.0:.8g}")
 
-    def _show_coord_system_detail(self, current, previous) -> None:
+    def _show_coord_system_detail(self, current, previous) -> None:  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """Display details for the selected coordinate system."""
         if not current:
             self.coord_sys_detail.setText("Select a coordinate system to see details.")
@@ -2998,7 +2998,7 @@ def _safe_math_eval(
     except SyntaxError as exc:
         raise fail("Invalid expression") from exc
 
-    def eval_node(node):
+    def eval_node(node):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """
         Eval node logic.
         

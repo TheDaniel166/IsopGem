@@ -10,7 +10,7 @@ class SpreadsheetIO:
     """
     
     @staticmethod
-    def export_csv(window, model):
+    def export_csv(window, model):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """Export grid to CSV."""
         path, _ = QFileDialog.getSaveFileName(window, "Export CSV", "", "CSV Files (*.csv)")
         if not path: return
@@ -34,7 +34,7 @@ class SpreadsheetIO:
             QMessageBox.critical(window, "Export Failed", str(e))
 
     @staticmethod
-    def export_json(window, model):
+    def export_json(window, model):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """Export grid to JSON."""
         path, _ = QFileDialog.getSaveFileName(window, "Export JSON", "", "JSON Files (*.json)")
         if not path: return
@@ -52,7 +52,7 @@ class SpreadsheetIO:
             QMessageBox.critical(window, "Export Failed", str(e))
 
     @staticmethod
-    def export_image(window, view):
+    def export_image(window, view):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """Export visible grid to PNG."""
         path, _ = QFileDialog.getSaveFileName(window, "Export Image", "", "PNG Files (*.png)")
         if not path: return
@@ -65,7 +65,7 @@ class SpreadsheetIO:
             QMessageBox.critical(window, "Export Failed", str(e))
 
     @staticmethod
-    def import_csv(window, model):
+    def import_csv(window, model):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """Import CSV to grid (Resizes grid to fit)."""
         path, _ = QFileDialog.getOpenFileName(window, "Import CSV", "", "CSV Files (*.csv)")
         if not path: return

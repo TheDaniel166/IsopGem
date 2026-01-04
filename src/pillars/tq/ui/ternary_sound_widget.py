@@ -107,7 +107,7 @@ class CalculatorTab(QWidget):
         meta = data['meta']
         ch = data['channels']
         
-        ch1, ch2, ch3 = ch[1], ch[2], ch[3]
+        ch1, ch2, ch3 = ch[1], ch[2], ch[3]  # type: ignore[reportUnknownVariableType]
         
         # Extract Family info
         params = data.get('parameters', {})
@@ -174,7 +174,7 @@ class CalculatorTab(QWidget):
                 self.audio_output.setVolume(85) # Grand might be cleaner?
                 self.player.play()
                 return
-            except Exception as e:
+            except Exception as _e:
                 logger.exception("Grand play error")
                 return
 
@@ -191,7 +191,7 @@ class CalculatorTab(QWidget):
             self.player.setSource(QUrl.fromLocalFile(path))
             self.audio_output.setVolume(75)
             self.player.play()
-        except Exception as e:
+        except Exception as _e:
             logger.exception("Play error")
 
 class ComposerTab(QWidget):
@@ -310,7 +310,7 @@ class ComposerTab(QWidget):
             
             if self.chk_grand_seq.isChecked():
                 # Extract nucleations
-                nucleations = [s.get('nucleation') for s in self.sequence_data if s.get('nucleation')]
+                nucleations = [s.get('nucleation') for s in self.sequence_data if s.get('nucleation')]  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
                 if not nucleations:
                     logger.warning("No nucleation data for Grand Mode")
                     return
@@ -325,7 +325,7 @@ class ComposerTab(QWidget):
             
             # TODO: Animate visualizer through sequence? 
             # That requires synchronization. For now, Visualizer shows last item or static.
-        except Exception as e:
+        except Exception as _e:
             logger.exception("Sequence play error")
 
     def play_chord(self):
@@ -338,7 +338,7 @@ class ComposerTab(QWidget):
             # Currently only Kamea has explicit chord mix.
             
             # Extract nucleations
-            nucleations = [s.get('nucleation') for s in self.sequence_data if s.get('nucleation')]
+            nucleations = [s.get('nucleation') for s in self.sequence_data if s.get('nucleation')]  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
             
             if nucleations:
                  # Use Kamea Service
@@ -349,7 +349,7 @@ class ComposerTab(QWidget):
             else:
                   logger.warning("Chord requires valid data (Nucleation missing?)")
 
-        except Exception as e:
+        except Exception as _e:
             logger.exception("Chord play error")
 
     def map_chord(self):
@@ -379,7 +379,7 @@ class ComposerTab(QWidget):
                 self.txt_input.setPlainText(chord_str)
                 # Auto-parse to update list
                 self.parse_sequence()
-            except Exception as e:
+            except Exception as _e:
                 logger.exception("Map chord error")
         else:
              self.txt_input.setPlaceholderText("Enter a seed number first (e.g. 10)")

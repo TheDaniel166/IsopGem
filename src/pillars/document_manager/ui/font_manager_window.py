@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import (
     QPushButton, QFileDialog, QMessageBox
 )
 from PyQt6.QtCore import Qt, QSize
-from PyQt6.QtGui import QFont, QAction, QIcon
+from PyQt6.QtGui import QFont, QAction, QIcon  # type: ignore[reportUnusedImport]
 
 from shared.ui.font_loader import LOADED_FONTS, install_new_font
 
@@ -137,7 +137,7 @@ class FontManagerWindow(QMainWindow):
         if self.font_list.count() > 0:
             self.font_list.setCurrentRow(0)
             
-    def _on_font_selected(self, current, previous):
+    def _on_font_selected(self, current, previous):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         if not current:
             return
             

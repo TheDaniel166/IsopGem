@@ -1,0 +1,48 @@
+{
+    "typeCheckingMode": "standard",
+    "venvPath": ".",
+    "venv": ".venv",
+    "include": [
+        "src"
+    ],
+    "ignore": [
+        "scripts/**",
+        "tests/**",
+        "debug_ephemeris.py",
+        "Docs/**",
+        "wiki/**",
+        "data/**",
+        "saved_documents/**",
+        "experiments/**",
+        "anamnesis/**",
+        "workflow_scripts/**"
+    ],
+    "exclude": [
+        ".venv/**",
+        "**/.venv/**",
+        "**/site-packages/**",
+        "**/node_modules/**",
+        "**/__pycache__/**",
+        "scripts/**",
+        "tests/**",
+        "data/**",
+        "Docs/**",
+        "wiki/**",
+        "saved_documents/**",
+        "experiments/**",
+        "anamnesis/**",
+        "workflow_scripts/**"
+    ],
+    "reportMissingTypeStubs": "none",
+    "reportUnknownMemberType": "none",
+    "reportUnknownArgumentType": "none",
+    "reportUnknownVariableType": "warning",
+    "reportUnknownLambdaType": "none",
+    "reportPrivateUsage": "warning",
+    "reportUnusedImport": "warning",
+    "reportUnusedVariable": "warning",
+    "reportGeneralTypeIssues": "error",
+    "reportOptionalMemberAccess": "error",
+    "reportOptionalSubscript": "error",
+    "strictParameterNoneValue": true
+}

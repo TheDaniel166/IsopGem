@@ -87,7 +87,7 @@ class VerseList(QWidget):
         from ...utils.numeric_utils import sum_numeric_face_values
 
         for v in active_verses:
-            item = self._create_verse_item(v, calculator, include_face_values)
+            item = self._create_verse_item(v, calculator, include_face_values)  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
             self.container_layout.addWidget(item)
             
         self.container_layout.addStretch()
@@ -105,7 +105,7 @@ class VerseList(QWidget):
         self.save_all_btn.setEnabled(False)
         self.status_label.setText("")
 
-    def _create_verse_item(self, verse, calculator, include_face_values):
+    def _create_verse_item(self, verse, calculator, include_face_values):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         box = QGroupBox(f"Verse {verse['number']}")
         layout = QHBoxLayout(box)
         
@@ -136,11 +136,11 @@ class VerseList(QWidget):
         # Actions
         btns = QVBoxLayout()
         jump = QPushButton("Jump")
-        jump.clicked.connect(lambda _, s=verse['start'], e=verse['end']: self.verse_jump_requested.emit(s, e))
+        jump.clicked.connect(lambda _, s=verse['start'], e=verse['end']: self.verse_jump_requested.emit(s, e))  # type: ignore[reportUnknownArgumentType, reportUnknownLambdaType]
         btns.addWidget(jump)
         
         save = QPushButton("Save")
-        save.clicked.connect(lambda _, v=verse: self.verse_save_requested.emit(v))
+        save.clicked.connect(lambda _, v=verse: self.verse_save_requested.emit(v))  # type: ignore[reportUnknownArgumentType, reportUnknownLambdaType]
         btns.addWidget(save)
         
         layout.addLayout(btns)

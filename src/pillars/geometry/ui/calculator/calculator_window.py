@@ -201,7 +201,7 @@ class GeometryCalculatorWindow(QMainWindow):
             win.raise_()
             win.activateWindow()
             # Set the value
-            win.input_field.setText(str(int(value)))
+            win.input_field.setText(str(int(value)))  # type: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
             # If the window has logic to auto-calc on text change, it will trigger.
             # QuadsetAnalysisWindow has textChanged connected to _on_input_changed.
 

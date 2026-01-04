@@ -279,7 +279,7 @@ class MindscapeTreeWidget(QTreeWidget):
         
         # Start Worker
         worker = ImportWorker(filepath)
-        worker.signals.finished.connect(lambda doc_id: self._on_import_finished(doc_id, sec_id, sec_item))
+        worker.signals.finished.connect(lambda doc_id: self._on_import_finished(doc_id, sec_id, sec_item))  # type: ignore[reportUnknownArgumentType, reportUnknownLambdaType]
         worker.signals.error.connect(self._on_import_error)
         self.thread_pool.start(worker)
 

@@ -111,12 +111,12 @@ class InputPane(QWidget):
     def _on_calculation_update(self):
         """Update all cards with new values from the model."""
         shape = self.view_model.get_shape()
-        for key, card in self.cards.items():
+        for key, card in self.cards.items():  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
             prop = shape.properties.get(key)
             if prop:
                 # Check if this property is 'solved' (has value and not readonly input?)
                 # For visual feedback, we can assume non-None derived values are solved.
-                is_solved = prop.value is not None and not prop.readonly 
+                _is_solved = prop.value is not None and not prop.readonly 
                 # Actually, strictly following previous logic:
                 # Solved = Green if it has a value.
                 # Required = Amber if None (and not readonly).

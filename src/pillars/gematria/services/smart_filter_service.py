@@ -99,7 +99,7 @@ class SmartFilterService:
             # If 2 words and ends with ADP/DET, caught above.
             
             # Pattern: ADJ + ADP (e.g. "Good of")
-            if len(doc) == 2 and first.pos_ == "ADJ" and last.pos_ == "ADP":
+            if len(doc) == 2 and first.pos_ == "ADJ" and last.pos_ == "ADP":  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
                 return False
                 
         return True

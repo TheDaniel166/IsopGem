@@ -95,7 +95,7 @@ class FixedStarsService:
         for star_name, display_name, constellation, nature in NOTABLE_STARS:
             try:
                 # swe.fixstar_ut returns ((lon, lat, dist, speed_lon, speed_lat, speed_dist), name, retflag)
-                result, star_info, retflag = swe.fixstar_ut(star_name, julian_day)
+                result, star_info, _retflag = swe.fixstar_ut(star_name, julian_day)  # type: ignore[reportUnknownMemberType, reportUnknownVariableType, reportUnusedVariable]
                 
                 longitude = result[0]
                 latitude = result[1]
@@ -118,7 +118,7 @@ class FixedStarsService:
                 continue
 
         # Sort by longitude
-        positions.sort(key=lambda p: p.longitude)
+        positions.sort(key=lambda p: p.longitude)  # type: ignore[reportUnknownLambdaType, reportUnknownMemberType]
         return positions
 
     def _extract_magnitude(self, star_info: str) -> float:

@@ -305,7 +305,7 @@ class AdytonGLViewport(QOpenGLWidget):
                 # Sanity check: ensure the quad has some area and is not too extreme
                 # (prevents 'golden rays' when viewed edge-on)
                 target_quad = QPolygonF([
-                    QPointF(sp0), QPointF(sp1), QPointF(sp2), QPointF(sp3)
+                    QPointF(sp0), QPointF(sp1), QPointF(sp2), QPointF(sp3)  # type: ignore[reportArgumentType, reportCallIssue]
                 ])
                 
                 # Simple bounding rect check to avoid massive overflows

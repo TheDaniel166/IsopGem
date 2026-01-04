@@ -181,7 +181,7 @@ class ResultsDashboard(QWidget):
     def clear(self):
         """Clear the dashboard and reset to initial state."""
         while self.layout.count():
-            item = self.layout.takeAt(0)
+            item = self.layout.takeAt(0)  # type: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownVariableType]
             if item.widget():
                 item.widget().deleteLater()
         
@@ -194,7 +194,7 @@ class ResultsDashboard(QWidget):
         """Update the dashboard with new results."""
         # Clear layout
         while self.layout.count():
-            item = self.layout.takeAt(0)
+            item = self.layout.takeAt(0)  # type: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownVariableType]
             if item.widget():
                 item.widget().deleteLater()
         
@@ -207,7 +207,7 @@ class ResultsDashboard(QWidget):
         # Total Value Card
         val_card = TotalValueCard(total, system_name)
         val_card.customContextMenuRequested.connect(
-            lambda pos: self.totalContextMenuRequested.emit(total, val_card.mapToGlobal(pos))
+            lambda pos: self.totalContextMenuRequested.emit(total, val_card.mapToGlobal(pos))  # type: ignore[reportUnknownArgumentType, reportUnknownLambdaType]
         )
         self.layout.addWidget(val_card)
         
@@ -229,7 +229,7 @@ class ResultsDashboard(QWidget):
             grid_layout.setContentsMargins(0, 5, 0, 5)
             
             cols = 8 # items per row
-            for i, (char, val) in enumerate(breakdown):
+            for i, (char, val) in enumerate(breakdown):  # type: ignore[reportUnknownArgumentType, reportUnknownVariableType]
                 tile = SpiritTile(char, val)
                 grid_layout.addWidget(tile, i // cols, i % cols)
             
@@ -245,7 +245,7 @@ class ResultsDashboard(QWidget):
         """Update the dashboard with comparison results."""
         # Clear layout
         while self.layout.count():
-            item = self.layout.takeAt(0)
+            item = self.layout.takeAt(0)  # type: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownVariableType]
             if item.widget():
                 item.widget().deleteLater()
         

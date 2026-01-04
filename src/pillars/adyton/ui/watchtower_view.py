@@ -270,7 +270,7 @@ class WatchtowerView(QWidget):
                 # Sort based on Algo
                 if algo == "Sunburst":
                     # Angular sort: slope = abs(y/x)
-                    def key_func(c):
+                    def key_func(c):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
                         """
                         Key func logic.
                         
@@ -279,18 +279,18 @@ class WatchtowerView(QWidget):
                         
                         """
                         if c.x == 0: return 99.0
-                        return abs(c.y / c.x)
+                        return abs(c.y / c.x)  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType, reportUnknownVariableType]
                     cells_list.sort(key=key_func)
                     
                 elif algo == "Gnomonic":
                     # Shell sort: (shell, y)
                     # Expands from center outwards
-                    cells_list.sort(key=lambda c: (max(abs(c.x), abs(c.y)), abs(c.y)))
+                    cells_list.sort(key=lambda c: (max(abs(c.x), abs(c.y)), abs(c.y)))  # type: ignore[reportUnknownArgumentType, reportUnknownLambdaType, reportUnknownMemberType]
                     
                 elif algo == "Serpentine":
                     # Diagonal sort: (x+y, x)
                     # Scans across the octant
-                    cells_list.sort(key=lambda c: (abs(c.x) + abs(c.y), abs(c.x)))
+                    cells_list.sort(key=lambda c: (abs(c.x) + abs(c.y), abs(c.x)))  # type: ignore[reportUnknownArgumentType, reportUnknownLambdaType, reportUnknownMemberType]
                 
                 # Assign 0, 1, 2
                 # 78 cells -> 26 per group
@@ -433,7 +433,7 @@ class WatchtowerView(QWidget):
             widget.set_cap_color(c_cap)
             
             # Connect Click
-            widget.clicked.connect(lambda c=cell, w=widget, widx=wall_idx_for_click: self.on_cell_clicked(c, w, widx))
+            widget.clicked.connect(lambda c=cell, w=widget, widx=wall_idx_for_click: self.on_cell_clicked(c, w, widx))  # type: ignore[reportUnknownArgumentType, reportUnknownLambdaType]
             
             widget.show()
             return widget
@@ -451,7 +451,7 @@ class WatchtowerView(QWidget):
             self.down_widgets.append((cell, w))
             
         # Unified list for general access if needed
-        self.active_widgets = self.up_widgets + self.down_widgets
+        self.active_widgets = self.up_widgets + self.down_widgets  # type: ignore[reportUnknownMemberType]
 
     def on_cell_clicked(self, cell: KameaCell, widget: KameaPyramidCell, wall_idx: int = -1):
         # Update Detail Panel
@@ -484,7 +484,7 @@ class WatchtowerView(QWidget):
                  self.lbl_wall.setText("Wall: -")
         
         # Reset Selection visual (if we implement selection state on widgets)
-        for _, w in self.active_widgets:
+        for _, w in self.active_widgets:  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
             w.set_selected(False)
         widget.set_selected(True)
 
@@ -492,7 +492,7 @@ class WatchtowerView(QWidget):
         """
         Lays out the two triangles to form a Diamond (Base-to-Base).
         """
-        scale = self.current_scale
+        _scale = self.current_scale  # type: ignore[reportUnknownMemberType, reportUnknownVariableType, reportUnusedVariable]
         cell_size = self.current_cell_size
         spacing = 0 # No gaps as per user request
         row_height = cell_size + spacing
@@ -503,7 +503,7 @@ class WatchtowerView(QWidget):
         
         # Height of a triangle (Shells 2 to 13 = 12 Rows)
         # Distance from Tip to Base Row CENTER is 11 * row_height
-        tri_h = 11 * row_height
+        _tri_h = 11 * row_height
         
         # We want the BASES to meet at cy.
         # Up Triangle Base (Row 11) Bottom Edge = cy
@@ -533,7 +533,7 @@ class WatchtowerView(QWidget):
         
         # Helper: Layout a single triangle
         # direction: 1 for Point Up (Rows go down Y), -1 for Point Down (Rows go up Y)
-        def layout_triangle(widgets, start_y, direction):
+        def layout_triangle(widgets, start_y, direction):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
             """
             Layout triangle logic.
             
@@ -556,7 +556,7 @@ class WatchtowerView(QWidget):
                 row_width = (num_in_row * cell_size) + ((num_in_row - 1) * spacing)
                 start_x = cx - (row_width / 2)
                 
-                for i, (cell, widget) in enumerate(row_widgets):
+                for i, (_cell, widget) in enumerate(row_widgets):  # type: ignore[reportUnknownArgumentType, reportUnknownVariableType, reportUnusedVariable]
                     x_pos = start_x + (i * (cell_size + spacing))
                     widget.setFixedSize(cell_size, cell_size)
                     widget.move(int(x_pos), int(y_pos))

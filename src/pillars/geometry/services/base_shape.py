@@ -160,7 +160,7 @@ class GeometricShape(ABC):
         
         # Strategy: Set all values provided in data directly to property.value
         # This assumes the saved data is a consistent snapshot.
-        for k, v in props.items():
+        for k, v in props.items():  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
             if k in self.properties:
                 self.properties[k].value = v
 

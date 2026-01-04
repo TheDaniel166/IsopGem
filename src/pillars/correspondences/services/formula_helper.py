@@ -199,7 +199,7 @@ def colorize_formula(formula: str) -> str:
     refs_sorted = sorted(refs, key=lambda r: r.start, reverse=True)
     
     result = formula
-    for i, ref in enumerate(reversed(refs_sorted)):  # Reverse back for color assignment
+    for i, _ref in enumerate(reversed(refs_sorted)):  # Reverse back for color assignment
         color_idx = len(refs_sorted) - 1 - i
         color = REFERENCE_COLORS[color_idx % len(REFERENCE_COLORS)]
         

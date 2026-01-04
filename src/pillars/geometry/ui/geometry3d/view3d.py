@@ -376,7 +376,7 @@ class Geometry3DView(QWidget):
                     continue
                     
                 # Centroid Z for sorting
-                z_sum = sum(v.z() for v in v_positions)
+                z_sum = sum(v.z() for v in v_positions)  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType, reportUnknownVariableType]
                 centroid_z = z_sum / len(v_positions)
                 
                 # Normal (using first 3 points, assuming planar-ish)
@@ -399,11 +399,11 @@ class Geometry3DView(QWidget):
             # Usually Z-buffer sorts by depth.
             # Let's try sorting by Z descending (paint farthest/smallest Z first? No, paint farthest Z first).
             # If Z points to viewer, negative Z is far. So paint smallest Z first.
-            faces_to_draw.sort(key=lambda x: x[0]) 
+            faces_to_draw.sort(key=lambda x: x[0])   # type: ignore[reportUnknownLambdaType, reportUnknownMemberType]
 
             # 3. Draw Faces
             painter.setPen(Qt.PenStyle.NoPen)
-            for _, indices, intensity, original_idx in faces_to_draw:
+            for _, indices, intensity, original_idx in faces_to_draw:  # type: ignore[reportUnknownVariableType]
                 poly = [screen_points[i] for i in indices]
                 
                 
@@ -431,7 +431,7 @@ class Geometry3DView(QWidget):
                 color = QColor(r, g, b, alpha)
                 painter.setBrush(color)
                 
-                qpoly = [p.toPoint() for p in poly] # drawPolygon needs QPoint
+                qpoly = [p.toPoint() for p in poly] # drawPolygon needs QPoint  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
                 painter.drawPolygon(qpoly)
 
         # 4. Draw Edges (Wireframe overlay - simpler, cleaner)
@@ -832,7 +832,7 @@ class Geometry3DView(QWidget):
         total_distance = 0.0
         num_verts = len(self._selected_vertex_indices)
         
-        def get_pt_3d(idx):
+        def get_pt_3d(idx):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
             """
             Retrieve pt 3d logic.
             
@@ -844,7 +844,7 @@ class Geometry3DView(QWidget):
             """
             return (0.0, 0.0, 0.0) if idx == -1 else payload.vertices[idx]
             
-        def get_pt_screen(idx):
+        def get_pt_screen(idx):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
              """
              Retrieve pt screen logic.
              
@@ -854,7 +854,7 @@ class Geometry3DView(QWidget):
              Returns:
                  Result of get_pt_screen operation.
              """
-             return self._center_screen_point if idx == -1 else screen_points[idx]
+             return self._center_screen_point if idx == -1 else screen_points[idx]  # type: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownVariableType]
         
         # Draw lines between consecutive vertices
         for i in range(num_verts - 1):
@@ -874,7 +874,7 @@ class Geometry3DView(QWidget):
             total_distance += segment_dist
             
             # Draw segment distance at midpoint
-            mid = QPointF((p1.x() + p2.x()) / 2, (p1.y() + p2.y()) / 2)
+            mid = QPointF((p1.x() + p2.x()) / 2, (p1.y() + p2.y()) / 2)  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
             self._draw_distance_label(painter, mid, f"{segment_dist:.4f}", small=True)
         
         # If loop is closed, draw closing edge and calculate area
@@ -894,7 +894,7 @@ class Geometry3DView(QWidget):
             closing_dist = distance_3d(v1_3d, v2_3d)
             total_distance += closing_dist
             
-            mid = QPointF((p1.x() + p2.x()) / 2, (p1.y() + p2.y()) / 2)
+            mid = QPointF((p1.x() + p2.x()) / 2, (p1.y() + p2.y()) / 2)  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
             self._draw_distance_label(painter, mid, f"{closing_dist:.4f}", small=True)
             
             # Calculate polygon area (handles 0,0,0 if present)
@@ -938,8 +938,8 @@ class Geometry3DView(QWidget):
                 
                 # Draw Volume/Area labels
                 # Calculate centroid of pyramid for label position
-                base_center_x = sum(get_pt_screen(i).x() for i in self._selected_vertex_indices) / num_verts
-                base_center_y = sum(get_pt_screen(i).y() for i in self._selected_vertex_indices) / num_verts
+                base_center_x = sum(get_pt_screen(i).x() for i in self._selected_vertex_indices) / num_verts  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType, reportUnknownVariableType]
+                base_center_y = sum(get_pt_screen(i).y() for i in self._selected_vertex_indices) / num_verts  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType, reportUnknownVariableType]
                 base_center = QPointF(base_center_x, base_center_y)
                 
                 label_pos = QPointF(
@@ -955,8 +955,8 @@ class Geometry3DView(QWidget):
                 
             else:
                 # Just draw base area label
-                center_x = sum(get_pt_screen(i).x() for i in self._selected_vertex_indices) / num_verts
-                center_y = sum(get_pt_screen(i).y() for i in self._selected_vertex_indices) / num_verts
+                center_x = sum(get_pt_screen(i).x() for i in self._selected_vertex_indices) / num_verts  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType, reportUnknownVariableType]
+                center_y = sum(get_pt_screen(i).y() for i in self._selected_vertex_indices) / num_verts  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType, reportUnknownVariableType]
                 center = QPointF(center_x, center_y)
                 self._draw_area_label(painter, center, area)
         
@@ -1056,7 +1056,7 @@ class Geometry3DView(QWidget):
         
         # Check center point (-1)
         if getattr(self, '_center_screen_point', None):
-            c_pt = self._center_screen_point
+            c_pt = self._center_screen_point  # type: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownVariableType]
             dx = pos.x() - c_pt.x()
             dy = pos.y() - c_pt.y()
             dist = math.sqrt(dx * dx + dy * dy)

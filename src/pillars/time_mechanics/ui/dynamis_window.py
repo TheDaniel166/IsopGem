@@ -19,7 +19,7 @@ class TrigramItem(QGraphicsItem):
     Renders a single 3-line Trigram.
     Style: 'SOLID' (Anchor) or 'FLUID' (Flux).
     """
-    def __init__(self, trigram_str="000", size=60, color=QColor("#333"), style='SOLID'):
+    def __init__(self, trigram_str="000", size=60, color=QColor("#333"), style='SOLID'):  # type: ignore[reportMissingParameterType]
         """
           init   logic.
         
@@ -45,7 +45,7 @@ class TrigramItem(QGraphicsItem):
         """
         return QRectF(-self.size/2, -self.size/2, self.size, self.size)
         
-    def paint(self, painter: QPainter, option, widget):
+    def paint(self, painter: QPainter, option, widget):  # type: ignore[reportIncompatibleMethodOverride, reportMissingParameterType]
         """
         Paint logic.
         
@@ -73,34 +73,34 @@ class TrigramItem(QGraphicsItem):
             y = y_start + (i * spacing)
             self._draw_line(painter, char, y)
 
-    def _draw_line(self, painter, type_char, y):
+    def _draw_line(self, painter, type_char, y):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         w = self.size 
         x_left = -w / 2
         x_right = w / 2
         
         if type_char == '1': # Yang (Solid)
-            painter.drawLine(QPointF(x_left, y), QPointF(x_right, y))
+            painter.drawLine(QPointF(x_left, y), QPointF(x_right, y))  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
             
         elif type_char == '2': # Yin (Broken)
             gap = w / 5
             mid_l = -gap/2
             mid_r = gap/2
-            painter.drawLine(QPointF(x_left, y), QPointF(mid_l, y))
-            painter.drawLine(QPointF(mid_r, y), QPointF(x_right, y))
+            painter.drawLine(QPointF(x_left, y), QPointF(mid_l, y))  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
+            painter.drawLine(QPointF(mid_r, y), QPointF(x_right, y))  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
             
         else: # Void (Ghost)
             p = painter.pen()
             p.setColor(self.color.lighter(160))
             p.setWidth(1)
             painter.setPen(p)
-            painter.drawLine(QPointF(x_left, y), QPointF(x_right, y))
+            painter.drawLine(QPointF(x_left, y), QPointF(x_right, y))  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
             # Restore
             p.setColor(self.color)
             if self.style in ['SOLID', 'CRYSTAL']: p.setWidth(4)
             else: p.setWidth(2)
             painter.setPen(p)
 
-    def update_trigram(self, new_val, new_style):
+    def update_trigram(self, new_val, new_style):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """
         Update trigram logic.
         
@@ -136,7 +136,7 @@ class PillarGauge(QGraphicsItem):
         """
         return QRectF(-self.size/2, -self.size/2, self.size, self.size)
         
-    def update_state(self, upper, lower, tone):
+    def update_state(self, upper, lower, tone):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """
         Update state logic.
         
@@ -157,7 +157,7 @@ class PillarGauge(QGraphicsItem):
             self.col_type = "EVEN"
         self.update()
         
-    def paint(self, painter, option, widget):
+    def paint(self, painter, option, widget):  # type: ignore[reportIncompatibleMethodOverride, reportMissingParameterType]
         """
         Paint logic.
         
@@ -235,7 +235,7 @@ class PillarGauge(QGraphicsItem):
         painter.setPen(QColor(255,255,255,100))
         painter.drawText(QRectF(-r, -15, r*2, 30), Qt.AlignmentFlag.AlignCenter, self.col_type)
 
-    def _draw_trigram_at(self, painter, trigram, cx, cy, style, color):
+    def _draw_trigram_at(self, painter, trigram, cx, cy, style, color):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         # Mini version of TrigramItem logic
         size = 50
         spacing = size / 3
@@ -256,12 +256,12 @@ class PillarGauge(QGraphicsItem):
             x_right = cx + w / 2
             
             if char == '1': # Solid
-                painter.drawLine(QPointF(x_left, y), QPointF(x_right, y))
+                painter.drawLine(QPointF(x_left, y), QPointF(x_right, y))  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
             elif char == '2': # Broken
                 mid_l = cx - w/10
                 mid_r = cx + w/10
-                painter.drawLine(QPointF(x_left, y), QPointF(mid_l, y))
-                painter.drawLine(QPointF(mid_r, y), QPointF(x_right, y))
+                painter.drawLine(QPointF(x_left, y), QPointF(mid_l, y))  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
+                painter.drawLine(QPointF(mid_r, y), QPointF(x_right, y))  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
             else: # Void
                 pass
 
@@ -274,7 +274,7 @@ class OrbItem(QGraphicsItem):
         radius: Description of radius.
     
     """
-    def __init__(self, color, radius=10):
+    def __init__(self, color, radius=10):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """
           init   logic.
         
@@ -294,7 +294,7 @@ class OrbItem(QGraphicsItem):
         """
         return QRectF(-self.radius*2, -self.radius*2, self.radius*4, self.radius*4)
                       
-    def paint(self, painter, option, widget):
+    def paint(self, painter, option, widget):  # type: ignore[reportIncompatibleMethodOverride, reportMissingParameterType]
         """
         Paint logic.
         

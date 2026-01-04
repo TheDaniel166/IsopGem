@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple, Type
+from typing import Dict, List, Optional, Tuple, Type  # type: ignore[reportUnusedImport]
 
 from ..shared.solid_payload import SolidPayload
 from .regular_prism_solids import (
@@ -35,7 +35,7 @@ class GeneralPrismSolidService(RegularPrismSolidServiceBase):
             height: Description of height.
         
         """
-        from .regular_prism_solids import _compute_metrics, _build_vertices, _build_edges, _build_faces
+        from .regular_prism_solids import _compute_metrics, _build_vertices, _build_edges, _build_faces  # type: ignore[reportPrivateUsage]
         from ..shared.solid_payload import SolidLabel
         
         if sides < 3:

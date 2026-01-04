@@ -234,7 +234,7 @@ class TorusSolidCalculator:
         elif key == 'minor_radius':
             r = value
         elif key == 'major_circumference':
-            R = value / (2 * math.pi)
+            R = value / (2 * math.pi)  # type: ignore[reportConstantRedefinition, reportOptionalOperand, reportUnknownVariableType]
             self._properties['major_radius'].value = R
         elif key == 'minor_circumference':
             r = value / (2 * math.pi)
@@ -247,7 +247,7 @@ class TorusSolidCalculator:
                 r = R / ratio
                 self._properties['minor_radius'].value = r
             elif r is not None:
-                R = r * ratio
+                R = r * ratio  # type: ignore[reportConstantRedefinition, reportOperatorIssue, reportUnknownVariableType]
                 self._properties['major_radius'].value = R
         elif key == 'surface_area':
             # A = 4 pi^2 R r

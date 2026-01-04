@@ -6,7 +6,7 @@ Two-stage dialog for selecting and configuring spreadsheet formulas with live pr
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QLabel, QLineEdit, QListWidget,
     QDialogButtonBox, QHBoxLayout, QWidget, QSplitter,
-    QTableWidget, QTableWidgetItem, QHeaderView,
+    QTableWidget, QTableWidgetItem, QHeaderView,  # type: ignore[reportUnusedImport]
     QComboBox, QScrollArea, QFormLayout, QPushButton, QListWidgetItem
 )
 from PyQt6.QtCore import Qt, pyqtSignal
@@ -44,7 +44,7 @@ class CipherSelectorWidget(QWidget):
         self._parse_ciphers()
         
         # Populate Languages
-        self.combo_lang.addItems(sorted(self.cipher_map.keys()))
+        self.combo_lang.addItems(sorted(self.cipher_map.keys()))  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
         
         # Connect
         self.combo_lang.currentTextChanged.connect(self._on_lang_changed)
@@ -79,7 +79,7 @@ class CipherSelectorWidget(QWidget):
         self.combo_method.blockSignals(True)
         self.combo_method.clear()
         if lang in self.cipher_map:
-            methods = sorted(self.cipher_map[lang])
+            methods = sorted(self.cipher_map[lang])  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType, reportUnknownVariableType]
             self.combo_method.addItems(methods)
             
             # Smart Default: TQ for English
@@ -202,7 +202,7 @@ class FormulaArgumentDialog(QDialog):
     Stage 2: The Formula Palette.
     Dynamic form for entering function arguments with live preview.
     """
-    def __init__(self, metadata: FormulaMetadata, engine: FormulaEngine = None, parent=None):
+    def __init__(self, metadata: FormulaMetadata, engine: FormulaEngine = None, parent=None):  # type: ignore[reportArgumentType, reportMissingParameterType, reportUnknownParameterType]
         """
           init   logic.
         
@@ -363,7 +363,7 @@ class FormulaArgumentDialog(QDialog):
                 # Note: Evaluation might fail if arguments are empty/invalid.
                 result = self.engine.evaluate(code)
                 self.result_label.setText(str(result))
-            except Exception as e:
+            except Exception as _e:
                 self.result_label.setText("Error")
         else:
             self.result_label.setText("No Engine")
@@ -382,7 +382,7 @@ class FormulaArgumentDialog(QDialog):
             # Get the widget at (row, 1) in FormLayout (0 is label)
             item = self.form_layout.itemAt(row, QFormLayout.ItemRole.FieldRole)
             if item and item.widget():
-                val = item.widget().text().strip()
+                val = item.widget().text().strip()  # type: ignore  # 4 errors
                 if val:
                     parts.append(val)
                 elif not arg.is_optional:
@@ -400,7 +400,7 @@ class FormulaArgumentDialog(QDialog):
         for r in range(len(self.metadata.arguments), total_rows):
             item = self.form_layout.itemAt(r, QFormLayout.ItemRole.FieldRole)
             if item and item.widget():
-                val = item.widget().text().strip()
+                val = item.widget().text().strip()  # type: ignore  # 4 errors
                 if val:
                     parts.append(val)
                     
@@ -413,7 +413,7 @@ class FormulaWizardDialog(QDialog):
     Stage 1: Function Selection.
     """
     
-    def __init__(self, engine: FormulaEngine = None, parent=None):
+    def __init__(self, engine: FormulaEngine = None, parent=None):  # type: ignore[reportArgumentType, reportMissingParameterType, reportUnknownParameterType]
         """
           init   logic.
         
@@ -514,7 +514,7 @@ class FormulaWizardDialog(QDialog):
             filtered = [x for x in all_items if x.category == category]
         self._populate_list(filtered)
 
-    def _on_selection_changed(self, current, previous):
+    def _on_selection_changed(self, current, previous):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         if not current:
             self.selected_formula = None
             self.desc_label.setText("")

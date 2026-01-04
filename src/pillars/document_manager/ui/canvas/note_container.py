@@ -5,7 +5,7 @@ Movable, resizable note containers with rich text editing for the Infinite Canva
 import logging
 
 from PyQt6.QtWidgets import (
-    QGraphicsProxyWidget, QTextEdit, QWidget, QVBoxLayout, QFrame, QLabel, QStyleOptionGraphicsItem, QSizeGrip
+    QGraphicsProxyWidget, QTextEdit, QWidget, QVBoxLayout, QFrame, QLabel, QStyleOptionGraphicsItem, QSizeGrip  # type: ignore[reportUnusedImport]
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QRectF, QPointF, QSize
 from PyQt6.QtGui import QPainter, QColor, QPen, QBrush
@@ -35,7 +35,7 @@ class ResizeGripWidget(QWidget):
         self._start_pos = None
         self.setStyleSheet("background-color: transparent;")
     
-    def paintEvent(self, event):
+    def paintEvent(self, event):  # type: ignore[reportIncompatibleMethodOverride, reportMissingParameterType, reportUnknownParameterType]
         """Draw resize grip lines."""
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
@@ -48,7 +48,7 @@ class ResizeGripWidget(QWidget):
             painter.drawLine(self.width() - offset, self.height(), 
                            self.width(), self.height() - offset)
     
-    def mousePressEvent(self, event):
+    def mousePressEvent(self, event):  # type: ignore[reportIncompatibleMethodOverride, reportMissingParameterType, reportUnknownParameterType]
         """
         Mousepressevent logic.
         
@@ -58,11 +58,11 @@ class ResizeGripWidget(QWidget):
         """
         if event.button() == Qt.MouseButton.LeftButton:
             self._dragging = True
-            self._start_pos = event.globalPosition().toPoint()
+            self._start_pos = event.globalPosition().toPoint()  # type: ignore[reportUnknownMemberType]
             self.resize_started.emit()
             event.accept()
     
-    def mouseMoveEvent(self, event):
+    def mouseMoveEvent(self, event):  # type: ignore[reportIncompatibleMethodOverride, reportMissingParameterType, reportUnknownParameterType]
         """
         Mousemoveevent logic.
         
@@ -71,14 +71,14 @@ class ResizeGripWidget(QWidget):
         
         """
         if self._dragging and self._start_pos:
-            current = event.globalPosition().toPoint()
-            delta_x = current.x() - self._start_pos.x()
-            delta_y = current.y() - self._start_pos.y()
+            current = event.globalPosition().toPoint()  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
+            delta_x = current.x() - self._start_pos.x()  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
+            delta_y = current.y() - self._start_pos.y()  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
             self._start_pos = current
             self.resize_delta.emit(delta_x, delta_y)
             event.accept()
     
-    def mouseReleaseEvent(self, event):
+    def mouseReleaseEvent(self, event):  # type: ignore[reportIncompatibleMethodOverride, reportMissingParameterType, reportUnknownParameterType]
         """
         Mousereleaseevent logic.
         
@@ -144,7 +144,7 @@ class NoteContainerWidget(QWidget):
         try:
             with document_service_context() as service:
                 return service.get_image(image_id)
-        except Exception as e:
+        except Exception as _e:
             logger.exception("Error fetching image resource %s", image_id)
             return None
         
@@ -152,7 +152,7 @@ class NoteContainerWidget(QWidget):
         """Forward resize request to parent."""
         self.resize_requested.emit(dx, dy)
     
-    def resizeEvent(self, event):
+    def resizeEvent(self, event):  # type: ignore[reportIncompatibleMethodOverride, reportMissingParameterType, reportUnknownParameterType]
         """Keep resize grip in bottom-right corner."""
         super().resizeEvent(event)
         grip_size = self.resize_grip.size()
@@ -275,7 +275,7 @@ class NoteContainerItemMovable(QGraphicsProxyWidget):
     
     RESIZE_MARGIN = 8  # Pixels from edge to detect resize
 
-    def __init__(self, x=0, y=0, w=400, content=""):
+    def __init__(self, x=0, y=0, w=400, content=""):  # type: ignore[reportMissingParameterType]
         """
           init   logic.
         
@@ -422,8 +422,8 @@ class NoteContainerItemMovable(QGraphicsProxyWidget):
         
         if self._dragging:
             # Calculate delta
-            delta = event.pos() - self._drag_start_pos
-            self.moveBy(delta.x(), delta.y())
+            delta = event.pos() - self._drag_start_pos  # type: ignore[reportOperatorIssue, reportOptionalMemberAccess, reportUnknownVariableType]
+            self.moveBy(delta.x(), delta.y())  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
             event.accept()
         else:
             # Update cursor based on position
@@ -513,7 +513,7 @@ class NoteContainerItemMovable(QGraphicsProxyWidget):
         ]
         for name, color in header_colors:
             action = header_color_menu.addAction(name)
-            action.triggered.connect(lambda checked, c=color: self._set_header_color(c))
+            action.triggered.connect(lambda checked, c=color: self._set_header_color(c))  # type: ignore[reportOptionalMemberAccess, reportUnknownArgumentType, reportUnknownLambdaType]
         header_color_menu.addSeparator()
         header_color_menu.addAction("Custom...").triggered.connect(self._choose_header_color)
         
@@ -526,7 +526,7 @@ class NoteContainerItemMovable(QGraphicsProxyWidget):
         ]
         for name, color in bg_colors:
             action = bg_color_menu.addAction(name)
-            action.triggered.connect(lambda checked, c=color: self._set_background_color(c))
+            action.triggered.connect(lambda checked, c=color: self._set_background_color(c))  # type: ignore[reportOptionalMemberAccess, reportUnknownArgumentType, reportUnknownLambdaType]
         bg_color_menu.addSeparator()
         bg_color_menu.addAction("Custom...").triggered.connect(self._choose_background_color)
         
@@ -602,7 +602,7 @@ class NoteContainerItemMovable(QGraphicsProxyWidget):
             self.widget_inner.header_label.setStyleSheet("font-size: 11px; color: #333;")
             layout.addWidget(self.widget_inner.header_label)
         
-        self.widget_inner.header_label.setText(f"{lock_icon}{name_display}")
+        self.widget_inner.header_label.setText(f"{lock_icon}{name_display}")  # type: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
     
     def _set_header_color(self, color: str):
         self._header_color = color

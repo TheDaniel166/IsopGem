@@ -16,7 +16,7 @@ from ..models import CalculationRecord
 class DatabaseToolsWindow(QMainWindow):
     """Window for database maintenance and cleanup operations."""
     
-    def __init__(self, window_manager=None, parent=None):
+    def __init__(self, window_manager=None, parent=None):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """Initialize the database tools window."""
         super().__init__(parent)
         self.window_manager = window_manager
@@ -275,7 +275,7 @@ class DatabaseToolsWindow(QMainWindow):
             stats.append(f"With Notes: {with_notes_count:,}")
             stats.append("")
             stats.append("By Language:")
-            for lang, count in sorted(language_counts.items(), key=lambda x: -x[1]):
+            for lang, count in sorted(language_counts.items(), key=lambda x: -x[1]):  # type: ignore[reportUnknownArgumentType, reportUnknownLambdaType, reportUnknownVariableType]
                 stats.append(f"  {lang}: {count:,}")
             
             self.stats_display.setPlainText("\n".join(stats))

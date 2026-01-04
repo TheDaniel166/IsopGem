@@ -209,7 +209,7 @@ class DocumentEditorWindow(QMainWindow):
         try:
             with document_service_context() as service:
                 return service.get_image(image_id)
-        except Exception as e:
+        except Exception as _e:
             logger.exception("Error fetching image resource %s", image_id)
             return None
 
@@ -254,7 +254,7 @@ class DocumentEditorWindow(QMainWindow):
             """
             for i in range(list_widget.count()):
                 item = list_widget.item(i)
-                item.setHidden(text.lower() not in item.text().lower())
+                item.setHidden(text.lower() not in item.text().lower())  # type: ignore[reportOptionalMemberAccess, reportUnknownMemberType]
         
         filter_input.textChanged.connect(filter_items)
         

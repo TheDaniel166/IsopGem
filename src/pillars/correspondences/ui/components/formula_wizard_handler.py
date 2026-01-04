@@ -65,7 +65,7 @@ class FormulaWizardHandler(QObject):
         # Trigger commit logic in window (writes to cell)
         self.window._on_formula_return()
         
-    def _on_wizard_selection_change(self, selected, deselected):
+    def _on_wizard_selection_change(self, selected, deselected):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """
         Future expansion: If wizard allows selecting ranges while open.
         This logic was partly present in monolith but unused? 

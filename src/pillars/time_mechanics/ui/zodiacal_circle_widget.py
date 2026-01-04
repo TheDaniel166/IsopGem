@@ -137,7 +137,7 @@ class ZodiacalCircleWidget(QWidget):
         pair = self._service.get_pair_by_date(date_str)
         return pair.difference if pair else None
     
-    def mouseMoveEvent(self, event) -> None:
+    def mouseMoveEvent(self, event) -> None:  # type: ignore[reportIncompatibleMethodOverride, reportMissingParameterType, reportUnknownParameterType]
         """Handle mouse movement for hover effects."""
         pos = event.position()
         
@@ -165,7 +165,7 @@ class ZodiacalCircleWidget(QWidget):
                         day = pair.sign_day if pair.sign_day is not None else 0
                         zodiac_display = f"{day}° {symbol} {sign_name}"
                         tooltip = f"{zodiac_display} ({pair.gregorian_date})\nDitrune: {pair.ditrune} | Contrune: {pair.contrune}"
-                    QToolTip.showText(event.globalPosition().toPoint(), tooltip, self)
+                    QToolTip.showText(event.globalPosition().toPoint(), tooltip, self)  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
                 
                 self.update()
                 return
@@ -174,7 +174,7 @@ class ZodiacalCircleWidget(QWidget):
         QToolTip.hideText()
         self.update()
     
-    def mousePressEvent(self, event) -> None:
+    def mousePressEvent(self, event) -> None:  # type: ignore[reportIncompatibleMethodOverride, reportMissingParameterType, reportUnknownParameterType]
         """Handle mouse click to select a degree."""
         if event.button() != Qt.MouseButton.LeftButton:
             return
@@ -189,7 +189,7 @@ class ZodiacalCircleWidget(QWidget):
                 self.update()
                 return
     
-    def paintEvent(self, event) -> None:
+    def paintEvent(self, event) -> None:  # type: ignore[reportIncompatibleMethodOverride, reportMissingParameterType, reportUnknownParameterType]
         """
         Paintevent logic.
         
@@ -266,7 +266,7 @@ class ZodiacalCircleWidget(QWidget):
         astro_font = QFont(self._astro_font_family, 18)
         p.setFont(astro_font)
         
-        for letter, (name, idx) in ZODIAC_SIGNS.items():
+        for letter, (_name, idx) in ZODIAC_SIGNS.items():
             # Each sign spans 30 degrees, center at 15 degrees offset
             angle_deg = idx * 30 + 15
             angle_rad = math.radians(-angle_deg + 90)  # Aries at top
@@ -358,7 +358,7 @@ class ZodiacalCircleWidget(QWidget):
         
         r_gate = r_outer + 15
         
-        for diff, angle_deg, symbol in gates:
+        for diff, angle_deg, _symbol in gates:
             angle_rad = math.radians(-angle_deg + 90)
             
             gx = cx + math.cos(angle_rad) * r_gate
@@ -486,7 +486,7 @@ class ZodiacalCircleWidget(QWidget):
             if divisor not in self.DIVISORS_360:
                 continue
             
-            color_hex, name, angle = self.DIVISORS_360[divisor]
+            color_hex, _name, angle = self.DIVISORS_360[divisor]
             color = QColor(color_hex)
             pen = QPen(color, 2)
             pen.setStyle(Qt.PenStyle.SolidLine)

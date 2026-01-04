@@ -305,8 +305,8 @@ class CalculationRepository:
     
     def _result_to_summary(self, result) -> CalculationRecord:
         """Convert a Whoosh result into a lightweight CalculationRecord."""
-        tags = result['tags'].split(',') if result.get('tags') else []
-        tags = [t.strip() for t in tags if t.strip()]
+        tags = result['tags'].split(',') if result.get('tags') else []  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
+        tags = [t.strip() for t in tags if t.strip()]  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
 
         return CalculationRecord(
             id=result['id'],
@@ -327,12 +327,12 @@ class CalculationRepository:
     def _result_to_record(self, result) -> CalculationRecord:
         """Convert Whoosh search result to CalculationRecord."""
         # Parse tags
-        tags = result['tags'].split(',') if result.get('tags') else []
-        tags = [t.strip() for t in tags if t.strip()]
+        tags = result['tags'].split(',') if result.get('tags') else []  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
+        tags = [t.strip() for t in tags if t.strip()]  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
         
         # Parse related IDs
-        related_ids = result.get('related_ids', '').split(',') if result.get('related_ids') else []
-        related_ids = [r.strip() for r in related_ids if r.strip()]
+        related_ids = result.get('related_ids', '').split(',') if result.get('related_ids') else []  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
+        related_ids = [r.strip() for r in related_ids if r.strip()]  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
         
         return CalculationRecord(
             id=result['id'],

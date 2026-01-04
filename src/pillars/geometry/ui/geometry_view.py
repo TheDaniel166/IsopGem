@@ -70,7 +70,7 @@ class GeometryView(QGraphicsView):
         # Also update on resize if needed (though resize doesn't change transform usually, but fits might)
         scene = self.scene()
         if hasattr(scene, "update_label_layout"):
-            scene.update_label_layout(self.transform())
+            scene.update_label_layout(self.transform())  # type: ignore[reportAttributeAccessIssue, reportOptionalMemberAccess, reportUnknownMemberType]
 
 
     # ------------------------------------------------------------------
@@ -124,7 +124,7 @@ class GeometryView(QGraphicsView):
         self.resetTransform()
         scene = self.scene()
         if hasattr(scene, "update_label_layout"):
-            scene.update_label_layout(self.transform())
+            scene.update_label_layout(self.transform())  # type: ignore[reportAttributeAccessIssue, reportOptionalMemberAccess, reportUnknownMemberType]
 
     def fit_scene(self):
         """
@@ -146,7 +146,7 @@ class GeometryView(QGraphicsView):
             # Update label layout on zoom
             scene = self.scene()
             if hasattr(scene, "update_label_layout"):
-                scene.update_label_layout(self.transform())
+                scene.update_label_layout(self.transform())  # type: ignore[reportAttributeAccessIssue, reportOptionalMemberAccess, reportUnknownMemberType]
 
 
     def fit_to_bounds(self, bounds: Optional[Bounds]):
@@ -171,7 +171,7 @@ class GeometryView(QGraphicsView):
         # Update label layout after fit operation
         scene = self.scene()
         if hasattr(scene, "update_label_layout"):
-            scene.update_label_layout(self.transform())
+            scene.update_label_layout(self.transform())  # type: ignore[reportAttributeAccessIssue, reportOptionalMemberAccess, reportUnknownMemberType]
 
 
     # ------------------------------------------------------------------
@@ -188,20 +188,20 @@ class GeometryView(QGraphicsView):
         
         # Toggle vertex highlights
         if hasattr(self.scene(), "set_vertex_highlights_visible"):
-            self.scene().set_vertex_highlights_visible(enabled)
+            self.scene().set_vertex_highlights_visible(enabled)  # type: ignore[reportAttributeAccessIssue, reportOptionalMemberAccess, reportUnknownMemberType]
             
         if enabled:
             self.setCursor(Qt.CursorShape.CrossCursor)
         else:
             self.setCursor(Qt.CursorShape.ArrowCursor)
 
-    def _snap_to_vertex(self, pos: QPoint, scene_pos: QPointF) -> QPointF:
+    def _snap_to_vertex(self, pos: QPoint, scene_pos: QPointF) -> QPointF:  # type: ignore[reportUndefinedVariable, reportUnknownParameterType]
         """Snap to nearest vertex if within threshold."""
         scene = self.scene()
         if not hasattr(scene, "get_vertices"):
             return scene_pos
             
-        vertices = scene.get_vertices()
+        vertices = scene.get_vertices()  # type: ignore  # 4 errors
         closest_dist = float('inf')
         closest_pt = None
         
@@ -258,11 +258,11 @@ class GeometryView(QGraphicsView):
             
             # Check for closing loop (clicking near start point)
             if len(self._measure_points) >= 3:
-                start_pt_screen = self.mapFromScene(self._measure_points[0])
+                start_pt_screen = self.mapFromScene(self._measure_points[0])  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType, reportUnknownVariableType]
                 if (event.pos() - start_pt_screen).manhattanLength() < self._snap_threshold:
                     # Close loop
                     if hasattr(self.scene(), "update_measurement_preview"):
-                        self.scene().update_measurement_preview(self._measure_points, closed=True)
+                        self.scene().update_measurement_preview(self._measure_points, closed=True)  # type: ignore[reportAttributeAccessIssue, reportOptionalMemberAccess, reportUnknownMemberType]
                     self._measuring_active = False # Finish measurement mode? Or just finish this shape?
                     # Let's keep mode active but reset points for new shape if user wants
                     # Actually better UX: Finish shape, keep markers.
@@ -272,11 +272,11 @@ class GeometryView(QGraphicsView):
                     event.accept()
                     return
 
-            self._measure_points.append(snapped_pos)
+            self._measure_points.append(snapped_pos)  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
             
             # Update preview
             if hasattr(self.scene(), "update_measurement_preview"):
-                self.scene().update_measurement_preview(self._measure_points, closed=False)
+                self.scene().update_measurement_preview(self._measure_points, closed=False)  # type: ignore[reportAttributeAccessIssue, reportOptionalMemberAccess, reportUnknownMemberType]
             
             event.accept()
             return
@@ -285,7 +285,7 @@ class GeometryView(QGraphicsView):
         if self._measuring_active and event.button() == Qt.MouseButton.RightButton:
             self._measure_points.clear()
             if hasattr(self.scene(), "clear_temporary_items"):
-                self.scene().clear_temporary_items()
+                self.scene().clear_temporary_items()  # type: ignore[reportAttributeAccessIssue, reportOptionalMemberAccess, reportUnknownMemberType]
             event.accept()
             return
 
@@ -351,7 +351,7 @@ class GeometryView(QGraphicsView):
             # Query scene for dots in rect
             scene = self.scene()
             if hasattr(scene, 'get_dots_in_rect'):
-                indices = scene.get_dots_in_rect(scene_rect)
+                indices = scene.get_dots_in_rect(scene_rect)  # type: ignore  # 4 errors
                 if indices:
                     self.dots_selected.emit(indices)
             

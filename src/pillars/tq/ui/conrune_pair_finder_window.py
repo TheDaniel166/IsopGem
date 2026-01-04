@@ -195,7 +195,7 @@ class ConrunePairFinderWindow(QMainWindow):
         value_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
         value_label.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         value_label.customContextMenuRequested.connect(
-            lambda pos, widget=value_label: self._show_diff_context_menu(widget, pos)
+            lambda pos, widget=value_label: self._show_diff_context_menu(widget, pos)  # type: ignore[reportUnknownArgumentType, reportUnknownLambdaType, reportUnknownMemberType]
         )
         layout.addWidget(label_title, row, 0)
         layout.addWidget(value_label, row, 1)

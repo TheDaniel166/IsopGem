@@ -173,8 +173,8 @@ class ExperimentalStarWindow(BaseFigurateWindow):
         self.thread_pool.start(worker)
 
     def _on_async_finished(self, payload_points_value_error):
-        payload, points, value, error = payload_points_value_error
-        self._apply_render_result(payload, points, value, error)
+        payload, points, value, error = payload_points_value_error  # type: ignore[reportUnknownVariableType]
+        self._apply_render_result(payload, points, value, error)  # type: ignore[reportUnknownArgumentType]
         self._set_busy(False)
 
     def _apply_render_result(self, payload: GeometryScenePayload, points: List[Tuple[float, float]], value: int, error: Optional[str] = None):

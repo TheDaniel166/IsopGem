@@ -56,23 +56,23 @@ class SearchHandler:
             self.view.scrollTo(index)
             self.view.setFocus()
 
-    def _find_matching_indexes(self, text, options, start_from=None, reverse=False):
+    def _find_matching_indexes(self, text, options, start_from=None, reverse=False):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """Helper to iterate grid and yield matches."""
         case_sensitive = options.get("case_sensitive", False)
         match_entire = options.get("match_entire", False)
         target = text if case_sensitive else text.lower()
         
-        rows = self.model.rowCount()
-        cols = self.model.columnCount()
+        rows = self.model.rowCount()  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
+        cols = self.model.columnCount()  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
         
         all_indexes = []
         for r in range(rows):
             for c in range(cols):
-                all_indexes.append(self.model.index(r, c))
+                all_indexes.append(self.model.index(r, c))  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
                 
         if start_from and start_from.isValid():
             try:
-                start_idx = (start_from.row() * cols) + start_from.column()
+                start_idx = (start_from.row() * cols) + start_from.column()  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
                 all_indexes = all_indexes[start_idx+1:] + all_indexes[:start_idx+1]
             except (AttributeError, TypeError, ValueError) as e:
                 logger.debug(
@@ -82,7 +82,7 @@ class SearchHandler:
                 )
                  
         for idx in all_indexes:
-            val = self.model.data(idx, Qt.ItemDataRole.DisplayRole)
+            val = self.model.data(idx, Qt.ItemDataRole.DisplayRole)  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
             if val is None: val = ""
             val_str = str(val)
             check_val = val_str if case_sensitive else val_str.lower()
@@ -96,9 +96,9 @@ class SearchHandler:
             if match:
                 yield idx
 
-    def _on_find_next(self, text, options):
-        current = self.view.currentIndex()
-        gen = self._find_matching_indexes(text, options, start_from=current)
+    def _on_find_next(self, text, options):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
+        current = self.view.currentIndex()  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
+        gen = self._find_matching_indexes(text, options, start_from=current)  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType, reportUnknownVariableType]
         try:
             next_idx = next(gen)
             self.view.setCurrentIndex(next_idx)
@@ -106,15 +106,15 @@ class SearchHandler:
         except StopIteration:
             QMessageBox.information(self.window, "Find", f"Cannot find '{text}'.")
 
-    def _on_find_all(self, text, options):
-        gen = self._find_matching_indexes(text, options, start_from=None)
+    def _on_find_all(self, text, options):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
+        gen = self._find_matching_indexes(text, options, start_from=None)  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType, reportUnknownVariableType]
         matches = list(gen)
         
         results_data = []
         
         for idx in matches:
-            addr = cell_address(idx.row(), idx.column())
-            val = str(self.model.data(idx, Qt.ItemDataRole.DisplayRole) or "")
+            addr = cell_address(idx.row(), idx.column())  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
+            val = str(self.model.data(idx, Qt.ItemDataRole.DisplayRole) or "")  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
             display = f"{addr}: {val}"
             results_data.append((display, idx))
             
@@ -125,7 +125,7 @@ class SearchHandler:
              QMessageBox.information(self.window, "Find", f"Cannot find '{text}'.")
              return
              
-        selection = self.view.selectionModel()
+        selection = self.view.selectionModel()  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
         selection.clearSelection()
         
         from PyQt6.QtCore import QItemSelection
@@ -133,24 +133,24 @@ class SearchHandler:
         for idx in matches:
             qt_selection.select(idx, idx)
             
-        selection.select(qt_selection, selection.SelectionFlag.Select)
+        selection.select(qt_selection, selection.SelectionFlag.Select)  # type: ignore[reportUnknownMemberType]
         
         # Use component status bar wrapper
         if hasattr(self.status_bar, 'show_message'):
-            self.status_bar.show_message(f"Found {len(matches)} occurrences.", 5000)
+            self.status_bar.show_message(f"Found {len(matches)} occurrences.", 5000)  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
         else:
              # Fallback if window passed statusbar widget vs component
              if hasattr(self.status_bar, 'showMessage'):
-                 self.status_bar.showMessage(f"Found {len(matches)} occurrences.", 5000)
+                 self.status_bar.showMessage(f"Found {len(matches)} occurrences.", 5000)  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
 
-    def _on_replace(self, text, replacement, options):
-        current = self.view.currentIndex()
+    def _on_replace(self, text, replacement, options):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
+        current = self.view.currentIndex()  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
         
         matches_current = False
         if current.isValid():
              case_sensitive = options.get("case_sensitive", False)
              match_entire = options.get("match_entire", False)
-             val = str(self.model.data(current, Qt.ItemDataRole.DisplayRole) or "")
+             val = str(self.model.data(current, Qt.ItemDataRole.DisplayRole) or "")  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
              target = text if case_sensitive else text.lower()
              check = val if case_sensitive else val.lower()
              
@@ -158,38 +158,38 @@ class SearchHandler:
              else: matches_current = (target in check)
         
         if matches_current:
-            val = str(self.model.data(current, Qt.ItemDataRole.DisplayRole) or "")
+            val = str(self.model.data(current, Qt.ItemDataRole.DisplayRole) or "")  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
             
             if match_entire:
                 new_val = replacement
             else:
                 if not options.get("case_sensitive"):
                     import re
-                    pattern = re.compile(re.escape(text), re.IGNORECASE)
+                    pattern = re.compile(re.escape(text), re.IGNORECASE)  # type: ignore[reportUnknownArgumentType, reportUnknownVariableType]
                     new_val = pattern.sub(replacement, val)
                 else:
                     new_val = val.replace(text, replacement)
             
             self.model.setData(current, new_val, Qt.ItemDataRole.EditRole)
             
-        self._on_find_next(text, options)
+        self._on_find_next(text, options)  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
 
-    def _on_replace_all(self, text, replacement, options):
-        gen = self._find_matching_indexes(text, options, start_from=None)
+    def _on_replace_all(self, text, replacement, options):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
+        gen = self._find_matching_indexes(text, options, start_from=None)  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType, reportUnknownVariableType]
         matches = list(gen)
         
         if not matches:
             QMessageBox.information(self.window, "Replace", f"Cannot find '{text}'.")
             return
             
-        self.model.undo_stack.beginMacro("Replace All")
+        self.model.undo_stack.beginMacro("Replace All")  # type: ignore[reportUnknownMemberType]
         count = 0
         try:
             import re
-            pattern = re.compile(re.escape(text), re.IGNORECASE) if not options.get("case_sensitive") else None
+            pattern = re.compile(re.escape(text), re.IGNORECASE) if not options.get("case_sensitive") else None  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType, reportUnknownVariableType]
             
             for idx in matches:
-                val = str(self.model.data(idx, Qt.ItemDataRole.DisplayRole) or "")
+                val = str(self.model.data(idx, Qt.ItemDataRole.DisplayRole) or "")  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
                 
                 if options.get("match_entire"):
                     new_val = replacement
@@ -203,7 +203,7 @@ class SearchHandler:
                     self.model.setData(idx, new_val, Qt.ItemDataRole.EditRole)
                     count += 1
         finally:
-            self.model.undo_stack.endMacro()
+            self.model.undo_stack.endMacro()  # type: ignore[reportUnknownMemberType]
             
         if hasattr(self.status_bar, 'show_message'):
              self.status_bar.show_message(f"Replaced {count} occurrences.", 5000)

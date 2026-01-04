@@ -288,8 +288,8 @@ class ChartStorageService:
             name=location_data["name"],
             latitude=location_data["latitude"],
             longitude=location_data["longitude"],
-            elevation=location_data.get("elevation", 0.0),
-            country_code=location_data.get("country_code"),
+            elevation=location_data.get("elevation", 0.0),  # type: ignore[reportAttributeAccessIssue, reportUnknownArgumentType, reportUnknownMemberType]
+            country_code=location_data.get("country_code"),  # type: ignore[reportAttributeAccessIssue, reportUnknownArgumentType, reportUnknownMemberType]
         )
         timestamp = datetime.fromisoformat(payload["timestamp"])
         return AstrologyEvent(

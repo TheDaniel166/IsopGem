@@ -82,7 +82,7 @@ class KameaMathService:
         else:
              return self._project_pure(points, rot_x, rot_y)
              
-    def _project_numpy(self, points, rot_x, rot_y) -> List[Tuple[float, float, float]]:
+    def _project_numpy(self, points, rot_x, rot_y) -> List[Tuple[float, float, float]]:  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """Fast Vectorized Rotation."""
         cx, sx = math.cos(rot_x), math.sin(rot_x)
         cy, sy = math.cos(rot_y), math.sin(rot_y)
@@ -112,7 +112,7 @@ class KameaMathService:
             [-cx*sy, sx, cx*cy]
         ])
         
-        pts_array = np.array(points)
+        pts_array = np.array(points)  # type: ignore[reportOptionalMemberAccess, reportUnknownArgumentType, reportUnknownVariableType]
         # points shape (N, 3). Matrix shape (3, 3).
         # We want pts @ mat.T or mat @ pts.T
         # Original: rot_mat @ vec. So vec is column?
@@ -121,7 +121,7 @@ class KameaMathService:
         rotated = pts_array @ rot_mat.T
         return rotated.tolist()
 
-    def _project_pure(self, points, rot_x, rot_y) -> List[Tuple[float, float, float]]:
+    def _project_pure(self, points, rot_x, rot_y) -> List[Tuple[float, float, float]]:  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """Pure Python Rotation (Fallback)."""
         cx, sx = math.cos(rot_x), math.sin(rot_x)
         cy, sy = math.cos(rot_y), math.sin(rot_y)
@@ -140,7 +140,7 @@ class KameaMathService:
         # OK, Matrix is correct.
         
         result = []
-        for x, y, z in points:
+        for x, y, z in points:  # type: ignore[reportUnknownVariableType]
             nx = x*m00 + y*m01 + z*m02
             ny = x*m10 + y*m11 + z*m12
             nz = x*m20 + y*m21 + z*m22

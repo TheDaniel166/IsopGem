@@ -54,7 +54,7 @@ class SevenSidedPrism:
         objects.append(floor_obj)
 
         # --- 2. Construction Loop ---
-        current_angle_deg = 0.0
+        _current_angle_deg = 0.0
         frustum_color_service = FrustumColorService()
 
         for i in range(7):

@@ -325,7 +325,7 @@ class Geometry3DWindow(QMainWindow):
         )
         for key, label in sphere_toggles:
             cb = self._create_checkbox(label, self._view.sphere_visible(key))
-            cb.toggled.connect(lambda checked, k=key: self._view.set_sphere_visible(k, checked))
+            cb.toggled.connect(lambda checked, k=key: self._view.set_sphere_visible(k, checked))  # type: ignore[reportUnknownArgumentType, reportUnknownLambdaType]
             layout.addWidget(cb)
             self._sphere_checkboxes[key] = cb
 
@@ -568,8 +568,8 @@ class Geometry3DWindow(QMainWindow):
             self._property_placeholder = placeholder
             return
 
-        for key, value in payload.metadata.items():
-            layout.addWidget(self._build_metadata_row(key, value))
+        for key, value in payload.metadata.items():  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
+            layout.addWidget(self._build_metadata_row(key, value))  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
         layout.addStretch(1)
         self._property_placeholder = None
 
@@ -646,7 +646,7 @@ class Geometry3DWindow(QMainWindow):
         input_field.setValidator(validator)
         if editable:
             input_field.editingFinished.connect(
-                lambda key=prop.key, field=input_field: self._commit_property_change(key, field)
+                lambda key=prop.key, field=input_field: self._commit_property_change(key, field)  # type: ignore[reportUnknownArgumentType, reportUnknownLambdaType]
             )
         self._install_value_context_menu(input_field)
         layout.addWidget(input_field)
@@ -784,8 +784,8 @@ class Geometry3DWindow(QMainWindow):
                 lines.append(f"• {prop.name}: {formatted}{unit}")
                 appended = True
         elif self._current_payload and self._current_payload.metadata:
-            for key, value in self._current_payload.metadata.items():
-                pretty = key.replace('_', ' ').title()
+            for key, value in self._current_payload.metadata.items():  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
+                pretty = key.replace('_', ' ').title()  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
                 lines.append(f"• {pretty}: {self._format_value(value)}")
                 appended = True
         if not appended:
@@ -820,7 +820,7 @@ class Geometry3DWindow(QMainWindow):
             return
         input_field.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         input_field.customContextMenuRequested.connect(
-            lambda pos, field=input_field: self._show_value_context_menu(field, pos)
+            lambda pos, field=input_field: self._show_value_context_menu(field, pos)  # type: ignore[reportUnknownArgumentType, reportUnknownLambdaType, reportUnknownMemberType]
         )
 
     def _show_value_context_menu(self, line_edit: QLineEdit, position):

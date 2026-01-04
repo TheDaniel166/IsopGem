@@ -593,7 +593,7 @@ class GeometricTransitions3DWindow(QMainWindow):
             summary_label.setProperty("family_key", group.key)
             summary_label.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
             summary_label.customContextMenuRequested.connect(
-                lambda pos, key=group.key, label=summary_label: self._show_family_summary_menu(key, label, pos)
+                lambda pos, key=group.key, label=summary_label: self._show_family_summary_menu(key, label, pos)  # type: ignore[reportUnknownArgumentType, reportUnknownLambdaType, reportUnknownMemberType]
             )
             tab_layout.addWidget(summary_label)
 
@@ -615,7 +615,7 @@ class GeometricTransitions3DWindow(QMainWindow):
             table.setStyleSheet("font-family: 'JetBrains Mono', monospace;")
             table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
             table.customContextMenuRequested.connect(
-                lambda pos, tbl=table: self._show_result_context_menu(tbl, pos)
+                lambda pos, tbl=table: self._show_result_context_menu(tbl, pos)  # type: ignore[reportUnknownArgumentType, reportUnknownLambdaType, reportUnknownMemberType]
             )
 
             for row, transition in enumerate(group.transitions):
@@ -627,7 +627,7 @@ class GeometricTransitions3DWindow(QMainWindow):
                 table.setItem(row, 5, QTableWidgetItem(str(transition.result_decimal)))
 
             table.itemSelectionChanged.connect(
-                lambda key=group.key, tbl=table: self._handle_family_selection(key, tbl)
+                lambda key=group.key, tbl=table: self._handle_family_selection(key, tbl)  # type: ignore[reportUnknownArgumentType, reportUnknownLambdaType]
             )
             table.resizeColumnsToContents()
             tab_layout.addWidget(table)
@@ -682,7 +682,7 @@ class GeometricTransitions3DWindow(QMainWindow):
         self.face_table.setStyleSheet("font-family: 'JetBrains Mono', monospace;")
         self.face_table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.face_table.customContextMenuRequested.connect(
-            lambda pos, tbl=self.face_table: self._show_result_context_menu(tbl, pos)
+            lambda pos, tbl=self.face_table: self._show_result_context_menu(tbl, pos)  # type: ignore[reportUnknownArgumentType, reportUnknownLambdaType, reportUnknownMemberType]
         )
         self.face_table.itemSelectionChanged.connect(self._handle_face_selection)
         layout.addWidget(self.face_table)

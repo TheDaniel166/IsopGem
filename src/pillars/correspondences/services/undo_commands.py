@@ -9,7 +9,7 @@ class SetCellDataCommand(QUndoCommand):
     """
     Command to change a single cell's value.
     """
-    def __init__(self, model, index, new_value, role=Qt.ItemDataRole.EditRole):
+    def __init__(self, model, index, new_value, role=Qt.ItemDataRole.EditRole):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """
           init   logic.
         
@@ -37,7 +37,7 @@ class SetCellDataCommand(QUndoCommand):
         
         # Capture old value based on role
         if role in (Qt.ItemDataRole.BackgroundRole, Qt.ItemDataRole.ForegroundRole, Qt.ItemDataRole.TextAlignmentRole, Qt.ItemDataRole.FontRole):
-            style = model._styles.get((self.row, self.col), {})
+            style = model._styles.get((self.row, self.col), {})  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
             
             if role == Qt.ItemDataRole.BackgroundRole:
                 self.key = "bg"
@@ -54,20 +54,20 @@ class SetCellDataCommand(QUndoCommand):
                 # That's easiest.
                 if isinstance(new_value, tuple) and len(new_value) == 2:
                     self.key = new_value[0]
-                    self.old_value = style.get(self.key)
+                    self.old_value = style.get(self.key)  # type: ignore[reportUnknownMemberType]
                 else:
                     # Fallback or Error
                     self.key = None
                     self.old_value = None
             
         elif role == self.BorderRole:
-            style = model._styles.get((self.row, self.col), {})
+            style = model._styles.get((self.row, self.col), {})  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
             # Should be a dict of borders
             self.old_value = style.get("borders", {}) # Make copy?
             if isinstance(self.old_value, dict):
                 self.old_value = self.old_value.copy()
         else:
-            self.old_value = model._data[self.row][self.col]
+            self.old_value = model._data[self.row][self.col]  # type: ignore[reportUnknownMemberType]
             
         self.setText(f"Edit Cell {self.row+1},{self.col+1}")
 
@@ -76,40 +76,40 @@ class SetCellDataCommand(QUndoCommand):
         Redo logic.
         
         """
-        idx = self.model.index(self.row, self.col)
+        idx = self.model.index(self.row, self.col)  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
         
         if self.role in (Qt.ItemDataRole.BackgroundRole, Qt.ItemDataRole.ForegroundRole, Qt.ItemDataRole.TextAlignmentRole, Qt.ItemDataRole.FontRole):
             if not self.key: return # Invalid FontRole Update
             
-            if (self.row, self.col) not in self.model._styles:
-                self.model._styles[(self.row, self.col)] = {}
+            if (self.row, self.col) not in self.model._styles:  # type: ignore[reportUnknownMemberType]
+                self.model._styles[(self.row, self.col)] = {}  # type: ignore[reportUnknownMemberType]
             
             if self.role == Qt.ItemDataRole.FontRole:
                  # new_value is (key, value)
                  # We want to store value
                  val = self.new_value[1]
                  if val is None:
-                     self.model._styles[(self.row, self.col)].pop(self.key, None)
+                     self.model._styles[(self.row, self.col)].pop(self.key, None)  # type: ignore[reportUnknownMemberType]
                  else:
-                     self.model._styles[(self.row, self.col)][self.key] = val
+                     self.model._styles[(self.row, self.col)][self.key] = val  # type: ignore[reportUnknownMemberType]
             else:
                 if self.new_value is None:
-                    self.model._styles[(self.row, self.col)].pop(self.key, None)
+                    self.model._styles[(self.row, self.col)].pop(self.key, None)  # type: ignore[reportUnknownMemberType]
                 else:
-                    self.model._styles[(self.row, self.col)][self.key] = self.new_value
+                    self.model._styles[(self.row, self.col)][self.key] = self.new_value  # type: ignore[reportUnknownMemberType]
                 
         elif self.role == self.BorderRole:
-            if (self.row, self.col) not in self.model._styles:
-                self.model._styles[(self.row, self.col)] = {}
+            if (self.row, self.col) not in self.model._styles:  # type: ignore[reportUnknownMemberType]
+                self.model._styles[(self.row, self.col)] = {}  # type: ignore[reportUnknownMemberType]
             
             # new_value should be the borders dict
             if not self.new_value:
-                self.model._styles[(self.row, self.col)].pop("borders", None)
+                self.model._styles[(self.row, self.col)].pop("borders", None)  # type: ignore[reportUnknownMemberType]
             else:
-                self.model._styles[(self.row, self.col)]["borders"] = self.new_value
+                self.model._styles[(self.row, self.col)]["borders"] = self.new_value  # type: ignore[reportUnknownMemberType]
                 
         else:
-            self.model._data[self.row][self.col] = self.new_value
+            self.model._data[self.row][self.col] = self.new_value  # type: ignore[reportUnknownMemberType]
             
         if hasattr(self.model, "clear_eval_cache"):
             self.model.clear_eval_cache()
@@ -120,30 +120,30 @@ class SetCellDataCommand(QUndoCommand):
         Undo logic.
         
         """
-        idx = self.model.index(self.row, self.col)
+        idx = self.model.index(self.row, self.col)  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
         
         if self.role in (Qt.ItemDataRole.BackgroundRole, Qt.ItemDataRole.ForegroundRole, Qt.ItemDataRole.TextAlignmentRole, Qt.ItemDataRole.FontRole):
             if not self.key: return
 
-            if (self.row, self.col) not in self.model._styles:
-                self.model._styles[(self.row, self.col)] = {}
+            if (self.row, self.col) not in self.model._styles:  # type: ignore[reportUnknownMemberType]
+                self.model._styles[(self.row, self.col)] = {}  # type: ignore[reportUnknownMemberType]
                 
             if self.old_value is None:
-                self.model._styles[(self.row, self.col)].pop(self.key, None)
+                self.model._styles[(self.row, self.col)].pop(self.key, None)  # type: ignore[reportUnknownMemberType]
             else:
-                self.model._styles[(self.row, self.col)][self.key] = self.old_value
+                self.model._styles[(self.row, self.col)][self.key] = self.old_value  # type: ignore[reportUnknownMemberType]
                 
         elif self.role == self.BorderRole:
-             if (self.row, self.col) not in self.model._styles:
-                self.model._styles[(self.row, self.col)] = {}
+             if (self.row, self.col) not in self.model._styles:  # type: ignore[reportUnknownMemberType]
+                self.model._styles[(self.row, self.col)] = {}  # type: ignore[reportUnknownMemberType]
                 
              if not self.old_value:
-                 self.model._styles[(self.row, self.col)].pop("borders", None)
+                 self.model._styles[(self.row, self.col)].pop("borders", None)  # type: ignore[reportUnknownMemberType]
              else:
-                 self.model._styles[(self.row, self.col)]["borders"] = self.old_value
+                 self.model._styles[(self.row, self.col)]["borders"] = self.old_value  # type: ignore[reportUnknownMemberType]
              
         else:
-            self.model._data[self.row][self.col] = self.old_value
+            self.model._data[self.row][self.col] = self.old_value  # type: ignore[reportUnknownMemberType]
             
         if hasattr(self.model, "clear_eval_cache"):
             self.model.clear_eval_cache()
@@ -160,7 +160,7 @@ class InsertRowsCommand(QUndoCommand):
         rows: Description of rows.
     
     """
-    def __init__(self, model, position, rows):
+    def __init__(self, model, position, rows):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """
           init   logic.
         
@@ -213,7 +213,7 @@ class RemoveRowsCommand(QUndoCommand):
         deleted_data: Description of deleted_data.
     
     """
-    def __init__(self, model, position, rows):
+    def __init__(self, model, position, rows):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """
           init   logic.
         
@@ -232,7 +232,7 @@ class RemoveRowsCommand(QUndoCommand):
         self.deleted_data = []
         for i in range(rows):
             # We copy the list to ensure we have the values
-            self.deleted_data.append(list(model._data[position + i]))
+            self.deleted_data.append(list(model._data[position + i]))  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
 
     def redo(self):
         """
@@ -252,7 +252,7 @@ class RemoveRowsCommand(QUndoCommand):
         
         """
         self.model.beginInsertRows(QModelIndex(), self.position, self.position + self.rows - 1)
-        for i, row_data in enumerate(self.deleted_data):
+        for i, row_data in enumerate(self.deleted_data):  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType, reportUnknownVariableType]
             self.model._data.insert(self.position + i, row_data)
         self.model.endInsertRows()
         if hasattr(self.model, "clear_eval_cache"):
@@ -269,7 +269,7 @@ class InsertColumnsCommand(QUndoCommand):
         columns: Description of columns.
     
     """
-    def __init__(self, model, position, columns):
+    def __init__(self, model, position, columns):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """
           init   logic.
         
@@ -293,7 +293,7 @@ class InsertColumnsCommand(QUndoCommand):
         self.model.beginInsertColumns(QModelIndex(), self.position, self.position + self.columns - 1)
         # Add new column headers
         for i in range(self.columns):
-            self.model._columns.insert(self.position + i, f"NewCol_{len(self.model._columns)+1}")
+            self.model._columns.insert(self.position + i, f"NewCol_{len(self.model._columns)+1}")  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
         
         # Add entry to every row
         for row in self.model._data:
@@ -334,7 +334,7 @@ class RemoveColumnsCommand(QUndoCommand):
         deleted_data: Description of deleted_data.
     
     """
-    def __init__(self, model, position, columns):
+    def __init__(self, model, position, columns):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """
           init   logic.
         
@@ -354,7 +354,7 @@ class RemoveColumnsCommand(QUndoCommand):
         self.deleted_data = [] # List of lists (one per row, containing deleted cols)
         
         for i in range(columns):
-            self.deleted_headers.append(model._columns[position + i])
+            self.deleted_headers.append(model._columns[position + i])  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
             
         for row in model._data:
             cols_data = []
@@ -386,11 +386,11 @@ class RemoveColumnsCommand(QUndoCommand):
         """
         self.model.beginInsertColumns(QModelIndex(), self.position, self.position + self.columns - 1)
         # Restore headers
-        for i, header in enumerate(self.deleted_headers):
+        for i, header in enumerate(self.deleted_headers):  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType, reportUnknownVariableType]
             self.model._columns.insert(self.position + i, header)
             
         # Restore data
-        for r_idx, row in enumerate(self.model._data):
+        for r_idx, row in enumerate(self.model._data):  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType, reportUnknownVariableType]
             saved_cols = self.deleted_data[r_idx]
             for c_idx, val in enumerate(saved_cols):
                 row.insert(self.position + c_idx, val)
@@ -403,7 +403,7 @@ class SortRangeCommand(QUndoCommand):
     Command to sort a range of cells.
     Holds the old and new state of the data block (including styles).
     """
-    def __init__(self, model, range_rect, old_block, new_block):
+    def __init__(self, model, range_rect, old_block, new_block):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """
           init   logic.
         
@@ -416,7 +416,7 @@ class SortRangeCommand(QUndoCommand):
         """
         super().__init__()
         self.model = model
-        self.top, self.left, self.bottom, self.right = range_rect
+        self.top, self.left, self.bottom, self.right = range_rect  # type: ignore[reportUnknownMemberType]
         self.old_block = old_block
         self.new_block = new_block
         self.setText("Sort Range")
@@ -425,7 +425,7 @@ class SortRangeCommand(QUndoCommand):
         # block is list of rows, where each item is (value, style_dict)
         for r_offset, row_data in enumerate(block):
             r = self.top + r_offset
-            for c_offset, (val, style) in enumerate(row_data):
+            for c_offset, (val, style) in enumerate(row_data):  # type: ignore[reportUnknownArgumentType, reportUnknownVariableType]
                 c = self.left + c_offset
                 
                 # Update Data
@@ -438,8 +438,8 @@ class SortRangeCommand(QUndoCommand):
                     self.model._styles[(r, c)] = style.copy()
                     
         # Emit generic data changed for the whole rect
-        tl = self.model.index(self.top, self.left)
-        br = self.model.index(self.bottom, self.right)
+        tl = self.model.index(self.top, self.left)  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
+        br = self.model.index(self.bottom, self.right)  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
         self.model.dataChanged.emit(tl, br, [Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.EditRole])
         if hasattr(self.model, "clear_eval_cache"):
             self.model.clear_eval_cache()

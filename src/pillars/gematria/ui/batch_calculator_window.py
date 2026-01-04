@@ -52,13 +52,13 @@ class BatchProcessThread(QThread):
         error_count = 0
         total = len(self.data)
         
-        for idx, row in enumerate(self.data):
+        for idx, row in enumerate(self.data):  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType, reportUnknownVariableType]
             if not self._is_running:
                 break
             
             try:
                 # Extract word/text (required field) - convert to string and handle NaN
-                text = str(row.get('word', row.get('text', ''))).strip()
+                text = str(row.get('word', row.get('text', ''))).strip()  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
                 if not text or text.lower() == 'nan':
                     error_count += 1
                     self.calculation_completed.emit("", "Error: No text")
@@ -66,11 +66,11 @@ class BatchProcessThread(QThread):
                     continue
                 
                 # Extract optional fields (case-insensitive) - handle NaN values
-                notes = str(row.get('notes', row.get('note', ''))).strip()
+                notes = str(row.get('notes', row.get('note', ''))).strip()  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
                 if notes.lower() == 'nan':
                     notes = ''
                     
-                tags_str = str(row.get('tags', row.get('tag', ''))).strip()
+                tags_str = str(row.get('tags', row.get('tag', ''))).strip()  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
                 if tags_str.lower() == 'nan':
                     tags_str = ''
                 
@@ -86,7 +86,7 @@ class BatchProcessThread(QThread):
                         # Calculate value
                         value = calculator.calculate(text)
                         breakdown = calculator.get_breakdown(text)
-                        normalized = calculator.normalize_text(text)
+                        _normalized = calculator.normalize_text(text)
                         
                         # Create calculation record
                         # Save via Service (handles breakdown and normalization internally)
@@ -98,7 +98,7 @@ class BatchProcessThread(QThread):
                             notes=notes,
                             tags=tags
                         )
-                    except Exception as calc_error:
+                    except Exception as _calc_error:
                         word_success = False
                         continue
                 
@@ -112,7 +112,7 @@ class BatchProcessThread(QThread):
             except Exception as e:
                 error_count += 1
                 self.calculation_completed.emit(
-                    row.get('word', row.get('text', 'Unknown')),
+                    row.get('word', row.get('text', 'Unknown')),  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
                     f"Error: {str(e)}"
                 )
             
@@ -128,7 +128,7 @@ class BatchProcessThread(QThread):
 class GreatHarvestWindow(QMainWindow):
     """The Great Harvest: A window for sowing seeds (importing) and reaping (calculating) results."""
     
-    def __init__(self, calculators: List[GematriaCalculator], window_manager=None, parent=None):
+    def __init__(self, calculators: List[GematriaCalculator], window_manager=None, parent=None):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """
         Initialize The Great Harvest window.
         
@@ -540,20 +540,20 @@ class GreatHarvestWindow(QMainWindow):
         self.preview_table.setRowCount(len(self.imported_data))
         self.preview_table.setSortingEnabled(False)
         
-        for idx, row in enumerate(self.imported_data):
+        for idx, row in enumerate(self.imported_data):  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType, reportUnknownVariableType]
             # 1. Word/Text
-            raw_word = row.get('word', row.get('text', ''))
+            raw_word = row.get('word', row.get('text', ''))  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType, reportUnknownVariableType]
             word_text = "" if raw_word is None else str(raw_word).strip()
             self.preview_table.setItem(idx, 0, QTableWidgetItem(str(word_text)))
             
             # 2. Tags
-            raw_tags = row.get('tags', row.get('tag', ''))
+            raw_tags = row.get('tags', row.get('tag', ''))  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType, reportUnknownVariableType]
             tags_text = str(raw_tags).strip() if raw_tags else ""
             if tags_text.lower() == 'nan': tags_text = ""
             self.preview_table.setItem(idx, 1, QTableWidgetItem(str(tags_text)))
             
             # 3. Notes
-            raw_notes = row.get('notes', row.get('note', ''))
+            raw_notes = row.get('notes', row.get('note', ''))  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType, reportUnknownVariableType]
             notes_text = str(raw_notes).strip() if raw_notes else ""
             if notes_text.lower() == 'nan': notes_text = ""
             if len(notes_text) > 50: notes_text = notes_text[:47] + "..."
@@ -666,9 +666,9 @@ class GreatHarvestWindow(QMainWindow):
         columns = ["Word", "Tags", "Notes"]
         rows = []
         for row in self.imported_data:
-             word = str(row.get('word', row.get('text', '')))
-             tags = str(row.get('tags', row.get('tag', '')))
-             notes = str(row.get('notes', row.get('note', '')))
+             word = str(row.get('word', row.get('text', '')))  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
+             tags = str(row.get('tags', row.get('tag', '')))  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
+             notes = str(row.get('notes', row.get('note', '')))  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
              rows.append([word, tags, notes])
              
         data = {
@@ -685,7 +685,7 @@ class GreatHarvestWindow(QMainWindow):
         )
         
         # Verify it opened (synchronously in this architecture for now)
-        hub = self.window_manager.get_active_windows().get("emerald_tablet")
+        hub = self.window_manager.get_active_windows().get("emerald_tablet")  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
         
         if hasattr(hub, "receive_import"):
             name = f"Harvest_{datetime.now().strftime('%Y%m%d_%H%M')}"

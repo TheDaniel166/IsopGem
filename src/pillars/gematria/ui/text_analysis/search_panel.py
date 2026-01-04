@@ -214,7 +214,7 @@ class SearchPanel(QWidget):
             filtered = [] # No tab active? or show all? 
             # If no tab active, maybe show nothing.
         else:
-            filtered = [m for m in self.all_matches if m[4] == self.current_tab_index]
+            filtered = [m for m in self.all_matches if m[4] == self.current_tab_index]  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
         
         total_count = len(self.all_matches)
         local_count = len(filtered)
@@ -231,7 +231,7 @@ class SearchPanel(QWidget):
             
         for item_data in filtered:
             # item_data: (text, start, end, doc_title, tab_index)
-            text, start, end, doc_title, tab_index = item_data
+            text, start, end, _doc_title, tab_index = item_data  # type: ignore[reportUnknownVariableType, reportUnusedVariable]
             
             label = f"{text} = {target_val}"
             # Doc title is redundant if we only show current tab, but kept for clarity if needed?
@@ -257,10 +257,10 @@ class SearchPanel(QWidget):
     def _on_item_clicked(self, item):
         data = item.data(Qt.ItemDataRole.UserRole)
         if data:
-            start, end, tab_index = data
+            start, end, tab_index = data  # type: ignore[reportUnknownVariableType]
             self.result_selected.emit(start, end, tab_index)
 
-    def contextMenuEvent(self, event):
+    def contextMenuEvent(self, event):  # type: ignore[reportIncompatibleMethodOverride, reportMissingParameterType, reportUnknownParameterType]
         """Context menu for results."""
         if not self.results_list.itemAt(event.pos()):
             return
@@ -283,7 +283,7 @@ class SearchPanel(QWidget):
         # Actually easier to just send self.all_matches filtered by current_tab_index
         filtered = []
         if self.current_tab_index != -1:
-            filtered = [m for m in self.all_matches if m[4] == self.current_tab_index]
+            filtered = [m for m in self.all_matches if m[4] == self.current_tab_index]  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
             
         if filtered:
             self.send_to_tablet_requested.emit(filtered)

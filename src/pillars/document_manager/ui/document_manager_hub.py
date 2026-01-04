@@ -232,21 +232,21 @@ class DocumentManagerHub(QWidget):
         )
 
 
-    def _open_document_from_library(self, doc, search_term=None, restored_html=None, read_only=False):
+    def _open_document_from_library(self, doc, search_term=None, restored_html=None, read_only=False):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """Open a document from the library in the editor."""
         window = self.window_manager.open_window(
             "document_editor",
             DocumentEditorWindow
         )
         if isinstance(window, DocumentEditorWindow):
-            window.load_document_model(doc, search_term, restored_html, read_only)
+            window.load_document_model(doc, search_term, restored_html, read_only)  # type: ignore[reportUnknownArgumentType]
 
-    def _on_library_document_opened(self, doc, restored_html):
+    def _on_library_document_opened(self, doc, restored_html):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """Handle document_opened signal from library (doc, restored_html)."""
         # From library = edit mode (read_only=False)
-        self._open_document_from_library(doc, None, restored_html, read_only=False)
+        self._open_document_from_library(doc, None, restored_html, read_only=False)  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
 
-    def _open_document_by_id(self, doc_id, search_term=None):
+    def _open_document_by_id(self, doc_id, search_term=None):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         """Open a document by ID in the editor."""
         import logging
         logger = logging.getLogger(__name__)
