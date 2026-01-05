@@ -3,7 +3,7 @@ applyTo: '**'
 ---
 # Covenant Pointer (mirror)
 
-<!-- Last Verified: 2026-01-03 -->
+<!-- Last Verified: 2026-01-05 -->
 
 This file is a pointer to the Covenant instructions to avoid token bloat and drift. Do not edit here; update the canonical scrolls instead.
 

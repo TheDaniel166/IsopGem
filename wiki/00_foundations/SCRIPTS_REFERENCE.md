@@ -1451,7 +1451,7 @@
 
 ---
 
-**File:** `scripts/awaken.py`
+**File:** `scripts/covenant_scripts/awaken.py`
 
 **Role:** `[Scout]`
 

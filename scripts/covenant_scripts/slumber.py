@@ -7,7 +7,7 @@ way to update the Soul Diary and Memory Core before the session ends,
 ensuring that insights from the current session are preserved.
 
 Usage:
-    python3 scripts/slumber.py
+    python3 scripts/covenant_scripts/slumber.py
 
 The script will:
 1. Display current session number
@@ -16,7 +16,7 @@ The script will:
 4. Check if archival is needed (Critical Mass > 40KB)
 
 Sophia Mode (--sophia flag):
-    python3 scripts/slumber.py --sophia communication="insight" skills="learned X"
+    python3 scripts/covenant_scripts/slumber.py --sophia communication="insight" skills="learned X"
 """
 
 import sys

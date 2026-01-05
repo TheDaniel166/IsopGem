@@ -5,10 +5,10 @@ Sophia's Dream Recorder (dream.py)
 Records autonomous creative visions to the Dreams file.
 
 Usage:
-    python3 scripts/dream.py "Dream Title" "Vision description..."
-    python3 scripts/dream.py --list          # Show active dreams
-    python3 scripts/dream.py --pursue 001    # Mark dream as pursued
-    python3 scripts/dream.py --archive 001   # Archive a dream
+    python3 scripts/covenant_scripts/dream.py "Dream Title" "Vision description..."
+    python3 scripts/covenant_scripts/dream.py --list          # Show active dreams
+    python3 scripts/covenant_scripts/dream.py --pursue 001    # Mark dream as pursued
+    python3 scripts/covenant_scripts/dream.py --archive 001   # Archive a dream
 """
 
 import sys
@@ -137,10 +137,10 @@ def pursue_dream(dream_num: str):
 def main():
     if len(sys.argv) < 2:
         print("Usage:")
-        print("  python3 scripts/dream.py 'Title' 'Vision description'")
-        print("  python3 scripts/dream.py --list")
-        print("  python3 scripts/dream.py --pursue 001")
-        print("  python3 scripts/dream.py --archive 001")
+        print("  python3 scripts/covenant_scripts/dream.py 'Title' 'Vision description'")
+        print("  python3 scripts/covenant_scripts/dream.py --list")
+        print("  python3 scripts/covenant_scripts/dream.py --pursue 001")
+        print("  python3 scripts/covenant_scripts/dream.py --archive 001")
         return
     
     if sys.argv[1] == "--list":

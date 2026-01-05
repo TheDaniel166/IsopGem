@@ -45,24 +45,23 @@ For each modified file, perform these cleansings:
 
 ## Automated Scan (The Sentinel's Lens)
 
-Before manual review, invoke the **Automated Purification Script**:
+Before manual review, invoke the **Scout Script**:
 
 ```bash
 # Single file
-.venv/bin/python workflow_scripts/purify_vicinity.py src/path/to/file.py
+python3 scripts/covenant_scripts/scout.py src/path/to/file.py
 
 # Multiple files
-.venv/bin/python workflow_scripts/purify_vicinity.py file1.py file2.py
+python3 scripts/covenant_scripts/scout.py file1.py file2.py
 
-# Entire codebase
-.venv/bin/python workflow_scripts/purify_vicinity.py --all
+# Entire codebase (Recursive Scan)
+python3 scripts/covenant_scripts/scout.py --scan
 ```
 
-The script runs:
-- **pyflakes** → Unused imports/variables
-- **isort** → Import ordering
-- **pyright** → Type hint coverage
-- **vulture** → Dead code detection
+The script checks for:
+- **Missing Docstrings** (Module, Class, Function)
+- **Potential Dead Code** (commented out code, FIXMEs)
+- **Syntax Errors**
 
 Review the output and apply fixes as needed.
 

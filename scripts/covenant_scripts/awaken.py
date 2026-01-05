@@ -13,7 +13,7 @@ Enhanced with:
 - Session counter increment
 
 Usage:
-    python3 scripts/awaken.py
+    python3 scripts/covenant_scripts/awaken.py
 """
 
 import sys
@@ -22,7 +22,11 @@ import shutil
 from pathlib import Path
 from datetime import datetime
 
-import dream_weaver
+try:
+    from . import dream_weaver
+except ImportError:
+    # Fallback if run as script, though usage as module is preferred now
+    import dream_weaver
 
 # Define the Holy Texts to recite
 SCROLLS = [
@@ -230,6 +234,102 @@ def print_awakening_summary(repo_root: Path, session_num: int):
     dream_count = count_active_dreams()
     if dream_count > 0:
         print(f"💭 Dreams Awaiting Review: {dream_count}")
+    glimpse = latest_dream_glimpse()
+    if glimpse:
+        print(glimpse)
+    recents = recent_dreams_snippet()
+    if recents:
+        print("Recent dreams:")
+        for line in recents:
+            print(f"   • {line}")
+    top_sym = top_symbol_snippet()
+    if top_sym:
+        print(top_sym)
+    if not (glimpse or recents or top_sym or dream_count):
+        # Fallback: show tail of DREAMS.md so legacy/hand-edited dreams surface
+        dreams_path = ANAMNESIS_DIR / "DREAMS.md"
+        if dreams_path.exists():
+            lines = dreams_path.read_text(encoding="utf-8").splitlines()
+            tail = lines[-12:] if len(lines) > 12 else lines
+            print("Latest dream (raw tail from DREAMS.md):")
+            for ln in tail:
+                print(f"   {ln}")
+        else:
+            print("(No dreams recorded yet — run slumber without --no-dream to weave one.)")
+    full_block = full_latest_dream_block()
+    if full_block:
+        print("\nFull latest dream:")
+        for line in full_block:
+            print(line)
+    
+    notes = get_notes()
+    if notes:
+        print(f"\n📝 Notes from Past Self ({len(notes)}):")
+        for note in notes[:5]:  # Show max 5
+            print(f"   • {note}")
+        if len(notes) > 5:
+            print(f"   ... and {len(notes) - 5} more")
+    
+    print("=" * 60)
+    print()
+
+
+def get_adrs(repo_root: Path) -> list[str]:
+    """Get list of Architectural Decision Records."""
+    adr_dir = repo_root / "wiki/01_blueprints/decisions"
+    if not adr_dir.exists():
+        return []
+    
+    adrs = []
+    for p in sorted(adr_dir.glob("*.md")):
+        # format: ADR-XXX_title.md
+        name = p.stem
+        try:
+            # Try to get the real title from the first line
+            content = p.read_text(encoding="utf-8").splitlines()
+            title = name
+            for line in content:
+                if line.startswith("# "):
+                    title = line.lstrip("# ").strip()
+                    break
+            adrs.append(f"{name}: {title}")
+        except Exception:
+            adrs.append(name)
+    return adrs
+
+
+def print_awakening_summary(repo_root: Path, session_num: int):
+    """Print a synthesized summary for instant orientation."""
+    print("=" * 60)
+    print("🔮 AWAKENING SUMMARY")
+    print("=" * 60)
+    print(f"📅 Session: {session_num}")
+    print(f"📆 Date: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    print(f"🎯 Cycle Goal: {get_cycle_goal(repo_root)}")
+    
+    distortion_count = count_distortions(repo_root)
+    if distortion_count > 0:
+        print(f"⚠️  Active Distortions: {distortion_count}")
+    else:
+        print("✅ No active distortions")
+        
+    # ADR Summary
+    adrs = get_adrs(repo_root)
+    if adrs:
+        print(f"\n🏛️  Architectural Decisions ({len(adrs)}):")
+        # Show recent 5 or all? Let's show all if < 10, else recent 5
+        if len(adrs) <= 10:
+            for adr in adrs:
+                print(f"   • {adr}")
+        else:
+            for adr in adrs[-5:]:
+                print(f"   • {adr}")
+            print(f"   ... ({len(adrs) - 5} older decisions)")
+    
+    # Show dreams awaiting review
+    dream_count = count_active_dreams()
+    if dream_count > 0:
+        print(f"\n💭 Dreams Awaiting Review: {dream_count}")
     glimpse = latest_dream_glimpse()
     if glimpse:
         print(glimpse)
