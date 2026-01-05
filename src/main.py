@@ -47,7 +47,13 @@ from pillars.geometry.ui import GeometryHub
 from pillars.document_manager.ui import DocumentManagerHub
 from pillars.astrology.ui import AstrologyHub
 from pillars.tq.ui import TQHub
-from pillars.adyton.ui import AdytonHub
+try:
+    from pillars.adyton.ui import AdytonHub
+    ADYTON_AVAILABLE = True
+except (ImportError, OSError) as e:
+    AdytonHub = None
+    ADYTON_AVAILABLE = False
+    print(f"Warning: Adyton pillar not available (OpenGL issue): {e}")
 from pillars.correspondences.ui import CorrespondenceHub
 from pillars.time_mechanics.ui import TimeMechanicsHub
 
@@ -382,8 +388,15 @@ class IsopGemMainWindow(QMainWindow):
 
     def _init_adyton_pillar(self):
         """Initialize the Adyton pillar."""
-        adyton_hub = AdytonHub(self.window_manager)
-        self.tabs.addTab(adyton_hub, "Adyton")
+        if ADYTON_AVAILABLE and AdytonHub is not None:
+            adyton_hub = AdytonHub(self.window_manager)
+            self.tabs.addTab(adyton_hub, "Adyton")
+        else:
+            # Create a placeholder tab
+            from PyQt6.QtWidgets import QLabel
+            placeholder = QLabel("Adyton requires OpenGL (not available)")
+            placeholder.setStyleSheet("color: #888; padding: 20px;")
+            self.tabs.addTab(placeholder, "Adyton (Unavailable)")
 
     def _init_correspondences_pillar(self):
         """Initialize the Emerald Tablet pillar."""

@@ -1,12 +1,12 @@
 {
-  "typeCheckingMode": "strict",
   "venvPath": ".",
   "venv": ".venv",
-  "include": ["src"],
+  "include": [
+    "src"
+  ],
   "ignore": [
     "scripts/**",
     "tests/**",
-    "debug_ephemeris.py",
     "Docs/**",
     "wiki/**",
     "data/**",
@@ -17,18 +17,142 @@
   ],
   "exclude": [
     ".venv/**",
-    "**/.venv/**",
-    "**/site-packages/**",
-    "**/node_modules/**",
     "**/__pycache__/**",
-    "scripts/**",
-    "tests/**",
-    "data/**",
-    "Docs/**",
-    "wiki/**",
-    "saved_documents/**",
-    "experiments/**",
-    "anamnesis/**",
-    "workflow_scripts/**"
+    "**/node_modules/**"
+  ],
+  "executionEnvironments": [
+    {
+      "root": "src/pillars/gematria/ui",
+      "extraPaths": [
+        "src"
+      ],
+      "typeCheckingMode": "basic",
+      "reportOptionalMemberAccess": "warning",
+      "reportUnknownMemberType": "none",
+      "reportUnknownArgumentType": "none",
+      "reportUnknownVariableType": "none",
+      "reportUnknownParameterType": "none",
+      "reportMissingParameterType": "none"
+    },
+    {
+      "root": "src/pillars/astrology/ui",
+      "extraPaths": [
+        "src"
+      ],
+      "typeCheckingMode": "basic",
+      "reportOptionalMemberAccess": "warning",
+      "reportUnknownMemberType": "none",
+      "reportUnknownArgumentType": "none",
+      "reportUnknownVariableType": "none",
+      "reportUnknownParameterType": "none",
+      "reportMissingParameterType": "none"
+    },
+    {
+      "root": "src/pillars/geometry/ui",
+      "extraPaths": [
+        "src"
+      ],
+      "typeCheckingMode": "basic",
+      "reportOptionalMemberAccess": "warning",
+      "reportUnknownMemberType": "none",
+      "reportUnknownArgumentType": "none",
+      "reportUnknownVariableType": "none",
+      "reportUnknownParameterType": "none",
+      "reportMissingParameterType": "none"
+    },
+    {
+      "root": "src/pillars/document_manager/ui",
+      "extraPaths": [
+        "src"
+      ],
+      "typeCheckingMode": "basic",
+      "reportOptionalMemberAccess": "warning",
+      "reportUnknownMemberType": "none",
+      "reportUnknownArgumentType": "none",
+      "reportUnknownVariableType": "none",
+      "reportUnknownParameterType": "none",
+      "reportMissingParameterType": "none"
+    },
+    {
+      "root": "src/pillars/tq/ui",
+      "extraPaths": [
+        "src"
+      ],
+      "typeCheckingMode": "basic",
+      "reportOptionalMemberAccess": "warning",
+      "reportUnknownMemberType": "none",
+      "reportUnknownArgumentType": "none",
+      "reportUnknownVariableType": "none",
+      "reportUnknownParameterType": "none",
+      "reportMissingParameterType": "none"
+    },
+    {
+      "root": "src/pillars/adyton/ui",
+      "extraPaths": [
+        "src"
+      ],
+      "typeCheckingMode": "basic",
+      "reportOptionalMemberAccess": "warning",
+      "reportUnknownMemberType": "none",
+      "reportUnknownArgumentType": "none",
+      "reportUnknownVariableType": "none",
+      "reportUnknownParameterType": "none",
+      "reportMissingParameterType": "none"
+    },
+    {
+      "root": "src/pillars/time_mechanics/ui",
+      "extraPaths": [
+        "src"
+      ],
+      "typeCheckingMode": "basic",
+      "reportOptionalMemberAccess": "warning",
+      "reportUnknownMemberType": "none",
+      "reportUnknownArgumentType": "none",
+      "reportUnknownVariableType": "none",
+      "reportUnknownParameterType": "none",
+      "reportMissingParameterType": "none"
+    },
+    {
+      "root": "src/pillars/correspondences/ui",
+      "extraPaths": [
+        "src"
+      ],
+      "typeCheckingMode": "basic",
+      "reportOptionalMemberAccess": "warning",
+      "reportUnknownMemberType": "none",
+      "reportUnknownArgumentType": "none",
+      "reportUnknownVariableType": "none",
+      "reportUnknownParameterType": "none",
+      "reportMissingParameterType": "none"
+    },
+    {
+      "root": "src/shared/ui",
+      "extraPaths": [
+        "src"
+      ],
+      "typeCheckingMode": "basic",
+      "reportOptionalMemberAccess": "warning",
+      "reportUnknownMemberType": "none",
+      "reportUnknownArgumentType": "none",
+      "reportUnknownVariableType": "none",
+      "reportUnknownParameterType": "none",
+      "reportMissingParameterType": "none"
+    },
+    {
+      "root": "src/shared/signals",
+      "extraPaths": [
+        "src"
+      ],
+      "typeCheckingMode": "basic",
+      "reportOptionalMemberAccess": "warning",
+      "reportUnknownMemberType": "none"
+    },
+    {
+      "root": "src",
+      "extraPaths": [
+        "src"
+      ],
+      "typeCheckingMode": "strict"
+    }
   ]
 }

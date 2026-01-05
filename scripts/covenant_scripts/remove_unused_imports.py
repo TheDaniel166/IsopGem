@@ -6,30 +6,49 @@ import subprocess
 import re
 from pathlib import Path
 from typing import Set
+import json
+from collections import defaultdict
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 SRC_DIR = REPO_ROOT / "src"
 
 
-def get_unused_imports(file_path: Path) -> Set[str]:
-    """Run pyflakes and extract unused import names."""
+def get_unused_imports(file_path: Path) -> dict[int, set[str]]:
+    """Run pyright and return dict of line_num -> set of unused names."""
     try:
+        # Run pyright on the specific file
+        # Using npx -y pyright to ensure we use the project version
         result = subprocess.run(
-            ["python3", "-m", "pyflakes", str(file_path)],
+            ["npx", "-y", "pyright", "--outputjson", str(file_path)],
             capture_output=True,
             text=True
         )
         
-        unused = set()
-        for line in result.stdout.splitlines():
-            # Match: filename.py:123: 'SomeImport' imported but unused
-            match = re.search(r"'([^']+)' imported but unused", line)
-            if match:
-                unused.add(match.group(1))
+        try:
+            output = json.loads(result.stdout)
+        except json.JSONDecodeError:
+            # Pyright might verify clean and return empty or non-json if failed
+            return {}
+            
+        diagnostics = output.get("generalDiagnostics", [])
+        unused = defaultdict(set)
+        
+        for diag in diagnostics:
+            if diag.get("rule") == "reportUnusedImport":
+                # Line numbers in Pyright are 0-indexed
+                line_num = diag["range"]["start"]["line"] + 1
+                message = diag.get("message", "")
+                
+                # Message format: "Import 'X' is not accessed"
+                match = re.search(r"Import '([^']+)' is not accessed", message)
+                if match:
+                    name = match.group(1)
+                    unused[line_num].add(name)
         
         return unused
-    except Exception:
-        return set()
+    except Exception as e:
+        print(f"Error running pyright on {file_path}: {e}")
+        return {}
 
 
 def remove_unused_imports_from_file(file_path: Path, dry_run: bool = True) -> int:
