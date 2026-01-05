@@ -3,9 +3,9 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, cast
 
-from ..shared.solid_payload import SolidLabel, SolidPayload
+from ..shared.solid_payload import Face, SolidLabel, SolidPayload
 from .solid_geometry import Vec3, edges_from_faces
 from .solid_property import SolidProperty
 
@@ -54,7 +54,7 @@ class CylinderSolidService:
         if radius <= 0 or height <= 0:
             raise ValueError("Radius and Height must be positive")
 
-        metrics = CylinderSolidService._compute_metrics(radius, height)
+        metrics = CylinderSolidService.compute_metrics(radius, height)
         
         vertices: List[Vec3] = []
         faces: List[Tuple[int, ...]] = []
@@ -95,7 +95,7 @@ class CylinderSolidService:
         payload = SolidPayload(
             vertices=vertices,
             edges=edges,
-            faces=faces,
+            faces=cast(List[Face], faces),
             labels=[
                 SolidLabel(text=f"r={radius:.2f}, h={height:.2f}", position=(0, 0, height * 1.05))
             ],
@@ -110,7 +110,7 @@ class CylinderSolidService:
         return CylinderResult(payload=payload, metrics=metrics)
 
     @staticmethod
-    def _compute_metrics(r: float, h: float) -> CylinderMetrics:
+    def compute_metrics(r: float, h: float) -> CylinderMetrics:
         base_area = math.pi * (r ** 2)
         lateral_area = 2 * math.pi * r * h
         circumference = 2 * math.pi * r
@@ -184,10 +184,14 @@ class CylinderSolidCalculator:
         elif key == 'height':
             h = value
         elif key == 'circumference':
+            if value is None:
+                return False
             r = value / (2 * math.pi)
         elif key == 'base_area':
             r = math.sqrt(value / math.pi)
         elif key == 'lateral_area':
+            if value is None:
+                return False
             # L = 2*pi*r*h. Solve for h (keep r) or r (keep h)?
             # Prioritize solving for height if r is set.
             if r and r > 0:
@@ -195,6 +199,8 @@ class CylinderSolidCalculator:
             elif h and h > 0:
                 r = value / (2 * math.pi * h)
         elif key == 'surface_area':
+            if value is None:
+                return False
             # A = 2*pi*r*(r+h). 
             # Solve for r (quadratic) or h (linear).
             # If h is known/fixed, solve for r?
@@ -215,6 +221,8 @@ class CylinderSolidCalculator:
                 # Solve for r (assuming h is fixed? or h scales?)
                 # 2*pi*r^2 + 2*pi*h*r - A = 0
                 # Quadratic: a=2pi, b=2pi*h, c=-A
+                if h is None or h <= 0:
+                    return False
                 a = 2 * math.pi
                 b = 2 * math.pi * h
                 c = -value
@@ -246,7 +254,7 @@ class CylinderSolidCalculator:
         if r is None or h is None:
             return
             
-        metrics = CylinderSolidService._compute_metrics(r, h)
+        metrics = CylinderSolidService.compute_metrics(r, h)
         self._properties['circumference'].value = metrics.circumference
         self._properties['base_area'].value = metrics.base_area
         self._properties['lateral_area'].value = metrics.lateral_area
@@ -273,7 +281,7 @@ class CylinderSolidCalculator:
         """
         return self._result.payload if self._result else None
 
-    def metadata(self) -> Dict[str, float]:
+    def metadata(self) -> dict[str, float]:
         """
         Metadata logic.
         
@@ -282,7 +290,7 @@ class CylinderSolidCalculator:
         """
         if not self._result:
             return {}
-        return dict(self._result.payload.metadata)
+        return cast(dict[str, float], self._result.payload.metadata)
 
     def metrics(self) -> Optional[CylinderMetrics]:
         """

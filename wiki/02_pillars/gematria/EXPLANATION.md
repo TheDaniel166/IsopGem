@@ -125,8 +125,8 @@ The **Gematria Protocol** is the **Tongue of God**. It is responsible for the tr
 
 ## Infrastructure
 
-### **calculation_repository.py** (`src/pillars/gematria/repositories/calculation_repository.py`)
-*   **Architectural Role**: Persistence Layer
-*   **The Purpose**: High-speed retrieval of past calculations.
-*   **Key Logic**: Wraps `Whoosh` for text indexing.
-*   **Backing Store**: `sqlite_calculation_repository.py` (`src/pillars/gematria/repositories/sqlite_calculation_repository.py`)
+### **sqlite_calculation_repository.py** (`src/pillars/gematria/repositories/sqlite_calculation_repository.py`)
+*   **Architectural Role**: Persistence Layer (Repository)
+*   **The Purpose**: Storage and retrieval of gematria calculations.
+*   **Key Logic**: SQLAlchemy-backed repository using `CalculationEntity` model.
+*   **Backing Store**: SQLite database via `shared.database` session factory.

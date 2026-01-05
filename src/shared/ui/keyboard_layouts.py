@@ -60,6 +60,26 @@ ASTRONOMICON_LAYOUT = KeyboardLayout(
     font_family="Astronomicon"
 )
 
+ARABIC_LAYOUT = KeyboardLayout(
+    name="arabic",
+    display_name="Arabic",
+    rows=[
+        ['ض', 'ص', 'ث', 'ق', 'ف', 'غ', 'ع', 'ه', 'خ', 'ح', 'ج', 'د'],
+        ['ش', 'س', 'ي', 'ب', 'ل', 'ا', 'ت', 'ن', 'م', 'ك', 'ط'],
+        ['ظ', 'ز', 'و', 'ة', 'ى', 'ر', 'ذ', 'ء', 'ئ']
+    ]
+)
+
+SANSKRIT_LAYOUT = KeyboardLayout(
+    name="sanskrit",
+    display_name="Sanskrit",
+    rows=[
+        ['औ', 'ऐ', 'आ', 'ई', 'ऊ', 'भ', 'ङ', 'घ', 'ध', 'झ', 'ढ', 'ञ'],
+        ['ओ', 'ए', 'अ', 'इ', 'उ', 'फ', 'र', 'क', 'त', 'च', 'ट', 'व'],
+        ['ं','ः','म','न','ण','ल','स','य','श','ष','प','द','ज','ड','ख','थ','छ','ठ','ग','ब','ह']
+    ]
+)
+
 SPECIAL_LAYOUT = KeyboardLayout(
     name="special",
     display_name="Special",
@@ -87,6 +107,8 @@ ESOTERIC_LAYOUT = KeyboardLayout(
 LAYOUTS: Dict[str, KeyboardLayout] = {
     "hebrew": HEBREW_LAYOUT,
     "greek": GREEK_LAYOUT,
+    "arabic": ARABIC_LAYOUT,
+    "sanskrit": SANSKRIT_LAYOUT,
     "trigrammaton": TRIGRAMMATON_LAYOUT,
     "astronomicon": ASTRONOMICON_LAYOUT,
     "special": SPECIAL_LAYOUT,

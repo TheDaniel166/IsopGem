@@ -3,9 +3,9 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple, cast
 
-from ..shared.solid_payload import SolidLabel, SolidPayload
+from ..shared.solid_payload import Face, SolidLabel, SolidPayload
 from .solid_geometry import Vec3, edges_from_faces
 from .solid_property import SolidProperty
 
@@ -55,7 +55,7 @@ class ConeSolidService:
         if radius <= 0 or height <= 0:
             raise ValueError("Radius and Height must be positive")
 
-        metrics = ConeSolidService._compute_metrics(radius, height)
+        metrics = ConeSolidService.compute_metrics(radius, height)
         
         vertices: List[Vec3] = []
         faces: List[Tuple[int, ...]] = []
@@ -84,7 +84,7 @@ class ConeSolidService:
         payload = SolidPayload(
             vertices=vertices,
             edges=edges,
-            faces=faces,
+            faces=cast(List[Face], faces),
             labels=[
                 SolidLabel(text=f"r={radius:.2f}, h={height:.2f}", position=(0, 0, height * 1.05))
             ],
@@ -100,7 +100,7 @@ class ConeSolidService:
         return ConeResult(payload=payload, metrics=metrics)
 
     @staticmethod
-    def _compute_metrics(r: float, h: float) -> ConeMetrics:
+    def compute_metrics(r: float, h: float) -> ConeMetrics:
         slant = math.sqrt(r**2 + h**2)
         base_area = math.pi * (r ** 2)
         lateral_area = math.pi * r * slant
@@ -178,14 +178,22 @@ class ConeSolidCalculator:
             h = value
         elif key == 'slant_height':
             # Solve for height keeping radius constant
-            h = math.sqrt(max(0, value**2 - r**2))  # type: ignore[reportOptionalOperand, reportUnknownArgumentType]
+            if value is None or r is None:
+                return False
+            h = math.sqrt(max(0, value**2 - r**2))
         elif key == 'base_circumference':
+            if value is None:
+                return False
             r = value / (2 * math.pi)
         elif key == 'base_area':
+            if value is None:
+                return False
             r = math.sqrt(value / math.pi)
         elif key == 'lateral_area':
             # L = pi * r * s. 
             # If r is fixed/known, solve for s, then h.
+            if value is None:
+                return False
             if r and r > 0:
                 s = value / (math.pi * r)
                 if s > r:
@@ -218,6 +226,8 @@ class ConeSolidCalculator:
             # h = sqrt(s^2 - r^2)
             
             # Prioritize solving for h if r is valid
+            if value is None:
+                return False
             if r and r > 0:
                 term = value / (math.pi * r)
                 s = term - r
@@ -231,7 +241,9 @@ class ConeSolidCalculator:
 
         elif key == 'volume':
             # Solve for height keeping radius constant
-            h = (3 * value) / (math.pi * r**2)  # type: ignore[reportOperatorIssue, reportOptionalOperand, reportUnknownVariableType]
+            if value is None or r is None:
+                return False
+            h = (3 * value) / (math.pi * r**2)
             
         self._properties['radius'].value = r
         self._properties['height'].value = h
@@ -244,7 +256,7 @@ class ConeSolidCalculator:
         if r is None or h is None:
             return
             
-        metrics = ConeSolidService._compute_metrics(r, h)
+        metrics = ConeSolidService.compute_metrics(r, h)
         self._properties['slant_height'].value = metrics.slant_height
         self._properties['base_circumference'].value = metrics.base_circumference
         self._properties['base_area'].value = metrics.base_area
@@ -272,7 +284,7 @@ class ConeSolidCalculator:
         """
         return self._result.payload if self._result else None
 
-    def metadata(self) -> Dict[str, float]:
+    def metadata(self) -> dict[str, float]:
         """
         Metadata logic.
         
@@ -281,7 +293,7 @@ class ConeSolidCalculator:
         """
         if not self._result:
             return {}
-        return dict(self._result.payload.metadata)
+        return cast(dict[str, float], self._result.payload.metadata)
 
     def metrics(self) -> Optional[ConeMetrics]:
         """

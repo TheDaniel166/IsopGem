@@ -19,6 +19,14 @@ from .tq_calculator import (
     TQGematriaCalculator, TQReducedCalculator, TQSquareCalculator,
     TQTriangularCalculator, TQPositionCalculator
 )
+from .arabic_calculator import (
+    ArabicGematriaCalculator, ArabicMaghrebiCalculator,
+    ArabicSmallValueCalculator,
+    ArabicOrdinalCalculator
+)
+from .sanskrit_calculator import SanskritKatapayadiCalculator
+
+
 
 __all__ = [
     'GematriaCalculator',
@@ -34,5 +42,7 @@ __all__ = [
     'GreekReverseSubstitutionCalculator', 'GreekPairMatchingCalculator',
     'GreekNextLetterCalculator',
     'TQGematriaCalculator', 'TQReducedCalculator', 'TQSquareCalculator',
-    'TQTriangularCalculator', 'TQPositionCalculator'
+    'TQTriangularCalculator', 'TQPositionCalculator',
+    'ArabicGematriaCalculator', 'ArabicMaghrebiCalculator',
+    'ArabicSmallValueCalculator', 'ArabicOrdinalCalculator'
 ]

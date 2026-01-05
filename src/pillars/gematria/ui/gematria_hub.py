@@ -48,7 +48,12 @@ from ..services import (
     TQReducedCalculator,
     TQSquareCalculator,
     TQTriangularCalculator,
-    TQPositionCalculator
+    TQPositionCalculator,
+    ArabicGematriaCalculator,
+    ArabicMaghrebiCalculator,
+    ArabicSmallValueCalculator,
+    ArabicOrdinalCalculator,
+    SanskritKatapayadiCalculator
 )
 
 
@@ -264,6 +269,15 @@ class GematriaHub(QWidget):
             TQSquareCalculator(),
             TQTriangularCalculator(),
             TQPositionCalculator(),
+            # Arabic calculators
+            ArabicGematriaCalculator(),
+            ArabicMaghrebiCalculator(),
+            ArabicSmallValueCalculator(),
+            ArabicMaghrebiCalculator(),
+            ArabicSmallValueCalculator(),
+            ArabicOrdinalCalculator(),
+            # Sanskrit
+            SanskritKatapayadiCalculator(),
         ]
         
         # Open through window manager - allow_multiple=True means each click creates a new window
@@ -326,6 +340,15 @@ class GematriaHub(QWidget):
             TQSquareCalculator(),
             TQTriangularCalculator(),
             TQPositionCalculator(),
+            # Arabic calculators
+            ArabicGematriaCalculator(),
+            ArabicMaghrebiCalculator(),
+            ArabicSmallValueCalculator(),
+            ArabicMaghrebiCalculator(),
+            ArabicSmallValueCalculator(),
+            ArabicOrdinalCalculator(),
+            # Sanskrit
+            SanskritKatapayadiCalculator(),
         ]
         
         # Open through window manager
@@ -387,6 +410,15 @@ class GematriaHub(QWidget):
             TQSquareCalculator(),
             TQTriangularCalculator(),
             TQPositionCalculator(),
+            # Arabic calculators
+            ArabicGematriaCalculator(),
+            ArabicMaghrebiCalculator(),
+            ArabicSmallValueCalculator(),
+            ArabicMaghrebiCalculator(),
+            ArabicSmallValueCalculator(),
+            ArabicOrdinalCalculator(),
+            # Sanskrit
+            SanskritKatapayadiCalculator(),
         ]
         
         # Open through window manager
@@ -437,6 +469,15 @@ class GematriaHub(QWidget):
             TQSquareCalculator(),
             TQTriangularCalculator(),
             TQPositionCalculator(),
+            # Arabic calculators
+            ArabicGematriaCalculator(),
+            ArabicMaghrebiCalculator(),
+            ArabicSmallValueCalculator(),
+            ArabicMaghrebiCalculator(),
+            ArabicSmallValueCalculator(),
+            ArabicOrdinalCalculator(),
+            # Sanskrit
+            SanskritKatapayadiCalculator(),
         ]
         self.window_manager.open_window(
             window_type="methods_reference",

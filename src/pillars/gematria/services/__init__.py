@@ -39,6 +39,13 @@ from .tq_calculator import (
     TQTriangularCalculator,
     TQPositionCalculator
 )
+from shared.services.gematria import (
+    ArabicGematriaCalculator,
+    ArabicMaghrebiCalculator,
+    ArabicSmallValueCalculator,
+    ArabicOrdinalCalculator,
+    SanskritKatapayadiCalculator
+)
 from .calculation_service import CalculationService
 
 __all__ = [
@@ -76,5 +83,10 @@ __all__ = [
     'TQSquareCalculator',
     'TQTriangularCalculator',
     'TQPositionCalculator',
+    'ArabicGematriaCalculator',
+    'ArabicMaghrebiCalculator',
+    'ArabicSmallValueCalculator',
+    'ArabicOrdinalCalculator',
+    'SanskritKatapayadiCalculator',
     'CalculationService'
 ]

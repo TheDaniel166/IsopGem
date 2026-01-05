@@ -3,9 +3,9 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, cast
 
-from ..shared.solid_payload import SolidLabel, SolidPayload
+from ..shared.solid_payload import Face, SolidLabel, SolidPayload, Vec3
 from .solid_geometry import Vec3, edges_from_faces
 from .solid_property import SolidProperty
 
@@ -51,7 +51,7 @@ class SphereSolidService:
         if radius <= 0:
             raise ValueError("Radius must be positive")
 
-        metrics = SphereSolidService._compute_metrics(radius)
+        metrics = SphereSolidService.compute_metrics(radius)
         
         vertices: List[Vec3] = []
         faces: List[Tuple[int, ...]] = []
@@ -88,7 +88,7 @@ class SphereSolidService:
         payload = SolidPayload(
             vertices=vertices,
             edges=edges,
-            faces=faces,
+            faces=cast(List[Face], faces),
             labels=[
                 SolidLabel(text=f"r = {radius:.2f}", position=(0, 0, radius * 1.1))
             ],
@@ -102,7 +102,7 @@ class SphereSolidService:
         return SphereResult(payload=payload, metrics=metrics)
 
     @staticmethod
-    def _compute_metrics(r: float) -> SphereMetrics:
+    def compute_metrics(r: float) -> SphereMetrics:
         return SphereMetrics(
             radius=r,
             diameter=2 * r,
@@ -164,10 +164,16 @@ class SphereSolidCalculator:
         if key == 'radius':
             r = value
         elif key == 'diameter':
+            if value is None:
+                return False
             r = value / 2
         elif key == 'surface_area':
+            if value is None:
+                return False
             r = math.sqrt(value / (4 * math.pi))
         elif key == 'volume':
+            if value is None:
+                return False
             r = (3 * value / (4 * math.pi)) ** (1/3)
 
         if r is not None:
@@ -182,7 +188,7 @@ class SphereSolidCalculator:
         if r is None:
             return
             
-        metrics = SphereSolidService._compute_metrics(r)
+        metrics = SphereSolidService.compute_metrics(r)
         self._properties['radius'].value = metrics.radius
         self._properties['diameter'].value = metrics.diameter
         self._properties['surface_area'].value = metrics.surface_area
@@ -208,7 +214,7 @@ class SphereSolidCalculator:
         """
         return self._result.payload if self._result else None
 
-    def metadata(self) -> Dict[str, float]:
+    def metadata(self) -> dict[str, float]:
         """
         Metadata logic.
         
@@ -217,4 +223,4 @@ class SphereSolidCalculator:
         """
         if not self._result:
             return {}
-        return dict(self._result.payload.metadata)
+        return cast(dict[str, float], self._result.payload.metadata)

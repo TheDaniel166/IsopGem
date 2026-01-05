@@ -213,7 +213,7 @@ class VirtualKeyboard(QDialog):
         self.layout_buttons = {}
         
         # Updated Order v2.4
-        layout_order = ["hebrew", "greek", "trigrammaton", "astronomicon", "special", "esoteric"]
+        layout_order = ["hebrew", "greek", "arabic", "sanskrit", "trigrammaton", "astronomicon", "special", "esoteric"]
         
         for layout_id in layout_order:
             if layout_id not in LAYOUTS: continue

@@ -189,3 +189,20 @@ Instead of isolated astrological text, the interpretation engine would weave acr
 
 This feature depends on the maturity of all four pillars. It represents the *culmination* of IsopGem's vision: not four separate tools, but one unified Temple of correspondences.
 
+## Prophecy: The Starfield Nexus (Feb 2026)
+
+**Deferred until Hardware Ascension (Feb 2026)**
+
+The "Starfield Nexus" prototype has proven the concept of Fractal Navigation: zooming from the Universe (Pillars) into Solar Systems (Tools).
+
+### The Vision
+- **Realistic Starfield**: Replace the static 2D background with a true 3D/parallax starfield.
+- **Hardware Acceleration**: Leverage upcoming hardware upgrade for high-fidelity rendering (Vulkan/Metal/OpenGL).
+- **Galaxy Simulation**: Procedural generation of stars, nebulae, and constellations.
+- **constellations.py**: Potential integration of real astronomical data for background stars.
+
+### Status
+- **Prototype**: Complete (`experiments/starfield_nexus`).
+- **Condition**: Awaiting hardware upgrade.
+- **Schedule**: February 2026.
+

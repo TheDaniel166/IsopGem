@@ -3,10 +3,10 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, cast
 
-from ..shared.solid_payload import SolidLabel, SolidPayload
-from .solid_geometry import Vec3, edges_from_faces
+from ..shared.solid_payload import Face, SolidLabel, SolidPayload, Vec3
+from .solid_geometry import edges_from_faces
 from .solid_property import SolidProperty
 
 
@@ -84,7 +84,7 @@ class SnubAntiprismSolidService:
         payload = SolidPayload(
             vertices=vertices,
             edges=edges,
-            faces=faces,
+            faces=cast(List[Face], faces),
             labels=[SolidLabel(text="J85", position=(0,0, C*s + 0.5))],
             metadata={
                 'edge': edge,
@@ -93,7 +93,7 @@ class SnubAntiprismSolidService:
             },
             suggested_scale=edge * 3.0
         )
-        return ComplexSolidResult(payload, payload.metadata)
+        return ComplexSolidResult(payload, cast(Dict[str, float], payload.metadata))
 
 
 class SnubAntiprismSolidCalculator:
@@ -200,7 +200,7 @@ class GyroelongatedSquarePrismSolidService:
             Result of build operation.
         """
         r_prism = edge / math.sqrt(2)
-        v_prism = []
+        v_prism: List[Vec3] = []
         for i in range(4):
             angle = (2 * math.pi * i) / 4 + math.pi/4
             v_prism.append((r_prism * math.cos(angle), r_prism * math.sin(angle), 0.0))
@@ -211,7 +211,7 @@ class GyroelongatedSquarePrismSolidService:
         # Square Antiprism (Top)
         # z from prism_h to prism_h + anti_h
         # Bottom ring of antiprism is the same as top ring of prism
-        v_anti = []
+        v_anti: List[Vec3] = []
         # Top ring rotated by 45 degrees
         for i in range(4):
             angle = (2 * math.pi * i) / 4 + math.pi/4 + math.pi/4
@@ -249,12 +249,12 @@ class GyroelongatedSquarePrismSolidService:
         payload = SolidPayload(
             vertices=vertices,
             edges=edges,
-            faces=faces,
+            faces=cast(List[Face], faces),
             labels=[SolidLabel(text="Hybrid", position=(0,0, prism_h + anti_h + 0.5))],
             metadata={'edge': edge, 'prism_height': prism_h, 'antiprism_height': anti_h, 'surface_area': sa, 'volume': vol},
             suggested_scale=max(edge, prism_h + anti_h) * 2.5
         )
-        return ComplexSolidResult(payload, payload.metadata)
+        return ComplexSolidResult(payload, cast(Dict[str, float], payload.metadata))
 
 
 class GyroelongatedSquarePrismSolidCalculator:

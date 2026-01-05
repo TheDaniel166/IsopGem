@@ -215,6 +215,23 @@ class GematriaCalculatorWindow(QMainWindow):
                 action = english_menu.addAction(name.replace("English ", ""))
                 action.triggered.connect(lambda checked, n=name: self._select_calculator(n))  # type: ignore[reportOptionalMemberAccess, reportUnknownArgumentType, reportUnknownLambdaType]
 
+        # Arabic submenu
+        arabic_menu = self.system_menu.addMenu("☪️ Arabic")
+        arabic_menu.addAction("✨ All Methods").triggered.connect(lambda: self._select_calculator("Arabic_ALL"))
+        arabic_menu.addSeparator()
+        for name in list(self.calculators.keys()):
+            if "Arabic" in name:
+                action = arabic_menu.addAction(name.replace("Arabic ", ""))
+                action.triggered.connect(lambda checked, n=name: self._select_calculator(n))  # type: ignore[reportOptionalMemberAccess, reportUnknownArgumentType, reportUnknownLambdaType]
+
+        # Sanskrit submenu
+        sanskrit_menu = self.system_menu.addMenu("🕉️ Sanskrit")
+        # Direct calculator selection since we only have one for now
+        for name in list(self.calculators.keys()):
+            if "Sanskrit" in name:
+                action = sanskrit_menu.addAction(name.replace("Sanskrit ", ""))
+                action.triggered.connect(lambda checked, n=name: self._select_calculator(n))
+
         self.system_button.setMenu(self.system_menu)
         
         # Set first calculator as default
@@ -366,9 +383,11 @@ class GematriaCalculatorWindow(QMainWindow):
                     self.virtual_keyboard.set_layout('hebrew')
                 elif language == 'Greek':
                     self.virtual_keyboard.set_layout('greek_lower')
+                elif language == 'Arabic':
+                    self.virtual_keyboard.set_layout('arabic')
         else:
             # Display only the method name without language prefix
-            display_name = system_name.replace("Hebrew ", "").replace("Greek ", "").replace("English ", "")
+            display_name = system_name.replace("Hebrew ", "").replace("Greek ", "").replace("English ", "").replace("Arabic ", "").replace("Sanskrit ", "")
             self.system_button.setText(display_name)
             self.current_calculator = self.calculators[system_name]
             self._current_language = None
@@ -379,6 +398,10 @@ class GematriaCalculatorWindow(QMainWindow):
                     self.virtual_keyboard.set_layout('hebrew')
                 elif 'Greek' in system_name:
                     self.virtual_keyboard.set_layout('greek_lower')
+                elif 'Arabic' in system_name:
+                    self.virtual_keyboard.set_layout('arabic')
+                elif 'Sanskrit' in system_name:
+                    self.virtual_keyboard.set_layout('sanskrit')
         
         # Toggle breakdown option based on mode
         self.show_breakdown_toggle.setEnabled(self.current_calculator is not None)
