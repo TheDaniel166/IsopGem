@@ -468,7 +468,7 @@ class NatalChartWindow(QMainWindow):
 
     def _on_service_error(self, err_tuple):
         """Handle async error."""
-        _exctype, value,_ traceback_str = err_tuple  # type: ignore[reportUnknownVariableType, reportUnusedVariable]
+        _exctype, value, _traceback_str = err_tuple  # type: ignore[reportUnknownVariableType, reportUnusedVariable]
         QMessageBox.critical(self, "Calculation Error", str(value))
         self._set_status(f"Error: {value}")
 

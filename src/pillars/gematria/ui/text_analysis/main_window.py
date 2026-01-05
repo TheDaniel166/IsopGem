@@ -559,7 +559,7 @@ class ExegesisWindow(QMainWindow):
                     _matches = self.analysis_service.find_value_matches(
                         text, val, self.current_calculator, include_nums, max_words
                     )
-                    for m_text, _start,_ end in matches:  # type: ignore[reportUnknownVariableType, unknown]
+                    for m_text, _start, _end in _matches:  # type: ignore[reportUnknownVariableType, unknown]
                         f.write(f"[{tab.document.title}] {m_text}\n")  # type: ignore[reportPossiblyUnboundVariable, reportUnknownMemberType, unknown]
                         count += 1
                 

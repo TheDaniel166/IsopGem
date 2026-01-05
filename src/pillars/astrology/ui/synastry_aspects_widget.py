@@ -135,7 +135,7 @@ class SynastryAspectsWidget(QWidget):
         
         # Build lookup
         aspect_lookup = {}
-        for pa, pb, _name, glyph,_ orb, color in self._aspects_data:  # type: ignore[reportUnknownMemberType, reportUnknownVariableType, reportUnusedVariable]
+        for pa, pb, _name, glyph, _orb, color in self._aspects_data:  # type: ignore[reportUnknownMemberType, reportUnknownVariableType, reportUnusedVariable]
             aspect_lookup[(pa, pb)] = (glyph, color)  # type: ignore[reportPossiblyUnboundVariable, reportUnboundVariable, unknown]
         
         for r, pa in enumerate(self._planets_a):

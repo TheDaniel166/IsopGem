@@ -511,7 +511,7 @@ class FormulaEngine:
         match = re.match(r'(\$?)([A-Z]+)(\$?)([0-9]+)', ref, re.IGNORECASE)
         if not match: return ref # Return as string if not valid ref
         
-        _abs_col, c_str,_ _abs_row, r_str = match.groups()  # type: ignore  # 4 errors
+        _abs_col, c_str, _abs_row, r_str = match.groups()  # type: ignore  # 4 errors
         row, col = self._to_rc(r_str, c_str)  # type: ignore[reportUndefinedVariable, reportUnknownArgumentType, reportUnknownMemberType]
 
         stack = getattr(self, "_eval_stack", None)
