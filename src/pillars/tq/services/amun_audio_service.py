@@ -1,259 +1,279 @@
 """
-Amun Audio Service - The Symphonic Synthesizer.
-Generates WAV audio files from Amun Sound signatures using additive synthesis with orchestral archetypes.
+Amun Audio Service - Meditative Sound Synthesis.
+
+Generates entraining audio from SoundFrame specifications.
+
+The Three Principles of Synthesis:
+    1. Pitch - Frequency in Hz (from ditrune position)
+    2. Timbre - Waveform type (Sine/Triangle/Sawtooth from Skin)
+    3. Entrainment - Amplitude pulse rate (4-13 Hz from Body)
 """
-import wave
 import math
 import struct
-import os
 import tempfile
-import random
+import wave
+from typing import Optional
+
+from ..models.amun_sound import SoundFrame, WaveformSpec
 
 
 class AmunAudioService:
-    """Service for generating Amun Sound Signatures as WAV files."""
-
+    """Service for generating entraining audio from SoundFrames."""
+    
+    SAMPLE_RATE = 44100
+    CHANNELS = 2
+    SAMPLE_WIDTH = 2  # 16-bit
+    MAX_AMP = 32767
+    
     @staticmethod
-    @staticmethod
-    def generate_wave_file(freq: float, attack: float = 0.1, release: float = 0.5, layers: int = 1, detune: float = 0.0, audio_type: str = 'Standard') -> str:
+    def generate_from_frame(
+        frame: SoundFrame,
+        duration: float = 4.0,
+        volume: float = 0.5,
+    ) -> str:
         """
-        Generate a temporary WAV file using Additive Synthesis (Symphonic Engine).
-        """
-        # Feature: Percussive/Plucked types enforce short duration if needed
-        if audio_type in ['Percussive', 'Plucked']:
-            # Ensure nice tail but crisp
-            pass 
-            
-        # Duration determined by envelope
-        duration = attack + release + 0.2 # Buffer
-        sample_rate = 44100
-        n_samples = int(sample_rate * duration)
-        
-        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp:
-            path = temp.name
-            
-        with wave.open(path, 'w') as wav_file:
-            wav_file.setnchannels(2)
-            wav_file.setsampwidth(2)
-            wav_file.setframerate(sample_rate)
-            
-            data = AmunAudioService._synthesize_data(freq, attack, release, layers, detune, n_samples, sample_rate, audio_type)
-            wav_file.writeframes(data)
-            
-        return path
-
-    @staticmethod
-    def generate_sequence(signatures: list, note_duration: float = 1.0) -> str:
-        """
-        Generate a single WAV file from a sequence of signatures.
+        Generate a WAV file from a SoundFrame.
         
         Args:
-            signatures: List of full signature dictionaries (output of calculate_signature).
-            note_duration: Duration of each note in seconds.
-            
+            frame: The SoundFrame containing pitch, timbre, and entrainment.
+            duration: Length in seconds.
+            volume: Master volume (0.0 to 1.0).
+        
         Returns:
-            Path to temporary WAV file.
+            Path to the generated WAV file.
         """
-        sample_rate = 44100
-        n_samples_per_note = int(sample_rate * note_duration)
+        if not frame.is_audible:
+            # Return silence for invisible ditrune
+            return AmunAudioService._generate_silence(duration)
         
-        fd, path = tempfile.mkstemp(suffix='.wav')
-        os.close(fd)
+        samples = AmunAudioService._synthesize_frame(
+            frame=frame,
+            duration=duration,
+            volume=volume,
+        )
         
-        with wave.open(path, 'w') as wav_file:
-            wav_file.setnchannels(2)
-            wav_file.setsampwidth(2)
-            wav_file.setframerate(sample_rate)
-            
-            full_data = bytearray()
-            
-            for sig in signatures:
-                _ch2 = sig['channels'][2]
-                _ch3 = sig['channels'][3]
-                _ch1 = sig['channels'][1]
-                
-                # Green Channel -> Dynamics (Amplitude)
-                # amp = ch2.get('value', 127) / 254.0 # Fallback mapping if not pre-calc?
-                # Actually SoundCalculator returns 'dynamics_amp' in parameters.
-                # Let's check the new structure.
-                # params = sig['parameters']
-                # freq = params['pitch_freq']
-                # amp = params['dynamics_amp']
-                # waveform = params['waveform']
-                
-                # Adapting to new structure if present, else fallback
-                # Legacy/Transition logic
-                # We expect params in `sig['parameters']` now.
-                if 'parameters' in sig:
-                    p = sig['parameters']
-                    freq = p.get('freq', 261.63)
-                    atk = p.get('attack', 0.1)
-                    rel = p.get('release', 0.5)
-                    layers = p.get('layers', 1)
-                    detune = p.get('detune', 0)
-                    audio_type = p.get('audio_type', 'Standard')
-                else:
-                    # Fallback
-                    freq = 261.63
-                    atk, rel = 0.1, 0.5
-                    layers, detune = 1, 0
-                    audio_type = 'Standard'
-                
-                # Note Duration logic for Sequencer?
-                # Sequencer usually wants fixed BPM. 
-                # For Symphonic, notes might overlap (Tail).
-                # For now, we cut to note_duration or allow tail?
-                # Let's render full envelope but overlap? 
-                # Simple: Render to n_samples determined by note_duration, 
-                # but if Envelope is longer, we might clip.
-                # Let's adjust n_samples to be max(note_duration, atk+rel)
-                # ensuring full sound.
-                # BUT generate_sequence appends linearly.
-                # So we must stick to note_duration for rhythm.
-                
-                # Re-calc n_samples for this specific note's envelope?
-                # No, sequence enforces grid.
-                # We'll stick to n_samples_per_note limits, effectively "choking" long notes.
-                
-                note_data = AmunAudioService._synthesize_data(freq, atk, rel, layers, detune, n_samples_per_note, sample_rate, audio_type)  # type: ignore[reportUnknownArgumentType]
-                full_data.extend(note_data)
-                
-            wav_file.writeframes(full_data)
-            
-        return path
-
+        return AmunAudioService._write_wav(samples)
+    
     @staticmethod
-    def _synthesize_data(freq: float, attack: float, release: float, layers: int, detune: float, n_samples: int, sample_rate: int, audio_type: str = 'Standard') -> bytes:
-        """Internal Additive Synthesis Logic with Archetype support."""
-        if freq == 0:
-            return b'\x00\x00' * n_samples * 2
-            
+    def _synthesize_frame(
+        frame: SoundFrame,
+        duration: float,
+        volume: float,
+    ) -> bytes:
+        """
+        Synthesize entraining audio for a SoundFrame.
+        
+        Implements:
+        - Additive synthesis based on waveform spec
+        - Amplitude modulation at entrainment pulse rate
+        - Smooth fade in/out
+        """
         data = bytearray()
-        
-        # Archetype Specific Variables
-        base_waveform = 'saw' # Default
-        if audio_type == 'Ambient': 
-            base_waveform = 'sine'
-        elif audio_type == 'Reedy':
-            base_waveform = 'square'
-        elif audio_type == 'Brassy':
-            base_waveform = 'brass' # Saw + Tri
-            
-        # Overrides for Percussive
-        if audio_type == 'Percussive':
-            attack = 0.01 # Force snap
-            
-        # Scaling Factor to prevent clipping with multiple layers
-        # Base volume 0.3, divided by sqrt(layers) roughly?
-        # JS: baseVol = 0.3 / Sqrt(layers)
-        base_vol = 0.3 / math.sqrt(layers) if layers > 0 else 0.3
-        
-        # Boost Ambient/Bass
-        if audio_type in ['Ambient', 'Bass']:
-            base_vol *= 1.2
-            
-        max_amp_val = 32767.0
-        
+        sample_rate = AmunAudioService.SAMPLE_RATE
+        n_samples = int(duration * sample_rate)
         two_pi = 2 * math.pi
         
-        # Pre-calc phase increments for active layers to save trig calls?
-        # We handle loop inside.
+        # Extract parameters
+        freq = frame.frequency
+        waveform = frame.waveform
+        pulse_rate = frame.pulse_rate
+        
+        # Fade envelope (avoid clicks)
+        fade_time = 0.3  # seconds
+        fade_samples = int(fade_time * sample_rate)
         
         for i in range(n_samples):
             t = i / sample_rate
             
-            # 1. Calculate Envelope (Linear A/R)
-            env = 0.0
-            if t < attack:
-                env = t / attack
-            elif t < (attack + release):
-                # Release phase: From 1.0 down to 0
-                rel_pos = t - attack
-                env = 1.0 - (rel_pos / release)
-            else:
-                env = 0.0
-                
-            if env < 0: env = 0
+            # 1. Generate waveform (additive synthesis)
+            wave_val = AmunAudioService._generate_waveform(
+                t, freq, waveform, two_pi
+            )
             
-            # Optimization: If Silent via Envelope, skip synthesis
-            if env <= 0.001 and t > attack:
-                _l_val,_ _r_val = 0, 0  # type: ignore  # 4 errors
-                data.extend(struct.pack('<hh', 0, 0))
+            # 2. Apply entrainment pulse (amplitude modulation)
+            # Pulse oscillates between 0.3 and 1.0 for gentle breathing effect
+            pulse_phase = two_pi * pulse_rate * t
+            pulse_env = 0.65 + 0.35 * math.sin(pulse_phase)
+            
+            # 3. Apply fade in/out
+            fade_env = 1.0
+            if i < fade_samples:
+                # Fade in
+                fade_env = 0.5 * (1 - math.cos(math.pi * i / fade_samples))
+            elif i > n_samples - fade_samples:
+                # Fade out
+                remaining = n_samples - i
+                fade_env = 0.5 * (1 - math.cos(math.pi * remaining / fade_samples))
+            
+            # 4. Combine
+            sample = wave_val * pulse_env * fade_env * volume
+            
+            # Convert to 16-bit integer
+            sample_int = int(sample * AmunAudioService.MAX_AMP)
+            sample_int = max(-32767, min(32767, sample_int))
+            
+            # Stereo (same on both channels)
+            data.extend(struct.pack('<hh', sample_int, sample_int))
+        
+        return bytes(data)
+    
+    @staticmethod
+    def _generate_waveform(
+        t: float,
+        freq: float,
+        waveform: WaveformSpec,
+        two_pi: float,
+    ) -> float:
+        """
+        Generate waveform sample using additive synthesis.
+        
+        Args:
+            t: Time in seconds.
+            freq: Fundamental frequency in Hz.
+            waveform: WaveformSpec with harmonic parameters.
+            two_pi: Pre-calculated 2*pi.
+        
+        Returns:
+            Sample value in range [-1, 1].
+        """
+        val = 0.0
+        
+        for h in range(1, waveform.max_harmonic + 1):
+            # Skip even harmonics for odd-only waveforms
+            if waveform.odd_harmonics and h % 2 == 0:
                 continue
-                
-            # 2. Layering Logic (Additive)
-            val = 0.0
             
-            # Layer 1: Fundamental
-            phase_main = two_pi * freq * t
+            # Calculate harmonic amplitude with rolloff
+            harmonic_amp = 1.0 / (h ** waveform.rolloff_exp)
             
-            if base_waveform == 'sine':
-                val += math.sin(phase_main)
-            elif base_waveform == 'square':
-                val += 1.0 if math.sin(phase_main) >= 0 else -1.0
-            else: # Saw / Brass
-                saw = ((phase_main / two_pi) % 1.0) * 2.0 - 1.0
-                if base_waveform == 'brass':
-                    # Mix Triangle
-                    tri = (2.0 / math.pi) * math.asin(math.sin(phase_main))
-                    val += 0.6 * saw + 0.4 * tri
-                else:
-                    val += saw
-
-            # Percussive Noise Burst
-            if audio_type == 'Percussive' and t < 0.05:
-                # Add white noise decay
-                noise = random.uniform(-1.0, 1.0)
-                noise_env = 1.0 - (t / 0.05)
-                val += noise * noise_env
-                
-            # Sub Oscillator for Bass/Pulse
-            if audio_type in ['Bass', 'Pulse', 'Ambient']:
-                 phase_sub = two_pi * (freq * 0.5) * t
-                 val += 0.5 * math.sin(phase_sub)
+            # Add harmonic
+            phase = two_pi * freq * h * t
+            val += math.sin(phase) * harmonic_amp
+        
+        # Normalize to prevent clipping
+        # Approximate normalization based on harmonic count
+        if waveform.odd_harmonics:
+            # Odd harmonics: fewer terms
+            norm = 1.0 + 0.1 * waveform.max_harmonic
+        else:
+            # All harmonics: more terms
+            norm = 1.0 + 0.15 * waveform.max_harmonic
+        
+        return val / norm
+    
+    @staticmethod
+    def _generate_silence(duration: float) -> str:
+        """Generate a silent WAV file."""
+        sample_rate = AmunAudioService.SAMPLE_RATE
+        n_samples = int(duration * sample_rate)
+        data = b'\x00\x00\x00\x00' * n_samples  # Stereo silence
+        return AmunAudioService._write_wav(data)
+    
+    @staticmethod
+    def _write_wav(samples: bytes) -> str:
+        """Write samples to a temporary WAV file."""
+        with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as f:
+            with wave.open(f.name, 'w') as wav:
+                wav.setnchannels(AmunAudioService.CHANNELS)
+                wav.setsampwidth(AmunAudioService.SAMPLE_WIDTH)
+                wav.setframerate(AmunAudioService.SAMPLE_RATE)
+                wav.writeframes(samples)
+            return f.name
+    
+    # =========================================================================
+    # Convenience Methods
+    # =========================================================================
+    
+    @staticmethod
+    def generate_from_decimal(
+        decimal: int,
+        duration: float = 4.0,
+        volume: float = 0.5,
+    ) -> str:
+        """
+        Generate audio from a ditrune decimal value.
+        
+        Args:
+            decimal: Ditrune value (0-728).
+            duration: Length in seconds.
+            volume: Master volume (0.0 to 1.0).
+        
+        Returns:
+            Path to generated WAV file.
+        """
+        from ..models.amun_sound import AmunSoundCalculator
+        frame = AmunSoundCalculator.calculate_signature(decimal)
+        return AmunAudioService.generate_from_frame(frame, duration, volume)
+    
+    @staticmethod
+    def generate_scale(
+        ditrunes: list,
+        duration_per_note: float = 2.0,
+        volume: float = 0.5,
+    ) -> str:
+        """
+        Generate audio for a sequence of ditrunes.
+        
+        Args:
+            ditrunes: List of ditrune decimal values.
+            duration_per_note: Duration of each note in seconds.
+            volume: Master volume.
+        
+        Returns:
+            Path to generated WAV file.
+        """
+        from ..models.amun_sound import AmunSoundCalculator
+        
+        all_samples = bytearray()
+        
+        for decimal in ditrunes:
+            frame = AmunSoundCalculator.calculate_signature(decimal)
+            if frame.is_audible:
+                samples = AmunAudioService._synthesize_frame(
+                    frame=frame,
+                    duration=duration_per_note,
+                    volume=volume,
+                )
+                all_samples.extend(samples)
+        
+        return AmunAudioService._write_wav(bytes(all_samples))
+    
+    @staticmethod
+    def generate_sequence(
+        signatures: list,
+        note_duration: float = 0.5,
+        volume: float = 0.5,
+    ) -> str:
+        """
+        Generate audio for a sequence of legacy signature dicts.
+        
+        This is a backward-compatibility wrapper for UI code.
+        
+        Args:
+            signatures: List of legacy signature dicts (from calculate_signature_legacy).
+            note_duration: Duration of each note in seconds.
+            volume: Master volume.
+        
+        Returns:
+            Path to generated WAV file.
+        """
+        all_samples = bytearray()
+        
+        for sig in signatures:
+            # Get the SoundFrame from the legacy dict
+            frame = sig.get('frame')
+            if frame is None:
+                # Fallback: recalculate from decimal
+                from ..models.amun_sound import AmunSoundCalculator
+                decimal = sig.get('meta', {}).get('decimal', 0)
+                frame = AmunSoundCalculator.calculate_signature(decimal)
             
-            # Additional Layers (Chorus/Stacking)
-            if layers > 1:
-                # Layer 2: Detuned (Chorus)
-                mult = 2.0 ** (detune / 1200.0)
-                
-                p_plus = two_pi * (freq * mult) * t
-                p_minus = two_pi * (freq / mult) * t
-                
-                w_p = math.sin(p_plus) if base_waveform == 'sine' else ((p_plus / two_pi) % 1.0) * 2.0 - 1.0
-                w_m = math.sin(p_minus) if base_waveform == 'sine' else ((p_minus / two_pi) % 1.0) * 2.0 - 1.0
-                
-                val += (w_p * 0.7) + (w_m * 0.7)
-                
-            if layers > 4:
-                # Layer 3: Octave Up
-                p_oct = two_pi * (freq * 2.0) * t
-                tri = (2.0 / math.pi) * math.asin(math.sin(p_oct))
-                if audio_type == 'Reedy':
-                    # Square octave
-                    sq_oct = 1.0 if math.sin(p_oct) >= 0 else -1.0
-                    val += sq_oct * 0.5
-                else:
-                    val += tri * 0.5
-                
-            if layers > 6 and audio_type != 'Bass':
-                # Layer 4: Perfect 5th
-                p_5th = two_pi * (freq * 1.5) * t
-                saw_5 = ((p_5th / two_pi) % 1.0) * 2.0 - 1.0
-                val += saw_5 * 0.4
-                
-            if layers > 10:
-                # Layer 6: High Shimmer
-                p_high = two_pi * (freq * 3.0) * t
-                val += math.sin(p_high) * 0.2
-                
-            # Apply Envelope and Volume
-            final_sample = val * base_vol * env * max_amp_val
-            
-            # Clip
-            final_val = max(-32767, min(32767, int(final_sample)))
-            
-            # Write Stereo (Dual Mono)
-            data.extend(struct.pack('<hh', final_val, final_val))
-            
-        return data
+            if frame.is_audible:
+                samples = AmunAudioService._synthesize_frame(
+                    frame=frame,
+                    duration=note_duration,
+                    volume=volume,
+                )
+                all_samples.extend(samples)
+        
+        return AmunAudioService._write_wav(bytes(all_samples))

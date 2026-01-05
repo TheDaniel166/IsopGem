@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                              QCheckBox)
 from PyQt6.QtCore import Qt, QUrl
 from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
-from ..models.amun_sound import AmunSoundCalculator
+from ..models.amun_sound import AmunSoundCalculator, SCALE_AXIS, StateFrame
 from ..services.amun_audio_service import AmunAudioService
 from ..services.kamea_symphony_service import KameaSymphonyService
 from ..services.kamea_grid_service import KameaGridService
@@ -66,15 +66,15 @@ class CalculatorTab(QWidget):
         self.btn_play.setEnabled(False)
         self.btn_play.clicked.connect(self.play_sound)
         
+        self.btn_axis = QPushButton("Play Axis Scale")
+        self.btn_axis.setToolTip("Play the Axis of Return (Chromatic Mandala)")
+        self.btn_axis.clicked.connect(self.play_axis_scale)
+        
         input_layout.addWidget(QLabel("Ditrune:"))
         input_layout.addWidget(self.le_input)
         input_layout.addWidget(btn_calc)
-        input_layout.addWidget(btn_calc)
         input_layout.addWidget(self.btn_play)
-        
-        self.chk_grand = QCheckBox("Grand Edition")
-        self.chk_grand.setToolTip("Use Kinetic Audio Engine (NumPy High-Res)")
-        input_layout.addWidget(self.chk_grand)
+        input_layout.addWidget(self.btn_axis)
         
         layout.addWidget(input_frame)
         layout.addStretch()
@@ -91,7 +91,7 @@ class CalculatorTab(QWidget):
             val = int(input_text)
             if not (0 <= val <= 728): raise ValueError("Range 0-728")
             
-            self.current_result = self.calculator.calculate_signature(val)
+            self.current_result = self.calculator.calculate_signature_legacy(val)
             self._display_results(self.current_result)
             self.btn_play.setEnabled(True)
             
@@ -140,59 +140,61 @@ class CalculatorTab(QWidget):
         self.output_display.setHtml(html)
 
     def play_sound(self):
-        """
-        Play sound logic.
-        
-        """
-        if not self.current_result: return
+        """Play sound for the current ditrune using the new Chromatic Mandala engine."""
+        if not self.current_result:
+            return
         
         # Update Visualizer immediately before play
         if self.main_window:
             self.main_window.update_visualizer(self.current_result)
-
-        # Updated for RGB structure
-        # Ch1 = Red (Pitch), Ch2 = Green (Dyn), Ch3 = Blue (Timbre)
-        # Note: AmunSoundCalculator output structure:
-        # 1: Pitch (Red) -> value, output (freq string)
-        # 2: Dynamics (Green) -> value, output (amp string)
-        # 3: Timbre (Blue) -> value, output (waveform)
         
-        # But wait! I need the raw floats for generation, not just strings.
-        # AmunSoundCalculator returns 'parameters' dict too.
-        params = self.current_result['parameters']
-        # Grand Edition Check
-        if self.chk_grand.isChecked():
-            # Use KameaSymphonyService
+        # New API: use StateFrame if available
+        frame = self.current_result.get('frame')
+        if frame:
             try:
-                nucleation = self.current_result.get('nucleation')
-                if not nucleation:
-                     logger.warning("Nucleation data missing; cannot play in Grand mode")
-                     return
-                
-                path = self.kamea_service.generate_wav_file(nucleation)
+                path = AmunAudioService.generate_from_frame(frame)
                 self.player.setSource(QUrl.fromLocalFile(path))
-                self.audio_output.setVolume(85) # Grand might be cleaner?
+                self.audio_output.setVolume(75)
                 self.player.play()
-                return
             except Exception as _e:
-                logger.exception("Grand play error")
-                return
-
-        # Standard Engine (AmunAudioService)
-        freq = params['freq']
-        attack = params['attack']
-        release = params['release']
-        layers = params['layers']
-        detune = params['detune']
-        audio_type = params.get('audio_type', 'Standard')
+                logger.exception("Play error (StateFrame)")
+            return
         
+        # Fallback: Legacy path
+        params = self.current_result.get('parameters', {})
         try:
-            path = AmunAudioService.generate_wave_file(freq, attack, release, layers, detune, audio_type)
+            path = AmunAudioService.generate_wave_file(
+                freq=params.get('freq', 261.63),
+                attack=params.get('attack', 0.5),
+                release=params.get('release', 1.0),
+                layers=params.get('layers', 6),
+            )
             self.player.setSource(QUrl.fromLocalFile(path))
             self.audio_output.setVolume(75)
             self.player.play()
         except Exception as _e:
-            logger.exception("Play error")
+            logger.exception("Play error (legacy)")
+    
+    def play_axis_scale(self):
+        """Play the Axis of Return scale (Chromatic Mandala meditation)."""
+        try:
+            # Generate the full Axis scale
+            frames = self.calculator.generate_scale(SCALE_AXIS)
+            path = AmunAudioService.generate_scale(frames, duration_per_state=2.0)
+            self.player.setSource(QUrl.fromLocalFile(path))
+            self.audio_output.setVolume(75)
+            self.player.play()
+            
+            # Update visualizer with first frame
+            if self.main_window and frames:
+                self.main_window.update_visualizer({'parameters': {
+                    'freq': frames[0].freq,
+                    'attack': frames[0].attack,
+                    'layers': frames[0].harmonic_profile,
+                    'color_hex': '#ffffff',
+                }})
+        except Exception as _e:
+            logger.exception("Axis scale play error")
 
 class ComposerTab(QWidget):
     """Tab for composing sequences."""
@@ -279,12 +281,14 @@ class ComposerTab(QWidget):
             try:
                 val = int(token)
                 if 0 <= val <= 728:
-                    sig = self.calculator.calculate_signature(val)
+                    sig = self.calculator.calculate_signature_legacy(val)
                     self.sequence_data.append(sig)
                     
-                    # Add to list
-                    param = sig['parameters']
-                    item_text = f"Ditrune {val}: {param['freq']:.1f}Hz, {param['layers']} Layers, {param['attack']}s Atk"
+                    # Add to list - use new API keys
+                    freq = sig.get('frequency', 0)
+                    waveform = sig.get('waveform', 'Unknown')
+                    pulse = sig.get('pulse_rate', 0)
+                    item_text = f"Ditrune {val}: {freq:.1f}Hz, {waveform}, {pulse:.1f}Hz Pulse"
                     self.list_widget.addItem(item_text)
             except ValueError:
                 continue

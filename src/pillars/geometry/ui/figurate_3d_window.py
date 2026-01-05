@@ -305,7 +305,7 @@ class Figurate3DWindow(BaseFigurateWindow):
         else:
             z_to_layer = {}
 
-        for idx, ((x2d, y2d), (_x3d,_ y3d, z3d)) in enumerate(zip(points_2d, points_3d), start=1):  # type: ignore[unknown]
+        for idx, ((x2d, y2d), (_x3d, _y3d, z3d)) in enumerate(zip(points_2d, points_3d), start=1):  # type: ignore[unknown]
             layer_idx = z_to_layer.get(round(z3d / spacing), 0)  # type: ignore[reportUndefinedVariable, reportUnknownArgumentType, unknown]
             
             if use_layer_colors:

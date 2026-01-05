@@ -211,7 +211,7 @@ class TorusKnotSolidService:
         parallel_frames = [(points[0], T0, N0, B0)]
         
         for i in range(1, total_steps + 1):
-            _prev_pos, prev_T, prev_N,_ prev_B = parallel_frames[-1]  # type: ignore[reportUnknownVariableType, reportUnusedVariable]
+            _prev_pos, prev_T, prev_N, _prev_B = parallel_frames[-1]  # type: ignore[reportUnknownVariableType, reportUnusedVariable]
             curr_pos = points[i]
             curr_T = tangents[i]
             

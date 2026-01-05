@@ -1603,7 +1603,7 @@ class TriangleSolverShape(GeometricShape):
             ('c', c, a, A, 'a', 'A'),
             ('c', c, b, B, 'b', 'B'),
         ]
-        for base_key, base_side, other_side, _other_angle,_ other_key, other_angle_key in ssa_cases:  # type: ignore[reportUnknownVariableType, reportUnusedVariable]
+        for base_key, base_side, other_side, _other_angle, _other_key, other_angle_key in _ssa_cases:  # type: ignore[reportUnknownVariableType, reportUnusedVariable]
             base_angle = {'a': A, 'b': B, 'c': C}[base_key]  # type: ignore[reportPossiblyUnboundVariable, reportUnknownVariableType, unknown]
             if not (base_side and other_side and base_angle and base_angle > 0):
                 continue
