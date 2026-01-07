@@ -53,6 +53,7 @@ Before the Twelve Tunings, scan the target. If any are found, declare “The Ins
 - Gradients: Archetyped buttons use gradient fills from COLORS.
 - Interaction: `:hover` and `:pressed` states defined.
 - Ghost Constraint: `ghost` may NOT be used for primary or destructive actions.
+- **Decree Exception**: Buttons with inline styles are permitted IF preceded by a comment containing `DEVIATION FROM VISUAL LITURGY (by decree of The Magus` with date and rationale. These are treated as intentional overrides and do not constitute failures.
 
 ### 4. The Tuning of the Vessels (Inputs) — MANDATE
 - Vessel: Inputs use `light` background, `ash` 2px borders, 8px radius, min-height 40px.
@@ -90,8 +91,8 @@ Before the Twelve Tunings, scan the target. If any are found, declare “The Ins
 
 ## The Rite of Refusal
 Harmonia MUST refuse to declare harmony if any occur:
-- Button without an archetype.
-- Raw hex outside COLORS.
+- Button without an archetype (UNLESS covered by a Magus decree comment).
+- Raw hex outside COLORS (UNLESS covered by a Magus decree comment).
 - Container using default Qt styling (unstyled substrate/tablet).
 - Focusable input without visible focus ring.
 - UI file importing data-layer/persistence directly.

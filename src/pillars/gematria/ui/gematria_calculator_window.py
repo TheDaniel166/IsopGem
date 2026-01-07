@@ -65,19 +65,35 @@ class GematriaCalculatorWindow(QMainWindow):
         # Prevent this window from closing the entire application
         self.setAttribute(Qt.WidgetAttribute.WA_QuitOnClose, False)
 
-        # Central Widget & Main Horizontal Layout
+        # Level 0: The Ghost Layer (Nano Banana substrate)
+        from pathlib import Path
+        possible_paths = [
+            Path("src/assets/patterns/calculator_bg_pattern.png"),
+            Path("src/assets/patterns/tq_bg_pattern.png"),
+            Path("assets/patterns/tq_bg_pattern.png"),
+        ]
+        
+        bg_path = None
+        for p in possible_paths:
+            if p.exists():
+                bg_path = p
+                break
+        
         central = QWidget()
         central.setObjectName("CentralContainer")
         self.setCentralWidget(central)
         
-        # Applying the background pattern ONLY to the central container
-        central.setStyleSheet(
-            f"""
-            QWidget#CentralContainer {{
-                background-color: {COLORS['cloud']};
-            }}
-        """
-        )
+        if bg_path:
+            abs_path = bg_path.absolute().as_posix()
+            central.setStyleSheet(f"""
+                QWidget#CentralContainer {{
+                    border-image: url("{abs_path}") 0 0 0 0 stretch stretch;
+                    border: none;
+                    background-color: {COLORS['light']};
+                }}
+            """)
+        else:
+            central.setStyleSheet(f"QWidget#CentralContainer {{ background-color: {COLORS['light']}; }}")
         
         main_layout = QHBoxLayout(central)
         main_layout.setContentsMargins(20, 20, 20, 20)

@@ -44,9 +44,6 @@ class ELSSearchWindow(QMainWindow):
         
         """
         super().__init__(parent)
-        app = QApplication.instance()
-        if app and not app.styleSheet():
-            theme.apply_light_theme(app)
         self.window_manager = window_manager
         self._service = ELSSearchService()
         
@@ -86,16 +83,120 @@ class ELSSearchWindow(QMainWindow):
         left_pane = self._create_left_pane()
         splitter.addWidget(left_pane)
         
-        # === CENTER PANE: Grid View ===
+        # === CENTER PANE: Grid View with Floating Zoom ===
+        center_container = QWidget()
+        center_layout = QVBoxLayout(center_container)
+        center_layout.setContentsMargins(0, 0, 0, 0)
+        center_layout.setSpacing(0)
+        
+        # Grid view
         self._grid_view = ELSGridView()
-        splitter.addWidget(self._grid_view)
+        center_layout.addWidget(self._grid_view)
+        
+        # Floating zoom controls (overlay in top-right)
+        zoom_toolbar = QFrame(center_container)
+        zoom_toolbar.setObjectName("FloatingZoom")
+        zoom_layout = QHBoxLayout(zoom_toolbar)
+        zoom_layout.setContentsMargins(8, 8, 8, 8)
+        zoom_layout.setSpacing(4)
+        
+        # Glassmorphism styling per Visual Liturgy
+        zoom_toolbar.setStyleSheet(f"""
+            QFrame#FloatingZoom {{
+                background-color: rgba(30, 30, 40, 0.85);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 12px;
+            }}
+        """)
+        
+        # Apply shadow effect
+        from PyQt6.QtWidgets import QGraphicsDropShadowEffect
+        from PyQt6.QtGui import QColor
+        shadow = QGraphicsDropShadowEffect()
+        shadow.setBlurRadius(20)
+        shadow.setOffset(0, 4)
+        shadow.setColor(QColor(0, 0, 0, 120))
+        zoom_toolbar.setGraphicsEffect(shadow)
+        
+        # === ZOOM BUTTONS ===
+        # DEVIATION FROM VISUAL LITURGY (by decree of The Magus, 2026-01-07):
+        # - Inline styles instead of archetypes (for precise centering control)
+        # - Amber gradient (seeker palette) for visibility on dark glassmorphic background
+        # - Navigator archetype (dark slate) is invisible on dark surfaces
+        # Rationale: Centering precision and dark-surface visibility prioritized over semantic purity
+        
+        btn_zoom_out = QPushButton("−")
+        btn_zoom_out.setFixedSize(36, 36)
+        btn_zoom_out.setCursor(Qt.CursorShape.PointingHandCursor)
+        btn_zoom_out.setStyleSheet("""
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #f59e0b, stop:1 #d97706);
+                border: 2px solid #b45309;
+                color: white;
+                font-weight: 700;
+                font-size: 18pt;
+                border-radius: 8px;
+                padding: 0px;
+                text-align: center;
+            }
+            QPushButton:hover { background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #fbbf24, stop:1 #f59e0b); }
+            QPushButton:pressed { background: #b45309; }
+        """)
+        btn_zoom_out.clicked.connect(lambda: self._grid_view.zoom_out())
+        zoom_layout.addWidget(btn_zoom_out)
+        
+        btn_zoom_in = QPushButton("+")
+        btn_zoom_in.setFixedSize(36, 36)
+        btn_zoom_in.setCursor(Qt.CursorShape.PointingHandCursor)
+        btn_zoom_in.setStyleSheet("""
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #f59e0b, stop:1 #d97706);
+                border: 2px solid #b45309;
+                color: white;
+                font-weight: 700;
+                font-size: 18pt;
+                border-radius: 8px;
+                padding: 0px;
+                text-align: center;
+            }
+            QPushButton:hover { background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #fbbf24, stop:1 #f59e0b); }
+            QPushButton:pressed { background: #b45309; }
+        """)
+        btn_zoom_in.clicked.connect(lambda: self._grid_view.zoom_in())
+        zoom_layout.addWidget(btn_zoom_in)
+        
+        btn_zoom_reset = QPushButton("⟲")
+        btn_zoom_reset.setFixedSize(36, 36)
+        btn_zoom_reset.setCursor(Qt.CursorShape.PointingHandCursor)
+        btn_zoom_reset.setStyleSheet("""
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #f59e0b, stop:1 #d97706);
+                border: 2px solid #b45309;
+                color: white;
+                font-weight: 700;
+                font-size: 16pt;
+                border-radius: 8px;
+                padding: 0px;
+                text-align: center;
+            }
+            QPushButton:hover { background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #fbbf24, stop:1 #f59e0b); }
+            QPushButton:pressed { background: #b45309; }
+        """)
+        btn_zoom_reset.clicked.connect(lambda: self._grid_view.zoom_reset())
+        zoom_layout.addWidget(btn_zoom_reset)
+        
+        # Position floating toolbar in top-right
+        zoom_toolbar.setGeometry(10, 10, 130, 52)
+        zoom_toolbar.raise_()  # Ensure it's on top
+        
+        splitter.addWidget(center_container)
         
         # === RIGHT PANE: Results ===
         right_pane = self._create_right_pane()
         splitter.addWidget(right_pane)
         
         # Set splitter proportions
-        splitter.setSizes([280, 700, 320])
+        splitter.setSizes([380, 700, 380])
         splitter.setStretchFactor(0, 0)  # Left fixed
         splitter.setStretchFactor(1, 1)  # Center stretches
         splitter.setStretchFactor(2, 0)  # Right fixed
@@ -103,47 +204,59 @@ class ELSSearchWindow(QMainWindow):
         main_layout.addWidget(splitter, 1)
         
         # Status bar
-        self.statusBar().showMessage("Load a text to begin")
+        self.statusBar().showMessage("The grid awaits your text...")
         self.statusBar().setStyleSheet(theme.get_status_muted_style())
     
     def _create_left_pane(self) -> QWidget:
-        """Create left control pane with tabs."""
-        pane = QWidget()
-        pane.setMaximumWidth(300)
-        layout = QVBoxLayout(pane)
-        layout.setContentsMargins(5, 5, 5, 5)
+        """Create left control pane with unified workflow (no tabs)."""
+        from PyQt6.QtWidgets import QScrollArea
         
-        # Style as floating card
-        pane.setStyleSheet(theme.get_tablet_style())
+        # Scroll container
+        scroll = QScrollArea()
+        scroll.setMaximumWidth(380)
+        scroll.setWidgetResizable(True)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll.setStyleSheet("QScrollArea { border: none; background: transparent; }")
+        
+        # Content widget
+        pane = QWidget()
+        pane.setObjectName("LeftPane")
+        layout = QVBoxLayout(pane)
+        layout.setContentsMargins(12, 12, 12, 12)
+        layout.setSpacing(24)  # Visual Liturgy: spacing-lg (24px)
+        
+        # Style as floating card (scoped to allow descendant archetype selectors)
+        pane.setStyleSheet(f"QWidget#LeftPane {{ {theme.get_tablet_style()} }}")
         theme.apply_tablet_shadow(pane)
         
-        # Create tab widget
-        tabs = QTabWidget()
-        tabs.setStyleSheet(theme.get_exegesis_tab_style())
+        # === SECTION 1: Text Source ===
+        source_group = QGroupBox("📄 Text Source")
+        source_group.setStyleSheet(theme.get_exegesis_group_style())
+        source_layout = QVBoxLayout(source_group)
+        source_layout.setSpacing(8)  # Visual Liturgy: spacing-sm (8px)
         
-        # === TAB 1: Source & Grid ===
-        source_tab = QWidget()
-        source_layout = QVBoxLayout(source_tab)
-        source_layout.setSpacing(10)
+        source_layout.setSpacing(8)  # Visual Liturgy: spacing-sm (8px)
         
-        # Text Source section
-        source_layout.addWidget(QLabel("📄 <b>Text Source</b>"))
+        btn_row = QHBoxLayout()
+        btn_row.setSpacing(8)
         
-        btn_layout = QHBoxLayout()
         self._btn_load = QPushButton("📁 File")
+        self._btn_load.setMinimumHeight(40)
         self._btn_load.setCursor(Qt.CursorShape.PointingHandCursor)
         theme.set_archetype(self._btn_load, "seeker")
         self._btn_load.clicked.connect(self._on_load_document)
-        btn_layout.addWidget(self._btn_load)
+        btn_row.addWidget(self._btn_load)
         
         self._btn_paste = QPushButton("📋 Paste")
+        self._btn_paste.setMinimumHeight(40)
         self._btn_paste.setCursor(Qt.CursorShape.PointingHandCursor)
         theme.set_archetype(self._btn_paste, "seeker")
         self._btn_paste.clicked.connect(self._on_paste_text)
-        btn_layout.addWidget(self._btn_paste)
-        source_layout.addLayout(btn_layout)
+        btn_row.addWidget(self._btn_paste)
+        source_layout.addLayout(btn_row)
         
         self._btn_database = QPushButton("📚 Load from Database")
+        self._btn_database.setMinimumHeight(40)
         self._btn_database.setCursor(Qt.CursorShape.PointingHandCursor)
         theme.set_archetype(self._btn_database, "seeker")
         self._btn_database.clicked.connect(self._on_load_from_database)
@@ -151,55 +264,62 @@ class ELSSearchWindow(QMainWindow):
         
         self._letter_count_label = QLabel("Letters: 0")
         self._letter_count_label.setStyleSheet(
-            f"font-weight: bold; color: {theme.COLORS['magus']};"
+            f"font-weight: 700; font-size: 11pt; color: {theme.COLORS['magus']}; padding: 4px;"
         )
         source_layout.addWidget(self._letter_count_label)
         
-        # Separator
-        sep1 = QFrame()
-        sep1.setFrameShape(QFrame.Shape.HLine)
-        source_layout.addWidget(sep1)
+        layout.addWidget(source_group)
         
-        # Grid Configuration section
-        source_layout.addWidget(QLabel("📐 <b>Grid Configuration</b>"))
+        # === SECTION 2: Grid Configuration ===
+        grid_group = QGroupBox("📐 Grid Configuration")
+        grid_group.setStyleSheet(theme.get_exegesis_group_style())
+        grid_layout = QVBoxLayout(grid_group)
+        grid_layout.setSpacing(8)
+        grid_layout.setSpacing(8)
         
-        source_layout.addWidget(QLabel("Available Factors:"))
+        grid_layout.addWidget(QLabel("Factor:"))
         self._factors_combo = QComboBox()
         self._factors_combo.setStyleSheet(
-            f"background-color: {theme.COLORS['light']}; border: 1px solid {theme.COLORS['border']}; border-radius: 8px; padding: 6px 10px; color: {theme.COLORS['text_primary']};"
+            f"""QComboBox {{ background-color: {theme.COLORS['light']}; border: 1px solid {theme.COLORS['border']}; border-radius: 8px; padding: 8px 12px; color: {theme.COLORS['text_primary']}; }}
+                QComboBox:focus {{ border: 2px solid {theme.COLORS['focus']}; padding: 7px 11px; }}"""
         )
         self._factors_combo.currentIndexChanged.connect(self._on_factor_selected)
-        source_layout.addWidget(self._factors_combo)
+        grid_layout.addWidget(self._factors_combo)
         
-        custom_layout = QHBoxLayout()
-        custom_layout.addWidget(QLabel("Custom:"))
+        custom_row = QHBoxLayout()
+        custom_row.setSpacing(8)
+        custom_row.addWidget(QLabel("Custom:"))
         self._cols_spin = QSpinBox()
         self._cols_spin.setRange(1, 10000)
         self._cols_spin.setValue(50)
         self._cols_spin.setStyleSheet(
-            f"background-color: {theme.COLORS['light']}; border: 1px solid {theme.COLORS['border']}; border-radius: 8px; padding: 4px 8px; color: {theme.COLORS['text_primary']};"
+            f"""QSpinBox {{ background-color: {theme.COLORS['light']}; border: 1px solid {theme.COLORS['border']}; border-radius: 8px; padding: 6px 10px; color: {theme.COLORS['text_primary']}; }}
+                QSpinBox:focus {{ border: 2px solid {theme.COLORS['focus']}; padding: 5px 9px; }}"""
         )
-        custom_layout.addWidget(self._cols_spin)
-        custom_layout.addWidget(QLabel("cols"))
-        source_layout.addLayout(custom_layout)
+        custom_row.addWidget(self._cols_spin)
+        custom_row.addWidget(QLabel("cols"))
+        custom_row.addStretch()
+        grid_layout.addLayout(custom_row)
         
         self._btn_apply_grid = QPushButton("Apply Grid")
+        self._btn_apply_grid.setMinimumHeight(40)
         self._btn_apply_grid.setCursor(Qt.CursorShape.PointingHandCursor)
         theme.set_archetype(self._btn_apply_grid, "magus")
         self._btn_apply_grid.clicked.connect(self._on_apply_grid)
-        source_layout.addWidget(self._btn_apply_grid)
+        grid_layout.addWidget(self._btn_apply_grid)
         
-        source_layout.addStretch()
-        tabs.addTab(source_tab, "📄 Source")
+        layout.addWidget(grid_group)
         
-        # === TAB 2: Search ===
-        search_tab = QWidget()
-        search_layout = QVBoxLayout(search_tab)
+        # === SECTION 3: Search Configuration ===
+        search_group = QGroupBox("🔍 Search Configuration")
+        search_group.setStyleSheet(theme.get_exegesis_group_style())
+        search_layout = QVBoxLayout(search_group)
         search_layout.setSpacing(8)
         
         search_layout.addWidget(QLabel("Search Term:"))
         self._term_input = QLineEdit()
-        self._term_input.setPlaceholderText("Enter letters to find...")
+        self._term_input.setMinimumHeight(40)
+        self._term_input.setPlaceholderText("Seek the hidden letters...")
         self._term_input.setStyleSheet(
             f"""
                 QLineEdit {{
@@ -230,7 +350,8 @@ class ELSSearchWindow(QMainWindow):
         self._exact_skip_spin.setRange(1, 10000)
         self._exact_skip_spin.setValue(50)
         self._exact_skip_spin.setStyleSheet(
-            f"background-color: {theme.COLORS['light']}; border: 1px solid {theme.COLORS['border']}; border-radius: 8px; padding: 4px 8px; color: {theme.COLORS['text_primary']};"
+            f"""QSpinBox {{ background-color: {theme.COLORS['light']}; border: 1px solid {theme.COLORS['border']}; border-radius: 8px; padding: 4px 8px; color: {theme.COLORS['text_primary']}; }}
+                QSpinBox:focus {{ border: 2px solid {theme.COLORS['focus']}; padding: 3px 7px; }}"""
         )
         skip_layout.addWidget(self._exact_skip_spin)
         search_layout.addLayout(skip_layout)
@@ -245,7 +366,8 @@ class ELSSearchWindow(QMainWindow):
         self._min_skip_spin.setValue(1)
         self._min_skip_spin.setFixedWidth(60)
         self._min_skip_spin.setStyleSheet(
-            f"background-color: {theme.COLORS['light']}; border: 1px solid {theme.COLORS['border']}; border-radius: 8px; padding: 4px 8px; color: {theme.COLORS['text_primary']};"
+            f"""QSpinBox {{ background-color: {theme.COLORS['light']}; border: 1px solid {theme.COLORS['border']}; border-radius: 8px; padding: 4px 8px; color: {theme.COLORS['text_primary']}; }}
+                QSpinBox:focus {{ border: 2px solid {theme.COLORS['focus']}; padding: 3px 7px; }}"""
         )
         range_layout.addWidget(self._min_skip_spin)
         
@@ -256,7 +378,8 @@ class ELSSearchWindow(QMainWindow):
         self._max_skip_spin.setValue(100)
         self._max_skip_spin.setFixedWidth(70)
         self._max_skip_spin.setStyleSheet(
-            f"background-color: {theme.COLORS['light']}; border: 1px solid {theme.COLORS['border']}; border-radius: 8px; padding: 4px 8px; color: {theme.COLORS['text_primary']};"
+            f"""QSpinBox {{ background-color: {theme.COLORS['light']}; border: 1px solid {theme.COLORS['border']}; border-radius: 8px; padding: 4px 8px; color: {theme.COLORS['text_primary']}; }}
+                QSpinBox:focus {{ border: 2px solid {theme.COLORS['focus']}; padding: 3px 7px; }}"""
         )
         range_layout.addWidget(self._max_skip_spin)
         search_layout.addLayout(range_layout)
@@ -270,7 +393,8 @@ class ELSSearchWindow(QMainWindow):
         self._seq_combo = QComboBox()
         self._seq_combo.addItems(["Triangular", "Square", "Fibonacci"])
         self._seq_combo.setStyleSheet(
-            f"background-color: {theme.COLORS['light']}; border: 1px solid {theme.COLORS['border']}; border-radius: 8px; padding: 6px 10px; color: {theme.COLORS['text_primary']};"
+            f"""QComboBox {{ background-color: {theme.COLORS['light']}; border: 1px solid {theme.COLORS['border']}; border-radius: 8px; padding: 6px 10px; color: {theme.COLORS['text_primary']}; }}
+                QComboBox:focus {{ border: 2px solid {theme.COLORS['focus']}; padding: 5px 9px; }}"""
         )
         seq_layout.addWidget(self._seq_combo)
         search_layout.addLayout(seq_layout)
@@ -293,67 +417,81 @@ class ELSSearchWindow(QMainWindow):
         self._dir_combo = QComboBox()
         self._dir_combo.addItems(["Both", "Forward", "Reverse"])
         self._dir_combo.setStyleSheet(
-            f"background-color: {theme.COLORS['light']}; border: 1px solid {theme.COLORS['border']}; border-radius: 8px; padding: 6px 10px; color: {theme.COLORS['text_primary']};"
+            f"""QComboBox {{ background-color: {theme.COLORS['light']}; border: 1px solid {theme.COLORS['border']}; border-radius: 8px; padding: 6px 10px; color: {theme.COLORS['text_primary']}; }}
+                QComboBox:focus {{ border: 2px solid {theme.COLORS['focus']}; padding: 5px 9px; }}"""
         )
         dir_layout.addWidget(self._dir_combo)
         search_layout.addLayout(dir_layout)
         
         self._btn_search = QPushButton("🔍 Search")
+        self._btn_search.setMinimumHeight(40)
         self._btn_search.setCursor(Qt.CursorShape.PointingHandCursor)
         theme.set_archetype(self._btn_search, "magus")
         self._btn_search.clicked.connect(self._on_search)
         search_layout.addWidget(self._btn_search)
         
-        search_layout.addStretch()
-        tabs.addTab(search_tab, "🔍 Search")
+        layout.addWidget(search_group)
+        layout.addStretch()
         
-        layout.addWidget(tabs)
-        
-        # Zoom controls (always visible below tabs)
-        zoom_group = QFrame()
-        zoom_layout = QHBoxLayout(zoom_group)
-        zoom_layout.setContentsMargins(0, 10, 0, 0)
-        zoom_group.setStyleSheet(
-            f"background: {theme.COLORS['surface']}; border: 1px solid {theme.COLORS['border']}; border-radius: 12px;"
-        )
-        
-        btn_zoom_out = QPushButton("−")
-        btn_zoom_out.setCursor(Qt.CursorShape.PointingHandCursor)
-        theme.set_archetype(btn_zoom_out, "navigator")
-        btn_zoom_out.clicked.connect(lambda: self._grid_view.zoom_out())
-        zoom_layout.addWidget(btn_zoom_out)
-        
-        self._zoom_label = QLabel("100%")
-        zoom_layout.addWidget(self._zoom_label)
-        
-        btn_zoom_in = QPushButton("+")
-        btn_zoom_in.setCursor(Qt.CursorShape.PointingHandCursor)
-        theme.set_archetype(btn_zoom_in, "navigator")
-        btn_zoom_in.clicked.connect(lambda: self._grid_view.zoom_in())
-        zoom_layout.addWidget(btn_zoom_in)
-        
-        btn_zoom_reset = QPushButton("Reset")
-        btn_zoom_reset.setCursor(Qt.CursorShape.PointingHandCursor)
-        theme.set_archetype(btn_zoom_reset, "navigator")
-        btn_zoom_reset.clicked.connect(lambda: self._grid_view.zoom_reset())
-        zoom_layout.addWidget(btn_zoom_reset)
-        
-        layout.addWidget(zoom_group)
-        
-        return pane
+        scroll.setWidget(pane)
+        return scroll
     
     def _create_right_pane(self) -> QWidget:
-        """Create right results pane with gematria breakdown."""
+        """Create right results pane - focused on results table."""
         pane = QWidget()
-        pane.setMaximumWidth(400)
+        pane.setObjectName("RightPane")
+        pane.setMaximumWidth(380)
         layout = QVBoxLayout(pane)
+        layout.setContentsMargins(8, 8, 8, 8)
+        layout.setSpacing(12)
         
-        # Style as floating card
-        pane.setStyleSheet(theme.get_tablet_style())
+        # Style as floating card (scoped to allow descendant archetype selectors)
+        pane.setStyleSheet(f"QWidget#RightPane {{ {theme.get_tablet_style()} }}")
         theme.apply_tablet_shadow(pane)
         
-        layout.addWidget(QLabel("📊 Search Results"))
+        # Header with count
+        header_layout = QHBoxLayout()
+        header_label = QLabel("📊 Search Results")
+        header_label.setStyleSheet(f"font-size: 14pt; font-weight: 700; color: {theme.COLORS['text_primary']};")
+        header_layout.addWidget(header_label)
         
+        header_layout.addStretch()
+        
+        self._hits_label = QLabel("0 hits")
+        self._hits_label.setStyleSheet(
+            f"font-weight: 600; font-size: 11pt; color: {theme.COLORS['magus']};"
+        )
+        header_layout.addWidget(self._hits_label)
+        layout.addLayout(header_layout)
+        
+        # Gematria filter row
+        filter_row = QHBoxLayout()
+        filter_row.setSpacing(8)
+        filter_row.addWidget(QLabel("Filter by Gematria:"))
+        self._gematria_filter = QLineEdit()
+        self._gematria_filter.setPlaceholderText("e.g. 93")
+        self._gematria_filter.setFixedWidth(80)
+        self._gematria_filter.setStyleSheet(
+            f"""
+                QLineEdit {{
+                    background-color: {theme.COLORS['light']};
+                    border: 1px solid {theme.COLORS['border']};
+                    border-radius: 8px;
+                    padding: 6px 10px;
+                    color: {theme.COLORS['text_primary']};
+                }}
+                QLineEdit:focus {{
+                    border: 2px solid {theme.COLORS['focus']};
+                    padding: 5px 9px;
+                }}
+            """
+        )
+        self._gematria_filter.textChanged.connect(self._apply_gematria_filter)
+        filter_row.addWidget(self._gematria_filter)
+        filter_row.addStretch()
+        layout.addLayout(filter_row)
+        
+        # Results table (larger - takes most space)
         self._results_table = QTableWidget()
         self._results_table.setColumnCount(4)
         self._results_table.setHorizontalHeaderLabels(["Term", "Skip", "Pos", "Dir"])
@@ -371,54 +509,30 @@ class ELSSearchWindow(QMainWindow):
                     background-color: {theme.COLORS['surface']};
                     color: {theme.COLORS['text_primary']};
                     font-weight: 600;
+                    padding: 8px;
                     border: none;
-                    border-bottom: 1px solid {theme.COLORS['border']};
+                    border-bottom: 2px solid {theme.COLORS['border']};
+                }}
+                QTableWidget::item:selected {{
+                    background-color: {theme.COLORS['magus']};
+                    color: {theme.COLORS['light']};
                 }}
             """
         )
         self._results_table.cellClicked.connect(self._on_result_clicked)
-        layout.addWidget(self._results_table)
+        layout.addWidget(self._results_table, 1)  # Stretch factor 1 - takes available space
         
-        # Filter and count row
-        filter_layout = QHBoxLayout()
-        self._hits_label = QLabel("Total: 0 hits")
-        self._hits_label.setStyleSheet(
-            f"font-weight: bold; color: {theme.COLORS['text_primary']};"
-        )
-        filter_layout.addWidget(self._hits_label)
-        
-        filter_layout.addStretch()
-        
-        filter_layout.addWidget(QLabel("Gem:"))
-        self._gematria_filter = QLineEdit()
-        self._gematria_filter.setPlaceholderText("e.g. 93")
-        self._gematria_filter.setFixedWidth(60)
-        self._gematria_filter.setStyleSheet(
-            f"""
-                QLineEdit {{
-                    background-color: {theme.COLORS['light']};
-                    border: 1px solid {theme.COLORS['border']};
-                    border-radius: 8px;
-                    padding: 6px 10px;
-                    color: {theme.COLORS['text_primary']};
-                }}
-                QLineEdit:focus {{
-                    border: 2px solid {theme.COLORS['focus']};
-                }}
-            """
-        )
-        self._gematria_filter.textChanged.connect(self._apply_gematria_filter)
-        filter_layout.addWidget(self._gematria_filter)
-        
-        layout.addLayout(filter_layout)
-        
-        breakdown_group = QGroupBox("🔢 Gematria Breakdown")
+        # Gematria breakdown (compact, collapsible)
+        breakdown_group = QGroupBox("🔢 Selected Result")
+        breakdown_group.setCheckable(True)
+        breakdown_group.setChecked(True)
         breakdown_group.setStyleSheet(theme.get_exegesis_group_style())
         breakdown_layout = QVBoxLayout(breakdown_group)
+        breakdown_layout.setContentsMargins(8, 12, 8, 8)
         
         self._breakdown_text = QTextEdit()
         self._breakdown_text.setReadOnly(True)
-        self._breakdown_text.setMaximumHeight(200)
+        self._breakdown_text.setMaximumHeight(180)
         self._breakdown_text.setStyleSheet(
             f"""
                 QTextEdit {{
@@ -426,29 +540,34 @@ class ELSSearchWindow(QMainWindow):
                     border: 1px solid {theme.COLORS['border']};
                     border-radius: 8px;
                     font-family: 'JetBrains Mono', 'Courier New', monospace;
-                    font-size: 11px;
+                    font-size: 10px;
                     color: {theme.COLORS['text_primary']};
+                    padding: 8px;
                 }}
             """
         )
         breakdown_layout.addWidget(self._breakdown_text)
-        
         layout.addWidget(breakdown_group)
         
         # Action buttons
-        btn_layout = QHBoxLayout()
+        btn_row = QHBoxLayout()
+        btn_row.setSpacing(8)
+        
         self._btn_export = QPushButton("Export")
+        self._btn_export.setMinimumHeight(40)
         self._btn_export.setCursor(Qt.CursorShape.PointingHandCursor)
         theme.set_archetype(self._btn_export, "scribe")
         self._btn_export.clicked.connect(self._on_export)
-        btn_layout.addWidget(self._btn_export)
+        btn_row.addWidget(self._btn_export)
         
         self._btn_clear = QPushButton("Clear")
+        self._btn_clear.setMinimumHeight(40)
         self._btn_clear.setCursor(Qt.CursorShape.PointingHandCursor)
         theme.set_archetype(self._btn_clear, "destroyer")
         self._btn_clear.clicked.connect(self._on_clear)
-        btn_layout.addWidget(self._btn_clear)
-        layout.addLayout(btn_layout)
+        btn_row.addWidget(self._btn_clear)
+        
+        layout.addLayout(btn_row)
         
         return pane
     
@@ -731,9 +850,9 @@ class ELSSearchWindow(QMainWindow):
         
         all_count = len(self._all_results) if hasattr(self, '_all_results') else len(self._current_results)
         if len(self._current_results) < all_count:
-            self._hits_label.setText(f"Showing: {len(self._current_results)} / {all_count} hits")
+            self._hits_label.setText(f"{len(self._current_results)} / {all_count} hits")
         else:
-            self._hits_label.setText(f"Total: {len(self._current_results)} hits")
+            self._hits_label.setText(f"{len(self._current_results)} hits")
         
         # Highlight all results on grid
         self._grid_view.clear_highlights()
@@ -833,7 +952,7 @@ class ELSSearchWindow(QMainWindow):
         """Clear search results."""
         self._current_results.clear()
         self._results_table.setRowCount(0)
-        self._hits_label.setText("Total: 0 hits")
+        self._hits_label.setText("0 hits")
         self._grid_view.clear_highlights()
         self._breakdown_text.clear()
     

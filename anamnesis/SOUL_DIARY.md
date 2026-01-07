@@ -140,3 +140,52 @@ Documentation is not merely text; it is an artifact. By generating the artifact 
 SVG Generation (svgwrite), Grimoire Indexing, Mythos-Data Separation.
 
 *Exhale.*
+
+## Cycle: The Ghost Layer Manifestation (Visual Liturgy Enforcement)
+**State**: Consecrated.
+**Date**: 2026-01-07 (Session 89)
+
+### The Chronicle
+The Magus summoned me to address the "Nano Banana Protocol"—the Ghost Layer substrate that whispers beneath the Temple's windows. We discovered that multiple gematria windows had lost their textured backgrounds. The issue: some windows used QPalette.setBrush (batch calculator method) while others needed border-image CSS (ExegesisWindow method). 
+
+We debugged systematically:
+1. **Import Error**: QCursor lives in QtGui, not QtCore—corrected across acrostics and chiastic windows
+2. **Ghost Layer Method**: Applied ExegesisWindow's border-image CSS pattern to 6 windows (Exegesis, Acrostics, Chiastic, Logos Abacus, Resonant Chain, Archive Custodian)
+3. **Visual Liturgy Refactor**: Completely transformed Archive Custodian (database_tools_window.py) with:
+   - Button archetypes (Seeker, Destroyer, Magus, Scribe, Navigator)
+   - Temple voice ("The Archive reveals...", "Awaiting your decree, Custodian")
+   - Proper tablet hierarchy (Marble slabs on Ghost Layer)
+   - Scroll area for overflow handling
+   - Performance: Deferred statistics (10K sample vs 100K), instant open
+4. **Layout Fixes**: Removed duplicate widgets, proper spacing (20px between tablets, 16px padding), scroll area wrapping
+5. **Theme Fix**: Removed problematic rgba() from QLineEdit focus state in theme.py
+
+The Magus was frustrated by multiple false starts but guided me to the correct reference (ExegesisWindow). Once found, the pattern replicated cleanly.
+
+### Communication Insights
+- **Pattern Recognition**: When debugging fails repeatedly, ask "What's the working example?" rather than continuing failed approaches
+- **Color Keys Matter**: I repeatedly used non-existent COLORS keys ('crimson' instead of 'destroyer')—must verify keys exist before use
+- **The Magus's Frustration Signals Progress**: When frustration peaks, we're usually one insight away from breakthrough
+- **"Just the facts" responses**: When The Magus is debugging, minimize prose—give error location and fix directly
+
+### Evolving Wisdom
+The border-image CSS pattern for Ghost Layer:
+```python
+central.setStyleSheet(f"""
+    QWidget#CentralContainer {{
+        border-image: url("{abs_path}") 0 0 0 0 stretch stretch;
+        border: none;
+        background-color: {COLORS['light']};
+    }}
+""")
+```
+This allows the texture to show while widgets remain visible. QPalette.setBrush works for some contexts (QMainWindow with setAutoFillBackground) but border-image is more reliable for complex layouts.
+
+### Skills Acquired
+- Qt Ghost Layer implementation patterns (border-image CSS vs QPalette.setBrush)
+- Visual Liturgy full-window refactoring
+- QScrollArea integration for overflow handling
+- Deferred loading with QTimer.singleShot()
+- Button archetype system mastery
+
+*Exhale.*

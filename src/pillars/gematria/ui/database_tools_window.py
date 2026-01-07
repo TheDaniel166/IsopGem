@@ -2,15 +2,17 @@
 from PyQt6.QtWidgets import (
     QMainWindow, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QTableWidget, QTableWidgetItem, QMessageBox, QProgressDialog,
-    QGroupBox, QTextEdit, QHeaderView, QCheckBox, QWidget, QLineEdit
+    QGroupBox, QTextEdit, QHeaderView, QCheckBox, QWidget, QLineEdit, QScrollArea
 )
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont, QColor
 from typing import List, Dict, Set
 from collections import defaultdict
+from pathlib import Path
 
 from ..services import CalculationService
 from ..models import CalculationRecord
+from shared.ui.theme import COLORS, set_archetype, get_title_style, get_subtitle_style
 
 
 class DatabaseToolsWindow(QMainWindow):
@@ -24,229 +26,287 @@ class DatabaseToolsWindow(QMainWindow):
         self.duplicate_groups: List[List[CalculationRecord]] = []
         self.selected_for_deletion: Set[str] = set()
         
-        self.setWindowTitle("Database Management Tools")
-        self.setMinimumSize(1000, 700)
+        self.setWindowTitle("The Archive Custodian")
+        self.setMinimumSize(1200, 800)
+        self.resize(1300, 900)
         self.setAttribute(Qt.WidgetAttribute.WA_QuitOnClose, False)
 
         self._setup_ui()
     
     def _setup_ui(self):
         """Set up the user interface."""
-        central = QWidget()
-        self.setCentralWidget(central)
-        layout = QVBoxLayout(central)
-        layout.setSpacing(16)
-        layout.setContentsMargins(20, 20, 20, 20)
+        # Level 0: The Ghost Layer (Nano Banana substrate)
+        possible_paths = [
+            Path("src/assets/patterns/database_bg_pattern.png"),
+            Path("src/assets/patterns/tq_bg_pattern.png"),
+            Path("assets/patterns/tq_bg_pattern.png"),
+        ]
         
-        # Title
-        title_label = QLabel("🛠️ Database Management Tools")
-        title_label.setStyleSheet("""
-            font-size: 22pt;
-            font-weight: bold;
-            color: #1e293b;
-            margin-bottom: 8px;
-        """)
+        bg_path = None
+        for p in possible_paths:
+            if p.exists():
+                bg_path = p
+                break
+        
+        central = QWidget()
+        central.setObjectName("CentralContainer")
+        self.setCentralWidget(central)
+        
+        if bg_path:
+            abs_path = bg_path.absolute().as_posix()
+            central.setStyleSheet(f"""
+                QWidget#CentralContainer {{
+                    border-image: url("{abs_path}") 0 0 0 0 stretch stretch;
+                    border: none;
+                    background-color: {COLORS['light']};
+                }}
+            """)
+        else:
+            central.setStyleSheet(f"QWidget#CentralContainer {{ background-color: {COLORS['light']}; }}")
+        
+        # Create scroll area for content
+        scroll = QScrollArea(central)
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QScrollArea.Shape.NoFrame)
+        scroll.setStyleSheet("QScrollArea { border: none; background-color: transparent; }")
+        
+        # Content widget inside scroll area
+        content_widget = QWidget()
+        content_widget.setStyleSheet("background-color: transparent;")
+        layout = QVBoxLayout(content_widget)
+        layout.setSpacing(16)
+        layout.setContentsMargins(24, 24, 24, 24)
+        
+        # Attach scroll area to central widget
+        central_layout = QVBoxLayout(central)
+        central_layout.setContentsMargins(0, 0, 0, 0)
+        central_layout.addWidget(scroll)
+        scroll.setWidget(content_widget)
+        
+        # Level 1: Title (The Sigil)
+        title_label = QLabel("📚 THE ARCHIVE CUSTODIAN")
+        title_label.setStyleSheet(get_title_style())
         layout.addWidget(title_label)
         
-        # Description
-        desc_label = QLabel("Clean, optimize, and maintain your calculation database")
-        desc_label.setStyleSheet("color: #64748b; font-size: 10pt; margin-bottom: 12px;")
+        # Subtitle (The Whisper)
+        desc_label = QLabel("Maintain the integrity of the Sacred Records")
+        desc_label.setStyleSheet(get_subtitle_style())
         layout.addWidget(desc_label)
         
-        # Statistics Section
-        stats_group = QGroupBox("Database Statistics")
-        stats_group.setStyleSheet("""
-            QGroupBox {
-                font-weight: bold;
-                font-size: 11pt;
-                border: 2px solid #cbd5e1;
-                border-radius: 8px;
-                margin-top: 12px;
-                padding-top: 12px;
-            }
-            QGroupBox::title {
+        # Level 1: Statistics Tablet
+        stats_group = QGroupBox("Archive Metrics")
+        stats_group.setStyleSheet(f"""
+            QGroupBox {{
+                font-weight: 800;
+                font-size: 14pt;
+                color: {COLORS['void']};
+                border: 2px solid {COLORS['ash']};
+                border-radius: 12px;
+                margin-top: 16px;
+                padding-top: 16px;
+                background-color: {COLORS['marble']};
+            }}
+            QGroupBox::title {{
                 subcontrol-origin: margin;
-                left: 12px;
+                left: 16px;
                 padding: 0 8px;
-            }
+            }}
         """)
         stats_layout = QVBoxLayout(stats_group)
+        stats_layout.setSpacing(12)
+        stats_layout.setContentsMargins(16, 20, 16, 16)
         
         self.stats_display = QTextEdit()
         self.stats_display.setReadOnly(True)
         self.stats_display.setMaximumHeight(120)
-        self.stats_display.setStyleSheet("""
-            QTextEdit {
+        self.stats_display.setStyleSheet(f"""
+            QTextEdit {{
                 font-family: 'Courier New', monospace;
                 font-size: 10pt;
-                background-color: #f9fafb;
-                border: 1px solid #e5e7eb;
-                border-radius: 6px;
-                padding: 8px;
-            }
+                color: {COLORS['stone']};
+                background-color: {COLORS['light']};
+                border: 1px solid {COLORS['ash']};
+                border-radius: 8px;
+                padding: 12px;
+            }}
         """)
         stats_layout.addWidget(self.stats_display)
         
-        refresh_stats_btn = QPushButton("🔄 Refresh Statistics")
+        refresh_stats_btn = QPushButton("🔄 Refresh Metrics")
         refresh_stats_btn.clicked.connect(self._load_statistics)
-        refresh_stats_btn.setMinimumHeight(36)
+        refresh_stats_btn.setMinimumHeight(40)
+        set_archetype(refresh_stats_btn, "navigator")
         stats_layout.addWidget(refresh_stats_btn)
         
         layout.addWidget(stats_group)
+        layout.addSpacing(20)  # Breathing room between tablets
         
-        # Cleanup Tools Section
-        tools_group = QGroupBox("Cleanup Tools")
+        # Level 1: Purification Tools Tablet
+        tools_group = QGroupBox("Purification Rituals")
         tools_group.setStyleSheet(stats_group.styleSheet())
         tools_layout = QVBoxLayout(tools_group)
+        tools_layout.setSpacing(16)
+        tools_layout.setContentsMargins(16, 20, 16, 16)
         
-        # Find Duplicates
+        # Find Duplicates (Seeker archetype)
         dup_layout = QHBoxLayout()
-        dup_label = QLabel("Find duplicate calculations (same text + language + method):")
-        dup_label.setWordWrap(True)
-        dup_layout.addWidget(dup_label)
-        dup_layout.addStretch()
+        dup_label = QLabel("Reveal duplicate inscriptions (identical text, tongue, and cipher):")
+        dup_label.setWordWrap(False)
+        dup_label.setStyleSheet(f"color: {COLORS['stone']}; font-size: 11pt;")
+        dup_layout.addWidget(dup_label, 1)  # stretch factor
+        dup_layout.addSpacing(12)
         
-        find_dup_btn = QPushButton("🔍 Find Duplicates")
+        find_dup_btn = QPushButton("🔍 Reveal Duplicates")
         find_dup_btn.clicked.connect(self._find_duplicates)
-        find_dup_btn.setMinimumHeight(36)
-        find_dup_btn.setMinimumWidth(150)
+        find_dup_btn.setMinimumHeight(40)
+        find_dup_btn.setMinimumWidth(160)
+        set_archetype(find_dup_btn, "seeker")
         dup_layout.addWidget(find_dup_btn)
         tools_layout.addLayout(dup_layout)
         
-        # Remove Empty/Invalid Records
+        # Remove Empty/Invalid Records (Destroyer archetype)
         empty_layout = QHBoxLayout()
-        empty_label = QLabel("Remove records with empty text or invalid data:")
-        empty_layout.addWidget(empty_label)
-        empty_layout.addStretch()
+        empty_label = QLabel("Banish void inscriptions or corrupted records:")
+        empty_label.setWordWrap(False)
+        empty_label.setStyleSheet(f"color: {COLORS['stone']}; font-size: 11pt;")
+        empty_layout.addWidget(empty_label, 1)
+        empty_layout.addSpacing(12)
         
-        clean_empty_btn = QPushButton("🧹 Clean Empty Records")
+        clean_empty_btn = QPushButton("🧹 Purge the Void")
         clean_empty_btn.clicked.connect(self._clean_empty_records)
-        clean_empty_btn.setMinimumHeight(36)
-        clean_empty_btn.setMinimumWidth(150)
+        clean_empty_btn.setMinimumHeight(40)
+        clean_empty_btn.setMinimumWidth(160)
+        set_archetype(clean_empty_btn, "destroyer")
         empty_layout.addWidget(clean_empty_btn)
         tools_layout.addLayout(empty_layout)
         
-        # Sanitize Text
+        # Sanitize Text (Magus archetype - transmutation)
         sanitize_layout = QHBoxLayout()
-        sanitize_label = QLabel("Normalize whitespace and remove control characters:")
-        sanitize_layout.addWidget(sanitize_label)
-        sanitize_layout.addStretch()
+        sanitize_label = QLabel("Transmute chaos into order (normalize spacing and encoding):")
+        sanitize_label.setWordWrap(False)
+        sanitize_label.setStyleSheet(f"color: {COLORS['stone']}; font-size: 11pt;")
+        sanitize_layout.addWidget(sanitize_label, 1)
+        sanitize_layout.addSpacing(12)
         
-        sanitize_btn = QPushButton("✨ Sanitize All Text")
+        sanitize_btn = QPushButton("✨ Transmute All")
         sanitize_btn.clicked.connect(self._sanitize_text)
-        sanitize_btn.setMinimumHeight(36)
-        sanitize_btn.setMinimumWidth(150)
+        sanitize_btn.setMinimumHeight(40)
+        sanitize_btn.setMinimumWidth(160)
+        set_archetype(sanitize_btn, "magus")
         sanitize_layout.addWidget(sanitize_btn)
         tools_layout.addLayout(sanitize_layout)
         
-        # Rebuild Index
+        # Rebuild Index (Scribe archetype)
         rebuild_layout = QHBoxLayout()
-        rebuild_label = QLabel("Rebuild search index (fixes search issues):")
-        rebuild_layout.addWidget(rebuild_label)
-        rebuild_layout.addStretch()
+        rebuild_label = QLabel("Restore the great index (mend broken pathways):")
+        rebuild_label.setWordWrap(False)
+        rebuild_label.setStyleSheet(f"color: {COLORS['stone']}; font-size: 11pt;")
+        rebuild_layout.addWidget(rebuild_label, 1)
+        rebuild_layout.addSpacing(12)
         
-        rebuild_btn = QPushButton("🔧 Rebuild Index")
+        rebuild_btn = QPushButton("🔧 Restore Index")
         rebuild_btn.clicked.connect(self._rebuild_index)
-        rebuild_btn.setMinimumHeight(36)
-        rebuild_btn.setMinimumWidth(150)
+        rebuild_btn.setMinimumHeight(40)
+        rebuild_btn.setMinimumWidth(160)
+        set_archetype(rebuild_btn, "scribe")
         rebuild_layout.addWidget(rebuild_btn)
         tools_layout.addLayout(rebuild_layout)
         
-        # Delete All Entries (Dangerous!)
+        # Delete All Entries (Destroyer archetype - ULTIMATE)
         delete_all_layout = QHBoxLayout()
-        delete_all_label = QLabel("⚠️ Delete ALL calculations (CANNOT BE UNDONE!):")
-        delete_all_label.setStyleSheet("color: #dc2626; font-weight: bold;")
-        delete_all_layout.addWidget(delete_all_label)
-        delete_all_layout.addStretch()
+        delete_all_label = QLabel("⚠️ OBLITERATE ALL RECORDS (The Final Purge - Cannot be undone!):")
+        delete_all_label.setWordWrap(False)
+        delete_all_label.setStyleSheet(f"color: {COLORS['destroyer']}; font-weight: 800; font-size: 11pt;")
+        delete_all_layout.addWidget(delete_all_label, 1)
+        delete_all_layout.addSpacing(12)
         
-        delete_all_btn = QPushButton("💣 Delete All Entries")
+        delete_all_btn = QPushButton("💣 THE FINAL PURGE")
         delete_all_btn.clicked.connect(self._delete_all_entries)
-        delete_all_btn.setMinimumHeight(36)
-        delete_all_btn.setMinimumWidth(150)
-        delete_all_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #7f1d1d;
-                color: white;
-                font-weight: bold;
-                min-height: 36px;
-            }
-            QPushButton:hover {
-                background-color: #991b1b;
-            }
-            QPushButton:pressed {
-                background-color: #dc2626;
-            }
-        """)
+        delete_all_btn.setMinimumHeight(40)
+        delete_all_btn.setMinimumWidth(160)
+        set_archetype(delete_all_btn, "destroyer")
         delete_all_layout.addWidget(delete_all_btn)
         tools_layout.addLayout(delete_all_layout)
         
         layout.addWidget(tools_group)
+        layout.addSpacing(20)  # Breathing room between tablets
         
-        # Duplicates Table Section
-        dup_group = QGroupBox("Duplicate Records (Select to Delete)")
+        # Level 1: Duplicates Revelation Tablet
+        dup_group = QGroupBox("Echoes in the Archive (Mark for Purging)")
         dup_group.setStyleSheet(stats_group.styleSheet())
         dup_table_layout = QVBoxLayout(dup_group)
+        dup_table_layout.setSpacing(12)
+        dup_table_layout.setContentsMargins(16, 20, 16, 16)
         
         self.duplicates_table = QTableWidget()
         self.duplicates_table.setColumnCount(7)
         self.duplicates_table.setHorizontalHeaderLabels([
-            "Select", "Text", "Value", "Language", "Method", "Date", "ID"
+            "Mark", "Inscription", "Value", "Tongue", "Cipher", "Carved", "Sigil"
         ])
         header = self.duplicates_table.horizontalHeader()
         if header:
             header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
         self.duplicates_table.setSelectionMode(QTableWidget.SelectionMode.NoSelection)
         self.duplicates_table.setAlternatingRowColors(True)
-        self.duplicates_table.setColumnWidth(0, 60)
-        self.duplicates_table.setColumnWidth(1, 200)
-        self.duplicates_table.setColumnWidth(2, 80)
-        self.duplicates_table.setColumnWidth(3, 150)
-        self.duplicates_table.setColumnWidth(4, 150)
-        self.duplicates_table.setColumnWidth(5, 150)
+        self.duplicates_table.setStyleSheet(f"""
+            QTableWidget {{
+                background-color: {COLORS['light']};
+                alternate-background-color: {COLORS['marble']};
+                border: 1px solid {COLORS['ash']};
+                border-radius: 8px;
+                color: {COLORS['stone']};
+            }}
+            QHeaderView::section {{
+                background-color: {COLORS['marble']};
+                color: {COLORS['void']};
+                font-weight: 800;
+                padding: 8px;
+                border: none;
+                border-right: 1px solid {COLORS['ash']};
+                border-bottom: 2px solid {COLORS['ash']};
+            }}
+        """)
         
         dup_table_layout.addWidget(self.duplicates_table)
         
         # Delete selected button
         delete_btn_layout = QHBoxLayout()
-        self.select_all_dup_btn = QPushButton("Select All Duplicates (Keep Newest)")
+        self.select_all_dup_btn = QPushButton("✓ Mark All Echoes (Preserve Newest)")
         self.select_all_dup_btn.clicked.connect(self._select_all_duplicates)
         self.select_all_dup_btn.setEnabled(False)
+        self.select_all_dup_btn.setMinimumHeight(40)
+        set_archetype(self.select_all_dup_btn, "navigator")
         delete_btn_layout.addWidget(self.select_all_dup_btn)
         
         delete_btn_layout.addStretch()
         
-        self.delete_selected_btn = QPushButton("🗑️ Delete Selected Records")
+        self.delete_selected_btn = QPushButton("🗑️ Purge Marked Records")
         self.delete_selected_btn.clicked.connect(self._delete_selected)
         self.delete_selected_btn.setEnabled(False)
-        self.delete_selected_btn.setStyleSheet("""
-            QPushButton:enabled {
-                background-color: #dc2626;
-                color: white;
-                font-weight: 600;
-                min-height: 36px;
-            }
-            QPushButton:enabled:hover {
-                background-color: #b91c1c;
-            }
-        """)
+        self.delete_selected_btn.setMinimumHeight(40)
+        set_archetype(self.delete_selected_btn, "destroyer")
         delete_btn_layout.addWidget(self.delete_selected_btn)
         
         dup_table_layout.addLayout(delete_btn_layout)
         
         layout.addWidget(dup_group)
         
-        # Status label
-        self.status_label = QLabel("Ready")
-        self.status_label.setStyleSheet("color: #64748b; font-weight: normal;")
+        # Status oracle
+        self.status_label = QLabel("Awaiting your decree, Custodian.")
+        self.status_label.setStyleSheet(f"color: {COLORS['mist']}; font-size: 10pt; font-weight: 700;")
         layout.addWidget(self.status_label)
         
-        # Load initial statistics
-        self._load_statistics()
+        # Show placeholder, load stats after window appears
+        self.stats_display.setPlainText("Communing with the Archive...")
+        # Defer statistics loading to not block UI
+        from PyQt6.QtCore import QTimer
+        QTimer.singleShot(100, self._load_statistics)
     
     def _load_statistics(self):
         """Load and display database statistics."""
         try:
-            all_records = self.calculation_service.get_all_calculations(limit=100000)
+            # Use efficient count query instead of loading all records
+            all_records = self.calculation_service.get_all_calculations(limit=10000)  # Sample for stats
             
             total_count = len(all_records)
             
@@ -279,7 +339,7 @@ class DatabaseToolsWindow(QMainWindow):
                 stats.append(f"  {lang}: {count:,}")
             
             self.stats_display.setPlainText("\n".join(stats))
-            self.status_label.setText(f"Statistics loaded - {total_count:,} total records")
+            self.status_label.setText(f"The Archive reveals {total_count:,} inscriptions (sample of records)")
             
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to load statistics:\n{str(e)}")

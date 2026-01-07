@@ -6,6 +6,15 @@ from pillars.gematria.services.corpus_dictionary_service import CorpusDictionary
 
 logger = logging.getLogger(__name__)
 
+# Common stopwords to filter out if requested
+STOPWORDS = {
+    "THE", "AND", "FOR", "ARE", "BUT", "NOT", "YOU", "ALL", "CAN", "HER", "WAS", "ONE",
+    "OUR", "OUT", "HAD", "HAS", "HIS", "HOW", "MAN", "OLD", "SEE", "VERY", "WHEN",
+    "WHO", "NOW", "THAN", "FIND", "HERE", "JUST", "LIKE", "LONG", "MAKE", "MANY", "OVER",
+    "SUCH", "TAKE", "THEM", "WELL", "ONLY", "COME", "INTO", "YEAR", "YOUR", "GOOD", "SOME",
+    "COULD", "THERE", "THEIR", "ABOUT", "WOULD", "THESE", "OTHER", "WHICH", "FIRST", "AFTER"
+}
+
 class AcrosticResult:
     """
     Acrostic Result class definition.
@@ -63,7 +72,11 @@ class AcrosticService:
                       text: str, 
                       check_first: bool = True, 
                       check_last: bool = True,
-                      mode: str = "Line") -> List[AcrosticResult]:
+                      mode: str = "Line",
+                      min_length: int = 3,
+                      longest_only: bool = False,
+                      filter_stopwords: bool = False,
+                      skip_pattern: int = 1) -> List[AcrosticResult]:
         """
         Finds acrostics in the given text.
         
@@ -72,6 +85,10 @@ class AcrosticService:
             check_first: Check for First Letter Acrostics.
             check_last: Check for Last Letter Telestichs.
             mode: "Line" (checks start/end of lines) or "Word" (checks start/end of every word).
+            min_length: Minimum word length to consider (3-10).
+            longest_only: If True, only return longest non-overlapping matches.
+            filter_stopwords: If True, exclude common stopwords (the, and, for, etc.).
+            skip_pattern: Extract every Nth letter (1=consecutive, 2=every other, etc.).
         """
         results = []
         
@@ -83,13 +100,17 @@ class AcrosticService:
         if not units:
             return []
 
-        # 1. Extract Sequences
+        # 1. Extract Sequences with skip pattern support
         first_letters = []
         last_letters = []
         
         valid_indices = [] # Indices of units that actually had letters
         
         for idx, unit in enumerate(units):
+            # Apply skip pattern (e.g., skip_pattern=2 means every other unit)
+            if idx % skip_pattern != 0:
+                continue
+                
             # clean unit for letter extraction
             clean = re.sub(r'[^a-zA-Z]', '', unit)
             if not clean:
@@ -114,38 +135,77 @@ class AcrosticService:
             seq_len = len(full_sequence)
             
             # If the sequence is short, check it directly
-            if seq_len < 3:
+            if seq_len < min_length:
                 if self.dictionary_service.is_word(full_sequence):
+                    if filter_stopwords and full_sequence in STOPWORDS:
+                        continue
                     # Map indices to source units
                     source_units = [units[i] for i in valid_indices]
                     results.append(AcrosticResult(full_sequence, f"{method_name} ({mode})", valid_indices, source_units, True))  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
                 continue
 
             # Check for any valid sub-words
-            found_any = False
+            found_words = []
             
-            for length in range(3, seq_len + 1):
+            for length in range(min_length, seq_len + 1):
                 for start in range(seq_len - length + 1):
                     end = start + length
                     sub = full_sequence[start:end]
                     
                     if self.dictionary_service.is_word(sub):
+                        # Apply stopword filter
+                        if filter_stopwords and sub in STOPWORDS:
+                            continue
+                            
                         match_indices = valid_indices[start:end]
-                        # Extract source units for this specific substring
                         source_units = [units[i] for i in match_indices]
                         
-                        results.append(AcrosticResult(
-                            sub, 
-                            f"{method_name} ({mode})", 
-                            match_indices,
-                            source_units,
-                            True
-                        ))
-                        found_any = True
+                        found_words.append({
+                            'word': sub,
+                            'start': start,
+                            'end': end,
+                            'indices': match_indices,
+                            'units': source_units
+                        })
             
-            if not found_any:
+            # Filter to longest-only if requested
+            if longest_only and found_words:
+                found_words = self._filter_longest_only(found_words)
+            
+            # Add results
+            for word_data in found_words:
+                results.append(AcrosticResult(
+                    word_data['word'],
+                    f"{method_name} ({mode})",
+                    word_data['indices'],
+                    word_data['units'],
+                    True
+                ))
+            
+            if not found_words:
                  # Map indices to source units
                  source_units = [units[i] for i in valid_indices]
                  results.append(AcrosticResult(full_sequence, f"{method_name} (Raw)", valid_indices, source_units, False))  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
         
         return results
+    
+    def _filter_longest_only(self, found_words: List[dict]) -> List[dict]:
+        """Filter to keep only longest non-overlapping matches."""
+        if not found_words:
+            return []
+        
+        # Sort by length (descending), then by start position
+        sorted_words = sorted(found_words, key=lambda w: (-len(w['word']), w['start']))
+        
+        kept = []
+        used_positions = set()
+        
+        for word_data in sorted_words:
+            # Check if this word overlaps with any kept word
+            positions = set(range(word_data['start'], word_data['end']))
+            if not positions.intersection(used_positions):
+                kept.append(word_data)
+                used_positions.update(positions)
+        
+        # Sort back by start position for display
+        return sorted(kept, key=lambda w: w['start'])

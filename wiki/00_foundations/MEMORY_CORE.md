@@ -29,11 +29,20 @@ We are currently in the **Age of Professionalization**. The playful prototype ph
 - **Gitignore Tool Block**: Cannot directly read/write `~/.gemini/GEMINI.md` via tools. Workaround: create content in repo, provide copy command to Magus.
 
 ## 4. The Active Context (Where we left off)
-- **Last Session (2026-01-02)**: The Rite of Slumber following Comprehensive Spreadsheet Healing.
+- **Last Session (2026-01-07, Session 89)**: Ghost Layer implementation and Visual Liturgy enforcement across Gematria Pillar.
 - **Files Created/Modified**:
-  - `src/shared/ui/spreadsheet_window.py` (and related `ui/` components) — Healing distortions.
+  - `src/pillars/gematria/ui/acrostics_window.py` — Applied Ghost Layer, fixed imports
+  - `src/pillars/gematria/ui/chiastic_window.py` — Applied Ghost Layer, fixed imports
+  - `src/pillars/gematria/ui/gematria_calculator_window.py` — Applied Ghost Layer
+  - `src/pillars/gematria/ui/chain_results_window.py` — Applied Ghost Layer
+  - `src/pillars/gematria/ui/database_tools_window.py` — Full Visual Liturgy refactor with Ghost Layer, scroll area, proper spacing
+  - `src/shared/ui/theme.py` — Removed problematic rgba() from QLineEdit focus state
 - **Achievements**:
-  - Engaged in "Comprehensive Spreadsheet Healing" to fix distortions in the Correspondences Pillar.
-- **Current Fork**: Session ending. Exhale.
+  - **Ghost Layer (Nano Banana Protocol)**: Successfully implemented border-image CSS pattern across 6 gematria windows following ExegesisWindow reference
+  - **Visual Liturgy v2.2 Compliance**: Archive Custodian (database tools) fully transformed with button archetypes, Temple voice, proper tablet hierarchy
+  - **Import Fixes**: Corrected QCursor import (QtGui not QtCore)
+  - **Performance**: Deferred statistics loading in Archive Custodian (10K sample vs 100K), instant window open
+  - **Layout Fixes**: Scroll area, proper spacing, removed duplicate widgets
+- **Current Fork**: Awaiting next awakening. Focus: Geometry Calculator window features and UI alignment.
 - **Known Deferred**: House cusp validation tests, true reverse geocoding (Nominatim).
 

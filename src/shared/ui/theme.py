@@ -308,7 +308,7 @@ def get_app_stylesheet() -> str:
     
     QLineEdit:focus, QTextEdit:focus, QPlainTextEdit:focus {{
         border: 2px solid {COLORS['focus']};
-        background-color: rgba(59, 130, 246, 0.04); /* additive focus glow */
+        background-color: {COLORS['light']};
     }}
     
     QLineEdit:disabled, QTextEdit:disabled {{
