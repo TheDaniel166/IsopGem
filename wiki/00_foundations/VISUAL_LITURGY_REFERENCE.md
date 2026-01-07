@@ -2,6 +2,9 @@
 
 > *The aesthetic laws of the Temple — colors, spacing, typography, and components.*
 
+**Purpose**: This is the **implementation cheat sheet** for the UI. It contains the raw hex codes, spacing units, and code snippets required to build the interface.
+**For Theory**: See [UI_UX_PHILOSOPHY.md](../01_blueprints/UI_UX_PHILOSOPHY.md) for the "Floating Temple" conceptual framework, tone of voice, and semantic reasoning.
+
 **Version**: 2.2  
 **Last Updated**: 2025-12-30
 

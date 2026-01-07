@@ -6,6 +6,7 @@ from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QFormLayout, QLabel, QGroupBox, QFrame
 )
 from PyQt6.QtCore import Qt
+from shared.ui.theme import COLORS, get_exegesis_group_style
 
 class StatsPanel(QWidget):
     """
@@ -27,24 +28,13 @@ class StatsPanel(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         
         group = QGroupBox("Document Statistics")
-        group.setStyleSheet("""
-            QGroupBox {
-                font-weight: bold;
-                border: 2px solid #cbd5e1;
-                border-radius: 8px;
-                margin-top: 12px;
-                padding-top: 16px; 
-                padding-left: 8px;
-                padding-right: 8px;
-                font-size: 11pt;
-            }
-        """)
+        group.setStyleSheet(get_exegesis_group_style(title_top=12))
         group_layout = QFormLayout(group)
         group_layout.setSpacing(10)
         
         # Styles for labels
-        lbl_style = "font-size: 10pt; color: #475569;"
-        val_style = "font-size: 11pt; font-weight: 600; color: #0f172a;"
+        lbl_style = f"font-size: 10pt; color: {COLORS['text_secondary']};"
+        val_style = f"font-size: 11pt; font-weight: 600; color: {COLORS['text_primary']};"
         
         self.word_count_lbl = QLabel("0")
         self.word_count_lbl.setStyleSheet(val_style)
@@ -65,7 +55,7 @@ class StatsPanel(QWidget):
         group_layout.addRow(line)
         
         self.total_val_lbl = QLabel("0")
-        self.total_val_lbl.setStyleSheet(f"{val_style} color: #2563eb;")
+        self.total_val_lbl.setStyleSheet(f"{val_style} color: {COLORS['focus']};")
         l3 = QLabel("Total Gematria:")
         l3.setStyleSheet(lbl_style)
         group_layout.addRow(l3, self.total_val_lbl)

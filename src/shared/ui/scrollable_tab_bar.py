@@ -1,5 +1,5 @@
-from PyQt6.QtCore import Qt, pyqtSignal, QSize
-from PyQt6.QtGui import QColor, QFont
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (
     QWidget,
     QScrollArea,
@@ -8,7 +8,10 @@ from PyQt6.QtWidgets import (
     QFrame,
     QSizePolicy
 )
-from shared.ui.theme import COLORS
+from shared.ui.theme import (
+    get_scrollable_tab_bar_style,
+    get_scrollable_tab_button_style,
+)
 
 class ScrollableTabBar(QWidget):
     """
@@ -29,43 +32,13 @@ class ScrollableTabBar(QWidget):
         
         # Scroll Area
         self.scroll_area = QScrollArea()
+        self.scroll_area.setObjectName("scrollable_tab_area")
         self.scroll_area.setWidgetResizable(True)
         # Always show horizontal scrollbar to ensure it doesn't jump in/out
         self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
         self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.scroll_area.setFrameShape(QFrame.Shape.NoFrame)
-        
-        # Style the scrollbar to be slim and themed
-        # Using 'stone' for handle to be neutral, and slightly wider for visibility
-        scrollbar_handle = COLORS.get('stone', '#334155')
-        scrollbar_bg = "#0f0f13"  # Darker track
-        
-        self.scroll_area.setStyleSheet(f"""
-            QScrollArea {{
-                background: transparent;
-                border: none;
-            }}
-            QScrollBar:horizontal {{
-                border: none;
-                background: {scrollbar_bg};
-                height: 12px;
-                margin: 0px 0px 0px 0px;
-                border-radius: 6px;
-            }}
-            QScrollBar::handle:horizontal {{
-                background: {scrollbar_handle};
-                min-width: 20px;
-                border-radius: 6px;
-            }}
-            QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {{
-                width: 0px;
-                border: none;
-                background: none;
-            }}
-            QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {{
-                background: none;
-            }}
-        """)
+        self.scroll_area.setStyleSheet(get_scrollable_tab_bar_style())
         
         # Content Container
         self.content_widget = QWidget()
@@ -80,6 +53,7 @@ class ScrollableTabBar(QWidget):
         
         self.scroll_area.setWidget(self.content_widget)
         layout.addWidget(self.scroll_area)
+        self.scroll_area.horizontalScrollBar().setObjectName("scrollable_tab_scrollbar")
         
         # State
         self.buttons = []
@@ -125,41 +99,9 @@ class ScrollableTabBar(QWidget):
         
     def _update_styles(self):
         """Update button styles based on active state."""
-        # Using 'seeker' (Gold) for active state to match Celestia theme
-        active_color = COLORS.get('seeker', '#f59e0b') 
-        text_active = "#ffffff"
-        text_dim = "#aaaaaa"
-        bg_hover = "rgba(255, 255, 255, 0.05)"
-        
         for i, btn in enumerate(self.buttons):
             is_active = (i == self._current_index)
-            
-            if is_active:
-                style = f"""
-                    QPushButton {{
-                        color: {text_active};
-                        background-color: transparent;
-                        border: none;
-                        border-bottom: 2px solid {active_color};
-                        padding: 8px 16px;
-                        font-weight: bold;
-                    }}
-                """
-            else:
-                style = f"""
-                    QPushButton {{
-                        color: {text_dim};
-                        background-color: transparent;
-                        border: none;
-                        border-bottom: 2px solid transparent;
-                        padding: 8px 16px;
-                    }}
-                    QPushButton:hover {{
-                        color: {text_active};
-                        background-color: {bg_hover};
-                    }}
-                """
-            btn.setStyleSheet(style)
+            btn.setStyleSheet(get_scrollable_tab_button_style(is_active))
 
     def _ensure_visible(self, index: int):
         """Scroll to ensure the selected tab is visible."""

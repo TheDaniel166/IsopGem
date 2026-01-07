@@ -13,6 +13,7 @@ from .verse_list import VerseList
 from .interlinear_widget import InterlinearDocumentView
 from shared.models.document_manager.document import Document
 from ...services.text_analysis_service import TextAnalysisService
+from shared.ui.theme import COLORS
 
 class DocumentTab(QWidget):
     """
@@ -75,7 +76,7 @@ class DocumentTab(QWidget):
         
         header = QHBoxLayout()
         self.viewer_label = QLabel("Document Text")
-        self.viewer_label.setStyleSheet("font-weight: bold; font-size: 11pt;")
+        self.viewer_label.setStyleSheet(f"font-weight: bold; font-size: 11pt; color: {COLORS['text_primary']};")
         header.addWidget(self.viewer_label)
         header.addStretch()
         
@@ -114,7 +115,7 @@ class DocumentTab(QWidget):
         
         # Selection Result Label
         self.sel_result_lbl = QLabel("")
-        self.sel_result_lbl.setStyleSheet("color: #2563eb; font-weight: bold;")
+        self.sel_result_lbl.setStyleSheet(f"color: {COLORS['focus']}; font-weight: bold;")
         layout.addWidget(self.sel_result_lbl)
         
     def _load_document_content(self, use_curated_format: bool = False):

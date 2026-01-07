@@ -1,5 +1,8 @@
 # **The Codex of IsopGem: Visual Liturgy (v2.2)**
 
+**Purpose**: This is the **conceptual manifesto** of the application. It defines the "Floating Temple" metaphor, the "Alchemical" color semantics, and the esoteric "Voice" of the interface.
+**For Implementation**: See [VISUAL_LITURGY_REFERENCE.md](../00_foundations/VISUAL_LITURGY_REFERENCE.md) for the concrete hex codes, CSS classes, and PyQt snippets.
+
 **Objective**: To build not merely a tool, but a **Sanctum**. The interface must feel like a living, breathing extensions of the user's will—a cohesive "Floating Temple" where Gematria and Code intermingle.
 
 ## **1\. The Aesthetic Philosophy ("The Floating Temple")**

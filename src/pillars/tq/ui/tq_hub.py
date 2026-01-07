@@ -7,6 +7,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor
 from shared.ui import WindowManager
 from .ternary_converter_window import TernaryConverterWindow
+from .trigram_visualizer_window import TrigramVisualizerWindow
 from .quadset_analysis_window import QuadsetAnalysisWindow
 from .transitions_window import TransitionsWindow
 from .geometric_transitions_window import GeometricTransitionsWindow
@@ -74,6 +75,7 @@ class TQHub(QWidget):
         # Primary tools grid
         tools = [
             ("≣", "Ternary Converter", "Convert between ternary and decimal", "#3b82f6", self._open_ternary_converter),
+            ("⚡", "Trigram Visualizer", "Visualize trigrams as geometric glyphs", "#f59e0b", self._open_trigram_visualizer),
             ("▦", "Quadset Analysis", "Analyze quadset relationships", "#8b5cf6", self._open_quadset_analysis),
             ("⇄", "Transitions", "Explore ternary state transitions", "#10b981", self._open_transitions),
             ("△", "Geo Transitions", "2D geometric transition mapping", "#dc2626", self._open_geometric_transitions),
@@ -215,6 +217,13 @@ class TQHub(QWidget):
         self.window_manager.open_window(
             "ternary_converter",
             TernaryConverterWindow
+        )
+
+    def _open_trigram_visualizer(self):
+        """Open the trigram visualizer window."""
+        self.window_manager.open_window(
+            "trigram_visualizer",
+            TrigramVisualizerWindow
         )
 
     def _open_quadset_analysis(self):

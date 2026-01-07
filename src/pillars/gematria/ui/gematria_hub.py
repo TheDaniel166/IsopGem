@@ -6,6 +6,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont, QColor
 from shared.ui import WindowManager
+from shared.ui.theme import COLORS
 from .gematria_calculator_window import GematriaCalculatorWindow
 from .saved_calculations_window import SavedCalculationsWindow
 from .batch_calculator_window import GreatHarvestWindow
@@ -90,42 +91,46 @@ class GematriaHub(QWidget):
         header_layout.setContentsMargins(0, 0, 0, 0)
         
         title_label = QLabel("Gematria")
-        title_label.setStyleSheet("""
-            QLabel {
-                color: #1e293b;
+        title_label.setStyleSheet(
+            f"""
+            QLabel {{
+                color: {COLORS['void']};
                 font-size: 32pt;
                 font-weight: 700;
                 letter-spacing: -1px;
-            }
-        """)
+            }}
+        """
+        )
         header_layout.addWidget(title_label)
 
         desc_label = QLabel("Numerical analysis across Hebrew, Greek, and English systems")
-        desc_label.setStyleSheet("""
-            QLabel {
-                color: #64748b;
+        desc_label.setStyleSheet(
+            f"""
+            QLabel {{
+                color: {COLORS['mist']};
                 font-size: 12pt;
-            }
-        """)
+            }}
+        """
+        )
         header_layout.addWidget(desc_label)
         
         layout.addWidget(header)
 
         # Tools grid
         tools = [
-            ("🔢", "Logos Abacus", "Interactive gematria calculator", "#3b82f6", self._open_calculator),
-            ("💾", "Records of Karnak", "Browse saved calculations", "#10b981", self._open_saved_calculations),
-            ("🌾", "The Great Harvest", "Sow and reap calculations", "#8b5cf6", self._open_batch_calculator),
-            ("🕯️", "The Exegesis", "Scriptural Inquiry & Analysis", "#ec4899", self._open_text_analysis),
-            ("🔮", "The Resonant Chain", "Hidden letter sequences", "#7C3AED", self._open_els_search),
-            ("🗝️", "Acrostic Discovery", "Find hidden messages in text", "#f43f5e", self._open_acrostics),
-            ("⚖️", "Chiastic TQ Finder", "Find symmetrical Gematria patterns", "#E11D48", self._open_chiasmus),
-            ("🗄️", "Database", "Manage calculation data", "#f97316", self._open_database_tools),
-            ("📖", "Reference", "Method documentation", "#06b6d4", self._open_methods_reference),
+            ("🔢", "Logos Abacus", "Interactive gematria calculator", COLORS['focus'], self._open_calculator),
+            ("💾", "Records of Karnak", "Browse saved calculations", COLORS['scribe'], self._open_saved_calculations),
+            ("🌾", "The Great Harvest", "Sow and reap calculations", COLORS['magus'], self._open_batch_calculator),
+            ("🕯️", "The Exegesis", "Scriptural Inquiry & Analysis", COLORS['destroyer'], self._open_text_analysis),
+            ("🔮", "The Resonant Chain", "Hidden letter sequences", COLORS['magus_hover'], self._open_els_search),
+            ("🗝️", "Acrostic Discovery", "Find hidden messages in text", COLORS['warning'], self._open_acrostics),
+            ("⚖️", "Chiastic TQ Finder", "Find symmetrical Gematria patterns", COLORS['error'], self._open_chiasmus),
+            ("🗄️", "Database", "Manage calculation data", COLORS['seeker'], self._open_database_tools),
+            ("📖", "Reference", "Method documentation", COLORS['info'], self._open_methods_reference),
         ]
 
         grid = QGridLayout()
-        grid.setSpacing(16)
+        grid.setSpacing(24)
         
         for i, (icon, title, desc, color, callback) in enumerate(tools):
             card = self._create_tool_card(icon, title, desc, color, callback)
@@ -135,13 +140,15 @@ class GematriaHub(QWidget):
         
         # Coming soon section
         coming_soon = QLabel("Coming Soon: Number Analysis • Comparison Tool")
-        coming_soon.setStyleSheet("""
-            QLabel {
-                color: #94a3b8;
+        coming_soon.setStyleSheet(
+            f"""
+            QLabel {{
+                color: {COLORS['mist']};
                 font-size: 10pt;
                 padding: 20px;
-            }
-        """)
+            }}
+        """
+        )
         coming_soon.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(coming_soon)
         
@@ -157,28 +164,30 @@ class GematriaHub(QWidget):
         """Create a modern tool card."""
         card = QFrame()
         card.setCursor(Qt.CursorShape.PointingHandCursor)
-        card.setStyleSheet(f"""
+        card.setStyleSheet(
+            f"""
             QFrame {{
                 background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #ffffff, stop:1 #f8fafc);
-                border: 1px solid #e2e8f0;
+                    stop:0 {COLORS['light']}, stop:1 {COLORS['cloud']});
+                border: 1px solid {COLORS['ash']};
                 border-radius: 12px;
                 padding: 0;
             }}
             QFrame:hover {{
                 background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #ffffff, stop:1 #f1f5f9);
+                    stop:0 {COLORS['light']}, stop:1 {COLORS['surface']});
                 border-color: {accent_color};
             }}
-        """)
+        """
+        )
         card.setMinimumSize(200, 140)
         card.setMaximumHeight(160)
         
         # Shadow effect
         shadow = QGraphicsDropShadowEffect()
-        shadow.setBlurRadius(12)
-        shadow.setOffset(0, 2)
-        shadow.setColor(QColor(0, 0, 0, 25))
+        shadow.setBlurRadius(24)
+        shadow.setOffset(0, 8)
+        shadow.setColor(QColor(0, 0, 0, 80))
         card.setGraphicsEffect(shadow)
         
         layout = QVBoxLayout(card)
@@ -189,36 +198,44 @@ class GematriaHub(QWidget):
         icon_container = QLabel(icon)
         icon_container.setFixedSize(48, 48)
         icon_container.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        icon_container.setStyleSheet(f"""
+        # Subtle overlay keeps chroma while reducing visual weight
+        icon_container.setStyleSheet(
+            f"""
             QLabel {{
-                background: {accent_color}20;
+                background: {accent_color}33;
                 border-radius: 10px;
                 font-size: 22pt;
+                color: {COLORS['light']};
             }}
-        """)
+        """
+        )
         layout.addWidget(icon_container)
         
         # Title
         title_label = QLabel(title)
-        title_label.setStyleSheet("""
-            QLabel {
-                color: #1e293b;
+        title_label.setStyleSheet(
+            f"""
+            QLabel {{
+                color: {COLORS['void']};
                 font-size: 13pt;
                 font-weight: 600;
                 background: transparent;
-            }
-        """)
+            }}
+        """
+        )
         layout.addWidget(title_label)
         
         # Description
         desc_label = QLabel(description)
-        desc_label.setStyleSheet("""
-            QLabel {
-                color: #64748b;
+        desc_label.setStyleSheet(
+            f"""
+            QLabel {{
+                color: {COLORS['mist']};
                 font-size: 9pt;
                 background: transparent;
-            }
-        """)
+            }}
+        """
+        )
         desc_label.setWordWrap(True)
         layout.addWidget(desc_label)
         

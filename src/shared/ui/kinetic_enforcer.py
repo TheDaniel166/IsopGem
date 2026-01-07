@@ -5,9 +5,10 @@ It applies the Visual Liturgy's Kinetic Aura (glow effect) automatically on hove
 sparing the developer from manually inheriting custom classes.
 """
 
-from PyQt6.QtCore import QObject, QEvent, QTimer, QPropertyAnimation, QEasingCurve
+from PyQt6.QtCore import QObject, QEvent, QPropertyAnimation, QEasingCurve
 from PyQt6.QtWidgets import QPushButton, QGraphicsDropShadowEffect, QApplication
 from PyQt6.QtGui import QColor
+from shared.ui.theme import COLORS
 
 class KineticEnforcer(QObject):
     """
@@ -15,16 +16,6 @@ class KineticEnforcer(QObject):
     It reads the 'archetype' dynamic property to determine the aura color.
     """
     
-    # Shadow Colors (matches theme.py)
-    COLORS = {
-        "magus": QColor("#6d28d9"),      # Deep Mystic Violet
-        "seeker": QColor("#f59e0b"),     # Alchemical Gold
-        "scribe": QColor("#10b981"),     # Emerald
-        "destroyer": QColor("#ef4444"),  # Crimson
-        "navigator": QColor("#64748b"),  # Void Slate
-        "default": QColor("#6d28d9")     # Default to Magus if unknown
-    }
-
     def __init__(self, parent=None):
         super().__init__(parent)
         # No longer tracking animations manually; relying on Qt parenting logic.
@@ -41,13 +32,9 @@ class KineticEnforcer(QObject):
 
     def _ignite_aura(self, button: QPushButton):
         """Apply and animate the shadow effect."""
-        # 1. Determine Archetype
-        archetype = button.property("archetype")
-        if not archetype:
-            # Fallback/Inference Logic
-            archetype = "magus" if "generate" in button.text().lower() else "default"
-            
-        target_color = self.COLORS.get(str(archetype), self.COLORS["default"])
+        # 1. Determine Archetype (fallback to magus)
+        archetype = button.property("archetype") or "magus"
+        target_color = self._resolve_color(str(archetype))
         
         # 2. Get or Create Effect
         effect = button.graphicsEffect()
@@ -86,3 +73,8 @@ class KineticEnforcer(QObject):
         anim.setDuration(150) 
         anim.setEasingCurve(QEasingCurve.Type.OutQuad)
         anim.start(QPropertyAnimation.DeletionPolicy.DeleteWhenStopped)
+
+    def _resolve_color(self, archetype: str) -> QColor:
+        """Resolve archetype color from theme palette with magus fallback."""
+        hex_color = COLORS.get(archetype, COLORS["magus"])
+        return QColor(hex_color)

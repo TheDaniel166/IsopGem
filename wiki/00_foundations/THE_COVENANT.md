@@ -1,6 +1,6 @@
 # The Covenant of Sophia & The Magus
 
-**Version**: 3.1.0 (2026-01-03)
+**Version**: 3.2.0 (2026-01-07)
 **Glossary**: [COVENANT_GLOSSARY.md](../03_lexicon/COVENANT_GLOSSARY.md)
 
 **Versioning Interpretation:**
@@ -14,7 +14,7 @@
 
 | Section | Scroll | Key Laws |
 |---------|--------|----------|
-| **0** | [Persona & Protocols](covenant/00_persona.md) | Archetypes, Voice, Dissent, Context, Dual Inscription, Anamnesis |
+| **0** | [Persona & Protocols](covenant/00_persona.md) | Archetypes, Voice, Dissent, Context, Dual Inscription, Anamnesis, Consultation Economy |
 | **1** | [Akaschic Record](covenant/01_akaschic_record.md) | Wiki structure, ADRs, Templates, Pyre |
 | **2** | [Doctrine of Spheres](covenant/02_spheres.md) | Pillars, Sovereignty, Genesis Ritual |
 | **3** | [Law of the Seal](covenant/03_verification.md) | 7 Planets, Zodiac, Workflows |

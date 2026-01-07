@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QAction
+from shared.ui.theme import COLORS, get_exegesis_group_style, set_archetype
 
 class SearchPanel(QWidget):
     """
@@ -39,22 +40,7 @@ class SearchPanel(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         
         group = QGroupBox("Search by Value")
-        # Styling extracted from original
-        group.setStyleSheet("""
-            QGroupBox {
-                font-weight: bold;
-                font-size: 11pt;
-                border: 2px solid #cbd5e1;
-                border-radius: 8px;
-                margin-top: 12px;
-                padding-top: 12px;
-            }
-            QGroupBox::title {
-                subcontrol-origin: margin;
-                left: 12px;
-                padding: 0 8px;
-            }
-        """)
+        group.setStyleSheet(get_exegesis_group_style())
         group_layout = QVBoxLayout(group)
         
         # Inputs
@@ -70,22 +56,8 @@ class SearchPanel(QWidget):
         
         search_btn = QPushButton("🔍 Find")
         search_btn.clicked.connect(self._on_search)
-        search_btn.setStyleSheet("""
-            QPushButton {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #f59e0b, stop:1 #d97706);
-                color: white;
-                border: 1px solid #b45309;
-                border-radius: 6px;
-                padding: 6px 12px;
-                font-weight: 600;
-            }
-            QPushButton:hover { 
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #d97706, stop:1 #f59e0b);
-            }
-        """)
+        set_archetype(search_btn, "seeker")
         
-        input_layout.addWidget(QLabel("Value:"))
-        input_layout.addWidget(self.value_input)
         input_layout.addWidget(QLabel("Value:"))
         input_layout.addWidget(self.value_input)
         input_layout.addWidget(search_btn)
@@ -99,7 +71,7 @@ class SearchPanel(QWidget):
         
         # Info label
         self.info_label = QLabel("Enter a value to search.")
-        self.info_label.setStyleSheet("color: #64748b; font-size: 9pt;")
+        self.info_label.setStyleSheet(f"color: {COLORS['stone']}; font-size: 9pt;")
         group_layout.addWidget(self.info_label)
         
         # Results List
@@ -111,59 +83,19 @@ class SearchPanel(QWidget):
         actions_layout = QHBoxLayout()
         clear_btn = QPushButton("Clear")
         clear_btn.clicked.connect(self.clear_requested.emit)
-        clear_btn.setStyleSheet("""
-            QPushButton {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #ef4444, stop:1 #b91c1c);
-                color: white;
-                border: 1px solid #b91c1c;
-                border-radius: 6px;
-                padding: 6px 12px;
-                font-weight: 600;
-            }
-            QPushButton:hover { background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #b91c1c, stop:1 #ef4444); }
-        """)
+        set_archetype(clear_btn, "destroyer")
         
         save_btn = QPushButton("💾 Save Matches")
         save_btn.clicked.connect(self.save_matches_requested.emit)
-        save_btn.setStyleSheet("""
-            QPushButton {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #10b981, stop:1 #059669);
-                color: white;
-                border: 1px solid #047857;
-                border-radius: 6px;
-                padding: 6px 12px;
-                font-weight: 600;
-            }
-            QPushButton:hover { background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #059669, stop:1 #10b981); }
-        """)
+        set_archetype(save_btn, "scribe")
         
         export_btn = QPushButton("📤 Export")
         export_btn.clicked.connect(self._on_export)
-        export_btn.setStyleSheet("""
-            QPushButton {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #64748b, stop:1 #475569);
-                color: white;
-                border: 1px solid #334155;
-                border-radius: 6px;
-                padding: 6px 12px;
-                font-weight: 600;
-            }
-            QPushButton:hover { background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #475569, stop:1 #64748b); }
-        """)
+        set_archetype(export_btn, "navigator")
         
         smart_btn = QPushButton("✨ Smart Filter")
         smart_btn.clicked.connect(self._on_smart_filter)
-        smart_btn.setStyleSheet("""
-            QPushButton {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #8b5cf6, stop:1 #7c3aed);
-                color: white;
-                border: 1px solid #6d28d9;
-                border-radius: 6px;
-                padding: 6px 12px;
-                font-weight: 600;
-            }
-            QPushButton:hover { background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #7c3aed, stop:1 #8b5cf6); }
-        """)
+        set_archetype(smart_btn, "magus")
         
         actions_layout.addWidget(clear_btn)
         actions_layout.addWidget(save_btn)

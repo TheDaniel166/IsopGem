@@ -8,11 +8,9 @@ import logging
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QComboBox,
     QPushButton, QLabel, QCheckBox, QMessageBox, QTabWidget,
-    QSplitter, QFileDialog, QFrame, QGraphicsDropShadowEffect,
-    QInputDialog
+    QSplitter, QFileDialog, QFrame, QInputDialog
 )
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QColor
 from typing import List
 from pathlib import Path
 
@@ -20,6 +18,15 @@ from ...services.base_calculator import GematriaCalculator
 from ...services import CalculationService
 from ...services.text_analysis_service import TextAnalysisService
 from shared.services.document_manager.document_service import document_service_context
+from shared.ui.theme import (
+    COLORS,
+    apply_tablet_shadow,
+    get_exegesis_group_style,
+    get_exegesis_tab_style,
+    get_exegesis_toolbar_style,
+    get_status_muted_style,
+    set_archetype,
+)
 
 
 # Components
@@ -102,12 +109,12 @@ class ExegesisWindow(QMainWindow):
                 QWidget#CentralContainer {{
                     border-image: url("{abs_path}") 0 0 0 0 stretch stretch;
                     border: none;
-                    background-color: #fdfbf7;
+                    background-color: {COLORS['surface']};
                 }}
             """)
         else:
              logger.warning("Background pattern not found; using fallback color")
-             central.setStyleSheet("QWidget#CentralContainer { background-color: #fdfbf7; }")
+             central.setStyleSheet(f"QWidget#CentralContainer {{ background-color: {COLORS['surface']}; }}")
         
         # Main Layout with Padding for Floating Panels
         main_layout = QVBoxLayout(central)
@@ -117,26 +124,8 @@ class ExegesisWindow(QMainWindow):
         # --- Toolbar (Level 1: Floating Header) ---
         toolbar_frame = QFrame()
         toolbar_frame.setObjectName("FloatingHeader")
-        toolbar_frame.setStyleSheet("""
-            QFrame#FloatingHeader {
-                background-color: rgba(255, 255, 255, 0.9);
-                border: 1px solid #d4c4a8; /* Ancient Gold/Tan border */
-                border-radius: 16px;
-            }
-            QLabel { font-family: 'Inter'; font-weight: 600; color: #44403c; }
-            QComboBox { 
-                background: white; border: 1px solid #d6d3d1; padding: 4px; border-radius: 6px; 
-            }
-            QPushButton {
-                background-color: white; border: 1px solid #d6d3d1; border-radius: 6px; padding: 6px 12px; font-weight: 600; color: #57534e;
-            }
-            QPushButton:hover { background-color: #fafaf9; border-color: #a8a29e; }
-        """)
-        header_shadow = QGraphicsDropShadowEffect()
-        header_shadow.setBlurRadius(12)
-        header_shadow.setColor(QColor(0,0,0,30))
-        header_shadow.setOffset(0, 2)
-        toolbar_frame.setGraphicsEffect(header_shadow)
+        toolbar_frame.setStyleSheet(get_exegesis_toolbar_style())
+        apply_tablet_shadow(toolbar_frame)
         
         toolbar = QHBoxLayout(toolbar_frame)
         toolbar.setContentsMargins(16, 12, 16, 12)
@@ -149,7 +138,7 @@ class ExegesisWindow(QMainWindow):
         
         open_btn = QPushButton("Open Scroll")
         open_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        open_btn.setProperty("archetype", "seeker")
+        set_archetype(open_btn, "seeker")
         open_btn.clicked.connect(self._on_open_document)
         toolbar.addWidget(open_btn)
         
@@ -191,7 +180,7 @@ class ExegesisWindow(QMainWindow):
         self.teach_btn = QPushButton("Train Scribe")
         self.teach_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.teach_btn.setEnabled(False) # Enable if tab active
-        self.teach_btn.setProperty("archetype", "scribe")
+        set_archetype(self.teach_btn, "scribe")
         self.teach_btn.clicked.connect(self._open_teacher)
         toolbar.addWidget(self.teach_btn)
         
@@ -199,7 +188,7 @@ class ExegesisWindow(QMainWindow):
         self.concordance_btn = QPushButton("📚 Concordance")
         self.concordance_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.concordance_btn.setToolTip("Open Holy Book Concordance - parse and index documents")
-        self.concordance_btn.setProperty("archetype", "navigator")
+        set_archetype(self.concordance_btn, "navigator")
         self.concordance_btn.clicked.connect(self._open_concordance)
         toolbar.addWidget(self.concordance_btn)
         
@@ -222,36 +211,13 @@ class ExegesisWindow(QMainWindow):
         self.doc_tabs.setTabsClosable(True)
         self.doc_tabs.tabCloseRequested.connect(self._on_tab_close)
         self.doc_tabs.currentChanged.connect(self._on_tab_changed)
-        self.doc_tabs.setStyleSheet("""
-            QTabWidget::pane {
-                border: 1px solid #d4c4a8;
-                border-radius: 12px;
-                background: rgba(255, 255, 255, 0.95);
-                top: -1px; /* Overlap tab bottom border */
-            }
-            QTabBar::tab {
-                background: rgba(240, 237, 230, 0.8);
-                border: 1px solid #e7e5e4;
-                padding: 8px 16px;
-                margin-right: 4px;
-                border-top-left-radius: 8px;
-                border-top-right-radius: 8px;
-                color: #57534e;
-            }
-            QTabBar::tab:selected {
-                background: white;
-                border-color: #d4c4a8;
-                border-bottom-color: white;
-                font-weight: bold;
-                color: #0f172a;
-            }
-        """)
+        self.doc_tabs.setStyleSheet(get_exegesis_tab_style())
         
         splitter.addWidget(self.doc_tabs)
         
         # Right: Tools (Floating Panel 2)
         self.tools_tabs = QTabWidget()
-        self.tools_tabs.setStyleSheet(self.doc_tabs.styleSheet()) # Shared style
+        self.tools_tabs.setStyleSheet(get_exegesis_tab_style())
         
         # Search Tab -> Scriptural Inquiry
         self.search_panel = SearchPanel()
@@ -276,7 +242,7 @@ class ExegesisWindow(QMainWindow):
         # Status Bar (Integrated into window or floating?)
         # Let's keep a simple label at bottom, maybe less obtrusive
         self.status = QLabel("Ready for Exegesis")
-        self.status.setStyleSheet("color: #78716c; font-style: italic; margin-left: 8px;")
+        self.status.setStyleSheet(get_status_muted_style())
         main_layout.addWidget(self.status)
         
     def _load_documents(self):

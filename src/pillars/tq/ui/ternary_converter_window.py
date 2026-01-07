@@ -177,7 +177,6 @@ class TernaryConverterWindow(QMainWindow):
                 
             value = int(text)
             ternary = self.ternary_service.decimal_to_ternary(value)
-            
             self.ternary_input.blockSignals(True)
             self.ternary_input.setText(ternary)
             self.ternary_input.blockSignals(False)
@@ -196,18 +195,13 @@ class TernaryConverterWindow(QMainWindow):
             return
             
         try:
-            # Handle negative sign at start
-            if text == "-":
-                return
-                
             value = self.ternary_service.ternary_to_decimal(text)
-            
             self.decimal_input.blockSignals(True)
             self.decimal_input.setText(str(value))
             self.decimal_input.blockSignals(False)
             
         except ValueError:
-            self.status_label.setText("Invalid ternary number (use only 0, 1, 2)")
+            self.status_label.setText("Invalid ternary number")
             
     def _clear_all(self):
         """Clear all inputs."""

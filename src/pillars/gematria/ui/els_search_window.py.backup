@@ -12,7 +12,7 @@ from PyQt6.QtWidgets import (
     QCheckBox
 )
 from PyQt6.QtCore import Qt
-from typing import List, Optional
+from typing import List
 import logging
 
 from .els_grid_view import ELSGridView
@@ -103,7 +103,7 @@ class ELSSearchWindow(QMainWindow):
         main_layout.addWidget(splitter, 1)
         
         # Status bar
-        self.statusBar().showMessage("Load a text to begin")
+        self.statusBar().showMessage("The Vessel awaits inscription")
         self.statusBar().setStyleSheet(theme.get_status_muted_style())
     
     def _create_left_pane(self) -> QWidget:
@@ -111,7 +111,7 @@ class ELSSearchWindow(QMainWindow):
         pane = QWidget()
         pane.setMaximumWidth(300)
         layout = QVBoxLayout(pane)
-        layout.setContentsMargins(5, 5, 5, 5)
+        layout.setContentsMargins(16, 16, 16, 16)  # More breathing room
         
         # Style as floating card
         pane.setStyleSheet(theme.get_tablet_style())
@@ -124,10 +124,13 @@ class ELSSearchWindow(QMainWindow):
         # === TAB 1: Source & Grid ===
         source_tab = QWidget()
         source_layout = QVBoxLayout(source_tab)
-        source_layout.setSpacing(10)
+        source_layout.setSpacing(12)  # Increased from 10px
         
         # Text Source section
-        source_layout.addWidget(QLabel("📄 <b>Text Source</b>"))
+        text_source_label = QLabel("📄 Text Source")
+        text_source_label.setStyleSheet(f"font-weight: 700; color: {theme.COLORS['void']}; font-size: 12pt;")
+        source_layout.addWidget(text_source_label)
+        source_layout.addSpacing(4)  # Space after header
         
         btn_layout = QHBoxLayout()
         self._btn_load = QPushButton("📁 File")
@@ -159,9 +162,13 @@ class ELSSearchWindow(QMainWindow):
         sep1 = QFrame()
         sep1.setFrameShape(QFrame.Shape.HLine)
         source_layout.addWidget(sep1)
+        source_layout.addSpacing(4)  # Space before next section
         
         # Grid Configuration section
-        source_layout.addWidget(QLabel("📐 <b>Grid Configuration</b>"))
+        grid_config_label = QLabel("📐 Grid Configuration")
+        grid_config_label.setStyleSheet(f"font-weight: 700; color: {theme.COLORS['void']}; font-size: 12pt;")
+        source_layout.addWidget(grid_config_label)
+        source_layout.addSpacing(4)  # Space after header
         
         source_layout.addWidget(QLabel("Available Factors:"))
         self._factors_combo = QComboBox()
@@ -195,7 +202,7 @@ class ELSSearchWindow(QMainWindow):
         # === TAB 2: Search ===
         search_tab = QWidget()
         search_layout = QVBoxLayout(search_tab)
-        search_layout.setSpacing(8)
+        search_layout.setSpacing(12)  # Increased from 8px to match Source tab
         
         search_layout.addWidget(QLabel("Search Term:"))
         self._term_input = QLineEdit()
@@ -314,7 +321,7 @@ class ELSSearchWindow(QMainWindow):
         zoom_layout = QHBoxLayout(zoom_group)
         zoom_layout.setContentsMargins(0, 10, 0, 0)
         zoom_group.setStyleSheet(
-            f"background: {theme.COLORS['surface']}; border: 1px solid {theme.COLORS['border']}; border-radius: 12px;"
+            f"background-color: transparent; border: 1px solid {theme.COLORS['border']}; border-radius: 12px; padding: 8px;"
         )
         
         btn_zoom_out = QPushButton("−")
@@ -468,7 +475,7 @@ class ELSSearchWindow(QMainWindow):
                 try:
                     with open(path, 'r', encoding=encoding) as f:
                         text = f.read()
-                    logger.info(f"Loaded file with {encoding} encoding")
+                    # Successfully decoded with this encoding
                     break
                 except (UnicodeDecodeError, UnicodeError):
                     continue
@@ -476,7 +483,7 @@ class ELSSearchWindow(QMainWindow):
             if text is not None:
                 self._load_text(text, source=path)
             else:
-                QMessageBox.warning(self, "Error", "Failed to decode file with any supported encoding")
+                QMessageBox.warning(self, "The Ritual faltered", "The glyphs resist translation")
     
     def _on_paste_text(self):
         """Show dialog to paste raw text."""
@@ -517,11 +524,11 @@ class ELSSearchWindow(QMainWindow):
         try:
             docs = get_all_documents_metadata()
         except Exception as e:
-            QMessageBox.warning(self, "Error", f"Failed to load documents: {e}")
+            QMessageBox.warning(self, "The Ritual faltered", f"Failed to commune with the archives: {e}")
             return
         
         if not docs:
-            QMessageBox.information(self, "No Documents", "No documents found in database")
+            QMessageBox.information(self, "The Archives Speak", "The archives are silent")
             return
         
         # Create selector dialog
@@ -575,12 +582,20 @@ class ELSSearchWindow(QMainWindow):
                     text = re.sub(r'<[^>]+>', '', document.content)  # type: ignore[reportArgumentType, reportCallIssue, reportUnknownVariableType]
                     self._load_text(text, source=document.title or "Database Document")
                 else:
-                    QMessageBox.warning(self, "Error", "Document has no text content")
+                    QMessageBox.warning(self, "The Ritual faltered", "The document vessel is void")
             except Exception as e:
-                QMessageBox.warning(self, "Error", f"Failed to load document: {e}")
+                QMessageBox.warning(self, "The Ritual faltered", f"Failed to retrieve from the archives: {e}")
     
     def _load_text(self, text: str, source: str = ""):
-        """Process and display text."""
+        """Process and display text.
+        
+        Prepares the text for ELS analysis by stripping non-letters, calculates
+        available grid factors, and initializes the grid view with the first factor.
+        
+        Args:
+            text: Raw text content to load.
+            source: Human-readable source description (file path, "Pasted Text", etc.).
+        """
         self._stripped_text, self._position_map = self._service.prepare_text(text)
         
         letter_count = len(self._stripped_text)
@@ -598,10 +613,7 @@ class ELSSearchWindow(QMainWindow):
             self._cols_spin.setValue(initial_cols)
             self._grid_view.set_grid(self._stripped_text, initial_cols)
         
-            self._grid_view.set_grid(self._stripped_text, initial_cols)
-        
         self.statusBar().showMessage(f"Loaded: {source} ({letter_count:,} letters)")
-        logger.info(f"Loaded text: {letter_count} letters from {source}")
     
     def _on_factor_selected(self, index: int):
         """Apply selected factor as grid columns."""
@@ -611,24 +623,31 @@ class ELSSearchWindow(QMainWindow):
                 self._cols_spin.setValue(cols)
     
     def _on_apply_grid(self):
-        """Apply custom grid configuration."""
+        """Apply custom grid configuration.
+        
+        Clears any existing highlights and reapplies the grid with the specified
+        column count, updating the status bar to reflect the new configuration.
+        """
         cols = self._cols_spin.value()
-        if self._stripped_text:
-            self._grid_view.clear_highlights()
         if self._stripped_text:
             self._grid_view.clear_highlights()
             self._grid_view.set_grid(self._stripped_text, cols)
             self.statusBar().showMessage(f"Grid: {cols} columns")
     
     def _on_search(self):
-        """Execute ELS or sequence search."""
+        """Execute ELS or sequence search.
+        
+        Performs the search based on the selected mode (exact skip, range, sequence,
+        or chain). For chain searches, opens a separate results window. For all other
+        modes, populates the results table and highlights matches on the grid.
+        """
         term = self._term_input.text().strip()
         if not term:
-            QMessageBox.warning(self, "Error", "Please enter a search term")
+            QMessageBox.warning(self, "The Ritual faltered", "A search term must be inscribed")
             return
         
         if not self._stripped_text:
-            QMessageBox.warning(self, "Error", "Please load text first")
+            QMessageBox.warning(self, "The Ritual faltered", "No text has been woven into the Grid")
             return
         
         # Get search parameters
@@ -670,7 +689,6 @@ class ELSSearchWindow(QMainWindow):
             return  # Don't continue to normal results display
         
         self._all_results = summary.results
-        self._current_results = summary.results
         self._current_results = summary.results
         self._gematria_filter.clear()  # Clear filter on new search
         self._display_results()
@@ -758,7 +776,7 @@ class ELSSearchWindow(QMainWindow):
     def _on_export(self):
         """Export results to Document Editor."""
         if not self._current_results:
-            QMessageBox.information(self, "No Results", "No results to export")
+            QMessageBox.information(self, "The Archives Speak", "The search yielded no patterns")
             return
         
         # Build formatted HTML report
@@ -827,7 +845,7 @@ class ELSSearchWindow(QMainWindow):
             
             self.statusBar().showMessage("Exported to Document Editor")
         else:
-            QMessageBox.warning(self, "Error", "Window manager not available")
+            QMessageBox.warning(self, "The Ritual faltered", "The Navigation Nexus is unreachable")
     
     def _on_clear(self):
         """Clear search results."""

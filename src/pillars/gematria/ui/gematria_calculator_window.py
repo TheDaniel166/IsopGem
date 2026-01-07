@@ -2,20 +2,25 @@
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QLineEdit, QPushButton, QTextEdit, QComboBox,
-    QMessageBox, QInputDialog, QMenu, QRadioButton,
-    QGraphicsDropShadowEffect
+    QMessageBox, QInputDialog, QMenu, QRadioButton
 )
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFont, QAction, QColor
 from typing import Dict, List, Optional
 from ..services.base_calculator import GematriaCalculator
 from ..services import CalculationService
 from shared.ui import VirtualKeyboard, get_shared_virtual_keyboard
 from shared.ui.window_manager import WindowManager # Should be available via parent typically, but importing for type hint if needed
 from .components import ResultsDashboard
-from shared.ui.components import CatalystButton
 from shared.signals.navigation_bus import navigation_bus
 from shared.services.document_manager.notebook_service import notebook_service_context
+from shared.ui.theme import (
+    COLORS,
+    apply_tablet_shadow,
+    get_subtitle_style,
+    get_tablet_style,
+    get_title_style,
+    set_archetype,
+)
 
 
 class GematriaCalculatorWindow(QMainWindow):
@@ -66,15 +71,13 @@ class GematriaCalculatorWindow(QMainWindow):
         self.setCentralWidget(central)
         
         # Applying the background pattern ONLY to the central container
-        bg_path = "/home/burkettdaniel927/.gemini/antigravity/brain/2a906893-16d8-4452-966d-10a7777e72da/gematria_bg_pattern_1766530853546.png"
-        central.setStyleSheet(f"""
+        central.setStyleSheet(
+            f"""
             QWidget#CentralContainer {{
-                background-image: url("{bg_path}");
-                background-repeat: repeat;
-                background-position: center;
-                background-color: #f8fafc;
+                background-color: {COLORS['cloud']};
             }}
-        """)
+        """
+        )
         
         main_layout = QHBoxLayout(central)
         main_layout.setContentsMargins(20, 20, 20, 20)
@@ -89,20 +92,16 @@ class GematriaCalculatorWindow(QMainWindow):
         left_panel.setObjectName("ControlPanel")
         left_panel.setMinimumWidth(350)
         left_panel.setMaximumWidth(450)
-        left_panel.setStyleSheet("""
-            QFrame#ControlPanel {
-                background-color: #ffffff;
-                border: 1px solid #cbd5e1;
-                border-radius: 24px;
-            }
-        """)
-        
+        left_panel.setStyleSheet(
+            f"""
+            QFrame#ControlPanel {{
+                {get_tablet_style()}
+            }}
+        """
+        )
+
         # Shadow for Left Panel
-        l_shadow = QGraphicsDropShadowEffect()
-        l_shadow.setBlurRadius(20)
-        l_shadow.setColor(QColor(0, 0, 0, 30))
-        l_shadow.setOffset(4, 4)
-        left_panel.setGraphicsEffect(l_shadow)
+        apply_tablet_shadow(left_panel)
         
         l_layout = QVBoxLayout(left_panel)
         l_layout.setContentsMargins(30, 40, 30, 40)
@@ -113,21 +112,14 @@ class GematriaCalculatorWindow(QMainWindow):
         header_layout.setSpacing(5)
         
         title_label = QLabel("LOGOS ABACUS")
-        title_label.setStyleSheet("""
-            color: #0f172a;
-            font-size: 28pt;
-            font-weight: 900;
-            letter-spacing: -1px;
-        """)
+        title_label.setStyleSheet(get_title_style(28) + "font-weight: 900; letter-spacing: -1px;")
         title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
         subtitle_label = QLabel("THE MATHEMATICS OF SOUL")
-        subtitle_label.setStyleSheet("""
-            color: #64748b;
-            font-size: 8pt;
-            font-weight: 700;
-            letter-spacing: 0.3em;
-        """)
+        subtitle_label.setStyleSheet(
+            get_subtitle_style()
+            + "font-size: 8pt; font-weight: 700; letter-spacing: 0.3em;"
+        )
         subtitle_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
         header_layout.addWidget(title_label)
@@ -141,52 +133,65 @@ class GematriaCalculatorWindow(QMainWindow):
         system_section.setSpacing(10)
         
         selector_label = QLabel("CALCULATION METHOD")
-        selector_label.setStyleSheet("font-size: 9pt; font-weight: 800; color: #94a3b8; letter-spacing: 0.1em;")
+        selector_label.setStyleSheet(
+            f"font-size: 9pt; font-weight: 800; color: {COLORS['mist']}; letter-spacing: 0.1em;"
+        )
         system_section.addWidget(selector_label)
         
         self.system_button = QPushButton()
         self.system_button.setMinimumHeight(54)
-        self.system_button.setStyleSheet("""
-            QPushButton {
-                background-color: #ffffff;
-                color: #0f172a;
+        self.system_button.setObjectName("SystemButton")
+        self.system_button.setStyleSheet(
+            f"""
+            QPushButton#SystemButton[archetype="navigator"] {{
                 text-align: left;
-                padding: 12px 18px;
-                font-size: 11pt;
-                border: 2px solid #e2e8f0;
-                border-radius: 12px;
                 font-weight: 700;
-            }
-            QPushButton:hover {
-                background-color: #f8fafc;
-                border-color: #3b82f6;
-            }
-            QPushButton::menu-indicator {
+                font-size: 11pt;
+                background-color: {COLORS['light']};
+                color: {COLORS['stone']};
+                border: 1px solid {COLORS['ash']};
+                border-radius: 12px;
+                padding: 12px 18px;
+            }}
+            QPushButton#SystemButton[archetype="navigator"]:hover {{
+                background-color: {COLORS['cloud']};
+                border: 1px solid {COLORS['focus']};
+            }}
+            QPushButton#SystemButton[archetype="navigator"]:pressed {{
+                background-color: {COLORS['ash']};
+            }}
+            QPushButton#SystemButton::menu-indicator {{
                 subcontrol-position: right center;
                 subcontrol-origin: padding;
                 right: 15px;
-            }
-        """)
+            }}
+        """
+        )
+        set_archetype(self.system_button, "navigator")
         
         # Create the menu
         self.system_menu = QMenu(self)
-        self.system_menu.setStyleSheet("""
-            QMenu {
-                background-color: white;
-                border: 1px solid #e2e8f0;
-                border-radius: 12px;
-                padding: 8px;
-            }
-            QMenu::item {
-                padding: 10px 25px;
+        self.system_menu.setStyleSheet(
+            f"""
+            QMenu {{
+                background-color: {COLORS['light']};
+                border: 1px solid {COLORS['ash']};
+                border-radius: 10px;
+                padding: 10px 6px;
+                margin-top: 6px;
+            }}
+            QMenu::item {{
+                padding: 10px 18px;
                 border-radius: 8px;
-                color: #334155;
-            }
-            QMenu::item:selected {
-                background-color: #3b82f6;
-                color: white;
-            }
-        """)
+                color: {COLORS['stone']};
+                font-weight: 600;
+            }}
+            QMenu::item:selected {{
+                background-color: {COLORS['focus']};
+                color: {COLORS['light']};
+            }}
+        """
+        )
         
         # Hebrew submenu
         hebrew_menu = self.system_menu.addMenu("📖 Hebrew")
@@ -247,46 +252,46 @@ class GematriaCalculatorWindow(QMainWindow):
         input_section.setSpacing(10)
         
         input_label = QLabel("ENTER WISDOM")
-        input_label.setStyleSheet("font-size: 9pt; font-weight: 800; color: #94a3b8; letter-spacing: 0.1em;")
+        input_label.setStyleSheet(
+            f"font-size: 9pt; font-weight: 800; color: {COLORS['mist']}; letter-spacing: 0.1em;"
+        )
         input_section.addWidget(input_label)
         
         input_row = QHBoxLayout()
         self.input_field = QLineEdit()
         self.input_field.setPlaceholderText("The phrase to measure...")
-        self.input_field.setStyleSheet("""
-            QLineEdit {
+        self.input_field.setStyleSheet(
+            f"""
+            QLineEdit {{
                 font-size: 15pt;
                 min-height: 54px;
                 padding: 10px 15px;
-                border: 2px solid #e2e8f0;
+                border: 2px solid {COLORS['ash']};
                 border-radius: 12px;
-                background-color: #ffffff;
-                color: #0f172a;
+                background-color: {COLORS['light']};
+                color: {COLORS['void']};
                 font-weight: 500;
-            }
-            QLineEdit:focus {
-                border: 2px solid #3b82f6;
-                background-color: #ffffff;
-            }
-        """)
+            }}
+            QLineEdit:focus {{
+                border: 2px solid {COLORS['focus']};
+                background-color: {COLORS['light']};
+            }}
+        """
+        )
         self.input_field.returnPressed.connect(self._calculate)
         input_row.addWidget(self.input_field)
         
         self.keyboard_toggle = QPushButton("⌨️")
         self.keyboard_toggle.setFixedSize(54, 54)
-        self.keyboard_toggle.setStyleSheet("""
-            QPushButton {
+        self.keyboard_toggle.setObjectName("KeyboardToggle")
+        self.keyboard_toggle.setStyleSheet(
+            """
+            QPushButton#KeyboardToggle {
                 font-size: 18pt;
-                background-color: #ffffff;
-                color: #3b82f6;
-                border-radius: 12px;
-                border: 2px solid #3b82f6;
             }
-            QPushButton:hover {
-                background-color: #3b82f6;
-                color: #ffffff;
-            }
-        """)
+        """
+        )
+        set_archetype(self.keyboard_toggle, "ghost")
         self.keyboard_toggle.clicked.connect(self._toggle_keyboard)
         input_row.addWidget(self.keyboard_toggle)
         
@@ -304,7 +309,7 @@ class GematriaCalculatorWindow(QMainWindow):
         self.calc_button = QPushButton("Calculate Revelation")
         self.calc_button.clicked.connect(self._calculate)
         self.calc_button.setMinimumHeight(64)
-        self.calc_button.setProperty("archetype", "magus")
+        set_archetype(self.calc_button, "magus")
         self.calc_button.setCursor(Qt.CursorShape.PointingHandCursor)
         actions_layout.addWidget(self.calc_button)
         
@@ -312,24 +317,26 @@ class GematriaCalculatorWindow(QMainWindow):
         self.save_button.clicked.connect(self._save_calculation)
         self.save_button.setMinimumHeight(54)
         self.save_button.setEnabled(False)
-        self.save_button.setProperty("archetype", "scribe")
+        set_archetype(self.save_button, "scribe")
         self.save_button.setCursor(Qt.CursorShape.PointingHandCursor)
         actions_layout.addWidget(self.save_button)
         l_layout.addLayout(actions_layout)
         
         # Options
         self.show_breakdown_toggle = QRadioButton("Expose Character Breakdown")
-        self.show_breakdown_toggle.setStyleSheet("""
-            QRadioButton {
-                color: #64748b;
+        self.show_breakdown_toggle.setStyleSheet(
+            f"""
+            QRadioButton {{
+                color: {COLORS['navigator']};
                 font-size: 10pt;
                 font-weight: 600;
-            }
-            QRadioButton::indicator {
+            }}
+            QRadioButton::indicator {{
                 width: 18px;
                 height: 18px;
-            }
-        """)
+            }}
+        """
+        )
         self.show_breakdown_toggle.toggled.connect(self._calculate)
         l_layout.addWidget(self.show_breakdown_toggle)
         
@@ -338,13 +345,15 @@ class GematriaCalculatorWindow(QMainWindow):
         # --- RIGHT PANEL (RESULTS PANEL) ---
         right_panel = QFrame()
         right_panel.setObjectName("ResultsPanel")
-        right_panel.setStyleSheet("""
-            QFrame#ResultsPanel {
-                background-color: rgba(255, 255, 255, 0.6);
-                border-radius: 20px;
-                border: 1px solid rgba(255, 255, 255, 0.4);
-            }
-        """)
+        right_panel.setStyleSheet(
+            f"""
+            QFrame#ResultsPanel {{
+                background-color: {COLORS['light']};
+                border-radius: 24px;
+                border: 1px solid {COLORS['border']};
+            }}
+        """
+        )
         
         r_layout = QVBoxLayout(right_panel)
         r_layout.setContentsMargins(0, 0, 0, 0)
@@ -645,10 +654,10 @@ class GematriaCalculatorWindow(QMainWindow):
             # Format high-quality summary
             res_str = f"""
             <div style="font-family: 'Segoe UI', sans-serif;">
-                <h2 style="color: #1e40af; border-bottom: 2px solid #3b82f6; padding-bottom: 5px;">Gematria Resonance</h2>
-                <p><b>Original Text:</b> <span style="font-size: 1.2em; color: #111827;">{self.current_text}</span></p>
-                <p><b>Numeric Value:</b> <span style="font-size: 1.5em; font-weight: bold; color: #2563eb;">{value}</span></p>
-                <p><b>System Used:</b> <i style="color: #4b5563;">{self.current_calculator.name if self.current_calculator else "All Methods"}</i></p>
+                <h2 style="color: {COLORS['focus']}; border-bottom: 2px solid {COLORS['focus']}; padding-bottom: 5px;">Gematria Resonance</h2>
+                <p><b>Original Text:</b> <span style="font-size: 1.2em; color: {COLORS['void']};">{self.current_text}</span></p>
+                <p><b>Numeric Value:</b> <span style="font-size: 1.5em; font-weight: bold; color: {COLORS['focus']};">{value}</span></p>
+                <p><b>System Used:</b> <i style="color: {COLORS['stone']};">{self.current_calculator.name if self.current_calculator else "All Methods"}</i></p>
             </div>
             """
             # DocumentEditorWindow uses 'editor' attribute (RichTextEditor)
@@ -677,7 +686,7 @@ class GematriaCalculatorWindow(QMainWindow):
     def _ms_add_note(self, page_widget, value: int):
         """Add the gematria result as a note to a page."""
         content = f"""
-        <h2 style="color: #1e3a8a;">Gematria Resonance</h2>
+        <h2 style="color: {COLORS['focus']};">Gematria Resonance</h2>
         <p><b>Text:</b> {self.current_text}</p>
         <p><b>Value:</b> <span style="font-size: 1.4em; font-weight: bold;">{value}</span></p>
         <p><b>System:</b> {self.current_calculator.name if self.current_calculator else "All"}</p>
