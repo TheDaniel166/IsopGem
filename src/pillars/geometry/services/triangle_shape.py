@@ -1,4 +1,164 @@
-"""Triangle shape calculators."""
+"""Triangle shape calculators.
+
+The triangle is the simplest polygon—three sides, three angles, three vertices. It is
+the fundamental building block of geometry: every polygon can be decomposed into
+triangles (triangulation), and every surface can be approximated by triangular meshes.
+The triangle possesses unique rigidity—it is the only polygon that cannot be deformed
+without changing side lengths.
+
+═══════════════════════════════════════════════════════════════════════════════════════
+AHA MOMENT #1: Triangle Inequality and Existence (The Fundamental Constraint)
+═══════════════════════════════════════════════════════════════════════════════════════
+
+For a triangle with sides a, b, c to EXIST, the **triangle inequality** must hold:
+
+  a + b > c    AND    a + c > b    AND    b + c > a
+
+Intuitively: **The sum of any two sides must exceed the third side.**
+
+Why? Imagine trying to connect three sticks of lengths a, b, c into a triangle:
+• If a + b ≤ c, then sticks a and b laid end-to-end cannot reach past stick c
+  → they cannot close the triangle ("degenerate" case: collinear points)
+• If a + b = c exactly, you get a "flat" triangle (zero area, 180° angle)
+
+Equivalently, for sides a ≤ b ≤ c (sorted), the single inequality suffices:
+
+  a + b > c    (the smallest two must exceed the largest)
+
+**Implications**:
+• Given two sides a and b, the third side c must satisfy: |a - b| < c < a + b
+• This constraint gives triangles RIGIDITY: once you fix three side lengths (and they
+  satisfy the inequality), the triangle's shape is UNIQUE (SSS congruence)
+• Squares/rectangles can be "parallelogram-ed" (sheared), but triangles CANNOT be
+  deformed without changing side lengths → this is why truss bridges use triangles!
+
+**Extension to metrics**: In metric spaces, the triangle inequality generalizes:
+  d(x,z) ≤ d(x,y) + d(y,z)    ("direct path ≤ detour via intermediate point")
+
+This is the FUNDAMENTAL AXIOM of distance—it defines what we mean by "distance."
+
+═══════════════════════════════════════════════════════════════════════════════════════
+AHA MOMENT #2: Heron's Formula (Area from Sides Alone)
+═══════════════════════════════════════════════════════════════════════════════════════
+
+Given three sides a, b, c, the area A can be computed WITHOUT knowing angles or heights:
+
+  **Heron's Formula**:
+    s = (a + b + c)/2    (semi-perimeter)
+    A = √[s(s-a)(s-b)(s-c)]
+
+This is remarkable because:
+• Standard area formula: A = (base × height)/2  requires altitude computation
+• Heron bypasses this—just three sides suffice!
+
+**Proof sketch** (via Law of Cosines):
+Law of Cosines: c² = a² + b² - 2ab·cos(C)
+⇒ cos(C) = (a² + b² - c²)/(2ab)
+⇒ sin²(C) = 1 - cos²(C)  [after algebra, factor into s terms]
+
+Area: A = (1/2)ab·sin(C), then substitute sin(C) from above ⇒ Heron's formula!
+
+**Alternative form** (Brahmagupta's generalization for quadrilaterals):
+For cyclic quadrilateral with sides a,b,c,d:
+  A = √[(s-a)(s-b)(s-c)(s-d)]    (where s = (a+b+c+d)/2)
+
+Heron's formula is the special case where one side shrinks to zero (quadrilateral
+collapses to triangle).
+
+**Computational note**: Direct computation can suffer from floating-point cancellation
+when triangle is nearly degenerate. Stable formula (Kahan 2000):
+
+Sort sides: a ≥ b ≥ c
+  A = (1/4)√[(a+(b+c))·(c-(a-b))·(c+(a-b))·(a+(b-c))]
+
+**Special cases**:
+• Equilateral (a=b=c): A = (a²√3)/4    [Heron reduces to this!]
+• Right triangle (c²=a²+b²): A = ab/2    [standard formula]
+
+═══════════════════════════════════════════════════════════════════════════════════════
+AHA MOMENT #3: Angle Sum Theorem and Degrees of Freedom
+═══════════════════════════════════════════════════════════════════════════════════════
+
+For ANY triangle (flat Euclidean plane), the interior angles sum to 180°:
+
+  α + β + γ = 180°    (or π radians)
+
+**Proof** (parallel postulate):
+• Draw a line through one vertex parallel to the opposite side
+• Alternate interior angles show that the three angles "add up" to a straight line (180°)
+
+This is equivalent to Euclid's **Fifth Postulate** (parallel postulate):
+  "Through a point not on a line, exactly one line can be drawn parallel to the given line."
+
+**Non-Euclidean geometry**:
+• **Spherical** (positive curvature): angle sum > 180°
+  - Example: Triangle on Earth's surface with three 90° angles (equator + two meridians)
+    → 90° + 90° + 90° = 270° > 180°
+  - Excess: E = (α+β+γ) - 180° relates to triangle area: A = R²·E (in radians)
+
+• **Hyperbolic** (negative curvature): angle sum < 180°
+  - Example: Triangles in Poincaré disk get "thinner" as they approach boundary
+  - Defect: D = 180° - (α+β+γ) > 0, also proportional to area
+
+**Degrees of freedom**: A triangle in 2D has 6 coordinates (3 vertices × 2 coords)
+BUT:
+• -2 for translation (x,y position)
+• -1 for rotation (θ orientation)
+• -1 for scaling (overall size)
+• = **2 intrinsic degrees of freedom**
+
+These 2 DOF can be chosen as:
+• Two angles (the third is constrained by sum = 180°)
+• Two side ratios (the third ratio is then determined)
+• Shape space of triangles is 2-dimensional!
+
+**Rigidity**: Once you specify:
+• SSS (3 sides) → triangle fully determined (0 DOF left)
+• SAS (2 sides + included angle) → triangle fully determined
+• ASA (2 angles + included side) → triangle fully determined
+• But AAA (3 angles) → similar triangles (1 DOF: scale)
+
+This is the foundation of **trigonometry** and **surveying** (triangulation).
+
+═══════════════════════════════════════════════════════════════════════════════════════
+🔺 HERMETIC SIGNIFICANCE 🔺
+═══════════════════════════════════════════════════════════════════════════════════════
+
+The triangle embodies **Trinity, Stability, and the Bridge Between Unity and Plurality**:
+
+• **Holy Trinity**: Father/Son/Spirit, Brahma/Vishnu/Shiva, Maiden/Mother/Crone.
+  Three is the first number that creates STRUCTURE (two points = line, three = plane).
+  The triangle is the geometric manifestation of the sacred triad.
+
+• **Alchemical Delta (△/▽)**: Upward triangle = Fire/Spirit/Masculine (🜃),
+  Downward triangle = Water/Matter/Feminine (🜄). Their union forms the hexagram
+  (Star of David, Seal of Solomon)—*As Above, So Below*.
+
+• **Pythagorean Tetraktys**:
+      •
+     • •
+    • • •
+   • • • •
+  The triangular array of 10 dots (1+2+3+4 = 10) representing the sum of all creation.
+  Pythagoras swore oaths by the Tetraktys—"the fount of ever-flowing nature."
+
+• **Structural Integrity**: The triangle is RIGID—used in trusses, pyramids, geodesic
+  domes. Buckminster Fuller: "Triangles are the strongest shape." This is geometric
+  truth: three points define a plane UNIQUELY, no wobble. Spiritually: the trinity
+  is STABLE (thesis/antithesis/synthesis, no unresolved duality).
+
+• **The All-Seeing Eye**: In Egyptian/Masonic symbolism, the eye within a triangle
+  represents divine omniscience. The triangle as the "eye of God" watching over
+  creation (on the US dollar bill: Annuit Cœptis, "He approves our undertakings").
+
+• **Past/Present/Future**: The three vertices of time's flow. Vertex 1 (base left) =
+  Past, Vertex 2 (base right) = Future, Vertex 3 (apex) = Present (the synthesis,
+  the NOW where past and future meet).
+
+The triangle teaches: **Two creates tension; Three creates resolution.** 🔺
+
+═══════════════════════════════════════════════════════════════════════════════════════
+"""
 import math
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple

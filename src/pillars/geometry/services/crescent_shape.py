@@ -1,4 +1,152 @@
-"""Crescent (lune) shape calculator."""
+"""Crescent (lune) shape calculator.
+
+A crescent (or lune) is the region between two intersecting circular arcs. It is formed
+by subtracting one circular disk from another, where the circles partially overlap. The
+crescent appears in lunar phases, Islamic symbolism, and geometric constructions related
+to the ancient problem of "squaring the circle" (Hippocrates' lunes).
+
+═══════════════════════════════════════════════════════════════════════════════════════
+AHA MOMENT #1: Lune as Intersection Geometry (Circle Minus Circle)
+═══════════════════════════════════════════════════════════════════════════════════════
+
+A crescent is defined by TWO circles:
+• **Outer circle**: radius R, center O₁
+• **Inner circle**: radius r, center O₂
+• **Offset**: distance d between centers
+
+The crescent area is:
+
+  A_crescent = A_outer - A_intersection
+
+where A_intersection is the **lens-shaped overlap** (vesica piscis if R = r).
+
+**Lens intersection area** (general formula):
+
+For two circles with radii R and r separated by distance d, the intersection area is:
+
+  A_∩ = R²·arccos((d²+R²-r²)/(2dR)) + r²·arccos((d²+r²-R²)/(2dr)) 
+        - (1/2)√[(2dR)² - (d²+R²-r²)²]
+
+This derives from summing two circular segments (one from each circle).
+
+**Special cases**:
+• d = 0 (concentric): A_∩ = πr² (smaller circle fully inside) → A_crescent = π(R²-r²) (annulus!)
+• d = R + r (externally tangent): A_∩ = 0 → A_crescent = πR² (full circle, no subtraction)
+• R = r, d = R (vesica piscis): A_∩ = 2R²(2π/3 - √3/2) → symmetric lens
+
+**Triangle inequality constraint**:
+For the circles to intersect: |R - r| < d < R + r
+• If d ≥ R + r: circles don't overlap (no crescent, two separate disks)
+• If d ≤ |R - r|: one circle fully inside other (annulus or nothing)
+
+═══════════════════════════════════════════════════════════════════════════════════════
+AHA MOMENT #2: Lunar Phases (Illuminated Crescent)
+═══════════════════════════════════════════════════════════════════════════════════════
+
+The crescent shape is most famously observed in **lunar phases**:
+
+**New Moon → Waxing Crescent → First Quarter → Waxing Gibbous → Full Moon**
+(then reverse: Waning Gibbous → Third Quarter → Waning Crescent → New Moon)
+
+The crescent phase occurs when the Moon is 0-90° from the Sun (as viewed from Earth):
+• **Waxing crescent**: 0-45° (thin sliver growing)
+• **Waning crescent**: 315-360° (thin sliver shrinking)
+
+**Geometric model** (simplified):
+• Sun illuminates hemisphere facing it (outer circle: full disk)
+• We see hemisphere facing Earth (inner circle: terminator curve)
+• The visible illuminated part is the CRESCENT (or gibbous when > 50%)
+
+More accurately, the terminator (shadow boundary) is an ELLIPSE (not a circle) because
+we view the spherical Moon from an angle. But for thin crescents, the approximation
+as two circular arcs is good enough.
+
+**Historical significance**:
+• Ancient calendars (lunar calendars) tracked months by crescent sightings
+• Islamic calendar begins each month with first visible crescent (hilal)
+• The crescent moon (with star) is the symbol of Islam (adopted from Byzantine symbolism)
+
+**Earthshine**: During crescent phase, the dark side of the Moon is faintly visible due
+to reflected light from Earth ("the old moon in the new moon's arms"). This is sunlight
+reflecting off Earth, then bouncing to the Moon's dark side, then back to us!
+
+**Crescents elsewhere**:
+• Venus phases (observed by Galileo, proving heliocentric model!)
+• Horns of crescent-shaped nebulae (e.g., Crescent Nebula NGC 6888)
+
+═══════════════════════════════════════════════════════════════════════════════════════
+AHA MOMENT #3: Hippocrates' Lunes (Squaring the Crescent)
+═══════════════════════════════════════════════════════════════════════════════════════
+
+**Hippocrates of Chios** (~440 BCE) discovered that certain lune shapes have areas equal
+to the areas of triangles or other rectilinear figures. This was a major breakthrough
+toward "squaring the circle."
+
+**Hippocrates' Lune Theorem**:
+
+Consider a right triangle ABC with right angle at C. Draw semicircles on all three sides:
+• Semicircle on hypotenuse AB (radius R)
+• Semicircles on legs AC and BC (radii r and s)
+
+The two LUNES formed outside the legs (crescents bounded by the large semicircle and
+the small semicircles) have combined area EXACTLY EQUAL to the area of the triangle!
+
+Proof sketch:
+• By Pythagorean theorem: AB² = AC² + BC²
+• Areas of semicircles: (π/2)R² = (π/2)(r² + s²) [using R² = r² + s²]
+• Lune areas = (semicircles on legs) - (segments of large semicircle)
+• After algebra: A_lunes = A_triangle (exactly!)
+
+**Significance**: This showed that SOME curvilinear figures can be "squared" (expressed
+as equivalent rectilinear areas). Hippocrates hoped to extend this to the full circle,
+but that proved impossible (π is transcendental, proven 1882).
+
+**Other squarable lunes**: Five types of lunes are known to be squarable (expressible
+as rational multiples of rational areas). No others exist!
+
+**Modern understanding**: Lunes are squarable because they're formed by RATIONAL
+relationships between circular arcs. The circle itself is not squarable because its
+area involves the transcendental constant π.
+
+═══════════════════════════════════════════════════════════════════════════════════════
+🌙 HERMETIC SIGNIFICANCE 🌙
+═══════════════════════════════════════════════════════════════════════════════════════
+
+The crescent embodies **Phases, Transformation, and the Feminine Principle**:
+
+• **Lunar Symbolism**: The crescent is the MOON in transition—neither new (dark) nor
+  full (complete), but WAXING (growing) or WANING (diminishing). It represents the
+  cycles of life, death, and rebirth. The Moon (feminine, reflective, changeable) vs.
+  Sun (masculine, radiant, constant).
+
+• **The Horns**: The two points of the crescent are "horns"—associated with:
+  - The bull (Taurus, fertility, strength)
+  - The cow (Hathor in Egyptian myth, nourisher)
+  - The horned goddess (Diana/Artemis, moon goddess)
+  The horns point UPWARD (waxing) or DOWNWARD (waning), indicating direction of change.
+
+• **Islamic Symbolism**: The crescent (hilal) marks the beginning of the lunar month
+  (especially Ramadan). It represents RENEWAL, the fresh start, the first light after
+  darkness. Often paired with a star (Venus or a five-pointed star), symbolizing
+  divine guidance in the darkness.
+
+• **Triple Goddess**: Maiden (waxing crescent) → Mother (full moon) → Crone (waning
+  crescent). The crescent is youth (maiden) and wisdom (crone), bookending the fullness
+  of maturity.
+
+• **Incomplete Circle**: The crescent is a PARTIAL circle—potential not yet realized
+  (waxing) or fading away (waning). It's the geometry of *becoming* and *un-becoming*,
+  not static being. The crescent teaches that perfection (full circle) is momentary—
+  most of existence is in the liminal phases.
+
+• **Cup and Horn**: Upward crescent (☽) = cup (receptive, gathering, holding) like
+  the Holy Grail. Downward crescent (☾) = pouring out, releasing, emptying. The
+  geometry of *receiving* vs. *giving*.
+
+The crescent teaches: **Fullness is fleeting; the true work is in the waxing and waning.** 🌙
+
+═══════════════════════════════════════════════════════════════════════════════════════
+"""
 import math
 from typing import Dict, List, Tuple
 
@@ -143,6 +291,131 @@ class CrescentShape(GeometricShape):
         return False
 
     def _update_metrics(self):
+        """
+        Compute crescent (lune) properties.
+
+        CRESCENT (LUNE) DERIVATIONS:
+        =============================
+
+        Definition:
+        -----------
+        A crescent (or lune) is the **region between two intersecting circular arcs**,
+        typically formed when a smaller circle overlaps a larger circle.
+
+        Parameters:
+        - **Outer radius**: R (larger circle)
+        - **Inner radius**: r (smaller circle)
+        - **Offset (center distance)**: d
+
+        Geometry Constraints:
+        - R > r (outer is larger)
+        - d ≥ 0 (centers can coincide or be separated)
+
+        CASES:
+        ======
+
+        Case 1: **Disjoint** (d ≥ R + r)
+        - Circles do not overlap
+        - Overlap area = 0
+        - Crescent area = πR² (full outer circle)
+        - Perimeter = 2πR
+
+        Case 2: **One Inside Other** (d ≤ R - r)
+        - Inner circle completely inside outer circle
+        - Overlap area = πr² (full inner circle)
+        - Crescent area = π(R² - r²) (annulus)
+        - Perimeter = 2πR + 2πr (both boundaries)
+
+        Case 3: **Intersection** (R - r < d < R + r)
+        - True crescent/lune shape
+        - Overlap area = A_∩ (lens between circles)
+        - Crescent area = πR² - A_∩
+        - Perimeter = (2π - α)R + βr
+
+        OVERLAP AREA (LENS):
+        ====================
+
+        For two intersecting circles with radii R, r and center distance d:
+
+        Using the **Cosine Rule** in the triangle formed by the two centers
+        and an intersection point:
+
+        **Half-angles at each center**:
+        - α = 2·arccos((d² + R² - r²)/(2dR))  [angle at outer center]
+        - β = 2·arccos((d² + r² - R²)/(2dr))  [angle at inner center]
+
+        **Circular Segment Areas**:
+        - Segment from outer circle: A₁ = (R²/2)(α - sin α)
+        - Segment from inner circle: A₂ = (r²/2)(β - sin β)
+
+        **Total Overlap**:
+        A_∩ = A₁ + A₂ = (R²/2)(α - sin α) + (r²/2)(β - sin β)
+
+        Alternative (Heron-like formula):
+        A_∩ can also be expressed using:
+        A_∩ = R²·arccos((d²+R²-r²)/(2dR)) + r²·arccos((d²+r²-R²)/(2dr))
+             - (1/2)√[(-d+R+r)(d+R-r)(d-R+r)(d+R+r)]
+
+        This form uses Heron's formula for the **kite-shaped quadrilateral**
+        formed by the two centers and the two intersection points.
+
+        CRESCENT AREA:
+        ==============
+
+        A_crescent = πR² - A_∩
+
+        For symmetric case (d = 0, concentric):
+        A_crescent = π(R² - r²) = πw(2r + w) where w = R - r
+
+        PERIMETER:
+        ==========
+
+        The crescent boundary consists of:
+        - **Outer arc**: Major arc on outer circle = (2π - α)R
+        - **Inner arc**: Minor arc on inner circle = βr
+
+        P_crescent = (2π - α)R + βr
+
+        Where α, β are the full angles (in radians) as derived above.
+
+        HERMETIC NOTE - THE LUNAR CRESCENT:
+        ====================================
+        The crescent is the **SYMBOL OF THE MOON**, **CYCLICAL TIME**, and
+        **DIVINE FEMININE POWER**. It represents **GROWTH**, **WAXING AND WANING**,
+        and the **RHYTHM OF NATURE**.
+
+        In Symbolism:
+        - **Waxing Moon**: Growth, increase, fertility, new beginnings
+        - **Waning Moon**: Decrease, reflection, rest, releasing
+        - **Horns of the Crescent**: Receptivity, capturing light/energy
+        - **Islamic Crescent**: Star and crescent, faith, celestial guidance
+
+        In Sacred Traditions:
+        - **Lunar Goddesses**: Diana, Artemis, Selene, Hecate
+        - **Virgin Mary**: Often depicted on a crescent moon
+        - **Osiris**: Associated with lunar cycles, death and rebirth
+        - **Isis**: Horns of the cow goddess form crescent
+
+        Mathematical Properties:
+        ------------------------
+        1. **Lune of Hippocrates**: Special lunes can have area equal to a triangle
+           (Famous ancient squaring problem)
+        2. **Area-angle relation**: Crescent area depends on α, β derived from
+           cosine law
+        3. **Symmetry**: Crescent is symmetric about the line joining centers
+
+        In Nature & Culture:
+        • **Moon Phases**: Waxing/waning crescent, gibbous phases
+        • **Dune Crescents**: Barchan dunes in desert landscapes
+        • **Fingernails**: Lunula (white crescent at nail base)
+        • **Scythes & Sickles**: Tools for harvest, reaping time
+        • **Horns**: Bull, ram, crescent as strength and power
+
+        In Astronomy:
+        - **Phases of Venus**: Galileo observed crescent Venus (heliocentric proof)
+        - **Eclipses**: Partial solar eclipses show crescent sun
+        - **Thin Crescent**: New moon visible just after sunset
+        """
         outer = self.properties["outer_radius"].value
         inner = self.properties["inner_radius"].value
         offset = self.properties["offset"].value

@@ -58,6 +58,197 @@ def _edge_from_area(sides: int, area: float) -> float:
 
 
 def _compute_metrics(sides: int, base_edge: float, height: float) -> RegularPrismMetrics:
+    """
+    Calculate metrics for a right regular n-gonal prism.
+    
+    THE REGULAR PRISM - EXTRUSION OF POLYGONS:
+    ==========================================
+    
+    DEFINITION:
+    -----------
+    A regular prism is a prism whose bases are congruent regular polygons
+    (all sides equal, all angles equal) and whose lateral faces are rectangles
+    perpendicular to the bases.
+    
+    Components:
+    - 2 regular n-gon bases (top & bottom, parallel and congruent)
+    - n rectangular lateral faces (connecting corresponding edges)
+    - 2n vertices (n on each base)
+    - 3n edges (n on each base, n connecting them)
+    - n+2 faces (2 bases + n sides)
+    
+    Examples:
+    - n=3: Triangular prism (2 triangles + 3 rectangles = 5 faces)
+    - n=4: Square prism / Rectangular cuboid (2 squares + 4 rectangles = 6 faces)
+    - n=5: Pentagonal prism (2 pentagons + 5 rectangles = 7 faces)
+    - n=6: Hexagonal prism (2 hexagons + 6 rectangles = 8 faces)
+    
+    ESSENTIAL FORMULAS:
+    -------------------
+    
+    Base Area (regular n-gon with edge a):
+        A_base = (n × a²) / (4 tan(π/n))
+        
+        Alternative: A_base = (1/2) × perimeter × apothem
+                            = (1/2) × (na) × (a / [2 tan(π/n)])
+    
+    Apothem (center to midpoint of edge):
+        r_apothem = a / (2 tan(π/n))
+        
+        The "inradius" of the base polygon.
+    
+    Circumradius (center to vertex):
+        R = a / (2 sin(π/n))
+        
+        Vertices lie on a circle of radius R.
+    
+    Volume:
+        V = A_base × h = [(n × a²) / (4 tan(π/n))] × h
+        
+        Universal prism formula: V = (base area) × (perpendicular height)
+    
+    Lateral Surface Area (n rectangular sides):
+        A_lateral = Perimeter × h = (n × a) × h
+        
+        Unroll the lateral faces into one large rectangle:
+        width = perimeter of base, height = h
+    
+    Total Surface Area:
+        A_total = A_lateral + 2 × A_base
+                = nah + 2 × [(n × a²) / (4 tan(π/n))]
+    
+    AHA MOMENT #1: PRISM AS EXTRUSION - THE DIMENSIONAL SWEEP
+    ==========================================================
+    A prism is created by "extruding" a 2D polygon into the 3rd dimension!
+    
+    Construction:
+    1. Start with a regular n-gon base in the xy-plane at z=0
+    2. Copy it to the parallel plane at z=h
+    3. Connect corresponding vertices with straight edges
+    4. Result: n rectangular "walls" connecting the two bases
+    
+    This is the same pattern as:
+    - Line segment (1D) extruded → Rectangle (2D)
+    - Rectangle (2D) extruded → Rectangular prism (3D)
+    - Prism (3D) extruded into 4D → 4D prismoid!
+    
+    The prism is the 3D SHADOW of a 2D shape moving through time:
+    - Each horizontal slice at height z is the same base polygon
+    - The shape is CONSTANT along the extrusion axis
+    - Volume = (area of cross-section) × (length of extrusion)
+    
+    Prisms are the simplest 3D solids after pyramids because:
+    - Only two "special" faces (top/bottom) - the rest are generic rectangles
+    - Translational symmetry along the height axis
+    - Easy to manufacture (extrusion, molding, cutting)
+    
+    Physical examples:
+    - Crystal growth along c-axis (quartz, calcite, beryl)
+    - Architectural columns (Pentagon building, hexagonal towers)
+    - Honeycomb cells (hexagonal prisms)
+    - Pencils (hexagonal prisms for better grip)
+    - Toblerone chocolate (triangular prism)
+    
+    AHA MOMENT #2: THE LIMIT AS n → ∞ IS A CYLINDER
+    ================================================
+    As the number of sides increases, the regular prism approaches a cylinder!
+    
+    Limit behavior:
+    - n=3: Triangular prism (sharp, few faces)
+    - n=4: Square prism (blocky)
+    - n=6: Hexagonal prism (smoother)
+    - n=12: Dodecagonal prism (nearly round)
+    - n→∞: Circular prism = CYLINDER!
+    
+    Mathematical convergence:
+    
+    1. Circumradius R = a / (2 sin(π/n)):
+       As n→∞, for fixed perimeter P=na (and thus a=P/n):
+       R → P/(2π)  [circle radius from perimeter]
+    
+    2. Base area A = (n × a²) / (4 tan(π/n)):
+       As n→∞, tan(π/n) ≈ π/n, so:
+       A → (n × a²) × n / (4π) = (na)² / (4π) = P² / (4π) = πR²
+       [circle area!]
+    
+    3. Lateral faces become infinitely thin rectangles → curved surface!
+       n rectangles → continuous cylindrical surface
+    
+    This limiting process is how calculus approaches curved shapes:
+    - Polygons approximate circles
+    - Prisms approximate cylinders
+    - Pyramids approximate cones
+    - Polyhedra approximate spheres
+    
+    The cylinder is the "perfect prism" with infinite sides!
+    
+    AHA MOMENT #3: ELEGANT COMBINATORIAL FORMULAS
+    ==============================================
+    The prism structure follows beautiful combinatorial patterns:
+    
+    Vertices: V = 2n
+    - n vertices on top base
+    - n vertices on bottom base
+    - Simple doubling!
+    
+    Edges: E = 3n
+    - n edges on top base
+    - n edges on bottom base
+    - n vertical edges connecting them
+    - Total: n + n + n = 3n
+    
+    Faces: F = n + 2
+    - n rectangular lateral faces
+    - 2 polygonal bases (top & bottom)
+    
+    Euler's Formula Verification:
+        V - E + F = 2n - 3n + (n+2) = 2  ✓
+    
+    This always equals 2 for any convex polyhedron!
+    
+    Edge lengths:
+    - Base edges: n edges of length a
+    - Lateral edges: n edges of length h
+    - Total edge length: L_total = na + nh = n(a+h)
+    
+    The prism is EFFICIENT:
+    - Minimal faces for given base (only n+2 faces)
+    - Each lateral face is a simple rectangle (easy to compute)
+    - Symmetry: n-fold rotational symmetry about central axis
+    
+    The regular prism is an INFINITE FAMILY—one formula describes
+    all triangular, square, pentagonal, hexagonal, ... prisms!
+    
+    HERMETIC NOTE - THE GEOMETRY OF ELEVATION:
+    ==========================================
+    The prism represents VERTICAL ASCENSION:
+    
+    - **Two Parallel Bases**: Heaven and Earth, Spirit and Matter
+    - **Height Axis**: The vertical pillar connecting realms
+    - **Rectangular Walls**: The structured path of ascent
+    - **n-fold Symmetry**: The number of paths/stations/emanations
+    
+    Symbolism:
+    - **Triangular (n=3)**: Trinity pillar, three-fold path
+    - **Square (n=4)**: Four elements, four cardinal directions
+    - **Pentagonal (n=5)**: Human (5 points), quintessence
+    - **Hexagonal (n=6)**: Honeycomb, natural efficiency (bees)
+    - **Octagonal (n=8)**: Buddhist eightfold path, regeneration
+    
+    In Sacred Architecture:
+    - **Pillars of Solomon's Temple**: Bronze pillars Jachin & Boaz
+    - **Cathedral Columns**: Vertical axis mundi connecting earth to heaven
+    - **Obelisks**: Tapered square prisms (rays of sun god Ra)
+    - **Minaret**: Cylindrical or prismatic towers (call to prayer rises)
+    
+    The prism is the AXIS of transformation—the ladder, the stairway, the
+    pillar that bridges dimensions. The base is FORM, the height is BECOMING,
+    and the top is ATTAINMENT.
+    
+    Each horizontal slice is identical—the path is CONSISTENT. Unlike the
+    pyramid (which tapers to a point), the prism maintains its full nature
+    from bottom to top. This is the geometry of PRESERVATION through ascent.
+    """
     base_area = _area(sides, base_edge)
     base_perimeter = sides * base_edge
     base_apothem = _apothem(sides, base_edge)

@@ -229,12 +229,223 @@ def _scale_vertices(edge_length: float) -> List[Vec3]:
 
 
 def _compute_metrics(edge_length: float) -> CubeMetrics:
-    # Core dimensions
+    """
+    Compute all geometric metrics for a cube from edge length.
+
+    CORE DIMENSION FORMULAS & DERIVATIONS:
+    ========================================
+
+    Face Area: A_face = a²
+    -----------------------
+    Each face is a square with side length a.
+    Area of square = side² = a²
+
+    Surface Area: A = 6a²
+    ---------------------
+    Cube has 6 identical square faces.
+    Total surface area = 6 × a² = 6a²
+
+    Volume: V = a³
+    ---------------
+    Volume of rectangular prism = length × width × height
+    For cube: all dimensions equal = a × a × a = a³
+
+    Face Diagonal: d_face = a√2
+    ----------------------------
+    Diagonal of square face using Pythagorean theorem:
+    d² = a² + a² = 2a²
+    d = a√2
+
+    Space Diagonal: d_space = a√3
+    ------------------------------
+    Diagonal through cube connecting opposite vertices.
+    Using 3D Pythagorean theorem:
+    d² = a² + a² + a² = 3a²
+    d = a√3
+
+    AHA MOMENT #1: PERFECT SYMMETRY
+    =================================
+    The cube is the ONLY Platonic solid where all face angles, dihedral angles,
+    and coordinate alignments are 90°—the angle of perfect orthogonality.
+    
+    This creates three independent, perpendicular axes of fourfold rotational
+    symmetry (through opposite face centers). No other Platonic solid achieves
+    this perfect Cartesian alignment.
+    
+    The cube is the geometric embodiment of the coordinate system itself:
+    - 3 pairs of parallel faces → 3 perpendicular planes
+    - 8 vertices → 8 octants of 3D space (±x, ±y, ±z combinations)
+    - 12 edges → 12 coordinate-aligned segments (4 per axis)
+
+    SPHERE RADII FORMULAS & DERIVATIONS:
+    =====================================
+
+    Inradius (Inscribed Sphere): r = a/2
+    -------------------------------------
+    The inscribed sphere touches the center of each face.
+    Distance from cube center to face center = half edge length.
+    r = a/2
+
+    Geometric Intuition:
+    - Place cube with vertices at (±a/2, ±a/2, ±a/2)
+    - Center at origin (0,0,0)
+    - Face centers at (±a/2, 0, 0), (0, ±a/2, 0), (0, 0, ±a/2)
+    - Distance from origin to any face center = a/2 ✓
+
+    Derivation using volume-to-surface-area ratio:
+    For any polyhedron with an inscribed sphere: r = 3V/A
+    
+    r = 3 × a³ / (6a²)
+      = 3a³ / 6a²
+      = a/2 ✓
+    
+    This confirms the geometric result and shows the cube's elegant simplicity:
+    the ratio 3V/A reduces perfectly to half the edge length.
+
+    Midradius (Midsphere): ρ = a√2/2
+    ---------------------------------
+    The midsphere touches the midpoint of each edge.
+    
+    Edge midpoint calculation (for canonical cube centered at origin):
+    Midpoint of bottom front edge: (0, -a/2, -a/2)
+    Distance from origin = √(0² + (a/2)² + (a/2)²)
+                        = √(a²/4 + a²/4)
+                        = √(a²/2)
+                        = a/√2
+                        = a√2/2 ✓
+
+    Rationalized form:
+    ρ = a/√2 × (√2/√2) = a√2/2
+    
+    Numerical value: ρ ≈ 0.7071067812a
+
+    Alternative derivation via face diagonal:
+    - Face diagonal = a√2
+    - Edge midpoint lies at distance (face_diagonal / 2) from center
+    - ρ = a√2 / 2 ✓
+
+    Circumradius (Circumscribed Sphere): R = a√3/2
+    -----------------------------------------------
+    The circumscribed sphere passes through all 8 vertices.
+    
+    Canonical vertex at (a/2, a/2, a/2):
+    Distance from origin = √((a/2)² + (a/2)² + (a/2)²)
+                        = √(3 × a²/4)
+                        = √(3a²/4)
+                        = a√3/2 ✓
+
+    Rationalized form already optimal.
+    Numerical value: R ≈ 0.8660254038a
+
+    Alternative Derivation via Space Diagonal:
+    - Space diagonal connects opposite vertices
+    - Length = a√3 (derived above)
+    - Circumradius = half the space diagonal = a√3/2 ✓
+
+    SPHERE RATIO RELATIONSHIPS:
+    ===========================
+    r : ρ : R = a/2 : a√2/2 : a√3/2
+               = 1 : √2 : √3
+    
+    Key ratios:
+    - R/r = (a√3/2) / (a/2) = √3 ≈ 1.732
+      The circumradius is exactly √3 times the inradius!
+    - ρ/r = (a√2/2) / (a/2) = √2 ≈ 1.414
+    - R/ρ = (a√3/2) / (a√2/2) = √3/√2 = √(3/2) ≈ 1.225
+
+    AHA MOMENT #2: PYTHAGOREAN PROGRESSION
+    ========================================
+    The cube's three radii form a Pythagorean sequence:
+    
+    r : ρ : R = 1 : √2 : √3
+    
+    These are the square roots of the first three integers—the most fundamental
+    sequence in geometry! This pattern reflects the cube's dimensional hierarchy:
+    - Inradius (r = a/2): Distance along ONE axis (1D) → factor of √1 = 1
+    - Midradius (ρ = a√2/2): Distance across TWO axes (2D) → factor of √2
+    - Circumradius (R = a√3/2): Distance through THREE axes (3D) → factor of √3
+    
+    Each radius encodes the dimensionality it spans. No other Platonic solid
+    exhibits such a clean progression from 1D through 3D.
+
+    Dihedral Angle: 90° (π/2 radians)
+    ==================================
+    The dihedral angle is the angle between two adjacent faces along a shared edge.
+    
+    For the cube, this is trivially 90° because all faces are perpendicular to
+    each other by construction (orthogonal coordinate planes).
+    
+    Formal derivation via face normals:
+    Consider two adjacent square faces:
+    - Bottom face (z = -a/2): normal = (0, 0, -1)
+    - Front face (y = -a/2): normal = (0, -1, 0)
+    
+    Dot product of outward normals:
+    (0, 0, -1) · (0, -1, 0) = 0
+    
+    Angle between normals: arccos(0) = 90°
+    
+    The dihedral angle is π minus the angle between outward normals:
+    θ = π - π/2 = π/2 = 90° ✓
+
+    AHA MOMENT #3: THE ONLY RIGHT-ANGLED PLATONIC SOLID
+    =====================================================
+    The cube is the ONLY Platonic solid with a right-angle (90°) dihedral.
+    
+    All other Platonic solids have acute or obtuse dihedrals:
+    - Tetrahedron: ≈ 70.53° (acute)
+    - Octahedron: ≈ 109.47° (obtuse)
+    - Dodecahedron: ≈ 116.57° (obtuse)
+    - Icosahedron: ≈ 138.19° (obtuse)
+    
+    The 90° dihedral is the geometric signature of the cube's space-filling
+    property: only right angles allow perfect tessellation with no gaps.
+    This makes the cube the ONLY Platonic solid that can tile 3D space.
+    
+    The cube is the "building block" of reality—literally!
+
+    HERMETIC NOTE - THE EARTH ELEMENT:
+    ====================================
+    The cube represents EARTH in Platonic solid cosmology:
+
+    Symbolism:
+    - 6 faces = 6 directions of space (±x, ±y, ±z) = perfect containment
+    - 90° angles everywhere = absolute stability and grounding
+    - Packing density = 1.0 (fills space perfectly, no voids)
+    - Only space-filling Platonic solid = foundation of all structure
+    - Dual to octahedron (Air) = Earth as complement to Air
+
+    Spiritual Correspondences:
+    - Insphere (r = a/2): The kernel, the seed, potential compressed to unity
+    - Midsphere (ρ = a√2/2): The growing boundary, expansion into 2D plane
+    - Circumsphere (R = a√3/2): Full manifestation, actualization in 3D space
+
+    The 1:√2:√3 progression encodes the unfolding of dimensionality:
+    - Unity (√1) → the point (0D principle)
+    - Duality (√2) → the diagonal (1D + 1D = 2D surface)
+    - Trinity (√3) → the body (1D + 1D + 1D = 3D volume)
+
+    Connection to Octahedron (Dual):
+    - Cube vertices → Octahedron face centers
+    - Cube face centers → Octahedron vertices
+    - Cube edges → Octahedron edges (both have 12)
+    
+    This duality expresses the hermetic axiom: "As above, so below."
+    Earth (Cube) and Air (Octahedron) are reciprocal manifestations—
+    one dense and filling, the other sparse and flowing.
+
+    Packing & Crystallography:
+    - The cube is the fundamental unit of the cubic lattice
+    - Salt crystals (NaCl), galena (PbS), pyrite (FeS₂) all form cubic structures
+    - The physical universe's most stable configuration
+    - Represents the principle of ORDER imposed on chaos
+    """
+    # Core dimensions (scale as area ~ a², volume ~ a³)
     face_area_val = _scaled_value(_BASE_FACE_AREA, edge_length, 2.0)
     surface_area_val = _scaled_value(_BASE_SURFACE_AREA, edge_length, 2.0)
     volume_val = _scaled_value(_BASE_VOLUME, edge_length, 3.0)
-    
-    # Sphere radii
+
+    # Sphere radii (scale linearly ~ a)
     inradius_val = _scaled_value(_BASE_INRADIUS, edge_length, 1.0)
     midradius_val = _scaled_value(_BASE_MIDRADIUS, edge_length, 1.0)
     circumradius_val = _scaled_value(_BASE_CIRCUMRADIUS, edge_length, 1.0)

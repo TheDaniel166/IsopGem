@@ -1,4 +1,163 @@
-"""Quadrilateral shape calculators."""
+"""Quadrilateral shape calculators.
+
+Quadrilaterals are 4-sided polygons—the most general 2D shapes with straight edges.
+They range from highly symmetric (square, rectangle) to completely irregular (trapezoid,
+kite, general quadrilateral). Special quadrilaterals (parallelogram, rhombus, rectangle,
+square, trapezoid, kite) have unique properties that make them fundamental to geometry,
+architecture, and tiling.
+
+═══════════════════════════════════════════════════════════════════════════════════════
+AHA MOMENT #1: Parallelogram Hierarchy (Opposite Sides Parallel)
+═══════════════════════════════════════════════════════════════════════════════════════
+
+**Parallelogram**: Both pairs of opposite sides are parallel (and equal)
+• Area: A = base × height = b×h (where h is perpendicular height, not slant side!)
+• Opposite angles are equal: α = γ, β = δ
+• Adjacent angles sum to 180°: α + β = 180°
+• Diagonals bisect each other (but NOT necessarily equal or perpendicular)
+
+The parallelogram FAMILY (increasing constraints):
+
+1. **General parallelogram**: Opposite sides parallel, sides a ≠ b, angles ≠ 90°
+
+2. **Rectangle**: Parallelogram + all angles 90°
+   • A = length × width
+   • Diagonals are EQUAL (d₁ = d₂)
+
+3. **Rhombus**: Parallelogram + all sides equal (a = b)
+   • A = a²·sin(θ) where θ is interior angle
+   • Diagonals are PERPENDICULAR (d₁ ⊥ d₂)
+   • Area also = (d₁×d₂)/2 (half the product of diagonals)
+
+4. **Square**: Rectangle + Rhombus (all sides equal + all angles 90°)
+   • A = s²
+   • Diagonals are equal AND perpendicular (d = s√2)
+
+**Venn diagram logic**:
+  Square ⊆ Rectangle ⊆ Parallelogram
+  Square ⊆ Rhombus ⊆ Parallelogram
+  Square = Rectangle ∩ Rhombus
+
+Every square is a rectangle; not every rectangle is a square!
+
+═══════════════════════════════════════════════════════════════════════════════════════
+AHA MOMENT #2: Shoelace Formula (Area of Any Polygon from Coordinates)
+═══════════════════════════════════════════════════════════════════════════════════════
+
+Given vertices (x₁,y₁), (x₂,y₂), ..., (xₙ,yₙ) in order (counterclockwise or clockwise):
+
+**Shoelace Formula** (also called surveyor's formula):
+
+  A = ½ |Σ(xᵢyᵢ₊₁ - xᵢ₊₁yᵢ)|
+
+  where indices wrap around (xₙ₊₁ = x₁, yₙ₊₁ = y₁)
+
+Expanded for quadrilateral:
+
+  A = ½ |x₁y₂ - x₂y₁ + x₂y₃ - x₃y₂ + x₃y₄ - x₄y₃ + x₄y₁ - x₁y₄|
+
+**Why "shoelace"?** If you write coordinates in two columns and draw diagonal lines:
+
+  x₁  y₁  ↘
+  x₂  y₂  ↘
+  x₃  y₃  ↘
+  x₄  y₄  ↘
+  x₁  y₁  (wrap)
+
+You multiply along the diagonals (like lacing a shoe!):
+• Rightward diagonals: +x₁y₂, +x₂y₃, +x₃y₄, +x₄y₁
+• Leftward diagonals: -x₂y₁, -x₃y₂, -x₄y₃, -x₁y₄
+• Sum them, take absolute value, divide by 2 → area!
+
+**Derivation** (via Green's theorem):
+The shoelace formula is equivalent to:
+
+  A = ∫∫ dA = ½ ∮ (x·dy - y·dx)
+
+Integrating around the polygon boundary.
+
+**Sign convention**: If vertices are counterclockwise, result is positive; if clockwise,
+result is negative. Taking absolute value gives area regardless of orientation.
+
+**Applications**:
+• GIS (Geographic Information Systems): Calculate land parcel areas from GPS coordinates
+• Computer graphics: Determine if polygon is convex, find area for rendering
+• Surveying: Compute field areas from surveyor's measurements
+
+═══════════════════════════════════════════════════════════════════════════════════════
+AHA MOMENT #3: Trapezoid and Kite (Non-Parallelogram Quadrilaterals)
+═══════════════════════════════════════════════════════════════════════════════════════
+
+Not all quadrilaterals are parallelograms! Two important exceptions:
+
+**Trapezoid** (US) / Trapezium (UK): ONE pair of opposite sides parallel
+• Parallel sides called "bases" (b₁, b₂)
+• Non-parallel sides called "legs"
+• **Area**: A = (b₁ + b₂)h/2  (average of bases × height)
+
+**Isosceles trapezoid**: Legs are equal, base angles are equal
+• Diagonals are EQUAL (like rectangle)
+• Symmetric about perpendicular bisector of bases
+
+**Kite**: TWO pairs of adjacent sides are equal
+• Sides: a, a, b, b (adjacent pairs equal, not opposite!)
+• One diagonal is the axis of symmetry
+• Diagonals are PERPENDICULAR
+• **Area**: A = (d₁×d₂)/2 (half the product of diagonals, like rhombus!)
+
+**Rhombus vs. Kite**:
+• Rhombus: ALL four sides equal (special parallelogram)
+• Kite: Only adjacent sides equal (NOT a parallelogram)
+• Both have perpendicular diagonals!
+
+**Cyclic quadrilateral**: All four vertices lie on a circle (inscribed)
+• **Brahmagupta's formula** (area from side lengths a,b,c,d):
+    A = √[(s-a)(s-b)(s-c)(s-d)]  where s = (a+b+c+d)/2
+  (This is Heron's formula generalized to quadrilaterals! Only works if cyclic.)
+• Opposite angles sum to 180°: α + γ = 180°, β + δ = 180°
+
+**Tangential quadrilateral**: All four sides are tangent to an inscribed circle
+• Sum of opposite sides are equal: a + c = b + d (Pitot's theorem)
+
+**Bicentric quadrilateral**: Both inscribed AND circumscribed (cyclic + tangential)
+• Very special! Examples: square, isosceles trapezoid with specific ratios
+
+═══════════════════════════════════════════════════════════════════════════════════════
+📦 HERMETIC SIGNIFICANCE 📦
+═══════════════════════════════════════════════════════════════════════════════════════
+
+Quadrilaterals embody **Balance, Opposition, and the Material World**:
+
+• **Four Elements / Four Directions**: The quadrilateral is the geometry of QUATERNARY
+  division—Earth/Air/Fire/Water, NESW, Spring/Summer/Fall/Winter. Four corners = four
+  fixed points anchoring reality. The square (most symmetric) is Earth; the kite
+  (dynamic, airborne) is Air.
+
+• **Parallelogram as Shearing**: A rectangle sheared into a parallelogram represents
+  *stress* and *strain* in materials. The parallelogram is a deformed square—it's
+  the geometry of *matter under pressure*. In physics, shear stress creates
+  parallelogram deformation (not rotation, not compression, but SKEWING).
+
+• **Rhombus as Diamond**: The rhombus (◆) is the diamond shape—compressed square,
+  stretched along one diagonal. In alchemy, the rhombus represents sulfur (🜗, the
+  active/masculine principle). The rhombus has TENSION (perpendicular diagonals create
+  internal stress, like stretched fabric).
+
+• **Kite as Flight**: The kite shape is asymmetric (unlike rhombus) but still has
+  perpendicular diagonals. It's the geometry of DIRECTED MOTION (the kite points
+  somewhere). In heraldry, the kite shield is for defense in one direction. The kite
+  is the rhombus made purposeful.
+
+• **Trapezoid as Transition**: The trapezoid (one pair parallel) is the IN-BETWEEN
+  form—not fully parallelogram (which would have TWO pairs parallel), not fully
+  irregular. It's the geometry of *gradual change*, of ramps and pyramids (side view
+  of pyramid = trapezoid). Architecturally, trapezoids mediate between different
+  levels (staircases, amphitheaters).
+
+Quadrilaterals teach: **Four points create structure; symmetry determines stability.** 📦
+
+═══════════════════════════════════════════════════════════════════════════════════════
+"""
 from __future__ import annotations
 
 import math

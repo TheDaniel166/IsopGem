@@ -1,4 +1,44 @@
-"""Square pyramid frustum solid service and calculator."""
+"""Square pyramid frustum solid service and calculator.
+
+THE SQUARE PYRAMID FRUSTUM - TRUNCATED FOUR-FOLD FORM:
+=======================================================
+
+This is the square (n=4) special case of the regular pyramid frustum.
+
+The square frustum is the MOST COMMON frustum in daily life and architecture:
+- Buckets, planters, waste baskets (stable, stackable)
+- Lampshades (diffuses light evenly)
+- Ancient monuments (stepped pyramid platforms)
+- Modern tapered buildings (structural efficiency + aesthetics)
+
+Special property: All four lateral faces are congruent isosceles trapezoids!
+
+ESSENTIAL FORMULAS (Square Frustum):
+-------------------------------------
+
+Volume (Heronian formula for square case):
+    V = (h/3) × (a² + ab + b²)
+    
+    where a = base_edge, b = top_edge
+    
+    This expands to: V = (h/3) × (a² + b² + √(a²b²))
+                     = (h/3) × (a² + b² + ab)  [geometric mean = ab for squares]
+
+Lateral Area (4 congruent trapezoids):
+    A_lateral = 2 × (a + b) × s
+    
+    where s = slant height = √(h² + ((a-b)/2)²)
+    
+    Each trapezoid: bases a and b, height s
+    Area = ((a+b)/2) × s
+    Total: 4 × ((a+b)/2) × s = 2(a+b) × s
+
+Total Surface Area:
+    A_total = a² + b² + 2(a+b)s
+
+Simplification: The square case (n=4) has simpler formulas than general n-gon
+because square geometry uses simple Pythagorean relationships!
+"""
 from __future__ import annotations
 
 import math

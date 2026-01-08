@@ -1,4 +1,68 @@
-"""General (n-gonal) Pyramid Solid Services and Calculators."""
+"""General (n-gonal) Pyramid Solid Services and Calculators.
+
+THE GENERAL PYRAMID - DYNAMIC POLYGON CONVERGENCE:
+==================================================
+
+DEFINITION:
+-----------
+A general pyramid service allows creation of pyramids with VARIABLE number
+of base sides (n), enabling exploration of the entire pyramid family from
+a single interface.
+
+Instead of fixed classes (TriangularPyramid, SquarePyramid, etc.), this
+service uses a `sides` parameter to dynamically generate n-gonal pyramids:
+- n=3: Triangular pyramid (tetrahedron if regular)
+- n=4: Square pyramid (Egyptian form)
+- n=5: Pentagonal pyramid
+- n=6: Hexagonal pyramid
+- ...
+- n → ∞: Approaches cone (circular base)
+
+This is the PYRAMID GENERATOR—one function, infinite shapes.
+
+MATHEMATICAL PROPERTIES:
+------------------------
+
+The formulas are identical to regular pyramids (see regular_pyramid_solids.py),
+but now `n` is a runtime parameter instead of a class constant:
+
+Volume:
+    V(n, a, h) = (1/3) × A_base(n, a) × h
+    
+    where A_base(n, a) = (n × a²) / (4 tan(π/n))
+
+Lateral Area:
+    A_lateral(n, a, h) = (1/2) × P(n, a) × s(n, a, h)
+    
+    where P(n, a) = n × a (perimeter)
+          s(n, a, h) = √(h² + r²), r = apothem
+
+The key insight: ONE SET OF FORMULAS works for ALL regular pyramids!
+
+See general_prismatic_solids.py documentation for analogous patterns
+(prisms and pyramids both use parametric n-gon bases).
+
+AHA MOMENTS (see also general_prismatic_solids.py):
+====================================================
+
+1. **Parametric Families**: One formula, infinite shapes
+   - Traditional: Separate class per n value (code duplication)
+   - Parametric: Single implementation with variable n (elegant)
+   - Enables animation: morph from triangle → square → pentagon → cone
+
+2. **Integer → Continuous Limit**:
+   - n discrete (3, 4, 5, ...) but behavior continuous
+   - As n → ∞: Pyramid → Cone (circular base, smooth surface)
+   - Bridges discrete polygonal geometry and continuous curved geometry
+
+3. **Symmetry Groups**:
+   - Each n-gonal pyramid has dihedral symmetry D_n
+   - As n increases, symmetry order increases (more rotations)
+   - Limit (n → ∞): Cylinder has continuous rotation symmetry
+
+The general pyramid service demonstrates ABSTRACTION MADE PRACTICAL—
+the universal pattern that generates all specific pyramid instances!
+"""
 from __future__ import annotations
 
 import math

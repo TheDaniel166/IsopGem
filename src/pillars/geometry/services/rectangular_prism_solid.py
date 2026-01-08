@@ -39,6 +39,171 @@ class RectangularPrismSolidResult:
 
 
 def _compute_metrics(length: float, width: float, height: float) -> RectangularPrismMetrics:
+    """
+    Calculate metrics for a right rectangular prism (cuboid, box).
+    
+    THE RECTANGULAR PRISM - THE FUNDAMENTAL BOX:
+    ============================================
+    
+    DEFINITION:
+    -----------
+    A rectangular prism (also called cuboid, rectangular box, or orthotope)
+    is a prism with rectangular bases and lateral faces. All six faces are
+    rectangles, and all angles are right angles (90°).
+    
+    Special cases:
+    - Square prism: Base is square (length = width ≠ height)
+    - Cube: All dimensions equal (length = width = height)
+    - Thin slab: One dimension much smaller (height << length, width)
+    
+    ESSENTIAL FORMULAS:
+    -------------------
+    
+    Base Area:
+        A_base = length × width
+        
+        The foundation rectangle.
+    
+    Volume:
+        V = length × width × height = A_base × height
+        
+        Classic "box volume" formula - the archetype for ALL prism volumes!
+        Volume = (area of base) × (perpendicular height)
+    
+    Lateral Surface Area (4 rectangular sides):
+        A_lateral = Perimeter_base × height
+                  = 2(l + w) × h
+                  = 2lh + 2wh
+        
+        "Unwrap" the four sides into a rectangle: width = perimeter, height = h
+    
+    Total Surface Area (all 6 faces):
+        A_surface = 2(lw + lh + wh)
+        
+        Three pairs of opposite congruent rectangles:
+        - Top & bottom: 2 × (l × w)
+        - Front & back: 2 × (l × h)
+        - Left & right: 2 × (w × h)
+    
+    Space Diagonal (corner to opposite corner through interior):
+        d = √(l² + w² + h²)
+        
+        3D Pythagorean theorem! See AHA MOMENT #3.
+    
+    Face Diagonals (corner to corner on face):
+        d_xy = √(l² + w²)  [base/top face]
+        d_xz = √(l² + h²)  [front/back face]
+        d_yz = √(w² + h²)  [left/right face]
+    
+    AHA MOMENT #1: THE BOX - MOST BASIC OF ALL PRISMS
+    ==================================================
+    The rectangular prism is the SIMPLEST 3D solid to describe:
+    - Three perpendicular dimensions (length, width, height)
+    - All faces are rectangles (easiest polygon after triangle)
+    - All angles are 90° (no trigonometry needed!)
+    
+    Every prism can be approximated by rectangular boxes:
+    - Cylindrical prism → Limit of rectangular prisms as corners increase
+    - Oblique prism → Stack of thin rectangular slices, each slightly offset
+    - Irregular prism → Voxel approximation (3D pixels = tiny boxes)
+    
+    The rectangular prism is the FUNDAMENTAL UNIT of 3D measurement:
+    - Volume in cubic units (1×1×1 boxes)
+    - Bricks, blocks, rooms, containers, crystals, voxels
+    - Cartesian coordinates (x,y,z) naturally define a box
+    
+    Architecture and packaging optimize for rectangular prisms because:
+    - Easy to manufacture (flat faces, right angles)
+    - Stack efficiently (no wasted space)
+    - Simple to measure and calculate
+    
+    The box is the 3D analog of the rectangle in 2D—the workhorse shape!
+    
+    AHA MOMENT #2: ALL FACES RECTANGULAR - THREE PAIRS
+    ===================================================
+    Unlike most prisms (polygonal base + rectangular sides), the rectangular
+    prism has ALL SIX FACES as rectangles! This creates beautiful symmetry:
+    
+    Three pairs of opposite congruent faces:
+    1. Top & bottom (parallel xy-planes): Area = l × w
+    2. Front & back (parallel xz-planes): Area = l × h
+    3. Left & right (parallel yz-planes): Area = w × h
+    
+    Each pair is separated by the third dimension:
+    - Top/bottom separated by height h
+    - Front/back separated by width w
+    - Left/right separated by length l
+    
+    Surface area formula reflects this symmetry:
+        A = 2(lw + lh + wh)
+          = 2 × (sum of three distinct face areas)
+    
+    This is why the rectangular prism is SO STABLE:
+    - Every direction sees a flat face (not edges/vertices)
+    - Three perpendicular reflection symmetries
+    - Three perpendicular 180° rotation symmetries
+    
+    The cube (l=w=h) maximizes this symmetry—all faces identical!
+    
+    AHA MOMENT #3: SPACE DIAGONAL - 3D PYTHAGOREAN THEOREM
+    =======================================================
+    The space diagonal connects opposite corners through the INTERIOR:
+    
+        d = √(l² + w² + h²)
+    
+    This is the 3D generalization of Pythagoras's theorem!
+    
+    Derivation by two-step Pythagoras:
+    1. Base diagonal: d_base = √(l² + w²)  [2D Pythagorean in xy-plane]
+    2. Then diagonal d_base is "horizontal" leg, h is "vertical" leg:
+       d = √(d_base² + h²) = √((l² + w²) + h²) = √(l² + w² + h²)
+    
+    This generalizes to n dimensions!
+    - 2D: d = √(x² + y²)
+    - 3D: d = √(x² + y² + z²)
+    - 4D: d = √(x² + y² + z² + w²)
+    - nD: d = √(x₁² + x₂² + ... + xₙ²)
+    
+    The space diagonal is the LONGEST line segment inside the box:
+    - Any other path corner-to-corner must go along edges (longer)
+    - Shortest distance = straight line through interior
+    
+    Physical interpretation:
+    - Maximum dimension that fits inside the box (diagonal rod)
+    - Vector magnitude in 3D Cartesian space
+    - "As-the-crow-flies" distance in 3D lattice
+    
+    The space diagonal connects opposite vertices with NO shared face, edge,
+    or coordinate! It's the most "separated" pair of points on the box.
+    
+    HERMETIC NOTE - THE GEOMETRY OF MANIFESTATION:
+    ==============================================
+    The rectangular prism represents ORDERED MANIFESTATION:
+    
+    - **Three Dimensions**: Body (length), Soul (width), Spirit (height)
+    - **Right Angles**: Perfect orthogonality—pure separation of dimensions
+    - **Six Faces**: The six directions of space (±x, ±y, ±z)
+    - **Twelve Edges**: The twelve zodiacal paths connecting planes
+    - **Eight Vertices**: The eight corners of creation (2³)
+    
+    Symbolism:
+    - **Rectangular Form**: The shaped world (vs. sphere's pure potential)
+    - **Three Axes**: Past-Present-Future, Body-Mind-Spirit, Matter-Energy-Consciousness
+    - **Volume Formula V=lwh**: Multiplication of dimensions = manifestation
+    - **Space Diagonal**: The direct path through material reality
+    
+    In Sacred Architecture:
+    - **Temple Chambers**: Holy of Holies (cube), Outer Court (rectangular)
+    - **Altar Dimensions**: Prescribed ratios (e.g., 2:1:1)
+    - **Foundation Stones**: Rectangular blocks (stability, order)
+    - **Kaaba**: Nearly cubic structure (13.1 × 11.03 × 12.86 m)
+    
+    The rectangular prism is CONTAINMENT and DEFINITION—the box that holds
+    form, the structure that separates inside from outside, the boundary
+    that creates space.
+    
+    Where the sphere is infinite potential, the box is finite actuality.
+    """
     base_area = length * width
     base_perimeter = 2.0 * (length + width)
     lateral_area = base_perimeter * height

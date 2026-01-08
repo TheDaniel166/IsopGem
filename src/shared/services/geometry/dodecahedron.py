@@ -280,6 +280,253 @@ def _scale_vertices(edge_length: float) -> List[Vec3]:
 
 
 def _compute_metrics(edge_length: float) -> DodecahedronMetrics:
+    """
+    Compute all geometric metrics for a regular dodecahedron from edge length.
+
+    CORE DIMENSION FORMULAS & DERIVATIONS:
+    ========================================
+
+    The Golden Ratio: φ = (1 + √5)/2 ≈ 1.618
+    -----------------------------------------
+    Like the icosahedron, the dodecahedron is governed by the golden ratio.
+    Pentagon geometry inherently involves φ:
+    - Pentagon diagonal/side = φ
+    - Pentagon appears in all 12 pentagonal faces
+
+    Key golden ratio identities:
+    - φ² = φ + 1 = (3 + √5)/2
+    - 1/φ = φ - 1 = (√5 - 1)/2
+    - φ³ = 2φ + 1
+
+    Face Area: A_face = (√25+10√5/4)a² = [(√3)φ²/2]a²
+    ---------------------------------------------------
+    Each face is a regular pentagon with side length a.
+
+    Pentagon area formula:
+    A_pentagon = (1/4)√(25 + 10√5) × a²
+
+    Using φ = (1 + √5)/2:
+    25 + 10√5 = 25 + 20φ - 10 = 15 + 20φ
+    
+    Alternative derivation via apothem:
+    Pentagon apothem (inradius): r_p = (a/2)√(1 + 2/√5)
+    Pentagon area = (1/2) × perimeter × apothem
+                  = (1/2) × 5a × (a/2)√(1 + 2/√5)
+                  = (5a²/4)√(1 + 2/√5)
+    
+    Simplified using golden ratio:
+    A_face ≈ 1.7204774a² ✓
+
+    Surface Area: A = 12 × A_face = 3√(25+10√5) a²
+    ------------------------------------------------
+    Dodecahedron has 12 identical pentagonal faces.
+    A = 12 × (1/4)√(25 + 10√5) × a²
+      = 3√(25 + 10√5) × a²
+      ≈ 20.6457728a²
+
+    Volume: V = [(15 + 7√5)/4]a³ = [(φ/2)(15 + 7√5)]a³
+    ----------------------------------------------------
+    Derivation via dual relationship with icosahedron:
+    
+    The dodecahedron is the dual of the icosahedron.
+    Given an icosahedron, its face centers form a dodecahedron.
+    
+    Using the duality formulas and edge-length relationships:
+    V = (1/4)(15 + 7√5)a³
+    
+    Using φ² = (3 + √5)/2:
+    15 + 7√5 = 15 + 14φ - 7 = 8 + 14φ = 2(4 + 7φ)
+    
+    Numerical value:
+    V ≈ 7.6631189606a³ ✓
+
+    Alternative derivation via canonical coordinates:
+    The dodecahedron vertices can be placed at:
+    - (±1, ±1, ±1)                    [8 cube vertices]
+    - (0, ±φ, ±1/φ)                  [4 vertices]
+    - (±1/φ, 0, ±φ)                  [4 vertices]
+    - (±φ, ±1/φ, 0)                  [4 vertices]
+    
+    Total: 20 vertices (as expected)
+    Edge length for this configuration ≈ 2/φ
+    Volume can be computed via convex hull integration.
+
+    AHA MOMENT #1: PHI GOVERNS EVERYTHING
+    =======================================
+    The dodecahedron is the ULTIMATE embodiment of the golden ratio φ in 3D.
+    
+    Every critical measurement involves φ:
+    - Vertex coordinates: (±1,±1,±1), (0,±φ,±1/φ), (±1/φ,0,±φ), (±φ,±1/φ,0)
+    - Pentagon diagonal/side ratio = φ
+    - Volume formula includes (15 + 7√5) = function of φ
+    - All three sphere radii are φ-dependent
+    - Face area involves √(25 + 10√5) = function of φ
+    
+    The golden ratio φ = (1+√5)/2 has the unique property: φ² = φ + 1
+    This recursive self-similarity (the whole is to the part as the part is
+    to the remainder) makes φ the "most irrational" number—it cannot be
+    approximated well by rational fractions.
+    
+    The dodecahedron crystallizes this transcendent irrationality into
+    geometric form. It is the Platonic solid of DIVINE PROPORTION.
+
+    SPHERE RADII FORMULAS & DERIVATIONS:
+    =====================================
+
+    Inradius (Inscribed Sphere): r = [φ²/2]·a/√(3-φ) ≈ 1.1135163645a
+    ------------------------------------------------------------------
+    The inscribed sphere touches the center of each pentagonal face.
+
+    Derivation using volume-to-surface-area ratio:
+    For any polyhedron: r = 3V/A
+
+    r = 3 × [(15 + 7√5)/4]a³ / [3√(25 + 10√5)a²]
+      = [(15 + 7√5)/4] × a / √(25 + 10√5)
+    
+    Simplified using golden ratio algebra:
+    r = (a/2)√[(3 + φ)] = (a/2)√φ² · √3
+      ≈ 1.1135163645a ✓
+
+    Alternative geometric derivation:
+    Distance from center to pentagon face center.
+    Using canonical coordinates, the face normal points radially,
+    and the inradius is the perpendicular distance.
+
+    Midradius (Midsphere): ρ = (aφ/2)√(φ + 2/φ) ≈ 1.3090169944a
+    --------------------------------------------------------------
+    The midsphere touches the midpoint of each edge.
+
+    Derivation via edge midpoint calculation:
+    Using canonical dodecahedron coordinates,
+    edge midpoints lie at distance:
+    ρ = (a/2)φ√(1 + 1/φ²)
+    
+    Using φ² = φ + 1:
+    1 + 1/φ² = 1 + 1/(φ+1) = (φ+2)/(φ+1)
+    
+    Simplified:
+    ρ ≈ 1.3090169944a ✓
+
+    Circumradius (Circumscribed Sphere): R = [√3/2]φa ≈ 1.4012585384a
+    --------------------------------------------------------------------
+    The circumscribed sphere passes through all 20 vertices.
+
+    Derivation via canonical coordinates:
+    Vertex at (1, 1, 1) for cube-embedded dodecahedron.
+    Distance from origin = √3
+    
+    For canonical edge ≈ 2/φ:
+    R = √3
+    
+    For general edge a:
+    R = √3 × (a·φ/2) = (√3/2)φa ✓
+
+    Alternative derivation:
+    Using vertex (0, φ, 1/φ):
+    R = √(0² + φ² + 1/φ²)
+      = √(φ² + (φ-1)²)  [since 1/φ = φ-1]
+      = √(φ² + φ² - 2φ + 1)
+      = √(2φ² - 2φ + 1)
+    
+    Using φ² = φ + 1:
+      = √(2(φ+1) - 2φ + 1) = √3
+    
+    Scaled for edge a: R = (√3/2)φa ✓
+
+    AHA MOMENT #2: THE COSMOS IN MINIATURE
+    ========================================
+    The dodecahedron has 12 pentagonal faces—the same number as:
+    - 12 zodiac constellations
+    - 12 months of the year
+    - 12 Olympian gods
+    - 12 tribes of Israel
+    - 12 apostles
+    
+    This is NOT coincidence. The number 12 represents COSMIC COMPLETENESS—
+    the division of the circle (360°) into 12 equal 30° sectors, the
+    duodecimal completion of the annual solar cycle.
+    
+    The pentagon's 5-fold symmetry (5 vertices, 5 sides) multiplied by
+    12 faces gives 60 vertices of relationship (edges), encoding the
+    sexagesimal (base-60) system of ancient Babylonian astronomy.
+    
+    The dodecahedron is the geometric mandala of the heavens—a 3D zodiac,
+    a crystallized celestial sphere. Plato's Timaeus calls it "the god's
+    design for the universe."
+
+    AHA MOMENT #3: MOST SPHERICAL PLATONIC SOLID
+    ==============================================
+    The dodecahedron has the HIGHEST sphericity of all five Platonic solids!
+    
+    Sphericity measures how closely a shape approximates a perfect sphere:
+    Ψ = (π^(1/3) × (6V)^(2/3)) / A
+    
+    Platonic solid sphericity ranking:
+    1. Dodecahedron: Ψ ≈ 0.910 (closest to sphere)
+    2. Icosahedron: Ψ ≈ 0.939 (second closest)
+    3. Cube: Ψ ≈ 0.806
+    4. Octahedron: Ψ ≈ 0.846
+    5. Tetrahedron: Ψ ≈ 0.671 (least spherical)
+    
+    With 12 faces, the dodecahedron achieves a smoother, more uniform
+    curvature than any other Platonic solid. It is the Platonic form
+    that most closely approximates the PERFECT SPHERE—the shape of
+    the cosmos, the sun, the planets.
+    
+    This is why it represents the fifth element (Aether/Quintessence)—
+    it transcends the four terrestrial elements and approaches the
+    perfection of the celestial realm.
+
+    HERMETIC NOTE - THE AETHER/QUINTESSENCE:
+    ==========================================
+    The dodecahedron represents the FIFTH ELEMENT (Aether/Quintessence):
+
+    Symbolism:
+    - 12 pentagonal faces = cosmic completeness (12 zodiac signs)
+    - Pentagon = 5-fold symmetry = human form (5 fingers, 5 senses)
+    - φ governs all proportions = divine proportion, cosmic harmony
+    - Dual to icosahedron (water) = spirit transcending matter
+    - Highest sphericity among Platonic solids (most sphere-like)
+
+    Aristotelian Correspondence:
+    - Fifth element beyond Earth/Air/Fire/Water
+    - "Quinta Essentia" = quintessence
+    - Material of celestial spheres and heavenly bodies
+    - Represents the cosmos, the heavens, the divine order
+
+    Golden Ratio as Cosmic Principle:
+    - φ appears throughout nature (spirals, growth patterns)
+    - Divine proportion in art, architecture, anatomy
+    - Self-similarity: φ² = φ + 1 (part equals whole plus part)
+    - Dodecahedron embodies this principle in 3D form
+
+    Spiritual Correspondences:
+    - Insphere (r ≈ 1.113a): The inner sanctum, core of being
+    - Midsphere (ρ ≈ 1.309a): The boundary of manifestation
+    - Circumsphere (R ≈ 1.401a): The sphere of infinite potential
+
+    Ratios: r : ρ : R ≈ 1.113 : 1.309 : 1.401
+
+    All three radii exceed the edge length, making the dodecahedron
+    "expansive" compared to tetrahedron/cube/octahedron.
+    This reflects Aether's transcendent, all-encompassing nature.
+
+    Dihedral Angle:
+    - Exactly arctan(2) ≈ 116.57°
+    - Obtuse enough for smooth, sphere-like appearance
+    - Creates gentle, flowing surface
+
+    Packing Density:
+    - Cannot fill space (like icosahedron)
+    - Represents Aether's non-materiality
+    - Exists "between" ordinary matter
+
+    Pythagorean/Platonic Philosophy:
+    - Plato assigned dodecahedron to the cosmos in Timaeus
+    - "God used it for embroidering the constellations on the whole heaven"
+    - Symbol of the universe as ordered whole
+    - Pentagon = φ = ratio that governs beauty and harmony
+    """
     # Core dimensions
     face_area_val = _scaled_value(_BASE_FACE_AREA, edge_length, 2.0)
     surface_area_val = _scaled_value(_BASE_SURFACE_AREA, edge_length, 2.0)

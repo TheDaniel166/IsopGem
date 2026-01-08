@@ -32,10 +32,73 @@ def isometric_project(x: float, y: float, z: float) -> Tuple[float, float]:
 # Tetrahedral Numbers
 # -----------------------------------------------------------------------------
 def tetrahedral_number(n: int) -> int:
-    """Calculate the n-th tetrahedral number.
-    
-    Formula: n(n+1)(n+2)/6
-    Sequence: 1, 4, 10, 20, 35, 56, 84, 120, ...
+    """
+    Calculate the n-th tetrahedral number.
+
+    Formula: T(n) = n(n+1)(n+2)/6
+
+    DERIVATION:
+    ===========
+    A tetrahedral number represents the total spheres in a triangular
+    pyramid (tetrahedron) of height n.
+
+    Approach 1 - Sum of Triangular Numbers:
+    ----------------------------------------
+    Layer k (from top) contains T₂(k) = k(k+1)/2 spheres (triangular number).
+
+    Total = Sum from k=1 to n of k(k+1)/2
+          = (1/2) × Sum(k² + k)
+          = (1/2) × [Sum(k²) + Sum(k)]
+
+    Using closed forms:
+    - Sum(k) from 1 to n = n(n+1)/2
+    - Sum(k²) from 1 to n = n(n+1)(2n+1)/6
+
+    Substituting:
+    T(n) = (1/2) × [n(n+1)(2n+1)/6 + n(n+1)/2]
+         = (1/2) × n(n+1) × [(2n+1)/6 + 1/2]
+         = (1/2) × n(n+1) × [(2n+1)/6 + 3/6]
+         = (1/2) × n(n+1) × (2n+4)/6
+         = n(n+1)(n+2)/6 ✓
+
+    Approach 2 - Combinatorial (Choosing from n+2):
+    ------------------------------------------------
+    T(n) = C(n+2, 3) = (n+2)! / (3! × (n-1)!)
+         = (n+2)(n+1)(n) / 6
+         = n(n+1)(n+2)/6 ✓
+
+    Geometric Interpretation:
+    - Each layer k is a triangle with k(k+1)/2 spheres
+    - Layers stack to form a 3D simplex (tetrahedron)
+    - Growth is cubic-ish but slower: O(n³)
+
+    Sequence: 1, 4, 10, 20, 35, 56, 84, 120, 165, 220...
+
+    Pattern Recognition:
+    - T(1) = 1                    (single sphere)
+    - T(2) = 1 + 3 = 4            (two layers)
+    - T(3) = 1 + 3 + 6 = 10       (three layers)
+    - T(4) = 1 + 3 + 6 + 10 = 20
+
+    HERMETIC SIGNIFICANCE:
+    ======================
+    The tetrahedral numbers represent:
+    - Trinity manifesting in space (3D)
+    - Fire element (tetrahedron = Fire)
+    - Ascension through progressive layers
+    - Each layer is a triangle (stability), stacking creates dimensionality
+
+    Notable Values:
+    - T(3) = 10: The Tetractys (Pythagorean sacred number)
+    - T(4) = 20: The icosahedron has 20 faces (Water element)
+    - T(5) = 35: 5 Platonic solids × 7 classical planets = 35 combinations
+
+    Connection to Triangular Numbers:
+    T(n) = Sum of first n triangular numbers
+    This links 2D (triangle) to 3D (tetrahedron) numerology.
+
+    Verification:
+    T(5) = 5×6×7/6 = 210/6 = 35 ✓
     """
     if n < 1:
         return 0
@@ -87,10 +150,92 @@ def tetrahedral_points(n: int, spacing: float = 1.0) -> List[Tuple[float, float,
 # Pyramidal Numbers (Square base)
 # -----------------------------------------------------------------------------
 def square_pyramidal_number(n: int) -> int:
-    """Calculate the n-th square pyramidal number.
-    
-    Formula: n(n+1)(2n+1)/6
-    Sequence: 1, 5, 14, 30, 55, 91, 140, ...
+    """
+    Calculate the n-th square pyramidal number.
+
+    Formula: P(n) = n(n+1)(2n+1)/6
+
+    DERIVATION:
+    ===========
+    A square pyramidal number represents the total spheres in a square
+    pyramid of height n (base is n×n, apex is 1×1).
+
+    Approach - Sum of Square Numbers:
+    ----------------------------------
+    Layer k (from top) contains k² spheres (square number).
+
+    Total = Sum from k=1 to n of k²
+          = n(n+1)(2n+1)/6 (known closed form)
+
+    Derivation of Closed Form:
+    --------------------------
+    We want: Sum(k²) = 1² + 2² + 3² + ... + n²
+
+    Method 1 - Algebraic Identity:
+    Use the identity: k³ - (k-1)³ = 3k² - 3k + 1
+
+    Summing both sides from k=1 to n:
+    n³ - 0³ = 3×Sum(k²) - 3×Sum(k) + n
+
+    Using Sum(k) = n(n+1)/2:
+    n³ = 3×Sum(k²) - 3×n(n+1)/2 + n
+    n³ = 3×Sum(k²) - (3n² + 3n)/2 + n
+    n³ = 3×Sum(k²) - (3n² + n)/2
+
+    Solving for Sum(k²):
+    3×Sum(k²) = n³ + (3n² + n)/2
+              = (2n³ + 3n² + n)/2
+              = n(2n² + 3n + 1)/2
+              = n(n+1)(2n+1)/2
+
+    Sum(k²) = n(n+1)(2n+1)/6 ✓
+
+    Method 2 - Geometric (Visual Proof):
+    ------------------------------------
+    Imagine 6 square pyramids fitting together to form a rectangular block
+    of dimensions n × (n+1) × (2n+1).
+
+    Volume of block = n(n+1)(2n+1)
+    Volume of one pyramid = n(n+1)(2n+1)/6 ✓
+
+    This visual proof shows why the formula has these specific factors!
+
+    Sequence: 1, 5, 14, 30, 55, 91, 140, 204, 285, 385...
+
+    Pattern Recognition:
+    - P(1) = 1                     (single sphere)
+    - P(2) = 1 + 4 = 5             (two layers: 1×1 + 2×2)
+    - P(3) = 1 + 4 + 9 = 14        (three layers)
+    - P(4) = 1 + 4 + 9 + 16 = 30
+    - P(5) = 1 + 4 + 9 + 16 + 25 = 55
+
+    HERMETIC SIGNIFICANCE:
+    ======================
+    The square pyramidal numbers represent:
+    - Material manifestation (square = Earth, stability)
+    - The Great Pyramid (4-sided, square base)
+    - Ascension from material (base) to spiritual (apex)
+    - Each layer is a square (4 = matter, 4 elements)
+
+    Notable Values:
+    - P(3) = 14: 2 × 7 (seven planets, dual nature)
+    - P(4) = 30: Days in a lunar month
+    - P(5) = 55: Fibonacci number! (1,1,2,3,5,8,13,21,34,55...)
+    - P(7) = 140: 7 × 20 (perfect week × icosahedron)
+    - P(12) = 650: 12 zodiac signs, 650 ≈ φ × 400 (golden proportion)
+
+    Connection to Cubic Numbers:
+    If you take 3 square pyramidal numbers P(n) plus 1,
+    you almost get a cube: 3×P(n) + 1 ≈ something meaningful?
+    Actually: 6×P(n) = n(n+1)(2n+1) = (n³) + (n²) + n(n²)
+
+    Ratio to Tetrahedral:
+    P(n) / T(n) = [n(n+1)(2n+1)/6] / [n(n+1)(n+2)/6]
+                = (2n+1) / (n+2)
+    As n→∞, this ratio approaches 2.
+
+    Verification:
+    P(5) = 5×6×11/6 = 330/6 = 55 ✓
     """
     if n < 1:
         return 0

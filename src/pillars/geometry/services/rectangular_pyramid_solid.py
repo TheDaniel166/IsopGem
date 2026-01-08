@@ -39,6 +39,209 @@ class RectangularPyramidSolidResult:
 
 
 def _compute_metrics(base_length: float, base_width: float, height: float) -> RectangularPyramidMetrics:
+    """
+    Calculate metrics for a right rectangular pyramid.
+    
+    THE RECTANGULAR PYRAMID - CONVERGENCE TO A POINT:
+    ==================================================
+    
+    DEFINITION:
+    -----------
+    A rectangular pyramid is a pyramid with a rectangular base and apex
+    directly above the center of the base. The four lateral faces are
+    isosceles triangles (two pairs of congruent triangles).
+    
+    Components:
+    - 1 rectangular base (length × width)
+    - 4 triangular lateral faces (2 congruent pairs)
+    - 1 apex (vertex at top)
+    - 5 vertices total (4 base corners + 1 apex)
+    - 8 edges (4 base edges + 4 lateral edges)
+    - 5 faces (1 base + 4 triangular sides)
+    
+    Special case:
+    - Square pyramid: length = width (all 4 lateral faces congruent)
+    
+    ESSENTIAL FORMULAS:
+    -------------------
+    
+    Base Area:
+        A_base = length × width
+    
+    Volume:
+        V = (1/3) × A_base × h = (1/3) × length × width × h
+        
+        The famous "one-third" rule! See AHA MOMENT #1.
+    
+    Slant Heights (two different values!):
+        s_length = √(h² + (width/2)²)   [slant along length direction]
+        s_width = √(h² + (length/2)²)    [slant along width direction]
+        
+        These are the perpendicular distances from apex to midpoint of
+        base edges. They differ unless length = width (square).
+    
+    Lateral Surface Area:
+        For rectangular pyramid, compute area of 4 triangular faces:
+        A_lateral = (length × s_length) + (width × s_width)
+        
+        Two triangles with base=length, height=s_length (area = ½ × base × height × 2)
+        Two triangles with base=width, height=s_width
+    
+    Total Surface Area:
+        A_total = A_base + A_lateral
+    
+    Lateral Edge (corner to apex):
+        L_edge = √(h² + r²)  where r = √[(length/2)² + (width/2)²]
+        
+        Distance from base corner to apex (space diagonal of right triangle).
+    
+    Base Diagonal:
+        d = √(length² + width²)
+        
+        Diagonal across rectangular base (2D Pythagorean theorem).
+    
+    AHA MOMENT #1: THE ONE-THIRD VOLUME FORMULA - DISSECTION PROOF
+    ===============================================================
+    Why is pyramid volume = (1/3) × base × height, not (1/2) or (1/1)?
+    
+    PROOF BY DISSECTION (Ancient method, used by Archimedes):
+    
+    Take a rectangular prism (box) with base area B and height h.
+    Volume of prism: V_prism = B × h
+    
+    Now dissect this prism into THREE pyramids:
+    1. Pyramid with base B at bottom, apex at top corner
+    2. Pyramid with base B at top, apex at bottom corner (flipped)
+    3. Pyramid connecting the two (irregular, but same volume by symmetry)
+    
+    All three pyramids have the SAME base area B and height h!
+    By symmetry, they must have equal volumes.
+    
+    Therefore:
+        3 × V_pyramid = V_prism = B × h
+        V_pyramid = (1/3) × B × h
+    
+    This works for ANY pyramid (triangular, square, hexagonal, ...)
+    as long as apex is directly above base center!
+    
+    Intuitive explanation:
+    - Prism: Full "column" of material from base to top
+    - Pyramid: Material "tapers" from full base to zero at apex
+    - Volume is 1/3 of prism because material is "averaged" over tapering
+    
+    Calculus proof:
+        V = ∫₀ʰ A(z) dz  where A(z) = B × (1 - z/h)² [area at height z]
+        V = B × ∫₀ʰ (1 - z/h)² dz = B × h/3
+    
+    The "one-third" is the SIGNATURE of pyramidal convergence!
+    
+    AHA MOMENT #2: TWO SLANT HEIGHTS - ASYMMETRY IN 2D
+    ===================================================
+    Unlike a square pyramid (which has ONE slant height), the rectangular
+    pyramid has TWO distinct slant heights:
+    
+        s_length = √(h² + (width/2)²)
+        s_width = √(h² + (length/2)²)
+    
+    Why two?
+    - Slant height is perpendicular distance from apex to BASE EDGE midpoint
+    - The two pairs of opposite edges have different lengths (length ≠ width)
+    - Therefore, the slant distances to them differ!
+    
+    Visualization:
+    - Stand at apex, look down at base
+    - Distance to midpoint of long edge ≠ distance to midpoint of short edge
+    - Long edge is farther from center, so larger slant height
+    
+    The four triangular faces come in TWO pairs:
+    - Pair 1: Base edge = length, slant height = s_length
+    - Pair 2: Base edge = width, slant height = s_width
+    
+    Area calculation:
+        A_lateral = 2 × (½ × length × s_length) + 2 × (½ × width × s_width)
+                  = length × s_length + width × s_width
+    
+    This asymmetry creates DIRECTIONALITY:
+    - Square pyramid: Symmetric (all directions equivalent)
+    - Rectangular pyramid: Has "long axis" and "short axis"
+    - Extreme rectangle (length >> width): Approaches "ridge" pyramid
+    
+    The rectangular pyramid demonstrates: Breaking rotational symmetry
+    (square → rectangle) creates MULTIPLE characteristic lengths!
+    
+    AHA MOMENT #3: THE SPECTRUM FROM NEEDLE TO SQUARE TO SLAB
+    ==========================================================
+    The rectangular pyramid sits on a CONTINUUM of base shapes:
+    
+    length = width (SQUARE):
+        - Symmetric pyramid (4-fold rotational symmetry)
+        - All lateral faces congruent
+        - One slant height: s = √(h² + (a/2)²)
+        - Classic Egyptian pyramid form
+    
+    length ≈ width (Nearly square):
+        - Slightly asymmetric
+        - Two slant heights very close
+        - Subtle directionality
+    
+    length >> width (Elongated, "ridge"):
+        - Highly directional (like roof ridge)
+        - s_length ≈ h (steep face along length)
+        - s_width >> h (gentle slope along width)
+        - Approaches "wedge" or "gable" shape
+    
+    length << width (Flattened, "slab"):
+        - Opposite directionality
+        - Wide flat pyramid (like mesa)
+    
+    width → 0 (Degenerate, "blade"):
+        - Collapses to triangle (no longer 3D solid!)
+        - Limit case: vertical blade
+    
+    The rectangular pyramid is the BRIDGE between symmetric and asymmetric:
+    - Square (isotropic): No preferred direction
+    - Rectangle (anisotropic): Preferred axes
+    
+    Physical examples:
+    - Roof gables: Elongated rectangular pyramids
+    - Mayan pyramids: Nearly square base (slight elongation)
+    - Modern architecture: Asymmetric pyramidal structures
+    
+    HERMETIC NOTE - THE GEOMETRY OF FOCUSED CONVERGENCE:
+    ====================================================
+    The rectangular pyramid represents DIRECTED ASCENSION:
+    
+    - **Rectangular Base**: The manifest world (4 directions, 2 axes)
+    - **Apex Point**: The divine unity (all paths converge)
+    - **Four Faces**: Four elements rising to quintessence
+    - **Two Slant Heights**: Dual nature (masculine/feminine, active/passive)
+    
+    Symbolism:
+    - **Length ≠ Width**: Asymmetry of manifestation (time ≠ space, matter ≠ energy)
+    - **Converging Edges**: All diversity returns to source
+    - **Volume = ⅓**: The material (1) reaches toward trinity (3)
+    - **Five Vertices**: Human form (4 limbs + 1 head/spirit)
+    
+    In Sacred Architecture:
+    - **Obelisks**: Rectangular pyramidal cap (sun's ray, divine connection)
+    - **Pyramidal Roofs**: Directing energy/prayer upward
+    - **Keystones**: Inverted pyramid (energy descending)
+    
+    The rectangular pyramid is the geometry of COLLECTION and FOCUSING:
+    - Base gathers from area (2D)
+    - Apex concentrates to point (0D)
+    - Volume occupies space (3D)
+    
+    This is the shape of FUNNELING:
+    - Energy collection: solar concentrators, funnel
+    - Water flow: drainage, rivers to delta
+    - Social hierarchy: many at base, one at top
+    - Spiritual path: diverse starting points, one destination
+    
+    The rectangular pyramid teaches: CONVERGENCE need not be symmetric.
+    Different paths (length ≠ width) can still reach the same apex.
+    The journey matters (different slant heights), but the destination is one.
+    """
     half_length = base_length / 2.0
     half_width = base_width / 2.0
     slant_length = math.hypot(height, half_width)

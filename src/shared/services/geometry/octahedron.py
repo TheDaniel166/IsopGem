@@ -220,6 +220,197 @@ def _scale_vertices(edge_length: float) -> List[Vec3]:
 
 
 def _compute_metrics(edge_length: float) -> OctahedronMetrics:
+    """
+    Compute all geometric metrics for a regular octahedron from edge length.
+
+    CORE DIMENSION FORMULAS & DERIVATIONS:
+    ========================================
+
+    Face Area: A_face = (√3/4)a²
+    ----------------------------
+    Each face is an equilateral triangle with side length a.
+    For equilateral triangle:
+    - Height = (√3/2)a
+    - Area = (1/2) × base × height
+           = (1/2) × a × (√3/2)a
+           = (√3/4)a² ✓
+
+    Surface Area: A = 8 × (√3/4)a² = 2√3 a²
+    ----------------------------------------
+    Octahedron has 8 identical equilateral triangle faces.
+    Total surface area = 8 × (√3/4)a² = 2√3 a²
+
+    Volume: V = (√2/3)a³
+    --------------------
+    View the octahedron as two congruent square pyramids joined base-to-base.
+    
+    The equatorial "belt" forms a square with diagonal = distance between
+    opposite vertices along the equator. For edge length a, this diagonal
+    is a√2 (by the Pythagorean theorem on the square formed by 4 edges).
+    Therefore, the square side length is (a√2)/√2 = a.
+    Square base area = a².
+
+    The distance between top and bottom vertices (poles) is a√2.
+    Each pyramid has height h = (a√2)/2 = a/√2.
+
+    Volume of one pyramid = (1/3) × base_area × height
+                          = (1/3) × a² × (a/√2)
+                          = a³/(3√2)
+    
+    Two pyramids:
+    V = 2 × a³/(3√2) = 2a³/(3√2) × (√2/√2) = (2√2/6)a³ = (√2/3)a³ ✓
+
+    Alternative derivation via canonical coordinates:
+    Vertices at (±1,0,0), (0,±1,0), (0,0,±1)
+    have edge length √2 and volume 4/3.
+    Scaling by a/√2 gives V = (4/3)(a/√2)³ = (4/3)(a³/2√2) = (√2/3)a³ ✓
+
+    AHA MOMENT #1: DUAL PYRAMID DECOMPOSITION
+    ===========================================
+    The octahedron is perfectly symmetric top-to-bottom. The equatorial square
+    divides it into two identical pyramids. This is the inverse of the cube:
+    - Cube: 6 square faces, 8 vertices
+    - Octahedron: 8 triangular faces, 6 vertices
+    The octahedron IS the dual of the cube!
+
+    SPHERE RADII FORMULAS & DERIVATIONS:
+    =====================================
+
+    Inradius (Inscribed Sphere): r = a/√6 = a√6/6
+    ----------------------------------------------
+    The inscribed sphere touches the center of each face.
+
+    Derivation using volume-to-surface-area ratio:
+    For any polyhedron with an inscribed sphere: r = 3V/A
+
+    r = 3 × [(√2/3)a³] / [2√3 a²]
+      = (√2 a³) / (2√3 a²)
+      = (√2 a) / (2√3)
+      = a√2 / (2√3)
+      = a / √6 ✓
+
+    Rationalized form:
+    r = a/√6 × (√6/√6) = a√6/6
+
+    Geometric derivation (canonical coordinates):
+    For the canonical octahedron with edge √2, a face plane equation is
+    x + y + z = 1 (for the upper-front-right face).
+    Distance from origin to plane = 1/√(1²+1²+1²) = 1/√3.
+    
+    For edge length a, scale factor = a/√2:
+    r = (a/√2) × (1/√3) = a/√6 ✓
+
+    Numerical value: r ≈ 0.4082482905a
+
+    Midradius (Midsphere): ρ = a/2
+    -------------------------------
+    The midsphere touches the midpoint of each edge.
+
+    Edge midpoint calculation for canonical vertices:
+    Edge from (1,0,0) to (0,1,0) → midpoint (1/2, 1/2, 0)
+    Distance from origin = √((1/2)² + (1/2)² + 0²) = √(1/2) = 1/√2
+    
+    For edge length a, scale by a/√2:
+    ρ = (a/√2) × (1/√2) = a/2 ✓
+
+    AHA MOMENT #2: PERFECT MIDPOINT
+    =================================
+    The midradius ρ = a/2 is exactly half the edge length!
+    This is unique among the Platonic solids. It reflects the octahedron's
+    perfect balance: edge midpoints lie at the "golden middle" between
+    center and vertices.
+
+    Circumradius (Circumscribed Sphere): R = a/√2 = a√2/2
+    -------------------------------------------------------
+    The circumscribed sphere passes through all 6 vertices.
+    
+    Canonical vertices are at distance 1 from origin.
+    For edge length a, scale factor = a/√2:
+    R = (a/√2) × 1 = a/√2 ✓
+
+    Rationalized form:
+    R = a/√2 × (√2/√2) = a√2/2
+
+    Numerical value: R ≈ 0.7071067812a
+
+    SPHERE RATIO RELATIONSHIPS:
+    ===========================
+    r : ρ : R = a√6/6 : a/2 : a√2/2
+               = √6/6 : 1/2 : √2/2
+               = √6 : 3 : 3√2
+               ≈ 0.408 : 0.500 : 0.707
+
+    Simplifying via common factor a/6:
+    r : ρ : R = √6 : 3 : 3√2
+    
+    Key ratios:
+    - R/r = (a√2/2) / (a√6/6) = 3√2/√6 = 3√(2/6) = 3/√3 = √3
+      The circumradius is exactly √3 times the inradius!
+    - ρ/r = (a/2) / (a√6/6) = 3/√6 = √(9/6) = √(3/2)
+    - R/ρ = (a√2/2) / (a/2) = √2
+
+    AHA MOMENT #3: THE √3 RATIO
+    =============================
+    R/r = √3 encodes the octahedron's threefold symmetry.
+    The number 3 appears throughout:
+    - 3 axes of fourfold rotation (through opposite vertices)
+    - Each vertex is the meeting point of 4 triangular faces
+    - 3 square cross-sections (through 4 edges each)
+
+    Dihedral Angle: arccos(-1/3) ≈ 109.47°
+    ========================================
+    The dihedral angle is the angle between two adjacent faces along a shared edge.
+
+    Consider two triangular faces meeting at an edge.
+    Face normals for canonical octahedron faces:
+    - Upper front right face (0, 2, 4): vertices (1,0,0), (0,1,0), (0,0,1)
+      Normal = (1,1,1)/√3
+    - Upper front left face (2, 1, 4): vertices (0,1,0), (-1,0,0), (0,0,1)
+      Normal = (-1,1,1)/√3
+
+    Dot product of normals:
+    (1,1,1)·(-1,1,1) / 3 = (-1 + 1 + 1) / 3 = 1/3
+
+    The dihedral angle θ is π minus the angle between outward normals:
+    cos(θ) = -1/3
+    θ = arccos(-1/3) ≈ 109.47° ✓
+
+    This is the supplement of the tetrahedral angle arccos(1/3) ≈ 70.53°.
+    This makes sense: the octahedron and tetrahedron are related by
+    "stellation" operations.
+
+    HERMETIC NOTE - THE AIR ELEMENT:
+    ==================================
+    The octahedron represents AIR in Platonic solid cosmology:
+
+    Symbolism:
+    - 8 triangular faces = balance of ascent and descent (4 up, 4 down)
+    - Dual of the cube (earth) = air as the counterpoint to solidity
+    - 6 vertices on 3 perpendicular axes = omnidirectional flow
+    - Midradius ρ = a/2 (exactly half edge) = air's perfect mediation
+    - Dihedral angle ≈109.47° (obtuse) = gentle, flowing angles
+
+    Spiritual Correspondences:
+    - Insphere (r ≈ 0.408a): The breath within, the vital center
+    - Midsphere (ρ = 0.5a): The mediating boundary, perfect balance
+    - Circumsphere (R ≈ 0.707a): The sphere of circulation
+
+    The R/r = √3 ratio reflects Air's role as the mediator between
+    the gross (Earth/Cube) and the subtle (Fire/Tetrahedron).
+
+    Connection to Cube (Dual):
+    - Octahedron vertices → Cube face centers
+    - Octahedron faces → Cube vertices
+    - Octahedron edges → Cube edges (same count: 12)
+    This duality expresses the esoteric principle: "That which is above
+    is like that which is below" — Air and Earth as complements.
+
+    Packing:
+    - Cannot fill 3D space alone
+    - Packing density ≈ 0.7236 (when arranged optimally)
+    - Represents Air's need for space to flow, inability to compress
+      into a rigid lattice like the cube
+    """
     # Core dimensions
     face_area_val = _scaled_value(_BASE_FACE_AREA, edge_length, 2.0)
     surface_area_val = _scaled_value(_BASE_SURFACE_AREA, edge_length, 2.0)

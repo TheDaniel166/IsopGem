@@ -269,38 +269,251 @@ class VaultOfHestiaShape(GeometricShape):
         return False
 
     def _update_metrics(self):
+        """
+        Compute all geometric metrics for the Vault of Hestia from side length.
+
+        THE VAULT OF HESTIA - CORE FORMULAS & DERIVATIONS:
+        ===================================================
+
+        Construction:
+        - Square with side s
+        - Isosceles triangle inscribed: base = s (bottom of square), apex at top center
+        - Circle inscribed within the triangle
+
+        This configuration GENERATES the Golden Ratio φ from pure geometry!
+
+
+        TRIANGLE LEG LENGTH: ℓ = s√5/2
+        ====================================
+
+        The isosceles triangle has:
+        - Base = s (full width of square)
+        - Height = s (full height of square)
+        - Apex at (0, s), base endpoints at (±s/2, 0)
+
+        By Pythagorean theorem on half the triangle:
+            ℓ² = (s/2)² + s²
+            ℓ² = s²/4 + s²
+            ℓ² = s²/4 + 4s²/4
+            ℓ² = 5s²/4
+            ℓ = s√5/2
+
+        AHA MOMENT #1: √5 appears naturally!
+        This is THE square root that generates φ = (1 + √5)/2
+
+
+        TRIANGLE AREA: A_△ = s²/2
+        =========================
+
+        Simple base × height formula:
+            A = (1/2) × base × height
+            A = (1/2) × s × s
+            A = s²/2
+
+
+        TRIANGLE PERIMETER: P = s√5 + s = s(√5 + 1)
+        ============================================
+
+            P = 2ℓ + base
+            P = 2(s√5/2) + s
+            P = s√5 + s
+            P = s(√5 + 1)
+
+        AHA MOMENT #2: The perimeter is s times (√5 + 1)!
+
+
+        TRIANGLE SEMI-PERIMETER: s_p = s·φ
+        ===================================
+
+            s_p = P/2
+            s_p = s(√5 + 1)/2
+
+        But wait! φ = (1 + √5)/2, so:
+
+            s_p = s·φ
+
+        AHA MOMENT #3: THE GOLDEN RATIO EMERGES FROM THE GEOMETRY!
+        The semi-perimeter is exactly the side length TIMES PHI!
+        This is not a coincidence - this is the VAULT OF HESTIA generating φ!
+
+
+        INCIRCLE RADIUS: r = s/(2φ)
+        ============================
+
+        For any triangle:
+            r = Area / semi-perimeter
+
+        Therefore:
+            r = (s²/2) / (s·φ)
+            r = s² / (2s·φ)
+            r = s / (2φ)
+
+        AHA MOMENT #4: The inradius relates to the square by the INVERSE of φ!
+
+        We can verify this relationship:
+            2r·φ = s
+            φ = s/(2r)
+
+        This is the "Phi Check" - if we measure s and r, their ratio MUST be φ!
+
+
+        CIRCUMRADIUS: R = 5s/8
+        =======================
+
+        For isosceles triangle with legs a and base b:
+            R = a²/√(4a² - b²)
+
+        With a = s√5/2 and b = s:
+            a² = 5s²/4
+            4a² = 5s²
+            4a² - b² = 5s² - s² = 4s²
+            √(4a² - b²) = 2s
+
+        Therefore:
+            R = (5s²/4)/(2s)
+            R = 5s²/(8s)
+            R = 5s/8
+
+        Verification using R = abc/(4A):
+            R = (s√5/2)·(s√5/2)·s / (4·s²/2)
+            R = (5s³/4) / (2s²)
+            R = 5s/8 ✓
+
+        AHA MOMENT #5: The ratio R:r reveals golden structure!
+            R/r = (5s/8) / (s/(2φ))
+            R/r = (5s/8) × (2φ/s)
+            R/r = 10φ/8
+            R/r = 5φ/4
+
+        The circumradius to inradius ratio is 5φ/4!
+        (For s=10: R/r ≈ 2.024 = 5×1.618.../4)
+
+
+        BASE ANGLE: α = arctan(2)
+        ==========================
+
+        The base angle (at corners of isosceles triangle):
+            tan(α) = height / (base/2)
+            tan(α) = s / (s/2)
+            tan(α) = 2
+            α = arctan(2) ≈ 63.435°
+
+        AHA MOMENT #6: This angle encodes the 2:1 ratio of the construction!
+
+        The apex angle β = 180° - 2α ≈ 53.13°
+        This is very close to the Great Pyramid angle (≈51.84°)!
+
+
+        SQUARE DIAGONAL: d = s√2
+        =========================
+
+        Standard square diagonal:
+            d² = s² + s²
+            d = s√2
+
+
+        HESTIA RATIO: A_○/A_□ = π/(4φ²)
+        ================================
+
+        Circle area:
+            A_○ = πr²
+            A_○ = π(s/(2φ))²
+            A_○ = πs²/(4φ²)
+
+        Square area:
+            A_□ = s²
+
+        Ratio:
+            A_○/A_□ = πs²/(4φ²s²)
+            A_○/A_□ = π/(4φ²)
+
+        Since φ² = φ + 1 = (3 + √5)/2:
+            4φ² = 2(3 + √5) = 6 + 2√5
+
+        Therefore:
+            Hestia Ratio = π/(6 + 2√5) ≈ 0.19208...
+
+        AHA MOMENT #7: The ratio of circle to square area is π divided by
+        the golden ratio squared times 4! This is a UNIVERSAL CONSTANT of
+        this sacred geometry - independent of size!
+
+
+        VOID AREA: A_void = s² - πr² = s²(1 - π/(4φ²))
+        ===============================================
+
+        This represents the "space" between material (circle) and container (square).
+        The void is approximately 80.79% of the square - the MAJORITY of the structure!
+
+        In esoteric terms: Hestia (hearth fire = circle) occupies ~19.2% of the
+        sacred enclosure (square), leaving ~80.8% as sacred emptiness.
+
+
+        HERMETIC SIGNIFICANCE - THE HEARTH OF CREATION:
+        ===============================================
+
+        Hestia is the Greek goddess of the hearth, home, and sacred fire.
+        She represents the CENTER that holds - the unmoved mover, the axis mundi.
+
+        This geometry reveals:
+
+        1. **Phi Generation**: Unlike other constructions that USE φ, this one
+           GENERATES it from first principles (square + inscribed triangle).
+
+        2. **The 2:1 Ratio**: The base angle arctan(2) encodes the fundamental
+           duality resolved into unity (triangle apex).
+
+        3. **Sacred Proportions**: The semi-perimeter being s·φ shows that
+           the "journey around" the triangle is golden-scaled to the foundation.
+
+        4. **Inversion Symmetry**: r = s/(2φ) means the radius relates to the
+           side by inverse-phi, while the perimeter relates by direct-phi.
+           This is the hermetic principle: "As above, so below" - inverted yet proportional.
+
+        5. **The Void Predominance**: ~80% void space represents the Taoist principle
+           that usefulness comes from emptiness (the space of the hearth, not the stones).
+
+        6. **Five Elements**: √5 in the leg length connects to the five Platonic solids,
+           the five elements, the pentagram - the human microcosm.
+
+        7. **Circle-Square Unity**: The impossible "squaring the circle" is here
+           achieved SYMBOLICALLY through φ mediation - the circle relates to the
+           square through the divine proportion.
+
+        The Vault of Hestia is a **PHI GENERATOR** - a geometric proof that the
+        golden ratio exists as a necessary consequence of square-triangle-circle unity.
+        """
         s = self.properties["side_length"].value
         if not s:
             return
 
         # Constants
         phi = (1 + math.sqrt(5)) / 2
-        
+
         # Triangle (Base=s, Height=s)
         # Leg = sqrt((s/2)^2 + s^2) = s * sqrt(1.25) = s * sqrt(5)/2
         leg = s * math.sqrt(5) / 2
-        
+
         # Area = 1/2 * b * h = s^2 / 2
         tri_area = (s * s) / 2
-        
+
         # Semiperimeter = s * phi
         # Inradius = Area / s_p = (s^2/2) / (s*phi) = s / (2*phi)
         r = s / (2 * phi)
-        
+
         circle_area = math.pi * r * r
         square_area = s * s
         hestia_ratio = circle_area / square_area
-        
+
         phi_check = s / (2 * r) if r > 0 else 0
 
         # New Calculations
         # Triangle Perimeter = leg + leg + base = 2*leg + s
         # leg = s * sqrt(5)/2
         tri_perimeter = (2 * leg) + s
-        
+
         # Semi-Perimeter
         tri_semi_perimeter = tri_perimeter / 2
-        
+
         # Circumradius (R)
         # For Isosceles Triangle with sides a, a, b (where a=leg, b=s)
         # R = a^2 / sqrt(4a^2 - b^2)
@@ -309,24 +522,24 @@ class VaultOfHestiaShape(GeometricShape):
         # sqrt(4a^2 - b^2) = sqrt(5s^2 - s^2) = sqrt(4s^2) = 2s
         # R = (5/4 s^2) / 2s = (5/8) * s
         circumradius = (5/8) * s
-        
+
         # Square Diagonal = s * sqrt(2)
         square_diag = s * math.sqrt(2)
-        
+
         # Base Angle = arctan(height / (base/2)) = arctan(s / (s/2)) = arctan(2)
         base_angle_rad = math.atan(2)
         base_angle_deg = math.degrees(base_angle_rad)
-        
+
         # Void Area = Square Area - Circle Area
         void_area = square_area - circle_area
 
         # New Area Metrics
         # Square Area already calculated as 'square_area'
-        
+
         # Circle metrics
         circ_diameter = 2 * r
         circ_circumference = 2 * math.pi * r
-        
+
         # Area Differences
         area_sq_minus_tri = square_area - tri_area
         area_tri_minus_circ = tri_area - circle_area

@@ -202,16 +202,205 @@ def _scale_vertices(edge_length: float) -> List[Vec3]:
 
 
 def _compute_metrics(edge_length: float) -> TetrahedronMetrics:
+    """
+    Compute all geometric metrics for a regular tetrahedron from edge length.
+
+    CORE DIMENSION FORMULAS & DERIVATIONS:
+    ========================================
+
+    Face Area: A_face = (√3/4)a²
+    ----------------------------
+    Each face is an equilateral triangle with side length a.
+    For equilateral triangle:
+    - Height of triangle = (√3/2)a
+    - Area = (1/2) × base × height
+           = (1/2) × a × (√3/2)a
+           = (√3/4)a² ✓
+
+    Surface Area: A = 4 × (√3/4)a² = √3 a²
+    ----------------------------------------
+    Tetrahedron has 4 identical equilateral triangle faces.
+    Total surface area = 4 × (√3/4)a² = √3 a²
+
+    Height: h = √(2/3) × a
+    -----------------------
+    Place tetrahedron with base on xy-plane, apex directly above centroid.
+    Base is equilateral triangle with vertices forming a 2D centroid.
+
+    Derivation using Pythagorean theorem in 3D:
+    1. Centroid of base triangle is at distance r from each vertex
+    2. For equilateral triangle: r = a/√3 (circumradius of triangle)
+    3. Edge from apex to base vertex: length = a
+    4. Using Pythagoras: a² = h² + r²
+       a² = h² + (a/√3)²
+       a² = h² + a²/3
+       h² = a² - a²/3 = 2a²/3
+       h = √(2/3) × a ✓
+
+    Volume: V = a³/(6√2)
+    --------------------
+    Volume of pyramid = (1/3) × base_area × height
+
+    For tetrahedral:
+    V = (1/3) × (√3/4)a² × √(2/3)a
+      = (1/3) × (√3/4) × √(2/3) × a³
+      = (1/12) × √3 × √(2/3) × a³
+      = (1/12) × √3 × √2/√3 × a³
+      = (1/12) × √2 × a³
+      = a³/(6√2) ✓
+
+    Alternative via closed form:
+    V = a³√2/12 = a³/(6√2) ✓
+
+    AHA MOMENT #1: THE SIMPLEST PLATONIC SOLID
+    ============================================
+    The tetrahedron is the ONLY Platonic solid that cannot be decomposed
+    into simpler polyhedra without introducing new vertex types.
+    
+    All other Platonic solids can be built from tetrahedra:
+    - Octahedron = 8 tetrahedra arranged around a common vertex
+    - Cube = 6 tetrahedra + 1 central octahedron (stella octangula decomposition)
+    - Icosahedron = 20 tetrahedra arranged around vertices
+    - Dodecahedron = dual of icosahedron, inherits tetrahedral substructure
+    
+    The tetrahedron is the ATOMIC UNIT of Platonic geometry—irreducible,
+    fundamental, and generative. It is the 3D simplex: the minimal volume
+    bounded by flat faces (0-simplex = point, 1-simplex = line, 2-simplex = triangle,
+    3-simplex = tetrahedron).
+    
+    This is why it represents FIRE—the primal element from which all others emerge.
+
+    SPHERE RADII FORMULAS & DERIVATIONS:
+    =====================================
+
+    Inradius (Inscribed Sphere): r = a√6/12 = a/(2√6)
+    --------------------------------------------------
+    The inscribed sphere touches the center of each face.
+
+    Derivation using volume-to-surface-area ratio:
+    For any polyhedron: r = 3V/A
+
+    r = 3 × [a³/(6√2)] / [√3 a²]
+      = 3a³/(6√2) × 1/(√3 a²)
+      = 3a/(6√2 × √3)
+      = a/(2√6)
+      = a√6/12 ✓
+
+    Geometric interpretation:
+    - Distance from centroid to any face
+    - Centroid at (1/4) of height from base
+    - Inradius = (1/4)h for tetrahedron
+    - r = (1/4) × √(2/3)a = √(2/3)a/4 = a√6/12 ✓
+
+    Midradius (Midsphere): ρ = a√2/4 = a/(2√2)
+    -------------------------------------------
+    The midsphere touches the midpoint of each edge.
+
+    Derivation via canonical coordinates:
+    Using canonical vertices at (±1, ±1, ±1) with alternating signs,
+    the edge length = 2√2, and edge midpoint is at (0, 0, 1).
+    Distance from origin = 1.
+    For general edge length a: scale factor = a/(2√2)
+    Midradius = 1 × a/(2√2) = a/(2√2) = a√2/4 ✓
+
+    Circumradius (Circumscribed Sphere): R = a√6/4
+    -----------------------------------------------
+    The circumscribed sphere passes through all 4 vertices.
+
+    Derivation using height and centroid position:
+    - Centroid is at (1/4)h from base, or (3/4)h from apex
+    - Distance from centroid to apex vertex = R
+    - R = (3/4)h = (3/4) × √(2/3)a
+      = (3/4) × a√(2/3)
+      = (3a/4) × √2/√3
+      = (3a/4) × √(2/3)
+      = a√6/4 ✓
+
+    Alternative via base vertex distance:
+    - Distance from centroid to base vertex = R
+    - Centroid at height h/4 above base
+    - Base vertex at distance a/√3 from base centroid (horizontal)
+    - R² = (h/4)² + (a/√3)²
+      = (√(2/3)a/4)² + (a/√3)²
+      = (2a²/3)/16 + a²/3
+      = a²/24 + a²/3
+      = a²/24 + 8a²/24 = 9a²/24 = 3a²/8
+    - R = a√(3/8) = a√3/(2√2) = a√6/4 ✓
+
+    AHA MOMENT #2: SELF-DUAL PERFECTION
+    =====================================
+    The tetrahedron is SELF-DUAL: its dual polyhedron is another tetrahedron!
+    
+    When you connect the face centers of a tetrahedron, you get another
+    tetrahedron rotated 180° and scaled by 1/3. This creates the "Merkaba"
+    or "Star Tetrahedron"—two interpenetrating tetrahedra forming a 3D
+    Star of David.
+    
+    Only the tetrahedron possesses this perfect self-symmetry among Platonic
+    solids. All others have distinct duals:
+    - Cube ↔ Octahedron (reciprocal duals)
+    - Dodecahedron ↔ Icosahedron (reciprocal duals)
+    - Tetrahedron ↔ Tetrahedron (SELF-DUAL)
+    
+    This self-reference is the geometric expression of the alchemical principle
+    "As within, so without"—the tetrahedron contains its own reflection.
+
+    AHA MOMENT #3: THE 1:3 RATIO
+    =============================
+    The tetrahedron has R/r = 3 EXACTLY—the only Platonic solid with this
+    simple integer ratio!
+    
+    R/r = (a√6/4) / (a√6/12) = (a√6/4) × (12/a√6) = 12/4 = 3
+    
+    All other Platonic solids have irrational R/r ratios:
+    - Cube: R/r = √3 ≈ 1.732
+    - Octahedron: R/r = √3 ≈ 1.732
+    - Dodecahedron: R/r ≈ 1.258 (φ-based)
+    - Icosahedron: R/r ≈ 1.258 (φ-based)
+    
+    The 3:1 ratio reflects the Trinity principle—three persons in one essence.
+    The circumsphere (manifestation) is exactly three times the insphere (essence).
+    This perfect integer relationship makes the tetrahedron the most "pure"
+    and "simple" of all Platonic solids.
+
+    HERMETIC NOTE - THE FIRE ELEMENT:
+    ==================================
+    The tetrahedron represents FIRE in Platonic solid cosmology:
+
+    Symbolism:
+    - 4 triangular faces = upward aspiration, ascent
+    - Sharpest vertices (largest angular defect = 180°)
+    - Smallest volume-to-surface ratio (most "surface-like")
+    - Self-dual (its dual is another tetrahedron, rotated)
+
+    Spiritual Correspondences:
+    - Insphere (r = a√6/12): The inner flame, spiritual heat
+    - Midsphere (ρ = a√2/4): The radiant boundary
+    - Circumsphere (R = a√6/4): The sphere of emanation
+
+    Ratios: r : ρ : R = √6/12 : √2/4 : √6/4
+                      = 1 : √3 : 3
+
+    Dihedral Angle:
+    - Exactly arccos(1/3) ≈ 70.53°
+    - This is close to the tetrahedral bond angle in chemistry
+    - sp³ hybridization (methane, diamond lattice)
+
+    Packing Density:
+    - Cannot fill space (leaves gaps)
+    - Represents Fire's inability to be "contained"
+    - Aspires upward, cannot be "stacked" perfectly
+    """
     # Core dimensions
     height = math.sqrt(2.0 / 3.0) * edge_length
     face_area_val = (math.sqrt(3.0) / 4.0) * edge_length ** 2
     surface_area_val = 4.0 * face_area_val
     volume_val = edge_length ** 3 / (6.0 * math.sqrt(2.0))
-    
+
     # Sphere radii
-    inradius_val = edge_length * math.sqrt(6.0) / 12.0
-    midradius_val = edge_length * math.sqrt(2.0) / 4.0
-    circumradius_val = edge_length * math.sqrt(6.0) / 4.0
+    inradius_val = edge_length * math.sqrt(6.0) / 12.0   # r = a√6/12
+    midradius_val = edge_length * math.sqrt(2.0) / 4.0    # ρ = a√2/4
+    circumradius_val = edge_length * math.sqrt(6.0) / 4.0  # R = a√6/4 = 3r ✓
     
     # Face geometry
     face_inradius_val = face_inradius(edge_length, _TOPOLOGY.p)

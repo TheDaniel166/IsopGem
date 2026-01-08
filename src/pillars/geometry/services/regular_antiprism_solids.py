@@ -1,4 +1,110 @@
-"""Regular antiprism solid services and calculators."""
+"""Regular antiprism solid services and calculators.
+
+The antiprism is a "twisted prism"—a polyhedron formed by rotating one regular n-gonal
+base by 180°/n relative to the other, then connecting them with 2n equilateral (or nearly
+equilateral) triangular faces instead of n rectangular faces. This rotation transforms
+the combinatorial structure while preserving the same vertex count (2n).
+
+═══════════════════════════════════════════════════════════════════════════════════════
+AHA MOMENT #1: Antiprism as "Twisted Prism" (The Rotation Operation)
+═══════════════════════════════════════════════════════════════════════════════════════
+
+In a regular n-prism:
+• Two parallel regular n-gons (bases) aligned with vertices directly above each other
+• n rectangular lateral faces connecting corresponding vertices
+• Total faces: n+2 (n rectangles + 2 n-gons)
+
+In a regular n-antiprism:
+• Two parallel regular n-gons (bases) with top rotated 180°/n relative to bottom
+• 2n triangular lateral faces (alternating up and down) connecting staggered vertices
+• Total faces: 2n+2 (2n triangles + 2 n-gons)
+
+The rotation creates a "twist" where each top vertex sits above the MIDPOINT of a bottom
+edge, not above a bottom vertex. This forces triangular (not rectangular) faces:
+• n "upward" triangles: (bottom_i, bottom_{i+1}, top_i)
+• n "downward" triangles: (bottom_i, top_i, top_{i-1})
+
+For n=3 (triangular antiprism = octahedron!), this is the Platonic octahedron.
+For n=4 (square antiprism), it's a Johnson solid (J17) with 8 equilateral triangles.
+
+The twist operation creates CHIRALITY in higher antiprisms (left/right handed forms
+become distinguishable), though the regular antiprism is achiral by symmetry.
+
+═══════════════════════════════════════════════════════════════════════════════════════
+AHA MOMENT #2: 2n Triangular Faces and the Lateral Chord
+═══════════════════════════════════════════════════════════════════════════════════════
+
+The lateral geometry involves TWO edge lengths:
+
+1) **Base edge**: a (given n-gon edge)
+2) **Lateral chord**: c (horizontal distance between staggered vertices)
+
+The lateral chord length c depends on the rotation angle:
+• Top and bottom vertices sit on circles of radius R = a/(2sin(π/n))
+• Rotation by 180°/n means angular offset = π/n
+• Chord formula: c = 2R·sin(π/(2n)) = 2R·sin(π/2n)
+
+For the lateral edge (3D diagonal connecting top to bottom):
+• l = √(h² + c²)
+
+When the antiprism is "right" (h chosen correctly), all 2n triangular faces can be
+EQUILATERAL, which happens when:
+• Lateral edge l = base edge a
+• This imposes h² + c² = a²
+• So h = √(a² - c²)
+
+For small n (3, 4, 5...), this creates beautiful near-equilateral tilings.
+
+═══════════════════════════════════════════════════════════════════════════════════════
+AHA MOMENT #3: Limit n→∞ and Continuous Symmetry
+═══════════════════════════════════════════════════════════════════════════════════════
+
+As n→∞ (bases become circles):
+
+• Prism → Right circular cylinder (rectangular faces → smooth cylindrical surface)
+• Antiprism → ??? (twisted cylinder?)
+
+The antiprism's 2n triangular faces form a helical pattern that, in the limit,
+approaches a HELICOID (minimal surface, like a spiral ramp).
+
+**Base area**: A_n = (na²)/(4tan(π/n)) → πR² as n→∞
+**Volume**: V = (na²h)/(12tan(π/n)) → πR²h/3 ??? Actually:
+V_antiprism = A_base × h (same as prism for fixed h)
+
+**Symmetry group**: D_{nd} (dihedral with vertical reflection symmetry), order 4n.
+As n→∞, approaches SO(2)×ℤ₂ (continuous rotational symmetry + vertical reflection).
+
+The antiprism is TIGHTER than the prism (lateral surface area smaller for same h and n)
+because the triangular zigzag path is shorter than vertical rectangles when properly
+constructed.
+
+═══════════════════════════════════════════════════════════════════════════════════════
+🔺 HERMETIC SIGNIFICANCE 🔺
+═══════════════════════════════════════════════════════════════════════════════════════
+
+The antiprism embodies the principle of **Dynamic Equilibrium Through Opposition**:
+
+• **Twist as Transformation**: The 180°/n rotation transforms static vertical alignment
+  (prism) into dynamic helical tension (antiprism). This is the geometric encoding of
+  *solve et coagula*—dissolve the straight path, coagulate into the spiral ascent.
+
+• **Triangulation and Stability**: Where the prism uses rectangular faces (4 points of
+  support), the antiprism uses triangular faces (3 points of support). Triangles are
+  RIGID (no degrees of freedom); the antiprism is structurally STRONGER. This is why
+  architectural towers and geodesic domes use triangulation.
+
+• **Octahedron as n=3**: The triangular antiprism is the OCTAHEDRON (dual of cube),
+  linking the antiprism family to Platonic solids. Air/Intellect element in sacred
+  geometry. The square antiprism (n=4, J17) appears in crystal structures.
+
+• **Helical Ascent**: The spiral pattern of the 2n triangular faces mirrors the CADUCEUS
+  (twin snakes), the DNA double helix, and the Fibonacci spiral in phyllotaxis (leaf
+  arrangement). The antiprism is the geometric signature of *growth through rotation*.
+
+The antiprism teaches: **True ascent is not vertical—it is helical.** 🌀
+
+═══════════════════════════════════════════════════════════════════════════════════════
+"""
 from __future__ import annotations
 
 import math

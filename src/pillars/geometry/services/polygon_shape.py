@@ -1,4 +1,158 @@
-"""Regular polygon shape calculator."""
+"""Regular polygon shape calculator.
+
+A regular polygon is an n-sided figure with all sides equal and all angles equal. It
+possesses n-fold rotational symmetry and represents discrete approximations to the
+continuous circle. As n→∞, the regular polygon converges to the circle, bridging
+the discrete world of integers with the continuous realm of curves.
+
+═══════════════════════════════════════════════════════════════════════════════════════
+AHA MOMENT #1: Interior and Exterior Angles (The 360° Walk)
+═══════════════════════════════════════════════════════════════════════════════════════
+
+For a regular n-gon:
+
+**Interior angle**: θ_interior = ((n-2)×180°)/n
+• Derivation: An n-gon can be divided into (n-2) triangles from a central vertex.
+  Total angle sum = (n-2)×180°. For regular polygon, divide by n vertices.
+• Rewrite: θ_interior = 180° - 360°/n
+
+**Exterior angle**: θ_exterior = 360°/n
+• Interior + Exterior = 180° (supplementary angles)
+• KEY INSIGHT: Sum of ALL exterior angles = 360° (for ANY polygon!)
+
+Why? Imagine walking around the perimeter of a polygon:
+• Start facing along edge 1
+• At each vertex, you turn by the exterior angle
+• After n vertices, you've completed ONE FULL ROTATION = 360°
+• This is true even for irregular polygons!
+
+**Examples**:
+• Triangle (n=3): interior = 60°, exterior = 120°
+• Square (n=4): interior = 90°, exterior = 90°
+• Pentagon (n=5): interior = 108°, exterior = 72°
+• Hexagon (n=6): interior = 120°, exterior = 60°
+• Octagon (n=8): interior = 135°, exterior = 45°
+• Dodecagon (n=12): interior = 150°, exterior = 30°
+
+As n→∞:
+• Interior angle → 180° (straight line)
+• Exterior angle → 0° (no turning)
+• Polygon → Circle (infinitesimal exterior angles sum to 360° via integration!)
+
+═══════════════════════════════════════════════════════════════════════════════════════
+AHA MOMENT #2: Apothem, Circumradius, and the Dual Geometry
+═══════════════════════════════════════════════════════════════════════════════════════
+
+A regular n-gon inscribed in a circle of radius R has two key radii:
+
+**Circumradius** R: distance from center to vertex
+**Apothem** a: distance from center to edge midpoint (perpendicular to edge)
+
+For side length s:
+• s = 2R·sin(π/n)    [chord formula]
+• a = R·cos(π/n)    [perpendicular drop from center to edge]
+• Alternatively: s = 2a·tan(π/n)
+
+**Area formula**:
+  A = (1/2)×perimeter×apothem = (1/2)×(ns)×a = (ns²)/(4tan(π/n))
+
+Or in terms of circumradius:
+  A = (nR²/2)·sin(2π/n)
+
+As n→∞:
+• sin(2π/n) → 2π/n    (small angle approximation)
+• A → (nR²/2)×(2π/n) = πR²    (circle area!)
+
+**Duality**: Every regular n-gon has a DUAL regular n-gon:
+• Original: vertices connected by edges
+• Dual: place vertex at center of each edge, connect them
+• Result: The dual of a regular n-gon is ANOTHER regular n-gon, rotated 180°/n
+• Example: Square's dual is a square rotated 45°
+• Self-dual polygons: n must divide 360° evenly into 90° chunks (n=4 only!)
+
+**Platonic solid duality**: This 2D duality extends to 3D:
+• Tetrahedron ↔ Tetrahedron (self-dual)
+• Cube ↔ Octahedron
+• Dodecahedron ↔ Icosahedron
+
+═══════════════════════════════════════════════════════════════════════════════════════
+AHA MOMENT #3: Diagonals and Combinatorial Explosion
+═══════════════════════════════════════════════════════════════════════════════════════
+
+A diagonal connects two non-adjacent vertices. For an n-gon:
+
+**Number of diagonals**: D = n(n-3)/2
+
+Derivation:
+• From each vertex, you can draw (n-3) diagonals (exclude the vertex itself and its
+  two adjacent vertices connected by edges)
+• Total: n(n-3), but this counts each diagonal TWICE (once from each endpoint)
+• So D = n(n-3)/2
+
+**Examples**:
+• Triangle (n=3): D = 0 (no diagonals, triangle is "complete")
+• Square (n=4): D = 2 (two diagonals crossing at center)
+• Pentagon (n=5): D = 5 (pentagram!)
+• Hexagon (n=6): D = 9
+• Octagon (n=8): D = 20
+• Decagon (n=10): D = 35
+
+As n grows, diagonals EXPLODE:
+• D ~ n²/2 (quadratic growth)
+• For n=100: D = 4850 diagonals!
+
+**Diagonal lengths** (multiple distinct lengths for n>6):
+• Triangle: no diagonals
+• Square: 1 length (all diagonals equal: d = s√2)
+• Pentagon: 1 length (all diagonals equal: d = s·φ, golden ratio!)
+• Hexagon: 2 lengths (short and long diagonals)
+• Heptagon: 2 lengths
+• Octagon: 3 lengths
+• For general n: (floor(n/2)-1) distinct diagonal lengths
+
+**Star polygons** (n/k notation):
+• Connect every k-th vertex: {n/k}
+• Pentagon diagonals form pentagram: {5/2}
+• Hexagon: {6/2} degenerates to two triangles, but {6/3} is hexagram (Star of David)
+• Heptagon: {7/2} and {7/3} are two distinct star heptagrams
+
+This combinatorial structure underlies graph theory and network topology.
+
+═══════════════════════════════════════════════════════════════════════════════════════
+⬢ HERMETIC SIGNIFICANCE ⬢
+═══════════════════════════════════════════════════════════════════════════════════════
+
+Polygons encode **Number Symbolism and Geometric Archetypes**:
+
+• **Pentagon (n=5)**: The human microcosm (5 limbs: 2 arms, 2 legs, 1 head), five
+  senses, five elements (classical + æther). Pentagon diagonals form the PENTAGRAM
+  (☆), ancient symbol of protection and golden ratio (φ everywhere in 5-fold geometry).
+  Venus traces a pentagram in the sky over 8 years (5:8 orbital resonance with Earth).
+
+• **Hexagon (n=6)**: The structure of honeycombs (optimal packing), benzene rings
+  (carbon chemistry), snowflakes (6-fold ice crystal symmetry). Six = 2×3 (marriage
+  of duality and trinity). Hexagram (Star of David, Seal of Solomon) = union of
+  upward/downward triangles → *As Above, So Below*.
+
+• **Heptagon (n=7)**: Seven days of week, seven classical planets, seven chakras,
+  seven heavens. Heptagon is NON-CONSTRUCTIBLE (like π), cannot be drawn with compass
+  and straightedge → it represents the *transcendent* (beyond rational construction).
+
+• **Octagon (n=8)**: Eight directions (compass rose), Buddhist Eightfold Path, eight
+  trigrams of I Ching. Octagon mediates between square (4) and circle (∞) → it's
+  used in Islamic architecture to transition from square chamber to circular dome.
+
+• **Enneagon (n=9)**: Nine = 3² (trinity of trinities), completeness before new cycle
+  (10). Dante's nine circles of Hell, nine months of gestation, nine Muses.
+
+• **Dodecagon (n=12)**: Twelve zodiac signs, twelve apostles, twelve tribes, twelve
+  hours. Dodecahedron (12 pentagonal faces) was Plato's form for the COSMOS itself
+  (the "fifth element" beyond the four terrestrial).
+
+Polygons teach: **Discrete number creates geometric form; form embodies number's meaning.** ⬢
+
+═══════════════════════════════════════════════════════════════════════════════════════
+"""
 import math
 from typing import Dict, List, Tuple
 from .base_shape import GeometricShape, ShapeProperty

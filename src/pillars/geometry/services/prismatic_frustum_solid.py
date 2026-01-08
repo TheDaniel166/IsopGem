@@ -1,4 +1,147 @@
-"""Prismatic frustum solid service and calculator."""
+"""Prismatic frustum solid service and calculator.
+
+A prismatic frustum is a prism with one base removed and replaced by a smaller similar
+polygon parallel to the original base. This creates a truncated prism with trapezoidal
+lateral faces instead of rectangular ones. Like the pyramid frustum, it interpolates
+between the full prism (when top edge = 0) and the limiting case (when top edge = bottom
+edge, yielding a standard prism).
+
+═══════════════════════════════════════════════════════════════════════════════════════
+AHA MOMENT #1: Frustum = Prism-Minus-Prism (Truncation Geometry)
+═══════════════════════════════════════════════════════════════════════════════════════
+
+Construction by subtraction:
+• Start with a tall regular prism: base edge a₁, height H
+• At height h from the bottom, slice horizontally and KEEP THE BOTTOM PART
+• The top face has edge a₂ < a₁ (scaled by similarity)
+
+The frustum is what remains: a truncated prism with:
+• **Bottom base**: Regular n-gon with edge a₁
+• **Top base**: Regular n-gon with edge a₂ (similar, smaller)
+• **Height**: h (vertical separation between bases)
+• **Lateral faces**: n congruent isosceles TRAPEZOIDS (not rectangles!)
+
+**Volume formula** (simpler than pyramid frustum!):
+For a prism, V = A_base × h regardless of base shape (Cavalieri's principle).
+
+For frustum, we can think of it as:
+V = (A₁ + A₂)/2 × h  (average base area times height)
+
+But actually, the EXACT formula is NOT the average for general frustums. For regular
+polygon bases:
+
+V = h/3 · (A₁ + A₂ + √(A₁·A₂))
+
+Wait, that's the pyramid frustum formula (Heronian mean). For a PRISMATIC frustum
+with vertical edges (not slanted), the volume is actually:
+
+V_frustum = h · (A₁ + A₂ + √(A₁·A₂))/3  (Prismoidal formula)
+
+OR, if the lateral edges are not vertical but radially outward (true frustum), then:
+
+V = h/2 · (A₁ + A₂)  (average of base areas)
+
+This depends on the exact construction. The most common prismatic frustum has VERTICAL
+faces (parallel to the axis), so volume is simply the average base area times height.
+
+═══════════════════════════════════════════════════════════════════════════════════════
+AHA MOMENT #2: Trapezoidal Lateral Faces (Parallel vs. Slanted Edges)
+═══════════════════════════════════════════════════════════════════════════════════════
+
+Each lateral face of a prismatic frustum is an isosceles trapezoid:
+• **Parallel sides**: Bottom edge a₁, top edge a₂
+• **Legs**: Lateral edges connecting corresponding vertices
+
+The lateral edge length l depends on the construction:
+
+1) **Vertical frustum** (right frustum): Lateral edges are VERTICAL (parallel to axis).
+   • l = h (height)
+   • Face area: A_face = (a₁ + a₂)/2 × h
+   • Total lateral area: A_lateral = n · (a₁ + a₂)/2 × h
+
+2) **Radial frustum** (conical taper): Lateral edges point radially outward.
+   • Top and bottom vertices sit on circles of radii R₁ and R₂
+   • Radial offset: ΔR = R₁ - R₂
+   • Lateral edge: l = √(h² + ΔR²) (3D Pythagorean theorem)
+   • Slant height (perpendicular to base edge): s = √(h² + (apothem₁ - apothem₂)²)
+
+The VERTICAL frustum is more common in architecture (columns, cooling towers), while
+the RADIAL frustum appears in crystal habits and truncated pyramids.
+
+**Truncation ratio** ρ = a₂/a₁:
+• ρ = 0: Full prism (top shrinks to a point—actually becomes a pyramid!)
+• ρ = 1: Standard prism (no truncation)
+• 0 < ρ < 1: True frustum (intermediate state)
+
+═══════════════════════════════════════════════════════════════════════════════════════
+AHA MOMENT #3: Architectural Ubiquity (Columns, Towers, Entasis)
+═══════════════════════════════════════════════════════════════════════════════════════
+
+Prismatic frustums are EVERYWHERE in sacred and functional architecture:
+
+**Greek Columns (Doric/Ionic/Corinthian)**:
+• Columns have *entasis*—a slight convex taper (widest at 1/3 height)
+• The frustum captures this taper as a discrete approximation
+• Bottom diameter > top diameter creates visual stability (prevents optical illusion
+  of narrowing when viewed from below)
+
+**Egyptian Pylons and Obelisks**:
+• Pylon towers: trapezoidal (frustum) cross-sections for earthquake resistance
+• Obelisks: square prismatic frustums with pyramidal caps
+
+**Modern Cooling Towers (Hyperboloid of Revolution)**:
+• Cross-section is a hyperboloid, but can be approximated by stacked frustums
+• The frustum's strength-to-weight ratio makes it ideal for tall structures
+
+**Crystal Habits (Mineralogy)**:
+• Quartz, beryl, and tourmaline crystals often exhibit prismatic habits with
+  terminated (truncated) ends—natural prismatic frustums
+
+**Mathematical insight**:
+The frustum is the BRIDGE between two symmetry scales:
+• Bottom base: large n-fold symmetry (circumradius R₁)
+• Top base: small n-fold symmetry (circumradius R₂)
+• Frustum: interpolates continuously between the two (self-similar scaling)
+
+As ρ → 0, the frustum → pyramid (1 point of convergence).
+As ρ → 1, the frustum → prism (parallel translation with no convergence).
+The frustum PARAMETERIZES the spectrum from convergent (pyramid) to parallel (prism).
+
+═══════════════════════════════════════════════════════════════════════════════════════
+🏛️ HERMETIC SIGNIFICANCE 🏛️
+═══════════════════════════════════════════════════════════════════════════════════════
+
+The prismatic frustum embodies **Gradual Refinement and Convergence**:
+
+• **Taper as Ascent**: The frustum narrows as it rises, symbolizing the refinement of
+  matter into spirit. The base (large, earthly) converges toward the apex (small,
+  celestial). This is the geometric signature of the *Path of Return*—the Many
+  converging back into the One.
+
+• **Truncation as Incompleteness**: Unlike the pyramid (which reaches the singular apex),
+  the frustum is CUT SHORT—it represents the *incomplete ascent*, the aspirant who has
+  not yet reached enlightenment. The flat top is the "platform of initiation" where
+  further work must be done.
+
+• **Stability Through Width**: The frustum is MORE STABLE than the full prism (lower
+  center of gravity due to taper) and more PRACTICAL than the pyramid (flat top provides
+  a working platform). It is the form of *pragmatic wisdom*—not the ideal (pyramid) but
+  the functional (frustum).
+
+• **Egyptian Pylon as Gateway**: The trapezoid-shaped pylon towers flanking temple
+  entrances are 2D projections of the frustum. They symbolize the *narrowing of the
+  path* as one enters sacred space—the wide worldly entrance converges to the narrow
+  holy of holies.
+
+• **Crystalline Termination**: In mineralogy, the frustum appears when crystal growth
+  is interrupted—the truncated pyramid or prism represents *frozen potential*. The
+  crystal "intended" to grow further but was halted. This is the geometry of the
+  *unfinished Work*—the Opus Interruptus.
+
+The prismatic frustum teaches: **Perfection is a process, not a state.** 🏛️
+
+═══════════════════════════════════════════════════════════════════════════════════════
+"""
 from __future__ import annotations
 
 import math

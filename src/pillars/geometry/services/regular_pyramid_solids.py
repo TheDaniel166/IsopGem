@@ -64,6 +64,230 @@ def _edge_from_apothem(sides: int, apothem: float) -> float:
 
 
 def _compute_metrics(sides: int, base_edge: float, height: float) -> RegularPyramidMetrics:
+    """
+    Calculate metrics for a right regular n-gonal pyramid.
+    
+    THE REGULAR PYRAMID - TAPERING FROM POLYGON TO POINT:
+    ======================================================
+    
+    DEFINITION:
+    -----------
+    A regular pyramid is a pyramid whose base is a regular polygon (all
+    sides equal, all angles equal) and whose apex is directly above the
+    center of the base.
+    
+    Components:
+    - 1 regular n-gon base (n sides, all edges equal length a)
+    - n congruent isosceles triangular lateral faces
+    - 1 apex vertex
+    - n+1 vertices total (n base + 1 apex)
+    - 2n edges (n base edges + n lateral edges from base to apex)
+    - n+1 faces (1 base + n triangular sides)
+    
+    Examples:
+    - n=3: Triangular pyramid (tetrahedron if equilateral triangular faces)
+    - n=4: Square pyramid (Egyptian pyramid, most iconic)
+    - n=5: Pentagonal pyramid
+    - n=6: Hexagonal pyramid
+    - n→∞: Approaches cone (circular base, infinite triangular faces → curved surface)
+    
+    ESSENTIAL FORMULAS:
+    -------------------
+    
+    Base Area (regular n-gon with edge a):
+        A_base = (n × a²) / (4 tan(π/n))
+        
+        Or: A_base = (1/2) × perimeter × apothem
+    
+    Volume:
+        V = (1/3) × A_base × h
+        
+        Universal for ALL pyramids! See AHA MOMENT #1.
+    
+    Apothem (perpendicular from center to edge midpoint):
+        r = a / (2 tan(π/n))
+        
+        This is the "inradius" of the base polygon.
+    
+    Slant Height (perpendicular from apex to base edge midpoint):
+        s = √(h² + r²)
+        
+        Pythagorean theorem in the plane containing apex, center, and edge midpoint.
+    
+    Lateral Surface Area (all n triangular faces):
+        A_lateral = (1/2) × perimeter × slant_height
+                  = (1/2) × (n × a) × s
+        
+        Each triangle: base=a, height=s, area=(1/2)×a×s
+        Sum: n × (1/2)×a×s = (1/2) × n×a × s
+    
+    Total Surface Area:
+        A_total = A_base + A_lateral
+    
+    Circumradius (center to vertex):
+        R = a / (2 sin(π/n))
+    
+    Lateral Edge (base vertex to apex):
+        L = √(h² + R²)
+        
+        Pythagorean in plane containing apex, center, and base vertex.
+    
+    AHA MOMENT #1: THE UNIVERSAL V = ⅓Bh - ALL PYRAMIDS!
+    =====================================================
+    The volume formula V = (1/3) × base_area × height works for EVERY pyramid:
+    - Triangular base, square base, hexagonal base, 100-gon base
+    - Regular polygon, irregular polygon, any shape!
+    
+    Why universal?
+    
+    Method 1: Cavalieri's Principle
+    - At height z above base, the cross-section is a similar polygon
+    - Scaling factor: (1 - z/h)  [shrinks linearly from base (z=0) to apex (z=h)]
+    - Area at height z: A(z) = A_base × (1 - z/h)²  [area scales as square of length]
+    
+    Volume by integration:
+        V = ∫₀ʰ A(z) dz = ∫₀ʰ A_base × (1 - z/h)² dz
+        
+    Let u = 1 - z/h, then du = -dz/h:
+        V = A_base × h × ∫₀¹ u² du = A_base × h × [u³/3]₀¹ = A_base × h / 3
+    
+    The "⅓" comes from ∫ u² du = u³/3 — the cubic integral!
+    
+    Method 2: Dissection (Ancient Egypt / Greece)
+    - Any pyramid can be related to a prism with same base and height
+    - Prism volume: V_prism = B × h
+    - By clever cutting, 3 pyramids = 1 prism
+    - Therefore: V_pyramid = (1/3) × B × h
+    
+    This works even for:
+    - Oblique pyramids (apex not over center): Still V = (⅓)Bh!
+    - Irregular base: As long as base is flat, V = (⅓)Bh!
+    
+    The "one-third" is the SIGNATURE of linear tapering from area to point.
+    
+    AHA MOMENT #2: THE LIMIT AS n → ∞ IS A CONE
+    ============================================
+    As the number of base sides increases, the pyramid approaches a cone!
+    
+    Convergence sequence:
+    - n=3: Triangular pyramid (sharp, 3 triangular faces)
+    - n=4: Square pyramid (Egyptian form)
+    - n=8: Octagonal pyramid (smoother)
+    - n=16: 16-gon pyramid (nearly conical)
+    - n→∞: CONE (circular base, smooth curved surface)!
+    
+    Mathematical limits:
+    
+    1. Base shape:
+       Regular n-gon → Circle as n→∞
+       Perimeter P = n×a (fixed) ⇒ a → 0 but P constant
+       Base radius: R = a/(2sin(π/n)) → P/(2π)  [circle radius]
+    
+    2. Base area:
+       A_base = (n×a²) / (4tan(π/n)) → πR²  [circle area]
+    
+    3. Lateral surface:
+       n discrete triangular faces → smooth conical surface
+       A_lateral = (½)×P×s → πR×s  [cone lateral area]
+       (where s = slant height)
+    
+    4. Volume:
+       V = (⅓)×A_base×h → (⅓)×πR²×h  [cone volume]
+    
+    This limit process is fundamental to calculus:
+    - Discrete → Continuous
+    - Polygonal → Curved
+    - Finite faces → Smooth surface
+    
+    The cone is the "perfect pyramid" with infinite sides!
+    
+    Just as:
+    - Prism (n→∞) → Cylinder
+    - Pyramid (n→∞) → Cone
+    - Antiprism (n→∞) → Bicone
+    
+    AHA MOMENT #3: LATERAL FACES AS φ-TRIANGLES (Golden Pyramids)
+    ==============================================================
+    When can the lateral triangular faces be EQUILATERAL?
+    
+    For equilateral lateral triangles:
+    - Base edge: a
+    - Lateral edges (base vertex to apex): L
+    - For equilateral triangle: L = a (all three edges equal!)
+    
+    But we also have: L = √(h² + R²)  where R = a/(2sin(π/n))
+    
+    Setting L = a:
+        a = √(h² + R²)
+        a² = h² + [a/(2sin(π/n))]²
+        a²[1 - 1/(4sin²(π/n))] = h²
+        h = a × √[1 - 1/(4sin²(π/n))]
+    
+    For n=3 (triangular base):
+        sin(π/3) = √3/2
+        h = a × √[1 - 1/3] = a × √(2/3) ≈ 0.816a
+        
+    This creates a REGULAR TETRAHEDRON (all 4 faces equilateral)!
+    
+    For n=4 (square base):
+        sin(π/4) = √2/2, so 1/(4sin²(π/4)) = 1/2
+        h = a × √(1/2) = a/√2
+        
+    This is impossible! (h < R means apex below base circle)
+    
+    But if we want GOLDEN RATIO in lateral faces:
+        Lateral face: isosceles triangle with base a, sides L
+        For φ-ratio: L/a = φ = (1+√5)/2 ≈ 1.618
+        
+    This gives: h = √(L² - R²) with constraints involving φ
+    
+    The Great Pyramid of Giza (approximately):
+    - Lateral face angle: ≈ 51.84°
+    - Slant height / half-base ≈ φ (golden ratio!)
+    - Creates aesthetically "perfect" proportions
+    
+    Different n values permit different special proportions!
+    
+    HERMETIC NOTE - THE GEOMETRY OF ASCENSION:
+    ==========================================
+    The regular pyramid represents UNIVERSAL CONVERGENCE:
+    
+    - **n-fold Base**: The multiplicity of creation (3=trinity, 4=elements, 5=human, ...)
+    - **Single Apex**: The divine unity (all paths lead to One)
+    - **Triangular Faces**: Trinitarian bridges (base-vertex1-apex, base-vertex2-apex, ...)
+    - **Height Axis**: The vertical pillar (axis mundi, world tree)
+    
+    Symbolism:
+    - **Volume = ⅓**: Matter (1) reaching toward trinity/spirit (3)
+    - **Slant Height**: The oblique path (not perpendicular ascent)
+    - **n+1 Vertices**: The many (n) + the one (apex)
+    - **Convergence**: "The way up and the way down are one and the same" (Heraclitus)
+    
+    In Sacred Architecture:
+    - **Egyptian Pyramids**: Square base (4 elements), rising to Ra (sun/unity)
+    - **Mayan Pyramids**: Often 9 levels (9 underworld realms) to celestial platform
+    - **Ziggurats**: Stepped pyramids (terraced ascent to divine)
+    - **Church Spires**: Pyramidal caps (prayers rising to heaven)
+    
+    The pyramid is FOCUSED INTENTION:
+    - Wide base: Many enter
+    - Narrow apex: Few reach
+    - Slant faces: The difficult climb
+    - Peak: The summit of realization
+    
+    As n increases:
+    - More faces (more paths)
+    - Smoother surface (easier climb?)
+    - Approach to cone (infinite paths → continuous flow)
+    
+    The pyramid teaches: ALL directions on the base (all approaches to truth)
+    eventually CONVERGE at the apex (singular truth). The shape itself is
+    a mandala of convergence—every radius points to center, every edge
+    flows to apex.
+    
+    This is the geometry of INITIATION—the many called, the few chosen,
+    the one truth.
+    """
     perimeter = sides * base_edge
     apothem = _apothem(sides, base_edge)
     base_area = _base_area(sides, base_edge)

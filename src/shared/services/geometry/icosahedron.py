@@ -240,6 +240,230 @@ def _scale_vertices(edge_length: float) -> List[Vec3]:
 
 
 def _compute_metrics(edge_length: float) -> IcosahedronMetrics:
+    """
+    Compute all geometric metrics for a regular icosahedron from edge length.
+
+    CORE DIMENSION FORMULAS & DERIVATIONS:
+    ========================================
+
+    The Golden Ratio: φ = (1 + √5)/2 ≈ 1.618
+    -----------------------------------------
+    The icosahedron is fundamentally governed by the golden ratio.
+    All sphere radii and many geometric relationships involve φ.
+
+    Key golden ratio identities:
+    - φ² = φ + 1
+    - 1/φ = φ - 1
+    - φ = 2·cos(36°) = 2·sin(54°)
+
+    Face Area: A_face = (√3/4)a²
+    -----------------------------
+    Each face is an equilateral triangle with side length a.
+    Same formula as tetrahedron faces:
+    A_face = (√3/4)a²
+
+    Surface Area: A = 20 × (√3/4)a² = 5√3 a²
+    ------------------------------------------
+    Icosahedron has 20 identical equilateral triangle faces.
+    Total surface area = 20 × (√3/4)a² = 5√3 a²
+
+    Volume: V = (5/12)(3 + √5)a³ = (5φ²/6)a³
+    ------------------------------------------
+    Derivation via canonical coordinates:
+    
+    The icosahedron can be constructed with 12 vertices at:
+    - (0, ±1, ±φ)   [4 vertices]
+    - (±1, ±φ, 0)   [4 vertices]
+    - (±φ, 0, ±1)   [4 vertices]
+    
+    Edge length for this configuration = 2
+    Volume = (5/12)(3 + √5) × 2³ = (10/3)(3 + √5)
+    
+    For general edge length a:
+    Scale factor = a/2
+    V = (10/3)(3 + √5) × (a/2)³
+      = (10/3)(3 + √5) × a³/8
+      = (5/12)(3 + √5) × a³
+    
+    Using φ = (1 + √5)/2:
+    3 + √5 = 3 + 2φ - 1 = 2 + 2φ = 2(1 + φ) = 2φ²
+    
+    Therefore:
+    V = (5/12) × 2φ² × a³ = (5φ²/6)a³ ✓
+
+    AHA MOMENT #1: GOLDEN RATIO IN THE COORDINATES
+    ===============================================
+    The icosahedron is the ONLY Platonic solid whose canonical vertex
+    coordinates explicitly contain the golden ratio φ!
+    
+    12 vertices at:
+    - (0, ±1, ±φ)   [4 vertices forming a golden rectangle in yz-plane]
+    - (±1, ±φ, 0)   [4 vertices forming a golden rectangle in xy-plane]
+    - (±φ, 0, ±1)   [4 vertices forming a golden rectangle in xz-plane]
+    
+    These are THREE mutually orthogonal golden rectangles (rectangles with
+    aspect ratio φ:1), interlocking at right angles. The icosahedron is
+    literally BUILT from golden rectangles.
+    
+    No other Platonic solid exhibits this property:
+    - Tetrahedron: vertices at alternating cube corners (integers)
+    - Cube: vertices at (±1, ±1, ±1) (integers)
+    - Octahedron: vertices at (±1, 0, 0), (0, ±1, 0), (0, 0, ±1) (integers)
+    - Dodecahedron: vertices include φ and 1/φ, but not as cleanly
+    
+    The icosahedron is the purest 3D expression of the golden mean.
+
+    SPHERE RADII FORMULAS & DERIVATIONS:
+    =====================================
+
+    Inradius (Inscribed Sphere): r = (φ²/2√3)a = [(3 + √5)/(4√3)]a
+    -----------------------------------------------------------------
+    The inscribed sphere touches the center of each triangular face.
+
+    Derivation using volume-to-surface-area ratio:
+    For any polyhedron: r = 3V/A
+
+    r = 3 × [(5φ²/6)a³] / [5√3 a²]
+      = 3 × (5φ²/6) × a³ / (5√3 a²)
+      = (3 × 5φ²/6) × a / (5√3)
+      = (5φ²/2) × a / (5√3)
+      = φ²a / (2√3)
+      = [(3 + √5)/(4√3)]a ✓
+
+    Numerical value: r ≈ 0.7557613141a
+
+    Midradius (Midsphere): ρ = φa/2 = [(1 + √5)/4]a
+    -------------------------------------------------
+    The midsphere touches the midpoint of each edge.
+
+    Derivation via canonical coordinates:
+    Using vertices at (0, ±1, ±φ), (±1, ±φ, 0), (±φ, 0, ±1):
+    - Edge from (0, 1, φ) to (1, φ, 0)
+    - Midpoint: (1/2, (1+φ)/2, φ/2)
+    - Distance from origin = √[(1/2)² + ((1+φ)/2)² + (φ/2)²]
+    
+    For this configuration, edge = 2, midradius = φ
+    For general edge a: ρ = φ × (a/2) = φa/2 ✓
+
+    Using φ = (1 + √5)/2:
+    ρ = [(1 + √5)/4]a
+
+    Numerical value: ρ ≈ 0.8090169944a
+
+    Circumradius (Circumscribed Sphere): R = (φ/√3)a·√(φ + 2/φ) ≈ 0.9510565163a
+    -------------------------------------------------------------------------------
+    The circumscribed sphere passes through all 12 vertices.
+
+    Derivation via canonical coordinates:
+    Vertex at (0, 1, φ) has distance from origin:
+    R₀ = √(0² + 1² + φ²) = √(1 + φ²)
+    
+    Using φ² = φ + 1:
+    R₀ = √(1 + φ + 1) = √(φ + 2)
+    
+    For canonical edge = 2, R = √(φ + 2)
+    For general edge a: R = √(φ + 2) × (a/2) ✓
+
+    Alternative form using φ properties:
+    R = (a/2)√(φ + 2) = (a/2)√[φ + 2(φ-1)] = (a/2)√(3φ)
+    R = (a/2)√3·√φ = (a√3/2)·√φ
+
+    Since φ = (1 + √5)/2:
+    R = (a/2)√[(1 + √5)/2 + 2]
+      = (a/2)√[(5 + √5)/2]
+      ≈ 0.9510565163a ✓
+
+    AHA MOMENT #2: MOST FACES, MOST FLUID
+    =======================================
+    The icosahedron has 20 triangular faces—MORE faces than any other
+    Platonic solid!
+    
+    Face count ranking:
+    1. Icosahedron: 20 faces (most faceted)
+    2. Dodecahedron: 12 faces
+    3. Octahedron: 8 faces
+    4. Cube: 6 faces
+    5. Tetrahedron: 4 faces (least faceted)
+    
+    More faces = smoother surface = more sphere-like = more FLUID.
+    
+    With 20 tiny triangular facets, the icosahedron achieves a finely
+    subdivided surface that flows smoothly around its volume. This is
+    why it represents WATER—the element of adaptability, flow, and
+    infinite subdivision.
+    
+    Water has no fixed shape; it conforms to its container. The icosahedron's
+    20 faces allow it to approximate ANY curved surface more closely than
+    the other Platonic solids (except the even-more-faceted dodecahedron).
+    
+    The icosahedron is the Platonic solid of MULTIPLICITY and VARIATION.
+
+    AHA MOMENT #3: PENTAGONAL SYMMETRY AND LIFE
+    =============================================
+    The icosahedron has 5-fold rotational symmetry—the symmetry of LIFE!
+    
+    Each of the 12 vertices is surrounded by exactly 5 triangular faces,
+    forming a pentagonal "cap" at every vertex. This 5-fold symmetry is
+    rare in crystallography (forbidden in classical crystal lattices) but
+    UBIQUITOUS in biology:
+    - Starfish: 5 arms
+    - Flowers: often 5 petals (roses, buttercups, apple blossoms)
+    - Human hand: 5 fingers
+    - Sand dollars: 5-fold symmetry
+    - Many viruses: icosahedral protein shells (T-number symmetry)
+    
+    The golden ratio φ governs spiral growth in nature (sunflower seeds,
+    nautilus shells, galaxy arms). The icosahedron, built from φ-based
+    coordinates and pentagonal symmetry, is the GEOMETRIC ARCHETYPE of
+    biological form.
+    
+    Life is fluid (Water), adaptive (20 faces), and golden-ratio-based
+    (φ in DNA spiral pitch, leaf arrangements, etc.). The icosahedron
+    embodies all three principles.
+
+    HERMETIC NOTE - THE WATER ELEMENT:
+    ===================================
+    The icosahedron represents WATER in Platonic solid cosmology:
+
+    Symbolism:
+    - 20 triangular faces = fluidity, many facets of flow
+    - Most faces of all Platonic solids
+    - Closest to spherical (highest sphericity after dodecahedron)
+    - 5-fold rotational symmetry (pentagonal patterns)
+    - Dual to dodecahedron (ether/quintessence)
+
+    Golden Ratio Correspondences:
+    - Every key dimension involves φ
+    - φ appears in pentagon geometry (5-fold symmetry)
+    - φ² = φ + 1 reflects self-similarity and recursive growth
+    - Water's ability to take any shape → flexibility of φ-based geometry
+
+    Spiritual Correspondences:
+    - Insphere (r ≈ 0.756a): The deep waters, hidden currents
+    - Midsphere (ρ = φa/2): The surface tension, mediating boundary
+    - Circumsphere (R ≈ 0.951a): The sphere of all possibilities
+
+    Ratios: r : ρ : R ≈ 0.756 : 0.809 : 0.951
+           = φ²/(2√3) : φ/2 : √(φ+2)/2
+
+    The ratios are all φ-dependent, reflecting Water's connection
+    to the golden mean of balance and harmony.
+
+    Dihedral Angle:
+    - Exactly arccos(√5/3) ≈ 138.19°
+    - Very obtuse, allowing smooth, flowing curvature
+    - Nearly spherical appearance
+
+    Packing Density:
+    - Cannot fill space perfectly
+    - Represents Water's need for containment
+    - Flows to fill voids, but cannot create rigid lattice
+
+    Connection to Pentagon:
+    - Each vertex has 5 edges (pentagonal symmetry)
+    - Pentagon has φ in diagonal-to-side ratio
+    - 5-fold rotational axes through opposite vertices
+    """
     # Core dimensions
     face_area_val = _scaled_value(_BASE_FACE_AREA, edge_length, 2.0)
     surface_area_val = _scaled_value(_BASE_SURFACE_AREA, edge_length, 2.0)
