@@ -1,10 +1,12 @@
 """File parsing utilities for document import."""
 import logging
+from typing import List, Tuple, Callable, Optional
 import os
 from pathlib import Path
 import base64
 from html.parser import HTMLParser
 import io
+import html as html_lib
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +41,22 @@ try:
 except ImportError:
     Converter = None
 
+try:
+    import chardet
+except ImportError:
+    chardet = None
+
+
+# Guard rails for embedded images pulled from DOCX
+MAX_DOCX_IMG_SIZE = 20 * 1024 * 1024  # 20MB cap for base64 embeds
+MAX_DOCX_STORE_IMG_SIZE = 50 * 1024 * 1024  # 50MB cap when streaming to store
+MAX_DOCX_TOTAL_IMG_BUDGET = 250 * 1024 * 1024  # 250MB aggregate budget per DOCX
+
+# Guard rails for PDF processing
+PDF_HIGH_FIDELITY_MAX_BYTES = 50 * 1024 * 1024  # 50MB limit for pdf2docx high-fidelity path
+PDF_HTML_TOTAL_CAP = 25 * 1024 * 1024  # 25MB cap for aggregated HTML
+PDF_HTML_PER_PAGE_CAP = 2 * 1024 * 1024  # 2MB cap per-page HTML
+
 
 class HTMLTextExtractor(HTMLParser):
     """Simple HTML parser to extract text with basic layout preservation."""
@@ -69,7 +87,11 @@ class DocumentParser:
     """Parses various file formats to extract text and HTML."""
     
     @staticmethod
-    def parse_file(file_path: str) -> tuple[str, str, str, dict]:
+    def parse_file(
+        file_path: str,
+        store_image_callback: Optional[Callable[[bytes, str], int]] = None,
+        high_fidelity: bool = False,
+    ) -> tuple[str, str, str, dict]:
         """
         Parse a file and return (content_text, raw_html, file_type, metadata).
         
@@ -85,7 +107,10 @@ class DocumentParser:
         
         if ext == '.txt':
             text = DocumentParser._parse_txt(path)
-            return text, f"<pre>{text}</pre>", 'txt', {}
+            escaped = html_lib.escape(text, quote=True)
+            metadata["pipeline"] = "txt:plain"
+            metadata["image_mode"] = "base64"
+            return text, f"<pre>{escaped}</pre>", 'txt', metadata
         elif ext == '.html' or ext == '.htm':
             html = DocumentParser._parse_html(path)
             
@@ -94,21 +119,46 @@ class DocumentParser:
             extractor.feed(html)
             text = extractor.get_text()
             
-            return text, html, 'html', {}
+            metadata["pipeline"] = "html:raw"
+            metadata["image_mode"] = "base64"
+            return text, html, 'html', metadata
         elif ext == '.docx':
-            return DocumentParser._parse_docx(path)
+            return DocumentParser._parse_docx(path, store_image_callback=store_image_callback)
         elif ext == '.pdf':
-            return DocumentParser._parse_pdf(path)
+            text, html, file_type, metadata = DocumentParser._parse_pdf(path, high_fidelity=high_fidelity)
+            # PDF parsers currently embed images as base64 in HTML output
+            metadata["image_mode"] = metadata.get("image_mode", "base64")
+            return text, html, file_type, metadata
         elif ext == '.rtf':
             text = DocumentParser._parse_rtf(path)
-            return text, f"<pre>{text}</pre>", 'rtf', {}
+            escaped = html_lib.escape(text, quote=True)
+            metadata["pipeline"] = "rtf:striprtf"
+            metadata["image_mode"] = "base64"
+            return text, f"<pre>{escaped}</pre>", 'rtf', metadata
         else:
             raise ValueError(f"Unsupported file type: {ext}")
 
     @staticmethod
     def _parse_txt(path: Path) -> str:
-        with open(path, 'r', encoding='utf-8', errors='ignore') as f:
-            return f.read()
+        data = path.read_bytes()
+
+        # Prefer detected encoding when available; fall back through utf-8 then latin-1 before ignoring errors.
+        encoding = 'utf-8'
+        if chardet:
+            try:
+                detected = chardet.detect(data[:65536])
+                if detected and detected.get('encoding'):
+                    encoding = detected['encoding']
+            except Exception:
+                pass
+
+        for enc in (encoding, 'utf-8', 'latin-1'):
+            try:
+                return data.decode(enc)
+            except Exception:
+                continue
+
+        return data.decode('utf-8', errors='ignore')
 
     @staticmethod
     def _parse_html(path: Path) -> str:
@@ -117,8 +167,18 @@ class DocumentParser:
 
 
     @staticmethod
-    def _get_run_images_as_html(run_element, parts_proxy) -> list[str]:
-        """Extract images from a run element and return as HTML img tags with base64."""
+    def _get_run_images_as_html(
+        run_element,
+        parts_proxy,
+        store_image_callback: Optional[Callable[[bytes, str], int]] = None,
+        image_budget: Optional[dict] = None,
+        warnings: Optional[list] = None,
+    ) -> list[str]:
+        """Extract images from a run element and return img tags.
+
+        If store_image_callback is provided, images are stored immediately and emitted
+        as docimg:// references; otherwise they are embedded as base64.
+        """
         image_htmls = []
         for elem in run_element.iter():
             if elem.tag.endswith('blip'):
@@ -127,18 +187,71 @@ class DocumentParser:
                     try:
                         image_part = parts_proxy.related_parts[embed_attr]
                         image_data = image_part.blob
-                        header = image_data[:4]
-                        mime = 'image/png'
-                        if header.startswith(b'\xff\xd8'): mime = 'image/jpeg'
-                        elif header.startswith(b'GIF'): mime = 'image/gif'
-                        b64 = base64.b64encode(image_data).decode('utf-8')
-                        image_htmls.append(f'<img src="data:{mime};base64,{b64}" />')
+                        # Size policy: allow larger assets when streaming to store, cap base64 embeds
+                        if store_image_callback:
+                            if len(image_data) > MAX_DOCX_STORE_IMG_SIZE:
+                                logger.warning("Embedded DOCX image exceeds store cap; skipping image")
+                                if warnings is not None:
+                                    warnings.append("docx_image_store_cap_exceeded")
+                                continue
+                        else:
+                            if len(image_data) > MAX_DOCX_IMG_SIZE:
+                                logger.warning("Embedded DOCX image exceeds base64 cap; skipping embed")
+                                image_htmls.append("<span class='docimg-omitted' aria-label='image omitted: too large'></span>")
+                                if warnings is not None:
+                                    warnings.append("docx_image_embed_cap_exceeded")
+                                continue
+                        if image_budget is not None:
+                            used = image_budget.get("used", 0)
+                            limit = image_budget.get("limit", MAX_DOCX_TOTAL_IMG_BUDGET)
+                            if used + len(image_data) > limit:
+                                logger.warning("Embedded DOCX images exceed aggregate budget; skipping image")
+                                image_htmls.append("<span class='docimg-omitted' aria-label='image omitted: budget exceeded'></span>")
+                                if warnings is not None:
+                                    warnings.append("docx_image_budget_exceeded")
+                                continue
+                        header = image_data[:12]
+                        mime = None
+                        if header.startswith(b'\xff\xd8'):
+                            mime = 'image/jpeg'
+                        elif header.startswith(b'\x89PNG'):
+                            mime = 'image/png'
+                        elif header.startswith(b'GIF8'):
+                            mime = 'image/gif'
+                        elif header.startswith(b'RIFF') and header[8:12] == b'WEBP':
+                            mime = 'image/webp'
+                        elif header.startswith(b'BM'):
+                            mime = 'image/bmp'
+
+                        if not mime:
+                            logger.warning("Embedded DOCX image has unsupported/unknown format; skipping")
+                            image_htmls.append("<span class='docimg-omitted' aria-label='image omitted: unsupported format'></span>")
+                            if warnings is not None:
+                                warnings.append("docx_image_unsupported_format")
+                            continue
+                        if image_budget is not None:
+                            image_budget["used"] = image_budget.get("used", 0) + len(image_data)
+                        if store_image_callback:
+                            try:
+                                image_id = store_image_callback(image_data, mime)
+                                image_htmls.append(f'<img src="docimg://{image_id}" />')
+                            except Exception:
+                                logger.debug("Failed to store image from DOCX run", exc_info=True)
+                                # If storage fails, fall back to base64 embed within the safe cap
+                                if len(image_data) <= MAX_DOCX_IMG_SIZE:
+                                    b64 = base64.b64encode(image_data).decode('utf-8')
+                                    image_htmls.append(f'<img src="data:{mime};base64,{b64}" />')
+                                else:
+                                    image_htmls.append("<span class='docimg-omitted' aria-label='image omitted: too large'></span>")
+                        else:
+                            b64 = base64.b64encode(image_data).decode('utf-8')
+                            image_htmls.append(f'<img src="data:{mime};base64,{b64}" />')
                     except Exception as e:
                         logger.debug("Failed to extract image from DOCX run", exc_info=True)
         return image_htmls
 
     @staticmethod
-    def _process_docx_paragraph(para, tag_override=None) -> tuple[str, bool]:
+    def _process_docx_paragraph(para, tag_override=None, store_image_callback: Optional[Callable[[bytes, str], int]] = None, image_budget: Optional[dict] = None, warnings: Optional[list] = None) -> tuple[str, bool]:
         """
         Convert a docx Paragraph to HTML string.
         Returns: (html_string, is_empty_boolean)
@@ -168,7 +281,7 @@ class DocumentParser:
             run_text = run.text
             
             # Handle Images
-            images = DocumentParser._get_run_images_as_html(run.element, run.part)
+            images = DocumentParser._get_run_images_as_html(run.element, run.part, store_image_callback=store_image_callback, image_budget=image_budget, warnings=warnings)
             if images:
                 para_content.extend(images)
                 has_content = True
@@ -176,7 +289,7 @@ class DocumentParser:
             if not run_text:
                 continue
                 
-            run_text = run_text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;').replace('\t', '&nbsp;&nbsp;&nbsp;&nbsp;').replace('\ufffc', '')
+            run_text = html_lib.escape(run_text, quote=True).replace('\t', '&nbsp;&nbsp;&nbsp;&nbsp;').replace('\ufffc', '')
             
             # If run has text (even spaces, though we might want to trim? for now keep strict)
             if run_text.strip():
@@ -265,7 +378,7 @@ class DocumentParser:
             return f"<{tag} dir='ltr' align='{align_attr}'{para_style_attr}><br/></{tag}>", True
 
     @staticmethod
-    def _process_docx_table(table) -> str:
+    def _process_docx_table(table, store_image_callback: Optional[Callable[[bytes, str], int]] = None, image_budget: Optional[dict] = None, warnings: Optional[list] = None) -> str:
         """Convert a docx Table to HTML string with shading and font support."""
         rows_html = []
         for row in table.rows:
@@ -288,7 +401,7 @@ class DocumentParser:
                 
                 for block in content_iter:
                     if isinstance(block, docx.text.paragraph.Paragraph):
-                        html, is_empty = DocumentParser._process_docx_paragraph(block)
+                        html, is_empty = DocumentParser._process_docx_paragraph(block, store_image_callback=store_image_callback, image_budget=image_budget, warnings=warnings)
                         if is_empty:
                             empty_para_count += 1
                             if empty_para_count <= MAX_EMPTY_PARAS:
@@ -299,7 +412,7 @@ class DocumentParser:
                     elif isinstance(block, docx.table.Table):
                         # Nested table
                         empty_para_count = 0
-                        cell_inner_html += DocumentParser._process_docx_table(block)
+                        cell_inner_html += DocumentParser._process_docx_table(block, store_image_callback=store_image_callback, image_budget=image_budget, warnings=warnings)
                 
                 # Extract Cell Properties (Shading/Background)
                 style_attr = "border: 1px solid #ccc; padding: 5px; vertical-align: top;"
@@ -454,8 +567,14 @@ class DocumentParser:
             
             return table_texts
         
-        # Iterate document in order
-        for block in doc.iter_inner_content():
+        # Iterate document in order (fallback to paragraphs/tables list if iter_inner_content missing)
+        try:
+            content_iter = doc.iter_inner_content()
+        except AttributeError:
+            # Fallback: concatenate paragraphs then tables in document order best-effort
+            content_iter = list(doc.paragraphs) + list(doc.tables)
+
+        for block in content_iter:
             if isinstance(block, docx.text.paragraph.Paragraph):
                 if block.text.strip():
                     text_parts.append(block.text.strip())
@@ -466,7 +585,10 @@ class DocumentParser:
         return "\n".join(text_parts)
 
     @staticmethod
-    def _parse_docx(source: object) -> tuple[str, str, str, dict]:
+    def _parse_docx(
+        source: object,
+        store_image_callback: Optional[Callable[[bytes, str], int]] = None,
+    ) -> tuple[str, str, str, dict]:
         """
         Parse a DOCX file from a path or file-like object.
         Args:
@@ -478,26 +600,28 @@ class DocumentParser:
 
         # Optimized imports
         if not docx:
-             if not mammoth:
-                 raise ImportError("python-docx or mammoth is required for .docx files")
-             # Fallback to pure mammoth if python-docx is missing
-             if hasattr(source, 'read'):
-                 docx_file = source
-             else:
-                 docx_file = open(source, "rb")
-                 
-             try:
-                 result = mammoth.convert_to_html(docx_file)
-                 html = result.value
-                 if hasattr(docx_file, 'seek'):
-                     docx_file.seek(0)
-                 text_result = mammoth.extract_raw_text(docx_file)
-                 text = text_result.value
-             finally:
-                 if not hasattr(source, 'read'):
-                     docx_file.close()
-                     
-             return text, html, 'docx', metadata
+            if not mammoth:
+                raise ImportError("python-docx or mammoth is required for .docx files")
+            # Fallback to pure mammoth if python-docx is missing
+            if hasattr(source, 'read'):
+                docx_file = source
+            else:
+                docx_file = open(source, "rb")
+                
+            try:
+                result = mammoth.convert_to_html(docx_file)
+                html = result.value
+                if hasattr(docx_file, 'seek'):
+                    docx_file.seek(0)
+                text_result = mammoth.extract_raw_text(docx_file)
+                text = text_result.value
+                metadata["pipeline"] = "docx:mammoth-only"
+                metadata["image_mode"] = "base64"
+            finally:
+                if not hasattr(source, 'read'):
+                    docx_file.close()
+                    
+            return text, html, 'docx', metadata
 
         try:
             # python-docx accepts path (str) or file-like object
@@ -512,6 +636,9 @@ class DocumentParser:
             
             # --- Text Extraction ---
             text = DocumentParser._extract_full_text(doc)
+
+            warnings: list[str] = []
+            image_budget = {"used": 0, "limit": MAX_DOCX_TOTAL_IMG_BUDGET}
             
             # --- Custom HTML Generation (Preserving Fonts & Order) ---
             html_parts = []
@@ -526,8 +653,13 @@ class DocumentParser:
             # Build precise numbering map
             numbering_map = DocumentParser._build_numbering_map(doc)
             
-            # Iterate through document content in order
-            for block in doc.iter_inner_content():
+            # Iterate through document content in order (version-safe)
+            try:
+                content_iter = doc.iter_inner_content()
+            except AttributeError:
+                content_iter = list(doc.paragraphs) + list(doc.tables)
+
+            for block in content_iter:
                 # --- LIST STATE MANAGEMENT ---
                 is_list_item = False
                 list_type, list_level = None, 0
@@ -568,7 +700,7 @@ class DocumentParser:
                 if isinstance(block, docx.text.paragraph.Paragraph):
                     # Pass 'li' if it's a list item
                     tag_override = 'li' if is_list_item else None
-                    html, is_empty = DocumentParser._process_docx_paragraph(block, tag_override=tag_override)
+                    html, is_empty = DocumentParser._process_docx_paragraph(block, tag_override=tag_override, store_image_callback=store_image_callback, image_budget=image_budget, warnings=warnings)
                     
                     if is_empty:
                         empty_para_count += 1
@@ -581,7 +713,7 @@ class DocumentParser:
                 elif isinstance(block, docx.table.Table):
                     # Reset empty count on table
                     empty_para_count = 0
-                    html_parts.append(DocumentParser._process_docx_table(block))
+                    html_parts.append(DocumentParser._process_docx_table(block, store_image_callback=store_image_callback, image_budget=image_budget, warnings=warnings))
             
             # Final cleanup: Close any remaining lists
             while list_stack:
@@ -589,6 +721,10 @@ class DocumentParser:
                 html_parts.append(f"</{closing_type}>")
 
             html = "\n".join(html_parts)
+            metadata["pipeline"] = metadata.get("pipeline", "docx:python-docx")
+            metadata["image_mode"] = "docimg" if store_image_callback else "base64"
+            if warnings:
+                metadata["warnings"] = warnings
             
         except Exception as e:
             logger.exception("Custom DOCX parsing failed; falling back")
@@ -606,26 +742,32 @@ class DocumentParser:
                         docx_file.seek(0)
                     text_result = mammoth.extract_raw_text(docx_file)
                     text = text_result.value
+                    metadata["pipeline"] = "docx:mammoth-fallback"
+                    metadata["image_mode"] = "base64"
                 finally:
                     if not hasattr(source, 'read'):
                         docx_file.close()
             else:
-                html = f"<pre>{text}</pre>"
+                escaped = html_lib.escape(text, quote=True)
+                html = f"<pre>{escaped}</pre>"
+                metadata["pipeline"] = "docx:pre-fallback"
+                metadata["image_mode"] = "base64"
 
         return text, html, 'docx', metadata
 
     @staticmethod
-    def _parse_pdf(path: Path) -> tuple[str, str, str, dict]:
-        text = ""
-        html = ""
+    def _parse_pdf(path: Path, high_fidelity: bool = False) -> tuple[str, str, str, dict]:
+        text_parts: list[str] = []
+        html_parts: list[str] = []
         metadata = {}
+        warnings: list[str] = []
         
         # Try pdf2docx -> mammoth pipeline for better table/layout preservation
-        if Converter and mammoth and docx:
+        if Converter and mammoth and docx and high_fidelity:
             try:
                 # SAFEGUARD: Skip pdf2docx for large files (>10MB) to prevent hanging/OOM
                 file_size = os.path.getsize(path)
-                if file_size > 10 * 1024 * 1024: # 10MB
+                if file_size > PDF_HIGH_FIDELITY_MAX_BYTES: # 10MB
                     logger.info(
                         "PDF > 10MB (%s bytes), skipping high-fidelity conversion. Using fallback.",
                         file_size,
@@ -639,8 +781,10 @@ class DocumentParser:
                 # Convert PDF to DOCX stream
                 # multi_processing=False required for stream operations
                 cv = Converter(str(path))
-                cv.convert(docx_stream, start=0, multi_processing=False)
-                cv.close()
+                try:
+                    cv.convert(docx_stream, start=0, multi_processing=False)
+                finally:
+                    cv.close()
                 
                 # Parse the generated DOCX from memory
                 docx_stream.seek(0)
@@ -649,6 +793,7 @@ class DocumentParser:
                 # Now extract real PDF metadata using pypdf or fitz
                 metadata = DocumentParser._extract_pdf_metadata(path)
                 
+                metadata["pipeline"] = "pdf:pdf2docx+mammoth"
                 return text, html, 'pdf', metadata
                 
             except Exception as e:
@@ -657,6 +802,7 @@ class DocumentParser:
 
         # Use PyMuPDF (fitz) for HTML with images
         if fitz:
+            doc = None
             try:
                 doc = fitz.open(path)
                 
@@ -666,21 +812,43 @@ class DocumentParser:
                     if meta.get('title'): metadata['title'] = meta['title']
                     if meta.get('author'): metadata['author'] = meta['author']
                 
-                html_parts = []
+                html_budget = 0
                 for page in doc:
                     # Get text
-                    text += str(page.get_text("text"))
+                    text_parts.append(str(page.get_text("text")))
                     # Get HTML
-                    page_html = str(page.get_text("html"))
+                    page_html_raw = str(page.get_text("html"))
+                    if len(page_html_raw) > PDF_HTML_PER_PAGE_CAP:
+                        warnings.append("pdf_page_html_truncated")
+                        page_html_raw = page_html_raw[:PDF_HTML_PER_PAGE_CAP]
+
+                    page_len = len(page_html_raw)
+                    remaining = PDF_HTML_TOTAL_CAP - html_budget
+                    if remaining <= 0:
+                        warnings.append("pdf_total_html_truncated")
+                        break
+
+                    if page_len > remaining:
+                        warnings.append("pdf_total_html_truncated")
+                        page_html_raw = page_html_raw[:remaining]
+                        page_len = len(page_html_raw)
+                    html_budget += page_len
                     # Wrap page content in LTR div to enforce directionality even in fallback
-                    html_parts.append(f"<div dir='ltr' align='left'>{page_html}</div>")
+                    if page_html_raw:
+                        html_parts.append(f"<div dir='ltr' align='left'>{page_html_raw}</div>")
                     
+                text = "\n".join(text_parts)
                 html = "\n".join(html_parts)
-                doc.close()
+                metadata["pipeline"] = "pdf:fitz"
+                if warnings:
+                    metadata["warnings"] = warnings
             except Exception as e:
                 # Handle encrypted pdfs etc
                 logger.exception("PyMuPDF failed")
                 raise ValueError(f"Failed to parse PDF: {e}")
+            finally:
+                if doc:
+                    doc.close()
                 
         elif pypdf:
             # Fallback to text only
@@ -700,13 +868,16 @@ class DocumentParser:
                         if reader.metadata.author: metadata['author'] = reader.metadata.author
 
                     for page in reader.pages:
-                        text += page.extract_text() + "\n"
+                        text_parts.append(page.extract_text() or "")
             except Exception as e:
-                 raise ValueError(f"pypdf failed: {e}")
-                 
-            html = f"<pre dir='ltr' align='left'>{text}</pre>"
+                raise ValueError(f"pypdf failed: {e}")
+            
+            text = "\n".join(text_parts)
+            escaped = html_lib.escape(text, quote=True)
+            html = f"<pre dir='ltr' align='left'>{escaped}</pre>"
+            metadata["pipeline"] = "pdf:pypdf"
         else:
-             raise ImportError("PyMuPDF or pypdf is required for .pdf files")
+            raise ImportError("PyMuPDF or pypdf is required for .pdf files")
 
         return text, html, 'pdf', metadata
 
@@ -714,15 +885,18 @@ class DocumentParser:
     def _extract_pdf_metadata(path: Path) -> dict:
         metadata = {}
         if fitz:
+            doc = None
             try:
                 doc = fitz.open(path)
                 meta = doc.metadata
                 if meta:
                     if meta.get('title'): metadata['title'] = meta['title']
                     if meta.get('author'): metadata['author'] = meta['author']
-                doc.close()
             except Exception:
                 pass
+            finally:
+                if doc:
+                    doc.close()
         elif pypdf:
              try:
                 with open(path, 'rb') as f:
