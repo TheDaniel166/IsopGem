@@ -10,6 +10,7 @@ python-docx>=1.1.0
 pypdf>=3.17.0
 PyMuPDF>=1.23.0
 striprtf>=0.0.26
+bleach>=6.1.0
 chardet>=5.2.0
 
 # Data tooling

@@ -673,7 +673,40 @@ class SafeTextEdit(QTextEdit):
         painter.end()
     
     def loadResource(self, type: int, name: QUrl) -> Any:  # type: ignore[override]
-        """Handle custom resource loading, specifically for docimg:// scheme."""
+        """
+        Handle custom resource loading, specifically for docimg:// protocol.
+
+        The docimg:// protocol enables database-backed image persistence without
+        embedding large base64 payloads in HTML. Images are stored once in the
+        database and referenced by ID.
+
+        URL Formats Supported:
+            docimg://123      → Load image with ID 123 (Qt parses as IP 0.0.0.123)
+            docimg:///123     → Also accepted (triple slash, ID in path)
+            docimg://mermaid/uuid → Special handling for Mermaid diagrams
+
+        Backend Integration:
+            Calls self.resource_provider(image_id) to fetch (bytes, mime_type) tuple
+            from the database. The resource_provider callback must be set by the
+            parent window (e.g., DocumentEditorWindow._fetch_image_resource).
+
+        Caching:
+            LRU cache with 32-image limit to avoid repeated database queries.
+            Cache entries moved to end on access (OrderedDict FIFO eviction).
+
+        Security:
+            - Image IDs must be positive integers (1 to 2^31-1)
+            - Images larger than 25MB are rejected with warning
+            - Invalid URLs fall back to Qt's default resource loader
+
+        Returns:
+            QImage if found in cache or loaded from provider, otherwise None.
+            Qt displays a broken image icon when None is returned.
+
+        Example:
+            # In HTML: <img src="docimg://42" />
+            # This method loads image ID 42 from database via resource_provider
+        """
         if name.scheme() == "docimg":
             # Check for mermaid or other named resources
             # Accessing url.path() might return /mermaid/uuid
@@ -1257,6 +1290,10 @@ class RichTextEditor(QWidget):
         file_menu.addAction("New", self.new_document)
         file_menu.addAction("Open...", self.open_document)
         file_menu.addAction("Save As...", self.save_document)
+        file_menu.addSeparator()
+        file_menu.addAction("Print...", self._print_document)
+        file_menu.addAction("Print Preview...", self._print_preview)
+        file_menu.addAction("Export PDF...", self._export_pdf)
         
         # === Quick Access Toolbar ===
         self.ribbon.add_quick_access_button(self.action_undo)

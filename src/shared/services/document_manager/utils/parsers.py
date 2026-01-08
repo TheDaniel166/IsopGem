@@ -7,6 +7,7 @@ import base64
 from html.parser import HTMLParser
 import io
 import html as html_lib
+import zipfile
 
 logger = logging.getLogger(__name__)
 
@@ -46,11 +47,19 @@ try:
 except ImportError:
     chardet = None
 
+try:
+    import bleach
+except ImportError:
+    bleach = None
+
 
 # Guard rails for embedded images pulled from DOCX
 MAX_DOCX_IMG_SIZE = 20 * 1024 * 1024  # 20MB cap for base64 embeds
 MAX_DOCX_STORE_IMG_SIZE = 50 * 1024 * 1024  # 50MB cap when streaming to store
 MAX_DOCX_TOTAL_IMG_BUDGET = 250 * 1024 * 1024  # 250MB aggregate budget per DOCX
+MAX_DOCX_UNCOMPRESSED_SIZE = 300 * 1024 * 1024  # 300MB guard against inflated archives
+MAX_DOCX_COMPRESSION_RATIO = 40  # guard against extreme compression bombs
+MAX_DOCX_ENTRIES = 2000  # guard against pathologically deep archives
 
 # Guard rails for PDF processing
 PDF_HIGH_FIDELITY_MAX_BYTES = 50 * 1024 * 1024  # 50MB limit for pdf2docx high-fidelity path
@@ -85,6 +94,85 @@ class HTMLTextExtractor(HTMLParser):
 
 class DocumentParser:
     """Parses various file formats to extract text and HTML."""
+
+    @staticmethod
+    def _sanitize_html(html: str) -> str:
+        """Strip unsafe tags/attrs while allowing basic formatting and data/docimg images."""
+        if not bleach:
+            return html
+
+        allowed_tags = [
+            'p', 'div', 'span', 'br', 'pre', 'code',
+            'ul', 'ol', 'li',
+            'table', 'thead', 'tbody', 'tr', 'th', 'td',
+            'strong', 'em', 'b', 'i', 'u',
+            'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+            'img', 'a',
+            'section', 'article'
+        ]
+
+        allowed_attrs = {
+            'img': ['src', 'alt'],
+            'a': ['href', 'title', 'rel'],
+            '*': ['dir', 'align'],
+        }
+
+        allowed_protocols = ['http', 'https', 'data', 'docimg']
+
+        return bleach.clean(
+            html,
+            tags=allowed_tags,
+            attributes=allowed_attrs,
+            protocols=allowed_protocols,
+            strip=True,
+        )
+
+    @staticmethod
+    def _assert_safe_docx_archive(source: object) -> None:
+        """Fail fast on likely DOCX zip-bombs before deeper processing."""
+        if isinstance(source, (str, Path)):
+            path = Path(source)
+            if not path.exists():
+                raise FileNotFoundError(f"DOCX file not found: {path}")
+            zip_handle = path
+        else:
+            try:
+                source.seek(0)
+            except Exception:
+                return  # Cannot introspect non-seekable streams
+            zip_handle = source
+
+        if not zipfile.is_zipfile(zip_handle):
+            raise ValueError("Invalid DOCX container (not a zip archive)")
+
+        with zipfile.ZipFile(zip_handle) as zf:
+            entries = zf.infolist()
+
+            if len(entries) > MAX_DOCX_ENTRIES:
+                raise ValueError(f"DOCX archive has too many entries ({len(entries)} > {MAX_DOCX_ENTRIES})")
+
+            total_uncompressed = 0
+            for info in entries:
+                if info.is_dir():
+                    continue
+
+                if info.compress_size == 0:
+                    if info.file_size == 0:
+                        continue  # empty file entry
+                    raise ValueError("DOCX archive contains a zero-length compressed entry")
+
+                total_uncompressed += info.file_size
+                if total_uncompressed > MAX_DOCX_UNCOMPRESSED_SIZE:
+                    raise ValueError("DOCX archive exceeds uncompressed size limit")
+
+                # Guard against extreme compression ratios per entry
+                if info.file_size > 0:
+                    compression_ratio = info.file_size / max(info.compress_size, 1)
+                    if compression_ratio > MAX_DOCX_COMPRESSION_RATIO:
+                        raise ValueError("DOCX archive entry exceeds compression ratio limit")
+
+            if hasattr(zip_handle, "seek"):
+                zip_handle.seek(0)
     
     @staticmethod
     def parse_file(
@@ -121,7 +209,8 @@ class DocumentParser:
             
             metadata["pipeline"] = "html:raw"
             metadata["image_mode"] = "base64"
-            return text, html, 'html', metadata
+            sanitized_html = DocumentParser._sanitize_html(html)
+            return text, sanitized_html, 'html', metadata
         elif ext == '.docx':
             return DocumentParser._parse_docx(path, store_image_callback=store_image_callback)
         elif ext == '.pdf':
@@ -598,6 +687,12 @@ class DocumentParser:
         text = ""
         html = ""
 
+        # Guard against DOCX zip bombs before parsing
+        try:
+            DocumentParser._assert_safe_docx_archive(source)
+        except ValueError as exc:
+            raise ValueError(f"DOCX rejected: {exc}")
+
         # Optimized imports
         if not docx:
             if not mammoth:
@@ -605,22 +700,25 @@ class DocumentParser:
             # Fallback to pure mammoth if python-docx is missing
             if hasattr(source, 'read'):
                 docx_file = source
-            else:
-                docx_file = open(source, "rb")
-                
-            try:
                 result = mammoth.convert_to_html(docx_file)
                 html = result.value
                 if hasattr(docx_file, 'seek'):
                     docx_file.seek(0)
                 text_result = mammoth.extract_raw_text(docx_file)
                 text = text_result.value
-                metadata["pipeline"] = "docx:mammoth-only"
-                metadata["image_mode"] = "base64"
-            finally:
-                if not hasattr(source, 'read'):
-                    docx_file.close()
+            else:
+                with open(source, "rb") as docx_file:
+                    result = mammoth.convert_to_html(docx_file)
+                    html = result.value
+                    if hasattr(docx_file, 'seek'):
+                        docx_file.seek(0)
+                    text_result = mammoth.extract_raw_text(docx_file)
+                    text = text_result.value
+
+            metadata["pipeline"] = "docx:mammoth-only"
+            metadata["image_mode"] = "base64"
                     
+            html = DocumentParser._sanitize_html(html)
             return text, html, 'docx', metadata
 
         try:
@@ -720,7 +818,7 @@ class DocumentParser:
                 closing_type = list_stack.pop()
                 html_parts.append(f"</{closing_type}>")
 
-            html = "\n".join(html_parts)
+            html = DocumentParser._sanitize_html("\n".join(html_parts))
             metadata["pipeline"] = metadata.get("pipeline", "docx:python-docx")
             metadata["image_mode"] = "docimg" if store_image_callback else "base64"
             if warnings:
@@ -749,7 +847,7 @@ class DocumentParser:
                         docx_file.close()
             else:
                 escaped = html_lib.escape(text, quote=True)
-                html = f"<pre>{escaped}</pre>"
+                html = DocumentParser._sanitize_html(f"<pre>{escaped}</pre>")
                 metadata["pipeline"] = "docx:pre-fallback"
                 metadata["image_mode"] = "base64"
 
@@ -789,6 +887,7 @@ class DocumentParser:
                 # Parse the generated DOCX from memory
                 docx_stream.seek(0)
                 text, html, _, _ = DocumentParser._parse_docx(docx_stream)
+                html = DocumentParser._sanitize_html(html)
                 
                 # Now extract real PDF metadata using pypdf or fitz
                 metadata = DocumentParser._extract_pdf_metadata(path)
@@ -838,7 +937,7 @@ class DocumentParser:
                         html_parts.append(f"<div dir='ltr' align='left'>{page_html_raw}</div>")
                     
                 text = "\n".join(text_parts)
-                html = "\n".join(html_parts)
+                html = DocumentParser._sanitize_html("\n".join(html_parts))
                 metadata["pipeline"] = "pdf:fitz"
                 if warnings:
                     metadata["warnings"] = warnings

@@ -199,18 +199,40 @@ class DocumentEditorWindow(QMainWindow):
     def _fetch_image_resource(self, image_id: int) -> Optional[Any]:
         """
         Fetch image resource for the editor from the database.
-        
+
         Args:
             image_id: ID of the image to fetch
-            
+
         Returns:
-            Tuple of (bytes, mime_type) or None
+            Tuple of (bytes, mime_type) or None if image not found or error occurs
         """
         try:
             with document_service_context() as service:
-                return service.get_image(image_id)
-        except Exception as _e:
-            logger.exception("Error fetching image resource %s", image_id)
+                result = service.get_image(image_id)
+
+                if result is None:
+                    logger.warning(f"Image ID {image_id} not found in database")
+                    return None
+
+                # Validate result structure
+                if not isinstance(result, tuple) or len(result) != 2:
+                    logger.error(f"Invalid image resource format for ID {image_id}: expected (bytes, mime_type) tuple")
+                    return None
+
+                data, mime_type = result
+
+                # Validate data
+                if not isinstance(data, bytes) or len(data) == 0:
+                    logger.warning(f"Image ID {image_id} has empty or invalid data")
+                    return None
+
+                return result
+
+        except ConnectionError as e:
+            logger.error(f"Database connection error while fetching image {image_id}: {e}")
+            return None
+        except Exception as e:
+            logger.exception(f"Unexpected error fetching image resource {image_id}: {e}")
             return None
 
     def _show_wiki_link_selector(self) -> None:
