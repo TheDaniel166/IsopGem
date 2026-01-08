@@ -45,48 +45,56 @@ class EllipseShape(GeometricShape):
                 key='semi_major_axis',
                 unit='units',
                 readonly=False,
+                formula=r'a'
             ),
             'semi_minor_axis': ShapeProperty(
                 name='Semi-minor Axis (b)',
                 key='semi_minor_axis',
                 unit='units',
                 readonly=False,
+                formula=r'b'
             ),
             'major_axis': ShapeProperty(
                 name='Major Axis (2a)',
                 key='major_axis',
                 unit='units',
                 readonly=False,
+                formula=r'2a'
             ),
             'minor_axis': ShapeProperty(
                 name='Minor Axis (2b)',
                 key='minor_axis',
                 unit='units',
                 readonly=False,
+                formula=r'2b'
             ),
             'area': ShapeProperty(
                 name='Area',
                 key='area',
                 unit='units²',
                 readonly=True,
+                formula=r'A = \pi ab'
             ),
             'perimeter': ShapeProperty(
                 name='Perimeter (Ramanujan)',
                 key='perimeter',
                 unit='units',
                 readonly=True,
+                formula=r'P \approx \pi\left[3(a+b) - \sqrt{(3a+b)(a+3b)}\right]'
             ),
             'eccentricity': ShapeProperty(
                 name='Eccentricity (e)',
                 key='eccentricity',
                 readonly=True,
                 precision=4,
+                formula=r'e = \sqrt{1 - \frac{b^2}{a^2}}'
             ),
             'focal_distance': ShapeProperty(
                 name='Focal Distance (c)',
                 key='focal_distance',
                 unit='units',
                 readonly=True,
+                formula=r'c = \sqrt{a^2 - b^2}'
             ),
         }
 

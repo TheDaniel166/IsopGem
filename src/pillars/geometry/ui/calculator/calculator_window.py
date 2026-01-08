@@ -80,8 +80,8 @@ class GeometryCalculatorWindow(QMainWindow):
         self.splitter.addWidget(self.viewport_pane)
         self.splitter.addWidget(self.controls_pane)
         
-        # Initial Sizes (Approx 25% | 50% | 25%)
-        self.splitter.setSizes([350, 700, 350])
+        # Initial Sizes - Give input pane more width for formulas (30% | 45% | 25%)
+        self.splitter.setSizes([420, 630, 350])
         self.splitter.setCollapsible(0, True)
         self.splitter.setCollapsible(2, True)
         

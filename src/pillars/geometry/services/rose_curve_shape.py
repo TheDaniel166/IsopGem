@@ -44,30 +44,35 @@ class RoseCurveShape(GeometricShape):
                 name="Amplitude (a)",
                 key="amplitude",
                 unit="units",
+                formula=r"a",
             ),
             "k_value": ShapeProperty(
                 name="Harmonic (k)",
                 key="k_value",
                 unit="",
                 precision=0,
+                formula=r"k",
             ),
             "petal_count": ShapeProperty(
                 name="Petal Count",
                 key="petal_count",
                 readonly=True,
                 precision=0,
+                formula=r"p = \begin{cases}k,&k\text{ odd}\\2k,&k\text{ even}\end{cases}",
             ),
             "max_radius": ShapeProperty(
                 name="Max Radius",
                 key="max_radius",
                 unit="units",
                 readonly=True,
+                formula=r"r_{max} = a",
             ),
             "total_area": ShapeProperty(
                 name="Total Area",
                 key="total_area",
                 unit="units²",
                 readonly=True,
+                formula=r"A = \tfrac{1}{2}a^2 p",
             ),
         }
 

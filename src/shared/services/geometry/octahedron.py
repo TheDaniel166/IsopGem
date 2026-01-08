@@ -365,6 +365,26 @@ class OctahedronSolidService:
 class OctahedronSolidCalculator:
     """Bidirectional calculator for regular octahedra with comprehensive properties."""
 
+    _FORMULAS = {
+        'face_area': r"A_f = \frac{\sqrt{3}}{4}a^2",
+        'surface_area': r"A = 2\sqrt{3}\,a^2",
+        'volume': r"V = \frac{\sqrt{2}}{3}a^3",
+        'inradius': r"r = \frac{a\sqrt{6}}{6}",
+        'midradius': r"\rho = \frac{a}{2}",
+        'circumradius': r"R = \frac{a\sqrt{2}}{2}",
+        'incircle_circumference': r"C_{in} = 2\pi r",
+        'midsphere_circumference': r"C_{mid} = 2\pi \rho",
+        'circumcircle_circumference': r"C_{circ} = 2\pi R",
+        'face_inradius': r"r_f = \frac{a\sqrt{3}}{6}",
+        'face_circumradius': r"R_f = \frac{a}{\sqrt{3}}",
+        'insphere_surface_area': r"A_{in} = 4\pi r^2",
+        'insphere_volume': r"V_{in} = \frac{4}{3}\pi r^3",
+        'midsphere_surface_area': r"A_{mid} = 4\pi \rho^2",
+        'midsphere_volume': r"V_{mid} = \frac{4}{3}\pi \rho^3",
+        'circumsphere_surface_area': r"A_{circ} = 4\pi R^2",
+        'circumsphere_volume': r"V_{circ} = \frac{4}{3}\pi R^3",
+    }
+
     # Properties that can be used as input (editable, with power for scaling)
     _EDITABLE_PROPERTIES = (
         ('edge_length', 'Edge Length', 'units', 4, 1.0, _BASE_EDGE_LENGTH),
@@ -427,13 +447,23 @@ class OctahedronSolidCalculator:
         
         for key, label, unit, precision, power, base_value in self._EDITABLE_PROPERTIES:
             self._properties[key] = SolidProperty(
-                name=label, key=key, unit=unit, precision=precision, editable=True
+                name=label,
+                key=key,
+                unit=unit,
+                precision=precision,
+                editable=True,
+                formula=self._FORMULAS.get(key),
             )
             self._edge_solvers[key] = self._build_solver(base_value, power)
         
         for key, label, unit, precision in self._READONLY_PROPERTIES:
             self._properties[key] = SolidProperty(
-                name=label, key=key, unit=unit, precision=precision, editable=False
+                name=label,
+                key=key,
+                unit=unit,
+                precision=precision,
+                editable=False,
+                formula=self._FORMULAS.get(key),
             )
         
         self._result: Optional[OctahedronSolidResult] = None

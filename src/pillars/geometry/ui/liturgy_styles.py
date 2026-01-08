@@ -289,7 +289,6 @@ class LiturgyInputs:
         return """
             QLineEdit {
                 font-size: 11pt;
-                min-height: 40px;
                 padding: 8px 12px;
                 border: 1px solid #cbd5e1;
                 border-radius: 12px;
@@ -309,7 +308,6 @@ class LiturgyInputs:
         return """
             QLineEdit {
                 font-size: 11pt;
-                min-height: 40px;
                 padding: 8px 12px;
                 border: 1px solid #e2e8f0;
                 border-radius: 12px;
@@ -425,6 +423,15 @@ class LiturgyTabs:
             }
             QTabBar::tab:hover:!selected {
                 background: #f1f5f9;
+            }
+            QTabBar::scroller {
+                width: 0px;
+            }
+            QTabBar QToolButton {
+                background: transparent;
+                border: none;
+                width: 0px;
+                height: 0px;
             }
         """
 

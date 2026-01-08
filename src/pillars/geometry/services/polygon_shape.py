@@ -70,61 +70,71 @@ class RegularPolygonShape(GeometricShape):
                 name='Side Length',
                 key='side',
                 unit='units',
-                readonly=False
+                readonly=False,
+                formula=r's'
             ),
             'perimeter': ShapeProperty(
                 name='Perimeter',
                 key='perimeter',
                 unit='units',
-                readonly=False
+                readonly=False,
+                formula=r'P = ns'
             ),
             'area': ShapeProperty(
                 name='Area',
                 key='area',
                 unit='units²',
-                readonly=False
+                readonly=False,
+                formula=r'A = \frac{ns^2}{4\tan(\pi/n)}'
             ),
             'wedge_area': ShapeProperty(
                 name='Wedge Area (sector)',
                 key='wedge_area',
                 unit='units²',
                 readonly=True,
+                formula=r'A_{wedge} = \frac{\pi r^2}{n}'
             ),
             'apothem': ShapeProperty(
                 name='Apothem',
                 key='apothem',
                 unit='units',
-                readonly=False
+                readonly=False,
+                formula=r'a = \frac{s}{2\tan(\pi/n)}'
             ),
             'circumradius': ShapeProperty(
                 name='Circumradius',
                 key='circumradius',
                 unit='units',
-                readonly=False
+                readonly=False,
+                formula=r'R = \frac{s}{2\sin(\pi/n)}'
             ),
             'incircle_circumference': ShapeProperty(
                 name='Incircle Circumference',
                 key='incircle_circumference',
                 unit='units',
                 readonly=True,
+                formula=r'C_{in} = 2\pi a'
             ),
             'circumcircle_circumference': ShapeProperty(
                 name='Circumcircle Circumference',
                 key='circumcircle_circumference',
                 unit='units',
                 readonly=True,
+                formula=r'C_{out} = 2\pi R'
             ),
             'interior_angle': ShapeProperty(
                 name='Interior Angle',
                 key='interior_angle',
                 unit='°',
-                readonly=True
+                readonly=True,
+                formula=r'\theta_{int} = \frac{(n-2) \cdot 180°}{n}'
             ),
             'exterior_angle': ShapeProperty(
                 name='Exterior Angle',
                 key='exterior_angle',
                 unit='°',
-                readonly=True
+                readonly=True,
+                formula=r'\theta_{ext} = \frac{360°}{n}'
             ),
         }
 

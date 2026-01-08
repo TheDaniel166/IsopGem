@@ -887,7 +887,7 @@ class AdvancedScientificCalculatorWindow(QMainWindow):
         self.time_value_input.setStyleSheet(
             """
             QLineEdit {
-                background: #0b1220;
+                background-color: #0b1220;
                 color: #e2e8f0;
                 border: 1px solid #1f2937;
                 border-radius: 8px;
@@ -1154,7 +1154,7 @@ class AdvancedScientificCalculatorWindow(QMainWindow):
         self.base_input.setStyleSheet(
             """
             QLineEdit {
-                background: #0b1220;
+                background-color: #0b1220;
                 color: #e2e8f0;
                 border: 1px solid #1f2937;
                 border-radius: 8px;
@@ -1399,7 +1399,7 @@ class AdvancedScientificCalculatorWindow(QMainWindow):
         self.constants_search.setStyleSheet(
             """
             QLineEdit {
-                background: #0b1220;
+                background-color: #0b1220;
                 color: #e2e8f0;
                 border: 1px solid #1f2937;
                 border-radius: 8px;
@@ -1637,7 +1637,7 @@ class AdvancedScientificCalculatorWindow(QMainWindow):
         self.fib_input.setStyleSheet(
             """
             QLineEdit {
-                background: #0b1220;
+                background-color: #0b1220;
                 color: #e2e8f0;
                 border: 1px solid #1f2937;
                 border-radius: 8px;
@@ -1827,7 +1827,7 @@ class AdvancedScientificCalculatorWindow(QMainWindow):
         self.coord_angle_input.setStyleSheet(
             """
             QLineEdit {
-                background: #0b1220;
+                background-color: #0b1220;
                 color: #e2e8f0;
                 border: 1px solid #1f2937;
                 border-radius: 8px;
@@ -2134,7 +2134,7 @@ class AdvancedScientificCalculatorWindow(QMainWindow):
         self.display.setStyleSheet(
             """
             QLineEdit {
-                background: #0b1220;
+                background-color: #0b1220;
                 color: #e2e8f0;
                 border: 1px solid #1f2937;
                 border-radius: 10px;
@@ -2260,7 +2260,7 @@ class AdvancedScientificCalculatorWindow(QMainWindow):
         self.value_input.setStyleSheet(
             """
             QLineEdit {
-                background: #0b1220;
+                background-color: #0b1220;
                 color: #e2e8f0;
                 border: 1px solid #1f2937;
                 border-radius: 8px;

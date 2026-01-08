@@ -14,6 +14,7 @@ class ShapeProperty:
     readonly: bool = False  # If True, can't be edited (calculated only)
     precision: int = 4  # Decimal places for display
     default: Optional[float] = None # Default value for initialization
+    formula: Optional[str] = None  # LaTeX formula for this property
 
 
 class GeometricShape(ABC):

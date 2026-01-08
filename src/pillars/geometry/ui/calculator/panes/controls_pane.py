@@ -51,6 +51,7 @@ class ControlsPane(QWidget):
         
         # Tabs
         self.tabs = QTabWidget()
+        self.tabs.setUsesScrollButtons(False)  # Disable arrow buttons
         self.tabs.setStyleSheet(LiturgyTabs.standard())
         
         self.tabs.addTab(self._build_display_tab(), "Display")

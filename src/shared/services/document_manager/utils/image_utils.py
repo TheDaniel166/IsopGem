@@ -10,6 +10,7 @@ from typing import List, Tuple, Callable
 logger = logging.getLogger(__name__)
 
 MAX_IMG_SIZE = 20 * 1024 * 1024  # 20MB limit for base64 data
+ALLOWED_MIME_SUBTYPES = {"png", "jpg", "jpeg", "gif", "webp", "bmp"}
 
 
 # Pattern to match base64 image data in src attributes while preserving other attributes
@@ -22,10 +23,12 @@ SAFE_EXTRACT_PATTERN = re.compile(
     re.IGNORECASE | re.DOTALL
 )
 
-# Pattern to restore images from docimg:// ids
+# Pattern to restore images from docimg:// ids (tolerant of attribute order/spacing/newlines)
 SAFE_RESTORE_PATTERN = re.compile(
-    r'(?P<prefix><img\s+[^>]*?src=["\'])docimg:///*(?P<id>\d+)(?P<suffix>["\'][^>]*>)',
-    re.IGNORECASE
+    r'(?P<prefix><img\b(?=[^>]*?\bsrc=["\']docimg://)(?:[^>]+?)\bsrc=["\'])'
+    r'docimg:///*(?P<id>\d+)'
+    r'(?P<suffix>["\'][^>]*>)',
+    re.IGNORECASE | re.DOTALL
 )
 
 
@@ -36,7 +39,7 @@ def extract_images_from_html(
     """
     Extract base64 images from HTML and replace with docimg:// references.
     Preserves all other HTML attributes (alt, class, style, etc).
-    Includes deduplication via MD5 hashing.
+    Includes deduplication via SHA-256 hashing.
     """
     images_info = []
     seen_hashes = {}  # Map hash -> image_id
@@ -50,9 +53,14 @@ def extract_images_from_html(
         
         """
         prefix = match.group('prefix')
-        mime_subtype = match.group('mime')
+        mime_subtype = match.group('mime').lower()
         base64_data = match.group('data')
+        cleaned_data = re.sub(r"\s+", "", base64_data)
         suffix = match.group('suffix')
+
+        if mime_subtype not in ALLOWED_MIME_SUBTYPES:
+            logger.warning("Blocked unsupported image mime subtype: %s", mime_subtype)
+            return match.group(0)
         
         if len(base64_data) > (MAX_IMG_SIZE * 1.33):
             logger.warning("Image too large, skipping extraction")
@@ -60,13 +68,17 @@ def extract_images_from_html(
 
         # Decode base64 to bytes
         try:
-            image_bytes = base64.b64decode(base64_data)
+            image_bytes = base64.b64decode(cleaned_data, validate=True)
         except Exception as e:
             logger.error(f"Failed to decode base64 image: {e}")
             return match.group(0)
+
+        if len(image_bytes) > MAX_IMG_SIZE:
+            logger.warning("Decoded image exceeds size cap; skipping extraction")
+            return match.group(0)
         
         # Deduplication check
-        img_hash = hashlib.md5(image_bytes).hexdigest()
+        img_hash = hashlib.sha256(image_bytes).hexdigest()
         
         if img_hash in seen_hashes:
             image_id = seen_hashes[img_hash]
@@ -129,9 +141,13 @@ def restore_images_in_html(
             
             # Extract mime subtype (handle cases like "image/png" vs "png")
             if '/' in mime_type:
-                mime_subtype = mime_type.split('/')[1]
+                mime_subtype = mime_type.split('/')[1].lower()
             else:
-                mime_subtype = mime_type
+                mime_subtype = mime_type.lower()
+
+            if mime_subtype not in ALLOWED_MIME_SUBTYPES:
+                logger.warning("Blocked unsupported image mime subtype during restore: %s", mime_subtype)
+                return match.group(0)
                 
             return f'{prefix}data:image/{mime_subtype};base64,{base64_data}{suffix}'
             

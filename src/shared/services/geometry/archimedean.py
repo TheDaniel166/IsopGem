@@ -257,13 +257,21 @@ class ArchimedeanSolidCalculatorBase:
             edge_length: Description of edge_length.
         
         """
-        self._properties: Dict[str, SolidProperty] = {
-            key: SolidProperty(name=label, key=key, unit=unit, precision=precision, editable=editable)
-            for key, label, unit, precision, editable in self._PROPERTY_DEFINITIONS
-        }
+        self._definition = _get_definition(self.SERVICE.DEFINITION_KEY)
+        self._formulas = self._build_formulas()
+
+        self._properties: Dict[str, SolidProperty] = {}
+        for key, label, unit, precision, editable in self._PROPERTY_DEFINITIONS:
+            self._properties[key] = SolidProperty(
+                name=label,
+                key=key,
+                unit=unit,
+                precision=precision,
+                editable=editable,
+                formula=self._formulas.get(key),
+            )
         
         # Add dynamic properties for face metrics based on definition
-        self._definition = _get_definition(self.SERVICE.DEFINITION_KEY)
         for n_gon, count in self._definition.face_sides.items():
             if n_gon == 3: name = "Triangle"
             elif n_gon == 4: name = "Square"
@@ -276,13 +284,23 @@ class ArchimedeanSolidCalculatorBase:
             # Individual Area
             key_single = f"area_{n_gon}_single"
             self._properties[key_single] = SolidProperty(
-                name=f"{name} Area (x1)", key=key_single, unit='units²', precision=4, editable=True
+                name=f"{name} Area (x1)",
+                key=key_single,
+                unit='units²',
+                precision=4,
+                editable=True,
+                formula=self._formulas.get(key_single),
             )
             
             # Total Area
             key_total = f"area_{n_gon}_total"
             self._properties[key_total] = SolidProperty(
-                name=f"Total {name}s Area (x{count})", key=key_total, unit='units²', precision=4, editable=True
+                name=f"Total {name}s Area (x{count})",
+                key=key_total,
+                unit='units²',
+                precision=4,
+                editable=True,
+                formula=self._formulas.get(key_total),
             )
 
         self._edge_length = edge_length if edge_length > 0 else 2.0
@@ -431,6 +449,24 @@ class ArchimedeanSolidCalculatorBase:
                     self._properties[key_single].value = data['area_single']
                 if key_total in self._properties:
                     self._properties[key_total].value = data['area_total']
+
+    def _build_formulas(self) -> Dict[str, str]:
+        base_edge = self._definition.base_edge_length
+        base_surface_area = self._definition.base_surface_area
+        base_volume = self._definition.base_volume
+
+        formulas: Dict[str, str] = {
+            'edge_length': r"e = s",
+            'surface_area': rf"A = {base_surface_area:.4f}\left(\frac{{e}}{{{base_edge:.4f}}}\right)^2",
+            'volume': rf"V = {base_volume:.4f}\left(\frac{{e}}{{{base_edge:.4f}}}\right)^3",
+        }
+
+        for n_gon, count in self._definition.face_sides.items():
+            area_expr = rf"\frac{{{n_gon} e^2}}{{4 \tan\left(\frac{{\pi}}{{{n_gon}}}\right)}}"
+            formulas[f"area_{n_gon}_single"] = rf"A_{{{n_gon}}} = {area_expr}"
+            formulas[f"area_{n_gon}_total"] = rf"A_{{{n_gon},\mathrm{{total}}}} = {count}\times {area_expr}"
+
+        return formulas
 
 
 class CuboctahedronSolidService(ArchimedeanSolidServiceBase):

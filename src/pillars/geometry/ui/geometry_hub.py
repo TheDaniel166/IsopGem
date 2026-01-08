@@ -56,17 +56,17 @@ class GeometryHub(QWidget):
         scroll.setStyleSheet("""
             QScrollArea#GeometryScroll { 
                 border: none; 
-                background: transparent; 
+                background-color: transparent; 
             }
             QScrollArea#GeometryScroll > QWidget > QWidget {
-                background: transparent;
+                background-color: transparent;
             }
         """)
         
         # Container (transparent to show parent's background)
         container = QWidget()
         container.setObjectName("GeometryContainer")
-        container.setStyleSheet("background: transparent;")
+        container.setStyleSheet("background-color: transparent;")
         
         layout = QVBoxLayout(container)
         layout.setSpacing(24)
@@ -74,7 +74,7 @@ class GeometryHub(QWidget):
 
         # Header section (The Sigil)
         header = QWidget()
-        header.setStyleSheet("background: transparent;")
+        header.setStyleSheet("background-color: transparent;")
         header_layout = QVBoxLayout(header)
         header_layout.setSpacing(8)
         header_layout.setContentsMargins(0, 0, 0, 0)
@@ -86,7 +86,7 @@ class GeometryHub(QWidget):
                 font-size: 28pt;
                 font-weight: 900;
                 letter-spacing: -1px;
-                background: transparent;
+                background-color: transparent;
             }
         """)
         header_layout.addWidget(title_label)
@@ -96,7 +96,7 @@ class GeometryHub(QWidget):
             QLabel {
                 color: #334155;
                 font-size: 11pt;
-                background: transparent;
+                background-color: transparent;
             }
         """)
         header_layout.addWidget(desc_label)
@@ -162,7 +162,7 @@ class GeometryHub(QWidget):
                 color: #94a3b8;
                 font-size: 10pt;
                 padding: 20px;
-                background: transparent;
+                background-color: transparent;
             }
         """)
         coming_soon.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -255,7 +255,7 @@ class GeometryHub(QWidget):
                 color: #0f172a;
                 font-size: 13pt;
                 font-weight: 800;
-                background: transparent;
+                background-color: transparent;
             }
         """)
         layout.addWidget(title_label)
@@ -266,7 +266,7 @@ class GeometryHub(QWidget):
             QLabel {
                 color: #334155;
                 font-size: 9pt;
-                background: transparent;
+                background-color: transparent;
             }
         """)
         desc_label.setWordWrap(True)

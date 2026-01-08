@@ -62,11 +62,11 @@ class IrregularPolygonShape(GeometricShape):
     def _init_properties(self):
         """Initialize base properties."""
         self.properties = {
-            'area': ShapeProperty(name='Area', key='area', unit='units²', readonly=True),
-            'perimeter': ShapeProperty(name='Perimeter', key='perimeter', unit='units', readonly=True),
-            'centroid_x': ShapeProperty(name='Centroid X', key='centroid_x', unit='', readonly=True),
-            'centroid_y': ShapeProperty(name='Centroid Y', key='centroid_y', unit='', readonly=True),
-            'num_vertices': ShapeProperty(name='Vertex Count', key='num_vertices', unit='', readonly=True, precision=0),
+            'area': ShapeProperty(name='Area', key='area', unit='units²', readonly=True, formula=r"A = \tfrac{1}{2}\sum (x_i y_{i+1} - x_{i+1} y_i)"),
+            'perimeter': ShapeProperty(name='Perimeter', key='perimeter', unit='units', readonly=True, formula=r"P = \sum \sqrt{(x_{i+1}-x_i)^2 + (y_{i+1}-y_i)^2}"),
+            'centroid_x': ShapeProperty(name='Centroid X', key='centroid_x', unit='', readonly=True, formula=r"C_x = \tfrac{1}{6A}\sum (x_i + x_{i+1})(x_i y_{i+1} - x_{i+1} y_i)"),
+            'centroid_y': ShapeProperty(name='Centroid Y', key='centroid_y', unit='', readonly=True, formula=r"C_y = \tfrac{1}{6A}\sum (y_i + y_{i+1})(x_i y_{i+1} - x_{i+1} y_i)"),
+            'num_vertices': ShapeProperty(name='Vertex Count', key='num_vertices', unit='', readonly=True, precision=0, formula=r"n"),
         }
 
     def set_points(self, points: List[Tuple[float, float]]):

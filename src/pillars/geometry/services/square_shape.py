@@ -34,25 +34,29 @@ class SquareShape(GeometricShape):
                 name='Side Length',
                 key='side',
                 unit='units',
-                readonly=False
+                readonly=False,
+                formula=r's'
             ),
             'perimeter': ShapeProperty(
                 name='Perimeter',
                 key='perimeter',
                 unit='units',
-                readonly=False
+                readonly=False,
+                formula=r'P = 4s'
             ),
             'area': ShapeProperty(
                 name='Area',
                 key='area',
                 unit='units²',
-                readonly=False
+                readonly=False,
+                formula=r'A = s^2'
             ),
             'diagonal': ShapeProperty(
                 name='Diagonal',
                 key='diagonal',
                 unit='units',
-                readonly=False
+                readonly=False,
+                formula=r'd = s\sqrt{2}'
             ),
         }
     
@@ -155,31 +159,36 @@ class RectangleShape(GeometricShape):
                 name='Length',
                 key='length',
                 unit='units',
-                readonly=False
+                readonly=False,
+                formula=r'l'
             ),
             'width': ShapeProperty(
                 name='Width',
                 key='width',
                 unit='units',
-                readonly=False
+                readonly=False,
+                formula=r'w'
             ),
             'perimeter': ShapeProperty(
                 name='Perimeter',
                 key='perimeter',
                 unit='units',
-                readonly=False
+                readonly=False,
+                formula=r'P = 4s'
             ),
             'area': ShapeProperty(
                 name='Area',
                 key='area',
                 unit='units²',
-                readonly=False
+                readonly=False,
+                formula=r'A = s^2'
             ),
             'diagonal': ShapeProperty(
                 name='Diagonal',
                 key='diagonal',
                 unit='units',
-                readonly=False
+                readonly=False,
+                formula=r'd = s\sqrt{2}'
             ),
         }
     

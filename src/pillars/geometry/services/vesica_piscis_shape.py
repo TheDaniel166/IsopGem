@@ -44,34 +44,40 @@ class VesicaPiscisShape(GeometricShape):
                 name="Circle Radius",
                 key="radius",
                 unit="units",
+                formula=r'r'
             ),
             "diameter": ShapeProperty(
                 name="Diameter",
                 key="diameter",
                 unit="units",
+                formula=r'd = 2r'
             ),
             "separation": ShapeProperty(
                 name="Center Separation",
                 key="separation",
                 unit="units",
+                formula=r's = r'
             ),
             "lens_height": ShapeProperty(
                 name="Lens Height",
                 key="lens_height",
                 unit="units",
                 readonly=True,
+                formula=r'h = r\sqrt{3}'
             ),
             "lens_area": ShapeProperty(
                 name="Lens Area",
                 key="lens_area",
                 unit="units²",
                 readonly=True,
+                formula=r'A = 2r^2\left(\frac{2\pi}{3} - \frac{\sqrt{3}}{2}\right)'
             ),
             "perimeter": ShapeProperty(
                 name="Lens Perimeter",
                 key="perimeter",
                 unit="units",
                 readonly=True,
+                formula=r'P = 4r\arcsin\left(\frac{\sqrt{3}}{2}\right)'
             ),
             "apex_angle": ShapeProperty(
                 name="Arc Angle (°)",
@@ -79,6 +85,7 @@ class VesicaPiscisShape(GeometricShape):
                 unit="°",
                 readonly=True,
                 precision=2,
+                formula=r'\theta = 120°'
             ),
         }
 

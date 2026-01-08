@@ -104,30 +104,32 @@ class _BaseSSSTriangleShape(GeometricShape):
 
     def _init_properties(self):
         self.properties = {
-            'side_a': ShapeProperty(name='Side a (BC)', key='side_a', unit='units'),
-            'side_b': ShapeProperty(name='Side b (AC)', key='side_b', unit='units'),
-            'side_c': ShapeProperty(name='Side c (AB)', key='side_c', unit='units'),
-            'perimeter': ShapeProperty(name='Perimeter', key='perimeter', unit='units', readonly=True),
-            'area': ShapeProperty(name='Area', key='area', unit='units²', readonly=True),
-            'angle_a_deg': ShapeProperty(name='∠A (°)', key='angle_a_deg', unit='°', readonly=True, precision=2),
-            'angle_b_deg': ShapeProperty(name='∠B (°)', key='angle_b_deg', unit='°', readonly=True, precision=2),
-            'angle_c_deg': ShapeProperty(name='∠C (°)', key='angle_c_deg', unit='°', readonly=True, precision=2),
-            'height_a': ShapeProperty(name='Height to a', key='height_a', unit='units', readonly=True),
-            'height_b': ShapeProperty(name='Height to b', key='height_b', unit='units', readonly=True),
-            'height_c': ShapeProperty(name='Height to c', key='height_c', unit='units', readonly=True),
-            'inradius': ShapeProperty(name='Inradius', key='inradius', unit='units', readonly=True),
-            'circumradius': ShapeProperty(name='Circumradius', key='circumradius', unit='units', readonly=True),
+            'side_a': ShapeProperty(name='Side a (BC)', key='side_a', unit='units', formula=r'a'),
+            'side_b': ShapeProperty(name='Side b (AC)', key='side_b', unit='units', formula=r'b'),
+            'side_c': ShapeProperty(name='Side c (AB)', key='side_c', unit='units', formula=r'c'),
+            'perimeter': ShapeProperty(name='Perimeter', key='perimeter', unit='units', readonly=True, formula=r'P = a + b + c'),
+            'area': ShapeProperty(name='Area', key='area', unit='units²', readonly=True, formula=r'A = \sqrt{s(s-a)(s-b)(s-c)},\ s=\tfrac{a+b+c}{2}'),
+            'angle_a_deg': ShapeProperty(name='∠A (°)', key='angle_a_deg', unit='°', readonly=True, precision=2, formula=r'\angle A = \cos^{-1}\!\left(\frac{b^2 + c^2 - a^2}{2bc}\right)'),
+            'angle_b_deg': ShapeProperty(name='∠B (°)', key='angle_b_deg', unit='°', readonly=True, precision=2, formula=r'\angle B = \cos^{-1}\!\left(\frac{a^2 + c^2 - b^2}{2ac}\right)'),
+            'angle_c_deg': ShapeProperty(name='∠C (°)', key='angle_c_deg', unit='°', readonly=True, precision=2, formula=r'\angle C = \cos^{-1}\!\left(\frac{a^2 + b^2 - c^2}{2ab}\right)'),
+            'height_a': ShapeProperty(name='Height to a', key='height_a', unit='units', readonly=True, formula=r'h_a = \frac{2A}{a}'),
+            'height_b': ShapeProperty(name='Height to b', key='height_b', unit='units', readonly=True, formula=r'h_b = \frac{2A}{b}'),
+            'height_c': ShapeProperty(name='Height to c', key='height_c', unit='units', readonly=True, formula=r'h_c = \frac{2A}{c}'),
+            'inradius': ShapeProperty(name='Inradius', key='inradius', unit='units', readonly=True, formula=r'r = \frac{A}{s}'),
+            'circumradius': ShapeProperty(name='Circumradius', key='circumradius', unit='units', readonly=True, formula=r'R = \frac{abc}{4A}'),
             'incircle_circumference': ShapeProperty(
                 name='Incircle Circumference',
                 key='incircle_circumference',
                 unit='units',
                 readonly=True,
+                formula=r'C_{in} = 2\pi r',
             ),
             'circumcircle_circumference': ShapeProperty(
                 name='Circumcircle Circumference',
                 key='circumcircle_circumference',
                 unit='units',
                 readonly=True,
+                formula=r'C_{circ} = 2\pi R',
             ),
         }
 
@@ -263,49 +265,57 @@ class EquilateralTriangleShape(GeometricShape):
                 name='Side Length',
                 key='side',
                 unit='units',
-                readonly=False
+                readonly=False,
+                formula=r's'
             ),
             'height': ShapeProperty(
                 name='Height',
                 key='height',
                 unit='units',
-                readonly=False
+                readonly=False,
+                formula=r'h = \tfrac{\sqrt{3}}{2}s'
             ),
             'perimeter': ShapeProperty(
                 name='Perimeter',
                 key='perimeter',
                 unit='units',
-                readonly=False
+                readonly=False,
+                formula=r'P = 3s'
             ),
             'area': ShapeProperty(
                 name='Area',
                 key='area',
                 unit='units²',
-                readonly=False
+                readonly=False,
+                formula=r'A = \tfrac{\sqrt{3}}{4}s^2'
             ),
             'inradius': ShapeProperty(
                 name='Inradius',
                 key='inradius',
                 unit='units',
-                readonly=False
+                readonly=False,
+                formula=r'r = \tfrac{s}{2\sqrt{3}}'
             ),
             'circumradius': ShapeProperty(
                 name='Circumradius',
                 key='circumradius',
                 unit='units',
-                readonly=False
+                readonly=False,
+                formula=r'R = \tfrac{s}{\sqrt{3}}'
             ),
             'incircle_circumference': ShapeProperty(
                 name='Incircle Circumference',
                 key='incircle_circumference',
                 unit='units',
                 readonly=True,
+                formula=r'C_{in} = 2\pi r',
             ),
             'circumcircle_circumference': ShapeProperty(
                 name='Circumcircle Circumference',
                 key='circumcircle_circumference',
                 unit='units',
                 readonly=True,
+                formula=r'C_{circ} = 2\pi R',
             ),
         }
     
@@ -430,55 +440,64 @@ class RightTriangleShape(GeometricShape):
                 name='Base (a)',
                 key='base',
                 unit='units',
-                readonly=False
+                readonly=False,
+                formula=r'a'
             ),
             'height': ShapeProperty(
                 name='Height (b)',
                 key='height',
                 unit='units',
-                readonly=False
+                readonly=False,
+                formula=r'b'
             ),
             'hypotenuse': ShapeProperty(
                 name='Hypotenuse (c)',
                 key='hypotenuse',
                 unit='units',
-                readonly=False
+                readonly=False,
+                formula=r'c = \sqrt{a^2 + b^2}'
             ),
             'perimeter': ShapeProperty(
                 name='Perimeter',
                 key='perimeter',
                 unit='units',
-                readonly=False
+                readonly=False,
+                formula=r'P = a + b + c'
             ),
             'area': ShapeProperty(
                 name='Area',
                 key='area',
                 unit='units²',
-                readonly=False
+                readonly=False,
+                formula=r'A = \tfrac{ab}{2}'
             ),
             'inradius': ShapeProperty(
                 name='Inradius',
                 key='inradius',
                 unit='units',
                 readonly=True,
+                formula=r'r = \tfrac{a + b - c}{2}',
             ),
             'circumradius': ShapeProperty(
                 name='Circumradius',
                 key='circumradius',
                 unit='units',
                 readonly=True,
+                formula=r'R = \tfrac{c}{2}',
             ),
             'incircle_circumference': ShapeProperty(
                 name='Incircle Circumference',
                 key='incircle_circumference',
                 unit='units',
                 readonly=True,
+                formula=r'C_{in} = 2\pi r',
             ),
             'circumcircle_circumference': ShapeProperty(
                 name='Circumcircle Circumference',
                 key='circumcircle_circumference',
                 unit='units',
                 readonly=True,
+                formula=r'C_{circ} = 2\pi R',
             ),
         }
     
@@ -691,26 +710,28 @@ class IsoscelesTriangleShape(GeometricShape):
 
     def _init_properties(self):
         self.properties = {
-            'base': ShapeProperty(name='Base (b)', key='base', unit='units'),
-            'leg': ShapeProperty(name='Equal Leg (ℓ)', key='leg', unit='units'),
-            'height': ShapeProperty(name='Height', key='height', unit='units'),
-            'perimeter': ShapeProperty(name='Perimeter', key='perimeter', unit='units', readonly=True),
-            'area': ShapeProperty(name='Area', key='area', unit='units²', readonly=True),
-            'apex_angle_deg': ShapeProperty(name='Apex Angle (°)', key='apex_angle_deg', unit='°', readonly=True, precision=2),
-            'base_angle_deg': ShapeProperty(name='Base Angle (°)', key='base_angle_deg', unit='°', readonly=True, precision=2),
-            'inradius': ShapeProperty(name='Inradius', key='inradius', unit='units', readonly=True),
-            'circumradius': ShapeProperty(name='Circumradius', key='circumradius', unit='units', readonly=True),
+            'base': ShapeProperty(name='Base (b)', key='base', unit='units', formula=r'b'),
+            'leg': ShapeProperty(name='Equal Leg (ℓ)', key='leg', unit='units', formula=r'\ell'),
+            'height': ShapeProperty(name='Height', key='height', unit='units', formula=r'h = \sqrt{\ell^2 - \left(\tfrac{b}{2}\right)^2}'),
+            'perimeter': ShapeProperty(name='Perimeter', key='perimeter', unit='units', readonly=True, formula=r'P = 2\ell + b'),
+            'area': ShapeProperty(name='Area', key='area', unit='units²', readonly=True, formula=r'A = \tfrac{b}{2}\sqrt{\ell^2 - \left(\tfrac{b}{2}\right)^2}'),
+            'apex_angle_deg': ShapeProperty(name='Apex Angle (°)', key='apex_angle_deg', unit='°', readonly=True, precision=2, formula=r'\theta_{apex} = 2\sin^{-1}\!\left(\tfrac{b}{2\ell}\right)'),
+            'base_angle_deg': ShapeProperty(name='Base Angle (°)', key='base_angle_deg', unit='°', readonly=True, precision=2, formula=r'\theta_{base} = \tfrac{180^\circ - \theta_{apex}}{2}'),
+            'inradius': ShapeProperty(name='Inradius', key='inradius', unit='units', readonly=True, formula=r'r = \tfrac{A}{s},\ s = \ell + \tfrac{b}{2}'),
+            'circumradius': ShapeProperty(name='Circumradius', key='circumradius', unit='units', readonly=True, formula=r'R = \tfrac{\ell^2}{\sqrt{4\ell^2 - b^2}}'),
             'incircle_circumference': ShapeProperty(
                 name='Incircle Circumference',
                 key='incircle_circumference',
                 unit='units',
                 readonly=True,
+                formula=r'C_{in} = 2\pi r',
             ),
             'circumcircle_circumference': ShapeProperty(
                 name='Circumcircle Circumference',
                 key='circumcircle_circumference',
                 unit='units',
                 readonly=True,
+                formula=r'C_{circ} = 2\pi R',
             ),
         }
 
@@ -1010,6 +1031,7 @@ class HeronianTriangleShape(_BaseSSSTriangleShape):
             key='heronian_flag',
             readonly=True,
             precision=0,
+            formula=r'H = 1 \text{ if } a,b,c,A \in \mathbb{Z}',
         )
 
     @property
@@ -1074,24 +1096,26 @@ class IsoscelesRightTriangleShape(GeometricShape):
 
     def _init_properties(self):
         self.properties = {
-            'leg': ShapeProperty(name='Leg (ℓ)', key='leg', unit='units'),
-            'hypotenuse': ShapeProperty(name='Hypotenuse', key='hypotenuse', unit='units'),
-            'perimeter': ShapeProperty(name='Perimeter', key='perimeter', unit='units', readonly=True),
-            'area': ShapeProperty(name='Area', key='area', unit='units²', readonly=True),
-            'height': ShapeProperty(name='Altitude', key='height', unit='units', readonly=True),
-            'inradius': ShapeProperty(name='Inradius', key='inradius', unit='units', readonly=True),
-            'circumradius': ShapeProperty(name='Circumradius', key='circumradius', unit='units', readonly=True),
+            'leg': ShapeProperty(name='Leg (ℓ)', key='leg', unit='units', formula=r'\ell'),
+            'hypotenuse': ShapeProperty(name='Hypotenuse', key='hypotenuse', unit='units', formula=r'c = \ell\sqrt{2}'),
+            'perimeter': ShapeProperty(name='Perimeter', key='perimeter', unit='units', readonly=True, formula=r'P = 2\ell + c'),
+            'area': ShapeProperty(name='Area', key='area', unit='units²', readonly=True, formula=r'A = \tfrac{\ell^2}{2}'),
+            'height': ShapeProperty(name='Altitude', key='height', unit='units', readonly=True, formula=r'h = \ell'),
+            'inradius': ShapeProperty(name='Inradius', key='inradius', unit='units', readonly=True, formula=r'r = \tfrac{\ell}{2}\left(2 - \sqrt{2}\right)'),
+            'circumradius': ShapeProperty(name='Circumradius', key='circumradius', unit='units', readonly=True, formula=r'R = \tfrac{c}{2} = \tfrac{\ell}{\sqrt{2}}'),
             'incircle_circumference': ShapeProperty(
                 name='Incircle Circumference',
                 key='incircle_circumference',
                 unit='units',
                 readonly=True,
+                formula=r'C_{in} = 2\pi r',
             ),
             'circumcircle_circumference': ShapeProperty(
                 name='Circumcircle Circumference',
                 key='circumcircle_circumference',
                 unit='units',
                 readonly=True,
+                formula=r'C_{circ} = 2\pi R',
             ),
         }
 
@@ -1200,24 +1224,26 @@ class ThirtySixtyNinetyTriangleShape(GeometricShape):
 
     def _init_properties(self):
         self.properties = {
-            'short_leg': ShapeProperty(name='Short Leg (opposite 30°)', key='short_leg', unit='units'),
-            'long_leg': ShapeProperty(name='Long Leg (opposite 60°)', key='long_leg', unit='units'),
-            'hypotenuse': ShapeProperty(name='Hypotenuse', key='hypotenuse', unit='units'),
-            'perimeter': ShapeProperty(name='Perimeter', key='perimeter', unit='units', readonly=True),
-            'area': ShapeProperty(name='Area', key='area', unit='units²', readonly=True),
-            'inradius': ShapeProperty(name='Inradius', key='inradius', unit='units', readonly=True),
-            'circumradius': ShapeProperty(name='Circumradius', key='circumradius', unit='units', readonly=True),
+            'short_leg': ShapeProperty(name='Short Leg (opposite 30°)', key='short_leg', unit='units', formula=r's'),
+            'long_leg': ShapeProperty(name='Long Leg (opposite 60°)', key='long_leg', unit='units', formula=r'\ell = s\sqrt{3}'),
+            'hypotenuse': ShapeProperty(name='Hypotenuse', key='hypotenuse', unit='units', formula=r'c = 2s'),
+            'perimeter': ShapeProperty(name='Perimeter', key='perimeter', unit='units', readonly=True, formula=r'P = s + s\sqrt{3} + 2s'),
+            'area': ShapeProperty(name='Area', key='area', unit='units²', readonly=True, formula=r'A = \tfrac{s^2\sqrt{3}}{2}'),
+            'inradius': ShapeProperty(name='Inradius', key='inradius', unit='units', readonly=True, formula=r'r = \tfrac{s(\sqrt{3}-1)}{2}'),
+            'circumradius': ShapeProperty(name='Circumradius', key='circumradius', unit='units', readonly=True, formula=r'R = s'),
             'incircle_circumference': ShapeProperty(
                 name='Incircle Circumference',
                 key='incircle_circumference',
                 unit='units',
                 readonly=True,
+                formula=r'C_{in} = 2\pi r',
             ),
             'circumcircle_circumference': ShapeProperty(
                 name='Circumcircle Circumference',
                 key='circumcircle_circumference',
                 unit='units',
                 readonly=True,
+                formula=r'C_{circ} = 2\pi R',
             ),
         }
 
@@ -1340,25 +1366,27 @@ class GoldenTriangleShape(GeometricShape):
 
     def _init_properties(self):
         self.properties = {
-            'equal_leg': ShapeProperty(name='Equal Leg', key='equal_leg', unit='units'),
-            'base': ShapeProperty(name='Base', key='base', unit='units'),
-            'height': ShapeProperty(name='Height', key='height', unit='units', readonly=True),
-            'perimeter': ShapeProperty(name='Perimeter', key='perimeter', unit='units', readonly=True),
-            'area': ShapeProperty(name='Area', key='area', unit='units²', readonly=True),
-            'apex_angle_deg': ShapeProperty(name='Apex Angle (°)', key='apex_angle_deg', unit='°', readonly=True, precision=2),
-            'inradius': ShapeProperty(name='Inradius', key='inradius', unit='units', readonly=True),
-            'circumradius': ShapeProperty(name='Circumradius', key='circumradius', unit='units', readonly=True),
+            'equal_leg': ShapeProperty(name='Equal Leg', key='equal_leg', unit='units', formula=r'\ell'),
+            'base': ShapeProperty(name='Base', key='base', unit='units', formula=r'b = \tfrac{\ell}{\phi}'),
+            'height': ShapeProperty(name='Height', key='height', unit='units', readonly=True, formula=r'h = \sqrt{\ell^2 - \left(\tfrac{b}{2}\right)^2}'),
+            'perimeter': ShapeProperty(name='Perimeter', key='perimeter', unit='units', readonly=True, formula=r'P = 2\ell + b'),
+            'area': ShapeProperty(name='Area', key='area', unit='units²', readonly=True, formula=r'A = \tfrac{b}{2}\sqrt{\ell^2 - \left(\tfrac{b}{2}\right)^2}'),
+            'apex_angle_deg': ShapeProperty(name='Apex Angle (°)', key='apex_angle_deg', unit='°', readonly=True, precision=2, formula=r'\theta_{apex} = 36^\circ'),
+            'inradius': ShapeProperty(name='Inradius', key='inradius', unit='units', readonly=True, formula=r'r = \tfrac{A}{s},\ s = \ell + \tfrac{b}{2}'),
+            'circumradius': ShapeProperty(name='Circumradius', key='circumradius', unit='units', readonly=True, formula=r'R = \tfrac{\ell^2 b}{4A}'),
             'incircle_circumference': ShapeProperty(
                 name='Incircle Circumference',
                 key='incircle_circumference',
                 unit='units',
                 readonly=True,
+                formula=r'C_{in} = 2\pi r',
             ),
             'circumcircle_circumference': ShapeProperty(
                 name='Circumcircle Circumference',
                 key='circumcircle_circumference',
                 unit='units',
                 readonly=True,
+                formula=r'C_{circ} = 2\pi R',
             ),
         }
 
@@ -1460,27 +1488,29 @@ class TriangleSolverShape(GeometricShape):
 
     def _init_properties(self):
         self.properties = {
-            'side_a': ShapeProperty(name='Side a (BC)', key='side_a', unit='units'),
-            'side_b': ShapeProperty(name='Side b (AC)', key='side_b', unit='units'),
-            'side_c': ShapeProperty(name='Side c (AB)', key='side_c', unit='units'),
-            'angle_a_deg': ShapeProperty(name='Angle A (°)', key='angle_a_deg', unit='°', precision=2),
-            'angle_b_deg': ShapeProperty(name='Angle B (°)', key='angle_b_deg', unit='°', precision=2),
-            'angle_c_deg': ShapeProperty(name='Angle C (°)', key='angle_c_deg', unit='°', precision=2),
-            'perimeter': ShapeProperty(name='Perimeter', key='perimeter', unit='units', readonly=True),
-            'area': ShapeProperty(name='Area', key='area', unit='units²', readonly=True),
-            'inradius': ShapeProperty(name='Inradius', key='inradius', unit='units', readonly=True),
-            'circumradius': ShapeProperty(name='Circumradius', key='circumradius', unit='units', readonly=True),
+            'side_a': ShapeProperty(name='Side a (BC)', key='side_a', unit='units', formula=r'a'),
+            'side_b': ShapeProperty(name='Side b (AC)', key='side_b', unit='units', formula=r'b'),
+            'side_c': ShapeProperty(name='Side c (AB)', key='side_c', unit='units', formula=r'c'),
+            'angle_a_deg': ShapeProperty(name='Angle A (°)', key='angle_a_deg', unit='°', precision=2, formula=r'\angle A = \cos^{-1}\!\left(\frac{b^2 + c^2 - a^2}{2bc}\right)'),
+            'angle_b_deg': ShapeProperty(name='Angle B (°)', key='angle_b_deg', unit='°', precision=2, formula=r'\angle B = \cos^{-1}\!\left(\frac{a^2 + c^2 - b^2}{2ac}\right)'),
+            'angle_c_deg': ShapeProperty(name='Angle C (°)', key='angle_c_deg', unit='°', precision=2, formula=r'\angle C = 180^\circ - \angle A - \angle B'),
+            'perimeter': ShapeProperty(name='Perimeter', key='perimeter', unit='units', readonly=True, formula=r'P = a + b + c'),
+            'area': ShapeProperty(name='Area', key='area', unit='units²', readonly=True, formula=r'A = \tfrac{1}{2}bc\sin A = \sqrt{s(s-a)(s-b)(s-c)}'),
+            'inradius': ShapeProperty(name='Inradius', key='inradius', unit='units', readonly=True, formula=r'r = \tfrac{A}{s}'),
+            'circumradius': ShapeProperty(name='Circumradius', key='circumradius', unit='units', readonly=True, formula=r'R = \tfrac{abc}{4A}'),
             'incircle_circumference': ShapeProperty(
                 name='Incircle Circumference',
                 key='incircle_circumference',
                 unit='units',
                 readonly=True,
+                formula=r'C_{in} = 2\pi r',
             ),
             'circumcircle_circumference': ShapeProperty(
                 name='Circumcircle Circumference',
                 key='circumcircle_circumference',
                 unit='units',
                 readonly=True,
+                formula=r'C_{circ} = 2\pi R',
             ),
         }
 

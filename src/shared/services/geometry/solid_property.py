@@ -15,6 +15,7 @@ class SolidProperty:
     value: Optional[float] = None
     precision: int = 4
     editable: bool = True
+    formula: Optional[str] = None
 
 
 __all__ = ["SolidProperty"]

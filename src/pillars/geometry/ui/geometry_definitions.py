@@ -31,7 +31,6 @@ from ..services import (
     ThirtySixtyNinetyTriangleShape,
     GoldenTriangleShape,
     TriangleSolverShape,
-    VaultOfHestiaShape,
     CyclicQuadrilateralShape,
     TangentialQuadrilateralShape,
     BicentricQuadrilateralShape,
@@ -130,10 +129,6 @@ from ..services import (
     SnubCubeSolidCalculator,
     SnubDodecahedronSolidService,
     SnubDodecahedronSolidCalculator,
-    SnubCubeSolidService,
-    SnubCubeSolidCalculator,
-    SnubDodecahedronSolidService,
-    SnubDodecahedronSolidCalculator,
     VaultOfHestiaSolidService,
     VaultOfHestiaSolidCalculator,
     SphereSolidService,
@@ -153,6 +148,16 @@ from ..services import (
     GeneralPyramidSolidService,
     GeneralPyramidSolidCalculator,
 )
+
+def build_twisted_icosahedral_antiprism(**kwargs):
+    # Wrapper to avoid inline lambdas in registry entries
+    return GeneralAntiprismSolidService.build_dynamic(sides=10, **kwargs)
+
+
+def calculate_twisted_icosahedral_antiprism(**kwargs):
+    # Wrapper to avoid inline lambdas in registry entries
+    return GeneralAntiprismSolidCalculator(sides=10, **kwargs)
+
 
 from .esoteric_definitions import ESOTERIC_DEFINITIONS
 
@@ -1303,7 +1308,7 @@ SOLID_VIEWER_CONFIG: Dict[str, dict] = {
     'twisted_icosahedral_antiprism': {
         'title': 'Twisted Icosahedral Antiprism',
         'summary': 'A decagonal (n=10) antiprism representing high-order prismatic twisting.',
-        'builder': lambda **kwargs: GeneralAntiprismSolidService.build_dynamic(sides=10, **kwargs),  # type: ignore[reportUnknownArgumentType, reportUnknownLambdaType]
-        'calculator': lambda **kwargs: GeneralAntiprismSolidCalculator(sides=10, **kwargs),  # type: ignore[reportUnknownArgumentType, reportUnknownLambdaType]
+        'builder': build_twisted_icosahedral_antiprism,
+        'calculator': calculate_twisted_icosahedral_antiprism,
     },
 }

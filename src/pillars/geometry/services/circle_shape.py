@@ -34,62 +34,72 @@ class CircleShape(GeometricShape):
                 name='Radius',
                 key='radius',
                 unit='units',
-                readonly=False
+                readonly=False,
+                formula=r'r'
             ),
             'diameter': ShapeProperty(
                 name='Diameter',
                 key='diameter',
                 unit='units',
-                readonly=False
+                readonly=False,
+                formula=r'd = 2r'
             ),
             'circumference': ShapeProperty(
                 name='Circumference',
                 key='circumference',
                 unit='units',
-                readonly=False
+                readonly=False,
+                formula=r'C = 2\pi r = \pi d'
             ),
             'area': ShapeProperty(
                 name='Area',
                 key='area',
                 unit='units²',
-                readonly=False
+                readonly=False,
+                formula=r'A = \pi r^2 = \frac{\pi d^2}{4}'
             ),
             'central_angle_deg': ShapeProperty(
                 name='Central Angle',
                 key='central_angle_deg',
                 unit='°',
                 readonly=False,
-                precision=2
+                precision=2,
+                formula=r'\theta \text{ (in degrees)}'
             ),
             'arc_length': ShapeProperty(
                 name='Arc Length',
                 key='arc_length',
                 unit='units',
-                readonly=False
+                readonly=False,
+                formula=r's = r\theta = \frac{\pi r \theta}{180°}'
             ),
             'chord_length': ShapeProperty(
                 name='Chord Length',
                 key='chord_length',
                 unit='units',
-                readonly=False
+                readonly=False,
+                formula=r'c = 2r\sin\left(\frac{\theta}{2}\right)'
             ),
             'sagitta': ShapeProperty(
                 name='Sagitta (Chord Height)',
                 key='sagitta',
                 unit='units',
-                readonly=False
+                readonly=False,
+                formula=r'h = r\left(1 - \cos\left(\frac{\theta}{2}\right)\right)'
             ),
             'sector_area': ShapeProperty(
                 name='Sector Area',
                 key='sector_area',
                 unit='units²',
-                readonly=True
+                readonly=True,
+                formula=r'A_{sector} = \frac{\pi r^2 \theta}{360°} = \frac{r^2\theta}{2}'
             ),
             'segment_area': ShapeProperty(
                 name='Segment Area',
                 key='segment_area',
                 unit='units²',
-                readonly=True
+                readonly=True,
+                formula=r'A_{segment} = \frac{r^2}{2}(\theta - \sin\theta)'
             ),
         }
     

@@ -202,7 +202,7 @@ class ShapePickerDialog(QDialog):
         """)
         
         self._grid_container = QWidget()
-        self._grid_container.setStyleSheet("background: transparent;")
+        self._grid_container.setStyleSheet("background-color: transparent;")
         self._grid_layout = QGridLayout(self._grid_container)
         self._grid_layout.setSpacing(12)
         self._grid_layout.setContentsMargins(0, 0, 0, 0)
@@ -218,7 +218,7 @@ class ShapePickerDialog(QDialog):
         
     def _build_header(self) -> QWidget:
         header = QWidget()
-        header.setStyleSheet("background: transparent;")
+        header.setStyleSheet("background-color: transparent;")
         header_layout = QVBoxLayout(header)
         header_layout.setContentsMargins(0, 0, 0, 0)
         header_layout.setSpacing(4)
@@ -268,15 +268,20 @@ class ShapePickerDialog(QDialog):
         
     def _build_search_bar(self) -> QWidget:
         container = QWidget()
-        container.setStyleSheet("background: transparent;")
+        container.setStyleSheet("background-color: transparent;")
         layout = QHBoxLayout(container)
         layout.setContentsMargins(0, 0, 0, 0)
         
         self._search_input = QLineEdit()
         self._search_input.setPlaceholderText("🔍 Filter shapes...")
-        self._search_input.setStyleSheet(f"""
+        
+        # Build stylesheet with explicit values to avoid f-string issues
+        cat_name = self._category.get('name', '')  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
+        border_focus_color = self.CATEGORY_COLORS.get(cat_name, '#64748b')
+        
+        stylesheet = f"""
             QLineEdit {{
-                background: {LiturgyColors.LIGHT};
+                background-color: {LiturgyColors.LIGHT};
                 border: 1px solid {LiturgyColors.ASH};
                 border-radius: 12px;
                 padding: 10px 16px;
@@ -284,9 +289,10 @@ class ShapePickerDialog(QDialog):
                 color: {LiturgyColors.VOID};
             }}
             QLineEdit:focus {{
-                border-color: {self.CATEGORY_COLORS.get(self._category.get('name', ''), '#64748b')};  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
+                border-color: {border_focus_color};
             }}
-        """)
+        """
+        self._search_input.setStyleSheet(stylesheet)
         self._search_input.textChanged.connect(self._on_search_changed)
         layout.addWidget(self._search_input)
         
@@ -294,7 +300,7 @@ class ShapePickerDialog(QDialog):
         
     def _build_footer(self) -> QWidget:
         footer = QWidget()
-        footer.setStyleSheet("background: transparent;")
+        footer.setStyleSheet("background-color: transparent;")
         layout = QHBoxLayout(footer)
         layout.setContentsMargins(0, 8, 0, 0)
         

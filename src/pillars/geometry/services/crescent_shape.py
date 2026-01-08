@@ -44,44 +44,52 @@ class CrescentShape(GeometricShape):
                 name="Outer Radius (R)",
                 key="outer_radius",
                 unit="units",
+                formula=r"R",
             ),
             "inner_radius": ShapeProperty(
                 name="Inner Radius (r)",
                 key="inner_radius",
                 unit="units",
+                formula=r"r",
             ),
             "offset": ShapeProperty(
                 name="Center Offset (d)",
                 key="offset",
                 unit="units",
+                formula=r"d",
             ),
             "outer_diameter": ShapeProperty(
                 name="Outer Diameter",
                 key="outer_diameter",
                 unit="units",
+                formula=r"D_R = 2R",
             ),
             "inner_diameter": ShapeProperty(
                 name="Inner Diameter",
                 key="inner_diameter",
                 unit="units",
+                formula=r"D_r = 2r",
             ),
             "intersection_area": ShapeProperty(
                 name="Overlap Area",
                 key="intersection_area",
                 unit="units²",
                 readonly=True,
+                formula=r"A_{\cap} = R^2\cos^{-1}\!\frac{d^2+R^2-r^2}{2dR} + r^2\cos^{-1}\!\frac{d^2+r^2-R^2}{2dr} - \tfrac{1}{2}\sqrt{(-d+R+r)(d+R-r)(d-R+r)(d+R+r)}",
             ),
             "crescent_area": ShapeProperty(
                 name="Crescent Area",
                 key="crescent_area",
                 unit="units²",
                 readonly=True,
+                formula=r"A_{cres} = \pi R^2 - A_{\cap}",
             ),
             "perimeter": ShapeProperty(
                 name="Crescent Perimeter",
                 key="perimeter",
                 unit="units",
                 readonly=True,
+                formula=r"P = (2\pi-\alpha)R + \beta r,\ \alpha=2\cos^{-1}\!\tfrac{d^2+R^2-r^2}{2dR},\ \beta=2\cos^{-1}\!\tfrac{d^2+r^2-R^2}{2dr}",
             ),
         }
 

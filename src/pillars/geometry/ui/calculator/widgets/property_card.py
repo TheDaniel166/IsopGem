@@ -3,12 +3,13 @@ Property Card - The Liturgical Input Tile.
 Styled card widget for displaying and editing a single geometric property.
 """
 from typing import Optional, Callable
-from PyQt6.QtWidgets import QFrame, QVBoxLayout, QLabel, QLineEdit, QMenu
+from PyQt6.QtWidgets import QFrame, QVBoxLayout, QLabel, QLineEdit, QMenu, QPushButton, QHBoxLayout
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QAction, QDoubleValidator
 
 from ....services.base_shape import ShapeProperty
 from ...liturgy_styles import LiturgyInputs, LiturgyColors, LiturgyMenus
+from .formula_dialog import FormulaDialog
 
 
 class PropertyCard(QFrame):
@@ -37,6 +38,7 @@ class PropertyCard(QFrame):
         self.unit = property_data.unit
         self.is_readonly = property_data.readonly
         self.precision = property_data.precision
+        self.formula = property_data.formula
         
         self._setup_ui()
         self.update_state(property_data.value)
@@ -47,10 +49,40 @@ class PropertyCard(QFrame):
         self.layout.setContentsMargins(12, 12, 12, 12)
         self.layout.setSpacing(4)
         
-        # Header (Name + Unit)
+        # Header (Name + Unit + Info Button)
+        header_layout = QHBoxLayout()
+        header_layout.setSpacing(6)
+        header_layout.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        
         self.header_label = QLabel(f"{self.property_name} ({self.unit})" if self.unit else self.property_name)
         self.header_label.setStyleSheet(f"color: {LiturgyColors.VOID_SLATE}; font-size: 10pt; font-weight: 600;")
-        self.layout.addWidget(self.header_label)
+        header_layout.addWidget(self.header_label, 0, Qt.AlignmentFlag.AlignVCenter)
+        
+        # Formula info button (only if formula exists)
+        if self.formula:
+            self.info_btn = QPushButton("?")
+            self.info_btn.setFixedSize(16, 16)
+            self.info_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            self.info_btn.setToolTip("Show formula")
+            self.info_btn.setStyleSheet(f"""
+                QPushButton {{
+                    background-color: {LiturgyColors.INDIGO_200};
+                    color: {LiturgyColors.INDIGO_900};
+                    border: 1px solid {LiturgyColors.INDIGO_700};
+                    border-radius: 8px;
+                    font-weight: bold;
+                    font-size: 8pt;
+                    padding: 0px;
+                }}
+                QPushButton:hover {{
+                    background-color: {LiturgyColors.INDIGO_100};
+                }}
+            """)
+            self.info_btn.clicked.connect(self._show_formula)
+            header_layout.addWidget(self.info_btn, 0, Qt.AlignmentFlag.AlignVCenter)
+        
+        header_layout.addStretch()
+        self.layout.addLayout(header_layout)
         
         # Input Field
         self.input_field = QLineEdit()
@@ -143,3 +175,18 @@ class PropertyCard(QFrame):
             self.quadset_analysis_requested.emit(val_int)
         except ValueError:
             pass
+    
+    def _show_formula(self):
+        """Show the formula dialog for this property."""
+        if not self.formula:
+            return
+        
+        dialog = FormulaDialog(
+            property_name=self.property_name,
+            formula_latex=self.formula,
+            parent=self
+        )
+        # Keep a reference so it isn't GC'd while open
+        self._formula_dialog = dialog
+        dialog.destroyed.connect(lambda: setattr(self, '_formula_dialog', None))
+        dialog.show()

@@ -129,14 +129,14 @@ class ParallelogramShape(GeometricShape):
 
 	def _init_properties(self):
 		self.properties = {
-			'base': ShapeProperty(name='Base', key='base', unit='units'),
-			'side': ShapeProperty(name='Side', key='side', unit='units'),
-			'height': ShapeProperty(name='Height', key='height', unit='units'),
-			'angle_deg': ShapeProperty(name='Included Angle (°)', key='angle_deg', unit='°', precision=2),
-			'perimeter': ShapeProperty(name='Perimeter', key='perimeter', unit='units', readonly=True),
-			'area': ShapeProperty(name='Area', key='area', unit='units²', readonly=True),
-			'diagonal_short': ShapeProperty(name='Short Diagonal', key='diagonal_short', unit='units', readonly=True),
-			'diagonal_long': ShapeProperty(name='Long Diagonal', key='diagonal_long', unit='units', readonly=True),
+			'base': ShapeProperty(name='Base', key='base', unit='units', formula=r'b'),
+			'side': ShapeProperty(name='Side', key='side', unit='units', formula=r's'),
+			'height': ShapeProperty(name='Height', key='height', unit='units', formula=r'h = s\sin\theta'),
+			'angle_deg': ShapeProperty(name='Included Angle (°)', key='angle_deg', unit='°', precision=2, formula=r'\theta'),
+			'perimeter': ShapeProperty(name='Perimeter', key='perimeter', unit='units', readonly=True, formula=r'P = 2(b + s)'),
+			'area': ShapeProperty(name='Area', key='area', unit='units²', readonly=True, formula=r'A = b h = bs\sin\theta'),
+			'diagonal_short': ShapeProperty(name='Short Diagonal', key='diagonal_short', unit='units', readonly=True, formula=r'd_{short} = \sqrt{b^2 + s^2 - 2bs\cos\theta}'),
+			'diagonal_long': ShapeProperty(name='Long Diagonal', key='diagonal_long', unit='units', readonly=True, formula=r'd_{long} = \sqrt{b^2 + s^2 + 2bs\cos\theta}'),
 		}
 
 	def calculate_from_property(self, property_key: str, value: float) -> bool:
@@ -308,13 +308,13 @@ class RhombusShape(GeometricShape):
 
 	def _init_properties(self):
 		self.properties = {
-			'side': ShapeProperty(name='Side Length', key='side', unit='units'),
-			'height': ShapeProperty(name='Height', key='height', unit='units'),
-			'angle_deg': ShapeProperty(name='Interior Angle (°)', key='angle_deg', unit='°', precision=2),
-			'diagonal_long': ShapeProperty(name='Long Diagonal', key='diagonal_long', unit='units'),
-			'diagonal_short': ShapeProperty(name='Short Diagonal', key='diagonal_short', unit='units'),
-			'perimeter': ShapeProperty(name='Perimeter', key='perimeter', unit='units', readonly=True),
-			'area': ShapeProperty(name='Area', key='area', unit='units²', readonly=True),
+			'side': ShapeProperty(name='Side Length', key='side', unit='units', formula=r'a'),
+			'height': ShapeProperty(name='Height', key='height', unit='units', formula=r'h = a\sin\theta'),
+			'angle_deg': ShapeProperty(name='Interior Angle (°)', key='angle_deg', unit='°', precision=2, formula=r'\theta'),
+			'diagonal_long': ShapeProperty(name='Long Diagonal', key='diagonal_long', unit='units', formula=r'd_1 = a\sqrt{2 + 2\cos\theta}'),
+			'diagonal_short': ShapeProperty(name='Short Diagonal', key='diagonal_short', unit='units', formula=r'd_2 = a\sqrt{2 - 2\cos\theta}'),
+			'perimeter': ShapeProperty(name='Perimeter', key='perimeter', unit='units', readonly=True, formula=r'P = 4a'),
+			'area': ShapeProperty(name='Area', key='area', unit='units²', readonly=True, formula=r'A = a^2\sin\theta = \tfrac{d_1 d_2}{2}'),
 		}
 
 	def calculate_from_property(self, property_key: str, value: float) -> bool:
@@ -477,16 +477,16 @@ class TrapezoidShape(GeometricShape):
 
 	def _init_properties(self):
 		self.properties = {
-			'base_major': ShapeProperty(name='Major Base', key='base_major', unit='units'),
-			'base_minor': ShapeProperty(name='Minor Base', key='base_minor', unit='units'),
-			'height': ShapeProperty(name='Height', key='height', unit='units'),
-			'leg_left': ShapeProperty(name='Left Leg', key='leg_left', unit='units'),
-			'leg_right': ShapeProperty(name='Right Leg', key='leg_right', unit='units'),
-			'area': ShapeProperty(name='Area', key='area', unit='units²', readonly=True),
-			'perimeter': ShapeProperty(name='Perimeter', key='perimeter', unit='units', readonly=True),
-			'midsegment': ShapeProperty(name='Mid-segment', key='midsegment', unit='units', readonly=True),
-			'angle_left_deg': ShapeProperty(name='Left Base Angle (°)', key='angle_left_deg', unit='°', readonly=True, precision=2),
-			'angle_right_deg': ShapeProperty(name='Right Base Angle (°)', key='angle_right_deg', unit='°', readonly=True, precision=2),
+			'base_major': ShapeProperty(name='Major Base', key='base_major', unit='units', formula=r'B'),
+			'base_minor': ShapeProperty(name='Minor Base', key='base_minor', unit='units', formula=r'b'),
+			'height': ShapeProperty(name='Height', key='height', unit='units', formula=r'h'),
+			'leg_left': ShapeProperty(name='Left Leg', key='leg_left', unit='units', formula=r'\ell_L'),
+			'leg_right': ShapeProperty(name='Right Leg', key='leg_right', unit='units', formula=r'\ell_R'),
+			'area': ShapeProperty(name='Area', key='area', unit='units²', readonly=True, formula=r'A = \tfrac{(B + b)h}{2}'),
+			'perimeter': ShapeProperty(name='Perimeter', key='perimeter', unit='units', readonly=True, formula=r'P = B + b + \ell_L + \ell_R'),
+			'midsegment': ShapeProperty(name='Mid-segment', key='midsegment', unit='units', readonly=True, formula=r'm = \tfrac{B + b}{2}'),
+			'angle_left_deg': ShapeProperty(name='Left Base Angle (°)', key='angle_left_deg', unit='°', readonly=True, precision=2, formula=r'\alpha_L = \arctan\!\left(\tfrac{h}{\sqrt{\ell_L^2 - h^2}}\right)'),
+			'angle_right_deg': ShapeProperty(name='Right Base Angle (°)', key='angle_right_deg', unit='°', readonly=True, precision=2, formula=r'\alpha_R = \arctan\!\left(\tfrac{h}{\sqrt{\ell_R^2 - h^2}}\right)'),
 		}
 
 	def calculate_from_property(self, property_key: str, value: float) -> bool:
@@ -673,15 +673,15 @@ class IsoscelesTrapezoidShape(GeometricShape):
 
 	def _init_properties(self):
 		self.properties = {
-			'base_major': ShapeProperty(name='Major Base', key='base_major', unit='units'),
-			'base_minor': ShapeProperty(name='Minor Base', key='base_minor', unit='units'),
-			'height': ShapeProperty(name='Height', key='height', unit='units'),
-			'leg': ShapeProperty(name='Leg', key='leg', unit='units'),
-			'area': ShapeProperty(name='Area', key='area', unit='units²', readonly=True),
-			'perimeter': ShapeProperty(name='Perimeter', key='perimeter', unit='units', readonly=True),
-			'midsegment': ShapeProperty(name='Mid-segment', key='midsegment', unit='units', readonly=True),
-			'base_angle_deg': ShapeProperty(name='Base Angle (°)', key='base_angle_deg', unit='°', readonly=True, precision=2),
-			'diagonal': ShapeProperty(name='Diagonal Length', key='diagonal', unit='units', readonly=True),
+			'base_major': ShapeProperty(name='Major Base', key='base_major', unit='units', formula=r'B'),
+			'base_minor': ShapeProperty(name='Minor Base', key='base_minor', unit='units', formula=r'b'),
+			'height': ShapeProperty(name='Height', key='height', unit='units', formula=r'h'),
+			'leg': ShapeProperty(name='Leg', key='leg', unit='units', formula=r'\ell = \sqrt{h^2 + \left(\tfrac{B-b}{2}\right)^2}'),
+			'area': ShapeProperty(name='Area', key='area', unit='units²', readonly=True, formula=r'A = \tfrac{(B + b)h}{2}'),
+			'perimeter': ShapeProperty(name='Perimeter', key='perimeter', unit='units', readonly=True, formula=r'P = B + b + 2\ell'),
+			'midsegment': ShapeProperty(name='Mid-segment', key='midsegment', unit='units', readonly=True, formula=r'm = \tfrac{B + b}{2}'),
+			'base_angle_deg': ShapeProperty(name='Base Angle (°)', key='base_angle_deg', unit='°', readonly=True, precision=2, formula=r'\alpha = \arctan\!\left(\tfrac{2h}{B - b}\right)'),
+			'diagonal': ShapeProperty(name='Diagonal Length', key='diagonal', unit='units', readonly=True, formula=r'd = \sqrt{\ell^2 + B b}'),
 		}
 
 	def calculate_from_property(self, property_key: str, value: float) -> bool:
@@ -811,13 +811,13 @@ class _BaseAdjacentEqualShape(GeometricShape):
 
 	def _init_properties(self):
 		self.properties = {
-			'equal_side': ShapeProperty(name='Equal Side Length', key='equal_side', unit='units'),
-			'unequal_side': ShapeProperty(name='Other Side Length', key='unequal_side', unit='units'),
-			'included_angle_deg': ShapeProperty(name='Angle Between Equal Sides (°)', key='included_angle_deg', unit='°', precision=2),
-			'area': ShapeProperty(name='Area', key='area', unit='units²', readonly=True),
-			'perimeter': ShapeProperty(name='Perimeter', key='perimeter', unit='units', readonly=True),
-			'diagonal_long': ShapeProperty(name='Long Diagonal', key='diagonal_long', unit='units', readonly=True),
-			'diagonal_short': ShapeProperty(name='Short Diagonal', key='diagonal_short', unit='units', readonly=True),
+			'equal_side': ShapeProperty(name='Equal Side Length', key='equal_side', unit='units', formula=r'a'),
+			'unequal_side': ShapeProperty(name='Other Side Length', key='unequal_side', unit='units', formula=r'b'),
+			'included_angle_deg': ShapeProperty(name='Angle Between Equal Sides (°)', key='included_angle_deg', unit='°', precision=2, formula=r'\theta'),
+			'area': ShapeProperty(name='Area', key='area', unit='units²', readonly=True, formula=r'A = \tfrac{d_1 d_2}{2}'),
+			'perimeter': ShapeProperty(name='Perimeter', key='perimeter', unit='units', readonly=True, formula=r'P = 2(a + b)'),
+			'diagonal_long': ShapeProperty(name='Long Diagonal', key='diagonal_long', unit='units', readonly=True, formula=r'd_1 = \max(AC, BD)'),
+			'diagonal_short': ShapeProperty(name='Short Diagonal', key='diagonal_short', unit='units', readonly=True, formula=r'd_2 = \min(AC, BD)'),
 		}
 
 	def calculate_from_property(self, property_key: str, value: float) -> bool:
@@ -1020,14 +1020,14 @@ class CyclicQuadrilateralShape(GeometricShape):
 
 	def _init_properties(self):
 		self.properties = {
-			'side_a': ShapeProperty(name='Side a', key='side_a', unit='units'),
-			'side_b': ShapeProperty(name='Side b', key='side_b', unit='units'),
-			'side_c': ShapeProperty(name='Side c', key='side_c', unit='units'),
-			'side_d': ShapeProperty(name='Side d', key='side_d', unit='units'),
-			'perimeter': ShapeProperty(name='Perimeter', key='perimeter', unit='units', readonly=True),
-			'semiperimeter': ShapeProperty(name='Semiperimeter', key='semiperimeter', unit='units', readonly=True),
-			'area': ShapeProperty(name='Area', key='area', unit='units²', readonly=True),
-			'circumradius': ShapeProperty(name='Circumradius', key='circumradius', unit='units', readonly=True),
+			'side_a': ShapeProperty(name='Side a', key='side_a', unit='units', formula=r'a'),
+			'side_b': ShapeProperty(name='Side b', key='side_b', unit='units', formula=r'b'),
+			'side_c': ShapeProperty(name='Side c', key='side_c', unit='units', formula=r'c'),
+			'side_d': ShapeProperty(name='Side d', key='side_d', unit='units', formula=r'd'),
+			'perimeter': ShapeProperty(name='Perimeter', key='perimeter', unit='units', readonly=True, formula=r'P = a + b + c + d'),
+			'semiperimeter': ShapeProperty(name='Semiperimeter', key='semiperimeter', unit='units', readonly=True, formula=r's = \tfrac{a + b + c + d}{2}'),
+			'area': ShapeProperty(name='Area', key='area', unit='units²', readonly=True, formula=r'A = \sqrt{(s-a)(s-b)(s-c)(s-d)}'),
+			'circumradius': ShapeProperty(name='Circumradius', key='circumradius', unit='units', readonly=True, formula=r'R = \sqrt{\tfrac{(ab+cd)(ac+bd)(ad+bc)}{16A^2}}'),
 		}
 
 	def calculate_from_property(self, property_key: str, value: float) -> bool:
@@ -1168,15 +1168,15 @@ class TangentialQuadrilateralShape(GeometricShape):
 
 	def _init_properties(self):
 		self.properties = {
-			'side_a': ShapeProperty(name='Side a', key='side_a', unit='units'),
-			'side_b': ShapeProperty(name='Side b', key='side_b', unit='units'),
-			'side_c': ShapeProperty(name='Side c', key='side_c', unit='units'),
-			'side_d': ShapeProperty(name='Side d', key='side_d', unit='units'),
-			'inradius': ShapeProperty(name='Inradius', key='inradius', unit='units'),
-			'perimeter': ShapeProperty(name='Perimeter', key='perimeter', unit='units', readonly=True),
-			'semiperimeter': ShapeProperty(name='Semiperimeter', key='semiperimeter', unit='units', readonly=True),
-			'area': ShapeProperty(name='Area', key='area', unit='units²', readonly=True),
-			'incircle_circumference': ShapeProperty(name='Incircle Circumference', key='incircle_circumference', unit='units', readonly=True),
+			'side_a': ShapeProperty(name='Side a', key='side_a', unit='units', formula=r'a'),
+			'side_b': ShapeProperty(name='Side b', key='side_b', unit='units', formula=r'b'),
+			'side_c': ShapeProperty(name='Side c', key='side_c', unit='units', formula=r'c'),
+			'side_d': ShapeProperty(name='Side d', key='side_d', unit='units', formula=r'd'),
+			'inradius': ShapeProperty(name='Inradius', key='inradius', unit='units', formula=r'r'),
+			'perimeter': ShapeProperty(name='Perimeter', key='perimeter', unit='units', readonly=True, formula=r'P = a + b + c + d'),
+			'semiperimeter': ShapeProperty(name='Semiperimeter', key='semiperimeter', unit='units', readonly=True, formula=r's = \tfrac{a + b + c + d}{2}'),
+			'area': ShapeProperty(name='Area', key='area', unit='units²', readonly=True, formula=r'A = r\,s \quad (a+c=b+d)'),
+			'incircle_circumference': ShapeProperty(name='Incircle Circumference', key='incircle_circumference', unit='units', readonly=True, formula=r'C_{in} = 2\pi r'),
 		}
 
 	def calculate_from_property(self, property_key: str, value: float) -> bool:
@@ -1318,17 +1318,17 @@ class BicentricQuadrilateralShape(GeometricShape):
 
 	def _init_properties(self):
 		self.properties = {
-			'side_a': ShapeProperty(name='Side a', key='side_a', unit='units'),
-			'side_b': ShapeProperty(name='Side b', key='side_b', unit='units'),
-			'side_c': ShapeProperty(name='Side c', key='side_c', unit='units'),
-			'side_d': ShapeProperty(name='Side d', key='side_d', unit='units'),
-			'perimeter': ShapeProperty(name='Perimeter', key='perimeter', unit='units', readonly=True),
-			'semiperimeter': ShapeProperty(name='Semiperimeter', key='semiperimeter', unit='units', readonly=True),
-			'area': ShapeProperty(name='Area', key='area', unit='units²', readonly=True),
-			'inradius': ShapeProperty(name='Inradius', key='inradius', unit='units', readonly=True),
-			'circumradius': ShapeProperty(name='Circumradius', key='circumradius', unit='units', readonly=True),
-			'incircle_circumference': ShapeProperty(name='Incircle Circumference', key='incircle_circumference', unit='units', readonly=True),
-			'circumcircle_circumference': ShapeProperty(name='Circumcircle Circumference', key='circumcircle_circumference', unit='units', readonly=True),
+			'side_a': ShapeProperty(name='Side a', key='side_a', unit='units', formula=r'a'),
+			'side_b': ShapeProperty(name='Side b', key='side_b', unit='units', formula=r'b'),
+			'side_c': ShapeProperty(name='Side c', key='side_c', unit='units', formula=r'c'),
+			'side_d': ShapeProperty(name='Side d', key='side_d', unit='units', formula=r'd'),
+			'perimeter': ShapeProperty(name='Perimeter', key='perimeter', unit='units', readonly=True, formula=r'P = a + b + c + d'),
+			'semiperimeter': ShapeProperty(name='Semiperimeter', key='semiperimeter', unit='units', readonly=True, formula=r's = \tfrac{a + b + c + d}{2}'),
+			'area': ShapeProperty(name='Area', key='area', unit='units²', readonly=True, formula=r'A = \sqrt{(s-a)(s-b)(s-c)(s-d)}'),
+			'inradius': ShapeProperty(name='Inradius', key='inradius', unit='units', readonly=True, formula=r'r = \tfrac{A}{s}'),
+			'circumradius': ShapeProperty(name='Circumradius', key='circumradius', unit='units', readonly=True, formula=r'R = \sqrt{\tfrac{(ab+cd)(ac+bd)(ad+bc)}{16A^2}}'),
+			'incircle_circumference': ShapeProperty(name='Incircle Circumference', key='incircle_circumference', unit='units', readonly=True, formula=r'C_{in} = 2\pi r'),
+			'circumcircle_circumference': ShapeProperty(name='Circumcircle Circumference', key='circumcircle_circumference', unit='units', readonly=True, formula=r'C_{circ} = 2\pi R'),
 		}
 
 	def calculate_from_property(self, property_key: str, value: float) -> bool:
@@ -1465,15 +1465,15 @@ class QuadrilateralSolverShape(GeometricShape):
 
 	def _init_properties(self):
 		self.properties = {
-			'side_a': ShapeProperty(name='Side a', key='side_a', unit='units'),
-			'side_b': ShapeProperty(name='Side b', key='side_b', unit='units'),
-			'side_c': ShapeProperty(name='Side c', key='side_c', unit='units'),
-			'side_d': ShapeProperty(name='Side d', key='side_d', unit='units'),
-			'diagonal_p': ShapeProperty(name='Diagonal p', key='diagonal_p', unit='units'),
-			'diagonal_q': ShapeProperty(name='Diagonal q', key='diagonal_q', unit='units'),
-			'diagonal_angle_deg': ShapeProperty(name='Angle Between Diagonals (°)', key='diagonal_angle_deg', unit='°', precision=2),
-			'area': ShapeProperty(name='Area', key='area', unit='units²', readonly=True),
-			'perimeter': ShapeProperty(name='Perimeter', key='perimeter', unit='units', readonly=True),
+			'side_a': ShapeProperty(name='Side a', key='side_a', unit='units', formula=r'a'),
+			'side_b': ShapeProperty(name='Side b', key='side_b', unit='units', formula=r'b'),
+			'side_c': ShapeProperty(name='Side c', key='side_c', unit='units', formula=r'c'),
+			'side_d': ShapeProperty(name='Side d', key='side_d', unit='units', formula=r'd'),
+			'diagonal_p': ShapeProperty(name='Diagonal p', key='diagonal_p', unit='units', formula=r'p'),
+			'diagonal_q': ShapeProperty(name='Diagonal q', key='diagonal_q', unit='units', formula=r'q'),
+			'diagonal_angle_deg': ShapeProperty(name='Angle Between Diagonals (°)', key='diagonal_angle_deg', unit='°', precision=2, formula=r'\phi'),
+			'area': ShapeProperty(name='Area', key='area', unit='units²', readonly=True, formula=r'A = \tfrac{1}{2}pq\sin\phi'),
+			'perimeter': ShapeProperty(name='Perimeter', key='perimeter', unit='units', readonly=True, formula=r'P = a + b + c + d'),
 		}
 
 	def calculate_from_property(self, property_key: str, value: float) -> bool:

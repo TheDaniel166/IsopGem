@@ -96,12 +96,11 @@ class EsotericWisdomWindow(QWidget):
         self.search_input.setPlaceholderText("Search the sacred scrolls...")
         self.search_input.setStyleSheet("""
             QLineEdit {
-                background: #ffffff;
+                background-color: #ffffff;
                 border: 1px solid #a78bfa;
                 border-radius: 8px;
                 padding: 6px 12px;
                 font-size: 10pt;
-                min-width: 250px;
                 color: #0f172a;
             }
             QLineEdit:focus {

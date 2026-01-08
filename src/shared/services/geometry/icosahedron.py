@@ -385,6 +385,14 @@ class IcosahedronSolidService:
 class IcosahedronSolidCalculator:
     """Bidirectional calculator for regular icosahedra with comprehensive properties."""
 
+    _FORMULAS = {
+        'face_area': r"A_f = \frac{\sqrt{3}}{4}a^2",
+        'surface_area': r"A = 5\sqrt{3}\,a^2",
+        'volume': r"V = \frac{5(3+\sqrt{5})}{12}a^3",
+        'inradius': r"r = \frac{a}{12}\sqrt{3}\,(3+\sqrt{5})",
+        'circumradius': r"R = \frac{a}{4}\sqrt{10+2\sqrt{5}}",
+    }
+
     _EDITABLE_PROPERTIES = (
         ('edge_length', 'Edge Length', 'units', 4, 1.0, _BASE_EDGE_LENGTH),
         ('face_area', 'Face Area', 'units²', 4, 2.0, _BASE_FACE_AREA),
@@ -445,13 +453,23 @@ class IcosahedronSolidCalculator:
         
         for key, label, unit, precision, power, base_value in self._EDITABLE_PROPERTIES:
             self._properties[key] = SolidProperty(
-                name=label, key=key, unit=unit, precision=precision, editable=True
+                name=label,
+                key=key,
+                unit=unit,
+                precision=precision,
+                editable=True,
+                formula=self._FORMULAS.get(key),
             )
             self._edge_solvers[key] = self._build_solver(base_value, power)
         
         for key, label, unit, precision in self._READONLY_PROPERTIES:
             self._properties[key] = SolidProperty(
-                name=label, key=key, unit=unit, precision=precision, editable=False
+                name=label,
+                key=key,
+                unit=unit,
+                precision=precision,
+                editable=False,
+                formula=self._FORMULAS.get(key),
             )
         
         self._result: Optional[IcosahedronSolidResult] = None

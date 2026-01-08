@@ -44,50 +44,59 @@ class AnnulusShape(GeometricShape):
                 name="Outer Radius (R)",
                 key="outer_radius",
                 unit="units",
+                formula=r'R'
             ),
             "inner_radius": ShapeProperty(
                 name="Inner Radius (r)",
                 key="inner_radius",
                 unit="units",
+                formula=r'r'
             ),
             "ring_width": ShapeProperty(
                 name="Ring Width (R - r)",
                 key="ring_width",
                 unit="units",
+                formula=r'w = R - r'
             ),
             "outer_diameter": ShapeProperty(
                 name="Outer Diameter",
                 key="outer_diameter",
                 unit="units",
+                formula=r'D = 2R'
             ),
             "inner_diameter": ShapeProperty(
                 name="Inner Diameter",
                 key="inner_diameter",
                 unit="units",
+                formula=r'd = 2r'
             ),
             "area": ShapeProperty(
                 name="Ring Area",
                 key="area",
                 unit="units²",
                 readonly=True,
+                formula=r'A = \pi(R^2 - r^2)'
             ),
             "outer_circumference": ShapeProperty(
                 name="Outer Circumference",
                 key="outer_circumference",
                 unit="units",
                 readonly=True,
+                formula=r'C_{outer} = 2\pi R'
             ),
             "inner_circumference": ShapeProperty(
                 name="Inner Circumference",
                 key="inner_circumference",
                 unit="units",
                 readonly=True,
+                formula=r'C_{inner} = 2\pi r'
             ),
             "radius_ratio": ShapeProperty(
                 name="Radius Ratio (R / r)",
                 key="radius_ratio",
                 readonly=True,
                 precision=4,
+                formula=r'\rho = \frac{R}{r}'
             ),
         }
 

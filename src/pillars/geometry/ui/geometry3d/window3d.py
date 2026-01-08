@@ -23,6 +23,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtGui import QAction, QDoubleValidator
 
 from ...shared.solid_payload import SolidPayload
+from ..calculator.widgets.formula_dialog import FormulaDialog
 from shared.ui import WindowManager
 from shared.signals.navigation_bus import navigation_bus
 from .view3d import Geometry3DView
@@ -62,6 +63,7 @@ class Geometry3DWindow(QMainWindow):
         self._property_error_label: Optional[QLabel] = None
         self._metadata_mode = True
         self._updating_inputs = False
+        self._formula_dialogs = []
 
         central = QWidget(self)
         self.setCentralWidget(central)
@@ -182,17 +184,17 @@ class Geometry3DWindow(QMainWindow):
         property_tabs.setDocumentMode(True)
         property_tabs.setStyleSheet(
             """
-            QTabWidget::pane { border: 1px solid #e2e8f0; border-radius: 10px; background: transparent; }
+            QTabWidget::pane { border: 1px solid #e2e8f0; border-radius: 10px; background-color: transparent; }
             QTabBar::tab { padding: 8px 16px; margin: 2px; font-weight: 600; }
-            QTabBar::tab:selected { background: #e0e7ff; border-radius: 6px; color: #1d4ed8; }
-            QTabBar::tab:!selected { background: #f8fafc; color: #64748b; }
+            QTabBar::tab:selected { background-color: #e0e7ff; border-radius: 6px; color: #1d4ed8; }
+            QTabBar::tab:!selected { background-color: #f8fafc; color: #64748b; }
             """
         )
         
         # Core properties tab
         core_scroll = QScrollArea()
         core_scroll.setWidgetResizable(True)
-        core_scroll.setStyleSheet("QScrollArea {border: none; background: transparent;}")
+        core_scroll.setStyleSheet("QScrollArea {border: none; background-color: transparent;}")
         core_widget = QWidget()
         self._property_layout = QVBoxLayout(core_widget)
         self._property_layout.setContentsMargins(8, 8, 8, 8)
@@ -209,7 +211,7 @@ class Geometry3DWindow(QMainWindow):
         # Advanced properties tab
         advanced_scroll = QScrollArea()
         advanced_scroll.setWidgetResizable(True)
-        advanced_scroll.setStyleSheet("QScrollArea {border: none; background: transparent;}")
+        advanced_scroll.setStyleSheet("QScrollArea {border: none; background-color: transparent;}")
         advanced_widget = QWidget()
         self._advanced_property_layout = QVBoxLayout(advanced_widget)
         self._advanced_property_layout.setContentsMargins(8, 8, 8, 8)
@@ -286,7 +288,7 @@ class Geometry3DWindow(QMainWindow):
             """
             QTabWidget::pane { border: 1px solid #e2e8f0; border-radius: 10px; }
             QTabBar::tab { padding: 6px 12px; margin: 2px; }
-            QTabBar::tab:selected { background: #e0e7ff; border-radius: 6px; }
+            QTabBar::tab:selected { background-color: #e0e7ff; border-radius: 6px; }
             """
         )
         tabs.addTab(self._build_display_tab(), "Display")
@@ -628,6 +630,30 @@ class Geometry3DWindow(QMainWindow):
             unit_label = QLabel(prop.unit)
             unit_label.setStyleSheet("color: #94a3b8; font-size: 10pt;")
             header.addWidget(unit_label)
+        formula = getattr(prop, 'formula', None)
+        if formula:
+            info_btn = QPushButton("?")
+            info_btn.setFixedSize(18, 18)
+            info_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            info_btn.setToolTip("Show formula")
+            info_btn.setStyleSheet(
+                """
+                QPushButton {
+                    background-color: #e0e7ff;
+                    color: #312e81;
+                    border: 1px solid #6366f1;
+                    border-radius: 9px;
+                    font-weight: 700;
+                    font-size: 9pt;
+                    padding: 0px;
+                }
+                QPushButton:hover {
+                    background-color: #c7d2fe;
+                }
+                """
+            )
+            info_btn.clicked.connect(lambda _, p=prop: self._show_formula_dialog(p))
+            header.addWidget(info_btn)
         header.addStretch(1)
         layout.addLayout(header)
 
@@ -652,6 +678,17 @@ class Geometry3DWindow(QMainWindow):
         layout.addWidget(input_field)
         self._property_inputs[prop.key] = input_field
         return frame
+
+    def _show_formula_dialog(self, prop: Any):
+        formula = getattr(prop, 'formula', None)
+        if not formula:
+            return
+        dialog = FormulaDialog(property_name=prop.name, formula_latex=formula, parent=self)
+        self._formula_dialogs.append(dialog)
+        dialog.destroyed.connect(
+            lambda _, d=dialog: self._formula_dialogs.remove(d) if d in self._formula_dialogs else None
+        )
+        dialog.show()
 
     def _commit_property_change(self, key: str, field: QLineEdit):
         if self._updating_inputs or not self._calculator:
