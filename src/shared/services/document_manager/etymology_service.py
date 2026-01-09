@@ -17,7 +17,8 @@ from urllib.parse import quote
 
 import requests
 
-from shared.services.lexicon.classical_lexicon_service import ClassicalLexiconService
+from shared.services.lexicon.lexicon_resolver import LexiconResolver
+from shared.config import get_config
 
 # Try to import BeautifulSoup for enhanced scraping
 try:
@@ -54,11 +55,18 @@ class EtymologyService:
         except ImportError:
             logger.warning("ety-python library not found. Running in online-only mode.")
         
-        # Initialize lexicon service for Greek/Hebrew
-        self._lexicon_service = ClassicalLexiconService()
-        self._etymology_db_path = Path(__file__).resolve().parents[4] / "data" / "etymology_db" / "etymology.csv.gz"
-        self._etymology_db_word_index_path = self._etymology_db_path.parent / "word_index.json"
+        # Initialize lexicon resolver for all languages
+        self._lexicon = LexiconResolver()
+
+        # Use config for paths instead of hardcoded relatives
+        config = get_config()
+        self._etymology_db_path = config.paths.etymology_db / "etymology.csv.gz"
+        self._etymology_db_word_index_path = config.paths.etymology_db / "word_index.json"
         self._etymology_db_word_index: Optional[Dict[str, Dict[str, int]]] = None
+
+        # Check if web fallback is enabled
+        self._enable_web_fallback = config.features.enable_etymology_web_fallback
+        self._enable_wiktionary_scraping = config.features.enable_wiktionary_scraping
 
     def _detect_script(self, text: str) -> str:
         """
@@ -193,16 +201,22 @@ class EtymologyService:
             }
 
         # Fallback to ety-python, then minimal online/APIs if offline sources fail
-        if self._ety_available:
-            res = self._try_offline_ety(word.lower())
+        # Respect feature flags for web fallback
+        if self._enable_web_fallback:
+            if self._ety_available:
+                res = self._try_offline_ety(word.lower())
+                if res:
+                    return res
+
+            res = self._try_online_api(word.lower())
             if res:
                 return res
 
-        res = self._try_online_api(word.lower())
-        if res:
-            return res
+            # Only scrape wiktionary if explicitly enabled (slow)
+            if self._enable_wiktionary_scraping:
+                return self._scrape_wiktionary(word.lower(), target_lang="English") or self._empty_result()
 
-        return self._scrape_wiktionary(word.lower(), target_lang="English") or self._empty_result()
+        return self._empty_result()
 
     def _empty_result(self) -> Dict[str, str]:
         return {"source": "None", "origin": "No etymology found.", "details": ""}
@@ -287,7 +301,7 @@ class EtymologyService:
         Returns formatted HTML with definition, etymology, and transliteration.
         """
         try:
-            results = self._lexicon_service.lookup_hebrew(word)
+            results = self._lexicon.lookup_hebrew(word)
             return self._format_entries(results, "Hebrew Lexicon", "Data from kaikki.org Wiktionary + Strong's")
         except Exception as e:
             logger.error(f"Hebrew lexicon lookup failed: {e}")
@@ -300,7 +314,7 @@ class EtymologyService:
         Returns formatted HTML with definition, etymology, and transliteration.
         """
         try:
-            results = self._lexicon_service.lookup_greek(word, prefer_classical=True)
+            results = self._lexicon.lookup_greek(word, prefer_classical=True)
             return self._format_entries(results, "Ancient Greek Lexicon", "Data from kaikki.org Wiktionary")
         except Exception as e:
             logger.error(f"Greek lexicon lookup failed: {e}")
@@ -309,7 +323,7 @@ class EtymologyService:
     def _lookup_latin_lexicon(self, word: str) -> Optional[Dict[str, str]]:
         """Query offline Latin (kaikki.org)."""
         try:
-            results = self._lexicon_service.lookup_latin(word)
+            results = self._lexicon.lookup_latin(word)
             return self._format_entries(results, "Latin Lexicon", "Data from kaikki.org Wiktionary")
         except Exception as e:
             logger.error(f"Latin lexicon lookup failed: {e}")
@@ -318,7 +332,7 @@ class EtymologyService:
     def _lookup_english_lexicon(self, word: str) -> Optional[Dict[str, str]]:
         """Query offline English (kaikki.org)."""
         try:
-            results = self._lexicon_service.lookup_english(word)
+            results = self._lexicon.lookup_english(word)
             return self._format_entries(results, "English Lexicon", "Data from kaikki.org Wiktionary")
         except Exception as e:
             logger.error(f"English lexicon lookup failed: {e}")
@@ -327,7 +341,7 @@ class EtymologyService:
     def _lookup_sanskrit_lexicon(self, word: str) -> Optional[Dict[str, str]]:
         """Query offline Sanskrit (kaikki.org)."""
         try:
-            results = self._lexicon_service.lookup_sanskrit(word)
+            results = self._lexicon.lookup_sanskrit(word)
             return self._format_entries(results, "Sanskrit Lexicon", "Data from kaikki.org Wiktionary")
         except Exception as e:
             logger.error(f"Sanskrit lexicon lookup failed: {e}")
@@ -336,7 +350,7 @@ class EtymologyService:
     def _lookup_aramaic_lexicon(self, word: str) -> Optional[Dict[str, str]]:
         """Query offline Aramaic (kaikki.org)."""
         try:
-            results = self._lexicon_service.lookup_aramaic(word)
+            results = self._lexicon.lookup_aramaic(word)
             return self._format_entries(results, "Aramaic Lexicon", "Data from kaikki.org Wiktionary")
         except Exception as e:
             logger.error(f"Aramaic lexicon lookup failed: {e}")
@@ -345,7 +359,7 @@ class EtymologyService:
     def _lookup_proto_indo_european(self, word: str) -> Optional[Dict[str, str]]:
         """Query offline Proto-Indo-European (kaikki.org)."""
         try:
-            results = self._lexicon_service.lookup_proto_indo_european(word)
+            results = self._lexicon.lookup_proto_indo_european(word)
             return self._format_entries(results, "Proto-Indo-European Lexicon", "Data from kaikki.org Wiktionary")
         except Exception as e:
             logger.error(f"Proto-Indo-European lexicon lookup failed: {e}")

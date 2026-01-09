@@ -372,9 +372,15 @@ class DocumentTab(QWidget):
             
     def _on_calculate_selection(self):
         txt = self.doc_viewer.get_selected_text()
-        if not txt or not self.current_calculator:
+        if not txt:
             return
-        val = self.analysis_service.calculate_text(txt, self.current_calculator, self.include_numbers)
+        # Use multi-lang calculator if available, otherwise fall back to single calculator
+        if self.multi_lang_calculator:
+            val = self.multi_lang_calculator.calculate(txt)
+        elif self.current_calculator:
+            val = self.analysis_service.calculate_text(txt, self.current_calculator, self.include_numbers)
+        else:
+            return
         self.sel_result_lbl.setText(f"✦ {val} ✦")
         
     def _on_verse_jump(self, start, end):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
@@ -396,16 +402,26 @@ class DocumentTab(QWidget):
         self.save_text_requested.emit(text)
 
     def _on_viewer_calculate(self, text):
-        # We can just run the calculation logic
-        if not text or not self.current_calculator:
+        # Use multi-lang calculator for all calculations
+        if not text:
             return
-        val = self.analysis_service.calculate_text(text, self.current_calculator, self.include_numbers)  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
+        if self.multi_lang_calculator:
+            val = self.multi_lang_calculator.calculate(text)
+        elif self.current_calculator:
+            val = self.analysis_service.calculate_text(text, self.current_calculator, self.include_numbers)  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
+        else:
+            return
         self.sel_result_lbl.setText(f"✦ {val} ✦")
 
     def _on_viewer_quadset(self, text):
-        if not text or not self.current_calculator:
+        if not text:
             return
-        val = self.analysis_service.calculate_text(text, self.current_calculator, self.include_numbers)  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
+        if self.multi_lang_calculator:
+            val = self.multi_lang_calculator.calculate(text)
+        elif self.current_calculator:
+            val = self.analysis_service.calculate_text(text, self.current_calculator, self.include_numbers)  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
+        else:
+            return
         self.open_quadset_requested.emit(val)
 
     # --- Signal Handling ---

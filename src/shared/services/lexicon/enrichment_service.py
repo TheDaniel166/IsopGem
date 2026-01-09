@@ -7,6 +7,7 @@ import time
 from .occult_reference_service import OccultReferenceService
 from .theosophical_glossary_service import TheosophicalGlossaryService
 from .etymology_db_service import EtymologyDbService
+from .lexicon_resolver import LexiconResolver
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +46,7 @@ class EnrichmentService:
         self._occult_service = None
         self._theosophical_service = None
         self._etymology_service = None
+        self._resolver = LexiconResolver()
         
     @property
     def occult_service(self) -> OccultReferenceService:
@@ -73,13 +75,54 @@ class EnrichmentService:
         Returns a list of Suggestion objects for the UI to display.
         
         Query order (Principle of Apocalypsis - complete revelation):
-        1. Theosophical Glossary (local) - G. de Purucker esoteric definitions
-        2. OpenOccult (local) - crystals, herbs, runes, tarot
-        3. Etymology-DB (local) - structured etymology relationships
-        4. Wiktionary (online) - standard definitions
-        5. FreeDict API (online) - standard definitions
+        1. LexiconResolver (local Kaikki + Strong's/Perseus + Sefaria)
+        2. Theosophical Glossary (local)
+        3. OpenOccult (local esoteric data)
+        4. Etymology-DB (local structured)
+        5. FreeDict API (online fallback)
         """
         suggestions = []
+
+        # 1. Unified lexicon resolver (Kaikki, Strong's/Perseus, Sefaria)
+        # OPTIMIZATION: Only lookup Hebrew/Greek from compact lexicons
+        # Skip English/Latin here since they load huge indexes (37MB + 19MB)
+        # and we have better sources for English (Etymology-DB, FreeDict API)
+        try:
+            # Detect script first to avoid loading large English indexes unnecessarily
+            scripts = self._resolver._detect_scripts(word)
+            resolver_results = []
+
+            # Only query compact lexicons for non-English scripts
+            if "hebrew" in scripts:
+                resolver_results.extend(self._resolver.lookup_hebrew(word))
+            elif "greek" in scripts:
+                resolver_results.extend(self._resolver.lookup_greek(word))
+            # Skip "latin" to avoid loading 56MB of indexes for English words
+
+            for r in resolver_results:
+                # Treat primary hit as Standard; attach morphology/translit inline
+                segments = [r.definition] if r.definition else []
+                if r.transliteration:
+                    segments.append(f"Translit: {r.transliteration}")
+                if r.morphology:
+                    segments.append(r.morphology)
+                if r.etymology:
+                    segments.append(f"Etym: {r.etymology}")
+
+                if segments:
+                    suggestions.append(Suggestion(
+                        type="Standard",
+                        content=f"[{r.language}] " + " | ".join(segments),
+                        source=r.source,
+                    ))
+                elif r.etymology:
+                    suggestions.append(Suggestion(
+                        type="Etymology",
+                        content=r.etymology,
+                        source=r.source,
+                    ))
+        except Exception as e:
+            logger.debug(f"Resolver lookup failed for '{word}': {e}")
         
         # 1. Theosophical Glossary (Local esoteric - G. de Purucker)
         theo_entries = self.theosophical_service.lookup(word)
@@ -142,11 +185,7 @@ class EnrichmentService:
         except Exception as e:
             logger.debug(f"Etymology-DB lookup failed for '{word}': {e}")
         
-        # 4. Wiktionary (standard definitions)
-        wiki_defs = self._fetch_wiktionary_definitions(word)
-        suggestions.extend(wiki_defs)
-            
-        # 5. Standard Definitions (FreeDict API)
+        # 4. Standard Definitions (FreeDict API fallback; Wiktionary omitted because Kaikki mirrors it)
         api_suggestions = self._fetch_freedict(word)
         suggestions.extend(api_suggestions)
             

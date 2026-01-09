@@ -3,7 +3,12 @@ Text Analysis Service - The Resonance Scanner.
 Service for value matching, text statistics, and verse parsing in gematria analysis.
 """
 import logging
-from typing import List, Tuple, Optional, Any, Dict
+import re
+from typing import Any, Dict, List, Optional, Tuple
+
+from shared.services.gematria.language_detector import LanguageDetector
+from shared.services.gematria.multi_language_calculator import MultiLanguageCalculator
+
 from ..services.base_calculator import GematriaCalculator
 from ..utils.numeric_utils import sum_numeric_face_values
 
@@ -135,9 +140,18 @@ class TextAnalysisService:
 
         return val
 
-    def calculate_stats(self, text: str, calculator: GematriaCalculator) -> Dict[str, Any]:
+    def calculate_stats(
+        self,
+        text: str,
+        calculator: GematriaCalculator,
+        multi_language_calculator: Optional[MultiLanguageCalculator] = None,
+    ) -> Dict[str, Any]:
         """
-        Calculate statistics for the text using the given calculator.
+        Calculate statistics for the text.
+
+        If a multi-language calculator is provided, compute per-language breakdowns and
+        totals using the configured cipher for each detected language. Otherwise, use the
+        supplied calculator for the entire text.
         """
         if not text:
             return {
@@ -145,30 +159,117 @@ class TextAnalysisService:
                 "char_count": 0,
                 "total_value": 0,
                 "avg_word_val": 0,
+                "language_breakdown": [],
             }
-            
-        words = text.split()
+
+        if multi_language_calculator:
+            return self._calculate_multi_language_stats(text, multi_language_calculator)
+
+        return self._calculate_single_language_stats(text, calculator)
+
+    # --- Internal helpers -------------------------------------------------
+
+    def _calculate_single_language_stats(
+        self,
+        text: str,
+        calculator: GematriaCalculator,
+    ) -> Dict[str, Any]:
+        """Calculate aggregate stats using a single calculator."""
+        words = re.findall(r"\w+", text, re.UNICODE)
         word_count = len(words)
         char_count = len(text)
         total_value = 0
-        
-        for w in words:
+
+        for word in words:
             try:
-                total_value += calculator.calculate(w)
-            except (AttributeError, TypeError) as e:
+                total_value += calculator.calculate(word)
+            except (AttributeError, TypeError) as exc:
                 logger.debug(
                     "TextAnalysisService: skipping word in stats (%s): %s",
-                    type(e).__name__,
-                    e,
+                    type(exc).__name__,
+                    exc,
                 )
-                
+
         avg = total_value / word_count if word_count > 0 else 0
-        
+
         return {
             "word_count": word_count,
             "char_count": char_count,
             "total_value": total_value,
             "avg_word_val": round(avg, 2),
+            "language_breakdown": [],
+        }
+
+    def _calculate_multi_language_stats(
+        self,
+        text: str,
+        multi_language_calculator: MultiLanguageCalculator,
+    ) -> Dict[str, Any]:
+        """Calculate stats with per-language breakdown using preferred ciphers."""
+        words = re.findall(r"\w+", text, re.UNICODE)
+        word_count = len(words)
+        char_count = len(text)
+
+        if word_count == 0:
+            return {
+                "word_count": 0,
+                "char_count": char_count,
+                "total_value": 0,
+                "avg_word_val": 0,
+                "language_breakdown": [],
+            }
+
+        per_language: Dict[str, Dict[str, Any]] = {}
+        total_value = 0
+
+        for word in words:
+            language = LanguageDetector.detect_word_language(word)
+            calculator = multi_language_calculator.get_calculator_for_language(language)
+            cipher_name = calculator.name if calculator else "None"
+
+            try:
+                value = calculator.calculate(word) if calculator else 0
+            except (AttributeError, TypeError) as exc:
+                logger.debug(
+                    "TextAnalysisService: skipping word in stats (%s): %s",
+                    type(exc).__name__,
+                    exc,
+                )
+                value = 0
+
+            total_value += value
+
+            bucket = per_language.setdefault(
+                language.value,
+                {"word_count": 0, "total_value": 0, "cipher": cipher_name},
+            )
+            bucket["word_count"] += 1
+            bucket["total_value"] += value
+
+            # Ensure cipher is recorded even if first word had no calculator
+            if calculator and bucket.get("cipher") != cipher_name:
+                bucket["cipher"] = cipher_name
+
+        avg = total_value / word_count if word_count > 0 else 0
+
+        breakdown = [
+            {
+                "language": lang,
+                "word_count": data["word_count"],
+                "total_value": data["total_value"],
+                "cipher": data.get("cipher", "None"),
+            }
+            for lang, data in sorted(
+                per_language.items(), key=lambda item: item[1]["word_count"], reverse=True
+            )
+        ]
+
+        return {
+            "word_count": word_count,
+            "char_count": char_count,
+            "total_value": total_value,
+            "avg_word_val": round(avg, 2),
+            "language_breakdown": breakdown,
         }
 
     def parse_verses(self, text: str, document_id: Optional[str] = None, allow_inline: bool = True) -> Dict[str, Any]:

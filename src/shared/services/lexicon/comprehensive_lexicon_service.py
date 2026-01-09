@@ -375,6 +375,31 @@ class ComprehensiveLexiconService:
             }
         }
 
+    def clear_caches(self):
+        """
+        Clear all loaded indexes and close file handles to free memory.
+
+        This is useful when memory usage is high and you want to explicitly
+        free up the loaded lexicon indexes (which can be 37MB+ for English).
+        """
+        # Close all file handles
+        for handle in self._compact_handles.values():
+            if handle:
+                try:
+                    handle.close()
+                except:
+                    pass
+
+        # Clear caches
+        self._compact_indexes.clear()
+        self._compact_handles.clear()
+
+        # Clear Strong's dictionaries
+        self._strongs_greek = None
+        self._strongs_hebrew = None
+
+        logger.debug("Cleared all lexicon caches and closed file handles")
+
     def __del__(self):
         """Cleanup: close all open file handles."""
         for handle in self._compact_handles.values():

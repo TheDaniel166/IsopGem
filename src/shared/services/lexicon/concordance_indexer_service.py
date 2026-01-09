@@ -318,8 +318,9 @@ class ConcordanceIndexerService:
         
         Returns: List of (normalized_word, position, original_form)
         """
-        # Match word tokens (letters only for TQ calculation)
-        pattern = re.compile(r'\b([a-zA-Z]+)\b')
+        # Match word tokens - UNICODE AWARE for Greek, Hebrew, Arabic, etc.
+        # \w matches Unicode word characters including all alphabets
+        pattern = re.compile(r'\b(\w+)\b', re.UNICODE)
         tokens = []
         
         for position, match in enumerate(pattern.finditer(text)):
@@ -330,8 +331,8 @@ class ConcordanceIndexerService:
             if len(normalized) < self.MIN_WORD_LENGTH:
                 continue
                 
-            # Skip stop words
-            if normalized in self.STOP_WORDS:
+            # Skip stop words (English only - don't filter non-English)
+            if normalized in self.STOP_WORDS and normalized.isascii():
                 continue
                 
             # Skip ignored words

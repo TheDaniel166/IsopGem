@@ -51,41 +51,94 @@ class WordLabel(QLabel):
     def _setup_ui(self):
         """Configure the word label appearance."""
         logger.info(f"WordLabel._setup_ui: word={self.word}, tq={self.tq_value}, key_id={self.key_id}, has_key={self.key_id is not None}")
-        # Display format: word with TQ subscript
-        display_html = f"""
-            <div style='text-align: center; padding: 2px;'>
-                <span style='font-size: 14px; font-weight: 500;'>{self.word}</span><br/>
-                <span style='font-size: 10px; color: #7c3aed;'>{self.tq_value}</span>
-            </div>
-        """
+
+        # Language-specific icons and colors
+        lang_config = {
+            "Hebrew": {"icon": "🕎", "bg": "#fff9f0", "border": "#ffd180", "hover_bg": "#ffecb3", "hover_border": "#ffb74d"},
+            "Greek": {"icon": "🏛️", "bg": "#f0f4ff", "border": "#90caf9", "hover_bg": "#e3f2fd", "hover_border": "#42a5f5"},
+            "Arabic": {"icon": "🕌", "bg": "#f1f8e9", "border": "#aed581", "hover_bg": "#dcedc8", "hover_border": "#9ccc65"},
+            "Latin": {"icon": "🏛️", "bg": "#fce4ec", "border": "#f48fb1", "hover_bg": "#f8bbd0", "hover_border": "#ec407a"},
+        }
+
+        config = lang_config.get(self.language, None)
+
+        # Display format: word with value and optional language badge
+        if config:
+            # Non-English: show language icon
+            display_html = f"""
+                <div style='text-align: center; padding: 2px;'>
+                    <span style='font-size: 11px;'>{config['icon']}</span>
+                    <span style='font-size: 14px; font-weight: 500;'>{self.word}</span><br/>
+                    <span style='font-size: 10px; color: #7c3aed;'>{self.tq_value}</span>
+                </div>
+            """
+        else:
+            # English: no icon
+            display_html = f"""
+                <div style='text-align: center; padding: 2px;'>
+                    <span style='font-size: 14px; font-weight: 500;'>{self.word}</span><br/>
+                    <span style='font-size: 10px; color: #7c3aed;'>{self.tq_value}</span>
+                </div>
+            """
+
         self.setText(display_html)
         self.setTextFormat(Qt.TextFormat.RichText)
-        
-        # Style based on whether it's indexed
-        if self.key_id:
-            self.setStyleSheet("""
-                QLabel {
-                    background-color: #faf5ff;
-                    border: 1px solid #e9d5ff;
-                    border-radius: 4px;
-                    padding: 4px 6px;
-                    margin: 2px;
-                }
-                QLabel:hover {
-                    background-color: #ede9fe;
-                    border-color: #c4b5fd;
-                }
-            """)
+
+        # Style based on language and indexed status
+        if config:
+            # Non-English word
+            if self.key_id:
+                # Indexed + non-English
+                self.setStyleSheet(f"""
+                    QLabel {{
+                        background-color: {config['bg']};
+                        border: 2px solid {config['border']};
+                        border-radius: 4px;
+                        padding: 4px 6px;
+                        margin: 2px;
+                    }}
+                    QLabel:hover {{
+                        background-color: {config['hover_bg']};
+                        border-color: {config['hover_border']};
+                    }}
+                """)
+            else:
+                # Not indexed + non-English
+                self.setStyleSheet(f"""
+                    QLabel {{
+                        background-color: {config['bg']};
+                        border: 1px solid {config['border']};
+                        border-radius: 4px;
+                        padding: 4px 6px;
+                        margin: 2px;
+                    }}
+                """)
         else:
-            self.setStyleSheet("""
-                QLabel {
-                    background-color: #f5f5f5;
-                    border: 1px solid #e5e5e5;
-                    border-radius: 4px;
-                    padding: 4px 6px;
-                    margin: 2px;
-                }
-            """)
+            # English word (original styling)
+            if self.key_id:
+                self.setStyleSheet("""
+                    QLabel {
+                        background-color: #faf5ff;
+                        border: 1px solid #e9d5ff;
+                        border-radius: 4px;
+                        padding: 4px 6px;
+                        margin: 2px;
+                    }
+                    QLabel:hover {
+                        background-color: #ede9fe;
+                        border-color: #c4b5fd;
+                    }
+                """)
+            else:
+                self.setStyleSheet("""
+                    QLabel {
+                        background-color: #f5f5f5;
+                        border: 1px solid #e5e5e5;
+                        border-radius: 4px;
+                        padding: 4px 6px;
+                        margin: 2px;
+                    }
+                """)
             
         self.setCursor(Qt.CursorShape.PointingHandCursor if self.key_id else Qt.CursorShape.ArrowCursor)
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -235,8 +288,11 @@ class InterlinearVerseWidget(QWidget):
                 if calc:
                     result['tq_value'] = calc.calculate(word)
                     result['cipher'] = calc.name
-            except Exception:
-                pass
+                    logger.debug(f"Multi-lang calc: '{word}' → {result['tq_value']} ({lang.value}, {calc.name})")
+                else:
+                    logger.warning(f"No calculator found for word '{word}' (language: {lang.value})")
+            except Exception as e:
+                logger.error(f"Multi-lang calc error for '{word}': {e}", exc_info=True)
         elif self.calculator:
             # Fallback to single calculator
             try:
@@ -249,6 +305,16 @@ class InterlinearVerseWidget(QWidget):
         if self.key_service:
             try:
                 key_id = self.key_service.db.get_id_by_word(word.lower())  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
+                
+                # AUTO-INDEX: If word not found and it's non-English, add it to lexicon
+                if not key_id and result.get('language') and result['language'] not in ['English', 'Unknown']:
+                    logger.info(f"Auto-indexing non-English word: '{word}' ({result['language']}, value={result['tq_value']})")
+                    try:
+                        key_id = self.key_service.db.add_word(word.lower(), result['tq_value'])  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
+                        logger.info(f"Successfully auto-indexed '{word}' with key_id={key_id}")
+                    except Exception as e:
+                        logger.error(f"Failed to auto-index '{word}': {e}", exc_info=True)
+                
                 if key_id:
                     result['key_id'] = key_id
                     

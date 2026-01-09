@@ -13,13 +13,14 @@ class CipherPreferences:
     """Manages user preferences for gematria ciphers per language."""
 
     # Default cipher names for each language
+    # These match the actual calculator.name values
     DEFAULT_CIPHERS = {
         Language.HEBREW: "Hebrew (Standard)",
-        Language.GREEK: "Greek (Standard)",
-        Language.ENGLISH: "English TQ",
-        Language.LATIN: "English TQ",  # Use English TQ for Latin
-        Language.ARABIC: "English TQ",  # Fallback until Arabic cipher added
-        Language.UNKNOWN: "English TQ",  # Default fallback
+        Language.GREEK: "Greek (Isopsephy)",  # Greek standard is called "Isopsephy"
+        Language.ENGLISH: "English (TQ)",
+        Language.LATIN: "English (TQ)",  # Use English TQ for Latin
+        Language.ARABIC: "English (TQ)",  # Fallback until Arabic cipher added
+        Language.UNKNOWN: "English (TQ)",  # Default fallback
     }
 
     def __init__(self, config_path: Optional[Path] = None):

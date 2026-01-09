@@ -47,6 +47,27 @@ class MultiLanguageCalculator:
         for language in Language:
             cipher_name = self.preferences.get_cipher(language)
             calculator = self.calculators.get(cipher_name)
+
+            # Fallback: if preferred cipher not found, try to find any calculator for that language
+            if calculator is None:
+                # Try to find a calculator that matches the language
+                language_keywords = {
+                    Language.HEBREW: ["Hebrew", "Hebraic"],
+                    Language.GREEK: ["Greek", "Isopsephy"],
+                    Language.ENGLISH: ["English", "TQ"],
+                    Language.LATIN: ["Latin", "English", "TQ"],
+                    Language.ARABIC: ["Arabic", "English", "TQ"],
+                }
+
+                keywords = language_keywords.get(language, [])
+                for keyword in keywords:
+                    for calc_name, calc in self.calculators.items():
+                        if keyword.lower() in calc_name.lower():
+                            calculator = calc
+                            break
+                    if calculator:
+                        break
+
             self._lang_calc_cache[language] = calculator
 
     def get_calculator_for_language(self, language: Language) -> Optional[GematriaCalculator]:

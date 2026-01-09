@@ -8,7 +8,7 @@ import logging
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QComboBox,
     QPushButton, QLabel, QCheckBox, QMessageBox, QTabWidget,
-    QSplitter, QFileDialog, QFrame
+    QSplitter, QFileDialog, QFrame, QDialog
 )
 from PyQt6.QtCore import Qt
 from typing import List
@@ -320,21 +320,54 @@ class ExegesisWindow(QMainWindow):
         doc_id = self.doc_combo.currentData()
         if not doc_id:
             return
-            
+
         # Check if already open
         for i in range(self.doc_tabs.count()):
             tab = self.doc_tabs.widget(i)
             if isinstance(tab, DocumentTab) and tab.document.id == doc_id:
                 self.doc_tabs.setCurrentIndex(i)
                 return
-        
+
         # Load document
         try:
             with document_service_context() as service:
                 document = service.get_document(doc_id)
             if not document:
                 return
-                
+
+            # LANGUAGE DETECTION & CIPHER SELECTION
+            # Scan document for languages before loading
+            from PyQt6.QtGui import QTextDocument
+            from shared.services.gematria.document_language_scanner import DocumentLanguageScanner
+            from pillars.gematria.ui.dialogs.cipher_selection_dialog import CipherSelectionDialog
+
+            # Get plain text from document
+            td = QTextDocument()
+            td.setHtml(str(document.content or ""))
+            plain_text = td.toPlainText()
+
+            # Scan for languages
+            scan_result = DocumentLanguageScanner.scan(plain_text)
+
+            # If non-English languages detected, show cipher selection dialog
+            if DocumentLanguageScanner.needs_cipher_selection(scan_result):
+                languages_for_selection = DocumentLanguageScanner.get_languages_for_selection(scan_result)
+
+                dialog = CipherSelectionDialog(
+                    languages_for_selection,
+                    self.calculators,
+                    parent=self
+                )
+
+                if dialog.exec() == QDialog.DialogCode.Accepted:
+                    # Apply selected ciphers to multi-lang calculator
+                    selected_ciphers = dialog.get_selected_ciphers()
+                    for language, cipher_name in selected_ciphers.items():
+                        self.multi_lang_calculator.set_preference(language, cipher_name)
+                else:
+                    # User cancelled - don't open document
+                    return
+
             tab = DocumentTab(document, self.analysis_service, multi_lang_calculator=self.multi_lang_calculator)
             # Connect signals
             tab.save_verse_requested.connect(self._on_save_verse)
@@ -437,7 +470,11 @@ class ExegesisWindow(QMainWindow):
 
     def _update_stats_for_tab(self, tab: DocumentTab):
         text = tab.get_text()
-        stats = self.analysis_service.calculate_stats(text, self.current_calculator)
+        stats = self.analysis_service.calculate_stats(
+            text,
+            self.current_calculator,
+            self.multi_lang_calculator,
+        )
         self.stats_panel.update_stats(stats)
         
     # --- Search ---

@@ -7,8 +7,23 @@ def parse_verses(text: str, allow_inline: bool = True) -> List[Dict[str, Any]]:
     """Parse the given plain text into numbered verses.
 
     Recognizes lines that start with an Arabic numeral followed by optional punctuation.
+    Falls back to header-based parsing if no numeric verses are found.
     Returns a list of dicts {number, start, end, text}
     """
+    if not text:
+        return []
+
+    # Try numeric parsing first
+    verses = _parse_numeric_verses(text, allow_inline)
+    
+    # Fallback to header-based parsing if no numeric verses found
+    if not verses:
+        verses = parse_by_headers(text)
+    
+    return verses
+
+
+def _parse_numeric_verses(text: str, allow_inline: bool = True) -> List[Dict[str, Any]]:
     verses: List[Dict[str, Any]] = []
 
     if not text:
@@ -112,4 +127,125 @@ def parse_verses(text: str, allow_inline: bool = True) -> List[Dict[str, Any]]:
             'is_inline': not c.get('line_start', False),
         })
 
+    return verses
+
+
+def _is_likely_header(line: str) -> bool:
+    """Heuristic to detect if a line is likely a section header.
+    
+    Headers are typically:
+    - Short (< 50 chars)
+    - Standalone (not part of a long paragraph)
+    - Capitalized, title-case, or non-Latin script
+    
+    Args:
+        line: The line to evaluate
+        
+    Returns:
+        True if line appears to be a header
+    """
+    stripped = line.strip()
+    
+    # Empty lines are not headers
+    if not stripped:
+        return False
+    
+    # Very short lines (1-2 words) are likely headers
+    word_count = len(stripped.split())
+    if word_count <= 2 and len(stripped) < 50:
+        # Check if it's capitalized or non-Latin
+        if stripped[0].isupper() or not stripped[0].isascii():
+            return True
+    
+    # Lines with non-Latin scripts (Greek, Hebrew, Arabic, etc.)
+    # that are reasonably short
+    if len(stripped) < 80:
+        # Check for Unicode ranges:
+        # Greek: 0x0370-0x03FF
+        # Hebrew: 0x0590-0x05FF
+        # Arabic: 0x0600-0x06FF
+        for char in stripped:
+            code = ord(char)
+            if (0x0370 <= code <= 0x03FF or  # Greek
+                0x0590 <= code <= 0x05FF or  # Hebrew
+                0x0600 <= code <= 0x06FF):   # Arabic
+                return True
+    
+    return False
+
+
+def parse_by_headers(text: str) -> List[Dict[str, Any]]:
+    """Fallback parser for documents with section headers instead of numbers.
+    
+    Detects standalone header lines and treats each header+paragraph pair
+    as a pseudo-verse, numbered sequentially (1, 2, 3...).
+    
+    Args:
+        text: Document text to parse
+        
+    Returns:
+        List of verse dicts with sequential numbering
+    """
+    verses: List[Dict[str, Any]] = []
+    
+    if not text:
+        return verses
+    
+    lines = text.split('\n')
+    
+    # Find potential headers
+    header_indices = []
+    for i, line in enumerate(lines):
+        if _is_likely_header(line):
+            header_indices.append(i)
+    
+    # If we found no headers, return empty
+    if not header_indices:
+        return verses
+    
+    # Extract header+content pairs
+    verse_num = 1
+    for i, header_idx in enumerate(header_indices):
+        # Determine where this section ends (next header or end of doc)
+        next_header_idx = header_indices[i + 1] if i + 1 < len(header_indices) else len(lines)
+        
+        # Extract header and content
+        header = lines[header_idx].strip()
+        content_lines = lines[header_idx + 1:next_header_idx]
+        content = '\n'.join(content_lines).strip()
+        
+        # Skip if no content (header at end of doc)
+        if not content:
+            continue
+        
+        # Calculate character positions in original text
+        chars_before_header = sum(len(lines[j]) + 1 for j in range(header_idx))  # +1 for \n
+        header_start = chars_before_header
+        header_end = header_start + len(lines[header_idx])
+        
+        # Content starts after the header line
+        content_start = header_end + 1  # +1 for newline after header
+        
+        # Calculate end of content
+        chars_in_section = sum(len(lines[j]) + 1 for j in range(header_idx + 1, next_header_idx))
+        content_end = content_start + chars_in_section
+        
+        # CRITICAL: Include header in the verse text so it appears in interlinear view
+        # and gets processed by language detection
+        full_text = f"{header}\n{content}"
+        
+        verses.append({
+            'number': verse_num,
+            'start': header_start,  # Start at the header, not after it
+            'end': content_end,
+            'text': full_text,  # Include header + content
+            'marker_start': header_start,
+            'marker_end': header_end,
+            'is_line_start': True,
+            'is_inline': False,
+            'header': header,  # Still store header separately as metadata
+        })
+        
+        verse_num += 1
+    
     return verses
