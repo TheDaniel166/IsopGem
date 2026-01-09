@@ -37,7 +37,7 @@ class SquarePyramidSolidResult:
 
 
 def _compute_metrics(base_edge: float, height: float) -> SquarePyramidMetrics:
-    \"""
+    """
     Calculate metrics for a right square pyramid.
     
     THE SQUARE PYRAMID - THE ICONIC PYRAMID:
@@ -105,7 +105,7 @@ def _compute_metrics(base_edge: float, height: float) -> SquarePyramidMetrics:
         volume=volume,
         lateral_edge=lateral_edge,
     )
-
+    """
 
 def _build_vertices(base_edge: float, height: float) -> List[tuple[float, float, float]]:
     half = base_edge / 2.0

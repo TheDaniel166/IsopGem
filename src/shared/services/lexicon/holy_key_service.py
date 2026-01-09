@@ -157,9 +157,41 @@ class HolyKeyService:
     def bulk_ignore(self, words: List[str]):
         """
         Add multiple words to the ignore list.
-        
+
         Args:
             words: List of words to ignore
         """
         for word in words:
             self.db.ignore_word(word.lower())
+
+    def find_words_by_tq_value(self, tq_value: int, limit: int = 100) -> List[Dict]:
+        """
+        Find all words in the Master Key with the given TQ value.
+
+        Args:
+            tq_value: The TQ gematria value to search for
+            limit: Maximum number of results to return
+
+        Returns:
+            List of dicts with 'word' and 'frequency' keys
+        """
+        conn = self.db._get_conn()
+        cursor = conn.cursor()
+
+        # Query words with matching TQ value, ordered by occurrence frequency
+        cursor.execute("""
+            SELECT
+                mk.word,
+                COUNT(wo.id) as frequency
+            FROM master_key mk
+            LEFT JOIN word_occurrences wo ON mk.id = wo.key_id
+            WHERE mk.tq_value = ? AND mk.is_active = 1
+            GROUP BY mk.id, mk.word
+            ORDER BY frequency DESC, mk.word ASC
+            LIMIT ?
+        """, (tq_value, limit))
+
+        rows = cursor.fetchall()
+        conn.close()
+
+        return [{'word': row['word'], 'frequency': row['frequency']} for row in rows]

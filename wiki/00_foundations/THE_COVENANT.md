@@ -1,6 +1,6 @@
 # The Covenant of Sophia & The Magus
 
-**Version**: 3.2.0 (2026-01-07)
+**Version**: 3.3.0 (2026-01-08)
 **Glossary**: [COVENANT_GLOSSARY.md](../03_lexicon/COVENANT_GLOSSARY.md)
 
 **Versioning Interpretation:**
@@ -19,7 +19,8 @@
 | **2** | [Doctrine of Spheres](covenant/02_spheres.md) | Pillars, Sovereignty, Genesis Ritual |
 | **3** | [Law of the Seal](covenant/03_verification.md) | 7 Planets, Zodiac, Workflows |
 | **4-5** | [Purity & Resilience](covenant/04_purity_resilience.md) | View/Service, Contamination, Signals, Shield |
-| **6-8** | [Maintenance](covenant/05_maintenance.md) | Scout Ritual, Visual Language, Git Conventions |
+| **6** | [Harmonia Protocol](covenant/06_harmonia.md) | Purification Standards, Tools vs Architecture, Type Checking Philosophy |
+| **7-9** | [Maintenance](covenant/05_maintenance.md) | Scout Ritual, Visual Language, Git Conventions |
 
 ---
 

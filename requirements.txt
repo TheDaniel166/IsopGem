@@ -40,7 +40,6 @@ geographiclib==2.0
 pytest>=9.0.1
 basedpyright>=1.21.0
 scipy>=1.10.0
-ety
 beautifulsoup4>=4.12.0
 
 # Spell checking

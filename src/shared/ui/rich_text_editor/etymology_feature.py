@@ -7,9 +7,10 @@ from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QLabel, QTextBrowser, 
     QPushButton, QHBoxLayout, QMenu, QLineEdit, QDialog
 )
-from PyQt6.QtCore import Qt, QThread, pyqtSignal
+from PyQt6.QtCore import Qt, QThread, pyqtSignal, QUrl
 from PyQt6.QtGui import QAction, QTextCursor
-from typing import Optional, Any, Dict, Callable
+from typing import Optional, Any, Dict, Callable, List
+from urllib.parse import unquote
 from shared.services.document_manager.etymology_service import get_etymology_service as _get_etymology_service
 from shared.ui.virtual_keyboard import VirtualKeyboard
 
@@ -55,6 +56,10 @@ class ResearchDialog(QDialog):
         self.setWindowTitle("Research & Etymology")
         self.setMinimumSize(450, 500)
         self._keyboard_visible = False
+        self._search_callback: Optional[Callable[[str], None]] = None
+        self._anchor_callback: Optional[Callable[[str], None]] = None
+        self._back_callback: Optional[Callable[[], None]] = None
+        self._forward_callback: Optional[Callable[[], None]] = None
         self.setup_ui()
         
         # Make it non-modal so user can continue editing
@@ -68,6 +73,22 @@ class ResearchDialog(QDialog):
         
         # Search bar with keyboard toggle
         search_layout = QHBoxLayout()
+
+        self.btn_back = QPushButton()
+        self.btn_back.setIcon(qta.icon("fa5s.arrow-left", color="#1e293b"))
+        self.btn_back.setToolTip("Back (history)")
+        self.btn_back.setFixedWidth(32)
+        self.btn_back.setEnabled(False)
+        self.btn_back.clicked.connect(self._on_back)
+        search_layout.addWidget(self.btn_back)
+
+        self.btn_forward = QPushButton()
+        self.btn_forward.setIcon(qta.icon("fa5s.arrow-right", color="#1e293b"))
+        self.btn_forward.setToolTip("Forward (history)")
+        self.btn_forward.setFixedWidth(32)
+        self.btn_forward.setEnabled(False)
+        self.btn_forward.clicked.connect(self._on_forward)
+        search_layout.addWidget(self.btn_forward)
         
         self.input_field = QLineEdit()
         self.input_field.setPlaceholderText("Enter word (λόγος, שלום, robot)...")
@@ -102,7 +123,9 @@ class ResearchDialog(QDialog):
 
         # Browser for results
         self.browser = QTextBrowser()
-        self.browser.setOpenExternalLinks(True)
+        self.browser.setOpenExternalLinks(False)
+        self.browser.setOpenLinks(False)
+        self.browser.anchorClicked.connect(self._on_anchor_clicked)
         self.browser.setStyleSheet("""
             QTextBrowser { 
                 border: 1px solid #cbd5e1; 
@@ -146,10 +169,37 @@ class ResearchDialog(QDialog):
         if word and hasattr(self, '_search_callback'):
             self._search_callback(word)
 
+    def _on_anchor_clicked(self, url: QUrl) -> None:
+        """Route anchor clicks to caller; keeps navigation in-app."""
+        if self._anchor_callback:
+            self._anchor_callback(url.toString())
+
+    def _on_back(self) -> None:
+        if self._back_callback:
+            self._back_callback()
+
+    def _on_forward(self) -> None:
+        if self._forward_callback:
+            self._forward_callback()
+
     def set_search_callback(self, callback: Callable[[str], None]) -> None:
         """Set the function to be called when a search is triggered."""
         """Set callback for when user searches from the dialog."""
         self._search_callback = callback
+
+    def set_anchor_callback(self, callback: Callable[[str], None]) -> None:
+        """Handle anchor clicks inside the browser."""
+        self._anchor_callback = callback
+
+    def set_navigation_callbacks(self, on_back: Callable[[], None], on_forward: Callable[[], None]) -> None:
+        """Wire navigation callbacks for history traversal."""
+        self._back_callback = on_back
+        self._forward_callback = on_forward
+
+    def set_nav_state(self, can_back: bool, can_forward: bool) -> None:
+        """Enable/disable navigation buttons based on history state."""
+        self.btn_back.setEnabled(can_back)
+        self.btn_forward.setEnabled(can_forward)
 
     def show_loading(self, word: str) -> None:
         """Display loading state for a specific word."""
@@ -201,12 +251,17 @@ class EtymologyFeature:
         # Create dialog (it won't show until called)
         self._dialog = None
         self._worker = None
+        self._history: List[str] = []
+        self._history_index = -1
         
     def _get_dialog(self) -> ResearchDialog:
         """Lazily create or return the research dialog."""
         if self._dialog is None:
             self._dialog = ResearchDialog(parent=self.main)
-            self._dialog.set_search_callback(self._do_research)
+            self._dialog.set_search_callback(lambda word: self._do_research(word, record_history=True))
+            self._dialog.set_anchor_callback(self._on_anchor_requested)
+            self._dialog.set_navigation_callbacks(self._go_back, self._go_forward)
+            self._dialog.set_nav_state(False, False)
         return self._dialog
         
     def create_action(self, parent: QWidget) -> QAction:
@@ -239,18 +294,74 @@ class EtymologyFeature:
 
         self._do_research(selected_text)
 
-    def _do_research(self, word: str) -> None:
+    def _do_research(self, word: str, record_history: bool = True) -> None:
         """Initiate background thread for etymology lookup."""
         """Perform the actual research lookup."""
-        if not word:
+        base_word = word.split('|', 1)[0]
+        clean_word = base_word.strip()
+        if not clean_word:
             return
-            
+
+        if record_history:
+            self._push_history(clean_word)
+
         dialog = self._get_dialog()
-        dialog.show_loading(word)
+        self._update_nav_buttons()
+        dialog.show_loading(clean_word)
         
-        self._worker = EtymologyWorker(word)
+        self._worker = EtymologyWorker(clean_word)
         self._worker.finished.connect(dialog.show_result)
         self._worker.start()
+
+    def _push_history(self, word: str) -> None:
+        """Record lookup history with a max depth of five."""
+        if not word:
+            return
+
+        if self._history_index >= 0 and self._history[self._history_index].lower() == word.lower():
+            return
+
+        if self._history_index < len(self._history) - 1:
+            self._history = self._history[: self._history_index + 1]
+
+        self._history.append(word)
+        if len(self._history) > 5:
+            self._history = self._history[-5:]
+
+        self._history_index = len(self._history) - 1
+
+    def _update_nav_buttons(self) -> None:
+        dialog = self._get_dialog()
+        can_back = self._history_index > 0
+        can_forward = self._history_index < len(self._history) - 1 and self._history_index >= 0
+        dialog.set_nav_state(can_back, can_forward)
+
+    def _go_back(self) -> None:
+        if self._history_index <= 0:
+            return
+
+        self._history_index -= 1
+        self._update_nav_buttons()
+        self._do_research(self._history[self._history_index], record_history=False)
+
+    def _go_forward(self) -> None:
+        if self._history_index >= len(self._history) - 1 or self._history_index < 0:
+            return
+
+        self._history_index += 1
+        self._update_nav_buttons()
+        self._do_research(self._history[self._history_index], record_history=False)
+
+    def _on_anchor_requested(self, url_str: str) -> None:
+        if not url_str:
+            return
+
+        if url_str.startswith('etymology:'):
+            payload = url_str.split('etymology:', 1)[1]
+            word_part = payload.split('|', 1)[0]
+            target_word = unquote(word_part).strip()
+            if target_word:
+                self._do_research(target_word, record_history=True)
 
     def extend_context_menu(self, menu: QMenu, pos: Any = None) -> None:
         """Add etymology lookup option to the editor context menu."""

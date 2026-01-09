@@ -1,14 +1,23 @@
 """
 Etymology Service for Document Manager Pillar.
-Handles looking up word origins using:
-- Offline: ety-python library
-- Online: Free Dictionary API, Sefaria (Hebrew), Wiktionary (Greek/English)
+Handles looking up word origins using offline lexicons, etymology graph data,
+and limited online fallbacks when necessary.
 """
-import requests
+import csv
+import gzip
+import html
+import json
 import logging
 import re
+from collections import defaultdict
 from functools import lru_cache
-from typing import Dict, Optional
+from pathlib import Path
+from typing import Dict, Optional, List
+from urllib.parse import quote
+
+import requests
+
+from shared.services.lexicon.classical_lexicon_service import ClassicalLexiconService
 
 # Try to import BeautifulSoup for enhanced scraping
 try:
@@ -26,9 +35,10 @@ class EtymologyService:
     Service to fetch etymology/origin of words.
     Features:
     - Auto-detects Hebrew, Greek, or Latin/English scripts.
-    - Prioritizes Sefaria for Hebrew (BDB lexicon).
-    - Deep scrapes Wiktionary Ancient Greek for Greek words.
-    - Uses ety-python (offline) or Free Dictionary API for English.
+    - Hebrew: kaikki.org + Strong's + Sefaria (combined).
+    - Greek: kaikki.org + Strong's (no scrape fallback).
+    - Latin/English/Sanskrit/Aramaic/PIE: offline Kaikki + etymology graph before fallbacks.
+    - ety-python and minimal online/API/scrape used only if offline sources miss.
     """
 
     def __init__(self):
@@ -43,6 +53,12 @@ class EtymologyService:
             logger.info("ety-python library detected. Offline mode enabled.")
         except ImportError:
             logger.warning("ety-python library not found. Running in online-only mode.")
+        
+        # Initialize lexicon service for Greek/Hebrew
+        self._lexicon_service = ClassicalLexiconService()
+        self._etymology_db_path = Path(__file__).resolve().parents[4] / "data" / "etymology_db" / "etymology.csv.gz"
+        self._etymology_db_word_index_path = self._etymology_db_path.parent / "word_index.json"
+        self._etymology_db_word_index: Optional[Dict[str, Dict[str, int]]] = None
 
     def _detect_script(self, text: str) -> str:
         """
@@ -57,6 +73,48 @@ class EtymologyService:
                 return 'greek'
         return 'latin'
 
+    def _format_entries(self, entries, source_label: str, details_label: str) -> Optional[Dict[str, str]]:
+        """Format a list of LexiconEntry objects into HTML."""
+        if not entries:
+            return None
+        html_parts = []
+        for entry in entries:
+            block = f"<h4>{entry.word}"
+            if entry.transliteration:
+                block += f" <span style='font-size:small; color:#6b7280'>({entry.transliteration})</span>"
+            block += "</h4>"
+
+            if entry.morphology:
+                block += f"<p><i>{entry.morphology}</i></p>"
+
+            if entry.definition:
+                defs = [d.strip() for d in entry.definition.split(';') if d.strip()]
+                if len(defs) > 1:
+                    block += "<ul>"
+                    for d in defs[:8]:
+                        block += f"<li>{d}</li>"
+                    block += "</ul>"
+                else:
+                    block += f"<p>{entry.definition}</p>"
+
+            if entry.etymology:
+                block += ("<p style='background:#fef3c7; padding:8px; border-left:3px solid #f59e0b;"
+                          " margin-top:8px;'><b>Etymology:</b> "
+                          f"{entry.etymology}</p>")
+
+            if entry.strong_number:
+                block += ("<p style='color:#94a3b8; font-size:9pt; margin-top:4px;'><b>Strong's:</b> "
+                          f"{entry.strong_number}</p>")
+
+            block += f"<p style='color:#94a3b8; font-size:9pt; margin-top:8px;'>Source: {entry.source}</p>"
+            html_parts.append(block)
+
+        return {
+            "source": source_label,
+            "origin": "<hr>".join(html_parts),
+            "details": details_label
+        }
+
     @lru_cache(maxsize=128)
     def get_word_origin(self, word: str) -> Dict[str, str]:
         """
@@ -70,34 +128,80 @@ class EtymologyService:
 
         # --- ROUTING BASED ON SCRIPT ---
         
-        # 1. HEBREW PATH (Sefaria -> Wiktionary)
+        # 1. HEBREW PATH (All sources combined - Principle of Apocalypsis)
         if script == 'hebrew':
             logger.info(f"Hebrew script detected for: {word}")
-            # Try Sefaria first (The "Deep" Theological Data)
+            combined_html = []
+            
+            # Gather from kaikki.org + Strong's
+            lexicon_result = self._lookup_hebrew_lexicon(word)
+            if lexicon_result:
+                combined_html.append(lexicon_result['origin'])
+            
+            # Gather from Sefaria (Deep Theological Data)
             sefaria_result = self._lookup_hebrew_sefaria(word)
             if sefaria_result:
-                return sefaria_result
-            # Fallback to Wiktionary (Hebrew section)
-            return self._scrape_wiktionary(word, target_lang="Hebrew") or self._empty_result()
+                combined_html.append(sefaria_result['origin'])
+            
+            if combined_html:
+                return {
+                    "source": "Hebrew Lexicon + Sefaria",
+                    "origin": "<hr style='margin: 20px 0; border: 2px solid #9333ea;'>".join(combined_html),
+                    "details": "Data from Kaikki.org, Strong's, and Sefaria.org"
+                }
+            
+            return self._empty_result()
 
-        # 2. GREEK PATH (Wiktionary Ancient Greek -> English fallback)
+        # 2. GREEK PATH (kaikki.org + Strong's -> no fallback)
         if script == 'greek':
             logger.info(f"Greek script detected for: {word}")
-            # Lowercase for Wiktionary (entries are typically lowercase)
-            word_lower = word.lower()
-            # Try Wiktionary aiming for 'Ancient Greek' specifically
-            return self._scrape_wiktionary(word_lower, target_lang="Ancient_Greek") or self._empty_result()
+            # Try kaikki.org + Strong's (56k + 5.5k entries with clean English glosses)
+            lexicon_result = self._lookup_greek_lexicon(word)
+            if lexicon_result:
+                return lexicon_result
+            # No fallback to web scraping - kaikki.org IS the latest Wiktionary scrape
+            return self._empty_result()
 
-        # 3. ENGLISH/LATIN PATH (ety -> API -> Wiktionary)
+        # 3. LATIN/ROMAN SCRIPTS (offline-first across all available languages)
+        combined_html: List[str] = []
+
+        # Aggregate all offline lexicon sources we have in Kaikki
+        for lookup in [
+            self._lookup_latin_lexicon,
+            self._lookup_english_lexicon,
+            self._lookup_sanskrit_lexicon,
+            self._lookup_aramaic_lexicon,
+            self._lookup_proto_indo_european,
+        ]:
+            try:
+                result = lookup(word)
+                if result:
+                    combined_html.append(result["origin"])
+            except Exception as e:
+                logger.error(f"Offline lexicon lookup failed: {e}")
+
+        # Add graph-based etymology relations to fill gaps (streamed; avoids full memory load)
+        ety_graph = self._lookup_etymology_db(word)
+        if ety_graph:
+            combined_html.append(ety_graph["origin"])
+
+        if combined_html:
+            return {
+                "source": "Offline Lexicons + Etymology Graph",
+                "origin": "<hr style='margin: 20px 0; border: 1px solid #a855f7;'>".join(combined_html),
+                "details": "Data from kaikki.org Wiktionary + etymology_db graph"
+            }
+
+        # Fallback to ety-python, then minimal online/APIs if offline sources fail
         if self._ety_available:
             res = self._try_offline_ety(word.lower())
             if res:
                 return res
-        
+
         res = self._try_online_api(word.lower())
         if res:
             return res
-        
+
         return self._scrape_wiktionary(word.lower(), target_lang="English") or self._empty_result()
 
     def _empty_result(self) -> Dict[str, str]:
@@ -175,6 +279,176 @@ class EtymologyService:
         except Exception as e:
             logger.error(f"Sefaria lookup failed: {e}")
         return None
+
+    # --- HEBREW LEXICON HANDLER ---
+    def _lookup_hebrew_lexicon(self, word: str) -> Optional[Dict[str, str]]:
+        """
+        Query kaikki.org + Strong's for Hebrew words.
+        Returns formatted HTML with definition, etymology, and transliteration.
+        """
+        try:
+            results = self._lexicon_service.lookup_hebrew(word)
+            return self._format_entries(results, "Hebrew Lexicon", "Data from kaikki.org Wiktionary + Strong's")
+        except Exception as e:
+            logger.error(f"Hebrew lexicon lookup failed: {e}")
+            return None
+
+    # --- GREEK LEXICON HANDLER ---
+    def _lookup_greek_lexicon(self, word: str) -> Optional[Dict[str, str]]:
+        """
+        Query kaikki.org Wiktionary for Ancient Greek words.
+        Returns formatted HTML with definition, etymology, and transliteration.
+        """
+        try:
+            results = self._lexicon_service.lookup_greek(word, prefer_classical=True)
+            return self._format_entries(results, "Ancient Greek Lexicon", "Data from kaikki.org Wiktionary")
+        except Exception as e:
+            logger.error(f"Greek lexicon lookup failed: {e}")
+            return None
+
+    def _lookup_latin_lexicon(self, word: str) -> Optional[Dict[str, str]]:
+        """Query offline Latin (kaikki.org)."""
+        try:
+            results = self._lexicon_service.lookup_latin(word)
+            return self._format_entries(results, "Latin Lexicon", "Data from kaikki.org Wiktionary")
+        except Exception as e:
+            logger.error(f"Latin lexicon lookup failed: {e}")
+            return None
+
+    def _lookup_english_lexicon(self, word: str) -> Optional[Dict[str, str]]:
+        """Query offline English (kaikki.org)."""
+        try:
+            results = self._lexicon_service.lookup_english(word)
+            return self._format_entries(results, "English Lexicon", "Data from kaikki.org Wiktionary")
+        except Exception as e:
+            logger.error(f"English lexicon lookup failed: {e}")
+            return None
+
+    def _lookup_sanskrit_lexicon(self, word: str) -> Optional[Dict[str, str]]:
+        """Query offline Sanskrit (kaikki.org)."""
+        try:
+            results = self._lexicon_service.lookup_sanskrit(word)
+            return self._format_entries(results, "Sanskrit Lexicon", "Data from kaikki.org Wiktionary")
+        except Exception as e:
+            logger.error(f"Sanskrit lexicon lookup failed: {e}")
+            return None
+
+    def _lookup_aramaic_lexicon(self, word: str) -> Optional[Dict[str, str]]:
+        """Query offline Aramaic (kaikki.org)."""
+        try:
+            results = self._lexicon_service.lookup_aramaic(word)
+            return self._format_entries(results, "Aramaic Lexicon", "Data from kaikki.org Wiktionary")
+        except Exception as e:
+            logger.error(f"Aramaic lexicon lookup failed: {e}")
+            return None
+
+    def _lookup_proto_indo_european(self, word: str) -> Optional[Dict[str, str]]:
+        """Query offline Proto-Indo-European (kaikki.org)."""
+        try:
+            results = self._lexicon_service.lookup_proto_indo_european(word)
+            return self._format_entries(results, "Proto-Indo-European Lexicon", "Data from kaikki.org Wiktionary")
+        except Exception as e:
+            logger.error(f"Proto-Indo-European lexicon lookup failed: {e}")
+            return None
+
+    def _load_etymology_word_index(self) -> None:
+        """Lazy-load word->row index for etymology graph (English only)."""
+        if self._etymology_db_word_index is not None:
+            return
+
+        if not self._etymology_db_word_index_path.exists():
+            logger.warning(f"Etymology word index not found at {self._etymology_db_word_index_path}; skipping graph lookups")
+            self._etymology_db_word_index = {}
+            return
+
+        try:
+            with open(self._etymology_db_word_index_path, 'r', encoding='utf-8') as f:
+                self._etymology_db_word_index = json.load(f)
+        except Exception as e:
+            logger.error(f"Failed to load etymology word index: {e}")
+            self._etymology_db_word_index = {}
+
+    def _lookup_etymology_db(self, word: str) -> Optional[Dict[str, str]]:
+        """Streamed lookup using word_index.json to avoid loading entire graph into memory."""
+        try:
+            self._load_etymology_word_index()
+            if not self._etymology_db_word_index:
+                return None
+
+            entry = self._etymology_db_word_index.get(word.lower())
+            if not entry:
+                return None
+
+            start_row = entry.get("start_row", 0)
+            count = entry.get("count", 0)
+            if start_row <= 0 or count <= 0:
+                return None
+
+            results: List[Dict[str, str]] = []
+            with gzip.open(self._etymology_db_path, 'rt', encoding='utf-8', errors='replace') as f:
+                reader = csv.DictReader(f)
+                for row_num, row in enumerate(reader, start=1):
+                    if row_num < start_row:
+                        continue
+                    if row_num >= start_row + count:
+                        break
+                    results.append(row)
+
+            if not results:
+                return None
+
+            grouped: Dict[str, List[Dict[str, str]]] = defaultdict(list)
+            for entry in results:
+                reltype = (entry.get('reltype') or 'related_to').strip()
+                related_term = (entry.get('related_term') or '').strip()
+                related_lang = (entry.get('related_lang') or '').strip()
+                if not related_term:
+                    continue
+                grouped[reltype].append({"term": related_term, "lang": related_lang})
+
+            if not grouped:
+                return None
+
+            html_parts: List[str] = []
+            for reltype, items in grouped.items():
+                limited = items[:10]
+                rel_label = reltype.replace('_', ' ').title()
+                rel_items: List[str] = []
+                for item in limited:
+                    term = item.get("term", "")
+                    lang = item.get("lang", "")
+                    if not term:
+                        continue
+
+                    display = f"{term} ({lang})" if lang else term
+                    href_target = quote(term)
+                    if lang:
+                        href_target += f"|{quote(lang)}"
+
+                    rel_items.append(
+                        (
+                            "<li>"
+                            f"<a href=\"etymology:{href_target}\" "
+                            "style=\"color: #7c3aed; font-weight: 600; text-decoration: underline;\" "
+                            f"title=\"Explore {html.escape(term)}\">{html.escape(display)}</a>"
+                            "</li>"
+                        )
+                    )
+
+                if rel_items:
+                    html_parts.append(f"<h4>{rel_label}</h4><ul>{''.join(rel_items)}</ul>")
+
+            if not html_parts:
+                return None
+
+            return {
+                "source": "Etymology Graph (streamed)",
+                "origin": "<hr>".join(html_parts),
+                "details": "Data from etymology_db using word_index.json (memory-safe stream)"
+            }
+        except Exception as e:
+            logger.error(f"Etymology DB lookup failed: {e}")
+            return None
 
     # --- OFFLINE ETY HANDLER ---
     def _try_offline_ety(self, word: str) -> Optional[Dict[str, str]]:

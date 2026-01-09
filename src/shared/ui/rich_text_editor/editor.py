@@ -1294,6 +1294,8 @@ class RichTextEditor(QWidget):
         file_menu.addAction("Print...", self._print_document)
         file_menu.addAction("Print Preview...", self._print_preview)
         file_menu.addAction("Export PDF...", self._export_pdf)
+        file_menu.addSeparator()
+        file_menu.addAction("Convert Symbol Font to Greek...", self._convert_document_symbol_font)
         
         # === Quick Access Toolbar ===
         self.ribbon.add_quick_access_button(self.action_undo)
@@ -2761,34 +2763,115 @@ class RichTextEditor(QWidget):
         self.editor.clear()
 
     def open_document(self) -> None:
-        """Open a file (Markdown, HTML, Text)."""
+        """Open a file (Markdown, HTML, Text, DOCX, PDF) with automatic encoding detection."""
         file_path, _ = QFileDialog.getOpenFileName(
             self, "Open Document", "",
-            "Markdown (*.md);;HTML (*.html *.htm);;Text (*.txt);;All Files (*)"
+            "All Supported (*.md *.html *.htm *.txt *.docx *.pdf);;"
+            "Markdown (*.md);;"
+            "HTML (*.html *.htm);;"
+            "Text (*.txt);;"
+            "Word Document (*.docx);;"
+            "PDF Document (*.pdf);;"
+            "All Files (*)"
         )
         if not file_path:
             return
 
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                content = f.read()
+            # Handle DOCX/PDF files - extract plain text only (case insensitive)
+            file_path_lower = file_path.lower()
 
+            if file_path_lower.endswith('.docx'):
+                content = self._extract_text_from_docx(file_path)
+                if content:
+                    self.editor.setPlainText(content)
+                    doc = self.editor.document()
+                    if doc is not None:
+                        doc.setModified(False)
+                    QMessageBox.information(
+                        self,
+                        "DOCX Imported",
+                        f"Plain text extracted from {os.path.basename(file_path)}\n"
+                        f"(Formatting removed - save as UTF-8 text)"
+                    )
+                    return
+                else:
+                    QMessageBox.warning(self, "Error", "Could not extract text from DOCX file")
+                    return
+
+            elif file_path_lower.endswith('.pdf'):
+                content = self._extract_text_from_pdf(file_path)
+                if content:
+                    self.editor.setPlainText(content)
+                    doc = self.editor.document()
+                    if doc is not None:
+                        doc.setModified(False)
+                    QMessageBox.information(
+                        self,
+                        "PDF Imported",
+                        f"Plain text extracted from {os.path.basename(file_path)}\n"
+                        f"(Formatting removed - save as UTF-8 text)"
+                    )
+                    return
+                else:
+                    QMessageBox.warning(self, "Error", "Could not extract text from PDF file")
+                    return
+
+            # Try multiple encodings for robust file opening (text files)
+            content = None
+            detected_encoding = None
+            encodings_to_try = [
+                'utf-8',           # Modern standard
+                'utf-8-sig',       # UTF-8 with BOM
+                'latin-1',         # ISO-8859-1 (Western European)
+                'windows-1252',    # Windows Western European
+                'cp1252',          # Alternative name for windows-1252
+                'iso-8859-1',      # Alternative name for latin-1
+                'ascii',           # Basic ASCII
+            ]
+
+            for encoding in encodings_to_try:
+                try:
+                    with open(file_path, 'r', encoding=encoding) as f:
+                        content = f.read()
+                    detected_encoding = encoding
+                    break
+                except (UnicodeDecodeError, LookupError):
+                    continue
+
+            if content is None:
+                # Last resort: read as binary and try to decode with error handling
+                with open(file_path, 'rb') as f:
+                    raw_data = f.read()
+                content = raw_data.decode('utf-8', errors='replace')
+                detected_encoding = 'utf-8 (with replacements)'
+
+            # Load content into editor
             if file_path.endswith('.md'):
                 self.editor.setMarkdown(content)
             elif file_path.endswith(('.html', '.htm')):
                 self.editor.setHtml(content)
             else:
                 self.editor.setPlainText(content)
-                
+
             doc = self.editor.document()
             if doc is not None:
                 doc.setModified(False)
-            
+
+            # Notify user if non-UTF-8 encoding was detected
+            if detected_encoding and detected_encoding not in ['utf-8', 'utf-8-sig']:
+                QMessageBox.information(
+                    self,
+                    "Encoding Detected",
+                    f"File opened with {detected_encoding} encoding.\n"
+                    f"When saved, it will be normalized to UTF-8."
+                )
+
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Could not open file:\n{e}")
 
     def save_document(self) -> None:
-        """Save the document (Markdown, HTML, Text)."""
+        """Save the document (Markdown, HTML, Text) - always saves as UTF-8."""
         file_path, filter_used = QFileDialog.getSaveFileName(
             self, "Save Document", "",
             "Markdown (*.md);;HTML (*.html);;Text (*.txt)"
@@ -2810,11 +2893,162 @@ class RichTextEditor(QWidget):
             else:
                 content = self.editor.toPlainText()
 
+            # Always save as UTF-8 for universal compatibility
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(content)
-            
+
             doc.setModified(False)
-            QMessageBox.information(self, "Saved", f"Document saved to {os.path.basename(file_path)}")
-            
+            QMessageBox.information(
+                self,
+                "Saved",
+                f"Document saved to {os.path.basename(file_path)}\n(UTF-8 encoding)"
+            )
+
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Could not save file:\n{e}")
+
+    def _extract_text_from_docx(self, file_path: str) -> str:
+        """Extract plain text from DOCX file (no formatting/HTML)."""
+        try:
+            import docx
+            doc = docx.Document(file_path)
+            # Extract all paragraph text
+            paragraphs = [para.text for para in doc.paragraphs if para.text.strip()]
+            return '\n\n'.join(paragraphs)
+        except ImportError:
+            QMessageBox.warning(
+                self,
+                "Missing Library",
+                "python-docx library not installed.\n\n"
+                "Install with: pip install python-docx"
+            )
+            return ""
+        except Exception as e:
+            logger.error(f"Error extracting text from DOCX: {e}")
+            return ""
+
+    def _extract_text_from_pdf(self, file_path: str) -> str:
+        """Extract plain text from PDF file using DocumentParser (strips HTML)."""
+        try:
+            from pathlib import Path
+            from shared.services.document_manager.utils.parsers import DocumentParser
+            from html.parser import HTMLParser
+
+            # Use your comprehensive parser
+            text, html, file_type, metadata = DocumentParser.parse_file(
+                Path(file_path),
+                high_fidelity=True  # Use best quality extraction
+            )
+
+            # Strip HTML tags to get plain text
+            class HTMLStripper(HTMLParser):
+                def __init__(self):
+                    super().__init__()
+                    self.text_parts = []
+
+                def handle_data(self, data):
+                    self.text_parts.append(data)
+
+                def get_text(self):
+                    return ''.join(self.text_parts)
+
+            # If we have HTML, strip it to plain text
+            if html and html.strip():
+                stripper = HTMLStripper()
+                stripper.feed(html)
+                plain_text = stripper.get_text()
+                # Clean up extra whitespace
+                lines = [line.strip() for line in plain_text.split('\n') if line.strip()]
+                plain_text = '\n\n'.join(lines)
+
+                # Don't auto-convert - let user decide via menu
+                return plain_text
+
+            # Fallback to direct text extraction
+            return text if text else ""
+
+        except ImportError as e:
+            logger.error(f"Missing library for PDF parsing: {e}")
+            QMessageBox.warning(
+                self,
+                "Missing Library",
+                f"Required library not installed:\n\n{str(e)}\n\n"
+                "Install with: pip install pypdf PyMuPDF pdf2docx mammoth"
+            )
+            return ""
+        except Exception as e:
+            logger.error(f"Error extracting text from PDF: {e}", exc_info=True)
+            QMessageBox.critical(
+                self,
+                "PDF Extraction Error",
+                f"Could not extract text from PDF:\n\n{str(e)}"
+            )
+            return ""
+
+    def _convert_document_symbol_font(self) -> None:
+        """Manually convert Symbol font in current document to Unicode Greek."""
+        current_text = self.editor.toPlainText()
+
+        if not current_text.strip():
+            QMessageBox.information(self, "Empty Document", "Document is empty - nothing to convert.")
+            return
+
+        # Show preview and ask for confirmation
+        converted_text = self._convert_symbol_font_to_greek_with_prompt(current_text)
+
+        if converted_text != current_text:
+            # User confirmed and text was converted
+            self.editor.setPlainText(converted_text)
+            QMessageBox.information(
+                self,
+                "Conversion Complete",
+                "Symbol font characters converted to Unicode Greek.\n\n"
+                "Remember to save the document!"
+            )
+
+    def _convert_symbol_font_to_greek_with_prompt(self, text: str) -> str:
+        """Convert Symbol font with user prompt (returns original if declined)."""
+        # Symbol font to Unicode mapping
+        symbol_to_unicode = {
+            # Lowercase Greek letters
+            'a': 'α', 'b': 'β', 'g': 'γ', 'd': 'δ', 'e': 'ε', 'z': 'ζ',
+            'h': 'η', 'q': 'θ', 'i': 'ι', 'k': 'κ', 'l': 'λ', 'm': 'μ',
+            'n': 'ν', 'x': 'ξ', 'o': 'ο', 'p': 'π', 'r': 'ρ', 's': 'σ',
+            't': 'τ', 'u': 'υ', 'f': 'φ', 'c': 'χ', 'y': 'ψ', 'w': 'ω',
+
+            # Uppercase Greek letters
+            'A': 'Α', 'B': 'Β', 'G': 'Γ', 'D': 'Δ', 'E': 'Ε', 'Z': 'Ζ',
+            'H': 'Η', 'Q': 'Θ', 'I': 'Ι', 'K': 'Κ', 'L': 'Λ', 'M': 'Μ',
+            'N': 'Ν', 'X': 'Ξ', 'O': 'Ο', 'P': 'Π', 'R': 'Ρ', 'S': 'Σ',
+            'T': 'Τ', 'U': 'Υ', 'F': 'Φ', 'C': 'Χ', 'Y': 'Ψ', 'W': 'Ω',
+
+            # Special variants
+            'j': 'ϕ', 'v': 'ς', 'J': 'ϑ', 'V': 'ϖ',
+        }
+
+        # Show preview of what conversion would look like
+        preview_length = min(200, len(text))
+        preview_text = text[:preview_length]
+        preview_converted = ''.join(symbol_to_unicode.get(c, c) for c in preview_text)
+
+        reply = QMessageBox.question(
+            self,
+            "Convert Symbol Font to Greek",
+            f"This will convert ASCII characters to Greek letters.\n\n"
+            f"Original preview:\n{preview_text}\n\n"
+            f"Converted preview:\n{preview_converted}\n\n"
+            f"Convert entire document?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+
+        if reply != QMessageBox.StandardButton.Yes:
+            return text  # Return unchanged
+
+        # Convert entire document
+        converted = []
+        for char in text:
+            converted.append(symbol_to_unicode.get(char, char))
+
+        return ''.join(converted)
+

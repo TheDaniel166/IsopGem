@@ -72,11 +72,181 @@ class ObliquePrismSolidService:
         
         Imagine a right prism (vertical sides), then shift the top base
         laterally by offset (skew_x, skew_y). The vertical height remains h,
-        but the lateral edges are now slanted.\n        
-        Components:\n        - 2 parallel congruent regular n-gon bases (bottom at z=-h/2, top at z=+h/2)\n        - Bottom base vertices: (x, y, -h/2)\n        - Top base vertices: (x + skew_x, y + skew_y, +h/2)\n        - n parallelogram lateral faces (no longer rectangles!)\n        - Lateral edges connect corresponding vertices with oblique slant\n        
-        Key distinction from right prism:\n        - Right prism: Lateral edges perpendicular to base (\u22a5), lateral faces are rectangles\n        - Oblique prism: Lateral edges NOT perpendicular, lateral faces are parallelograms\n        
-        ESSENTIAL FORMULAS:\n        -------------------\n        \n        Skew Magnitude (lateral offset in xy-plane):\n            s = \u221a(skew_x\u00b2 + skew_y\u00b2)\n            \n            This is how far the top is shifted from directly above bottom.\n        \n        Lateral Edge Length (slant distance):\n            L_edge = \u221a(h\u00b2 + s\u00b2) = \u221a(h\u00b2 + skew_x\u00b2 + skew_y\u00b2)\n            \n            3D Pythagorean theorem: vertical height h, horizontal offset s.\n        \n        Volume (CAVALIERI'S PRINCIPLE!):\n            V = A_base \u00d7 h\n            \n            CRITICAL INSIGHT: Volume depends ONLY on base area and vertical\n            height, NOT on the skew! Oblique and right prisms with same base\n            and height have IDENTICAL volumes!\n        \n        Lateral Surface Area:\n            A_lateral = (computed from actual faces)\n            \n            More complex than right prism because faces are parallelograms,\n            not rectangles. Each face has base edge 'a' and oblique edge L_edge.\n        \n        Total Surface Area:\n            A_total = A_lateral + 2 \u00d7 A_base\n        \n        AHA MOMENT #1: CAVALIERI'S PRINCIPLE - VOLUME IS INVARIANT!\n        ============================================================\n        The volume of an oblique prism equals that of a right prism with the\n        same base and height, REGARDLESS of the skew!\n        \n        Bonaventura Cavalieri (1635): If two solids have equal cross-sectional\n        areas at every height, they have equal volumes.\n        \n        Imagine a deck of cards:\n        - Stacked vertically (right prism): V = (card area) \u00d7 (stack height)\n        - Pushed into slant (oblique prism): V = (card area) \u00d7 (stack height)\n        - Volume UNCHANGED even though shape is skewed!\n        \n        Every horizontal slice at height z has the SAME area (the base polygon),\n        just shifted by (skew_x \u00d7 z/h, skew_y \u00d7 z/h). The area doesn't change!\n        \n        Mathematical proof:\n            V = \u222b\u222b\u222b dV = \u222b_{-h/2}^{h/2} A_base dz = A_base \u00d7 h\n        \n        The integral doesn't care about lateral position\u2014only vertical extent!\n        \n        This principle also explains:\n        - Cylinder volume = oblique cylinder volume (same base, height)\n        - Pyramid volume = oblique pyramid volume (same base, height)\n        - Spheroid volume = sphere volume (NO! different principle)\n        \n        Cavalieri's Principle is WHY we can compute volumes of complex shapes\n        by slicing them into infinitesimal layers and adding up areas!\n        \n        AHA MOMENT #2: PARALLELOGRAM FACES - SHEARED RECTANGLES\n        ========================================================\n        In a right prism, lateral faces are rectangles:\n        - Base edge: a (from base polygon)\n        - Height edge: h (perpendicular to base)\n        - Area of each face: a \u00d7 h\n        \n        In an oblique prism, lateral faces are parallelograms:\n        - Base edge: a (unchanged)\n        - Oblique edge: L = \u221a(h\u00b2 + (skew/n)\u00b2)  [varies by position!]\n        - Angle between edges: NOT 90\u00b0 (acute or obtuse)\n        \n        Each parallelogram is a SHEARED rectangle:\n        - Take a rectangle (a \u00d7 h)\n        - Push top edge sideways by some amount\n        - Area changes: A_parallelogram = base \u00d7 perpendicular_height\n          (perpendicular height < h for oblique prism)\n        \n        The faces are no longer congruent! Faces on the \"leading\" side of the\n        skew are stretched differently than faces on the \"trailing\" side.\n        \n        This is why oblique prisms are HARDER to manufacture:\n        - Right angles are easy (carpenter's square, machining)\n        - Oblique angles require precise angle measurement and jigs\n        \n        Yet oblique prisms are common in nature:\n        - Leaning crystals (monoclinic crystal system)\n        - Wind-bent plant stems\n        - Geological faults (sheared rock layers)\n        \n        AHA MOMENT #3: THE SPECTRUM FROM RIGHT TO OBLIQUE\n        ==================================================\n        Skew creates a continuous spectrum of prism forms:\n        \n        skew = 0:\n            Right prism (vertical sides, rectangular lateral faces)\n            Maximal symmetry: n-fold rotation + n mirror planes\n        \n        0 < skew < h:\n            Moderate oblique prism (tilted but stable)\n            Loses mirror symmetry, keeps only rotational symmetry\n        \n        skew = h:\n            45\u00b0 oblique prism (diagonal slant)\n            Lateral edges at 45\u00b0 angle to base\n        \n        skew > h:\n            Extreme oblique prism (\"overhang\")\n            Top base projects beyond bottom base footprint!\n        \n        skew \u2192 \u221e:\n            Degenerate case (infinite slant)\n        \n        Physical interpretation:\n        - Tower of Pisa: Small skew (3.97\u00b0 from vertical \u2248 7% skew)\n        - Playing cards pushed over: Medium skew\n        - Impossible architecture: Large skew (requires hidden support)\n        \n        The skew vector (skew_x, skew_y) has DIRECTION and magnitude:\n        - Direction: Which way the prism leans (compass bearing)\n        - Magnitude s = \u221a(skew_x\u00b2 + skew_y\u00b2): How much it leans\n        \n        The lateral edge length L = \u221a(h\u00b2 + s\u00b2) is always \u2265 h:\n        - Minimum (L = h): Right prism (s = 0)\n        - Maximum: No limit (as s increases, L increases)\n        \n        HERMETIC NOTE - THE GEOMETRY OF IMBALANCE:\n        ==========================================\n        The oblique prism represents DYNAMIC TENSION:\n        \n        - **Vertical Height h**: The intended path, the ideal axis\n        - **Lateral Skew s**: The deviation, the perturbation\n        - **Slant Edge L**: The actual path through space (hypotenuse)\n        - **Parallelogram Faces**: Sheared reality (distortion from ideal)\n        \n        Symbolism:\n        - **Leaning Tower**: Human ambition under gravitational pull\n        - **Playing Cards**: Order on the verge of collapse\n        - **Monoclinic Crystal**: Asymmetry creates unique properties\n        - **Shear Transform**: External force distorting structure\n        \n        In Esoteric Traditions:\n        - **Right Prism**: Perfect alignment (spirit \u22a5 matter)\n        - **Oblique Prism**: The fallen state (spirit at angle to matter)\n        - **Skew Vector**: The horizontal pull (worldly temptation)\n        - **Cavalieri's Invariant**: Inner volume (soul) unchanged despite outer skew!\n        \n        The oblique prism teaches: EXTERNAL FORM may be distorted, but\n        INTERNAL CONTENT (volume) remains constant if the foundation (base)\n        and height (vertical extent) are preserved.\n        \n        This is the geometry of RESILIENCE UNDER STRESS\u2014the structure that\n        leans but does not fall, the tower that reaches despite the wind.\n        
-        Args:\n            base_edge: Description of base_edge.\n            height: Description of height.\n            skew_x: Description of skew_x.\n            skew_y: Description of skew_y.\n        \n        Returns:\n            Result of build operation.\n        \"\"\"\n        if cls.SIDES < 3:
+        but the lateral edges are now slanted.
+        
+        Components:
+        - 2 parallel congruent regular n-gon bases (bottom at z=-h/2, top at z=+h/2)
+        - Bottom base vertices: (x, y, -h/2)
+        - Top base vertices: (x + skew_x, y + skew_y, +h/2)
+        - n parallelogram lateral faces (no longer rectangles!)
+        - Lateral edges connect corresponding vertices with oblique slant
+        
+        Key distinction from right prism:
+        - Right prism: Lateral edges perpendicular to base (\u22a5), lateral faces are rectangles
+        - Oblique prism: Lateral edges NOT perpendicular, lateral faces are parallelograms
+        
+        ESSENTIAL FORMULAS:
+        -------------------
+        
+        Skew Magnitude (lateral offset in xy-plane):
+            s = \u221a(skew_x\u00b2 + skew_y\u00b2)
+            
+            This is how far the top is shifted from directly above bottom.
+        
+        Lateral Edge Length (slant distance):
+            L_edge = \u221a(h\u00b2 + s\u00b2) = \u221a(h\u00b2 + skew_x\u00b2 + skew_y\u00b2)
+            
+            3D Pythagorean theorem: vertical height h, horizontal offset s.
+        
+        Volume (CAVALIERI'S PRINCIPLE!):
+            V = A_base \u00d7 h
+            
+            CRITICAL INSIGHT: Volume depends ONLY on base area and vertical
+            height, NOT on the skew! Oblique and right prisms with same base
+            and height have IDENTICAL volumes!
+        
+        Lateral Surface Area:
+            A_lateral = (computed from actual faces)
+            
+            More complex than right prism because faces are parallelograms,
+            not rectangles. Each face has base edge 'a' and oblique edge L_edge.
+        
+        Total Surface Area:
+            A_total = A_lateral + 2 \u00d7 A_base
+        
+        AHA MOMENT #1: CAVALIERI'S PRINCIPLE - VOLUME IS INVARIANT!
+        ============================================================
+        The volume of an oblique prism equals that of a right prism with the
+        same base and height, REGARDLESS of the skew!
+        
+        Bonaventura Cavalieri (1635): If two solids have equal cross-sectional
+        areas at every height, they have equal volumes.
+        
+        Imagine a deck of cards:
+        - Stacked vertically (right prism): V = (card area) \u00d7 (stack height)
+        - Pushed into slant (oblique prism): V = (card area) \u00d7 (stack height)
+        - Volume UNCHANGED even though shape is skewed!
+        
+        Every horizontal slice at height z has the SAME area (the base polygon),
+        just shifted by (skew_x \u00d7 z/h, skew_y \u00d7 z/h). The area doesn't change!
+        
+        Mathematical proof:
+            V = \u222b\u222b\u222b dV = \u222b_{-h/2}^{h/2} A_base dz = A_base \u00d7 h
+        
+        The integral doesn't care about lateral position\u2014only vertical extent!
+        
+        This principle also explains:
+        - Cylinder volume = oblique cylinder volume (same base, height)
+        - Pyramid volume = oblique pyramid volume (same base, height)
+        - Spheroid volume = sphere volume (NO! different principle)
+        
+        Cavalieri's Principle is WHY we can compute volumes of complex shapes
+        by slicing them into infinitesimal layers and adding up areas!
+        
+        AHA MOMENT #2: PARALLELOGRAM FACES - SHEARED RECTANGLES
+        ========================================================
+        In a right prism, lateral faces are rectangles:
+        - Base edge: a (from base polygon)
+        - Height edge: h (perpendicular to base)
+        - Area of each face: a \u00d7 h
+        
+        In an oblique prism, lateral faces are parallelograms:
+        - Base edge: a (unchanged)
+        - Oblique edge: L = \u221a(h\u00b2 + (skew/n)\u00b2)  [varies by position!]
+        - Angle between edges: NOT 90\u00b0 (acute or obtuse)
+        
+        Each parallelogram is a SHEARED rectangle:
+        - Take a rectangle (a \u00d7 h)
+        - Push top edge sideways by some amount
+        - Area changes: A_parallelogram = base \u00d7 perpendicular_height
+          (perpendicular height < h for oblique prism)
+        
+        The faces are no longer congruent! Faces on the \"leading\" side of the
+        skew are stretched differently than faces on the \"trailing\" side.
+        
+        This is why oblique prisms are HARDER to manufacture:
+        - Right angles are easy (carpenter's square, machining)
+        - Oblique angles require precise angle measurement and jigs
+        
+        Yet oblique prisms are common in nature:
+        - Leaning crystals (monoclinic crystal system)
+        - Wind-bent plant stems
+        - Geological faults (sheared rock layers)
+        
+        AHA MOMENT #3: THE SPECTRUM FROM RIGHT TO OBLIQUE
+        ==================================================
+        Skew creates a continuous spectrum of prism forms:
+        
+        skew = 0:
+            Right prism (vertical sides, rectangular lateral faces)
+            Maximal symmetry: n-fold rotation + n mirror planes
+        
+        0 < skew < h:
+            Moderate oblique prism (tilted but stable)
+            Loses mirror symmetry, keeps only rotational symmetry
+        
+        skew = h:
+            45\u00b0 oblique prism (diagonal slant)
+            Lateral edges at 45\u00b0 angle to base
+        
+        skew > h:
+            Extreme oblique prism (\"overhang\")
+            Top base projects beyond bottom base footprint!
+        
+        skew \u2192 \u221e:
+            Degenerate case (infinite slant)
+        
+        Physical interpretation:
+        - Tower of Pisa: Small skew (3.97\u00b0 from vertical \u2248 7% skew)
+        - Playing cards pushed over: Medium skew
+        - Impossible architecture: Large skew (requires hidden support)
+        
+        The skew vector (skew_x, skew_y) has DIRECTION and magnitude:
+        - Direction: Which way the prism leans (compass bearing)
+        - Magnitude s = \u221a(skew_x\u00b2 + skew_y\u00b2): How much it leans
+        
+        The lateral edge length L = \u221a(h\u00b2 + s\u00b2) is always \u2265 h:
+        - Minimum (L = h): Right prism (s = 0)
+        - Maximum: No limit (as s increases, L increases)
+        
+        HERMETIC NOTE - THE GEOMETRY OF IMBALANCE:
+        ==========================================
+        The oblique prism represents DYNAMIC TENSION:
+        
+        - **Vertical Height h**: The intended path, the ideal axis
+        - **Lateral Skew s**: The deviation, the perturbation
+        - **Slant Edge L**: The actual path through space (hypotenuse)
+        - **Parallelogram Faces**: Sheared reality (distortion from ideal)
+        
+        Symbolism:
+        - **Leaning Tower**: Human ambition under gravitational pull
+        - **Playing Cards**: Order on the verge of collapse
+        - **Monoclinic Crystal**: Asymmetry creates unique properties
+        - **Shear Transform**: External force distorting structure
+        
+        In Esoteric Traditions:
+        - **Right Prism**: Perfect alignment (spirit \u22a5 matter)
+        - **Oblique Prism**: The fallen state (spirit at angle to matter)
+        - **Skew Vector**: The horizontal pull (worldly temptation)
+        - **Cavalieri's Invariant**: Inner volume (soul) unchanged despite outer skew!
+        
+        The oblique prism teaches: EXTERNAL FORM may be distorted, but
+        INTERNAL CONTENT (volume) remains constant if the foundation (base)
+        and height (vertical extent) are preserved.
+        
+        This is the geometry of RESILIENCE UNDER STRESS\u2014the structure that
+        leans but does not fall, the tower that reaches despite the wind.
+
+        Args:
+            base_edge: Description of base_edge.
+            height: Description of height.
+            skew_x: Description of skew_x.
+            skew_y: Description of skew_y.
+
+        Returns:
+            Result of build operation.
+        """
+        if cls.SIDES < 3:
             raise ValueError('A prism base must have at least 3 sides')
         if base_edge <= 0 or height <= 0:
             raise ValueError('Base edge and height must be positive')
@@ -144,7 +314,9 @@ class ObliquePrismSolidService:
         return ObliquePrismSolidResult(payload=payload, metrics=metrics)
 
     @classmethod
-    def payload(cls, base_edge: float = 2.0, height: float = 4.0, skew_x: float = 0.75, skew_y: float = 0.35) -> SolidPayload:
+    def payload(
+        cls, base_edge: float = 2.0, height: float = 4.0, skew_x: float = 0.75, skew_y: float = 0.35
+    ) -> SolidPayload:
         """
         Payload logic.
         

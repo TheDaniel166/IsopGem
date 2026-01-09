@@ -55,7 +55,7 @@ class KeyDatabase:
         self._init_db()
 
     def _get_conn(self) -> sqlite3.Connection:
-        conn = sqlite3.connect(self.db_path)
+        conn = sqlite3.connect(self.db_path, timeout=30.0)  # 30 second timeout
         conn.row_factory = sqlite3.Row
         return conn
 
@@ -63,6 +63,13 @@ class KeyDatabase:
         """Initialize the database schema."""
         conn = self._get_conn()
         cursor = conn.cursor()
+        
+        # Enable WAL mode once for better concurrency (only affects this database file)
+        try:
+            cursor.execute("PRAGMA journal_mode=WAL")
+            cursor.execute("PRAGMA busy_timeout=30000")  # 30 second timeout for locks
+        except sqlite3.OperationalError:
+            pass  # Already in WAL mode or locked temporarily
         
         # 1. Master Key Table
         cursor.execute("""
@@ -136,7 +143,37 @@ class KeyDatabase:
             )
         """)
         
-        # 6. Ensure master_key has frequency column (migration)
+        # 6. Etymology Database (from etymology-db project)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS etymologies (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                term_id TEXT NOT NULL,
+                lang TEXT NOT NULL,
+                term TEXT NOT NULL,
+                reltype TEXT NOT NULL,
+                related_term_id TEXT,
+                related_lang TEXT,
+                related_term TEXT,
+                position INTEGER DEFAULT 0,
+                group_tag TEXT,
+                parent_tag TEXT,
+                parent_position INTEGER,
+                loaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
+        # Indices for etymology queries (English word lookups)
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS ix_etymologies_term 
+            ON etymologies(term, lang)
+        """)
+        
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS ix_etymologies_reltype 
+            ON etymologies(term, reltype)
+        """)
+        
+        # 7. Ensure master_key has frequency column (migration)
         try:
             cursor.execute("ALTER TABLE master_key ADD COLUMN frequency INTEGER DEFAULT 0")
         except sqlite3.OperationalError:
@@ -150,15 +187,25 @@ class KeyDatabase:
         DANGEROUS: Drops all tables and re-initializes.
         Used for rebuilding the lexicon from scratch.
         """
+        import gc
+        
+        # Force garbage collection to close lingering connections
+        gc.collect()
+        
         conn = self._get_conn()
         cursor = conn.cursor()
         
-        tables = ['word_occurrences', 'occurrences', 'definitions', 'master_key', 'ignored_words']
-        for table in tables:
-            cursor.execute(f"DROP TABLE IF EXISTS {table}")
+        try:
+            tables = ['word_occurrences', 'occurrences', 'definitions', 'master_key', 'ignored_words', 'etymologies']
+            for table in tables:
+                cursor.execute(f"DROP TABLE IF EXISTS {table}")
             
-        conn.commit()
-        conn.close()
+            conn.commit()
+        except sqlite3.OperationalError as e:
+            conn.rollback()
+            raise Exception(f"Database is locked. Close all windows using the lexicon and try again. ({e})")
+        finally:
+            conn.close()
         
         # Re-init
         self._init_db()

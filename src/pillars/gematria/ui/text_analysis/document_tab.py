@@ -5,7 +5,7 @@ Tab widget combining document viewer with verse list and calculation controls.
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QStackedWidget
 )
-from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtCore import pyqtSignal, Qt
 from typing import Optional
 
 from .document_viewer import DocumentViewer
@@ -27,25 +27,27 @@ class DocumentTab(QWidget):
     open_quadset_requested = pyqtSignal(int)
     teach_requested = pyqtSignal()
     
-    def __init__(self, document: Document, analysis_service: TextAnalysisService, parent=None):
+    def __init__(self, document: Document, analysis_service: TextAnalysisService, multi_lang_calculator=None, parent=None):
         """
           init   logic.
-        
+
         Args:
             document: Description of document.
             analysis_service: Description of analysis_service.
+            multi_lang_calculator: Optional multi-language calculator instance.
             parent: Description of parent.
-        
+
         """
         super().__init__(parent)
         self.document = document
         self.analysis_service = analysis_service
         self.current_calculator = None
+        self.multi_lang_calculator = multi_lang_calculator
         self.strict_parsing = True
         self.include_numbers = False
         self._formatted_verse_mode = False  # Track formatted verse display
         self._is_stale = False # Track if content needs refresh due to lexicon updates
-        
+
         self._setup_ui()
         self._load_document_content()
 
@@ -89,6 +91,21 @@ class DocumentTab(QWidget):
         self.save_sel_btn.clicked.connect(self._on_save_selection)
         self.save_sel_btn.setEnabled(False)
         header.addWidget(self.save_sel_btn)
+        
+        # Selection Result Label - prominent display in header
+        self.sel_result_lbl = QLabel("")
+        self.sel_result_lbl.setStyleSheet(f"""
+            color: {COLORS['focus']};
+            font-weight: bold;
+            font-size: 14pt;
+            padding: 4px 12px;
+            background-color: rgba(100, 200, 255, 0.15);
+            border-radius: 4px;
+        """)
+        self.sel_result_lbl.setMinimumWidth(120)
+        self.sel_result_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        header.addWidget(self.sel_result_lbl)
+        
         layout.addLayout(header)
         
         # Stack
@@ -112,11 +129,6 @@ class DocumentTab(QWidget):
         self.stack.addWidget(self.interlinear_view)
         
         layout.addWidget(self.stack)
-        
-        # Selection Result Label
-        self.sel_result_lbl = QLabel("")
-        self.sel_result_lbl.setStyleSheet(f"color: {COLORS['focus']}; font-weight: bold;")
-        layout.addWidget(self.sel_result_lbl)
         
     def _load_document_content(self, use_curated_format: bool = False):
         """Load document content into the viewer.
@@ -275,8 +287,9 @@ class DocumentTab(QWidget):
         except ImportError:
             key_service = None
             
-        # Set calculator and key service
+        # Set calculator, multi-lang calculator, and key service
         self.interlinear_view.calculator = self.current_calculator
+        self.interlinear_view.multi_lang_calculator = self.multi_lang_calculator
         self.interlinear_view.key_service = key_service
         
         # Parse verses
@@ -362,7 +375,7 @@ class DocumentTab(QWidget):
         if not txt or not self.current_calculator:
             return
         val = self.analysis_service.calculate_text(txt, self.current_calculator, self.include_numbers)
-        self.sel_result_lbl.setText(f"Value: {val}")
+        self.sel_result_lbl.setText(f"✦ {val} ✦")
         
     def _on_verse_jump(self, start, end):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
         # Switch to text view and highlight
@@ -387,7 +400,7 @@ class DocumentTab(QWidget):
         if not text or not self.current_calculator:
             return
         val = self.analysis_service.calculate_text(text, self.current_calculator, self.include_numbers)  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
-        self.sel_result_lbl.setText(f"Value: {val}")
+        self.sel_result_lbl.setText(f"✦ {val} ✦")
 
     def _on_viewer_quadset(self, text):
         if not text or not self.current_calculator:

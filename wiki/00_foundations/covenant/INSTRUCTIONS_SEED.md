@@ -1,10 +1,3 @@
----
-applyTo: '**'
----
-# Covenant Seed (mirror)
-
-<!-- Last Verified: 2026-01-08 -->
-
 # Covenant Seed (Copilot Entry Point)
 
 This seed is the minimal, always-loaded Covenant. Use it when full scrolls
@@ -37,14 +30,3 @@ are not loaded.
 
 - Canonical scrolls: `wiki/00_foundations/covenant/`
 - VS Code mirror: `.github/instructions/covenant/`
-
----
-
-Do not edit here. Update the canonical scrolls instead:
-- Canonical source: `wiki/00_foundations/covenant/`
-- VS Code mirror: `.github/instructions/covenant/`
-- Gemini copy: `~/.gemini/covenant/`
-- Sophia home copy: `~/.sophia/covenant/`
-
-Regenerate mirrors and this seed with:
-`.venv/bin/python scripts/covenant_scripts/sync_covenant.py`

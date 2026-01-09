@@ -8,7 +8,7 @@ import logging
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QComboBox,
     QPushButton, QLabel, QCheckBox, QMessageBox, QTabWidget,
-    QSplitter, QFileDialog, QFrame, QInputDialog
+    QSplitter, QFileDialog, QFrame
 )
 from PyQt6.QtCore import Qt
 from typing import List
@@ -21,7 +21,6 @@ from shared.services.document_manager.document_service import document_service_c
 from shared.ui.theme import (
     COLORS,
     apply_tablet_shadow,
-    get_exegesis_group_style,
     get_exegesis_tab_style,
     get_exegesis_toolbar_style,
     get_status_muted_style,
@@ -34,6 +33,7 @@ from .search_panel import SearchPanel
 from .document_tab import DocumentTab
 from .stats_panel import StatsPanel
 from .smart_filter_dialog import SmartFilterDialog
+from .interlinear_tools_panel import InterlinearToolsPanel
 from ..holy_book_teacher_window import HolyBookTeacherWindow
 
 logger = logging.getLogger(__name__)
@@ -64,17 +64,21 @@ class ExegesisWindow(QMainWindow):
         eng_tq = next((c for c in calculators if "English TQ" in c.name), None)
         tq = next((c for c in calculators if "TQ" in c.name), None)
         eng = next((c for c in calculators if "English" in c.name), None)
-        
+
         if eng_tq:
             self.current_calculator = eng_tq
         elif tq:
             self.current_calculator = tq
         elif eng:
             self.current_calculator = eng
-                
+
+        # Create multi-language calculator for automatic language detection
+        from shared.services.gematria.multi_language_calculator import MultiLanguageCalculator
+        self.multi_lang_calculator = MultiLanguageCalculator(calculators)
+
         self.calc_service = CalculationService()
         self.analysis_service = TextAnalysisService()
-        
+
         self._setup_ui()
         self._load_documents()
         
@@ -154,11 +158,12 @@ class ExegesisWindow(QMainWindow):
         
         # Options
         self.holy_view_chk = QCheckBox("Holy Scansion")
+        self.holy_view_chk.setToolTip("View document as parsed verses")
         self.holy_view_chk.toggled.connect(self._on_view_mode_toggled)
         toolbar.addWidget(self.holy_view_chk)
         
-        self.interlinear_chk = QCheckBox("Interlinear")
-        self.interlinear_chk.setToolTip("Show word-level TQ values and concordance links")
+        self.interlinear_chk = QCheckBox("  ↳ Interlinear")
+        self.interlinear_chk.setToolTip("Requires Holy Scansion • Shows word-level TQ values and concordance links")
         self.interlinear_chk.toggled.connect(self._on_view_mode_toggled)
         self.interlinear_chk.setEnabled(False)  # Only enabled when Holy Scansion is checked
         toolbar.addWidget(self.interlinear_chk)
@@ -233,7 +238,12 @@ class ExegesisWindow(QMainWindow):
         # Stats Tab -> Numerological Frequency
         self.stats_panel = StatsPanel()
         self.tools_tabs.addTab(self.stats_panel, "Numerological Frequency")
-        
+
+        # Interlinear Tools Tab (hidden by default, shown when interlinear mode active)
+        self.interlinear_tools_panel = InterlinearToolsPanel()
+        self.interlinear_tools_tab_index = self.tools_tabs.addTab(self.interlinear_tools_panel, "Interlinear Tools")
+        self.tools_tabs.setTabVisible(self.interlinear_tools_tab_index, False)  # Hidden by default
+
         splitter.addWidget(self.tools_tabs)
         
         splitter.setSizes([800, 400])
@@ -255,7 +265,7 @@ class ExegesisWindow(QMainWindow):
             from shared.services.document_manager.verse_teacher_service import verse_teacher_service_context
             
             # Batch query: get all document IDs with curated verses in ONE query
-            curated_doc_ids: set = set()
+            curated_doc_ids: set[int] = set()
             try:
                 with verse_teacher_service_context() as verse_service:
                     curated_doc_ids = verse_service.get_documents_with_curated_verses()
@@ -325,7 +335,7 @@ class ExegesisWindow(QMainWindow):
             if not document:
                 return
                 
-            tab = DocumentTab(document, self.analysis_service)
+            tab = DocumentTab(document, self.analysis_service, multi_lang_calculator=self.multi_lang_calculator)
             # Connect signals
             tab.save_verse_requested.connect(self._on_save_verse)
             tab.save_all_requested.connect(self._on_save_all_verses)
@@ -343,7 +353,7 @@ class ExegesisWindow(QMainWindow):
                 interlinear=self.interlinear_chk.isChecked()
             )
             
-            index = self.doc_tabs.addTab(tab, document.title)
+            index = self.doc_tabs.addTab(tab, str(document.title))
             self.doc_tabs.setCurrentIndex(index)
             self.status.setText(f"Opened Scroll: {document.title}")
             
@@ -392,16 +402,22 @@ class ExegesisWindow(QMainWindow):
             self.interlinear_chk.setEnabled(checked)
             if not checked:
                 self.interlinear_chk.setChecked(False)
-        
+
         holy_mode = self.holy_view_chk.isChecked()
         interlinear_mode = self.interlinear_chk.isChecked()
-        
+
+        # Show/hide Interlinear Tools tab based on interlinear mode
+        self.tools_tabs.setTabVisible(self.interlinear_tools_tab_index, interlinear_mode)
+        if interlinear_mode:
+            # Switch to Interlinear Tools tab when enabled
+            self.tools_tabs.setCurrentIndex(self.interlinear_tools_tab_index)
+
         # When Holy Scansion is enabled, auto-check Curated Format if curated verses exist
         if holy_mode and self.sender() == self.holy_view_chk:
             current_tab = self.doc_tabs.currentWidget()
             if isinstance(current_tab, DocumentTab) and current_tab.has_curated_verses():
                 self.curated_format_chk.setChecked(True)
-        
+
         for i in range(self.doc_tabs.count()):
             tab = self.doc_tabs.widget(i)
             if isinstance(tab, DocumentTab):
@@ -553,8 +569,8 @@ class ExegesisWindow(QMainWindow):
             return
             
         dlg = HolyBookTeacherWindow(
-            document_id=current.document.id,
-            document_title=current.document.title,
+            document_id=int(current.document.id),
+            document_title=str(current.document.title),
             allow_inline=not self.strict_verse_chk.isChecked(),
             parent=self
         )
@@ -646,24 +662,26 @@ class ExegesisWindow(QMainWindow):
             pass
 
     def _save_record(self, text, default_note=None, silent=False):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
-        try:
-            val = self.analysis_service.calculate_text(text, self.current_calculator, self.include_nums_chk.isChecked())
-            notes = default_note or ""
-            if not silent:
-                notes, ok = QInputDialog.getMultiLineText(self, "Save to Karnak", f"Save: {text} = {val}", notes)
-                if not ok: return
-            
-            self.calc_service.save_calculation(
-                text=text,
-                value=val,
-                calculator=self.current_calculator,
-                breakdown=[],
-                notes=notes,
-                source="Exegesis Tool"
-            )
-        except Exception as e:
-            if not silent:
-                QMessageBox.critical(self, "Error", str(e))
+        """Save calculation using reusable dialog."""
+        if not text or self.current_calculator is None:
+            return
+        
+        from shared.ui.save_calculation_dialog import SaveCalculationDialog
+        
+        # Calculate value and breakdown
+        val = self.analysis_service.calculate_text(text, self.current_calculator, self.include_nums_chk.isChecked())
+        breakdown = self.current_calculator.get_breakdown(text)
+        
+        SaveCalculationDialog.save_calculation(
+            parent=self,
+            text=text,
+            value=val,
+            calculator=self.current_calculator,
+            breakdown=breakdown,
+            source="Exegesis Tool",
+            default_notes=default_note or "",
+            silent=silent
+        )
 
     def _on_send_search_to_emerald(self, matches):
         if not self.window_manager or not matches:

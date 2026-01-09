@@ -1,10 +1,10 @@
 """Gematria calculator tool window."""
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QLabel, QLineEdit, QPushButton, QTextEdit, QComboBox,
+    QLabel, QLineEdit, QPushButton,
     QMessageBox, QInputDialog, QMenu, QRadioButton
 )
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QPoint
 from typing import Dict, List, Optional
 from ..services.base_calculator import GematriaCalculator
 from ..services import CalculationService
@@ -45,7 +45,7 @@ class GematriaCalculatorWindow(QMainWindow):
         # Store current calculation
         self.current_text: str = ""
         self.current_value: int = 0
-        self.current_breakdown: List[tuple] = []
+        self.current_breakdown: List[tuple[str, int]] = []
         
         # Virtual keyboard
         self.virtual_keyboard: Optional[VirtualKeyboard] = None
@@ -560,59 +560,16 @@ class GematriaCalculatorWindow(QMainWindow):
             QMessageBox.warning(self, "Gematria Calculator", "Cannot save while viewing all methods.")
             return
         
-        # Create a simple dialog to get notes and tags
-        notes, ok = QInputDialog.getMultiLineText(
-            self,
-            "Save Calculation",
-            f"Saving: {self.current_text} = {self.current_value}\n\nNotes (optional):",
-            ""
+        from shared.ui.save_calculation_dialog import SaveCalculationDialog
+        
+        SaveCalculationDialog.save_calculation(
+            parent=self,
+            text=self.current_text,
+            value=self.current_value,
+            calculator=self.current_calculator,
+            breakdown=self.current_breakdown,
+            source=""  # TODO: Add input field for source (e.g. Book, Chapter, Verse)
         )
-        
-        if not ok:
-            return
-        
-        # Get tags
-        tags_str, ok = QInputDialog.getText(
-            self,
-            "Add Tags",
-            "Tags (comma-separated, optional):",
-            QLineEdit.EchoMode.Normal,
-            ""
-        )
-        
-        if not ok:
-            tags_str = ""
-        
-        # Parse tags
-        tags = [tag.strip() for tag in tags_str.split(',') if tag.strip()]
-        
-        # TODO: Add input field for Source information (e.g. Book, Chapter, Verse)
-        source = ""
-        
-        # Save to database
-        try:
-            record = self.calculation_service.save_calculation(
-                text=self.current_text,
-                value=self.current_value,
-                calculator=self.current_calculator,
-                breakdown=self.current_breakdown,
-                notes=notes,
-                tags=tags,
-                source=source  # TODO: Populate from user input
-            )
-            
-            QMessageBox.information(
-                self,
-                "Saved",
-                f"Calculation saved successfully!\n\n{record.text} = {record.value}"
-            )
-            
-        except Exception as e:
-            QMessageBox.critical(
-                self,
-                "Error",
-                f"Failed to save calculation:\n{str(e)}"
-            )
 
     def _send_to_tablet(self):
         """Send current results to Emerald Tablet."""
@@ -632,7 +589,7 @@ class GematriaCalculatorWindow(QMainWindow):
             data = self.last_export_data["data"]
             hub.receive_import(name, data)
 
-    def _on_total_context_menu(self, value: int, pos):
+    def _on_total_context_menu(self, value: int, pos: QPoint):
         """Build and show the context menu for the total value."""
         menu = QMenu(self)
         
@@ -688,7 +645,8 @@ class GematriaCalculatorWindow(QMainWindow):
         """Locate the active Mindscape window via the Window Manager."""
         if not self.window_manager: return None
         # WindowManager usually tracks windows by key
-        return self.window_manager.get_window("mindscape")
+        win = self.window_manager.get_window("mindscape")
+        return win if isinstance(win, QMainWindow) else None
 
     def _ms_insert_current(self):
         """Insert total into current Mindscape page."""
@@ -798,7 +756,7 @@ class GematriaCalculatorWindow(QMainWindow):
         """Create a new section in a chosen notebook."""
         with notebook_service_context() as service:
             notebooks = service.get_notebooks_with_structure()
-            nb_map = {nb.title: nb.id for nb in notebooks}
+            nb_map: dict[str, int] = {nb.title: nb.id for nb in notebooks}
             
             if not nb_map:
                 QMessageBox.warning(self, "MindScape", "No notebooks found.")
@@ -806,7 +764,7 @@ class GematriaCalculatorWindow(QMainWindow):
                 
             nb_choice, ok = QInputDialog.getItem(
                 self, "Select Notebook", "Choose notebook for the section:",
-                sorted(nb_map.keys()), 0, False
+                list(sorted(nb_map.keys())), 0, False
             )
             
             if not (ok and nb_choice): return

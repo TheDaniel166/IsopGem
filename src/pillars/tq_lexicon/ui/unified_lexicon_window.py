@@ -20,6 +20,7 @@ from PyQt6.QtWidgets import (
     QTableWidgetItem, QCheckBox, QPlainTextEdit, QMessageBox,
     QHeaderView, QListWidget, QListWidgetItem, QComboBox, QFrame,
     QTreeWidget, QTreeWidgetItem, QProgressBar, QGroupBox, QTextEdit,
+    QFormLayout, QDialog, QDialogButtonBox,
 )
 from PyQt6.QtGui import QColor, QFont
 
@@ -150,6 +151,14 @@ class UnifiedLexiconWindow(QMainWindow):
         self.progress_bar.setVisible(False)
         self.statusBar().addPermanentWidget(self.progress_bar)
         self.statusBar().showMessage("Ready")
+        
+        # Load initial data for current tab
+        self._load_documents()
+        current_idx = self.tabs.currentIndex()
+        if current_idx == 2:  # Concordance tab
+            self._load_concordance()
+        elif current_idx == 3:  # Master Key tab
+            self._search_master_key("")
 
     # =========================================================================
     # TAB 1: IMPORT & PARSE
@@ -679,6 +688,9 @@ class UnifiedLexiconWindow(QMainWindow):
         self.txt_import_results.setPlainText("\n".join(lines))
         self._load_documents()
         self._update_stats()
+        
+        # Refresh Master Key table to show newly indexed words
+        self._search_master_key(self.txt_mk_search.text())
 
         QMessageBox.information(
             self, "Complete",
@@ -932,148 +944,382 @@ class UnifiedLexiconWindow(QMainWindow):
         def_tab = QWidget()
         def_layout = QVBoxLayout(def_tab)
         
-        # List of existing definitions
+        # List of existing definitions - grouped by type
         def_list = QListWidget()
         def_list.setAlternatingRowColors(True)
         definitions = self.service.db.get_definitions(key_id)
         
+        # Group definitions by type
+        from collections import defaultdict
+        grouped = defaultdict(list)
         for d in definitions:
-            src_text = f" ({d.source})" if d.source else ""
-            item = QListWidgetItem(f"[{d.type}] {d.content}{src_text}")
-            item.setData(Qt.ItemDataRole.UserRole, d)
-            def_list.addItem(item)
-            
-        if not definitions:
-            def_list.addItem(QListWidgetItem("No definitions recorded. Use 'Fetch Suggestions' to add."))
+            grouped[d.type].append(d)
+        
+        # Display grouped by type with headers
+        if definitions:
+            for def_type in ['Etymology', 'Standard', 'Theosophical', 'Alchemical', 'Botanical', 'Occult', 'Divinatory', 'Mythological', 'Phonetic']:
+                if def_type in grouped:
+                    # Type header
+                    header_item = QListWidgetItem(f"━━━ {def_type.upper()} ({len(grouped[def_type])}) ━━━")
+                    header_item.setForeground(QColor("#8b5cf6"))
+                    font = header_item.font()
+                    font.setBold(True)
+                    header_item.setFont(font)
+                    header_item.setFlags(Qt.ItemFlag.NoItemFlags)  # Not selectable
+                    def_list.addItem(header_item)
+                    
+                    # Definitions under this type
+                    for d in grouped[def_type]:
+                        src_text = f" ({d.source})" if d.source else ""
+                        item = QListWidgetItem(f"  • {d.content}{src_text}")
+                        item.setData(Qt.ItemDataRole.UserRole, d)
+                        def_list.addItem(item)
+        else:
+            def_list.addItem(QListWidgetItem("No definitions recorded. Use 'Fetch & Add All' to fetch and save."))
             
         def_layout.addWidget(def_list)
         
-        # Add Definition Section
-        group_add = QGroupBox("Add New Definition")
-        def_layout.addWidget(group_add)
-        add_layout = QVBoxLayout(group_add)
-        
-        # Auto-fetch button (no dropdown)
-        box_auto = QHBoxLayout()
-        btn_fetch = QPushButton("✨ Fetch & Add All")
-        btn_fetch.setIcon(qta.icon("fa5s.magic", color="#8b5cf6"))
-        btn_fetch.setStyleSheet("background-color: #8b5cf6; color: white; font-weight: bold; padding: 8px 16px;")
-        box_auto.addWidget(btn_fetch)
-        box_auto.addStretch()
-        add_layout.addLayout(box_auto)
-        
-        # Status label for fetch results
-        lbl_fetch_status = QLabel("")
-        lbl_fetch_status.setStyleSheet("color: #64748b; font-style: italic;")
-        add_layout.addWidget(lbl_fetch_status)
-        
-        # Separator
-        add_layout.addWidget(QLabel("— or add manually —"))
-        
-        # Manual Form
-        form_layout = QFormLayout()
-        cmb_type = QComboBox()
-        cmb_type.addItems(['Etymology', 'Standard', 'Alchemical', 'Botanical', 'Occult', 'Divinatory', 'Mythological'])
-        
-        txt_content = QTextEdit()
-        txt_content.setMaximumHeight(80)
-        
-        txt_source = QLineEdit()
-        txt_source.setPlaceholderText("Citation / Authority")
-        
-        form_layout.addRow("Type:", cmb_type)
-        form_layout.addRow("Meaning:", txt_content)
-        form_layout.addRow("Citation:", txt_source)
-        add_layout.addLayout(form_layout)
-        
-        btn_add = QPushButton("Add Definition")
-        btn_add.setStyleSheet("background-color: #7c3aed; color: white; font-weight: bold;")
-        add_layout.addWidget(btn_add)
+        # Fetched Suggestions Section
+        group_suggestions = QGroupBox("Fetched Suggestions")
+        def_layout.addWidget(group_suggestions)
+        sugg_layout = QVBoxLayout(group_suggestions)
+
+        # Status label
+        lbl_fetch_status = QLabel("Fetching suggestions...")
+        lbl_fetch_status.setStyleSheet("color: #7c3aed; font-style: italic; padding: 4px;")
+        sugg_layout.addWidget(lbl_fetch_status)
+
+        # Suggestions list with checkboxes
+        suggestions_list = QListWidget()
+        suggestions_list.setAlternatingRowColors(True)
+        suggestions_list.setStyleSheet("""
+            QListWidget::item {
+                padding: 8px;
+                border-bottom: 1px solid #e5e7eb;
+            }
+            QListWidget::item:hover {
+                background-color: #f3f4f6;
+            }
+        """)
+        sugg_layout.addWidget(suggestions_list)
+
+        # Action buttons for suggestions
+        sugg_actions = QHBoxLayout()
+        btn_select_all = QPushButton("Select All")
+        btn_select_all.setIcon(qta.icon("fa5s.check-double", color="#6366f1"))
+        btn_clear_all = QPushButton("Clear")
+        btn_clear_all.setIcon(qta.icon("fa5s.times", color="#ef4444"))
+        btn_add_selected = QPushButton("Add Selected (0)")
+        btn_add_selected.setIcon(qta.icon("fa5s.plus-circle", color="#10b981"))
+        btn_add_selected.setStyleSheet("background-color: #10b981; color: white; font-weight: bold; padding: 6px 12px;")
+        btn_add_selected.setEnabled(False)
+
+        sugg_actions.addWidget(btn_select_all)
+        sugg_actions.addWidget(btn_clear_all)
+        sugg_actions.addStretch()
+        sugg_actions.addWidget(btn_add_selected)
+        sugg_layout.addLayout(sugg_actions)
+
+        # Existing Definitions - Filtered View Section
+        group_existing = QGroupBox("Existing Definitions")
+        def_layout.addWidget(group_existing)
+        existing_layout = QVBoxLayout(group_existing)
+
+        # Filter controls
+        filter_row = QHBoxLayout()
+        filter_row.addWidget(QLabel("Filter by Type:"))
+
+        cmb_filter_type = QComboBox()
+        cmb_filter_type.addItems(['All Types', 'Etymology', 'Standard', 'Theosophical', 'Alchemical', 'Botanical', 'Occult', 'Divinatory', 'Mythological', 'Phonetic'])
+        filter_row.addWidget(cmb_filter_type)
+
+        btn_add_new = QPushButton("+ Add Custom Definition")
+        btn_add_new.setIcon(qta.icon("fa5s.plus-circle", color="#7c3aed"))
+        btn_add_new.setStyleSheet("background-color: #f3f4f6; color: #7c3aed; font-weight: bold; padding: 6px 12px; border: 2px solid #7c3aed;")
+        filter_row.addWidget(btn_add_new)
+        filter_row.addStretch()
+
+        existing_layout.addLayout(filter_row)
+
+        # Filtered definitions list
+        filtered_def_list = QListWidget()
+        filtered_def_list.setAlternatingRowColors(True)
+        filtered_def_list.setStyleSheet("""
+            QListWidget::item {
+                padding: 8px;
+                border-bottom: 1px solid #e5e7eb;
+            }
+        """)
+        existing_layout.addWidget(filtered_def_list)
         
         detail_tabs.addTab(def_tab, f"Definitions ({len(definitions)})")
-        
-        # Logic for auto-fetch and add
-        def fetch_and_add_all():
-            btn_fetch.setText("Fetching...")
-            btn_fetch.setEnabled(False)
-            lbl_fetch_status.setText("Querying sources...")
+
+        # Auto-fetch suggestions on dialog open
+        def fetch_suggestions():
+            lbl_fetch_status.setText("Fetching suggestions from multiple sources...")
             self.sugg_worker = SuggestionWorker(self.service, word)
-            self.sugg_worker.finished.connect(on_auto_add_complete)
+            self.sugg_worker.finished.connect(on_suggestions_loaded)
             self.sugg_worker.start()
-            
-        def on_auto_add_complete(suggestions):
-            btn_fetch.setText("✨ Fetch & Add All")
-            btn_fetch.setEnabled(True)
-            
+
+        def on_suggestions_loaded(suggestions):
+            suggestions_list.clear()
+
             if not suggestions:
-                lbl_fetch_status.setText("No definitions found from any source.")
+                lbl_fetch_status.setText("No suggestions found from any source.")
                 return
-                
-            # Track what types we add to avoid duplicates
-            added_types = set()
-            added_count = 0
-            
-            # Principle of Apocalypsis: ALL revelation, no veils
+
+            # Get existing definitions to filter out duplicates
+            existing_defs = self.service.db.get_definitions(key_id)
+            existing_contents = {(d.type, d.content.strip().lower()) for d in existing_defs}
+
+            # Filter out suggestions that are already in the database
+            new_suggestions = []
             for s in suggestions:
-                self.service.db.add_definition(key_id, s.type, s.content, s.source)
-                added_count += 1
-            
-            # Refresh the list
+                # Check if this suggestion already exists (by type and content)
+                suggestion_key = (s.type, s.content.strip().lower())
+                if suggestion_key not in existing_contents:
+                    new_suggestions.append(s)
+
+            if not new_suggestions:
+                lbl_fetch_status.setText("No new suggestions (all definitions already added)")
+                return
+
+            lbl_fetch_status.setText(f"Found {len(new_suggestions)} new suggestions from {len(set(s.source for s in new_suggestions))} sources")
+
+            # Add each NEW suggestion as a checkable item
+            for s in new_suggestions:
+                item = QListWidgetItem()
+                item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+                item.setCheckState(Qt.CheckState.Unchecked)
+
+                # Format: [TYPE] Content (source)
+                display_text = f"[{s.type}] {s.content[:100]}{'...' if len(s.content) > 100 else ''}"
+                if s.source:
+                    display_text += f" ({s.source})"
+
+                item.setText(display_text)
+                item.setData(Qt.ItemDataRole.UserRole, s)  # Store full suggestion object
+                suggestions_list.addItem(item)
+
+        def update_add_button():
+            """Update the 'Add Selected' button count."""
+            checked_count = sum(
+                1 for i in range(suggestions_list.count())
+                if suggestions_list.item(i).checkState() == Qt.CheckState.Checked
+            )
+            btn_add_selected.setText(f"Add Selected ({checked_count})")
+            btn_add_selected.setEnabled(checked_count > 0)
+
+        def select_all_suggestions():
+            for i in range(suggestions_list.count()):
+                suggestions_list.item(i).setCheckState(Qt.CheckState.Checked)
+            update_add_button()
+
+        def clear_all_suggestions():
+            for i in range(suggestions_list.count()):
+                suggestions_list.item(i).setCheckState(Qt.CheckState.Unchecked)
+            update_add_button()
+
+        def add_selected_suggestions():
+            """Add all checked suggestions to the database."""
+            added_count = 0
+            added_types = set()
+
+            for i in range(suggestions_list.count()):
+                item = suggestions_list.item(i)
+                if item.checkState() == Qt.CheckState.Checked:
+                    suggestion = item.data(Qt.ItemDataRole.UserRole)
+                    self.service.db.add_definition(
+                        key_id,
+                        suggestion.type,
+                        suggestion.content,
+                        suggestion.source
+                    )
+                    added_count += 1
+                    added_types.add(suggestion.type)
+
+            if added_count == 0:
+                return
+
+            # Refresh the definitions list - grouped by type
             def_list.clear()
             new_defs = self.service.db.get_definitions(key_id)
+
+            # Group by type
+            from collections import defaultdict
+            grouped = defaultdict(list)
             for d in new_defs:
-                src_text = f" ({d.source})" if d.source else ""
-                item = QListWidgetItem(f"[{d.type}] {d.content}{src_text}")
-                item.setData(Qt.ItemDataRole.UserRole, d)
-                def_list.addItem(item)
-                
+                grouped[d.type].append(d)
+
+            # Display with headers
+            for def_type in ['Etymology', 'Standard', 'Theosophical', 'Alchemical', 'Botanical', 'Occult', 'Divinatory', 'Mythological', 'Phonetic']:
+                if def_type in grouped:
+                    # Type header
+                    header_item = QListWidgetItem(f"━━━ {def_type.upper()} ({len(grouped[def_type])}) ━━━")
+                    header_item.setForeground(QColor("#8b5cf6"))
+                    font = header_item.font()
+                    font.setBold(True)
+                    header_item.setFont(font)
+                    header_item.setFlags(Qt.ItemFlag.NoItemFlags)
+                    def_list.addItem(header_item)
+
+                    # Definitions
+                    for d in grouped[def_type]:
+                        src_text = f" ({d.source})" if d.source else ""
+                        item = QListWidgetItem(f"  • {d.content}{src_text}")
+                        item.setData(Qt.ItemDataRole.UserRole, d)
+                        def_list.addItem(item)
+
             detail_tabs.setTabText(0, f"Definitions ({len(new_defs)})")
-            lbl_fetch_status.setText(f"Added {added_count} definitions from {len(added_types)} categories.")
-            
+
+            # Clear the checked items from suggestions
+            for i in range(suggestions_list.count() - 1, -1, -1):
+                if suggestions_list.item(i).checkState() == Qt.CheckState.Checked:
+                    suggestions_list.takeItem(i)
+
+            update_add_button()
+            lbl_fetch_status.setText(f"✓ Added {added_count} definitions from {len(added_types)} categories")
+
             # Emit signal
             try:
                 from shared.signals.navigation_bus import navigation_bus
                 navigation_bus.lexicon_updated.emit(key_id, word)
             except Exception as e:
                 logger.error(f"Signal emit failed: {e}")
-                
-            QMessageBox.information(dlg, "Enriched", f"Added {added_count} definitions.")
 
-        def add_definition():
-            """Manual definition add."""
-            content = txt_content.toPlainText().strip()
-            dtype = cmb_type.currentText()
-            source = txt_source.text().strip()
-            
-            if not content:
-                QMessageBox.warning(dlg, "Missing Content", "Please enter a meaning.")
-                return
-                
-            self.service.db.add_definition(key_id, dtype, content, source)
-            
-            # Refresh list
-            def_list.clear()
-            new_defs = self.service.db.get_definitions(key_id)
-            for d in new_defs:
+            QMessageBox.information(dlg, "Definitions Added", f"Successfully added {added_count} definitions.")
+
+            # Refresh filtered view
+            refresh_filtered_view()
+
+        def refresh_filtered_view():
+            """Refresh the filtered definitions view based on selected type."""
+            filtered_def_list.clear()
+            selected_type = cmb_filter_type.currentText()
+
+            all_defs = self.service.db.get_definitions(key_id)
+
+            # Filter definitions
+            if selected_type == "All Types":
+                filtered = all_defs
+            else:
+                filtered = [d for d in all_defs if d.type == selected_type]
+
+            # Display filtered definitions
+            for d in filtered:
                 src_text = f" ({d.source})" if d.source else ""
-                item = QListWidgetItem(f"[{d.type}] {d.content}{src_text}")
+                item_text = f"[{d.type}] {d.content}{src_text}"
+                item = QListWidgetItem(item_text)
                 item.setData(Qt.ItemDataRole.UserRole, d)
-                def_list.addItem(item)
-            
-            detail_tabs.setTabText(0, f"Definitions ({len(new_defs)})")
-            txt_content.clear()
-            
-            # Emit Signal
-            try:
-                from shared.signals.navigation_bus import navigation_bus
-                navigation_bus.lexicon_updated.emit(key_id, word)
-            except Exception as e:
-                logger.error(f"Signal emit failed: {e}")
-                
-            QMessageBox.information(dlg, "Added", "Definition added successfully.")
+                filtered_def_list.addItem(item)
 
-        btn_fetch.clicked.connect(fetch_and_add_all)
-        btn_add.clicked.connect(add_definition)
+            # Update group box title
+            group_existing.setTitle(f"Existing Definitions ({len(filtered)} of {len(all_defs)})")
+
+        def show_add_definition_dialog():
+            """Show dialog for adding a custom definition."""
+            add_dlg = QDialog(dlg)
+            add_dlg.setWindowTitle(f"Add Definition for '{word}'")
+            add_dlg.resize(500, 300)
+
+            layout = QVBoxLayout(add_dlg)
+
+            # Form
+            form_layout = QFormLayout()
+
+            cmb_type = QComboBox()
+            cmb_type.addItems(['Etymology', 'Standard', 'Theosophical', 'Alchemical', 'Botanical', 'Occult', 'Divinatory', 'Mythological'])
+
+            txt_content = QTextEdit()
+            txt_content.setPlaceholderText("Enter the meaning or definition...")
+
+            txt_source = QLineEdit()
+            txt_source.setPlaceholderText("Citation / Authority")
+
+            form_layout.addRow("Type:", cmb_type)
+            form_layout.addRow("Meaning:", txt_content)
+            form_layout.addRow("Citation:", txt_source)
+            layout.addLayout(form_layout)
+
+            # Buttons
+            btn_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel)
+            layout.addWidget(btn_box)
+
+            def save_definition():
+                content = txt_content.toPlainText().strip()
+                dtype = cmb_type.currentText()
+                source = txt_source.text().strip()
+
+                if not content:
+                    QMessageBox.warning(add_dlg, "Missing Content", "Please enter a meaning.")
+                    return
+
+                self.service.db.add_definition(key_id, dtype, content, source)
+
+                # Refresh main list
+                def_list.clear()
+                new_defs = self.service.db.get_definitions(key_id)
+
+                # Group by type
+                from collections import defaultdict
+                grouped = defaultdict(list)
+                for d in new_defs:
+                    grouped[d.type].append(d)
+
+                # Display with headers
+                for def_type in ['Etymology', 'Standard', 'Theosophical', 'Alchemical', 'Botanical', 'Occult', 'Divinatory', 'Mythological', 'Phonetic']:
+                    if def_type in grouped:
+                        # Type header
+                        header_item = QListWidgetItem(f"━━━ {def_type.upper()} ({len(grouped[def_type])}) ━━━")
+                        header_item.setForeground(QColor("#8b5cf6"))
+                        font = header_item.font()
+                        font.setBold(True)
+                        header_item.setFont(font)
+                        header_item.setFlags(Qt.ItemFlag.NoItemFlags)
+                        def_list.addItem(header_item)
+
+                        # Definitions
+                        for d in grouped[def_type]:
+                            src_text = f" ({d.source})" if d.source else ""
+                            item = QListWidgetItem(f"  • {d.content}{src_text}")
+                            item.setData(Qt.ItemDataRole.UserRole, d)
+                            def_list.addItem(item)
+
+                detail_tabs.setTabText(0, f"Definitions ({len(new_defs)})")
+
+                # Refresh filtered view
+                refresh_filtered_view()
+
+                # Emit Signal
+                try:
+                    from shared.signals.navigation_bus import navigation_bus
+                    navigation_bus.lexicon_updated.emit(key_id, word)
+                except Exception as e:
+                    logger.error(f"Signal emit failed: {e}")
+
+                QMessageBox.information(add_dlg, "Added", "Definition added successfully.")
+                add_dlg.accept()
+
+            btn_box.accepted.connect(save_definition)
+            btn_box.rejected.connect(add_dlg.reject)
+
+            add_dlg.exec()
+
+        # Connect button signals
+        btn_select_all.clicked.connect(select_all_suggestions)
+        btn_clear_all.clicked.connect(clear_all_suggestions)
+        btn_add_selected.clicked.connect(add_selected_suggestions)
+        btn_add_new.clicked.connect(show_add_definition_dialog)
+
+        # Connect filter dropdown
+        cmb_filter_type.currentTextChanged.connect(refresh_filtered_view)
+
+        # Connect checkbox changes to update button
+        suggestions_list.itemChanged.connect(update_add_button)
+
+        # Initialize views
+        refresh_filtered_view()  # Load filtered definitions
+        fetch_suggestions()  # Auto-fetch suggestions
         
         # === Tab 2: Concordance ===
         conc_tab = QWidget()
@@ -1162,11 +1408,20 @@ class UnifiedLexiconWindow(QMainWindow):
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
         )
         if reply == QMessageBox.StandardButton.Yes:
-            self.service.db.reset_database()
-            self._search_master_key("")
-            self._load_concordance()
-            self._load_documents()
-            self.statusBar().showMessage("Database reset.")
+            try:
+                # Force close any open detail dialogs or connections
+                self.service.db.reset_database()
+                self._search_master_key("")
+                self._load_concordance()
+                self._load_documents()
+                self.statusBar().showMessage("Database reset.")
+            except Exception as e:
+                QMessageBox.critical(
+                    self, "Reset Failed",
+                    f"Could not reset database:\n\n{str(e)}\n\n"
+                    "Try closing all other IsopGem windows and try again."
+                )
+                return
 
     def _on_enrich_progress(self, current: int, total: int, status: str):
         """Handle enrichment progress updates."""
