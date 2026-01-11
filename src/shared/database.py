@@ -8,11 +8,15 @@ import os
 # Define Base for models
 Base = declarative_base()
 
-from shared.paths import get_data_path
+from shared.config import get_config
 
-# Database path
-DB_DIR = get_data_path()
-DB_PATH = DB_DIR / "isopgem.db"
+# Database path - centralized via config
+# Database path - centralized via config
+config = get_config()
+DB_PATH = config.paths.main_db
+
+# Ensure directory exists
+DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 # Create engine
 engine = create_engine(f"sqlite:///{DB_PATH}", echo=False)

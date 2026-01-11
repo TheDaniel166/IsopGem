@@ -177,26 +177,47 @@ class InsertRowsCommand(QUndoCommand):
         self.setText(f"Insert {rows} Rows")
 
     def redo(self):
-        """
-        Redo logic.
-        
-        """
+        """Insert rows and shift style keys down."""
         self.model.beginInsertRows(QModelIndex(), self.position, self.position + self.rows - 1)
         col_count = len(self.model._columns)
         for _ in range(self.rows):
             self.model._data.insert(self.position, [""] * col_count)
+        
+        # STYLE KEY SHIFTING: Move styles below insertion point down
+        shifted_styles = {}
+        for (r, c), style in list(self.model._styles.items()):
+            if r >= self.position:
+                # Shift this style down by self.rows
+                shifted_styles[(r + self.rows, c)] = style
+            else:
+                # Keep as-is
+                shifted_styles[(r, c)] = style
+        self.model._styles = shifted_styles
+        
         self.model.endInsertRows()
         if hasattr(self.model, "clear_eval_cache"):
             self.model.clear_eval_cache()
 
     def undo(self):
-        """
-        Undo logic.
-        
-        """
+        """Remove inserted rows and shift style keys back up."""
         self.model.beginRemoveRows(QModelIndex(), self.position, self.position + self.rows - 1)
         for _ in range(self.rows):
             del self.model._data[self.position]
+        
+        # STYLE KEY SHIFTING: Move styles that were shifted down back up
+        shifted_styles = {}
+        for (r, c), style in list(self.model._styles.items()):
+            if r >= self.position + self.rows:
+                # Shift back up
+                shifted_styles[(r - self.rows, c)] = style
+            elif r >= self.position:
+                # These were in the deleted range, skip them
+                pass
+            else:
+                # Keep as-is
+                shifted_styles[(r, c)] = style
+        self.model._styles = shifted_styles
+        
         self.model.endRemoveRows()
         if hasattr(self.model, "clear_eval_cache"):
             self.model.clear_eval_cache()
@@ -214,46 +235,69 @@ class RemoveRowsCommand(QUndoCommand):
     
     """
     def __init__(self, model, position, rows):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
-        """
-          init   logic.
-        
-        Args:
-            model: Description of model.
-            position: Description of position.
-            rows: Description of rows.
-        
-        """
+        """Initialize RemoveRowsCommand and capture data + styles."""
         super().__init__()
         self.model = model
         self.position = position
         self.rows = rows
         self.setText(f"Remove {rows} Rows")
+        
         # Capture deleted data for undo
         self.deleted_data = []
         for i in range(rows):
-            # We copy the list to ensure we have the values
             self.deleted_data.append(list(model._data[position + i]))  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
+        
+        # Capture deleted styles for undo
+        self.deleted_styles = {}
+        for (r, c), style in list(model._styles.items()):
+            if position <= r < position + rows:
+                # This style will be deleted, save it
+                self.deleted_styles[(r, c)] = style.copy()
 
     def redo(self):
-        """
-        Redo logic.
-        
-        """
+        """Remove rows and shift style keys up."""
         self.model.beginRemoveRows(QModelIndex(), self.position, self.position + self.rows - 1)
         for _ in range(self.rows):
             del self.model._data[self.position]
+        
+        # STYLE KEY SHIFTING: Remove deleted range and shift styles up
+        shifted_styles = {}
+        for (r, c), style in list(self.model._styles.items()):
+            if r < self.position:
+                # Keep as-is (before deleted range)
+                shifted_styles[(r, c)] = style
+            elif r >= self.position + self.rows:
+                # Shift up by self.rows
+                shifted_styles[(r - self.rows, c)] = style
+            # else: r is in deleted range, skip it
+        self.model._styles = shifted_styles
+        
         self.model.endRemoveRows()
         if hasattr(self.model, "clear_eval_cache"):
             self.model.clear_eval_cache()
 
     def undo(self):
-        """
-        Undo logic.
-        
-        """
+        """Re-insert rows and restore styles."""
         self.model.beginInsertRows(QModelIndex(), self.position, self.position + self.rows - 1)
         for i, row_data in enumerate(self.deleted_data):  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType, reportUnknownVariableType]
             self.model._data.insert(self.position + i, row_data)
+        
+        # STYLE KEY SHIFTING: Shift existing styles down and restore deleted styles
+        shifted_styles = {}
+        for (r, c), style in list(self.model._styles.items()):
+            if r < self.position:
+                # Keep as-is (before insertion point)
+                shifted_styles[(r, c)] = style
+            else:
+                # Shift down by self.rows
+                shifted_styles[(r + self.rows, c)] = style
+        
+        # Restore deleted styles
+        for (r, c), style in self.deleted_styles.items():
+            shifted_styles[(r, c)] = style
+        
+        self.model._styles = shifted_styles
+        
         self.model.endInsertRows()
         if hasattr(self.model, "clear_eval_cache"):
             self.model.clear_eval_cache()
@@ -286,10 +330,7 @@ class InsertColumnsCommand(QUndoCommand):
         self.setText(f"Insert {columns} Columns")
 
     def redo(self):
-        """
-        Redo logic.
-        
-        """
+        """Insert columns and shift style keys right."""
         self.model.beginInsertColumns(QModelIndex(), self.position, self.position + self.columns - 1)
         # Add new column headers
         for i in range(self.columns):
@@ -299,15 +340,24 @@ class InsertColumnsCommand(QUndoCommand):
         for row in self.model._data:
             for _ in range(self.columns):
                 row.insert(self.position, "")
+        
+        # STYLE KEY SHIFTING: Move styles right of insertion point
+        shifted_styles = {}
+        for (r, c), style in list(self.model._styles.items()):
+            if c >= self.position:
+                # Shift right by self.columns
+                shifted_styles[(r, c + self.columns)] = style
+            else:
+                # Keep as-is
+                shifted_styles[(r, c)] = style
+        self.model._styles = shifted_styles
+        
         self.model.endInsertColumns()
         if hasattr(self.model, "clear_eval_cache"):
             self.model.clear_eval_cache()
 
     def undo(self):
-        """
-        Undo logic.
-        
-        """
+        """Remove inserted columns and shift style keys back left."""
         self.model.beginRemoveColumns(QModelIndex(), self.position, self.position + self.columns - 1)
         # Remove headers
         for _ in range(self.columns):
@@ -317,6 +367,21 @@ class InsertColumnsCommand(QUndoCommand):
         for row in self.model._data:
             for _ in range(self.columns):
                 del row[self.position]
+        
+        # STYLE KEY SHIFTING: Move styles that were shifted right back left
+        shifted_styles = {}
+        for (r, c), style in list(self.model._styles.items()):
+            if c >= self.position + self.columns:
+                # Shift back left
+                shifted_styles[(r, c - self.columns)] = style
+            elif c >= self.position:
+                # These were in the deleted range, skip them
+                pass
+            else:
+                # Keep as-is
+                shifted_styles[(r, c)] = style
+        self.model._styles = shifted_styles
+        
         self.model.endRemoveColumns()
         if hasattr(self.model, "clear_eval_cache"):
             self.model.clear_eval_cache()
@@ -335,23 +400,16 @@ class RemoveColumnsCommand(QUndoCommand):
     
     """
     def __init__(self, model, position, columns):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
-        """
-          init   logic.
-        
-        Args:
-            model: Description of model.
-            position: Description of position.
-            columns: Description of columns.
-        
-        """
+        """Initialize RemoveColumnsCommand and capture data + styles."""
         super().__init__()
         self.model = model
         self.position = position
         self.columns = columns
         self.setText(f"Remove {columns} Columns")
+        
         # Capture data
         self.deleted_headers = []
-        self.deleted_data = [] # List of lists (one per row, containing deleted cols)
+        self.deleted_data = []  # List of lists (one per row, containing deleted cols)
         
         for i in range(columns):
             self.deleted_headers.append(model._columns[position + i])  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType]
@@ -361,12 +419,16 @@ class RemoveColumnsCommand(QUndoCommand):
             for i in range(columns):
                 cols_data.append(row[position + i])
             self.deleted_data.append(cols_data)
+        
+        # Capture deleted styles for undo
+        self.deleted_styles = {}
+        for (r, c), style in list(model._styles.items()):
+            if position <= c < position + columns:
+                # This style will be deleted, save it
+                self.deleted_styles[(r, c)] = style.copy()
 
     def redo(self):
-        """
-        Redo logic.
-        
-        """
+        """Remove columns and shift style keys left."""
         self.model.beginRemoveColumns(QModelIndex(), self.position, self.position + self.columns - 1)
         # Remove headers
         for _ in range(self.columns):
@@ -375,15 +437,25 @@ class RemoveColumnsCommand(QUndoCommand):
         for row in self.model._data:
             for _ in range(self.columns):
                 del row[self.position]
+        
+        # STYLE KEY SHIFTING: Remove deleted range and shift styles left
+        shifted_styles = {}
+        for (r, c), style in list(self.model._styles.items()):
+            if c < self.position:
+                # Keep as-is (before deleted range)
+                shifted_styles[(r, c)] = style
+            elif c >= self.position + self.columns:
+                # Shift left by self.columns
+                shifted_styles[(r, c - self.columns)] = style
+            # else: c is in deleted range, skip it
+        self.model._styles = shifted_styles
+        
         self.model.endRemoveColumns()
         if hasattr(self.model, "clear_eval_cache"):
             self.model.clear_eval_cache()
 
     def undo(self):
-        """
-        Undo logic.
-        
-        """
+        """Re-insert columns and restore styles."""
         self.model.beginInsertColumns(QModelIndex(), self.position, self.position + self.columns - 1)
         # Restore headers
         for i, header in enumerate(self.deleted_headers):  # type: ignore[reportUnknownArgumentType, reportUnknownMemberType, reportUnknownVariableType]
@@ -394,6 +466,23 @@ class RemoveColumnsCommand(QUndoCommand):
             saved_cols = self.deleted_data[r_idx]
             for c_idx, val in enumerate(saved_cols):
                 row.insert(self.position + c_idx, val)
+        
+        # STYLE KEY SHIFTING: Shift existing styles right and restore deleted styles
+        shifted_styles = {}
+        for (r, c), style in list(self.model._styles.items()):
+            if c < self.position:
+                # Keep as-is (before insertion point)
+                shifted_styles[(r, c)] = style
+            else:
+                # Shift right by self.columns
+                shifted_styles[(r, c + self.columns)] = style
+        
+        # Restore deleted styles
+        for (r, c), style in self.deleted_styles.items():
+            shifted_styles[(r, c)] = style
+        
+        self.model._styles = shifted_styles
+        
         self.model.endInsertColumns()
         if hasattr(self.model, "clear_eval_cache"):
             self.model.clear_eval_cache()

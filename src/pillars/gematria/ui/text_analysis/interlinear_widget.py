@@ -19,6 +19,9 @@ from typing import List, Optional, Dict, Any
 import logging
 logger = logging.getLogger(__name__)
 
+# Visual Liturgy compliance
+from shared.ui.theme import COLORS
+
 
 class WordLabel(QLabel):
     """
@@ -52,12 +55,12 @@ class WordLabel(QLabel):
         """Configure the word label appearance."""
         logger.info(f"WordLabel._setup_ui: word={self.word}, tq={self.tq_value}, key_id={self.key_id}, has_key={self.key_id is not None}")
 
-        # Language-specific icons and colors
+        # Language-specific icons and Visual Liturgy-compliant colors
         lang_config = {
-            "Hebrew": {"icon": "🕎", "bg": "#fff9f0", "border": "#ffd180", "hover_bg": "#ffecb3", "hover_border": "#ffb74d"},
-            "Greek": {"icon": "🏛️", "bg": "#f0f4ff", "border": "#90caf9", "hover_bg": "#e3f2fd", "hover_border": "#42a5f5"},
-            "Arabic": {"icon": "🕌", "bg": "#f1f8e9", "border": "#aed581", "hover_bg": "#dcedc8", "hover_border": "#9ccc65"},
-            "Latin": {"icon": "🏛️", "bg": "#fce4ec", "border": "#f48fb1", "hover_bg": "#f8bbd0", "hover_border": "#ec407a"},
+            "Hebrew": {"icon": "🕎", "bg": COLORS['seeker_soft'], "border": COLORS['seeker'], "hover_bg": COLORS['seeker_soft'], "hover_border": COLORS['seeker_hover']},
+            "Greek": {"icon": "🏛️", "bg": COLORS['cloud'], "border": COLORS['focus'], "hover_bg": COLORS['marble'], "hover_border": COLORS['focus']},
+            "Arabic": {"icon": "🕌", "bg": COLORS['scribe_soft'], "border": COLORS['scribe'], "hover_bg": COLORS['scribe_soft'], "hover_border": COLORS['scribe_hover']},
+            "Latin": {"icon": "🏛️", "bg": COLORS['destroyer_soft'], "border": COLORS['destroyer'], "hover_bg": COLORS['destroyer_soft'], "hover_border": COLORS['destroyer']},
         }
 
         config = lang_config.get(self.language, None)
@@ -69,7 +72,7 @@ class WordLabel(QLabel):
                 <div style='text-align: center; padding: 2px;'>
                     <span style='font-size: 11px;'>{config['icon']}</span>
                     <span style='font-size: 14px; font-weight: 500;'>{self.word}</span><br/>
-                    <span style='font-size: 10px; color: #7c3aed;'>{self.tq_value}</span>
+                    <span style='font-size: 10px; color: {COLORS['magus_hover']};'>{self.tq_value}</span>
                 </div>
             """
         else:
@@ -77,7 +80,7 @@ class WordLabel(QLabel):
             display_html = f"""
                 <div style='text-align: center; padding: 2px;'>
                     <span style='font-size: 14px; font-weight: 500;'>{self.word}</span><br/>
-                    <span style='font-size: 10px; color: #7c3aed;'>{self.tq_value}</span>
+                    <span style='font-size: 10px; color: {COLORS['magus_hover']};'>{self.tq_value}</span>
                 </div>
             """
 
@@ -114,30 +117,30 @@ class WordLabel(QLabel):
                     }}
                 """)
         else:
-            # English word (original styling)
+            # English word (Visual Liturgy styling)
             if self.key_id:
-                self.setStyleSheet("""
-                    QLabel {
-                        background-color: #faf5ff;
-                        border: 1px solid #e9d5ff;
+                self.setStyleSheet(f"""
+                    QLabel {{
+                        background-color: {COLORS['magus_soft']};
+                        border: 1px solid {COLORS['magus_soft']};
                         border-radius: 4px;
                         padding: 4px 6px;
                         margin: 2px;
-                    }
-                    QLabel:hover {
-                        background-color: #ede9fe;
-                        border-color: #c4b5fd;
-                    }
+                    }}
+                    QLabel:hover {{
+                        background-color: {COLORS['magus_soft']};
+                        border-color: {COLORS['magus_mute']};
+                    }}
                 """)
             else:
-                self.setStyleSheet("""
-                    QLabel {
-                        background-color: #f5f5f5;
-                        border: 1px solid #e5e5e5;
+                self.setStyleSheet(f"""
+                    QLabel {{
+                        background-color: {COLORS['marble']};
+                        border: 1px solid {COLORS['ash']};
                         border-radius: 4px;
                         padding: 4px 6px;
                         margin: 2px;
-                    }
+                    }}
                 """)
             
         self.setCursor(Qt.CursorShape.PointingHandCursor if self.key_id else Qt.CursorShape.ArrowCursor)
@@ -193,9 +196,9 @@ class InterlinearVerseWidget(QWidget):
 
         # Verse header
         self.header_label = QLabel("")
-        self.header_label.setStyleSheet("""
+        self.header_label.setStyleSheet(f"""
             font-weight: bold;
-            color: #7c3aed;
+            color: {COLORS['magus_hover']};
             font-size: 12px;
             padding: 4px;
         """)
@@ -450,7 +453,7 @@ class InterlinearDocumentView(QWidget):
         toolbar = QHBoxLayout()
         
         self.lbl_info = QLabel("Interlinear View")
-        self.lbl_info.setStyleSheet("font-weight: bold; font-size: 14px; color: #7c3aed;")
+        self.lbl_info.setStyleSheet(f"font-weight: bold; font-size: 14px; color: {COLORS['magus_hover']};")
         toolbar.addWidget(self.lbl_info)
         toolbar.addStretch()
         
@@ -459,12 +462,12 @@ class InterlinearDocumentView(QWidget):
         # Scroll area for verses
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setStyleSheet("""
-            QScrollArea {
-                border: 1px solid #e5e7eb;
+        scroll.setStyleSheet(f"""
+            QScrollArea {{
+                border: 1px solid {COLORS['ash']};
                 border-radius: 8px;
-                background: white;
-            }
+                background: {COLORS['light']};
+            }}
         """)
         
         self.verses_container = QWidget()
@@ -507,7 +510,7 @@ class InterlinearDocumentView(QWidget):
             # Add separator
             frame = QFrame()
             frame.setFrameShape(QFrame.Shape.HLine)
-            frame.setStyleSheet("background-color: #e5e7eb;")
+            frame.setStyleSheet(f"background-color: {COLORS['ash']};")
             
             self.verses_layout.insertWidget(self.verses_layout.count() - 1, verse_widget)
             self.verses_layout.insertWidget(self.verses_layout.count() - 1, frame)

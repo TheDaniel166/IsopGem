@@ -14,6 +14,7 @@ import logging
 from shared.ui.rich_text_editor import RichTextEditor
 
 from pillars.correspondences.services.formula_engine import FormulaHelper, FormulaEngine
+from pillars.correspondences.services.spreadsheet_validator import validate_spreadsheet_data, ValidationError
 
 
 from shared.ui.theme import COLORS
@@ -37,22 +38,30 @@ class SpreadsheetModel(QAbstractTableModel):
     """
     def __init__(self, data_json: dict, parent=None):  # type: ignore[reportMissingParameterType, reportMissingTypeArgument, reportUnknownParameterType]
         """
-          init   logic.
+        Initialize the SpreadsheetModel with validated JSON data.
         
         Args:
-            data_json: Description of data_json.
-            parent: Description of parent.
-        
+            data_json: Raw JSON data (will be validated)
+            parent: Qt parent object
         """
         super().__init__(parent)
-        self._columns = data_json.get("columns", [])
+        
+        # VALIDATION GATE: Ensure data integrity before loading
+        try:
+            validated_data = validate_spreadsheet_data(data_json)
+        except ValidationError as e:
+            logger.error(f"Spreadsheet data validation failed: {e}")
+            # Fallback to minimal valid structure
+            validated_data = {"columns": [], "data": []}
+        
+        self._columns = validated_data.get("columns", [])
         # Support both "data" and "rows" keys
-        self._data = data_json.get("data") or data_json.get("rows", [])  # type: ignore[reportUnknownMemberType]
+        self._data = validated_data.get("data") or validated_data.get("rows", [])  # type: ignore[reportUnknownMemberType]
+        
         # Styles: {(row, col): {"bg": "#hex", "fg": "#hex", "borders": {"top": bool, ...}}}
-        # We need to load this from JSON if available, or init empty
         self._styles = {}
-        loaded_styles = data_json.get("styles", {})
-        # Convert string keys "row,col" back to tuple (row, col) if needed
+        loaded_styles = validated_data.get("styles", {})
+        # Convert string keys "row,col" back to tuple (row, col)
         for k, v in loaded_styles.items():  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
             try:
                 r, c = map(int, k.split(","))
@@ -1238,9 +1247,6 @@ class SpreadsheetView(QTableView):
         # Check for Ctrl+V
         if event.matches(QKeySequence.StandardKey.Paste) or (event.key() == Qt.Key.Key_V and event.modifiers() & Qt.KeyboardModifier.ControlModifier):
             self._paste_from_clipboard()
-            event.accept()
-            return
-
             event.accept()
             return
 

@@ -7,6 +7,7 @@ set -euo pipefail
 repo_root="$(cd -- "$(dirname "$0")"/.. && pwd)"
 python_bin="$repo_root/.venv/bin/python"
 sync_script="$repo_root/workflow_scripts/sync_covenant.py"
+verify_script="$repo_root/scripts/covenant_scripts/verify_integrity.py"
 
 if [[ ! -x "$python_bin" ]]; then
     echo "[pre-commit] Skipping covenant sync: $python_bin not found (activate venv)." >&2
@@ -25,3 +26,51 @@ if ! git -C "$repo_root" diff --quiet -- .github/instructions/Sophia.instruction
     echo "[pre-commit] Covenant mirrors updated. Please git add the changes and re-run commit." >&2
     exit 1
 fi
+
+# ═══════════════════════════════════════════════════════════════════
+# RITE OF INTEGRITY - Verify all staged Python files
+# ═══════════════════════════════════════════════════════════════════
+
+if [[ ! -f "$verify_script" ]]; then
+    echo "[pre-commit] ⚠️  Skipping integrity check: $verify_script not found." >&2
+    # Don't block commit if script is missing, but warn
+    exit 0
+fi
+
+# Get all staged Python files
+staged_py_files=$(git diff --cached --name-only --diff-filter=ACM | grep '\.py$' || true)
+
+if [[ -z "$staged_py_files" ]]; then
+    # No Python files staged, skip verification
+    exit 0
+fi
+
+echo "🔍 Running Rite of Integrity on staged Python files..."
+
+# Convert to array
+readarray -t py_files_array <<< "$staged_py_files"
+
+# Build absolute paths
+py_files_abs=()
+for file in "${py_files_array[@]}"; do
+    if [[ -f "$repo_root/$file" ]]; then
+        py_files_abs+=("$repo_root/$file")
+    fi
+done
+
+if [[ ${#py_files_abs[@]} -eq 0 ]]; then
+    exit 0
+fi
+
+# Run verify_integrity.py on all staged Python files
+if ! "$python_bin" "$verify_script" "${py_files_abs[@]}"; then
+    echo "" >&2
+    echo "❌ RITE OF INTEGRITY FAILED" >&2
+    echo "One or more staged Python files have integrity violations." >&2
+    echo "Fix the errors above and try again." >&2
+    echo "" >&2
+    exit 1
+fi
+
+echo "✅ Rite of Integrity: PASSED"
+exit 0

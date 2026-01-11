@@ -1256,6 +1256,8 @@ SOLID_VIEWER_CONFIG: Dict[str, dict] = {
         'summary': 'Cube holding a Pyramid holding a Sphere (Phi Generator).',
         'builder': VaultOfHestiaSolidService.build,
         'calculator': VaultOfHestiaSolidCalculator,
+        # Canon DSL integration (first Canon-compliant geometry!)
+        'use_canon_dsl': True,
     },
     'sphere': {
         'title': 'Sphere',

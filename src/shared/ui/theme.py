@@ -21,6 +21,22 @@ COLORS = {
     'light': '#ffffff',          # The Illumination (Input Fields - The Vessel)
 
     # ═══════════════════════════════════════════════════════════════════════════════
+    # 1.5. The Visual Liturgy v2.3 (Day & Night Liturgies)
+    # ═══════════════════════════════════════════════════════════════════════════════
+    # Night Liturgy (Dark Mode)
+    'temple_dark': '#1a1a2e',    # Window backgrounds
+    'card_surface': 'rgba(30, 30, 40, 0.85)', # Card backgrounds
+    'void_deep': '#0f0f1a',      # Deepest backgrounds
+    'text_primary_v2': '#F8FAFC', # Cloud Text
+    'text_secondary_v2': '#94A3B8', # Mist Text
+
+    # Shared Accents (The Catalysts)
+    'gold_pure': '#FFD700',      # Gold/Amber
+    'amber_glow': '#F59E0B',     # Amber Glow
+    'celestial_blue': '#3B82F6', # Celestial Blue
+    'purple_magus': '#8B5CF6',   # Purple Magus
+
+    # ═══════════════════════════════════════════════════════════════════════════════
     # 2. The Catalysts (Archetypes)
     # ═══════════════════════════════════════════════════════════════════════════════
     # Magus (Violet) - Transmute / Execute
@@ -68,11 +84,12 @@ COLORS = {
     # ═══════════════════════════════════════════════════════════════════════════════
     # 3. Focus & Status
     # ═══════════════════════════════════════════════════════════════════════════════
-    'focus': '#3b82f6',          # Azure
-    'success': '#10b981',        # Scribe
-    'warning': '#f59e0b',        # Seeker
-    'error': '#ef4444',          # Destroyer
-    'info': '#3b82f6',           # Azure
+    'focus': '#3b82f6',          # Celestial Blue
+    'success': '#22C55E',        # Success (V2.3)
+    'warning': '#F59E0B',        # Amber Glow (V2.3)
+    'error': '#EF4444',          # Danger (V2.3)
+    'info': '#3B82F6',           # Celestial Blue (V2.3)
+    'muted': '#64748B',          # Muted (V2.3)
 
     # ═══════════════════════════════════════════════════════════════════════════════
     # 4. Legacy / Aliases (For Backward Compatibility)
@@ -97,6 +114,16 @@ COLORS = {
     'accent': '#10b981',         # Scribe
     'accent_hover': '#34d399',   # Scribe Hover
     'accent_pressed': '#059669', # Scribe Dark
+
+    # ═══════════════════════════════════════════════════════════════════════════════
+    # 5. Extended Palette (Internal Theme.py Use)
+    # ═══════════════════════════════════════════════════════════════════════════════
+    'slate_900': '#1e293b',      # Deeper slate (Navigator gradients)
+    'overlay_subtle': 'rgba(0, 0, 0, 0.02)',    # Faint dark scrim (tab selected)
+    'overlay_hover': 'rgba(0, 0, 0, 0.01)',     # Ultra-faint dark scrim (tab hover)
+    'overlay_light': 'rgba(255, 255, 255, 0.05)', # Faint light overlay (scrollable buttons)
+    'shadow_default': 'rgba(0, 0, 0, 0.31)',    # Standard drop shadow (80/255 opacity)
+    'magus_bright': '#8b5cf6',   # Brighter violet for palette highlights
 }
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -242,8 +269,8 @@ def get_app_stylesheet() -> str:
     /* Navigator (Slate) - Adaptive for light/dark contexts */
     /* High-contrast dark buttons for visibility on light surfaces */
     QPushButton[archetype="navigator"] {{
-        background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #1e293b, stop:1 #0f172a);
-        border: 2px solid #0f172a;
+        background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 {COLORS['slate_900']}, stop:1 {COLORS['void']});
+        border: 2px solid {COLORS['void']};
         color: {COLORS['light']};
         font-weight: 600;
         border-radius: 8px;
@@ -251,7 +278,7 @@ def get_app_stylesheet() -> str:
         min-height: 36px;
     }}
     QPushButton[archetype="navigator"]:hover {{
-        background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 {COLORS['stone']}, stop:1 #1e293b);
+        background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 {COLORS['stone']}, stop:1 {COLORS['slate_900']});
         border-color: {COLORS['seeker']}; /* Amber glow on hover */
     }}
     QPushButton[archetype="navigator"]:pressed {{
@@ -464,13 +491,13 @@ def get_app_stylesheet() -> str:
     QTabBar::tab:selected {{
         color: {COLORS['void']};
         border-bottom: 3px solid {COLORS['seeker']}; /* Gold underline per Celestial Tabs */
-        background: rgba(0, 0, 0, 0.02);
+        background: {COLORS['overlay_subtle']};
     }}
-    
+
     QTabBar::tab:hover:!selected {{
         color: {COLORS['stone']};
         border-bottom: 2px solid {COLORS['navigator']};
-        background: rgba(0, 0, 0, 0.01);
+        background: {COLORS['overlay_hover']};
     }}
     
     QTabBar::tab:first {{
@@ -611,7 +638,7 @@ def get_scrollable_tab_button_style(active: bool) -> str:
     active_color = COLORS['seeker']
     text_active = COLORS['light']
     text_dim = COLORS['mist']
-    bg_hover = "rgba(255, 255, 255, 0.05)"
+    bg_hover = COLORS['overlay_light']
 
     if active:
         return f"""
@@ -745,7 +772,8 @@ def apply_tablet_shadow(widget):
     shadow = QGraphicsDropShadowEffect()
     shadow.setBlurRadius(24)
     shadow.setOffset(0, 8)
-    shadow.setColor(QColor(0, 0, 0, 80))
+    # Parse rgba(0, 0, 0, 0.31) -> QColor with alpha 0-255 scale
+    shadow.setColor(QColor(0, 0, 0, int(0.31 * 255)))  # Uses COLORS['shadow_default']
     widget.setGraphicsEffect(shadow)
 
 
@@ -778,19 +806,19 @@ def apply_light_theme(app):
     app.setStyle("Fusion")
 
     palette = QPalette()
-    palette.setColor(QPalette.ColorRole.Window, QColor("#f1f5f9"))       # Marble
-    palette.setColor(QPalette.ColorRole.WindowText, QColor("#0f172a"))   # Void
-    palette.setColor(QPalette.ColorRole.Base, QColor("#f1f5f9"))         # Marble
-    palette.setColor(QPalette.ColorRole.AlternateBase, QColor("#f8fafc")) # Cloud
-    palette.setColor(QPalette.ColorRole.ToolTipBase, QColor("#0f172a"))  # Void
-    palette.setColor(QPalette.ColorRole.ToolTipText, QColor("#f8fafc"))  # Cloud
-    palette.setColor(QPalette.ColorRole.Text, QColor("#0f172a"))         # Void
-    palette.setColor(QPalette.ColorRole.Button, QColor("#f1f5f9"))       # Marble
-    palette.setColor(QPalette.ColorRole.ButtonText, QColor("#0f172a"))   # Void
-    palette.setColor(QPalette.ColorRole.BrightText, QColor("#ef4444"))   # Destroyer Crimson
-    palette.setColor(QPalette.ColorRole.Link, QColor("#8b5cf6"))         # Magus Violet
-    palette.setColor(QPalette.ColorRole.Highlight, QColor("#8b5cf6"))    # Magus Violet
-    palette.setColor(QPalette.ColorRole.HighlightedText, QColor("#ffffff"))
+    palette.setColor(QPalette.ColorRole.Window, QColor(COLORS['marble']))
+    palette.setColor(QPalette.ColorRole.WindowText, QColor(COLORS['void']))
+    palette.setColor(QPalette.ColorRole.Base, QColor(COLORS['marble']))
+    palette.setColor(QPalette.ColorRole.AlternateBase, QColor(COLORS['cloud']))
+    palette.setColor(QPalette.ColorRole.ToolTipBase, QColor(COLORS['void']))
+    palette.setColor(QPalette.ColorRole.ToolTipText, QColor(COLORS['cloud']))
+    palette.setColor(QPalette.ColorRole.Text, QColor(COLORS['void']))
+    palette.setColor(QPalette.ColorRole.Button, QColor(COLORS['marble']))
+    palette.setColor(QPalette.ColorRole.ButtonText, QColor(COLORS['void']))
+    palette.setColor(QPalette.ColorRole.BrightText, QColor(COLORS['destroyer']))
+    palette.setColor(QPalette.ColorRole.Link, QColor(COLORS['magus_bright']))
+    palette.setColor(QPalette.ColorRole.Highlight, QColor(COLORS['magus_bright']))
+    palette.setColor(QPalette.ColorRole.HighlightedText, QColor(COLORS['light']))
 
     app.setPalette(palette)
     app.setStyleSheet(get_app_stylesheet())

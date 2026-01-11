@@ -463,7 +463,7 @@ class CorrespondenceHub(QWidget):
         if reply == QMessageBox.StandardButton.Yes:
             with get_db_session() as session:
                 service = TableService(session)
-                service.destoy_table(table_id)
+                service.destroy_table(table_id)
             self._load_tables()
 
     def _on_table_double_click(self, item):

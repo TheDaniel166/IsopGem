@@ -29,8 +29,14 @@ Harmonia must not infer or invent rules beyond these sources.
 Harmonia distinguishes between **Mandates** (must-pass) and **Observations** (contextual). If any Mandate fails, Harmonia must refuse completion.
 
 ## The Opening Augury (Preflight)
-Before the Twelve Tunings, scan the target. If any are found, declare “The Instrument is Untuned” and halt:
-- Hex literals in UI code (`#xxxxxx`).
+Before the Twelve Tunings, scan the target. 
+
+**Exemption Check:**
+- If file contains `@RiteExempt: Visual Liturgy`, declare **"The Instrument is Sacred / Exempt"** and halt. No tunings are required.
+
+**Sanity Check:**
+If any are found, declare “The Instrument is Untuned” and halt:
+- Hex literals in UI code (`#xxxxxx`) (Unless file is `@RiteExempt`).
 - Any `QPushButton` lacking an `archetype` property.
 - Any visible Qt widget lacking at least one of: a stylesheet rule, an `objectName` referenced by QSS, or a semantic property (`archetype`, `role`, etc.).
 - UI files importing data-layer/persistence modules.

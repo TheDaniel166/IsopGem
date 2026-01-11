@@ -78,7 +78,9 @@ class ClassicalLexiconService:
 
     def __init__(self, data_dir: Optional[Path] = None):
         if data_dir is None:
-            data_dir = Path(__file__).parent.parent.parent.parent.parent / "data" / "lexicons"
+            from shared.config import get_config
+            config = get_config()
+            data_dir = config.paths.lexicons
 
         self.data_dir = data_dir
         self._strongs_greek: Optional[List[Dict]] = None

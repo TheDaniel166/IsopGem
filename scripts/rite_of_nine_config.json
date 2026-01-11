@@ -1,0 +1,52 @@
+{
+  "allowed_hosts": [
+    "sefira",
+    "sefira.org",
+    "sefira.com",
+    "locationiq",
+    "nominatim",
+    "geocoding",
+    "localhost",
+    "127.0.0.1"
+  ],
+  "ui_liturgy_tokens": [
+    "shared.ui.theme",
+    "ThemeTokens",
+    "apply_visual_liturgy",
+    "VisualLiturgy"
+  ],
+  "config_modules": [
+    "config",
+    "config.config",
+    "config.app_config"
+  ],
+  "pillar_root": "src/pillars",
+  "signal_modules": [
+    "shared.navigation_bus",
+    "shared.signal_bus",
+    "shared.bus"
+  ],
+  "ui_contamination_blocklist": [
+    "sqlalchemy",
+    "pandas",
+    "requests",
+    "urllib",
+    "lxml",
+    "bs4",
+    "httpx"
+  ],
+  "security_secret_keywords": [
+    "API_KEY",
+    "SECRET",
+    "TOKEN",
+    "PRIVATE_KEY"
+  ],
+  "boundary_markers": [
+    "api",
+    "controller",
+    "handler",
+    "endpoint",
+    "cli",
+    "ui"
+  ]
+}

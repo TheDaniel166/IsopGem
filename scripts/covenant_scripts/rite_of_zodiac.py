@@ -8,6 +8,7 @@ import os
 import time
 import importlib
 import inspect
+import re
 import tracemalloc
 import random
 import string
@@ -132,8 +133,10 @@ class ZodiacAudit:
         return Oracle.seal("TAURUS", passed, f"Schemas Verified: {valid_schemas}")
 
     def run_virgo(self) -> bool:
-        """VIRGO (The Virgin): Purity & Static Analysis"""
-        # Test: Strict Type Hints
+        """VIRGO (The Virgin): Harmonia Compliance"""
+        # Virgo now serves the Harmonia Protocol, not pyright
+        # Tests for ARCHITECTURAL purity, not cosmetic type hints
+        
         try:
             filename = self.module.__file__
             if filename is None:
@@ -141,16 +144,29 @@ class ZodiacAudit:
             with open(filename, 'r') as f:
                 content = f.read()
             
-            # Rough heuristic: Ratio of functions to type hints
-            func_count = content.count("def ")
-            type_count = content.count("->")
+            violations = []
             
-            # Allow some leeway, but aim for high coverage
-            passed = (type_count >= func_count * 0.8) or (func_count == 0)
-            msg = f"Type Coverage: {type_count}/{func_count}" if func_count > 0 else "Pure Data"
-            return Oracle.seal("VIRGO", passed, msg)
-        except:
-            return Oracle.seal("VIRGO", False, "Unreadable Source")
+            # 1. Bare except: clauses (forbidden per Harmonia)
+            bare_excepts = len(re.findall(r'\bexcept\s*:', content))
+            if bare_excepts > 0:
+                violations.append(f"bare-except({bare_excepts})")
+            
+            # 2. Print statements (should use logging per Shield Law)
+            print_calls = len(re.findall(r'(?<!#)\bprint\s*\(', content))
+            if print_calls > 3:  # Allow a few for legitimate output
+                violations.append(f"print-statements({print_calls})")
+            
+            # 3. Commented-out code (dead code per Scout Ritual)
+            dead_code = len(re.findall(r'#\s*(def|class|return|if |for |while )', content))
+            if dead_code > 5:  # Some commented examples are OK
+                violations.append(f"dead-code({dead_code})")
+            
+            passed = len(violations) == 0
+            metrics = "Harmonia: Clean" if passed else f"Issues: {', '.join(violations)}"
+            return Oracle.seal("VIRGO", passed, metrics)
+            
+        except Exception as e:
+            return Oracle.seal("VIRGO", False, f"Check Failed: {e}")
 
     def run_capricorn(self) -> bool:
         """CAPRICORN (The Goat): Legacy & Regression"""

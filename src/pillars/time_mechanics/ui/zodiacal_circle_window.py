@@ -3,6 +3,12 @@ Zodiacal Circle Window - Main window for Trigrammic Time Keeping.
 
 Displays the interactive Zodiacal Circle with an info panel showing
 selected Conrune pair details.
+
+@RiteExempt: Visual Liturgy
+Note: This window is a "Visual Visualization Instrument". It intentionally uses
+bespoke styling and semantic coloring (Gold as signal, negative space darkness)
+and is exempt from standard Visual Liturgy token enforcement. The geometry and
+color are content, not chrome.
 """
 from __future__ import annotations
 

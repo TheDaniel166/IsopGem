@@ -63,7 +63,10 @@ class EtymologyDbService:
         Args:
             db_path: Path to holy_key.db (not used, kept for compatibility)
         """
-        self.csv_path = Path(__file__).parent.parent.parent.parent.parent / "data" / "etymology_db" / "etymology.csv.gz"
+        from shared.config import get_config
+        config = get_config()
+        
+        self.csv_path = config.paths.etymology_db / "etymology.csv.gz"
         self.index_path = self.csv_path.parent / "word_index.json"
         self.index: Optional[Dict[str, Dict[str, int]]] = None
         

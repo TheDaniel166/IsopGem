@@ -44,6 +44,6 @@ class TableService:
         """Rename a scroll."""
         return self.repo.update_name(table_id, new_name)
 
-    def destoy_table(self, table_id: str):
+    def destroy_table(self, table_id: str):
         """Destroy a scroll forever."""
         self.repo.delete(table_id)

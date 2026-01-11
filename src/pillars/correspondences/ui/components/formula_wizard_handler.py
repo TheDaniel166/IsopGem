@@ -54,7 +54,7 @@ class FormulaWizardHandler(QObject):
         except ImportError as e:
             QMessageBox.warning(self.window, "Wizard Error", f"Formula Wizard component not found: {e}")
         except Exception as e:
-            QMessageBox.critical(self.window, "Wizard Error", str(e))
+            QMessageBox.critical(self.window, "Wizard Error", f"Unexpected error: {e}")(self.window, "Wizard Error", str(e))
 
     def _commit_wizard_formula(self, formula_text):
         """

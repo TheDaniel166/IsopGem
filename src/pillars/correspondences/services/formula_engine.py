@@ -1,48 +1,17 @@
 """
 Formula Engine - The Spreadsheet Logic Core.
-Recursive descent parser and evaluator for spreadsheet formulas with Gematria integration.
+Recursive descent parser and evaluator for spreadsheet formulas with cross-pillar integration.
 """
 import re
 import math
+import logging
 from typing import Any, Dict, Callable, NamedTuple, List, Optional, Set, Tuple
 from enum import Enum, auto
-# from shared.services.gematria.service import GematriaService # TODO: Integrate fully in Phase 3
-from shared.services.gematria.base_calculator import GematriaCalculator
-from shared.services.gematria import (
-    HebrewGematriaCalculator, HebrewSofitCalculator, HebrewLetterValueCalculator,
-    HebrewOrdinalCalculator, HebrewSmallValueCalculator, HebrewAtBashCalculator,
-    HebrewAlbamCalculator, HebrewKolelCalculator, HebrewSquareCalculator,
-    HebrewCubeCalculator, HebrewTriangularCalculator, HebrewIntegralReducedCalculator,
-    HebrewOrdinalSquareCalculator, HebrewFullValueCalculator,
-    GreekGematriaCalculator, GreekLetterValueCalculator, GreekOrdinalCalculator,
-    GreekSmallValueCalculator, GreekKolelCalculator, GreekSquareCalculator,
-    GreekCubeCalculator, GreekTriangularCalculator, GreekDigitalCalculator,
-    GreekOrdinalSquareCalculator, GreekFullValueCalculator,
-    GreekReverseSubstitutionCalculator, GreekPairMatchingCalculator,
-    GreekNextLetterCalculator,
-    TQGematriaCalculator, TQReducedCalculator, TQSquareCalculator,
-    TQTriangularCalculator, TQPositionCalculator
-)
 
-# Registry of available Gematria Calculators
-# Maps UPPERCASE name -> Calculator Instance
-_CIPHER_REGISTRY: Dict[str, GematriaCalculator] = {
-    c.name.upper(): c for c in [
-        HebrewGematriaCalculator(), HebrewSofitCalculator(), HebrewLetterValueCalculator(),
-        HebrewOrdinalCalculator(), HebrewSmallValueCalculator(), HebrewAtBashCalculator(),
-        HebrewAlbamCalculator(), HebrewKolelCalculator(), HebrewSquareCalculator(),
-        HebrewCubeCalculator(), HebrewTriangularCalculator(), HebrewIntegralReducedCalculator(),
-        HebrewOrdinalSquareCalculator(), HebrewFullValueCalculator(),
-        GreekGematriaCalculator(), GreekLetterValueCalculator(), GreekOrdinalCalculator(),
-        GreekSmallValueCalculator(), GreekKolelCalculator(), GreekSquareCalculator(),
-        GreekCubeCalculator(), GreekTriangularCalculator(), GreekDigitalCalculator(),
-        GreekOrdinalSquareCalculator(), GreekFullValueCalculator(),
-        GreekReverseSubstitutionCalculator(), GreekPairMatchingCalculator(),
-        GreekNextLetterCalculator(),
-        TQGematriaCalculator(), TQReducedCalculator(), TQSquareCalculator(),
-        TQTriangularCalculator(), TQPositionCalculator()
-    ]
-}
+logger = logging.getLogger(__name__)
+
+# Cross-pillar communication via Signal Bus
+from shared.signals import gematria_bus
 
 class ArgumentMetadata(NamedTuple):
     """
@@ -459,32 +428,70 @@ class Parser:
 
     # --- Safe Helpers ---
     def _safe_add(self, a, b):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
-        try: return float(a) + float(b)
-        except: return str(a) + str(b) # Concat strings if not numbers? 
-    def _safe_sub(self, a, b): return float(a) - float(b)  # type: ignore[reportMissingParameterType, reportUnknownArgumentType, reportUnknownParameterType]
-    def _safe_mul(self, a, b): return float(a) * float(b)  # type: ignore[reportMissingParameterType, reportUnknownArgumentType, reportUnknownParameterType]
-    def _safe_div(self, a, b): return float(a) / float(b)  # type: ignore[reportMissingParameterType, reportUnknownArgumentType, reportUnknownParameterType]
-    def _safe_pow(self, a, b): return float(a) ** float(b)  # type: ignore[reportMissingParameterType, reportUnknownArgumentType, reportUnknownParameterType]
+        """Add two values, falling back to string concatenation if not numeric."""
+        try:
+            return float(a) + float(b)
+        except (TypeError, ValueError):
+            return str(a) + str(b)
+
+    def _safe_sub(self, a, b):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
+        """Subtract b from a, returning #VALUE! on type error."""
+        try:
+            return float(a) - float(b)
+        except (TypeError, ValueError):
+            return "#VALUE!"
+
+    def _safe_mul(self, a, b):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
+        """Multiply two values, returning #VALUE! on type error."""
+        try:
+            return float(a) * float(b)
+        except (TypeError, ValueError):
+            return "#VALUE!"
+
+    def _safe_div(self, a, b):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
+        """Divide a by b, returning #DIV/0! on zero or #VALUE! on type error."""
+        try:
+            divisor = float(b)
+            if divisor == 0:
+                return "#DIV/0!"
+            return float(a) / divisor
+        except (TypeError, ValueError):
+            return "#VALUE!"
+
+    def _safe_pow(self, a, b):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
+        """Raise a to power b, returning #VALUE! on error."""
+        try:
+            return float(a) ** float(b)
+        except (TypeError, ValueError, OverflowError):
+            return "#VALUE!"
 
 
 class FormulaEngine:
     """
     The Logic Core.
-    Uses Recursive Descent Parsing.
+    Uses Recursive Descent Parsing with performance guards.
     """
+    
+    # Performance configuration
+    MAX_RECURSION_DEPTH = 100  # Maximum formula dependency depth
+    MAX_EVAL_COUNT = 5000  # Maximum cell evaluations per formula
+    
     def __init__(self, data_context: Dict[str, Any]):
-        """
-          init   logic.
-        
-        Args:
-            data_context: Description of data_context.
-        
-        """
+        """Initialize the formula engine with a data context."""
         self.context = data_context
-        # self.calc_service = CalculationService() # Removed unused dependency
+        # Performance tracking
+        self._eval_depth = 0
+        self._eval_count = 0
 
     def evaluate(self, content: str, visited: Optional[Set[Tuple[int, int]]] = None) -> Any:
-        """Evaluate a formula string, tracking the current dependency stack to avoid cycles."""
+        """
+        Evaluate a formula string with performance guards.
+        
+        Tracks:
+        - Recursion depth (to prevent stack overflow)
+        - Evaluation count (to prevent runaway calculations)
+        - Dependency cycles (to prevent infinite loops)
+        """
         if not isinstance(content, str) or not content.startswith('='):
             return content
         
@@ -492,8 +499,20 @@ class FormulaEngine:
         if not formula:
             return ""
 
+        # PERFORMANCE GUARD: Recursion depth
+        if self._eval_depth >= self.MAX_RECURSION_DEPTH:
+            logger.warning(f"Formula recursion depth exceeded {self.MAX_RECURSION_DEPTH}")
+            return "#DEPTH!"
+        
+        # PERFORMANCE GUARD: Evaluation count
+        if self._eval_count >= self.MAX_EVAL_COUNT:
+            logger.warning(f"Formula evaluation count exceeded {self.MAX_EVAL_COUNT}")
+            return "#CALC!"
+
         previous_stack = getattr(self, "_eval_stack", None)
         self._eval_stack = visited or set()
+        self._eval_depth += 1
+        self._eval_count += 1
         
         try:
             tokens = Tokenizer.tokenize(formula)
@@ -501,10 +520,18 @@ class FormulaEngine:
             result = parser.parse()
             return result
         except Exception as e:
+            logger.error(f"Formula evaluation error: {e}", exc_info=True)
             return f"#ERROR: {str(e)}"
         finally:
-            # Restore prior stack to avoid leaking state between calls
+            # Restore state
+            self._eval_depth -= 1
             self._eval_stack = previous_stack
+            
+            # Reset counters at top level
+            if self._eval_depth == 0:
+                if self._eval_count > 1000:
+                    logger.info(f"Formula evaluation completed: {self._eval_count} cells")
+                self._eval_count = 0
 
     def _resolve_cell_value(self, ref: str):
         # A1 -> Val, $A$1 -> Val
@@ -523,6 +550,11 @@ class FormulaEngine:
         return 0
 
     def _resolve_range_values(self, start_ref: str, end_ref: str) -> List[Any]:
+        """
+        Resolve a range reference to a list of values.
+        
+        Performance guard: Limits range size to prevent excessive calculations.
+        """
         # A1:B2 -> [Val, Val, ...]
         m1 = re.match(r'(\$?)([A-Z]+)(\$?)([0-9]+)', start_ref, re.IGNORECASE)
         m2 = re.match(r'(\$?)([A-Z]+)(\$?)([0-9]+)', end_ref, re.IGNORECASE)
@@ -536,6 +568,20 @@ class FormulaEngine:
         
         r_start, r_end = min(r1, r2), max(r1, r2)
         c_start, c_end = min(c1, c2), max(c1, c2)
+        
+        # PERFORMANCE GUARD: Check range size
+        rows = r_end - r_start + 1
+        cols = c_end - c_start + 1
+        cell_count = rows * cols
+        
+        MAX_RANGE_CELLS = 10000  # Configurable limit
+        if cell_count > MAX_RANGE_CELLS:
+            logger.warning(
+                f"Range {start_ref}:{end_ref} contains {cell_count} cells "
+                f"(limit: {MAX_RANGE_CELLS}). This may cause performance issues."
+            )
+            # Return error instead of attempting evaluation
+            return ["#REF!"]  # Excel error for invalid range reference
         
         values = []
         if hasattr(self.context, 'evaluate_cell'):
@@ -561,20 +607,64 @@ class FormulaEngine:
 
 # --- Standard Functions ---
 
+# Helper for error propagation
+def get_error(*args):
+    """
+    Check if any argument is an error string and return it.
+    
+    Excel behavior: If any cell reference in a formula contains an error,
+    the formula result is that error. This function implements that logic.
+    
+    Returns:
+        The first error string found (starts with #), or None if no errors.
+    
+    Examples:
+        get_error(1, 2, "#DIV/0!", 4) -> "#DIV/0!"
+        get_error(1, 2, 3) -> None
+        get_error([1, "#VALUE!", 3]) -> "#VALUE!"
+    """
+    for arg in args:
+        # Handle lists (from range arguments)
+        if isinstance(arg, (list, tuple)):
+            nested_error = get_error(*arg)
+            if nested_error:
+                return nested_error
+        # Check for error strings
+        elif isinstance(arg, str) and arg.startswith("#"):
+            return arg
+    return None
+
+
 @FormulaRegistry.register("GEMATRIA", "Calculates Gematria.", "GEMATRIA(text, [cipher])", "Esoteric", [
     ArgumentMetadata("text", "Text/Cell", "str"),
     ArgumentMetadata("cipher", "Cipher Name", "gematria_cipher", True)
 ])
 def func_gematria(engine: FormulaEngine, text: Any, cipher: str = "English (TQ)"):
     """
-    Calculates the Gematria value of the text.
+    Calculates the Gematria value of the text via Signal Bus.
+    
+    Uses the GematriaBus to request calculations without directly importing
+    the Gematria pillar, preserving architectural sovereignty.
+    
+    Args:
+        engine: The formula engine context
+        text: The text to calculate
+        cipher: The cipher name (default: "English (TQ)")
+        
+    Returns:
+        int: The calculated Gematria value
+        str: Error message if calculation fails (e.g., "#CIPHER?", "#TIMEOUT!")
     """
-    if not text: return 0
+    if not text:
+        return 0
+    
     text_str = str(text)
-    cipher_key = str(cipher).upper()
-    calculator = _CIPHER_REGISTRY.get(cipher_key)
-    if not calculator: return f"#CIPHER? ({cipher})"
-    return calculator.calculate(text_str)
+    cipher_str = str(cipher)
+    
+    # Request calculation via Signal Bus
+    result = gematria_bus.request_calculation(text_str, cipher_str)
+    
+    return result
 
 @FormulaRegistry.register(
     "ASTRO", 
@@ -729,144 +819,98 @@ def func_astro(engine: FormulaEngine, body: str, property_: str):
     ArgumentMetadata("number2", "Value (opt)", "number", True)
 ], is_variadic=True)
 def func_sum(engine: FormulaEngine, *args):
-    """
-    Func sum logic.
-    
-    Args:
-        engine: Description of engine.
-    
-    """
+    """Sum all numeric values in the arguments, skipping non-numeric values."""
     total = 0
     def add(item):
-        """
-        Add logic.
-        
-        Args:
-            item: Description of item.
-        
-        """
         nonlocal total
         if isinstance(item, list):
-            for i in item: add(i)
+            for i in item:
+                add(i)
         else:
-            try: total += float(item)
-            except: pass
-    for a in args: add(a)
+            try:
+                total += float(item)
+            except (TypeError, ValueError):
+                pass  # Skip non-numeric values (Excel behavior)
+    for a in args:
+        add(a)
     return total
 
 @FormulaRegistry.register("AVERAGE", "Average of arguments.", "AVERAGE(val1, ...)", "Math", [
     ArgumentMetadata("number1", "Value", "number")
 ], is_variadic=True)
 def func_average(engine: FormulaEngine, *args):
-    """
-    Func average logic.
-    
-    Args:
-        engine: Description of engine.
-    
-    """
+    """Calculate average of all numeric values, skipping non-numeric values."""
     values = []
     def collect(item):
-        """
-        Collect logic.
-        
-        Args:
-            item: Description of item.
-        
-        """
         if isinstance(item, list):
-            for i in item: collect(i)
+            for i in item:
+                collect(i)
         else:
-            try: values.append(float(item))
-            except: pass
-    for a in args: collect(a)
+            try:
+                values.append(float(item))
+            except (TypeError, ValueError):
+                pass  # Skip non-numeric values
+    for a in args:
+        collect(a)
     return sum(values) / len(values) if values else 0
 
 @FormulaRegistry.register("COUNT", "Count numbers.", "COUNT(val1, ...)", "Math", [
     ArgumentMetadata("val1", "Value", "any")
 ], is_variadic=True)
 def func_count(engine: FormulaEngine, *args):
-    """
-    Func count logic.
-    
-    Args:
-        engine: Description of engine.
-    
-    """
+    """Count the number of numeric values in the arguments."""
     count = 0
     def check(item):
-        """
-        Check logic.
-        
-        Args:
-            item: Description of item.
-        
-        """
         nonlocal count
         if isinstance(item, list):
-            for i in item: check(i)
+            for i in item:
+                check(i)
         else:
-            try: 
+            try:
                 float(item)
                 count += 1
-            except: pass
-    for a in args: check(a)
+            except (TypeError, ValueError):
+                pass  # Non-numeric values don't count
+    for a in args:
+        check(a)
     return count
 
 @FormulaRegistry.register("MIN", "Minimum value.", "MIN(val1, ...)", "Math", [
     ArgumentMetadata("val1", "Value", "number")
 ], is_variadic=True)
-def func_min(engine: FormulaEngine, *args):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
-    """
-    Func min logic.
-    
-    Args:
-        engine: Description of engine.
-    
-    """
+def func_min(engine: FormulaEngine, *args):
+    """Return the minimum numeric value from the arguments."""
     values = []
     def collect(item):
-        """
-        Collect logic.
-        
-        Args:
-            item: Description of item.
-        
-        """
-        if isinstance(item, list): 
-            for i in item: collect(i)
-        else: 
-            try: values.append(float(item))
-            except: pass
-    for a in args: collect(a)
+        if isinstance(item, list):
+            for i in item:
+                collect(i)
+        else:
+            try:
+                values.append(float(item))
+            except (TypeError, ValueError):
+                pass  # Skip non-numeric values
+    for a in args:
+        collect(a)
     return min(values) if values else 0
 
 @FormulaRegistry.register("MAX", "Maximum value.", "MAX(val1, ...)", "Math", [
     ArgumentMetadata("val1", "Value", "number")
 ], is_variadic=True)
-def func_max(engine: FormulaEngine, *args):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
-    """
-    Func max logic.
-    
-    Args:
-        engine: Description of engine.
-    
-    """
+def func_max(engine: FormulaEngine, *args):
+    """Return the maximum numeric value from the arguments."""
     values = []
     def collect(item):
-        """
-        Collect logic.
-        
-        Args:
-            item: Description of item.
-        
-        """
-        if isinstance(item, list): 
-            for i in item: collect(i)
-        else: 
-            try: values.append(float(item))
-            except: pass
-    for a in args: collect(a)
+        if isinstance(item, list):
+            for i in item:
+                collect(i)
+        else:
+            try:
+                values.append(float(item))
+            except (TypeError, ValueError):
+                pass  # Skip non-numeric values
+    for a in args:
+        collect(a)
     return max(values) if values else 0
 
 @FormulaRegistry.register("IF", "Conditional logic.", "IF(cond, true, false)", "Logic", [
@@ -919,242 +963,218 @@ def func_concat(engine: FormulaEngine, *args):
     ArgumentMetadata("number", "Value", "number")
 ])
 def func_abs(engine: FormulaEngine, val):
-    """
-    Func abs logic.
-    
-    Args:
-        engine: Description of engine.
-        val: Description of val.
-    
-    """
-    try: return abs(float(val))
-    except: return "#VALUE!"
+    """Return the absolute value of a number."""
+    if (err := get_error(val)):
+        return err
+    try:
+        return abs(float(val))
+    except (TypeError, ValueError):
+        return "#VALUE!"
+
 
 @FormulaRegistry.register("ROUND", "Rounds number.", "ROUND(number, [digits])", "Math", [
     ArgumentMetadata("number", "Value", "number"),
     ArgumentMetadata("digits", "Decimals (default 0)", "number", True)
 ])
-def func_round(engine: FormulaEngine, val, digits=0):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
-    """
-    Func round logic.
-    
-    Args:
-        engine: Description of engine.
-        val: Description of val.
-        digits: Description of digits.
-    
-    """
-    try: return round(float(val), int(digits))
-    except: return "#VALUE!"
+def func_round(engine: FormulaEngine, val, digits=0):
+    """Round a number to the specified number of decimal places."""
+    if (err := get_error(val, digits)):
+        return err
+    try:
+        return round(float(val), int(digits))
+    except (TypeError, ValueError):
+        return "#VALUE!"
+
 
 @FormulaRegistry.register("FLOOR", "Rounds down.", "FLOOR(number)", "Math", [
     ArgumentMetadata("number", "Value", "number")
 ])
 def func_floor(engine: FormulaEngine, val):
-    """
-    Func floor logic.
-    
-    Args:
-        engine: Description of engine.
-        val: Description of val.
-    
-    """
-    try: return math.floor(float(val))
-    except: return "#VALUE!"
+    """Round a number down to the nearest integer."""
+    if (err := get_error(val)):
+        return err
+    try:
+        return math.floor(float(val))
+    except (TypeError, ValueError):
+        return "#VALUE!"
+
 
 @FormulaRegistry.register("CEILING", "Rounds up.", "CEILING(number)", "Math", [
     ArgumentMetadata("number", "Value", "number")
 ])
 def func_ceiling(engine: FormulaEngine, val):
-    """
-    Func ceiling logic.
-    
-    Args:
-        engine: Description of engine.
-        val: Description of val.
-    
-    """
-    try: return math.ceil(float(val))
-    except: return "#VALUE!"
+    """Round a number up to the nearest integer."""
+    if (err := get_error(val)):
+        return err
+    try:
+        return math.ceil(float(val))
+    except (TypeError, ValueError):
+        return "#VALUE!"
+
 
 @FormulaRegistry.register("INT", "Integer part.", "INT(number)", "Math", [
     ArgumentMetadata("number", "Value", "number")
 ])
 def func_int(engine: FormulaEngine, val):
-    """
-    Func int logic.
-    
-    Args:
-        engine: Description of engine.
-        val: Description of val.
-    
-    """
-    try: return int(float(val))
-    except: return "#VALUE!"
+    """Return the integer part of a number."""
+    if (err := get_error(val)):
+        return err
+    try:
+        return int(float(val))
+    except (TypeError, ValueError):
+        return "#VALUE!"
+
 
 @FormulaRegistry.register("SQRT", "Square root.", "SQRT(number)", "Math", [
     ArgumentMetadata("number", "Value", "number")
 ])
 def func_sqrt(engine: FormulaEngine, val):
-    """
-    Func sqrt logic.
-    
-    Args:
-        engine: Description of engine.
-        val: Description of val.
-    
-    """
-    try: return math.sqrt(float(val))
-    except: return "#VALUE!"
+    """Return the square root of a number."""
+    if (err := get_error(val)):
+        return err
+    try:
+        num = float(val)
+        if num < 0:
+            return "#NUM!"
+        return math.sqrt(num)
+    except (TypeError, ValueError):
+        return "#VALUE!"
+
 
 @FormulaRegistry.register("POWER", "Power.", "POWER(base, exp)", "Math", [
     ArgumentMetadata("base", "Base", "number"),
     ArgumentMetadata("exp", "Exponent", "number")
 ])
-def func_power(engine: FormulaEngine, base, exp):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
-    """
-    Func power logic.
-    
-    Args:
-        engine: Description of engine.
-        base: Description of base.
-        exp: Description of exp.
-    
-    """
-    try: return math.pow(float(base), float(exp))
-    except: return "#VALUE!"
+def func_power(engine: FormulaEngine, base, exp):
+    """Raise base to the power of exp."""
+    if (err := get_error(base, exp)):
+        return err
+    try:
+        return math.pow(float(base), float(exp))
+    except (TypeError, ValueError, OverflowError):
+        return "#VALUE!"
+
 
 @FormulaRegistry.register("MOD", "Modulo.", "MOD(num, div)", "Math", [
     ArgumentMetadata("number", "Number", "number"),
     ArgumentMetadata("divisor", "Divisor", "number")
 ])
-def func_mod(engine: FormulaEngine, num, div):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
-    """
-    Func mod logic.
-    
-    Args:
-        engine: Description of engine.
-        num: Description of num.
-        div: Description of div.
-    
-    """
-    try: return float(num) % float(div)
-    except: return "#VALUE!"
+def func_mod(engine: FormulaEngine, num, div):
+    """Return the remainder after division."""
+    if (err := get_error(num, div)):
+        return err
+    try:
+        divisor = float(div)
+        if divisor == 0:
+            return "#DIV/0!"
+        return float(num) % divisor
+    except (TypeError, ValueError):
+        return "#VALUE!"
 
 @FormulaRegistry.register("PI", "Pi constant.", "PI()", "Math", [])
 def func_pi(engine: FormulaEngine):
-    """
-    Func pi logic.
-    
-    Args:
-        engine: Description of engine.
-    
-    """
+    """Return the mathematical constant Pi."""
     return math.pi
+
 
 @FormulaRegistry.register("SIN", "Sine (radians).", "SIN(rad)", "Trig", [ArgumentMetadata("angle", "Radians", "number")])
 def func_sin(engine: FormulaEngine, val):
-    """
-    Func sin logic.
-    
-    Args:
-        engine: Description of engine.
-        val: Description of val.
-    
-    """
-    try: return math.sin(float(val))
-    except: return "#VALUE!"
+    """Return the sine of an angle in radians."""
+    if (err := get_error(val)):
+        return err
+    try:
+        return math.sin(float(val))
+    except (TypeError, ValueError):
+        return "#VALUE!"
+
 
 @FormulaRegistry.register("COS", "Cosine (radians).", "COS(rad)", "Trig", [ArgumentMetadata("angle", "Radians", "number")])
 def func_cos(engine: FormulaEngine, val):
-    """
-    Func cos logic.
-    
-    Args:
-        engine: Description of engine.
-        val: Description of val.
-    
-    """
-    try: return math.cos(float(val))
-    except: return "#VALUE!"
+    """Return the cosine of an angle in radians."""
+    if (err := get_error(val)):
+        return err
+    try:
+        return math.cos(float(val))
+    except (TypeError, ValueError):
+        return "#VALUE!"
+
 
 @FormulaRegistry.register("TAN", "Tangent (radians).", "TAN(rad)", "Trig", [ArgumentMetadata("angle", "Radians", "number")])
 def func_tan(engine: FormulaEngine, val):
-    """
-    Func tan logic.
-    
-    Args:
-        engine: Description of engine.
-        val: Description of val.
-    
-    """
-    try: return math.tan(float(val))
-    except: return "#VALUE!"
+    """Return the tangent of an angle in radians."""
+    if (err := get_error(val)):
+        return err
+    try:
+        return math.tan(float(val))
+    except (TypeError, ValueError):
+        return "#VALUE!"
+
 
 @FormulaRegistry.register("ASIN", "Arc Sine.", "ASIN(num)", "Trig", [ArgumentMetadata("number", "Value", "number")])
 def func_asin(engine: FormulaEngine, val):
-    """
-    Func asin logic.
-    
-    Args:
-        engine: Description of engine.
-        val: Description of val.
-    
-    """
-    try: return math.asin(float(val))
-    except: return "#VALUE!"
+    """Return the arc sine (inverse sine) in radians."""
+    if (err := get_error(val)):
+        return err
+    try:
+        num = float(val)
+        if num < -1 or num > 1:
+            return "#NUM!"
+        return math.asin(num)
+    except (TypeError, ValueError):
+        return "#VALUE!"
+
 
 @FormulaRegistry.register("ACOS", "Arc Cosine.", "ACOS(num)", "Trig", [ArgumentMetadata("number", "Value", "number")])
 def func_acos(engine: FormulaEngine, val):
-    """
-    Func acos logic.
-    
-    Args:
-        engine: Description of engine.
-        val: Description of val.
-    
-    """
-    try: return math.acos(float(val))
-    except: return "#VALUE!"
+    """Return the arc cosine (inverse cosine) in radians."""
+    if (err := get_error(val)):
+        return err
+    try:
+        num = float(val)
+        if num < -1 or num > 1:
+            return "#NUM!"
+        return math.acos(num)
+    except (TypeError, ValueError):
+        return "#VALUE!"
+
 
 @FormulaRegistry.register("ATAN", "Arc Tangent.", "ATAN(num)", "Trig", [ArgumentMetadata("number", "Value", "number")])
 def func_atan(engine: FormulaEngine, val):
-    """
-    Func atan logic.
-    
-    Args:
-        engine: Description of engine.
-        val: Description of val.
-    
-    """
-    try: return math.atan(float(val))
-    except: return "#VALUE!"
+    """Return the arc tangent (inverse tangent) in radians."""
+    if (err := get_error(val)):
+        return err
+    try:
+        return math.atan(float(val))
+    except (TypeError, ValueError):
+        return "#VALUE!"
+
 
 @FormulaRegistry.register("LN", "Natural Log.", "LN(num)", "Math", [ArgumentMetadata("number", "Value", "number")])
 def func_ln(engine: FormulaEngine, val):
-    """
-    Func ln logic.
-    
-    Args:
-        engine: Description of engine.
-        val: Description of val.
-    
-    """
-    try: return math.log(float(val))
-    except: return "#VALUE!"
+    """Return the natural logarithm (base e)."""
+    if (err := get_error(val)):
+        return err
+    try:
+        num = float(val)
+        if num <= 0:
+            return "#NUM!"
+        return math.log(num)
+    except (TypeError, ValueError):
+        return "#VALUE!"
+
 
 @FormulaRegistry.register("LOG10", "Log base 10.", "LOG10(num)", "Math", [ArgumentMetadata("number", "Value", "number")])
 def func_log10(engine: FormulaEngine, val):
-    """
-    Func log10 logic.
-    
-    Args:
-        engine: Description of engine.
-        val: Description of val.
-    
-    """
-    try: return math.log10(float(val))
-    except: return "#VALUE!"
+    """Return the base-10 logarithm."""
+    if (err := get_error(val)):
+        return err
+    try:
+        num = float(val)
+        if num <= 0:
+            return "#NUM!"
+        return math.log10(num)
+    except (TypeError, ValueError):
+        return "#VALUE!"
 
 # --- String Functions ---
 
@@ -1210,66 +1230,46 @@ def func_proper(engine: FormulaEngine, text):
     ArgumentMetadata("text", "Text", "str"),
     ArgumentMetadata("num_chars", "Count (def 1)", "number", True)
 ])
-def func_left(engine: FormulaEngine, text, n=1):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
-    """
-    Func left logic.
-    
-    Args:
-        engine: Description of engine.
-        text: Description of text.
-        n: Description of n.
-    
-    """
+def func_left(engine: FormulaEngine, text, n=1):
+    """Return the leftmost n characters from text."""
     try:
         s = str(text) if text is not None else ""
         count = int(float(n))
         return s[:count]
-    except: return "#VALUE!"
+    except (TypeError, ValueError):
+        return "#VALUE!"
+
 
 @FormulaRegistry.register("RIGHT", "Right chars.", "RIGHT(text, [n])", "Text", [
     ArgumentMetadata("text", "Text", "str"),
     ArgumentMetadata("num_chars", "Count (def 1)", "number", True)
 ])
-def func_right(engine: FormulaEngine, text, n=1):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
-    """
-    Func right logic.
-    
-    Args:
-        engine: Description of engine.
-        text: Description of text.
-        n: Description of n.
-    
-    """
+def func_right(engine: FormulaEngine, text, n=1):
+    """Return the rightmost n characters from text."""
     try:
         s = str(text) if text is not None else ""
         count = int(float(n))
-        # slice from end
         return s[-count:] if count > 0 else ""
-    except: return "#VALUE!"
+    except (TypeError, ValueError):
+        return "#VALUE!"
+
 
 @FormulaRegistry.register("MID", "Middle chars.", "MID(text, start, n)", "Text", [
     ArgumentMetadata("text", "Text", "str"),
     ArgumentMetadata("start_num", "Start (1-based)", "number"),
     ArgumentMetadata("num_chars", "Count", "number")
 ])
-def func_mid(engine: FormulaEngine, text, start, n):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
-    """
-    Func mid logic.
-    
-    Args:
-        engine: Description of engine.
-        text: Description of text.
-        start: Description of start.
-        n: Description of n.
-    
-    """
+def func_mid(engine: FormulaEngine, text, start, n):
+    """Return n characters from text starting at position start (1-based)."""
     try:
         s = str(text) if text is not None else ""
-        st = int(float(start)) - 1 # 1-based to 0-based
+        st = int(float(start)) - 1  # 1-based to 0-based
         count = int(float(n))
-        if st < 0: return "#VALUE!"
+        if st < 0:
+            return "#VALUE!"
         return s[st:st+count]
-    except: return "#VALUE!"
+    except (TypeError, ValueError):
+        return "#VALUE!"
 
 @FormulaRegistry.register("TRIM", "Trim spaces.", "TRIM(text)", "Text", [ArgumentMetadata("text", "Text", "str")])
 def func_trim(engine: FormulaEngine, text):
@@ -1294,28 +1294,19 @@ def func_trim(engine: FormulaEngine, text):
     ArgumentMetadata("num_chars", "Count", "number"),
     ArgumentMetadata("new_text", "New Text", "str")
 ])
-def func_replace(engine: FormulaEngine, old_text, start, n, new_text):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
-    """
-    Func replace logic.
-    
-    Args:
-        engine: Description of engine.
-        old_text: Description of old_text.
-        start: Description of start.
-        n: Description of n.
-        new_text: Description of new_text.
-    
-    """
+def func_replace(engine: FormulaEngine, old_text, start, n, new_text):
+    """Replace n characters in text starting at position start with new_text."""
     try:
         s = str(old_text) if old_text is not None else ""
         st = int(float(start)) - 1
         count = int(float(n))
         repl = str(new_text) if new_text is not None else ""
         
-        if st < 0: return "#VALUE!"
-        # Python replacement by slicing
+        if st < 0:
+            return "#VALUE!"
         return s[:st] + repl + s[st+count:]
-    except: return "#VALUE!"
+    except (TypeError, ValueError):
+        return "#VALUE!"
 
 @FormulaRegistry.register("SUBSTITUTE", "Substitute text.", "SUBSTITUTE(text, old, new, [n])", "Text", [
     ArgumentMetadata("text", "Text", "str"),
@@ -1323,18 +1314,8 @@ def func_replace(engine: FormulaEngine, old_text, start, n, new_text):  # type: 
     ArgumentMetadata("new_text", "New", "str"),
     ArgumentMetadata("instance_num", "Instance (opt)", "number", True)
 ])
-def func_substitute(engine: FormulaEngine, text, old_text, new_text, instance=None):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
-    """
-    Func substitute logic.
-    
-    Args:
-        engine: Description of engine.
-        text: Description of text.
-        old_text: Description of old_text.
-        new_text: Description of new_text.
-        instance: Description of instance.
-    
-    """
+def func_substitute(engine: FormulaEngine, text, old_text, new_text, instance=None):
+    """Substitute occurrences of old_text with new_text in text."""
     try:
         s = str(text) if text is not None else ""
         old = str(old_text)
@@ -1343,14 +1324,12 @@ def func_substitute(engine: FormulaEngine, text, old_text, new_text, instance=No
             return s.replace(old, new_)
         else:
             n = int(float(instance))
-            # Python replace doesn't support specific instance index directly efficiently
-            # We can split and join
+            # Replace only the nth occurrence
             parts = s.split(old)
-            if n > len(parts) - 1: return s # Instance out of range
+            if n > len(parts) - 1:
+                return s  # Instance out of range
             
-            # Reconstruct: parts[0] + old + ... + parts[n-1] + NEW + parts[n] + ...
-            # Actually easier: replace first n occurrences, then replace n-1 occurrences back? No.
-            # Manual rebuild
+            # Reconstruct with only nth replacement
             res = ""
             current = 0
             for _i, part in enumerate(parts[:-1]):
@@ -1362,57 +1341,43 @@ def func_substitute(engine: FormulaEngine, text, old_text, new_text, instance=No
                     res += old
             res += parts[-1]
             return res
-    except: return "#VALUE!"
+    except (TypeError, ValueError):
+        return "#VALUE!"
 
 @FormulaRegistry.register("TEXTJOIN", "Join with delimiter.", "TEXTJOIN(delim, skip_empty, text1, ...)", "Text", [
     ArgumentMetadata("delimiter", "Delimiter", "str"),
     ArgumentMetadata("ignore_empty", "Ignore Empty", "bool"),
     ArgumentMetadata("text1", "Text", "str")
 ], is_variadic=True)
-def func_textjoin(engine: FormulaEngine, delim, ignore_empty, *args):  # type: ignore[reportMissingParameterType, reportUnknownParameterType]
-    """
-    Func textjoin logic.
-    
-    Args:
-        engine: Description of engine.
-        delim: Description of delim.
-        ignore_empty: Description of ignore_empty.
-    
-    """
+def func_textjoin(engine: FormulaEngine, delim, ignore_empty, *args):
+    """Join text values with a delimiter, optionally skipping empty values."""
     d = str(delim) if delim is not None else ""
-    # ignore_empty logic: check if bool or int string
+    
+    # Parse ignore_empty flag
     skip = False
     try:
         if ignore_empty is None:
-            # Default behavior for missing arg? Excel usually mandates it.
-            # But here we treat empty as False or True?
-            # User example: TEXTJOIN(,,...) impliesthey want default behavior.
-            # Let's default to TRUE (convenience) or FALSE?
-            # If d is "" (default), skip usually doesn't matter much unless we have gaps.
-            # Let's default skip to TRUE to keep it clean.
+            skip = True  # Default to skipping empty for convenience
+        elif isinstance(ignore_empty, bool):
+            skip = ignore_empty
+        elif str(ignore_empty).lower() in ('true', '1'):
             skip = True
-        elif isinstance(ignore_empty, bool): skip = ignore_empty
-        elif str(ignore_empty).lower() in ('true', '1'): skip = True
-    except: pass
+    except (TypeError, ValueError):
+        pass
     
     parts = []
     def collect(item):
-        """
-        Collect logic.
-        
-        Args:
-            item: Description of item.
-        
-        """
         if isinstance(item, list):
-            for i in item: collect(i)
+            for i in item:
+                collect(i)
         else:
             s_val = str(item) if item is not None else ""
             if skip and s_val == "":
                 return
             parts.append(s_val)
             
-    for a in args: collect(a)
+    for a in args:
+        collect(a)
     return d.join(parts)
 
 class FormulaHelper:

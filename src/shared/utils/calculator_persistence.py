@@ -36,17 +36,17 @@ def default_state() -> CalculatorState:
     return CalculatorState(history=[])
 
 
-def get_default_state_path(app_name: str = "isopgem") -> Path:
-    """Return user-specific state path using XDG base directory.
+def get_default_state_path() -> Path:
+    """Return user-specific state path using centralized config.
 
-    Linux target:
-    - $XDG_STATE_HOME/<app_name>/calculator_state.json
-    - fallback: ~/.local/state/<app_name>/calculator_state.json
+    Uses XDG_STATE_HOME via shared.config, ensuring centralized environment access.
+    Path: $XDG_STATE_HOME/isopgem/calculator_state.json
+    Fallback: ~/.local/state/isopgem/calculator_state.json
     """
-
-    xdg_state_home = os.environ.get("XDG_STATE_HOME")
-    base = Path(xdg_state_home) if xdg_state_home else (Path.home() / ".local" / "state")
-    return base / app_name / "calculator_state.json"
+    from shared.config import get_config
+    
+    config = get_config()
+    return config.paths.user_state / "calculator_state.json"
 
 
 def _ensure_parent_dir(path: Path) -> None:

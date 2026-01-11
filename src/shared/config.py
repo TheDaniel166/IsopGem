@@ -56,6 +56,7 @@ class PathConfig:
     # User config directories
     user_config: Path
     user_preferences: Path
+    user_state: Path  # XDG-compliant state directory (calculator state, etc.)
 
     @classmethod
     def from_environment(cls) -> 'PathConfig':
@@ -77,6 +78,14 @@ class PathConfig:
         # User config in standard location
         user_config_root = Path.home() / ".config" / "isopgem"
         user_config_root.mkdir(parents=True, exist_ok=True)
+        
+        # User state directory (XDG Base Directory Specification)
+        xdg_state_home = os.environ.get("XDG_STATE_HOME")
+        if xdg_state_home:
+            user_state_root = Path(xdg_state_home) / "isopgem"
+        else:
+            user_state_root = Path.home() / ".local" / "state" / "isopgem"
+        user_state_root.mkdir(parents=True, exist_ok=True)
 
         return cls(
             project_root=project_root,
@@ -96,9 +105,10 @@ class PathConfig:
             # Database files
             main_db=data_root / "databases" / "isopgem.db",
 
-            # User config
+            # User config and state
             user_config=user_config_root,
             user_preferences=user_config_root / "preferences.json",
+            user_state=user_state_root,
         )
 
 
