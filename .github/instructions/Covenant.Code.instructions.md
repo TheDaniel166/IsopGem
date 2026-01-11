@@ -3,7 +3,7 @@ applyTo: 'src/**,scripts/**'
 ---
 # Covenant Code Scrolls (mirror)
 
-<!-- Last Verified: 2026-01-08 -->
+<!-- Last Verified: 2026-01-11 -->
 
 ---
 
@@ -152,6 +152,7 @@ The **View** (UI) and the **Logic** (Service) inhabit different planes of existe
 * **Purpose:** Present the Shadow of Truth
 * **Allowed:** Layout, painting, animations, capturing clicks
 * **The Limit:** The View is "Hollow" — knows nothing of database, math, or stars
+* **Exemption (Rendered Content):** HTML/CSS used for document rendering (e.g., QTextBrowser content) is considered content, not UI chrome, and is not subject to Visual Liturgy token enforcement.
 
 **The Realm of Essence (The Service - `services/`)**
 * **Purpose:** Calculate the Truth
@@ -183,6 +184,70 @@ If calculation takes > 100ms, it is **Forbidden** on the Main Thread.
 1. Encapsulate in `QRunnable` or `Worker` class
 2. Offload to `QThreadPool`
 3. Await Signal of Completion
+
+### 4.5 The Law of Configuration Sovereignty
+
+**"The roots of the Temple must be known, not scattered."**
+
+All configuration and path access must flow through **singular channels** to ensure testability, auditability, and deployment flexibility.
+
+#### 4.5.1 The Doctrine of Centralization
+
+**Mandatory Centralization** (via `get_config()`):
+* **Environment Variables:** All `os.environ` access (except `main.py` bootstrapping)
+* **User-Modifiable Paths:** State, config, preferences, cache
+* **Critical System Paths:** Database locations, application-wide resources
+* **Deployment-Variant Paths:** Paths that differ between frozen/dev builds
+
+**Rationale:** These concerns affect system stability, security, and testing. Centralization provides a single source of truth.
+
+#### 4.5.2 The Doctrine of Pragmatism
+
+**Permitted Direct Access** (via utility functions like `get_data_path()`):
+* **Read-Only Static Data:** Lexicon directories, ephemeris files
+* **Immutable Resources:** Asset paths, icon directories
+* **Development-Time Helpers:** Simple path construction for non-critical resources
+
+**Rationale:** Not all path access requires heavy configuration machinery. Simple utilities serve simple needs.
+
+#### 4.5.3 The Forbidden Patterns
+
+**Never:**
+* Hardcoded absolute paths (`/usr/share/isopgem/data`)
+* Repeated construction of the same path (`get_data_path() / "databases" / "isopgem.db"` when `config.paths.main_db` exists)
+* Environment access scattered across services (except whitelisted bootstrap files)
+
+#### 4.5.4 The Test of Living Reason
+
+Before centralizing a path or configuration value, ask:
+* **Does this vary by deployment?** (Yes → Centralize)
+* **Is this user-configurable?** (Yes → Centralize)
+* **Would changing this require touching multiple files?** (Yes → Centralize)
+* **Is this a simple, static, read-only resource?** (Yes → Direct access acceptable)
+
+**The Caution:** Avoid centralization for its own sake. Ossified rules without living reasons become sediment, not structure.
+
+#### 4.5.5 The Implementation
+
+**Single Source of Truth:**
+```python
+# shared/config.py - The Canonical Registry
+from shared.config import get_config
+
+config = get_config()
+db_path = config.paths.main_db          # ✓ Centralized critical path
+state_path = config.paths.user_state    # ✓ User-modifiable path
+lexicon_dir = config.paths.lexicons     # ✓ Defined once, used many
+```
+
+**Permitted Utility Access:**
+```python
+# For simple, static data directory access
+from shared.paths import get_data_path
+
+data_dir = get_data_path()
+lexicons = data_dir / "lexicons"  # ✓ Simple, direct, acceptable
+```
 
 ---
 
