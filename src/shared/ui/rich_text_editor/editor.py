@@ -2,6 +2,7 @@
 import html as html_module
 import logging
 import os
+import base64
 from typing import Optional, Any, Union, List, Tuple, Dict, Generator, Callable
 from collections import OrderedDict
 
@@ -14,9 +15,9 @@ from PyQt6.QtWidgets import (
     QSlider, QLineEdit, QStatusBar, QFileDialog, QGridLayout,
     QScrollArea, QFrame, QGroupBox, QPushButton, QTabWidget, QSplitter
 )
-from PyQt6.QtCore import Qt, pyqtSignal, QSize, QMimeData, QUrl, QMarginsF, QSizeF, QPoint, QTimer
+from PyQt6.QtCore import Qt, pyqtSignal, QSize, QMimeData, QUrl, QMarginsF, QSizeF, QPoint, QTimer, QBuffer, QByteArray
 from PyQt6.QtGui import (
-    QFont, QAction, QColor, QTextCharFormat,
+    QFont, QAction, QColor, QTextCharFormat, QTextImageFormat, QTextFragment,
     QTextCursor, QTextListFormat, QTextBlockFormat,
     QActionGroup, QBrush, QDesktopServices, QPageSize, QPageLayout, QKeySequence,
     QTextDocument, QPaintEvent
@@ -708,12 +709,14 @@ class SafeTextEdit(QTextEdit):
             # This method loads image ID 42 from database via resource_provider
         """
         if name.scheme() == "docimg":
-            # Check for mermaid or other named resources
-            # Accessing url.path() might return /mermaid/uuid
-            if "mermaid" in name.toString():
-                # Default handling should find it in the resource cache
+            # Check for mermaid, math, or other named resources
+            # Accessing url.path() might return /mermaid/uuid or /math/uuid
+            url_str = name.toString()
+            if "mermaid" in url_str or "math" in url_str:
+                # These resources should have been pre-rendered by setHtml()
+                # or added by feature modules during initial insertion
                 return super().loadResource(type, name)
-            
+
             try:
                 # Extract image ID
                 path = name.path().strip('/')
@@ -775,6 +778,92 @@ class SafeTextEdit(QTextEdit):
                 logger.error(f"Failed to load image resource {name.toString()}: {e}")
         
         return super().loadResource(type, name)
+
+    def setHtml(self, html: str) -> None:  # type: ignore[override]
+        """
+        Override setHtml to pre-render math and mermaid images from alt text.
+
+        When loading HTML that contains docimg://math/ or docimg://mermaid/ images,
+        we extract the LaTeX/Mermaid source code from the alt attribute and re-render
+        the images, adding them back to the document's resource cache.
+        """
+        import re
+
+        print("\n=== setHtml: Scanning for math/mermaid images ===")
+
+        # First, scan HTML for math/mermaid images and extract their source
+        # Pattern: <img ...> with attributes in any order
+        img_pattern = re.compile(r'<img\s+([^>]+)>', re.IGNORECASE)
+
+        for match in img_pattern.finditer(html):
+            img_attrs = match.group(1)
+
+            # Extract src and alt from attributes (order-independent)
+            src_match = re.search(r'src="(docimg://(?:math|mermaid)/[^"]+)"', img_attrs, re.IGNORECASE)
+            alt_match = re.search(r'alt="([^"]*)"', img_attrs, re.IGNORECASE)
+
+            if not src_match:
+                continue
+
+            img_url = src_match.group(1)
+            alt_text = alt_match.group(1) if alt_match else ""
+
+            print(f"\nFound image: {img_url}")
+            print(f"Alt text: {alt_text[:100] if alt_text else 'None'}...")
+
+            if alt_text:
+                # Re-render based on type
+                if "math" in img_url and alt_text.startswith("LATEX:"):
+                    code = alt_text[6:]  # Remove "LATEX:" prefix
+                    # Unescape HTML entities
+                    code = html_module.unescape(code)
+                    print(f"Re-rendering LaTeX: {code[:100]}...")
+
+                    try:
+                        from .math_renderer import MathRenderer
+                        image = MathRenderer.render_latex(code)
+                        if image:
+                            print(f"  LaTeX image size: {image.width()}x{image.height()}")
+                            # Add to document resources BEFORE setHtml
+                            self.document().addResource(
+                                QTextDocument.ResourceType.ImageResource,
+                                QUrl(img_url),
+                                image
+                            )
+                            print(f"✓ LaTeX image cached: {img_url}")
+                        else:
+                            print(f"✗ LaTeX render returned None")
+                    except Exception as e:
+                        print(f"✗ Failed to render LaTeX: {e}")
+                        import traceback
+                        traceback.print_exc()
+
+                elif "mermaid" in img_url and alt_text.startswith("MERMAID:"):
+                    code = alt_text[8:]  # Remove "MERMAID:" prefix
+                    code = html_module.unescape(code)
+                    print(f"Re-rendering Mermaid: {code[:100]}...")
+
+                    try:
+                        from .webview_mermaid_renderer import WebViewMermaidRenderer
+                        image = WebViewMermaidRenderer.render_mermaid(code)
+                        if image:
+                            print(f"  Mermaid image size: {image.width()}x{image.height()}")
+                            # Add to document resources BEFORE setHtml
+                            self.document().addResource(
+                                QTextDocument.ResourceType.ImageResource,
+                                QUrl(img_url),
+                                image
+                            )
+                            print(f"✓ Mermaid image cached: {img_url}")
+                        else:
+                            print(f"✗ Mermaid render returned None")
+                    except Exception as e:
+                        print(f"✗ Failed to render Mermaid: {e}")
+                        import traceback
+                        traceback.print_exc()
+
+        # Now load the HTML with images pre-cached
+        super().setHtml(html)
 
     def insertFromMimeData(self, source: Optional[QMimeData]) -> None:  # type: ignore[override]
         """Override paste behavior to protect against freezing."""
@@ -2587,6 +2676,8 @@ class RichTextEditor(QWidget):
         self.editor.setHtml(html)
         # Ensure LTR is maintained after setting content
         self.editor.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
+        # Re-render generated assets (Mermaid/LaTeX) that rely on in-memory resources
+        self._restore_generated_objects()
         
     def get_text(self) -> str:
         """
@@ -2616,6 +2707,7 @@ class RichTextEditor(QWidget):
         self.editor.setMarkdown(markdown)
         # Ensure LTR is maintained
         self.editor.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
+        self._restore_generated_objects()
 
     def get_markdown(self) -> str:
         """Get the editor content as Markdown."""
@@ -2748,6 +2840,98 @@ class RichTextEditor(QWidget):
         self._search_term = None
         self._match_count = 0
         self._current_match = 0
+
+    def _restore_generated_objects(self) -> None:
+        """Re-render Mermaid/LaTeX images after loading persisted content.
+
+        Saved HTML/Markdown only preserves `docimg://...` URLs plus alt text;
+        the in-memory resources are not serialized. On reopen, that yields
+        broken glyphs. We walk the document, find image fragments with
+        alt-text markers, and re-render them via the feature renderers.
+        """
+        doc = self.editor.document()
+        if doc is None:
+            return
+
+        mer = getattr(self, 'mermaid_feature', None)
+        mth = getattr(self, 'math_feature', None)
+        if mer is None and mth is None:
+            return
+
+        # Collect replacement tasks first to avoid iterator invalidation while editing
+        tasks: list[tuple[int, str, str]] = []  # (position, kind, code)
+
+        block = doc.begin()
+        while block.isValid():
+            frag_iter = block.begin()
+            while not frag_iter.atEnd():
+                frag: QTextFragment = frag_iter.fragment()
+                if frag.isValid() and frag.charFormat().isImageFormat():
+                    fmt: QTextImageFormat = frag.charFormat().toImageFormat()
+                    alt = fmt.property(QTextImageFormat.Property.ImageAltText)
+                    if isinstance(alt, str):
+                        if mer and alt.startswith(getattr(mer, 'MERMAID_PREFIX', 'MERMAID:')):
+                            code = alt[len(mer.MERMAID_PREFIX):]
+                            tasks.append((frag.position(), 'mermaid', code))
+                        elif mth and alt.startswith(getattr(mth, 'LATEX_PREFIX', 'LATEX:')):
+                            code = alt[len(mth.LATEX_PREFIX):]
+                            tasks.append((frag.position(), 'latex', code))
+                frag_iter += 1
+            block = block.next()
+
+        for pos, kind, code in tasks:
+            cursor = QTextCursor(doc)
+            cursor.setPosition(pos)
+            cursor.setPosition(pos + 1, QTextCursor.MoveMode.KeepAnchor)
+            try:
+                if kind == 'mermaid' and mer:
+                    self.editor.setTextCursor(cursor)
+                    mer.insert_mermaid(code)
+                elif kind == 'latex' and mth:
+                    self.editor.setTextCursor(cursor)
+                    mth.insert_math(code)
+            except Exception as exc:
+                logger.warning("Failed to restore %s block: %s", kind, exc)
+
+    def _document_with_embedded_images(self, source: QTextDocument) -> QTextDocument:
+        """Clone document and embed images as data URIs so saves round-trip.
+
+        Qt does not persist custom docimg:// resources to disk. Embedding ensures
+        Mermaid/LaTeX renders survive reopen without relying on in-memory cache.
+        """
+        clone = source.clone()
+        if clone is None:
+            return source
+
+        tasks: list[tuple[int, QTextImageFormat]] = []
+        block = clone.begin()
+        while block.isValid():
+            frag_iter = block.begin()
+            while not frag_iter.atEnd():
+                frag: QTextFragment = frag_iter.fragment()
+                if frag.isValid() and frag.charFormat().isImageFormat():
+                    fmt: QTextImageFormat = frag.charFormat().toImageFormat()
+                    name = fmt.name()
+                    if name:
+                        img = clone.resource(QTextDocument.ResourceType.ImageResource, QUrl(name))
+                        if hasattr(img, 'save'):
+                            buffer = QBuffer()
+                            buffer.open(QBuffer.OpenModeFlag.WriteOnly)
+                            img.save(buffer, 'PNG')
+                            data = bytes(buffer.data())
+                            data_uri = "data:image/png;base64," + base64.b64encode(data).decode('ascii')
+                            fmt.setName(data_uri)
+                            tasks.append((frag.position(), fmt))
+                frag_iter += 1
+            block = block.next()
+
+        for pos, fmt in tasks:
+            cursor = QTextCursor(clone)
+            cursor.setPosition(pos)
+            cursor.setPosition(pos + 1, QTextCursor.MoveMode.KeepAnchor)
+            cursor.setCharFormat(fmt)
+
+        return clone
 
     def new_document(self) -> None:
         """Clear the editor for a new document."""
@@ -2883,13 +3067,27 @@ class RichTextEditor(QWidget):
             doc = self.editor.document()
             if doc is None:
                 return
+            export_doc = self._document_with_embedded_images(doc)
 
-            if file_path.endswith('.md'):
+            # Ensure a file extension based on the selected filter; default to .txt for safety.
+            base, ext = os.path.splitext(file_path)
+            if not ext:
+                chosen_ext = ".txt"
+                normalized_filter = (filter_used or "").lower()
+                if "markdown" in normalized_filter:
+                    chosen_ext = ".md"
+                elif "html" in normalized_filter:
+                    chosen_ext = ".html"
+                file_path = f"{file_path}{chosen_ext}"
+                ext = chosen_ext
+            ext = ext.lower()
+
+            if ext == '.md':
                 # Convert to Markdown
                 # Note: Qt's toMarkdown features are basic but standard compliant.
-                content = doc.toMarkdown()
-            elif file_path.endswith('.html'):
-                content = self.editor.toHtml()
+                content = export_doc.toMarkdown()
+            elif ext == '.html':
+                content = export_doc.toHtml()
             else:
                 content = self.editor.toPlainText()
 

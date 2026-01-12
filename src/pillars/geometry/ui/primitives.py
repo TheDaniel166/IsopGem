@@ -106,6 +106,7 @@ class LinePrimitive:
     start: Tuple[float, float]
     end: Tuple[float, float]
     pen: PenStyle = field(default_factory=PenStyle)
+    metadata: Optional[dict] = field(default=None)
 
 
 @dataclass

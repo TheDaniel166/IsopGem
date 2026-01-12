@@ -77,38 +77,42 @@ class MathFeature:
         cursor = self.editor.textCursor()
         cursor.insertImage(fmt)
 
-    def render_all_math(self):
+    def render_all_math(self, silent: bool = False):
         """
         Scan document for $$...$$ blocks and replace them with rendered images.
+
+        Args:
+            silent: If True, suppress dialog messages (for auto-render)
         """
         doc_text = self.editor.toPlainText()
-        
+
         # Finding all occurrences of $$...$$
         # We must be careful about modifying text while iterating.
         # We'll collect all matches first (start, end, content), then apply from back to front.
-        
+
         import re
         # Pattern 1: $$ content $$ (Display Math, priority)
         # Pattern 2: $ content $ (Inline Math, stricter)
-        # We search for $$...$$ first, process matches, then search $...$ in remaining text? 
+        # We search for $$...$$ first, process matches, then search $...$ in remaining text?
         # Better: Single pattern or iterate carefully.
-        
+
         # Regex explanation:
         # (?<!\$)\$\$(.*?)\$\$(?!\$)  Matches $$...$$ not preceded or followed by another $
         # OR
         # (?<!\$)\$(?!\$)(.*?)(?<!\$)\$(?!\$)Matches $...$ (strict single $)
-        
+
         # Combined pattern is complex. Let's do two passes or use a unified regex.
         # Unified: (\$\$(.*?)\$\$)|((?<!\$)\$(?!\$)(.*?)(?<!\$)\$(?!\$))
-        
+
         pattern = re.compile(r'(\$\$.*?\$\$)|((?<!\$)\$(?!\$).*?(?<!\$)\$(?!\$))', re.DOTALL)
-        
+
         matches = []
         for match in pattern.finditer(doc_text):
             matches.append(match)
-            
+
         if not matches:
-            QMessageBox.information(self.parent, "Math Render", "No math blocks found ($$...$$ or $...$).")
+            if not silent:
+                QMessageBox.information(self.parent, "Math Render", "No math blocks found ($$...$$ or $...$).")
             return
 
         cursor = self.editor.textCursor()
@@ -155,10 +159,11 @@ class MathFeature:
                 cursor.insertImage(fmt)
                 count += 1
         
-        if count > 0:
-            QMessageBox.information(self.parent, "Math Render", f"Rendered {count} equations.")
-        else:
-            QMessageBox.warning(self.parent, "Math Render", "Found blocks but failed to render them.")
+        if not silent:
+            if count > 0:
+                QMessageBox.information(self.parent, "Math Render", f"Rendered {count} equations.")
+            else:
+                QMessageBox.warning(self.parent, "Math Render", "Found blocks but failed to render them.")
 
     def extend_context_menu(self, menu: QMenu):
         """Add actions to context menu."""

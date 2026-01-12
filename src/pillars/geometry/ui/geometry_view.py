@@ -141,7 +141,7 @@ class GeometryView(QGraphicsView):
     def _apply_zoom(self, factor: float):
         current_scale = self.transform().m11()
         new_scale = current_scale * factor
-        if 0.01 <= new_scale <= 100.0:
+        if 0.01 <= new_scale <= 400.0:
             self.scale(factor, factor)
             # Update label layout on zoom
             scene = self.scene()
@@ -262,7 +262,7 @@ class GeometryView(QGraphicsView):
                 if (event.pos() - start_pt_screen).manhattanLength() < self._snap_threshold:
                     # Close loop
                     if hasattr(self.scene(), "update_measurement_preview"):
-                        self.scene().update_measurement_preview(self._measure_points, closed=True)  # type: ignore[reportAttributeAccessIssue, reportOptionalMemberAccess, reportUnknownMemberType]
+                        self.scene().update_measurement_preview(self._measure_points, closed=True, view_scale=self.transform().m11())  # type: ignore[reportAttributeAccessIssue, reportOptionalMemberAccess, reportUnknownMemberType]
                     self._measuring_active = False # Finish measurement mode? Or just finish this shape?
                     # Let's keep mode active but reset points for new shape if user wants
                     # Actually better UX: Finish shape, keep markers.
@@ -276,7 +276,7 @@ class GeometryView(QGraphicsView):
             
             # Update preview
             if hasattr(self.scene(), "update_measurement_preview"):
-                self.scene().update_measurement_preview(self._measure_points, closed=False)  # type: ignore[reportAttributeAccessIssue, reportOptionalMemberAccess, reportUnknownMemberType]
+                self.scene().update_measurement_preview(self._measure_points, closed=False, view_scale=self.transform().m11())  # type: ignore[reportAttributeAccessIssue, reportOptionalMemberAccess, reportUnknownMemberType]
             
             event.accept()
             return

@@ -2,7 +2,7 @@
 
 <!-- Last Verified: 2026-01-10 -->
 
-**Status: Proposed** *(Awaiting Magus Approval)*
+**Status: Accepted** *(Approved by The Magus, 2026-01-11)*
 
 **Aligned with:** 
 - ADR-010: Canon DSL Adoption
@@ -454,33 +454,34 @@ src/pillars/geometry/ui/unified/
 
 ## Implementation Checklist
 
-### Phase A: Foundation
+### Phase A: Foundation ✓ COMPLETE
 
-- [ ] Create `src/pillars/geometry/ui/unified/` directory
-- [ ] Implement `GeometryPayload` dataclass
-- [ ] Implement `HistoryEntry` dataclass
-- [ ] Implement `DeclarationHistory` manager
-- [ ] Implement `AdaptiveViewport` widget
-- [ ] Define `GeometrySolver` ABC in `canon_dsl`
-- [ ] Write unit tests for history manager
+- [x] Create `src/pillars/geometry/ui/unified/` directory
+- [x] Implement `GeometryPayload` dataclass
+- [x] Implement `HistoryEntry` dataclass
+- [x] Implement `DeclarationHistory` manager
+- [x] Implement `AdaptiveViewport` widget
+- [x] Define `GeometrySolver` ABC in geometry pillar *(note: pillar owns it, not canon_dsl)*
+- [ ] Write unit tests for history manager *(deferred)*
 
-### Phase B: Unified Window Shell
+### Phase B: Unified Window Shell ✓ COMPLETE
 
-- [ ] Create `UnifiedGeometryViewer` main window
-- [ ] Implement Properties Panel
-- [ ] Implement Console Panel with tab bar
-- [ ] Implement Display Tab (port from existing)
-- [ ] Implement View/Camera Tab (port from existing)
-- [ ] Implement Output Tab (port from existing)
-- [ ] Implement History Tab (new)
-- [ ] Implement Canon Tab (new)
-- [ ] Implement status bar
-- [ ] Visual Liturgy compliance check
+- [x] Create `UnifiedGeometryViewer` main window
+- [x] Implement Properties Panel
+- [x] Implement Console Panel with tab bar
+- [x] Implement Display Tab (port from existing)
+- [x] Implement View/Camera Tab (port from existing)
+- [x] Implement Output Tab (port from existing)
+- [x] Implement History Tab (new)
+- [x] Implement Canon Tab (new)
+- [x] Implement status bar
+- [x] Visual Liturgy compliance check
 
-### Phase C: 3D Migration
+### Phase C: 3D Migration — IN PROGRESS
 
-- [ ] Integrate `Geometry3DView` into AdaptiveViewport
-- [ ] Verify Vault of Hestia works in unified viewer
+- [x] Integrate `Geometry3DView` into AdaptiveViewport
+- [x] Verify Vault of Hestia works in unified viewer
+- [x] Update `VaultOfHestiaSolver` to extend `GeometrySolver`
 - [ ] Create `TetrahedronSolver` and `TetrahedronRealizer`
 - [ ] Create `CubeSolver` and `CubeRealizer`
 - [ ] Create `OctahedronSolver` and `OctahedronRealizer`

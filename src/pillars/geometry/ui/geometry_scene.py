@@ -95,6 +95,7 @@ class GeometryScene(QGraphicsScene):
         # Drawing Preview State
         self._preview_line_item: Optional[QGraphicsItem] = None
         self._hovered_dot_index: Optional[int] = None
+        self._circle_items: dict[str, list[QGraphicsItem]] = {}
 
         # Measurement Customization State
         self._meas_font_size: float = 9.0
@@ -105,6 +106,7 @@ class GeometryScene(QGraphicsScene):
         
         self._last_meas_points: List[QPointF] = []
         self._last_meas_closed: bool = False
+        self._last_meas_view_scale: float = 1.0
 
         self.axes_visible: bool = True
         self.labels_visible: bool = True
@@ -176,6 +178,11 @@ class GeometryScene(QGraphicsScene):
         for item in self._vertex_highlight_items:
             item.setVisible(visible)
 
+    def set_circle_visibility(self, role: str, visible: bool):
+        """Toggle visibility of circles by semantic role (e.g., incircle, circumcircle)."""
+        for item in self._circle_items.get(role, []):
+            item.setVisible(visible)
+
     def apply_theme(self, theme: str):
         """
         Apply theme logic.
@@ -218,41 +225,27 @@ class GeometryScene(QGraphicsScene):
         return None
 
     def get_vertices(self) -> List[QPointF]:
-        """Get all significant vertices from the current payload."""
+        """Vertices for measurement/highlights: polygon + diagonals endpoints and their intersections."""
         if not self._payload or not self._payload.primitives:
             return []
-        
+
         points: List[QPointF] = []
         segments: List[Tuple[QPointF, QPointF]] = []
 
-        # 1. Collect explicit vertices and segments
         for primitive in self._payload.primitives:
             if isinstance(primitive, PolygonPrimitive):
                 poly_points = [QPointF(x, y) for x, y in primitive.points]
                 points.extend(poly_points)
-                # Add centroid
-                points.append(_polygon_centroid(primitive.points))
-                # Add segments
                 for i in range(len(poly_points)):
                     segments.append((poly_points[i], poly_points[(i + 1) % len(poly_points)]))
-                    
+
             elif isinstance(primitive, LinePrimitive):
                 p1 = QPointF(*primitive.start)
                 p2 = QPointF(*primitive.end)
                 points.append(p1)
                 points.append(p2)
                 segments.append((p1, p2))
-                
-            elif isinstance(primitive, CirclePrimitive):
-                cx, cy = primitive.center
-                r = primitive.radius
-                points.append(QPointF(cx, cy))
-                points.append(QPointF(cx + r, cy))
-                points.append(QPointF(cx - r, cy))
-                points.append(QPointF(cx, cy + r))
-                points.append(QPointF(cx, cy - r))
 
-        # 2. Find intersections
         for i in range(len(segments)):
             for j in range(i + 1, len(segments)):
                 s1 = segments[i]
@@ -260,20 +253,16 @@ class GeometryScene(QGraphicsScene):
                 intersection = _segment_intersection(s1[0], s1[1], s2[0], s2[1])
                 if intersection:
                     points.append(intersection)
-        
-        # 3. Dedup (simple distance check or quantization)
-        # Using quantization for robustness
+
         unique_points: List[QPointF] = []
         seen = set()
-        
         for p in points:
-            # Round to 3 decimal places for key
             key = (round(p.x(), 3), round(p.y(), 3))
             if key not in seen:
                 seen.add(key)
                 unique_points.append(p)
-                
-        return unique_points 
+
+        return unique_points
 
     def add_temporary_line(self, start: QPointF, end: QPointF, label: Optional[str] = None):
         """Legacy helper, redirected to new system or kept for simple 2-point compatibility."""
@@ -282,10 +271,17 @@ class GeometryScene(QGraphicsScene):
         self._temp_items.clear()
         self._add_temp_segment(start, end, label)
 
-    def update_measurement_preview(self, points: List[QPointF], closed: bool = False):
-        """Update the scene with the current multi-point measurement state."""
+    def update_measurement_preview(self, points: List[QPointF], closed: bool = False, view_scale: float | None = None):
+        """Update the scene with the current multi-point measurement state.
+
+        Args:
+            points: Measurement vertices in scene coordinates.
+            closed: Whether the polygon is closed.
+            view_scale: Current view scale (m11). Used to keep labels sized while staying anchored.
+        """
         self._last_meas_points = list(points)
         self._last_meas_closed = closed
+        self._last_meas_view_scale = float(view_scale) if view_scale and view_scale > 0 else 1.0
         self.clear_temporary_items()
         
         if not points:
@@ -299,7 +295,7 @@ class GeometryScene(QGraphicsScene):
             p1 = points[i]
             p2 = points[(i + 1) % n]
             dist = math.sqrt((p2.x() - p1.x())**2 + (p2.y() - p1.y())**2)
-            self._add_temp_segment(p1, p2, f"{dist:.2f}")
+            self._add_temp_segment(p1, p2, f"{dist:.2f}", scale=self._last_meas_view_scale)
 
         # 2. Draw Polygon Fill & Area if closed or enough points
         if n >= 3 and self._meas_show_area:
@@ -329,11 +325,16 @@ class GeometryScene(QGraphicsScene):
                 font.setPointSizeF(self._meas_font_size + 1.0) # Slightly larger than segments
                 font.setBold(True)
                 text_item.setFont(font)
+                if self._last_meas_view_scale != 0:
+                    text_item.setScale(1.0 / self._last_meas_view_scale)
                 
                 rect = text_item.boundingRect()
+                scale_factor = 1.0 / self._last_meas_view_scale if self._last_meas_view_scale not in (0.0, float('inf')) else 1.0
+                width = rect.width() * scale_factor
+                height = rect.height() * scale_factor
                 
                 # Positioning
-                text_item.setPos(centroid.x() - rect.width()/2, centroid.y() - rect.height()/2)
+                text_item.setPos(centroid.x() - width/2, centroid.y() - height/2)
                 text_item.setZValue(13)
                 
                 self.addItem(text_item)
@@ -360,7 +361,7 @@ class GeometryScene(QGraphicsScene):
             "count": n
         })
 
-    def _add_temp_segment(self, start: QPointF, end: QPointF, label: Optional[str]):
+    def _add_temp_segment(self, start: QPointF, end: QPointF, label: Optional[str], *, scale: float = 1.0):
         """Helper to draw a single temp segment."""
         pen = QPen(self._meas_line_color, 2)
         pen.setStyle(Qt.PenStyle.DashLine)
@@ -375,16 +376,20 @@ class GeometryScene(QGraphicsScene):
             text_col = self._meas_line_color if self._meas_use_line_color_for_text else self._meas_text_color
             text_item.setBrush(QBrush(text_col))
             text_item.setZValue(11)
-            text_item.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations)
             font = text_item.font()
             font.setPointSizeF(self._meas_font_size)
             font.setBold(True)
             text_item.setFont(font)
+            if scale != 0:
+                text_item.setScale(1.0 / scale)
             
             mid_x = (start.x() + end.x()) / 2
             mid_y = (start.y() + end.y()) / 2
             rect = text_item.boundingRect()
-            text_item.setPos(mid_x - rect.width() / 2, mid_y - rect.height() / 2)
+            scale_factor = 1.0 / scale if scale not in (0.0, float('inf')) else 1.0
+            width = rect.width() * scale_factor
+            height = rect.height() * scale_factor
+            text_item.setPos(mid_x - width / 2, mid_y - height / 2)
             
             self.addItem(text_item)
             self._temp_items.append(text_item) 
@@ -398,7 +403,7 @@ class GeometryScene(QGraphicsScene):
         
         """
         self._meas_font_size = size
-        self.update_measurement_preview(self._last_meas_points, self._last_meas_closed)
+        self.update_measurement_preview(self._last_meas_points, self._last_meas_closed, self._last_meas_view_scale)
 
     def set_measurement_line_color(self, color: QColor):
         """
@@ -409,7 +414,7 @@ class GeometryScene(QGraphicsScene):
         
         """
         self._meas_line_color = color
-        self.update_measurement_preview(self._last_meas_points, self._last_meas_closed)
+        self.update_measurement_preview(self._last_meas_points, self._last_meas_closed, self._last_meas_view_scale)
         
     def set_measurement_text_color(self, color: QColor):
         """
@@ -420,7 +425,7 @@ class GeometryScene(QGraphicsScene):
         
         """
         self._meas_text_color = color
-        self.update_measurement_preview(self._last_meas_points, self._last_meas_closed)
+        self.update_measurement_preview(self._last_meas_points, self._last_meas_closed, self._last_meas_view_scale)
         
     def set_measurement_show_area(self, enabled: bool):
         """
@@ -431,7 +436,7 @@ class GeometryScene(QGraphicsScene):
         
         """
         self._meas_show_area = enabled
-        self.update_measurement_preview(self._last_meas_points, self._last_meas_closed)
+        self.update_measurement_preview(self._last_meas_points, self._last_meas_closed, self._last_meas_view_scale)
 
 
     def clear_temporary_items(self):
@@ -711,6 +716,7 @@ class GeometryScene(QGraphicsScene):
         self._label_items.clear()
         self._axes_items.clear()
         self._vertex_highlight_items.clear()
+        self._circle_items.clear()
         self._temp_items.clear()  # Also clear temp items on rebuild
         self._label_primitives = []
         self._preview_line_item = None  # Prevent dangling pointer crash
@@ -838,6 +844,10 @@ class GeometryScene(QGraphicsScene):
             ellipse.setZValue(2.0) # Dots above lines (Z=1.5)
             if primitive.metadata and 'index' in primitive.metadata:
                 ellipse.setData(0, primitive.metadata['index'])
+            if primitive.metadata and 'role' in primitive.metadata:
+                ellipse.setData(1, primitive.metadata['role'])
+                role = primitive.metadata['role']
+                self._circle_items.setdefault(role, []).append(ellipse)
             ellipse.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable)
 
     def _add_polygon(self, primitive: PolygonPrimitive):

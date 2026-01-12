@@ -9,7 +9,7 @@ from typing import Callable, Optional
 
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QFrame, QGridLayout, QGraphicsDropShadowEffect, QScrollArea,
+    QFrame, QGridLayout, QGraphicsDropShadowEffect, QScrollArea, QInputDialog,
 )
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor, QPixmap, QPainter, QBrush  # type: ignore[reportUnusedImport]
@@ -301,14 +301,23 @@ class GeometryHub(QWidget):
     
     def _launch_shape(self, shape_definition: dict):
         """Launch the appropriate window for a shape definition."""
+        print(f"═══ _launch_shape called with: {shape_definition} ═══", flush=True)
+        
         shape_type = shape_definition.get('type')
         factory = shape_definition.get('factory')
         polygon_sides = shape_definition.get('polygon_sides')
         solid_id = shape_definition.get('solid_id')
         status = shape_definition.get('status')
         
+        print(f"shape_type={shape_type}, solid_id={solid_id}", flush=True)
+        
         # Handle "Coming Soon" items
         if status and not factory and not polygon_sides and shape_type not in {'regular_polygon', 'solid_viewer'}:
+            return
+
+        # Canon-enabled shapes (2D)
+        if shape_definition.get('use_canon_dsl'):
+            self._open_canon_shape_viewer(shape_definition)
             return
         
         # Regular polygon by sides
@@ -372,10 +381,22 @@ class GeometryHub(QWidget):
     
     def _open_solid_viewer(self, solid_id: str):
         """Open 3D viewer for a solid."""
+        print(f"═══ _open_solid_viewer called with solid_id={solid_id} ═══", flush=True)
+        
         config = SOLID_VIEWER_CONFIG.get(solid_id)
+        print(f"Config found: {config is not None}, use_canon_dsl: {config.get('use_canon_dsl') if config else None}", flush=True)
+        
         if not config:
+            print(f"WARNING: No config found for {solid_id}", flush=True)
             return
         
+        # Check if this solid uses Canon DSL (new unified viewer)
+        if config.get('use_canon_dsl'):
+            print(">>> Routing to _open_unified_viewer!", flush=True)
+            self._open_unified_viewer(solid_id, config)
+            return
+        
+        # Legacy path: Use old Geometry3DWindow
         builder = config.get('builder')
         calculator_cls = config.get('calculator')
         calculator = calculator_cls() if calculator_cls else None
@@ -399,6 +420,155 @@ class GeometryHub(QWidget):
                 window.set_calculator(calculator)
             else:
                 window.set_payload(payload)
+    
+    def _open_unified_viewer(self, solid_id: str, config: dict):
+        """Open the new Canon DSL-powered unified geometry viewer.
+        
+        Creates the window DIRECTLY (like the test script) to ensure
+        consistent styling, not through window_manager.
+        """
+        print(f"═══ OPENING UNIFIED VIEWER for {solid_id} ═══", flush=True)
+        
+        from .unified.unified_viewer import UnifiedGeometryViewer
+        from canon_dsl import CanonEngine
+        
+        print("Creating UnifiedGeometryViewer directly...", flush=True)
+        
+        try:
+            # Create viewer directly (same as test script)
+            viewer = UnifiedGeometryViewer()
+            print(f"✓ Viewer created: {viewer}", flush=True)
+            
+            viewer.setWindowTitle(f"{config.get('title', solid_id.title())} • Unified Viewer")
+            print("✓ Title set", flush=True)
+            
+            # Create and configure Canon engine (choose realizer/solver from config)
+            engine = CanonEngine()
+            viewer._canon_engine = engine
+            print("✓ Canon engine configured", flush=True)
+
+            solver_cls = config.get('solver')
+            realizer_cls = config.get('realizer')
+
+            if solver_cls is None or realizer_cls is None:
+                if solid_id == "vault_of_hestia_3d":
+                    print("WARNING: Canon config missing solver/realizer; falling back to Vault defaults", flush=True)
+                    from ..canon.vault_of_hestia_solver import VaultOfHestiaSolver
+                    from ..canon.vault_of_hestia_realizer import VaultOfHestiaRealizer
+
+                    solver_cls = VaultOfHestiaSolver
+                    realizer_cls = VaultOfHestiaRealizer
+                else:
+                    print("WARNING: Canon config missing solver/realizer; aborting open", flush=True)
+                    return
+
+            solver = solver_cls()
+            realizer = realizer_cls()
+
+            # Register realizer for its supported kinds (default to solver.form_type)
+            supported_kinds = getattr(realizer, 'supported_kinds', set()) or {getattr(solver, 'form_type', solid_id)}
+            for kind in supported_kinds:
+                engine.register_realizer(kind, realizer)
+            viewer.set_solver(solver)
+            print(f"✓ Solver set ({solver}) and realizer registered for {supported_kinds}", flush=True)
+            
+            # Realize with a sensible default canonical value if available
+            default_canonical = config.get('default_canonical')
+            if default_canonical is None:
+                default_canonical = getattr(solver, '_state', None)
+            if default_canonical is None:
+                # Fallback: attempt numeric default
+                default_canonical = 10.0
+
+            viewer.realize_from_canonical(default_canonical)
+            print("✓ Realized", flush=True)
+            
+            # Show the window
+            viewer.resize(1400, 900)
+            viewer.show()
+            print("✓ Window shown!", flush=True)
+            
+            # Keep reference to prevent garbage collection
+            if not hasattr(self, '_unified_viewers'):
+                self._unified_viewers = []
+            self._unified_viewers.append(viewer)
+            print(f"✓ Viewer stored (total: {len(self._unified_viewers)})", flush=True)
+            
+        except Exception as e:
+            print(f"ERROR creating unified viewer: {e}", flush=True)
+            import traceback
+            traceback.print_exc()
+
+    def _open_canon_shape_viewer(self, shape_definition: dict):
+        """Open the unified viewer for Canon-enabled 2D shapes (e.g., polygons)."""
+        print(f"═══ OPENING CANON SHAPE VIEWER for {shape_definition.get('name')} ═══", flush=True)
+
+        from .unified.unified_viewer import UnifiedGeometryViewer
+        from canon_dsl import CanonEngine
+
+        solver_cls = shape_definition.get('solver')
+        realizer_cls = shape_definition.get('realizer')
+        if solver_cls is None or realizer_cls is None:
+            print("WARNING: Canon shape config missing solver/realizer; aborting open", flush=True)
+            return
+
+        default_canonical = shape_definition.get('default_canonical')
+        display_name = shape_definition.get('name', 'Canon Shape')
+
+        # Custom n-gon prompt
+        if shape_definition.get('type') == 'regular_polygon_custom':
+            start_n = 6
+            if isinstance(default_canonical, dict) and default_canonical.get('num_sides'):
+                start_n = int(default_canonical['num_sides'])
+            n, ok = QInputDialog.getInt(
+                self,
+                "Regular n-gon",
+                "Number of sides (n ≥ 3):",
+                value=start_n,
+                min=3,
+                max=200,
+            )
+            if not ok:
+                return
+            default_canonical = {
+                'num_sides': n,
+                'side_length': (default_canonical.get('side_length', 1.0) if isinstance(default_canonical, dict) else 1.0),
+            }
+            display_name = f"Regular {n}-gon"
+
+        try:
+            viewer = UnifiedGeometryViewer()
+            engine = CanonEngine()
+
+            solver = solver_cls()
+            if isinstance(default_canonical, dict) and 'num_sides' in default_canonical and hasattr(solver, 'set_num_sides'):
+                solver.set_num_sides(int(default_canonical['num_sides']))
+
+            realizer = realizer_cls()
+
+            supported_kinds = getattr(realizer, 'supported_kinds', set()) or {getattr(solver, 'form_type', display_name)}
+            for kind in supported_kinds:
+                engine.register_realizer(kind, realizer)
+
+            viewer._canon_engine = engine
+            viewer.set_solver(solver)
+            viewer.setWindowTitle(f"{display_name} • Unified Viewer")
+
+            initial_canonical = default_canonical or getattr(solver, '_state', None) or 1.0
+            viewer.realize_from_canonical(initial_canonical)
+
+            viewer.resize(1400, 900)
+            viewer.show()
+
+            if not hasattr(self, '_unified_viewers'):
+                self._unified_viewers = []
+            self._unified_viewers.append(viewer)
+            print(f"✓ Canon shape viewer opened (total: {len(self._unified_viewers)})", flush=True)
+
+        except Exception as e:
+            print(f"ERROR creating Canon shape viewer: {e}", flush=True)
+            import traceback
+            traceback.print_exc()
     
     def _open_advanced_scientific_calculator(self):
         """Open the standalone scientific calculator."""

@@ -39,7 +39,7 @@ try:
     from canon_dsl import CanonEngine, CanonValidationError
     from ...canon.vault_of_hestia_solver import VaultOfHestiaSolver
     from ...canon.vault_of_hestia_realizer import VaultOfHestiaRealizer
-    from ...services.vault_of_hestia_solid import VaultOfHestiaSolidCalculator
+    # NOTE: VaultOfHestiaSolidCalculator removed - now using VaultOfHestiaSolver for all calculations
     CANON_DSL_AVAILABLE = True
 except ImportError as _canon_import_error:
     CANON_DSL_AVAILABLE = False
@@ -169,7 +169,9 @@ class Geometry3DWindow(QMainWindow):
         self._metadata_mode = False
         
         # Detect if this is a Canon DSL-compatible calculator
-        if CANON_DSL_AVAILABLE and isinstance(calculator, VaultOfHestiaSolidCalculator):
+        # NOTE: VaultOfHestiaSolidCalculator has been removed. This window (window3d.py) is legacy code.
+        # The new unified viewer uses VaultOfHestiaSolver directly. This check will never be true.
+        if CANON_DSL_AVAILABLE and False:  # isinstance check removed - calculator class no longer exists
             self._use_canon_dsl = True
             self._canon_solver = VaultOfHestiaSolver()
             # Clear Canon state (will be populated on first realization)

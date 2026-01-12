@@ -74,13 +74,15 @@ class Geometry3DView(QWidget):
         self._last_mouse_pos: Optional[QPoint] = None
         self._interaction_mode: Optional[str] = None
         self._show_axes = True
+        self._show_faces = True
+        self._show_edges = True
         self._sphere_visibility = {
             'incircle': False,
             'midsphere': False,
             'circumsphere': False,
         }
-        self._show_labels = True
-        self._show_vertices = True
+        self._show_labels = False  # Off by default
+        self._show_vertices = False  # Off by default
         self._show_dual = False
         
         # Measurement mode
@@ -166,6 +168,24 @@ class Geometry3DView(QWidget):
             Result of labels_visible operation.
         """
         return self._show_labels
+
+    def set_faces_visible(self, visible: bool):
+        """Set face visibility (shows/hides filled polygons)."""
+        self._show_faces = visible
+        self.update()
+
+    def faces_visible(self) -> bool:
+        """Return current face visibility state."""
+        return self._show_faces
+
+    def set_edges_visible(self, visible: bool):
+        """Set edge visibility (wireframe lines)."""
+        self._show_edges = visible
+        self.update()
+
+    def edges_visible(self) -> bool:
+        """Return current edge visibility state."""
+        return self._show_edges
 
     def set_vertices_visible(self, visible: bool):
         """
@@ -401,56 +421,50 @@ class Geometry3DView(QWidget):
             # If Z points to viewer, negative Z is far. So paint smallest Z first.
             faces_to_draw.sort(key=lambda x: x[0])   # type: ignore[reportUnknownLambdaType, reportUnknownMemberType]
 
-            # 3. Draw Faces
-            painter.setPen(Qt.PenStyle.NoPen)
-            for _, indices, intensity, original_idx in faces_to_draw:  # type: ignore[reportUnknownVariableType]
-                poly = [screen_points[i] for i in indices]
-                
-                
-                # Color Logic
-                base_color = None
-                if payload.face_colors and original_idx < len(payload.face_colors):
-                     raw_color = payload.face_colors[original_idx]
-                     if raw_color:
-                         base_color = QColor(*raw_color)
-                
-                if base_color:
-                    # Modulate intensity
-                    # Scaling RGB
-                    r = int(base_color.red() * intensity)
-                    g = int(base_color.green() * intensity)
-                    b = int(base_color.blue() * intensity)
-                    alpha = base_color.alpha()
-                else:
-                    # Default "Crystal" Color
-                    r = int(0 * intensity)
-                    g = int(180 * intensity)
-                    b = int(255 * intensity)
-                    alpha = 210
+            # 3. Draw Faces (if enabled)
+            if self._show_faces:
+                painter.setPen(Qt.PenStyle.NoPen)
+                for _, indices, intensity, original_idx in faces_to_draw:  # type: ignore[reportUnknownVariableType]
+                    poly = [screen_points[i] for i in indices]
+                    
+                    
+                    # Color Logic
+                    base_color = None
+                    if payload.face_colors and original_idx < len(payload.face_colors):
+                         raw_color = payload.face_colors[original_idx]
+                         if raw_color:
+                             base_color = QColor(*raw_color)
+                    
+                    if base_color:
+                        # Modulate intensity
+                        # Scaling RGB
+                        r = int(base_color.red() * intensity)
+                        g = int(base_color.green() * intensity)
+                        b = int(base_color.blue() * intensity)
+                        alpha = base_color.alpha()
+                    else:
+                        # Default "Crystal" Color
+                        r = int(0 * intensity)
+                        g = int(180 * intensity)
+                        b = int(255 * intensity)
+                        alpha = 210
 
-                color = QColor(r, g, b, alpha)
-                painter.setBrush(color)
-                
-                qpoly = [p.toPoint() for p in poly] # drawPolygon needs QPoint  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
-                painter.drawPolygon(qpoly)
+                    color = QColor(r, g, b, alpha)
+                    painter.setBrush(color)
+                    
+                    qpoly = [p.toPoint() for p in poly] # drawPolygon needs QPoint  # type: ignore[reportUnknownMemberType, reportUnknownVariableType]
+                    painter.drawPolygon(qpoly)
 
-        # 4. Draw Edges (Wireframe overlay - simpler, cleaner)
-        #    Draw edges faint or bright?
-        #    Let's draw edges for definition
-        edge_pen = QPen(QColor(255, 255, 255, 60), 1.0)
-        painter.setPen(edge_pen)
-        painter.setBrush(Qt.BrushStyle.NoBrush)
-        
-        # Optimization: Only draw edges that are part of the payload.edges list
-        # If no explicit edges, do we infer? 
-        # The payload currently has explicit edges.
-        
-        # To avoid Z-fighting/mess, maybe only draw silhouette or boundary?
-        # For "Prism", allow wireframe on top for now.
-        for edge in payload.edges:
-            if len(edge) != 2: continue
-            i, j = edge
-            painter.drawLine(screen_points[i], screen_points[j])
+        # 4. Draw Edges (Wireframe overlay - if enabled)
+        if self._show_edges:
+            edge_pen = QPen(QColor(255, 255, 255, 60), 1.0)
+            painter.setPen(edge_pen)
+            painter.setBrush(Qt.BrushStyle.NoBrush)
+            
+            for edge in payload.edges:
+                if len(edge) != 2: continue
+                i, j = edge
+                painter.drawLine(screen_points[i], screen_points[j])
 
         # Store screen points for hit detection
         self._last_screen_points = screen_points
@@ -788,8 +802,8 @@ class Geometry3DView(QWidget):
 
         # Draw Mesh Vertices
         # Optimization: If too many vertices, only draw selected/hovered to avoid clutter
-        show_all_vertices = len(screen_points) <= 200
-        
+        show_all_vertices = len(screen_points) <= 1000  # Increased from 200 to handle tessellated spheres
+
         for i, point in enumerate(screen_points):
             is_selected = i in self._selected_vertex_indices
             is_hovered = i == self._hovered_vertex_index
@@ -812,14 +826,14 @@ class Geometry3DView(QWidget):
                 radius = 5
             
             painter.drawEllipse(point, radius, radius)
-            
+
             if is_selected or is_hovered:
                 painter.setPen(QColor(255, 255, 255))
                 font = painter.font()
                 font.setPointSize(9)
                 painter.setFont(font)
                 painter.drawText(point + QPointF(10, -10), f"V{i}")
-        
+
         painter.restore()
 
     def _draw_measurement(self, painter: QPainter, screen_points: List[QPointF], payload: SolidPayload):

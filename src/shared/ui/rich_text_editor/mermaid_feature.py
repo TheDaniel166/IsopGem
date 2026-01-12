@@ -119,12 +119,15 @@ class MermaidFeature:
         cursor = self.editor.textCursor()
         cursor.insertImage(fmt)
 
-    def render_all_mermaid(self):
+    def render_all_mermaid(self, silent: bool = False):
         """
         Scan document for ```mermaid ... ``` blocks and replace them with rendered images.
+
+        Args:
+            silent: If True, suppress dialog messages (for auto-render)
         """
         doc_text = self.editor.toPlainText()
-        
+
         import re
         # Pattern 1: Standard Markdown ```mermaid ... ```
         # Pattern 2: Bare Start Keywords (e.g. "graph TD") until double newline?
@@ -133,35 +136,35 @@ class MermaidFeature:
         # 1. ```mermaid ... ```
         # 2. ``` ... ``` where content starts with standard mermaid keywords?
         # 3. Just `graph TD...` is hard to delimit end without knowing context.
-        
+
         # User screenshot shows:
         # graph TD
         # A[...] --> B[...]
-        
+
         # We can try to match blocks that start with known keywords and end with double newline.
         # Keywords: graph, sequenceDiagram, classDiagram, stateDiagram, erDiagram, pie, gantt
-        
+
         # Keywords: graph, sequenceDiagram, classDiagram, stateDiagram, erDiagram, pie, gantt
-        
+
         keywords = r'(?:graph|sequenceDiagram|classDiagram|stateDiagram(?:-v2)?|erDiagram|pie|gantt|mindmap|timeline)'
-        
+
         # Updated to be Case-Sensitive to avoid matching English prose like "Graph Traversal"
         keywords = r'(?:graph|flowchart|sequenceDiagram|classDiagram|stateDiagram(?:-v2)?|erDiagram|pie|gantt|mindmap|timeline|gitGraph|c4Context)'
-        
+
         # Refined Bare Block Logic:
         # Match a line starting with keyword, then subsequent non-empty lines.
         # Stops at first empty line.
-        
+
         # Refined Bare Block Pattern
         # 1. Start with a keyword (graph, flow, etc.)
         # 2. Match content, allowing single newlines.
         # 3. Stop at double newline OR start of prose (Capitalized word).
-        
+
         pattern = re.compile(
             r'(```mermaid(.*?)```)'                   # Group 1 & 2: Explicit
             r'|'
             r'(```\s*(' + keywords + r'.*?)```)'      # Group 3 & 4: Generic Fence
-            r'|' 
+            r'|'
             # Group 5: Bare Block
             # Starts with new line or start of string.
             # Optional indentation [ \t]*.
@@ -170,18 +173,19 @@ class MermaidFeature:
             r'((?:^|\n)[ \t]*(?:' + keywords + r')\b'
             r'(?:(?!\n\n).)*?)'                       # Match everything UNTIL a double newline
             r'(?=\n\n|\n[A-Z][a-z]+|\Z)',             # Stop at double-nl, capitalized sentence, or EOF
-            re.DOTALL | re.MULTILINE 
+            re.DOTALL | re.MULTILINE
             # REMOVED re.IGNORECASE to prevent matching "Graph" vs "graph"
         )
 
 
-        
+
         matches = []
         for match in pattern.finditer(doc_text):
             matches.append(match)
-            
+
         if not matches:
-            QMessageBox.information(self.parent, "Mermaid Render", "No mermaid blocks found (```mermaid ... ```).")
+            if not silent:
+                QMessageBox.information(self.parent, "Mermaid Render", "No mermaid blocks found (```mermaid ... ```).")
             return
 
         cursor = self.editor.textCursor()
@@ -225,10 +229,11 @@ class MermaidFeature:
                 self._insert_rendered_image_at_cursor(image, code, cursor)
                 count += 1
         
-        if count > 0:
-            QMessageBox.information(self.parent, "Mermaid Render", f"Rendered {count} diagrams.")
-        else:
-            QMessageBox.warning(self.parent, "Mermaid Render", "Found blocks but failed to render them.")
+        if not silent:
+            if count > 0:
+                QMessageBox.information(self.parent, "Mermaid Render", f"Rendered {count} diagrams.")
+            else:
+                QMessageBox.warning(self.parent, "Mermaid Render", "Found blocks but failed to render them.")
 
     def _insert_rendered_image_at_cursor(self, image, code: str, cursor: QTextCursor):
         """Helper to insert image at specific cursor."""

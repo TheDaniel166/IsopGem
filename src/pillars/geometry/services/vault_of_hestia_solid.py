@@ -207,6 +207,7 @@ class VaultOfHestiaSolidService:
             metadata={
                 'side_length': s,
                 'sphere_radius': r,
+                'inradius': r,  # For 3D view sphere toggle (incircle/insphere)
                 'hestia_ratio': metrics.hestia_ratio_3d,
                 'cube_volume': metrics.cube_volume,
                 'sphere_volume': metrics.sphere_volume,
@@ -612,162 +613,14 @@ class VaultOfHestiaSolidService:
                 
         return verts, faces
 
-
-class VaultOfHestiaSolidCalculator:
-    """Bidirectional calculator for the 3D Vault of Hestia."""
-
-    def __init__(self, side_length: float = 10.0):
-        """
-          init   logic.
-        
-        Args:
-            side_length: Description of side_length.
-        
-        """
-        self._properties = {
-            'side_length': SolidProperty('Side Length (s)', 'side_length', 'units', 10.0),
-            'sphere_radius': SolidProperty('Sphere Radius (r)', 'sphere_radius', 'units', 10.0),
-            'cube_volume': SolidProperty('Cube Volume (V_c)', 'cube_volume', 'units³', 5.0),
-            'cube_surface_area': SolidProperty('Cube Surface Area', 'cube_surface_area', 'units²', 5.0),
-            'pyramid_volume': SolidProperty('Pyramid Volume (V_p)', 'pyramid_volume', 'units³', 5.0),
-            'sphere_volume': SolidProperty('Sphere Volume (V_s)', 'sphere_volume', 'units³', 5.0),
-            'sphere_surface_area': SolidProperty('Sphere Surface', 'sphere_surface_area', 'units²', 5.0),
-            'hestia_ratio_3d': SolidProperty('Hestia Ratio (Vol)', 'hestia_ratio_3d', '', value=None, precision=6, editable=False),
-            'cube_diagonal': SolidProperty('Cube Diagonal', 'cube_diagonal', 'units', value=None, precision=4, editable=False),
-            'pyramid_slant': SolidProperty('Pyramid Slant Height', 'pyramid_slant_height', 'units', value=None, precision=4, editable=False),
-            'void_cube_sphere': SolidProperty('Void (Cube-Sphere)', 'void_volume_cube_sphere', 'units³', value=None, precision=4, editable=False),
-            'void_pyr_sphere': SolidProperty('Void (Pyr-Sphere)', 'void_volume_pyramid_sphere', 'units³', value=None, precision=4, editable=False),
-            'pyramid_tsa': SolidProperty('Pyramid TSA (2φs²)', 'pyramid_total_surface_area', 'units²', value=None, precision=4, editable=False),
-            'inradius_ratio': SolidProperty('Inradius Ratio (φ)', 'inradius_resonance_phi', '', value=None, precision=6, editable=False),
-            'vol_efficiency': SolidProperty('Vol Efficiency', 'volume_efficiency', '', value=None, precision=4, editable=False),
-            'phi': SolidProperty('Phi (Ref)', 'phi', '', value=None, precision=6, editable=False),
-        }
-        
-        self.set_property('side_length', side_length)
-        self._recalculate()
-
-    def properties(self) -> List[SolidProperty]:
-        """
-        Properties logic.
-        
-        Returns:
-            Result of properties operation.
-        """
-        return list(self._properties.values())
-
-    def set_property(self, key: str, value: Optional[float]) -> bool:
-        """
-        Configure property logic.
-        
-        Args:
-            key: Description of key.
-            value: Description of value.
-        
-        Returns:
-            Result of set_property operation.
-        """
-        if value is not None and value <= 0:
-            return False
-            
-        prop = self._properties.get(key)
-        if not prop:
-            return False
-            
-        prop.value = value
-        
-        # Bidirectional Solver
-        # Everything derives from s (side_length) eventually.
-        # Constants
-        phi = (1 + math.sqrt(5)) / 2
-        
-        s = None
-        
-        if key == 'side_length':
-            s = value
-            
-        elif key == 'sphere_radius':
-            # r = s / (2*phi) => s = r * 2 * phi
-            s = value * 2 * phi
-            
-        elif key == 'cube_volume':
-            # V = s^3 => s = cbrt(V)
-            s = value ** (1/3)
-            
-        elif key == 'cube_surface_area':
-            # A = 6 s^2 => s = sqrt(A/6)
-            s = math.sqrt(value / 6)
-            
-        elif key == 'pyramid_volume':
-            # V = s^3 / 3 => s^3 = 3V => s = cbrt(3V)
-            s = (3 * value) ** (1/3)
-            
-        elif key == 'sphere_volume':
-            # V = 4/3 pi r^3 => r = cbrt(3V / 4pi)
-            r = (3 * value / (4 * math.pi)) ** (1/3)
-            s = r * 2 * phi
-            
-        elif key == 'sphere_surface_area':
-            # A = 4 pi r^2 => r = sqrt(A / 4pi)
-            r = math.sqrt(value / (4 * math.pi))
-            s = r * 2 * phi
-
-        if s is not None:
-            self._properties['side_length'].value = s
-            self._recalculate()
-            return True
-            
-        return False
-
-    def _recalculate(self):
-        s = self._properties['side_length'].value
-        if s is None:
-            return
-            
-        metrics = VaultOfHestiaSolidService._compute_metrics(s)
-        
-        self._properties['sphere_radius'].value = metrics.sphere_radius
-        self._properties['cube_volume'].value = metrics.cube_volume
-        self._properties['cube_surface_area'].value = metrics.cube_surface_area
-        self._properties['pyramid_volume'].value = metrics.pyramid_volume
-        self._properties['sphere_volume'].value = metrics.sphere_volume
-        self._properties['sphere_surface_area'].value = metrics.sphere_surface_area
-        self._properties['hestia_ratio_3d'].value = metrics.hestia_ratio_3d
-        self._properties['cube_diagonal'].value = metrics.cube_diagonal
-        self._properties['pyramid_slant'].value = metrics.pyramid_slant_height
-        self._properties['void_cube_sphere'].value = metrics.void_volume_cube_sphere
-        self._properties['void_pyr_sphere'].value = metrics.void_volume_pyramid_sphere
-        self._properties['pyramid_tsa'].value = metrics.pyramid_total_surface_area
-        self._properties['inradius_ratio'].value = metrics.inradius_resonance_phi
-        self._properties['vol_efficiency'].value = metrics.volume_efficiency
-        self._properties['phi'].value = metrics.phi
-        
-        self._result = VaultOfHestiaSolidService.build(s)
-
-    def clear(self):
-        """
-        Clear logic.
-        
-        """
-        for p in self._properties.values():
-            p.value = None
-        self._result = None
-
-    def payload(self) -> Optional[SolidPayload]:
-        """
-        Payload logic.
-        
-        Returns:
-            Result of payload operation.
-        """
-        return self._result.payload if self._result else None
-
-    def metadata(self) -> Dict[str, float]:
-        """
-        Metadata logic.
-        
-        Returns:
-            Result of metadata operation.
-        """
-        if not self._result:
-            return {}
-        return dict(self._result.payload.metadata)
+# NOTE: VaultOfHestiaSolidCalculator has been removed (was lines 617-775).
+# The bidirectional calculation logic is now handled by the Canon-compliant solver.
+#
+# Migration guide:
+#   Old: from pillars.geometry.services.vault_of_hestia_solid import VaultOfHestiaSolidCalculator
+#   New: from pillars.geometry.canon.vault_of_hestia_solver import VaultOfHestiaSolver
+#
+# The new solver provides:
+#   - solve_from(key, value) -> SolveResult
+#   - get_all_properties(side_length) -> dict[str, float]
+#   - create_declaration(side_length) -> Declaration (Canon DSL)
