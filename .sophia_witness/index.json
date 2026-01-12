@@ -1,0 +1,18 @@
+{
+  "artifacts": [
+    {
+      "id": "24ba0ab37929",
+      "timestamp": "2026-01-12T08:51:39.730422",
+      "decision": "Pillars must remain sovereign - no direct inter-pillar imports",
+      "affected": [
+        "wiki/00_foundations/covenant/ (structural)"
+      ]
+    }
+  ],
+  "by_structure": {
+    "wiki/00_foundations/covenant/ (structural)": [
+      "24ba0ab37929"
+    ]
+  },
+  "by_concept": []
+}

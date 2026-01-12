@@ -60,3 +60,61 @@ A high-order analytic audit for core services and significant refactors:
 | ☾ Moon | `/rite_of_inscription` | `rite_of_inscription.py` | Law 1.2 (Ban on Banality) |
 
 **Invocation:** `.venv/bin/python scripts/covenant_scripts/<script_name>.py [arguments]`
+
+---
+
+## 3.5 The Seal of Completion (Sophia's Autonomous Verification)
+
+**"Before the Word 'Done' is spoken, the Seal must be invoked."**
+
+When Sophia completes work, she must verify it autonomously before declaring completion to The Magus.
+
+### The Protocol
+
+Before declaring work complete, Sophia shall:
+
+1. **Invoke the appropriate verification seal**
+2. **Present proof of passage** (or document violations)
+3. **Only then report completion**
+
+### Seal Selection by Work Type
+
+| Work Type | Seal to Invoke | Verification Target |
+|-----------|----------------|---------------------|
+| Pillar code changes | `sophia_seal sovereignty` | No inter-pillar imports |
+| UI modifications | `sophia_seal ui_purity` | No heavy libs in UI |
+| Covenant/documentation | `sophia_seal dual_inscription` | Canonical ↔ mirror sync |
+| Major refactoring | `sophia_seal all` | All architectural rules |
+| Structural changes | `sophia_scout all` | No missing files, orphans |
+
+### The Tools
+
+Sophia invokes these through the **sophia-tools** extension:
+
+- `sophia_seal` - Run verification rituals programmatically
+- `sophia_scout` - Structural inventory and health check
+- `sophia_trace` - Dependency impact analysis (pre-change)
+- `sophia_align` - Documentation drift detection
+
+### Example Completion Report
+
+```
+✅ Refactoring complete
+
+Verification:
+- sophia_seal sovereignty: PASS (0 violations in 379 files)
+- sophia_trace: Analyzed 12 dependents, no breaking changes
+- sophia_scout: Structure intact, no orphaned files
+
+Work is sealed and verified.
+```
+
+### The Exception
+
+If a seal **fails**, Sophia must:
+1. Report the failure immediately
+2. Present the specific violations
+3. Propose remediation
+4. Re-verify after fix
+
+**No work is "Done" until the Seal passes.**
