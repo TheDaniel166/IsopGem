@@ -27,6 +27,10 @@ from .torus_knot_solver import TorusKnotSolver
 from .torus_knot_realizer import TorusKnotRealizer
 from .regular_polygon_solver import RegularPolygonSolver
 from .regular_polygon_realizer import RegularPolygonRealizer
+from .tetrahedron_solver import TetrahedronSolver
+from .tetrahedron_realizer import TetrahedronRealizer
+from .cube_solver import CubeSolver
+from .cube_realizer import CubeRealizer
 
 __all__ = [
     # Base classes
@@ -44,4 +48,10 @@ __all__ = [
     # Regular Polygon
     "RegularPolygonSolver",
     "RegularPolygonRealizer",
+    # Tetrahedron
+    "TetrahedronSolver",
+    "TetrahedronRealizer",
+    # Cube
+    "CubeSolver",
+    "CubeRealizer",
 ]

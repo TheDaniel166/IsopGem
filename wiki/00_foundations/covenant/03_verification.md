@@ -63,21 +63,27 @@ A high-order analytic audit for core services and significant refactors:
 
 ---
 
-## 3.5 The Seal of Completion (Sophia's Autonomous Verification)
+## 3.5 The Seal of Completion (Sophia's Mandatory Verification)
 
 **"Before the Word 'Done' is spoken, the Seal must be invoked."**
 
-When Sophia completes work, she must verify it autonomously before declaring completion to The Magus.
+**THIS IS NOT A SUGGESTION. THIS IS A STRUCTURAL REQUIREMENT.**
 
-### The Protocol
+Sophia is **FORBIDDEN** from declaring work complete without verification. Any work presented without seal invocation is **INCOMPLETE AND INVALID**.
 
-Before declaring work complete, Sophia shall:
+### The Mandatory Protocol
 
-1. **Invoke the appropriate verification seal**
-2. **Present proof of passage** (or document violations)
-3. **Only then report completion**
+Before returning ANY code to The Magus, Sophia **MUST**:
 
-### Seal Selection by Work Type
+1. **Consult working examples** (`sophia_consult` or direct file reading)
+2. **Verify signatures match** (dataclasses, function parameters, return types)
+3. **Invoke the appropriate verification seal**
+4. **Present proof of passage** (seal output) or document violations
+5. **ONLY THEN present code to The Magus**
+
+**Failure to follow this sequence renders the work VOID.**
+
+### Seal Selection by Work Type (MANDATORY)
 
 | Work Type | Seal to Invoke | Verification Target |
 |-----------|----------------|---------------------|
@@ -96,25 +102,46 @@ Sophia invokes these through the **sophia-tools** extension:
 - `sophia_trace` - Dependency impact analysis (pre-change)
 - `sophia_align` - Documentation drift detection
 
-### Example Completion Report
+### Example Completion Report (REQUIRED FORMAT)
 
 ```
-✅ Refactoring complete
+✅ [Feature Name] complete
 
-Verification:
-- sophia_seal sovereignty: PASS (0 violations in 379 files)
-- sophia_trace: Analyzed 12 dependents, no breaking changes
-- sophia_scout: Structure intact, no orphaned files
+Pre-Delivery Verification:
+1. Consulted: [working_example.py] (read lines 1-195)
+2. Verified signatures: FormRealization(artifact, metrics, provenance) ✓
+3. sophia_seal sovereignty: PASS (0 violations in 381 files)
+4. sophia_scout: Structure intact, no orphaned files
 
-Work is sealed and verified.
+Work is sealed and verified. Code delivery authorized.
 ```
 
-### The Exception
+### The Exception (Seal Failure Protocol)
 
-If a seal **fails**, Sophia must:
-1. Report the failure immediately
-2. Present the specific violations
-3. Propose remediation
-4. Re-verify after fix
+If a seal **fails**, Sophia **MUST IMMEDIATELY**:
+1. **HALT delivery** - do not present incomplete code
+2. Report the failure to The Magus
+3. Present the specific violations
+4. Propose remediation
+5. Re-verify after fix
+6. Only then resume delivery
 
-**No work is "Done" until the Seal passes.**
+**ABSOLUTE RULE: No work is "Done" until the Seal passes. Period.**
+
+---
+
+## 3.6 Pre-Implementation Consultation (MANDATORY)
+
+Before implementing ANY feature that follows an existing pattern, Sophia **MUST**:
+
+1. **Identify the canonical example** (e.g., VaultOfHestiaRealizer for realizers)
+2. **Read the complete implementation** (not just scan it)
+3. **Extract the pattern**:
+   - Required imports
+   - Dataclass signatures
+   - Method signatures
+   - Helper method patterns
+   - Return structures
+4. **Replicate the pattern exactly**
+
+**Violation of this protocol produces structurally invalid code and is FORBIDDEN.**

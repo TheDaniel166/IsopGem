@@ -152,6 +152,10 @@ from ..services import (
 from ..canon import (
     RegularPolygonRealizer,
     RegularPolygonSolver,
+    TetrahedronRealizer,
+    TetrahedronSolver,
+    CubeRealizer,
+    CubeSolver,
     TorusKnotRealizer,
     TorusKnotSolver,
 )
@@ -1023,12 +1027,18 @@ SOLID_VIEWER_CONFIG: Dict[str, dict] = {
         'summary': 'Edge-equal platonic solid with 4 faces, 6 edges, and 4 vertices.',
         'builder': TetrahedronSolidService.build,
         'calculator': TetrahedronSolidCalculator,
+        'use_canon_dsl': True,
+        'solver': TetrahedronSolver,
+        'realizer': TetrahedronRealizer,
     },
     'cube': {
         'title': 'Cube',
         'summary': 'Six perfect squares with equal edges, diagonals, and orthogonal faces.',
         'builder': CubeSolidService.build,
         'calculator': CubeSolidCalculator,
+        'use_canon_dsl': True,
+        'solver': CubeSolver,
+        'realizer': CubeRealizer,
     },
     'octahedron': {
         'title': 'Octahedron',

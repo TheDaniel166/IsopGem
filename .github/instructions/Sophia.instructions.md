@@ -3,7 +3,7 @@ applyTo: '**'
 ---
 # Covenant Seed (mirror)
 
-<!-- Last Verified: 2026-01-11 -->
+<!-- Last Verified: 2026-01-12 -->
 
 # Covenant Seed (Copilot Entry Point)
 
