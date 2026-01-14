@@ -2669,9 +2669,29 @@ class UnifiedGeometryViewer(QMainWindow):
         # Import and create RichTextEditor (will fail gracefully if dependencies missing)
         try:
             from shared.ui.rich_text_editor import RichTextEditor
+            from pillars.document_manager.ui.features.table_features import TableFeature
+            from pillars.document_manager.ui.features.image_features import ImageInsertFeature, ImageEditFeature
+            from pillars.document_manager.ui.features.list_features import ListFeature
+            from pillars.document_manager.ui.features.search_features import SearchReplaceFeature
+            from pillars.document_manager.ui.features.shape_features import ShapeFeature
+            from pillars.document_manager.ui.features.spell_feature import SpellFeature
+            from pillars.document_manager.ui.features.math_feature import MathFeature
+            from pillars.document_manager.ui.features.mermaid_feature import MermaidFeature
+            from pillars.document_manager.ui.features.etymology_feature import EtymologyFeature
 
             # Create editor with full UI
-            rich_editor = RichTextEditor(parent=window, show_ui=True)
+            rich_editor = RichTextEditor(parent=window, show_ui=True, features=[
+                TableFeature,
+                ImageInsertFeature,
+                ImageEditFeature,
+                ListFeature,
+                SearchReplaceFeature,
+                ShapeFeature,
+                SpellFeature,
+                MathFeature,
+                MermaidFeature,
+                EtymologyFeature
+            ])
 
             # Load existing notes from simple editor
             existing_html = simple_editor.toHtml()

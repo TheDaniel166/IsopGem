@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPixmap, QPainter, QImage
 
-from shared.ui.rich_text_editor.math_renderer import MathRenderer
+from pillars.document_manager.ui.features.math_renderer import MathRenderer
 from ...liturgy_styles import LiturgyColors, LiturgyButtons
 
 

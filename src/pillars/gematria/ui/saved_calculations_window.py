@@ -16,6 +16,15 @@ from ..services import CalculationService
 from ..models import CalculationRecord
 from shared.ui import VirtualKeyboard, get_shared_virtual_keyboard
 from shared.ui.rich_text_editor import RichTextEditor
+from pillars.document_manager.ui.features.table_features import TableFeature
+from pillars.document_manager.ui.features.image_features import ImageInsertFeature, ImageEditFeature
+from pillars.document_manager.ui.features.list_features import ListFeature
+from pillars.document_manager.ui.features.search_features import SearchReplaceFeature
+from pillars.document_manager.ui.features.shape_features import ShapeFeature
+from pillars.document_manager.ui.features.spell_feature import SpellFeature
+from pillars.document_manager.ui.features.math_feature import MathFeature
+from pillars.document_manager.ui.features.mermaid_feature import MermaidFeature
+from pillars.document_manager.ui.features.etymology_feature import EtymologyFeature
 
 class NumericTableWidgetItem(QTableWidgetItem):
     """Table item that sorts numerically."""
@@ -323,7 +332,18 @@ class SavedCalculationsWindow(QMainWindow):
         rev_title.setStyleSheet("font-size: 10pt; font-weight: 800; color: #3b82f6; letter-spacing: 0.15em;")
         rev_layout.addWidget(rev_title)
         
-        self.notes_editor = RichTextEditor(show_ui=True)
+        self.notes_editor = RichTextEditor(show_ui=True, features=[
+            TableFeature,
+            ImageInsertFeature,
+            ImageEditFeature,
+            ListFeature,
+            SearchReplaceFeature,
+            ShapeFeature,
+            SpellFeature,
+            MathFeature,
+            MermaidFeature,
+            EtymologyFeature
+        ])
         rev_layout.addWidget(self.notes_editor)
         
         rev_actions = QHBoxLayout()

@@ -2,6 +2,13 @@
 
 Aligned with Visual Liturgy v2.2 - "The Codex of IsopGem"
 """
+"""
+SHARED JUSTIFICATION:
+- RATIONALE: Core Infrastructure (UI)
+- USED BY: Astrology, Correspondences, Gematria, Geometry, Tq (43 references)
+- CRITERION: 2 (Essential for app to function)
+"""
+
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # Rule: No widget in ui/ may define hex colors directly. All color must come from COLORS.

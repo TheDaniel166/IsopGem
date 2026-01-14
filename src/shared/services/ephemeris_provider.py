@@ -2,6 +2,13 @@
 Ephemeris Provider - The Celestial Engine.
 Singleton interface to Skyfield for calculating geocentric/heliocentric planetary positions and lunar nodes.
 """
+"""
+SHARED JUSTIFICATION:
+- RATIONALE: Port (Boundary abstraction)
+- USED BY: Astrology, Correspondences, Time_mechanics (7 references)
+- CRITERION: 1 (Cross-pillar infrastructure port)
+"""
+
 from datetime import datetime, timezone, timedelta
 import logging
 import math

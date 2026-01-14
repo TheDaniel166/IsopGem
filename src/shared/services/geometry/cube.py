@@ -1,3 +1,4 @@
+
 """Cube solid math utilities and calculator.
 
 Enhanced with comprehensive bidirectional properties including:
@@ -7,6 +8,7 @@ Enhanced with comprehensive bidirectional properties including:
 - Sphere metrics (inscribed/circumscribed surface area and volume)
 - Quality metrics (sphericity, isoperimetric quotient)
 """
+
 from __future__ import annotations
 
 import math

@@ -9,6 +9,8 @@ from typing import Optional
 class SolidProperty:
     """Describes a metric exposed by a solid calculator."""
 
+
+
     name: str
     key: str
     unit: str = ''

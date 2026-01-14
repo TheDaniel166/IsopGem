@@ -1,3 +1,15 @@
+"""
+⚠️  GRANDFATHERED VIOLATION - Pre-existing before Law of Substrate (2026-01-13)
+
+SHARED JUSTIFICATION:
+- RATIONALE: GRANDFATHERED - Needs manual review
+- USED BY: Adyton, Astrology, Document_manager, Gematria, Geometry, Time_mechanics, Tq (20 references)
+- CRITERION: Unknown - requires categorization
+
+This module violates the Law of the Substrate but is documented as pre-existing.
+Refactoring plan: See wiki/04_prophecies/shared_folder_audit_2026-01-13.md
+"""
+
 """Centralized window manager for IsopGem application.
 
 This module manages the lifecycle of tool windows across all pillars,
@@ -6,6 +18,7 @@ including opening, closing, positioning, and tracking active windows.
 The WindowManager also listens to the NavigationBus for decoupled window
 requests, performing lazy imports to preserve pillar sovereignty.
 """
+
 from typing import Dict, Optional, Type, Any
 import logging
 import importlib

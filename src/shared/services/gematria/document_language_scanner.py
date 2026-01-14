@@ -1,9 +1,22 @@
+"""
+⚠️  GRANDFATHERED VIOLATION - Pre-existing before Law of Substrate (2026-01-13)
+
+SHARED JUSTIFICATION:
+- RATIONALE: Domain Logic (GRANDFATHERED - pending refactor)
+- USED BY: Gematria (1 references)
+- CRITERION: Violation (Domain algorithms in shared)
+
+This module violates the Law of the Substrate but is documented as pre-existing.
+Refactoring plan: See wiki/04_prophecies/shared_folder_audit_2026-01-13.md
+"""
+
 """Document language scanner for pre-analysis before loading documents.
 
 Scans document text to detect which languages are present and their prevalence.
 Used to prompt user for cipher selection when opening a document (clicking "Open Scroll").
 All subsequent views (document text, interlinear, search, frequency analysis) use the selected ciphers.
 """
+
 from typing import Dict, List, Set
 from collections import Counter
 from .language_detector import Language, LanguageDetector

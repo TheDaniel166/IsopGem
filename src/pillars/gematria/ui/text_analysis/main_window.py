@@ -11,6 +11,7 @@ from PyQt6.QtWidgets import (
     QSplitter, QFileDialog, QFrame, QDialog
 )
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QCloseEvent
 from typing import List
 from pathlib import Path
 
@@ -81,6 +82,52 @@ class ExegesisWindow(QMainWindow):
 
         self._setup_ui()
         self._load_documents()
+    
+    def closeEvent(self, event: QCloseEvent) -> None:
+        """Clean up resources before window closes to prevent segfault."""
+        try:
+            # Disconnect all tabs to prevent signal issues during destruction
+            for i in range(self.doc_tabs.count()):
+                tab = self.doc_tabs.widget(i)
+                if isinstance(tab, DocumentTab):
+                    # Disconnect signals from this tab
+                    try:
+                        tab.save_verse_requested.disconnect()
+                    except:
+                        pass
+                    try:
+                        tab.save_all_requested.disconnect()
+                    except:
+                        pass
+                    try:
+                        tab.save_text_requested.disconnect()
+                    except:
+                        pass
+                    try:
+                        tab.open_quadset_requested.disconnect()
+                    except:
+                        pass
+            
+            # Disconnect search panel signals
+            try:
+                self.search_panel.search_requested.disconnect()
+                self.search_panel.result_selected.disconnect()
+                self.search_panel.clear_requested.disconnect()
+                self.search_panel.save_matches_requested.disconnect()
+                self.search_panel.export_requested.disconnect()
+                self.search_panel.smart_filter_requested.disconnect()
+                self.search_panel.send_to_tablet_requested.disconnect()
+            except:
+                pass
+            
+            # Clear all tabs (this will trigger proper cleanup of DocumentTab widgets)
+            self.doc_tabs.clear()
+            
+        except Exception as e:
+            logger.error(f"Error during ExegesisWindow cleanup: {e}")
+        finally:
+            # Always accept the close event
+            event.accept()
         
     def _setup_ui(self):
         self.setWindowTitle("The Exegesis")

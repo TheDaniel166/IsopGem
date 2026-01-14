@@ -1,8 +1,10 @@
+
 """Shared Gematria Models.
 
 Hosted here to prevent circular dependencies (e.g. TQ needs DB entities) and 
 maintain pillar sovereignty.
 """
+
 from __future__ import annotations
 
 import json

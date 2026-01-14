@@ -1,0 +1,1479 @@
+{
+  "async_tasks/decorators.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [
+      "async_method",
+      "run_in_background"
+    ],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/async_tasks/__init__.py"
+    ]
+  },
+  "async_tasks/manager.py": {
+    "direct_references": 19,
+    "indirect_references": 0,
+    "total_references": 19,
+    "exported_symbols": [
+      "TaskManager",
+      "get_task_manager"
+    ],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/main.py",
+      "src/shared/async_tasks/__init__.py",
+      "src/shared/database.py",
+      "src/shared/errors/handler.py",
+      "src/shared/repositories/document_manager/document_repository.py"
+    ]
+  },
+  "async_tasks/worker.py": {
+    "direct_references": 4,
+    "indirect_references": 0,
+    "total_references": 4,
+    "exported_symbols": [
+      "BackgroundTask",
+      "BackgroundWorker"
+    ],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/async_tasks/__init__.py",
+      "src/shared/async_tasks/decorators.py",
+      "src/shared/async_tasks/manager.py",
+      "src/shared/ui/worker.py"
+    ]
+  },
+  "config.py": {
+    "direct_references": 7,
+    "indirect_references": 0,
+    "total_references": 7,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/database.py",
+      "src/shared/services/document_manager/etymology_service.py",
+      "src/shared/services/gematria/cipher_preferences.py",
+      "src/shared/services/lexicon/classical_lexicon_service.py",
+      "src/shared/services/lexicon/comprehensive_lexicon_service.py"
+    ]
+  },
+  "database.py": {
+    "direct_references": 14,
+    "indirect_references": 0,
+    "total_references": 14,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/main.py",
+      "src/scripts/reset_mindscape_db.py",
+      "src/shared/models/document_manager/document.py",
+      "src/shared/models/document_manager/document_verse.py",
+      "src/shared/models/document_manager/notebook.py"
+    ]
+  },
+  "errors/base.py": {
+    "direct_references": 36,
+    "indirect_references": 1,
+    "total_references": 37,
+    "exported_symbols": [
+      "AppError",
+      "ErrorCategory",
+      "ErrorSeverity"
+    ],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/calculators/hebrew.py",
+      "src/main.py",
+      "src/scripts/reset_mindscape_db.py",
+      "src/shared/async_tasks/worker.py",
+      "src/shared/database.py"
+    ]
+  },
+  "errors/codes.py": {
+    "direct_references": 2,
+    "indirect_references": 1,
+    "total_references": 3,
+    "exported_symbols": [
+      "ErrorCode"
+    ],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/async_tasks/worker.py",
+      "src/shared/errors/__init__.py",
+      "src/shared/errors/handler.py"
+    ]
+  },
+  "errors/handler.py": {
+    "direct_references": 2,
+    "indirect_references": 1,
+    "total_references": 3,
+    "exported_symbols": [
+      "ErrorContext",
+      "handle_error"
+    ],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/async_tasks/worker.py",
+      "src/shared/errors/__init__.py",
+      "src/shared/logging_config.py"
+    ]
+  },
+  "errors/ui_notifier.py": {
+    "direct_references": 2,
+    "indirect_references": 0,
+    "total_references": 2,
+    "exported_symbols": [
+      "notify_error",
+      "notify_info",
+      "notify_success",
+      "notify_warning"
+    ],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/errors/__init__.py",
+      "src/shared/errors/handler.py"
+    ]
+  },
+  "logging_config.py": {
+    "direct_references": 0,
+    "indirect_references": 0,
+    "total_references": 0,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": true,
+    "sample_references": []
+  },
+  "models/document_manager/document.py": {
+    "direct_references": 17,
+    "indirect_references": 0,
+    "total_references": 17,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/main.py",
+      "src/shared/database.py",
+      "src/shared/repositories/document_manager/document_repository.py",
+      "src/shared/repositories/document_manager/document_verse_repository.py",
+      "src/shared/repositories/document_manager/image_repository.py"
+    ]
+  },
+  "models/document_manager/document_verse.py": {
+    "direct_references": 5,
+    "indirect_references": 0,
+    "total_references": 5,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/repositories/document_manager/document_verse_repository.py",
+      "src/shared/repositories/document_manager/verse_edit_log_repository.py",
+      "src/shared/repositories/document_manager/verse_rule_repository.py",
+      "src/shared/services/document_manager/document_service.py",
+      "src/shared/services/document_manager/verse_teacher_service.py"
+    ]
+  },
+  "models/document_manager/dtos.py": {
+    "direct_references": 2,
+    "indirect_references": 0,
+    "total_references": 2,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/repositories/document_manager/document_repository.py",
+      "src/shared/services/document_manager/document_service.py"
+    ]
+  },
+  "models/document_manager/notebook.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/services/document_manager/notebook_service.py"
+    ]
+  },
+  "models/gematria.py": {
+    "direct_references": 6,
+    "indirect_references": 0,
+    "total_references": 6,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/main.py",
+      "src/shared/services/lexicon/concordance_indexer_service.py",
+      "src/shared/services/lexicon/holy_key_service.py",
+      "src/shared/signals/__init__.py",
+      "src/shared/signals/gematria_bus.py"
+    ]
+  },
+  "models/geo_location.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/services/ephemeris_provider.py"
+    ]
+  },
+  "models/time/thelemic_calendar_models.py": {
+    "direct_references": 2,
+    "indirect_references": 0,
+    "total_references": 2,
+    "exported_symbols": [
+      "ASTRONOMICON_CHARS",
+      "ConrunePair",
+      "ZODIAC_SIGNS"
+    ],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/models/time/__init__.py",
+      "src/shared/services/time/thelemic_calendar_service.py"
+    ]
+  },
+  "paths.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/config.py"
+    ]
+  },
+  "repositories/document_manager/document_repository.py": {
+    "direct_references": 3,
+    "indirect_references": 0,
+    "total_references": 3,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/services/document_manager/document_service.py",
+      "src/shared/services/document_manager/verse_teacher_service.py",
+      "src/shared/services/lexicon/concordance_indexer_service.py"
+    ]
+  },
+  "repositories/document_manager/document_verse_repository.py": {
+    "direct_references": 2,
+    "indirect_references": 0,
+    "total_references": 2,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/services/document_manager/document_service.py",
+      "src/shared/services/document_manager/verse_teacher_service.py"
+    ]
+  },
+  "repositories/document_manager/image_repository.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/services/document_manager/document_service.py"
+    ]
+  },
+  "repositories/document_manager/search_repository.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/services/document_manager/document_service.py"
+    ]
+  },
+  "repositories/document_manager/verse_edit_log_repository.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/services/document_manager/verse_teacher_service.py"
+    ]
+  },
+  "repositories/document_manager/verse_rule_repository.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/services/document_manager/verse_teacher_service.py"
+    ]
+  },
+  "repositories/lexicon/key_database.py": {
+    "direct_references": 2,
+    "indirect_references": 0,
+    "total_references": 2,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/services/lexicon/concordance_indexer_service.py",
+      "src/shared/services/lexicon/holy_key_service.py"
+    ]
+  },
+  "services/astro_glyph_service.py": {
+    "direct_references": 0,
+    "indirect_references": 0,
+    "total_references": 0,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": true,
+    "sample_references": []
+  },
+  "services/document_manager/document_service.py": {
+    "direct_references": 0,
+    "indirect_references": 0,
+    "total_references": 0,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": true,
+    "sample_references": []
+  },
+  "services/document_manager/etymology_service.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/ui/rich_text_editor/etymology_feature.py"
+    ]
+  },
+  "services/document_manager/notebook_service.py": {
+    "direct_references": 0,
+    "indirect_references": 0,
+    "total_references": 0,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": true,
+    "sample_references": []
+  },
+  "services/document_manager/spell_service.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/ui/rich_text_editor/spell_feature.py"
+    ]
+  },
+  "services/document_manager/utils/image_utils.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/services/document_manager/document_service.py"
+    ]
+  },
+  "services/document_manager/utils/parsers.py": {
+    "direct_references": 2,
+    "indirect_references": 0,
+    "total_references": 2,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/services/document_manager/document_service.py",
+      "src/shared/ui/rich_text_editor/editor.py"
+    ]
+  },
+  "services/document_manager/verse_teacher_service.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/services/lexicon/concordance_indexer_service.py"
+    ]
+  },
+  "services/ephemeris_provider.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/services/venus_phenomena_service.py"
+    ]
+  },
+  "services/gematria/arabic_calculator.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [
+      "("
+    ],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/services/gematria/__init__.py"
+    ]
+  },
+  "services/gematria/base_calculator.py": {
+    "direct_references": 7,
+    "indirect_references": 0,
+    "total_references": 7,
+    "exported_symbols": [
+      "GematriaCalculator"
+    ],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/services/gematria/__init__.py",
+      "src/shared/services/gematria/arabic_calculator.py",
+      "src/shared/services/gematria/greek_calculator.py",
+      "src/shared/services/gematria/hebrew_calculator.py",
+      "src/shared/services/gematria/multi_language_calculator.py"
+    ]
+  },
+  "services/gematria/cipher_preferences.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/services/gematria/multi_language_calculator.py"
+    ]
+  },
+  "services/gematria/document_language_scanner.py": {
+    "direct_references": 0,
+    "indirect_references": 0,
+    "total_references": 0,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": true,
+    "sample_references": []
+  },
+  "services/gematria/greek_calculator.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [
+      "("
+    ],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/services/gematria/__init__.py"
+    ]
+  },
+  "services/gematria/hebrew_calculator.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [
+      "("
+    ],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/services/gematria/__init__.py"
+    ]
+  },
+  "services/gematria/language_detector.py": {
+    "direct_references": 3,
+    "indirect_references": 0,
+    "total_references": 3,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/services/gematria/cipher_preferences.py",
+      "src/shared/services/gematria/document_language_scanner.py",
+      "src/shared/services/gematria/multi_language_calculator.py"
+    ]
+  },
+  "services/gematria/multi_language_calculator.py": {
+    "direct_references": 0,
+    "indirect_references": 0,
+    "total_references": 0,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": true,
+    "sample_references": []
+  },
+  "services/gematria/sanskrit_calculator.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [
+      "SanskritKatapayadiCalculator"
+    ],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/services/gematria/__init__.py"
+    ]
+  },
+  "services/gematria/tq_calculator.py": {
+    "direct_references": 3,
+    "indirect_references": 0,
+    "total_references": 3,
+    "exported_symbols": [
+      "("
+    ],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/services/gematria/__init__.py",
+      "src/shared/services/lexicon/concordance_indexer_service.py",
+      "src/shared/services/lexicon/holy_key_service.py"
+    ]
+  },
+  "services/geometry/archimedean.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [
+      "("
+    ],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/services/geometry/__init__.py"
+    ]
+  },
+  "services/geometry/archimedean_data.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/services/geometry/archimedean.py"
+    ]
+  },
+  "services/geometry/cube.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [
+      "CubeSolidCalculator",
+      "CubeSolidService"
+    ],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/services/geometry/__init__.py"
+    ]
+  },
+  "services/geometry/dodecahedron.py": {
+    "direct_references": 2,
+    "indirect_references": 0,
+    "total_references": 2,
+    "exported_symbols": [
+      "DodecahedronSolidCalculator",
+      "DodecahedronSolidService"
+    ],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/services/geometry/__init__.py",
+      "src/shared/services/geometry/archimedean.py"
+    ]
+  },
+  "services/geometry/geometry_visuals.py": {
+    "direct_references": 5,
+    "indirect_references": 0,
+    "total_references": 5,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/services/geometry/cube.py",
+      "src/shared/services/geometry/dodecahedron.py",
+      "src/shared/services/geometry/icosahedron.py",
+      "src/shared/services/geometry/octahedron.py",
+      "src/shared/services/geometry/tetrahedron.py"
+    ]
+  },
+  "services/geometry/icosahedron.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [
+      "IcosahedronSolidCalculator",
+      "IcosahedronSolidService"
+    ],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/services/geometry/__init__.py"
+    ]
+  },
+  "services/geometry/octahedron.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [
+      "OctahedronSolidCalculator",
+      "OctahedronSolidService"
+    ],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/services/geometry/__init__.py"
+    ]
+  },
+  "services/geometry/platonic_constants.py": {
+    "direct_references": 5,
+    "indirect_references": 0,
+    "total_references": 5,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/services/geometry/cube.py",
+      "src/shared/services/geometry/dodecahedron.py",
+      "src/shared/services/geometry/icosahedron.py",
+      "src/shared/services/geometry/octahedron.py",
+      "src/shared/services/geometry/tetrahedron.py"
+    ]
+  },
+  "services/geometry/solid_geometry.py": {
+    "direct_references": 5,
+    "indirect_references": 0,
+    "total_references": 5,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/services/geometry/archimedean.py",
+      "src/shared/services/geometry/cube.py",
+      "src/shared/services/geometry/dodecahedron.py",
+      "src/shared/services/geometry/icosahedron.py",
+      "src/shared/services/geometry/octahedron.py"
+    ]
+  },
+  "services/geometry/solid_payload.py": {
+    "direct_references": 8,
+    "indirect_references": 0,
+    "total_references": 8,
+    "exported_symbols": [
+      "SolidLabel",
+      "SolidPayload"
+    ],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/services/geometry/__init__.py",
+      "src/shared/services/geometry/archimedean.py",
+      "src/shared/services/geometry/cube.py",
+      "src/shared/services/geometry/dodecahedron.py",
+      "src/shared/services/geometry/geometry_visuals.py"
+    ]
+  },
+  "services/geometry/solid_property.py": {
+    "direct_references": 6,
+    "indirect_references": 0,
+    "total_references": 6,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/services/geometry/archimedean.py",
+      "src/shared/services/geometry/cube.py",
+      "src/shared/services/geometry/dodecahedron.py",
+      "src/shared/services/geometry/icosahedron.py",
+      "src/shared/services/geometry/octahedron.py"
+    ]
+  },
+  "services/geometry/tetrahedron.py": {
+    "direct_references": 2,
+    "indirect_references": 0,
+    "total_references": 2,
+    "exported_symbols": [
+      "TetrahedronSolidCalculator",
+      "TetrahedronSolidService"
+    ],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/services/geometry/__init__.py",
+      "src/shared/services/geometry/archimedean.py"
+    ]
+  },
+  "services/help_service.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/ui/help_window.py"
+    ]
+  },
+  "services/lexicon/classical_lexicon_service.py": {
+    "direct_references": 2,
+    "indirect_references": 0,
+    "total_references": 2,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/services/lexicon/comprehensive_lexicon_service.py",
+      "src/shared/services/lexicon/lexicon_resolver.py"
+    ]
+  },
+  "services/lexicon/comprehensive_lexicon_service.py": {
+    "direct_references": 2,
+    "indirect_references": 0,
+    "total_references": 2,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/errors/handler.py",
+      "src/shared/services/lexicon/lexicon_resolver.py"
+    ]
+  },
+  "services/lexicon/concordance_indexer_service.py": {
+    "direct_references": 0,
+    "indirect_references": 0,
+    "total_references": 0,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": true,
+    "sample_references": []
+  },
+  "services/lexicon/enrichment_service.py": {
+    "direct_references": 0,
+    "indirect_references": 0,
+    "total_references": 0,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": true,
+    "sample_references": []
+  },
+  "services/lexicon/etymology_db_service.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/services/lexicon/enrichment_service.py"
+    ]
+  },
+  "services/lexicon/holy_key_service.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/services/lexicon/concordance_indexer_service.py"
+    ]
+  },
+  "services/lexicon/language_config.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/services/lexicon/comprehensive_lexicon_service.py"
+    ]
+  },
+  "services/lexicon/lexicon_resolver.py": {
+    "direct_references": 2,
+    "indirect_references": 0,
+    "total_references": 2,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/services/document_manager/etymology_service.py",
+      "src/shared/services/lexicon/enrichment_service.py"
+    ]
+  },
+  "services/lexicon/occult_reference_service.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/services/lexicon/enrichment_service.py"
+    ]
+  },
+  "services/lexicon/theosophical_glossary_service.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/services/lexicon/enrichment_service.py"
+    ]
+  },
+  "services/time/clock_provider.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [
+      "ClockProvider",
+      "FixedClock",
+      "SystemClock",
+      "get_system_clock"
+    ],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/services/time/__init__.py"
+    ]
+  },
+  "services/time/thelemic_calendar_service.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [
+      "ThelemicCalendarService"
+    ],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/services/time/__init__.py"
+    ]
+  },
+  "services/tq/baphomet_color_service.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [
+      "BaphometColorService"
+    ],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/services/tq/__init__.py"
+    ]
+  },
+  "services/tq/ternary_service.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [
+      "TernaryService"
+    ],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/services/tq/__init__.py"
+    ]
+  },
+  "services/venus_phenomena_service.py": {
+    "direct_references": 0,
+    "indirect_references": 0,
+    "total_references": 0,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": true,
+    "sample_references": []
+  },
+  "signals/gematria_bus.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [
+      "GematriaBus",
+      "gematria_bus"
+    ],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/signals/__init__.py"
+    ]
+  },
+  "signals/navigation_bus.py": {
+    "direct_references": 2,
+    "indirect_references": 0,
+    "total_references": 2,
+    "exported_symbols": [
+      "NavigationBus",
+      "navigation_bus"
+    ],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/signals/__init__.py",
+      "src/shared/ui/window_manager.py"
+    ]
+  },
+  "ui/catalyst_styles.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/ui/components.py"
+    ]
+  },
+  "ui/components.py": {
+    "direct_references": 0,
+    "indirect_references": 0,
+    "total_references": 0,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": true,
+    "sample_references": []
+  },
+  "ui/font_loader.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/main.py"
+    ]
+  },
+  "ui/help_window.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/main.py"
+    ]
+  },
+  "ui/keyboard_layouts.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/ui/virtual_keyboard.py"
+    ]
+  },
+  "ui/kinetic_enforcer.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/main.py"
+    ]
+  },
+  "ui/rich_text_editor/code_editor_widget.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/ui/rich_text_editor/mermaid_editor_dialog.py"
+    ]
+  },
+  "ui/rich_text_editor/dialogs/base_dialog.py": {
+    "direct_references": 2,
+    "indirect_references": 0,
+    "total_references": 2,
+    "exported_symbols": [
+      "BaseEditorDialog"
+    ],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/ui/rich_text_editor/dialogs/__init__.py",
+      "src/shared/ui/rich_text_editor/dialogs/horizontal_rule_dialog.py"
+    ]
+  },
+  "ui/rich_text_editor/dialogs/export_pdf_dialog.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [
+      "ExportPdfDialog"
+    ],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/ui/rich_text_editor/dialogs/__init__.py"
+    ]
+  },
+  "ui/rich_text_editor/dialogs/horizontal_rule_dialog.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [
+      "HorizontalRuleDialog"
+    ],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/ui/rich_text_editor/dialogs/__init__.py"
+    ]
+  },
+  "ui/rich_text_editor/dialogs/hyperlink_dialog.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [
+      "HyperlinkDialog"
+    ],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/ui/rich_text_editor/dialogs/__init__.py"
+    ]
+  },
+  "ui/rich_text_editor/dialogs/page_mode_dialog.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [
+      "PageModeDialog"
+    ],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/ui/rich_text_editor/dialogs/__init__.py"
+    ]
+  },
+  "ui/rich_text_editor/dialogs/page_setup_dialog.py": {
+    "direct_references": 2,
+    "indirect_references": 0,
+    "total_references": 2,
+    "exported_symbols": [
+      "PageSetupDialog"
+    ],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/ui/rich_text_editor/dialogs/__init__.py",
+      "src/shared/ui/rich_text_editor/dialogs/export_pdf_dialog.py"
+    ]
+  },
+  "ui/rich_text_editor/dialogs/special_characters_dialog.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [
+      "SpecialCharactersDialog"
+    ],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/ui/rich_text_editor/dialogs/__init__.py"
+    ]
+  },
+  "ui/rich_text_editor/editor.py": {
+    "direct_references": 5,
+    "indirect_references": 0,
+    "total_references": 5,
+    "exported_symbols": [
+      "RichTextEditor",
+      "SafeTextEdit"
+    ],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/ui/rich_text_editor/__init__.py",
+      "src/shared/ui/rich_text_editor/dialogs/page_mode_dialog.py",
+      "src/shared/ui/rich_text_editor/mermaid_editor_dialog.py",
+      "src/shared/ui/rich_text_editor/mermaid_feature.py",
+      "src/shared/ui/rich_text_editor/shape_features.py"
+    ]
+  },
+  "ui/rich_text_editor/editor_constants.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/ui/rich_text_editor/editor.py"
+    ]
+  },
+  "ui/rich_text_editor/er_generator.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/ui/rich_text_editor/mermaid_editor_dialog.py"
+    ]
+  },
+  "ui/rich_text_editor/etymology_feature.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/ui/rich_text_editor/editor.py"
+    ]
+  },
+  "ui/rich_text_editor/image_features.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/ui/rich_text_editor/editor.py"
+    ]
+  },
+  "ui/rich_text_editor/image_gateway.py": {
+    "direct_references": 2,
+    "indirect_references": 0,
+    "total_references": 2,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/ui/rich_text_editor/editor.py",
+      "src/shared/ui/rich_text_editor/image_features.py"
+    ]
+  },
+  "ui/rich_text_editor/list_features.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/ui/rich_text_editor/editor.py"
+    ]
+  },
+  "ui/rich_text_editor/math_feature.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/ui/rich_text_editor/editor.py"
+    ]
+  },
+  "ui/rich_text_editor/math_renderer.py": {
+    "direct_references": 2,
+    "indirect_references": 0,
+    "total_references": 2,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/ui/rich_text_editor/editor.py",
+      "src/shared/ui/rich_text_editor/math_feature.py"
+    ]
+  },
+  "ui/rich_text_editor/mermaid_editor_dialog.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/ui/rich_text_editor/mermaid_feature.py"
+    ]
+  },
+  "ui/rich_text_editor/mermaid_feature.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/ui/rich_text_editor/editor.py"
+    ]
+  },
+  "ui/rich_text_editor/mermaid_highlighter.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/ui/rich_text_editor/mermaid_editor_dialog.py"
+    ]
+  },
+  "ui/rich_text_editor/mermaid_linter.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/ui/rich_text_editor/mermaid_editor_dialog.py"
+    ]
+  },
+  "ui/rich_text_editor/ribbon_widget.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/ui/rich_text_editor/editor.py"
+    ]
+  },
+  "ui/rich_text_editor/search_features.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/ui/rich_text_editor/editor.py"
+    ]
+  },
+  "ui/rich_text_editor/shape_features.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/ui/rich_text_editor/editor.py"
+    ]
+  },
+  "ui/rich_text_editor/shape_item.py": {
+    "direct_references": 2,
+    "indirect_references": 0,
+    "total_references": 2,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/ui/rich_text_editor/shape_features.py",
+      "src/shared/ui/rich_text_editor/shape_overlay.py"
+    ]
+  },
+  "ui/rich_text_editor/shape_overlay.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/ui/rich_text_editor/shape_features.py"
+    ]
+  },
+  "ui/rich_text_editor/spell_feature.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/ui/rich_text_editor/editor.py"
+    ]
+  },
+  "ui/rich_text_editor/table_features.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/ui/rich_text_editor/editor.py"
+    ]
+  },
+  "ui/rich_text_editor/webview_mermaid_renderer.py": {
+    "direct_references": 3,
+    "indirect_references": 0,
+    "total_references": 3,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/ui/rich_text_editor/editor.py",
+      "src/shared/ui/rich_text_editor/mermaid_editor_dialog.py",
+      "src/shared/ui/rich_text_editor/mermaid_feature.py"
+    ]
+  },
+  "ui/save_calculation_dialog.py": {
+    "direct_references": 0,
+    "indirect_references": 0,
+    "total_references": 0,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": true,
+    "sample_references": []
+  },
+  "ui/scrollable_tab_bar.py": {
+    "direct_references": 0,
+    "indirect_references": 0,
+    "total_references": 0,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": true,
+    "sample_references": []
+  },
+  "ui/substrate_widget.py": {
+    "direct_references": 0,
+    "indirect_references": 0,
+    "total_references": 0,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": true,
+    "sample_references": []
+  },
+  "ui/theme.py": {
+    "direct_references": 6,
+    "indirect_references": 1,
+    "total_references": 7,
+    "exported_symbols": [
+      "COLORS",
+      "get_app_stylesheet"
+    ],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/main.py",
+      "src/shared/ui/__init__.py",
+      "src/shared/ui/kinetic_enforcer.py",
+      "src/shared/ui/rich_text_editor/code_editor_widget.py",
+      "src/shared/ui/rich_text_editor/mermaid_editor_dialog.py"
+    ]
+  },
+  "ui/virtual_keyboard.py": {
+    "direct_references": 3,
+    "indirect_references": 1,
+    "total_references": 3,
+    "exported_symbols": [
+      "VirtualKeyboard",
+      "get_shared_virtual_keyboard"
+    ],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/ui/__init__.py",
+      "src/shared/ui/rich_text_editor/editor.py",
+      "src/shared/ui/rich_text_editor/etymology_feature.py"
+    ]
+  },
+  "ui/window_manager.py": {
+    "direct_references": 1,
+    "indirect_references": 1,
+    "total_references": 2,
+    "exported_symbols": [
+      "WindowManager"
+    ],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/main.py",
+      "src/shared/ui/__init__.py"
+    ]
+  },
+  "ui/worker.py": {
+    "direct_references": 3,
+    "indirect_references": 0,
+    "total_references": 3,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/async_tasks/__init__.py",
+      "src/shared/async_tasks/decorators.py",
+      "src/shared/async_tasks/manager.py"
+    ]
+  },
+  "utils/calculator_persistence.py": {
+    "direct_references": 0,
+    "indirect_references": 0,
+    "total_references": 0,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": true,
+    "sample_references": []
+  },
+  "utils/measure_conversion.py": {
+    "direct_references": 0,
+    "indirect_references": 0,
+    "total_references": 0,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": true,
+    "sample_references": []
+  },
+  "utils/verse_parser.py": {
+    "direct_references": 1,
+    "indirect_references": 0,
+    "total_references": 1,
+    "exported_symbols": [],
+    "pillars": [],
+    "is_orphan": false,
+    "sample_references": [
+      "src/shared/services/document_manager/verse_teacher_service.py"
+    ]
+  }
+}

@@ -12,6 +12,15 @@ import re
 import logging
 
 from shared.ui.rich_text_editor import RichTextEditor
+from pillars.document_manager.ui.features.table_features import TableFeature
+from pillars.document_manager.ui.features.image_features import ImageInsertFeature, ImageEditFeature
+from pillars.document_manager.ui.features.list_features import ListFeature
+from pillars.document_manager.ui.features.search_features import SearchReplaceFeature
+from pillars.document_manager.ui.features.shape_features import ShapeFeature
+from pillars.document_manager.ui.features.spell_feature import SpellFeature
+from pillars.document_manager.ui.features.math_feature import MathFeature
+from pillars.document_manager.ui.features.mermaid_feature import MermaidFeature
+from pillars.document_manager.ui.features.etymology_feature import EtymologyFeature
 
 from pillars.correspondences.services.formula_engine import FormulaHelper, FormulaEngine
 from pillars.correspondences.services.spreadsheet_validator import validate_spreadsheet_data, ValidationError
@@ -782,7 +791,18 @@ class CellEditorDialog(QDialog):
         self.resize(800, 600)
 
         layout = QVBoxLayout(self)
-        self.editor = RichTextEditor()
+        self.editor = RichTextEditor(features=[
+            TableFeature,
+            ImageInsertFeature,
+            ImageEditFeature,
+            ListFeature,
+            SearchReplaceFeature,
+            ShapeFeature,
+            SpellFeature,
+            MathFeature,
+            MermaidFeature,
+            EtymologyFeature
+        ])
         self.editor.set_html(initial_html)
         layout.addWidget(self.editor)
 

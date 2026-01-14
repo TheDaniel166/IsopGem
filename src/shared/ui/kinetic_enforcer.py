@@ -4,6 +4,13 @@ This service acts as a global event filter that monitors all QPushButtons in the
 It applies the Visual Liturgy's Kinetic Aura (glow effect) automatically on hover,
 sparing the developer from manually inheriting custom classes.
 """
+"""
+SHARED JUSTIFICATION:
+- RATIONALE: Core Infrastructure (UI)
+- USED BY: Internal shared/ modules only (1 references)
+- CRITERION: 2 (Essential for app to function)
+"""
+
 
 from PyQt6.QtCore import QObject, QEvent, QPropertyAnimation, QEasingCurve
 from PyQt6.QtWidgets import QPushButton, QGraphicsDropShadowEffect, QApplication

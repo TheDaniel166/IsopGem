@@ -1,8 +1,21 @@
+"""
+⚠️  GRANDFATHERED VIOLATION - Pre-existing before Law of Substrate (2026-01-13)
+
+SHARED JUSTIFICATION:
+- RATIONALE: GRANDFATHERED - Needs manual review
+- USED BY: Document_manager, Tq (4 references)
+- CRITERION: Unknown - requires categorization
+
+This module violates the Law of the Substrate but is documented as pre-existing.
+Refactoring plan: See wiki/04_prophecies/shared_folder_audit_2026-01-13.md
+"""
+
 """Catalyst Button Styles — Visual Liturgy v2.2 §10.
 
 This module provides reusable button style functions for the five Catalyst archetypes.
 Import these in any UI file to maintain consistent styling across the Temple.
 """
+
 
 
 def get_seeker_style() -> str:

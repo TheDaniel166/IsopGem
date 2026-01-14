@@ -1,8 +1,21 @@
+"""
+⚠️  GRANDFATHERED VIOLATION - Pre-existing before Law of Substrate (2026-01-13)
+
+SHARED JUSTIFICATION:
+- RATIONALE: Domain Logic (GRANDFATHERED - pending refactor)
+- USED BY: Gematria (6 references)
+- CRITERION: Violation (Domain algorithms in shared)
+
+This module violates the Law of the Substrate but is documented as pre-existing.
+Refactoring plan: See wiki/04_prophecies/shared_folder_audit_2026-01-13.md
+"""
+
 """Language detection service for gematria calculations.
 
 Detects the primary language of text based on Unicode character ranges.
 Supports Hebrew, Greek, English, and other languages for appropriate cipher selection.
 """
+
 from typing import Dict, Optional, Counter
 from enum import Enum
 

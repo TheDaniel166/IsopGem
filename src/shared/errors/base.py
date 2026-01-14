@@ -3,6 +3,13 @@ Base error classes for Isopgem.
 
 Defines the fundamental error types and structures used throughout the application.
 """
+"""
+SHARED JUSTIFICATION:
+- RATIONALE: Core Infrastructure
+- USED BY: Astrology, Correspondences, Document_manager, Gematria, Geometry, Time_mechanics, Tq, Tq_lexicon (105 references)
+- CRITERION: 2 (Essential for app to function)
+"""
+
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Optional, Dict, Any

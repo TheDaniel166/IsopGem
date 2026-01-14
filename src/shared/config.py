@@ -1,4 +1,11 @@
 """
+SHARED JUSTIFICATION:
+- RATIONALE: Core Infrastructure
+- USED BY: Geometry, Tq (10 references)
+- CRITERION: 2 (Essential for app to function)
+"""
+
+"""
 Centralized configuration for Isopgem.
 
 This module provides a single source of truth for:

@@ -1,7 +1,20 @@
 """
+⚠️  GRANDFATHERED VIOLATION - Pre-existing before Law of Substrate (2026-01-13)
+
+SHARED JUSTIFICATION:
+- RATIONALE: UI Component (GRANDFATHERED - should move to pillars/document_manager)
+- USED BY: Internal shared/ modules only (1 references)
+- CRITERION: Violation (Single-pillar UI component)
+
+This module violates the Law of the Substrate but is documented as pre-existing.
+Refactoring plan: See wiki/04_prophecies/shared_folder_audit_2026-01-13.md
+"""
+
+"""
 Code Editor Widget with Line Numbers.
 A QPlainTextEdit subclass that displays line numbers in a sidebar.
 """
+
 from PyQt6.QtCore import Qt, QRect, QSize
 from PyQt6.QtGui import QColor, QPainter, QTextFormat, QFont, QPaintEvent, QResizeEvent
 from PyQt6.QtWidgets import QPlainTextEdit, QWidget, QTextEdit

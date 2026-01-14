@@ -1,3 +1,15 @@
+"""
+⚠️  GRANDFATHERED VIOLATION - Pre-existing before Law of Substrate (2026-01-13)
+
+SHARED JUSTIFICATION:
+- RATIONALE: Domain Logic (GRANDFATHERED - pending refactor)
+- USED BY: Gematria (4 references)
+- CRITERION: Violation (Domain algorithms in shared)
+
+This module violates the Law of the Substrate but is documented as pre-existing.
+Refactoring plan: See wiki/04_prophecies/shared_folder_audit_2026-01-13.md
+"""
+
 """Greek isopsephy calculator implementation."""
 from typing import Dict
 from .base_calculator import GematriaCalculator
@@ -5,6 +17,7 @@ from .base_calculator import GematriaCalculator
 
 class GreekGematriaCalculator(GematriaCalculator):
     """Calculator for Greek isopsephy (standard values).
+
     
     Also known as Isopsephy (ἰσοψηφία) - "equal counting"
     

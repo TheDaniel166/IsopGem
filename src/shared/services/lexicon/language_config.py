@@ -3,6 +3,13 @@ Language configuration for comprehensive lexicon support.
 
 Defines all supported languages with their properties for dynamic loading.
 """
+"""
+SHARED JUSTIFICATION:
+- RATIONALE: Core Infrastructure
+- USED BY: Internal shared/ modules only (1 references)
+- CRITERION: 2 (Essential for app to function)
+"""
+
 from typing import List, Dict, Optional
 from dataclasses import dataclass
 

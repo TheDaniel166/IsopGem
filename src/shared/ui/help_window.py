@@ -1,8 +1,21 @@
 """
+⚠️  GRANDFATHERED VIOLATION - Pre-existing before Law of Substrate (2026-01-13)
+
+SHARED JUSTIFICATION:
+- RATIONALE: GRANDFATHERED - Needs manual review
+- USED BY: Internal shared/ modules only (1 references)
+- CRITERION: Unknown - requires categorization
+
+This module violates the Law of the Substrate but is documented as pre-existing.
+Refactoring plan: See wiki/04_prophecies/shared_folder_audit_2026-01-13.md
+"""
+
+"""
 The Akaschic Archive (Help Window).
 
 A dual-pane documentation viewer resembling classic compiled help (.chm).
 """
+
 import logging
 from typing import Optional
 

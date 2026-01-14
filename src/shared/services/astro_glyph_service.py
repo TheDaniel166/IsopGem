@@ -1,9 +1,11 @@
+
 """Astrological Glyph Service - Centralized font-agnostic symbol provider.
 
 This service provides astrological glyphs (zodiac signs, planets, aspects)
 to the entire application without requiring callers to know which font is used.
 It auto-detects available fonts and provides appropriate character mappings.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass

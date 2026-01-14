@@ -3,6 +3,13 @@ Decorators for easy background task execution.
 
 Provides simple decorator-based API for running methods in background.
 """
+"""
+SHARED JUSTIFICATION:
+- RATIONALE: Core Infrastructure
+- USED BY: Internal shared/ modules only (1 references)
+- CRITERION: 2 (Essential for app to function)
+"""
+
 from typing import Callable, Optional, Any
 from functools import wraps
 import logging

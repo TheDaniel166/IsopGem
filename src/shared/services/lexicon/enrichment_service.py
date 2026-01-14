@@ -1,3 +1,16 @@
+"""
+⚠️  GRANDFATHERED VIOLATION - Pre-existing before Law of Substrate (2026-01-13)
+
+SHARED JUSTIFICATION:
+- RATIONALE: Domain Logic (GRANDFATHERED - should move to pillars/lexicon)
+- USED BY: Tq_lexicon (2 references)
+- CRITERION: Violation (Single-pillar domain logic)
+
+This module violates the Law of the Substrate but is documented as pre-existing.
+Refactoring plan: See wiki/04_prophecies/shared_folder_audit_2026-01-13.md
+"""
+
+
 from dataclasses import dataclass
 from typing import List, Callable, Optional
 import logging

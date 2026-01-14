@@ -20,7 +20,10 @@
 | **3** | [Law of the Seal](covenant/03_verification.md) | 7 Planets, Zodiac, Workflows |
 | **4-5** | [Purity & Resilience](covenant/04_purity_resilience.md) | View/Service, Contamination, Signals, Shield, **Configuration Sovereignty** |
 | **6** | [Harmonia Protocol](covenant/06_harmonia.md) | Purification Standards, Tools vs Architecture, Type Checking Philosophy |
-| **7-9** | [Maintenance](covenant/05_maintenance.md) | Scout Ritual, Visual Language, Git Conventions |
+| **7** | [Discipline of the Simulacrum](covenant/07_simulacrum.md) | The 12 Rules of Mocking, Boundaries, Fakes vs Mocks |
+| **8** | [Doctrine of Ports](covenant/08_doctrine_of_ports.md) | Injected Boundaries, Trinity of Determinism, Trinity of Boundaries |
+| **9** | [Law of the Substrate](covenant/09_law_of_substrate.md) | Admission Criteria, Dumping Ground Prevention, Quarterly Audit |
+| **10** | [Maintenance](covenant/05_maintenance.md) | Scout Ritual, Visual Language, Git Conventions |
 
 ---
 

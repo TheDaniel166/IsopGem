@@ -1,6 +1,16 @@
 """
 Centralized logging configuration for IsopGem.
 """
+"""
+SHARED JUSTIFICATION:
+- RATIONALE: Core Infrastructure (Planned for future implementation)
+- USED BY: Not yet implemented (reserved for future logging system)
+- CRITERION: 2 (Essential for app to function)
+
+NOTE: This module is not currently used but is reserved for implementing
+a centralized logging system. Keep for future development.
+"""
+
 import logging
 import logging.handlers
 import sys

@@ -3,6 +3,13 @@ Background worker implementation using QThreadPool.
 
 Provides thread-based background execution with progress tracking and cancellation.
 """
+"""
+SHARED JUSTIFICATION:
+- RATIONALE: Core Infrastructure
+- USED BY: Astrology, Document_manager (10 references)
+- CRITERION: 2 (Essential for app to function)
+"""
+
 from typing import Callable, Any, Optional, List
 from PyQt6.QtCore import QObject, QRunnable, QThreadPool, pyqtSignal, pyqtSlot
 import logging

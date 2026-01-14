@@ -1,7 +1,20 @@
 """
+⚠️  GRANDFATHERED VIOLATION - Pre-existing before Law of Substrate (2026-01-13)
+
+SHARED JUSTIFICATION:
+- RATIONALE: Contract (Document schemas) - GRANDFATHERED, may be infrastructure
+- USED BY: Document_manager, Gematria (7 references)
+- CRITERION: 4 (Shared data contract) OR 2 (if docs are global infrastructure)
+
+This module violates the Law of the Substrate but is documented as pre-existing.
+Refactoring plan: See wiki/04_prophecies/shared_folder_audit_2026-01-13.md
+"""
+
+"""
 Notebook Models - The Mindscape Structure.
 SQLAlchemy models for Notebooks and Sections, providing hierarchical document organization.
 """
+
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text
 from sqlalchemy.orm import relationship
 from shared.database import Base

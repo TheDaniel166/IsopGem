@@ -1,4 +1,11 @@
 """
+SHARED JUSTIFICATION:
+- RATIONALE: Core Infrastructure
+- USED BY: Internal shared/ modules only (3 references)
+- CRITERION: 2 (Essential for app to function)
+"""
+
+"""
 Error codes for Isopgem.
 
 Centralized error codes make it easy to:

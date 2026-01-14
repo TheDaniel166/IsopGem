@@ -1,9 +1,22 @@
 """
+⚠️  GRANDFATHERED VIOLATION - Pre-existing before Law of Substrate (2026-01-13)
+
+SHARED JUSTIFICATION:
+- RATIONALE: Contract (Data schemas) - GRANDFATHERED
+- USED BY: Time_mechanics (5 references)
+- CRITERION: 4 (Shared data contract) - needs verification
+
+This module violates the Law of the Substrate but is documented as pre-existing.
+Refactoring plan: See wiki/04_prophecies/shared_folder_audit_2026-01-13.md
+"""
+
+"""
 Thelemic Calendar Models - Data Transfer Objects for the Zodiacal Circle.
 
 These models represent the Conrune pairs from the Thelemic Calendar system,
 which maps 364 days to Ditrune/Contrune pairs with zodiacal positions.
 """
+
 from dataclasses import dataclass
 from typing import Optional
 

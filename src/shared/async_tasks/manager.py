@@ -7,6 +7,13 @@ Provides centralized management of all background tasks:
 - Monitor task status
 - Task queue management
 """
+"""
+SHARED JUSTIFICATION:
+- RATIONALE: Core Infrastructure
+- USED BY: Astrology, Document_manager, Gematria, Geometry, Time_mechanics, Tq_lexicon (64 references)
+- CRITERION: 2 (Essential for app to function)
+"""
+
 from typing import List, Dict, Optional
 from PyQt6.QtCore import QThreadPool, QObject, pyqtSignal
 import logging

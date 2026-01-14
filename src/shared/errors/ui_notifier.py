@@ -4,6 +4,13 @@ UI notification system for user-facing error messages.
 Provides toast notifications and error dialogs for the user.
 Integrates with PyQt6 for visual feedback.
 """
+"""
+SHARED JUSTIFICATION:
+- RATIONALE: Core Infrastructure
+- USED BY: Internal shared/ modules only (2 references)
+- CRITERION: 2 (Essential for app to function)
+"""
+
 from typing import Optional
 from PyQt6.QtWidgets import QMessageBox, QWidget
 from PyQt6.QtCore import QTimer

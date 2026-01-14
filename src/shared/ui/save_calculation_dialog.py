@@ -1,7 +1,20 @@
 """
+⚠️  GRANDFATHERED VIOLATION - Pre-existing before Law of Substrate (2026-01-13)
+
+SHARED JUSTIFICATION:
+- RATIONALE: GRANDFATHERED - Needs manual review
+- USED BY: Gematria (2 references)
+- CRITERION: Unknown - requires categorization
+
+This module violates the Law of the Substrate but is documented as pre-existing.
+Refactoring plan: See wiki/04_prophecies/shared_folder_audit_2026-01-13.md
+"""
+
+"""
 Reusable dialog for saving gematria calculations.
 Handles notes input, tags input, and saving to the calculation service.
 """
+
 from PyQt6.QtWidgets import QInputDialog, QLineEdit, QMessageBox, QWidget
 from typing import Optional, List, TYPE_CHECKING
 

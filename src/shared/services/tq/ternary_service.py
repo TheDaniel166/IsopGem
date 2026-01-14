@@ -1,7 +1,20 @@
+"""
+⚠️  GRANDFATHERED VIOLATION - Pre-existing before Law of Substrate (2026-01-13)
+
+SHARED JUSTIFICATION:
+- RATIONALE: Domain Logic (GRANDFATHERED - should move to pillars/tq)
+- USED BY: Adyton, Tq (14 references)
+- CRITERION: Violation (Single-pillar domain logic)
+
+This module violates the Law of the Substrate but is documented as pre-existing.
+Refactoring plan: See wiki/04_prophecies/shared_folder_audit_2026-01-13.md
+"""
+
 """Service for ternary conversions."""
 
 class TernaryService:
     """Service for handling decimal-ternary conversions."""
+
     
     @staticmethod
     def decimal_to_ternary(n: int) -> str:

@@ -1,3 +1,16 @@
+"""
+⚠️  GRANDFATHERED VIOLATION - Pre-existing before Law of Substrate (2026-01-13)
+
+SHARED JUSTIFICATION:
+- RATIONALE: GRANDFATHERED - Unclear if infrastructure or pillar
+- USED BY: Document_manager, Gematria, Tq_lexicon (9 references)
+- CRITERION: 2 (if global) OR Violation (if pillar-specific)
+
+This module violates the Law of the Substrate but is documented as pre-existing.
+Refactoring plan: See wiki/04_prophecies/shared_folder_audit_2026-01-13.md
+"""
+
+
 """Repository for Document model."""
 from sqlalchemy.orm import Session, defer, load_only
 from shared.models.document_manager.document import Document

@@ -1,3 +1,15 @@
+"""
+⚠️  GRANDFATHERED VIOLATION - Pre-existing before Law of Substrate (2026-01-13)
+
+SHARED JUSTIFICATION:
+- RATIONALE: GRANDFATHERED - Needs manual review
+- USED BY: Astrology, Tq (3 references)
+- CRITERION: Unknown - requires categorization
+
+This module violates the Law of the Substrate but is documented as pre-existing.
+Refactoring plan: See wiki/04_prophecies/shared_folder_audit_2026-01-13.md
+"""
+
 """Shared Substrate Widget to paint background textures."""
 from PyQt6.QtWidgets import QWidget
 from PyQt6.QtGui import QPainter, QColor, QPixmap
@@ -6,6 +18,7 @@ from shared.ui.theme import COLORS
 
 class SubstrateWidget(QWidget):
     """Widget that paints a background image scaled to fill the entire widget."""
+
     
     def __init__(self, image_path: str, parent=None):
         """

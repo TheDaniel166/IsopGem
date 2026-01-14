@@ -1,3 +1,10 @@
+"""
+SHARED JUSTIFICATION:
+- RATIONALE: Core Infrastructure
+- USED BY: Gematria (3 references)
+- CRITERION: 2 (Essential for app to function)
+"""
+
 import sqlite3
 import logging
 from pathlib import Path

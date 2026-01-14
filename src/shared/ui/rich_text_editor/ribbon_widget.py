@@ -1,7 +1,20 @@
 """
+⚠️  GRANDFATHERED VIOLATION - Pre-existing before Law of Substrate (2026-01-13)
+
+SHARED JUSTIFICATION:
+- RATIONALE: UI Component (GRANDFATHERED - should move to pillars/document_manager)
+- USED BY: Document_manager (3 references)
+- CRITERION: Violation (Single-pillar UI component)
+
+This module violates the Law of the Substrate but is documented as pre-existing.
+Refactoring plan: See wiki/04_prophecies/shared_folder_audit_2026-01-13.md
+"""
+
+"""
 Ribbon Widget - The Office-Style Toolbar.
 Wrapper around pyqtribbon providing unified ribbon navigation with tabs, groups, and galleries.
 """
+
 from PyQt6.QtWidgets import QWidget, QSizePolicy
 from PyQt6.QtGui import QAction, QIcon, QColor
 from PyQt6.QtCore import Qt, QSize

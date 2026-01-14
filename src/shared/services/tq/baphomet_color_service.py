@@ -1,7 +1,20 @@
 """
+⚠️  GRANDFATHERED VIOLATION - Pre-existing before Law of Substrate (2026-01-13)
+
+SHARED JUSTIFICATION:
+- RATIONALE: Domain Logic (GRANDFATHERED - should move to pillars/tq)
+- USED BY: Adyton, Tq (7 references)
+- CRITERION: Violation (Single-pillar domain logic)
+
+This module violates the Law of the Substrate but is documented as pre-existing.
+Refactoring plan: See wiki/04_prophecies/shared_folder_audit_2026-01-13.md
+"""
+
+"""
 Baphomet Color Service - The RGB Resolver.
 Implements the Kamea of Baphomet color physics by folding 6-digit ternary strings into RGB channels.
 """
+
 from PyQt6.QtGui import QColor
 
 class BaphometColorService:

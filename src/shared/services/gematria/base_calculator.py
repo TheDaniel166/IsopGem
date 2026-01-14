@@ -1,4 +1,11 @@
-"""Base class for gematria calculators following DRY principles."""
+"""
+SHARED JUSTIFICATION:
+- RATIONALE: Contract (Gematria calculator protocol)
+- USED BY: Gematria (15 references)
+- CRITERION: 4 (Shared data contract)
+
+Base class for gematria calculators following DRY principles.
+"""
 from abc import ABC, abstractmethod
 from typing import Dict, List, Tuple
 import unicodedata
@@ -6,6 +13,8 @@ import unicodedata
 
 class GematriaCalculator(ABC):
     """Abstract base class for all gematria calculation systems."""
+
+
     
     def __init__(self):
         """Initialize the calculator with its letter-value mapping."""

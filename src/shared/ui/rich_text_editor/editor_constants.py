@@ -1,8 +1,21 @@
 """
+⚠️  GRANDFATHERED VIOLATION - Pre-existing before Law of Substrate (2026-01-13)
+
+SHARED JUSTIFICATION:
+- RATIONALE: UI Component (GRANDFATHERED - should move to pillars/document_manager)
+- USED BY: Internal shared/ modules only (1 references)
+- CRITERION: Violation (Single-pillar UI component)
+
+This module violates the Law of the Substrate but is documented as pre-existing.
+Refactoring plan: See wiki/04_prophecies/shared_folder_audit_2026-01-13.md
+"""
+
+"""
 Editor constants and page settings for the Rich Text Editor.
 Centralizes configuration that was previously hardcoded.
 """
-from PyQt6.QtGui import QPageSize
+
+from PyQt6.QtGui import QPageSize, QTextListFormat
 
 
 class PageSettings:
@@ -85,3 +98,26 @@ DEFAULT_PAGE_SETTINGS = PageSettings("letter")
 PAGE_HEIGHT_LETTER = DEFAULT_PAGE_SETTINGS.content_height_pixels  # 864
 PAGE_HEIGHT_LEGAL = PageSettings("legal").content_height_pixels   # 1152
 PAGE_HEIGHT_A4 = PageSettings("a4").content_height_pixels         # 929
+
+
+# === List Style Constants ===
+# Used by the ribbon UI to build list style menus
+# The actual list feature logic remains in the ListFeature class
+
+LIST_STYLES = {
+    # Bullet styles
+    "Disc (●)": QTextListFormat.Style.ListDisc,
+    "Circle (○)": QTextListFormat.Style.ListCircle,
+    "Square (■)": QTextListFormat.Style.ListSquare,
+    # Number styles
+    "Decimal (1, 2, 3)": QTextListFormat.Style.ListDecimal,
+    "Lower Alpha (a, b, c)": QTextListFormat.Style.ListLowerAlpha,
+    "Upper Alpha (A, B, C)": QTextListFormat.Style.ListUpperAlpha,
+    "Lower Roman (i, ii, iii)": QTextListFormat.Style.ListLowerRoman,
+    "Upper Roman (I, II, III)": QTextListFormat.Style.ListUpperRoman,
+}
+
+# Quick access groups for ribbon menus
+BULLET_STYLES = ["Disc (●)", "Circle (○)", "Square (■)"]
+NUMBER_STYLES = ["Decimal (1, 2, 3)", "Lower Alpha (a, b, c)", "Upper Alpha (A, B, C)", 
+                 "Lower Roman (i, ii, iii)", "Upper Roman (I, II, III)"]

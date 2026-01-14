@@ -1,3 +1,15 @@
+"""
+⚠️  GRANDFATHERED VIOLATION - Pre-existing before Law of Substrate (2026-01-13)
+
+SHARED JUSTIFICATION:
+- RATIONALE: Domain Logic (GRANDFATHERED - pending refactor)
+- USED BY: Internal shared/ modules only (1 references)
+- CRITERION: Violation (Domain algorithms in shared)
+
+This module violates the Law of the Substrate but is documented as pre-existing.
+Refactoring plan: See wiki/04_prophecies/shared_folder_audit_2026-01-13.md
+"""
+
 """Sanskrit gematria calculator implementation (Katapayadi system)."""
 from typing import Dict, List, Tuple
 from .base_calculator import GematriaCalculator
@@ -5,6 +17,7 @@ from .base_calculator import GematriaCalculator
 
 class SanskritKatapayadiCalculator(GematriaCalculator):
     """Calculator for Sanskrit Katapayadi system.
+
     
     The Katapayadi system (कटपयादि) maps Sanskrit letters to digits,
     allowing numbers to be encoded as words or verses.

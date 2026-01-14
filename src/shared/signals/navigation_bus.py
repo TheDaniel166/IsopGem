@@ -1,3 +1,10 @@
+"""
+SHARED JUSTIFICATION:
+- RATIONALE: Core Infrastructure
+- USED BY: Adyton, Astrology, Gematria, Geometry, Time_mechanics, Tq, Tq_lexicon (24 references)
+- CRITERION: 2 (Essential for app to function)
+"""
+
 """Navigation Signal Bus for decoupled window launching.
 
 This module provides a centralized signal bus that allows any pillar to

@@ -1,8 +1,21 @@
 """
+⚠️  GRANDFATHERED VIOLATION - Pre-existing before Law of Substrate (2026-01-13)
+
+SHARED JUSTIFICATION:
+- RATIONALE: GRANDFATHERED - Unclear if infrastructure or pillar
+- USED BY: Document_manager (2 references)
+- CRITERION: 2 (if global) OR Violation (if pillar-specific)
+
+This module violates the Law of the Substrate but is documented as pre-existing.
+Refactoring plan: See wiki/04_prophecies/shared_folder_audit_2026-01-13.md
+"""
+
+"""
 Etymology Service for Document Manager Pillar.
 Handles looking up word origins using offline lexicons, etymology graph data,
 and limited online fallbacks when necessary.
 """
+
 import csv
 import gzip
 import html

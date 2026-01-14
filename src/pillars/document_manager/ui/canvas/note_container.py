@@ -122,7 +122,28 @@ class NoteContainerWidget(QWidget):
         
         # Content Editor (RichTextEditor headless)
         from pillars.document_manager.ui.rich_text_editor import RichTextEditor
-        self.rt_editor = RichTextEditor(show_ui=False)
+        from pillars.document_manager.ui.features.table_features import TableFeature
+        from pillars.document_manager.ui.features.image_features import ImageInsertFeature, ImageEditFeature
+        from pillars.document_manager.ui.features.list_features import ListFeature
+        from pillars.document_manager.ui.features.search_features import SearchReplaceFeature
+        from pillars.document_manager.ui.features.shape_features import ShapeFeature
+        from pillars.document_manager.ui.features.spell_feature import SpellFeature
+        from pillars.document_manager.ui.features.math_feature import MathFeature
+        from pillars.document_manager.ui.features.mermaid_feature import MermaidFeature
+        from pillars.document_manager.ui.features.etymology_feature import EtymologyFeature
+
+        self.rt_editor = RichTextEditor(show_ui=False, features=[
+            TableFeature,
+            ImageInsertFeature,
+            ImageEditFeature,
+            ListFeature,
+            SearchReplaceFeature,
+            ShapeFeature,
+            SpellFeature,
+            MathFeature,
+            MermaidFeature,
+            EtymologyFeature
+        ])
         self.editor = self.rt_editor.editor # Expose inner SafeTextEdit for direct access
         
         # Override styles for container look

@@ -1,8 +1,21 @@
+"""
+⚠️  GRANDFATHERED VIOLATION - Pre-existing before Law of Substrate (2026-01-13)
+
+SHARED JUSTIFICATION:
+- RATIONALE: Domain Logic (GRANDFATHERED - pending refactor)
+- USED BY: Gematria (2 references)
+- CRITERION: Violation (Domain algorithms in shared)
+
+This module violates the Law of the Substrate but is documented as pre-existing.
+Refactoring plan: See wiki/04_prophecies/shared_folder_audit_2026-01-13.md
+"""
+
 """Cipher preference manager for multi-language gematria calculations.
 
 Allows users to configure which cipher to use for each language.
 Preferences are persisted to user settings.
 """
+
 import json
 from pathlib import Path
 from typing import Dict, Optional, List

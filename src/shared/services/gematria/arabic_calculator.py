@@ -1,3 +1,15 @@
+"""
+⚠️  GRANDFATHERED VIOLATION - Pre-existing before Law of Substrate (2026-01-13)
+
+SHARED JUSTIFICATION:
+- RATIONALE: Domain Logic (GRANDFATHERED - pending refactor)
+- USED BY: Internal shared/ modules only (1 references)
+- CRITERION: Violation (Domain algorithms in shared)
+
+This module violates the Law of the Substrate but is documented as pre-existing.
+Refactoring plan: See wiki/04_prophecies/shared_folder_audit_2026-01-13.md
+"""
+
 """Arabic gematria calculator implementation (Abjad system)."""
 from typing import Dict
 from .base_calculator import GematriaCalculator
@@ -5,6 +17,7 @@ from .base_calculator import GematriaCalculator
 
 class ArabicGematriaCalculator(GematriaCalculator):
     """Calculator for Arabic gematria using the Abjad system.
+
     
     The Abjad system (أبجد) is the traditional Arabic numerology system,
     similar to Hebrew gematria. It assigns numerical values to the 28 letters

@@ -1,3 +1,10 @@
+"""
+SHARED JUSTIFICATION:
+- RATIONALE: Core Infrastructure
+- USED BY: Astrology, Correspondences, Document_manager, Gematria, Tq, Tq_lexicon (34 references)
+- CRITERION: 2 (Essential for app to function)
+"""
+
 """Shared database connection and session management."""
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base

@@ -1,5 +1,18 @@
+"""
+⚠️  GRANDFATHERED VIOLATION - Pre-existing before Law of Substrate (2026-01-13)
+
+SHARED JUSTIFICATION:
+- RATIONALE: Domain Logic (GRANDFATHERED - should move to pillars/geometry)
+- USED BY: Geometry (2 references)
+- CRITERION: Violation (Single-pillar domain logic)
+
+This module violates the Law of the Substrate but is documented as pre-existing.
+Refactoring plan: See wiki/04_prophecies/shared_folder_audit_2026-01-13.md
+"""
+
 """Canonical Archimedean solid datasets auto-generated from dmccooey.com.
 Do not edit by hand; run scripts/generate_archimedean_data.py instead."""
+
 ARCHIMEDEAN_DATA = {
     'cuboctahedron': {
         'name': 'Cuboctahedron',

@@ -1,3 +1,15 @@
+"""
+⚠️  GRANDFATHERED VIOLATION - Pre-existing before Law of Substrate (2026-01-13)
+
+SHARED JUSTIFICATION:
+- RATIONALE: Contract (Data schemas) - GRANDFATHERED
+- USED BY: Astrology (2 references)
+- CRITERION: 4 (Shared data contract) - needs verification
+
+This module violates the Law of the Substrate but is documented as pre-existing.
+Refactoring plan: See wiki/04_prophecies/shared_folder_audit_2026-01-13.md
+"""
+
 """Shared geographic location model."""
 from dataclasses import dataclass
 from typing import Optional
@@ -5,6 +17,7 @@ from typing import Optional
 @dataclass(slots=True)
 class GeoLocation:
     """Geographic location data.
+
 
     Attributes:
         name: Human readable label for the location (city, coordinates, etc.)

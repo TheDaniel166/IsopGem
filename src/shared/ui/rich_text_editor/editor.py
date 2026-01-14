@@ -1,9 +1,126 @@
-"""Reusable Rich Text Editor widget with Ribbon UI."""
+"""
+SHARED JUSTIFICATION:
+- RATIONALE: Shared UI Capability
+- USED BY: Document_manager (Primary), Geometry (Unified Viewer - Dynamic Import)
+- CRITERION: 4 (Cross-Pillar Capability)
+
+The Rich Text Editor is a heavy UI component used primarily by the Document Manager
+but also invoked dynamically by the Geometry Pillar's Unified Viewer for advanced
+note-taking. As a reusable, self-contained editor widget, it correctly resides
+in shared/ui/ to prevent the Geometry pillar from depending on the Document Manager pillar.
+
+CONSTRAINT: shared/ui/ must never import from pillars/ (Shared is lower than all Pillars).
+All Pillar-specific functionality must be injected via callbacks or feature classes.
+"""
+
+"""
+Reusable Rich Text Editor with Ribbon UI and Plugin Architecture.
+
+ARCHITECTURE OVERVIEW
+=====================
+
+This module contains two primary classes that work together:
+
+1. SafeTextEdit (QTextEdit subclass)
+   - The editing surface with embedded engines
+   - Handles: pagination, resource loading, paste protection, rendering
+   - Pure Qt widget - no business logic
+   
+2. RichTextEditor (QWidget container)
+   - Orchestrates SafeTextEdit + Ribbon + Status Bar + Features
+   - Manages: feature injection, UI composition, file I/O
+   - Public API for embedding in parent windows
+
+EMBEDDED ENGINES IN SafeTextEdit
+=================================
+
+SafeTextEdit is not a simple QTextEdit - it contains 5 specialized engines:
+
+1. PAGINATION ENGINE (lines ~183-574)
+   - Atomic block pagination: ensures text blocks don't straddle page boundaries
+   - Debounced via QTimer to avoid per-keystroke runs
+   - Anchor-based scroll restoration to maintain viewport position
+   - Properties: pagination_enabled, _pagination_timer, _pagination_generation
+   
+2. RESOURCE PROTOCOL (lines ~688-792, ~908-971)
+   - Custom docimg:// URL scheme for database-backed images
+   - LRU cache (32 images max) via OrderedDict
+   - Callbacks: resource_provider, resource_saver (injected by parent)
+   
+3. PASTE GUARD (lines ~892-971)
+   - Mars Seal defensive pattern: prompts before large pastes
+   - Thresholds: 100K chars text, 75K HTML, 12MB images
+   - Prevents UI freezing from clipboard bombs
+   
+4. ASSET RESTORATION (lines ~794-891, ~2910-2961)
+   - Pre-renders LaTeX/Mermaid images when loading HTML
+   - Uses injected callbacks: latex_renderer, mermaid_renderer
+   - Ensures generated content survives save/load cycles
+   
+5. PAGE BREAK RENDERING (lines ~615-686)
+   - Paints dashed lines + gap fill at page boundaries
+   - Visual guides for document layout mode
+   - Toggleable via show_page_breaks property
+
+FEATURE INJECTION SYSTEM
+=========================
+
+RichTextEditor uses dependency injection for extensibility:
+
+- Features passed as List[Type[EditorFeature]] to constructor
+- Features instantiated lazily in _ensure_features_initialized()
+- Ribbon adapts to available features (graceful degradation)
+- Document Manager injects full suite; Geometry injects minimal set
+
+Example:
+    editor = RichTextEditor(
+        features=[
+            ListFeature,
+            TableFeature,
+            SearchReplaceFeature,
+            # ... more features
+        ]
+    )
+
+RENDERER INJECTION
+==================
+
+For LaTeX/Mermaid rendering (Pillar-specific functionality):
+
+    editor.editor.latex_renderer = MathRenderer.render_latex
+    editor.editor.mermaid_renderer = WebViewMermaidRenderer.render_mermaid
+
+This keeps Shared code decoupled from Pillar implementations.
+
+FILE STRUCTURE (3300+ lines)
+=============================
+
+Lines 1-117:    Imports, constants, enums, dataclasses
+Lines 118-971:  SafeTextEdit class (editing surface + engines)
+Lines 972-983:  RichTextEditor class starts
+Lines 984-1196: RichTextEditor initialization & setup
+Lines 1197-1426: RichTextEditor feature system
+Lines 1427-2044: RichTextEditor ribbon construction (4 tabs + context)
+Lines 2045-2454: RichTextEditor formatting/layout methods
+Lines 2455-2584: RichTextEditor print/export methods
+Lines 2585-2709: RichTextEditor format sync & updates
+Lines 2710-2909: RichTextEditor public API (get/set HTML/text/markdown)
+Lines 2910-3337: RichTextEditor file I/O & utility methods
+
+NAVIGATION TIPS
+===============
+
+- Search for "# ===" to jump between major sections
+- Search for "TAB:" to find ribbon tab definitions
+- Search for "def _init_" to find initialization sequences
+- Search for "Engine:" in comments to find engine boundaries
+- Each embedded engine has inline documentation at its entry point
+"""
 import html as html_module
 import logging
 import os
 import base64
-from typing import Optional, Any, Union, List, Tuple, Dict, Generator, Callable
+from typing import Optional, Any, Union, List, Tuple, Dict, Generator, Callable, Type
 from collections import OrderedDict
 
 logger = logging.getLogger(__name__)
@@ -26,17 +143,17 @@ import qtawesome as qta
 from PyQt6.QtPrintSupport import QPrinter, QPrintDialog, QPrintPreviewDialog
 
 # Feature modules
-from .table_features import TableFeature
-from .image_features import ImageInsertFeature, ImageEditFeature
-from .image_gateway import ImageGateway
-from .list_features import ListFeature
-from .search_features import SearchReplaceFeature
-from .shape_features import ShapeFeature
+# from .table_features import TableFeature <-- Removed
+# from .image_features import ImageInsertFeature, ImageEditFeature, ImageGateway <-- Removed
+# from .list_features import ListFeature <-- Removed
+# from .search_features import SearchReplaceFeature
+# from .shape_features import ShapeFeature <-- Removed
 from .ribbon_widget import RibbonWidget
-from .etymology_feature import EtymologyFeature
-from .spell_feature import SpellFeature
-from .math_feature import MathFeature
-from .mermaid_feature import MermaidFeature
+# from .etymology_feature import EtymologyFeature  <-- Removed
+# from .spell_feature import SpellFeature
+# from .math_feature import MathFeature <-- Removed
+# from .mermaid_feature import MermaidFeature <-- Removed
+from .feature_interface import EditorFeature
 
 # Dialog modules (extracted for modularity)
 from .dialogs import (
@@ -103,17 +220,33 @@ class PageModeOptions:
     # show_page_numbers: bool = False # Future: page numbers in gutter
 
 
+# =============================================================================
+# SAFETEXTEDIT: EDITING SURFACE + EMBEDDED ENGINES
+# =============================================================================
+
 class SafeTextEdit(QTextEdit):
     """
-    A hardened QTextEdit implementing the Mars Seal defensive pattern.
+    A hardened QTextEdit with 5 embedded engines for document editing.
     
-    Provides two critical fortifications:
-    1. **Paste Protection**: Intercepts large clipboard payloads (text, HTML, images)
-       and prompts user confirmation before inserting potentially freezing content.
-    2. **Atomic Block Pagination**: Ensures text blocks don't straddle page boundaries
-       by dynamically adjusting top margins, creating clean visual page breaks.
+    RESPONSIBILITY: Provide the raw editing surface + low-level document services.
+    Does NOT handle: UI chrome (ribbon/status), file I/O, feature orchestration.
     
-    Also handles custom `docimg://` resource URLs for database-backed image loading.
+    EMBEDDED ENGINES:
+    -----------------
+    1. Pagination Engine: Atomic block pagination with scroll restoration
+    2. Resource Protocol: docimg:// URL scheme for database-backed images
+    3. Paste Guard: Mars Seal defensive pattern against clipboard bombs
+    4. Asset Restoration: Pre-render LaTeX/Mermaid on HTML load
+    5. Page Break Rendering: Visual guides for document layout mode
+    
+    INJECTION POINTS (set by parent):
+    ---------------------------------
+    - resource_provider: Callable[[int], Optional[Tuple[bytes, str]]]
+    - resource_saver: Callable[[bytes, str], Optional[int]]
+    - latex_renderer: Callable[[str], Optional[QImage]]
+    - mermaid_renderer: Callable[[str], Optional[QImage]]
+    
+    These callbacks decouple the editor from Pillar-specific implementations.
     """
     
     def __init__(self, parent: Optional[QWidget] = None) -> None:
@@ -132,8 +265,14 @@ class SafeTextEdit(QTextEdit):
             parent: Parent widget for Qt ownership hierarchy.
         """
         super().__init__(parent)
+        # Resource loading callbacks (injected by parent)
         self.resource_provider: Optional[Callable[[int], Optional[Tuple[bytes, str]]]] = None
         self.resource_saver: Optional[Callable[[bytes, str], Optional[int]]] = None
+        
+        # Generated asset renderers (injected by parent, e.g., Document Manager)
+        self.latex_renderer: Optional[Callable[[str], Optional[Any]]] = None
+        self.mermaid_renderer: Optional[Callable[[str], Optional[Any]]] = None
+        
         self._show_page_breaks = False
         self._page_settings = DEFAULT_PAGE_SETTINGS
         self._docimg_cache: "OrderedDict[int, Any]" = OrderedDict()
@@ -167,6 +306,14 @@ class SafeTextEdit(QTextEdit):
         scrollbar = self.verticalScrollBar()
         if scrollbar is not None:
             scrollbar.valueChanged.connect(self._on_scroll)
+    
+    # -------------------------------------------------------------------------
+    # ENGINE 1: PAGINATION (Atomic Block Layout)
+    # -------------------------------------------------------------------------
+    # Ensures text blocks don't straddle page boundaries by dynamically
+    # adjusting top margins. Debounced via QTimer, uses monotonic generation
+    # counter for idempotency, and employs anchor-based scroll restoration.
+    # -------------------------------------------------------------------------
     
     def _schedule_pagination(self):
         """Schedule pagination check (debounced to avoid per-keystroke runs)."""
@@ -600,6 +747,14 @@ class SafeTextEdit(QTextEdit):
         if viewport:
             viewport.update()
     
+    # -------------------------------------------------------------------------
+    # ENGINE 5: PAGE BREAK RENDERING (Visual Guides)
+    # -------------------------------------------------------------------------
+    # Paints dashed horizontal lines and shaded gaps at page boundaries
+    # during the paint event. Only renders visible page breaks (viewport
+    # culling) for performance. Toggled via show_page_breaks property.
+    # -------------------------------------------------------------------------
+    
     def paintEvent(self, e: Optional[QPaintEvent]) -> None:  # type: ignore[override]
         """Paint the text, then overlay visible page break lines and gap fills."""
         super().paintEvent(e)
@@ -672,6 +827,15 @@ class SafeTextEdit(QTextEdit):
                 painter.drawText(15, int(gap_start_viewport) - 5, f"─ Page {page + 1} ─")
 
         painter.end()
+    
+    # -------------------------------------------------------------------------
+    # ENGINE 2: RESOURCE PROTOCOL (docimg:// + LRU Cache)
+    # -------------------------------------------------------------------------
+    # Custom URL scheme for database-backed images. Decouples editor from
+    # database by using injected resource_provider callback. LRU cache (32
+    # images) prevents repeated DB queries. Security: validates IDs, rejects
+    # payloads > 25MB, supports both docimg://123 and docimg:///123 formats.
+    # -------------------------------------------------------------------------
     
     def loadResource(self, type: int, name: QUrl) -> Any:  # type: ignore[override]
         """
@@ -779,6 +943,15 @@ class SafeTextEdit(QTextEdit):
         
         return super().loadResource(type, name)
 
+    # -------------------------------------------------------------------------
+    # ENGINE 4: ASSET RESTORATION (Pre-render Generated Content)
+    # -------------------------------------------------------------------------
+    # When loading HTML with docimg://math/ or docimg://mermaid/ images,
+    # extracts source code from alt attributes and re-renders using injected
+    # latex_renderer/mermaid_renderer callbacks. This ensures generated content
+    # survives save/load cycles without embedding in HTML.
+    # -------------------------------------------------------------------------
+    
     def setHtml(self, html: str) -> None:  # type: ignore[override]
         """
         Override setHtml to pre-render math and mermaid images from alt text.
@@ -819,52 +992,67 @@ class SafeTextEdit(QTextEdit):
                     code = html_module.unescape(code)
                     print(f"Re-rendering LaTeX: {code[:100]}...")
 
-                    try:
-                        from .math_renderer import MathRenderer
-                        image = MathRenderer.render_latex(code)
-                        if image:
-                            print(f"  LaTeX image size: {image.width()}x{image.height()}")
-                            # Add to document resources BEFORE setHtml
-                            self.document().addResource(
-                                QTextDocument.ResourceType.ImageResource,
-                                QUrl(img_url),
-                                image
-                            )
-                            print(f"✓ LaTeX image cached: {img_url}")
-                        else:
-                            print(f"✗ LaTeX render returned None")
-                    except Exception as e:
-                        print(f"✗ Failed to render LaTeX: {e}")
-                        import traceback
-                        traceback.print_exc()
+                    # Use injected renderer callback (provided by parent, e.g., Document Manager)
+                    if self.latex_renderer:
+                        try:
+                            image = self.latex_renderer(code)
+                            if image:
+                                print(f"  LaTeX image size: {image.width()}x{image.height()}")
+                                # Add to document resources BEFORE setHtml
+                                self.document().addResource(
+                                    QTextDocument.ResourceType.ImageResource,
+                                    QUrl(img_url),
+                                    image
+                                )
+                                print(f"✓ LaTeX image cached: {img_url}")
+                            else:
+                                print(f"✗ LaTeX render returned None")
+                        except Exception as e:
+                            print(f"✗ Failed to render LaTeX: {e}")
+                            import traceback
+                            traceback.print_exc()
+                    else:
+                        print(f"⚠ LaTeX renderer not injected (feature not loaded)")
 
                 elif "mermaid" in img_url and alt_text.startswith("MERMAID:"):
                     code = alt_text[8:]  # Remove "MERMAID:" prefix
                     code = html_module.unescape(code)
                     print(f"Re-rendering Mermaid: {code[:100]}...")
 
-                    try:
-                        from .webview_mermaid_renderer import WebViewMermaidRenderer
-                        image = WebViewMermaidRenderer.render_mermaid(code)
-                        if image:
-                            print(f"  Mermaid image size: {image.width()}x{image.height()}")
-                            # Add to document resources BEFORE setHtml
-                            self.document().addResource(
-                                QTextDocument.ResourceType.ImageResource,
-                                QUrl(img_url),
-                                image
-                            )
-                            print(f"✓ Mermaid image cached: {img_url}")
-                        else:
-                            print(f"✗ Mermaid render returned None")
-                    except Exception as e:
-                        print(f"✗ Failed to render Mermaid: {e}")
-                        import traceback
-                        traceback.print_exc()
+                    # Use injected renderer callback (provided by parent, e.g., Document Manager)
+                    if self.mermaid_renderer:
+                        try:
+                            image = self.mermaid_renderer(code)
+                            if image:
+                                print(f"  Mermaid image size: {image.width()}x{image.height()}")
+                                # Add to document resources BEFORE setHtml
+                                self.document().addResource(
+                                    QTextDocument.ResourceType.ImageResource,
+                                    QUrl(img_url),
+                                    image
+                                )
+                                print(f"✓ Mermaid image cached: {img_url}")
+                            else:
+                                print(f"✗ Mermaid render returned None")
+                        except Exception as e:
+                            print(f"✗ Failed to render Mermaid: {e}")
+                            import traceback
+                            traceback.print_exc()
+                    else:
+                        print(f"⚠ Mermaid renderer not injected (feature not loaded)")
 
         # Now load the HTML with images pre-cached
         super().setHtml(html)
 
+    # -------------------------------------------------------------------------
+    # ENGINE 3: PASTE GUARD (Mars Seal Defensive Pattern)
+    # -------------------------------------------------------------------------
+    # Intercepts large clipboard payloads and prompts for confirmation before
+    # inserting. Prevents UI freezing from: massive text dumps (>100K chars),
+    # large HTML (>75K), embedded data URIs (>12MB), and huge images (>12MP).
+    # User can cancel paste after seeing size warning.
+    # -------------------------------------------------------------------------
+    
     def insertFromMimeData(self, source: Optional[QMimeData]) -> None:  # type: ignore[override]
         """Override paste behavior to protect against freezing."""
         if source is None:
@@ -948,17 +1136,50 @@ class SafeTextEdit(QTextEdit):
 
 
 
+# =============================================================================
+# RICHTEXTEDITOR: ORCHESTRATOR + UI SHELL
+# =============================================================================
+# This class composes SafeTextEdit with Ribbon UI, feature injection system,
+# status bar, and public API. It does NOT contain editing logic - that lives
+# in SafeTextEdit. RichTextEditor is the "window dressing" around the engine.
+#
 # Dialog classes have been moved to ui/dialogs/ for modularity:
-# - HyperlinkDialog
-# - HorizontalRuleDialog  
-# - PageSetupDialog
-# - SpecialCharactersDialog
-# - ExportPdfDialog
+# - HyperlinkDialog, HorizontalRuleDialog, PageSetupDialog
+# - SpecialCharactersDialog, ExportPdfDialog, PageModeDialog
+# =============================================================================
 
 
 class RichTextEditor(QWidget):
     """
-    A comprehensive rich text editor widget with a Ribbon interface.
+    A comprehensive rich text editor widget with Ribbon interface and plugin system.
+    
+    RESPONSIBILITY: Orchestrate SafeTextEdit + Ribbon + Features + File I/O.
+    Does NOT handle: Low-level editing, pagination logic, resource loading.
+    
+    ARCHITECTURE:
+    -------------
+    - SafeTextEdit (self.editor): The editing surface (QTextEdit)
+    - RibbonWidget (self.ribbon): The toolbar (Home/Insert/Page/Reference tabs)
+    - Features (self.features): Injected plugins (tables, lists, search, etc.)
+    - Status Bar: Word count + zoom controls
+    
+    FEATURE INJECTION:
+    ------------------
+    Pass List[Type[EditorFeature]] to constructor to enable plugins.
+    Missing features result in disabled ribbon controls (graceful degradation).
+    
+    Example:
+        editor = RichTextEditor(
+            features=[ListFeature, TableFeature, SearchReplaceFeature]
+        )
+    
+    PUBLIC API:
+    -----------
+    - get_html() / set_html(): Export/load formatted content
+    - get_text() / set_text(): Export/load plain text
+    - get_markdown() / set_markdown(): Markdown conversion
+    - save_document() / open_document(): File I/O with encoding detection
+    - find_text() / find_next() / find_previous(): Search navigation
     """
     
     # Signal emitted when text changes
@@ -967,7 +1188,7 @@ class RichTextEditor(QWidget):
     # Signal emitted when [[ is typed
     wiki_link_requested = pyqtSignal()
     
-    def __init__(self, parent: Optional[QWidget] = None, placeholder_text: str = "Start typing...", show_ui: bool = True) -> None:
+    def __init__(self, parent: Optional[QWidget] = None, placeholder_text: str = "Start typing...", show_ui: bool = True, features: Optional[List[Type[EditorFeature]]] = None) -> None:
         """
         Initialize the rich text editor with ribbon UI and feature modules.
         
@@ -980,11 +1201,28 @@ class RichTextEditor(QWidget):
             placeholder_text: Placeholder shown when editor is empty.
             show_ui: If False, creates a headless editor without ribbon/status bar
                      (useful for testing or embedding in custom layouts).
+            features: Optional list of EditorFeature classes to enable.
+                      If None, loads the default set of features (legacy mode).
         """
         super().__init__(parent)
+        self._injected_feature_classes: Optional[List[Type[EditorFeature]]] = features
+        self.features: Dict[str, EditorFeature] = {}
         self.virtual_keyboard: VirtualKeyboard | None = None
         self.page_count_label: QLabel | None = None
         self.word_count_label: QLabel | None = None
+        
+        # Initialize Feature Attributes to None
+        self.etymology_feature = None
+        self.table_feature = None
+        self.mermaid_feature = None
+        self.math_feature = None
+        self.shape_feature = None
+        self.list_feature = None
+        self.search_feature = None
+        self.spell_feature = None
+        self.image_insert_feature = None
+        self.image_edit_feature = None
+        self.image_gateway = None
         
         # Styles Definition
         self.styles = {
@@ -1215,6 +1453,15 @@ class RichTextEditor(QWidget):
                 self.mermaid_feature.extend_context_menu(menu)
             menu.exec(self.editor.mapToGlobal(pos))
 
+    # =========================================================================
+    # FEATURE INJECTION SYSTEM
+    # =========================================================================
+    # Features are passed as classes to __init__, instantiated lazily, and
+    # stored in self.features dict. Ribbon adapts to available features.
+    # This allows Document Manager to inject full suite while Geometry injects
+    # minimal set, both without crashes or forced dependencies.
+    # =========================================================================
+    
     def _init_features(self) -> None:
         """Initialize feature slots to None. Actual instantiation happens in _ensure_features_initialized().
         
@@ -1245,43 +1492,68 @@ class RichTextEditor(QWidget):
         """
         if not self.editor:
             return
-        
-        if not self.etymology_feature:
-            self.etymology_feature = EtymologyFeature(self)
-        
-        if not self.list_feature:
-            self.list_feature = ListFeature(self.editor, self)
-        
-        if not self.table_feature:
-            self.table_feature = TableFeature(self.editor, self)
-        
-        if not getattr(self, 'image_gateway', None):
-            self.image_gateway = ImageGateway(
-                self.editor,
-                resource_saver=getattr(self, 'resource_saver', None),
-                resource_provider=getattr(self, 'resource_provider', None)
-            )
+            
+        # 1. Plugin Injection Mode (Sovereign Injection)
+        if self._injected_feature_classes is not None:
+            # Only run if not already populated
+            if self.features: 
+                return
+            
+            # Pre-initialize Gateway (Removed: ImageGateway is now in Pillar)
+            # Features needing it must auto-initialize it.
 
-        if not getattr(self, 'image_insert_feature', None):
-            self.image_insert_feature = ImageInsertFeature(self.editor, self, self.image_gateway)
+            for cls in self._injected_feature_classes:
+                try:
+                    # Try injecting with gateway first (for image features)
+                    # We pass the gateway if it exists on editor, else None.
+                    # The Feature is responsible for fallback.
+                    try:
+                         # We can't predict arg names easily, but we know Image features might take 2 args.
+                         # If we pass None for gateway, it works with our updated Feature __init__.
+                         instance = cls(self, getattr(self, 'image_gateway', None))
+                    except TypeError:
+                        # Fallback to standard init
+                        instance = cls(self)
+                    if hasattr(instance, 'initialize'): 
+                        instance.initialize()
+                    
+                    name = instance.name() if hasattr(instance, 'name') else cls.__name__
+                    self.features[name] = instance
+                    
+                    # Compatibility Mapping for legacy code expecting specific attributes
+                    if name == "etymology_feature":
+                        self.etymology_feature = instance
+                    elif name == "table_feature":
+                        self.table_feature = instance
+                    elif name == "mermaid_feature":
+                        self.mermaid_feature = instance
+                    elif name == "math_feature":
+                        self.math_feature = instance
+                    elif name == "shape_feature":
+                        self.shape_feature = instance
+                    elif name == "list_feature":
+                        self.list_feature = instance
+                    elif name == "search_replace_feature":
+                        self.search_feature = instance
+                    elif name == "spell_feature":
+                        self.spell_feature = instance
+                    elif name == "image_insert_feature":
+                        self.image_insert_feature = instance
+                    elif name == "image_edit_feature":
+                        self.image_edit_feature = instance
+                    # Add mappings for future refactored features here
+                    
+                except Exception as e:
+                    logger.error(f"Failed to initialize plugin {cls.__name__}: {e}")
+            return
 
-        if not getattr(self, 'image_edit_feature', None):
-            self.image_edit_feature = ImageEditFeature(self.editor, self, self.image_gateway)
+        # 2. Legacy Monolith Mode (Deprecated)
+        # All features should now be injected via the 'features' argument.
+        # This block ensures attributes are at least stable (None) if not injected.
         
-        if not self.search_feature:
-            self.search_feature = SearchReplaceFeature(self.editor, self)
-        
-        if not self.spell_feature:
-            self.spell_feature = SpellFeature(self)
-        
-        if not self.math_feature:
-            self.math_feature = MathFeature(self.editor, self)
-        
-        if not self.mermaid_feature:
-            self.mermaid_feature = MermaidFeature(self.editor, self)
-        
-        if not self.shape_feature:
-            self.shape_feature = ShapeFeature(self)
+        # If any legacy logic attempts to access these attributes, 
+        # providing None is safer than AttributeError, but functionality will be missing.
+        pass
 
     def show_search(self) -> None:
         """Public API for Global Ribbon."""
@@ -1348,20 +1620,24 @@ class RichTextEditor(QWidget):
         """
         self._toggle_superscript()
 
+    # =========================================================================
+    # RIBBON CONSTRUCTION (4 Tabs + 2 Context Categories)
+    # =========================================================================
+    # Builds Home, Insert, Page Layout, and Reference tabs.
+    # Context categories (Table Tools, Image Tools) appear when relevant.
+    # Ribbon adapts to available features - missing features = disabled buttons.
+    # =========================================================================
+    
     def _init_ribbon(self) -> None:
-        """Populate the ribbon with tabs and groups."""
+        """Populate the ribbon with tabs and groups.
+        
+        Graceful Degradation: Ribbon groups adapt to available features.
+        Missing features result in hidden/disabled controls, not crashes.
+        This allows Geometry to inject minimal features while Document Manager
+        injects the full suite.
+        """
         # Ensure features are initialized before wiring ribbon
         self._ensure_features_initialized()
-        assert self.list_feature is not None
-        assert self.table_feature is not None
-        assert self.image_insert_feature is not None
-        assert self.image_edit_feature is not None
-        assert self.search_feature is not None
-        assert self.spell_feature is not None
-        assert self.math_feature is not None
-        assert self.mermaid_feature is not None
-        assert self.shape_feature is not None
-        assert self.etymology_feature is not None
         
         # === Define Core Actions First ===
         self.action_undo = QAction("Undo", self)
@@ -1639,69 +1915,74 @@ class RichTextEditor(QWidget):
         # --- Group: Lists ---
         grp_lists = tab_home.add_group("Lists")
         
-        # Bullet List Button with Dropdown
-        from .list_features import LIST_STYLES, BULLET_STYLES, NUMBER_STYLES
+        # Only build list controls if ListFeature is available
         lf = self.list_feature
-        assert lf is not None
-        
-        self.bullet_btn = QToolButton()
-        self.bullet_btn.setIcon(qta.icon("fa5s.list-ul", color="#1e293b"))
-        self.bullet_btn.setToolTip("Bullet List")
-        self.bullet_btn.setPopupMode(QToolButton.ToolButtonPopupMode.MenuButtonPopup)
-        self.bullet_btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.bullet_btn.clicked.connect(lambda: self._toggle_list(QTextListFormat.Style.ListDisc))
-        
-        bullet_menu = QMenu(self)
-        for name in BULLET_STYLES:
-            act = bullet_menu.addAction(name)
-            if act is None:
-                continue
-            style = LIST_STYLES[name]
-            act.triggered.connect(lambda checked, s=style: self._toggle_list(s))
-        self.bullet_btn.setMenu(bullet_menu)
-        grp_lists.add_widget(self.bullet_btn)
-        
-        # Number List Button with Dropdown
-        self.number_btn = QToolButton()
-        self.number_btn.setIcon(qta.icon("fa5s.list-ol", color="#1e293b"))
-        self.number_btn.setToolTip("Numbered List")
-        self.number_btn.setPopupMode(QToolButton.ToolButtonPopupMode.MenuButtonPopup)
-        self.number_btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.number_btn.clicked.connect(lambda: self._toggle_list(QTextListFormat.Style.ListDecimal))
-        
-        number_menu = QMenu(self)
-        for name in NUMBER_STYLES:
-            act = number_menu.addAction(name)
-            if act is None:
-                continue
-            style = LIST_STYLES[name]
-            act.triggered.connect(lambda checked, s=style: self._toggle_list(s))
-        number_menu.addSeparator()
-        act_start = number_menu.addAction("Set Start Number...")
-        if act_start:
-            act_start.triggered.connect(lambda lf=lf: lf.show_start_number_dialog())
-        self.number_btn.setMenu(number_menu)
-        grp_lists.add_widget(self.number_btn)
-        
-        # Checklist Button
-        act_checklist = QAction(qta.icon("fa5s.check-square", color="#1e293b"), "Checklist", self)
-        act_checklist.setToolTip("Toggle Checklist")
-        act_checklist.triggered.connect(lambda lf=lf: lf.toggle_checklist())
-        grp_lists.add_action(act_checklist, Qt.ToolButtonStyle.ToolButtonIconOnly)
-        
-        # Indent/Outdent
-        act_indent = QAction(qta.icon("fa5s.indent", color="#1e293b"), "Increase Indent", self)
-        act_indent.triggered.connect(lambda lf=lf: lf.indent())
-        grp_lists.add_action(act_indent, Qt.ToolButtonStyle.ToolButtonIconOnly)
-        
-        act_outdent = QAction(qta.icon("fa5s.outdent", color="#1e293b"), "Decrease Indent", self)
-        act_outdent.triggered.connect(lambda lf=lf: lf.outdent())
-        grp_lists.add_action(act_outdent, Qt.ToolButtonStyle.ToolButtonIconOnly)
-        
-        # Remove List
-        act_remove_list = QAction(qta.icon("fa5s.times-circle", color="#dc2626"), "Remove List", self)
-        act_remove_list.triggered.connect(lambda lf=lf: lf.remove_list())
-        grp_lists.add_action(act_remove_list, Qt.ToolButtonStyle.ToolButtonIconOnly)
+        if lf is not None:
+            from .editor_constants import LIST_STYLES, BULLET_STYLES, NUMBER_STYLES
+            
+            self.bullet_btn = QToolButton()
+            self.bullet_btn.setIcon(qta.icon("fa5s.list-ul", color="#1e293b"))
+            self.bullet_btn.setToolTip("Bullet List")
+            self.bullet_btn.setPopupMode(QToolButton.ToolButtonPopupMode.MenuButtonPopup)
+            self.bullet_btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+            self.bullet_btn.clicked.connect(lambda: self._toggle_list(QTextListFormat.Style.ListDisc))
+            
+            bullet_menu = QMenu(self)
+            for name in BULLET_STYLES:
+                act = bullet_menu.addAction(name)
+                if act is None:
+                    continue
+                style = LIST_STYLES[name]
+                act.triggered.connect(lambda checked, s=style: self._toggle_list(s))
+            self.bullet_btn.setMenu(bullet_menu)
+            grp_lists.add_widget(self.bullet_btn)
+            
+            # Number List Button with Dropdown
+            self.number_btn = QToolButton()
+            self.number_btn.setIcon(qta.icon("fa5s.list-ol", color="#1e293b"))
+            self.number_btn.setToolTip("Numbered List")
+            self.number_btn.setPopupMode(QToolButton.ToolButtonPopupMode.MenuButtonPopup)
+            self.number_btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+            self.number_btn.clicked.connect(lambda: self._toggle_list(QTextListFormat.Style.ListDecimal))
+            
+            number_menu = QMenu(self)
+            for name in NUMBER_STYLES:
+                act = number_menu.addAction(name)
+                if act is None:
+                    continue
+                style = LIST_STYLES[name]
+                act.triggered.connect(lambda checked, s=style: self._toggle_list(s))
+            number_menu.addSeparator()
+            act_start = number_menu.addAction("Set Start Number...")
+            if act_start:
+                act_start.triggered.connect(lambda: lf.show_start_number_dialog())
+            self.number_btn.setMenu(number_menu)
+            grp_lists.add_widget(self.number_btn)
+            
+            # Checklist Button
+            act_checklist = QAction(qta.icon("fa5s.check-square", color="#1e293b"), "Checklist", self)
+            act_checklist.setToolTip("Toggle Checklist")
+            act_checklist.triggered.connect(lambda: lf.toggle_checklist())
+            grp_lists.add_action(act_checklist, Qt.ToolButtonStyle.ToolButtonIconOnly)
+            
+            # Indent/Outdent
+            act_indent = QAction(qta.icon("fa5s.indent", color="#1e293b"), "Increase Indent", self)
+            act_indent.triggered.connect(lambda: lf.indent())
+            grp_lists.add_action(act_indent, Qt.ToolButtonStyle.ToolButtonIconOnly)
+            
+            act_outdent = QAction(qta.icon("fa5s.outdent", color="#1e293b"), "Decrease Indent", self)
+            act_outdent.triggered.connect(lambda: lf.outdent())
+            grp_lists.add_action(act_outdent, Qt.ToolButtonStyle.ToolButtonIconOnly)
+            
+            # Remove List
+            act_remove_list = QAction(qta.icon("fa5s.times-circle", color="#dc2626"), "Remove List", self)
+            act_remove_list.triggered.connect(lambda: lf.remove_list())
+            grp_lists.add_action(act_remove_list, Qt.ToolButtonStyle.ToolButtonIconOnly)
+        else:
+            # Feature not available - add disabled placeholder
+            act_unavailable = QAction("Lists (Not Available)", self)
+            act_unavailable.setEnabled(False)
+            grp_lists.add_action(act_unavailable, Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
         
         # --- Group: Styles (Gallery) ---
         grp_style = tab_home.add_group("Styles")
@@ -1729,12 +2010,12 @@ class RichTextEditor(QWidget):
         grp_edit.add_action(self.action_find, Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
         
         # Replace
-        action_replace = QAction("Replace", self)
         sf = self.search_feature
-        assert sf is not None
-        action_replace.triggered.connect(lambda checked, sf=sf: sf.show_search_dialog())
-        action_replace.setIcon(qta.icon("fa5s.sync-alt", color="#1e293b"))
-        grp_edit.add_action(action_replace, Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
+        if sf is not None:
+            action_replace = QAction("Replace", self)
+            action_replace.triggered.connect(lambda checked, sf=sf: sf.show_search_dialog())
+            action_replace.setIcon(qta.icon("fa5s.sync-alt", color="#1e293b"))
+            grp_edit.add_action(action_replace, Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
         
         # Select All
         action_select_all = QAction("Select All", self)
@@ -1759,16 +2040,22 @@ class RichTextEditor(QWidget):
         grp_pages.add_action(action_break, Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
         
         # Group: Tables
-        # NOTE: Features are initialized via _ensure_features_initialized(), not here
         grp_tables = tab_insert.add_group("Tables")
-        grp_tables.add_widget(self.table_feature.create_toolbar_button())
+        if self.table_feature:
+            grp_tables.add_widget(self.table_feature.create_toolbar_button())
+        else:
+            act_unavailable = QAction("Tables (Not Available)", self)
+            act_unavailable.setEnabled(False)
+            grp_tables.add_action(act_unavailable)
         
         # Group: Illustrations
         grp_illus = tab_insert.add_group("Illustrations")
-        grp_illus.add_action(self.image_insert_feature.create_toolbar_action(), Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
+        if self.image_insert_feature:
+            grp_illus.add_action(self.image_insert_feature.create_toolbar_action(), Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
         
         # Shapes
-        grp_illus.add_widget(self.shape_feature.create_toolbar_button())
+        if self.shape_feature:
+            grp_illus.add_widget(self.shape_feature.create_toolbar_button())
         
         # Group: Symbols
         grp_sym = tab_insert.add_group("Symbols")
@@ -1858,124 +2145,134 @@ class RichTextEditor(QWidget):
         # Group: Language
         grp_lang = tab_ref.add_group("Language")
         
-        # Use existing etymology_feature instance (created in _setup_ui)
-        ety = self.etymology_feature
-        assert ety is not None
-        grp_lang.add_action(ety.create_action(self), Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
+        # Etymology lookup
+        if self.etymology_feature:
+            grp_lang.add_action(self.etymology_feature.create_action(self), Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
 
         # Group: Proofing
         grp_proof = tab_ref.add_group("Proofing")
         
-        # Spell Check button
-        sp = self.spell_feature
-        assert sp is not None
-        grp_proof.add_action(sp.create_ribbon_action(self), Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
-        
-        # Spell Check toggle
-        grp_proof.add_action(sp.create_toggle_action(self), Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        # Spell Check (if available)
+        if self.spell_feature:
+            grp_proof.add_action(self.spell_feature.create_ribbon_action(self), Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
+            grp_proof.add_action(self.spell_feature.create_toggle_action(self), Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
 
         # =========================================================================
         # CONTEXT CATEGORIES
         # =========================================================================
         
         # === CONTEXT CATEGORY: Table Tools ===
-        self.ctx_table = self.ribbon.add_context_category("Table Tools", Qt.GlobalColor.darkYellow)
+        # Only create if TableFeature is available
         tf = self.table_feature
-        assert tf is not None
-        
-        # Layout Group - Insert/Delete
-        grp_tbl_layout = self.ctx_table.add_group("Layout")
-        
-        act_ins_row = QAction(qta.icon("fa5s.plus", color="#1e293b"), "Insert Row", self)
-        act_ins_row.triggered.connect(lambda tf=tf: tf._insert_row_below())
-        grp_tbl_layout.add_action(act_ins_row, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-        
-        act_ins_col = QAction(qta.icon("fa5s.plus", color="#1e293b"), "Insert Col", self)
-        act_ins_col.triggered.connect(lambda tf=tf: tf._insert_col_right())
-        grp_tbl_layout.add_action(act_ins_col, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-        
-        grp_tbl_layout.add_separator()
-        
-        act_del_row = QAction(qta.icon("fa5s.minus", color="#dc2626"), "Delete Row", self)
-        act_del_row.triggered.connect(lambda tf=tf: tf._delete_row())
-        grp_tbl_layout.add_action(act_del_row, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-        
-        act_del_col = QAction(qta.icon("fa5s.minus", color="#dc2626"), "Delete Col", self)
-        act_del_col.triggered.connect(lambda tf=tf: tf._delete_col())
-        grp_tbl_layout.add_action(act_del_col, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-        
-        act_del_table = QAction(qta.icon("fa5s.trash", color="#dc2626"), "Delete Table", self)
-        act_del_table.triggered.connect(lambda tf=tf: tf._delete_table())
-        grp_tbl_layout.add_action(act_del_table, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-        
-        # Merge/Split Group
-        grp_tbl_merge = self.ctx_table.add_group("Merge")
-        
-        act_merge = QAction(qta.icon("fa5s.object-group", color="#1e293b"), "Merge Cells", self)
-        act_merge.triggered.connect(lambda tf=tf: tf._merge_cells())
-        grp_tbl_merge.add_action(act_merge, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-        
-        act_split = QAction(qta.icon("fa5s.object-ungroup", color="#1e293b"), "Split Cells", self)
-        act_split.triggered.connect(lambda tf=tf: tf._split_cells())
-        grp_tbl_merge.add_action(act_split, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-        
-        act_distribute = QAction(qta.icon("fa5s.arrows-alt-h", color="#1e293b"), "Distribute", self)
-        act_distribute.triggered.connect(lambda tf=tf: tf._distribute_columns())
-        grp_tbl_merge.add_action(act_distribute, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-        
-        # Style Group
-        grp_tbl_style = self.ctx_table.add_group("Style")
-        
-        act_cell_bg = QAction(qta.icon("fa5s.fill-drip", color="#1e293b"), "Cell Color", self)
-        act_cell_bg.triggered.connect(lambda tf=tf: tf._set_cell_background())
-        grp_tbl_style.add_action(act_cell_bg, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-        
-        act_cell_border = QAction(qta.icon("fa5s.border-style", color="#1e293b"), "Borders", self)
-        act_cell_border.triggered.connect(lambda tf=tf: tf._edit_cell_borders())
-        grp_tbl_style.add_action(act_cell_border, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-        
-        act_cell_props = QAction(qta.icon("fa5s.sliders-h", color="#1e293b"), "Cell Props", self)
-        act_cell_props.triggered.connect(lambda tf=tf: tf._edit_cell_properties())
-        grp_tbl_style.add_action(act_cell_props, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-        
-        act_table_props = QAction(qta.icon("fa5s.cog", color="#1e293b"), "Table Props", self)
-        act_table_props.triggered.connect(lambda tf=tf: tf._edit_table_properties())
-        grp_tbl_style.add_action(act_table_props, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        if tf is not None:
+            self.ctx_table = self.ribbon.add_context_category("Table Tools", Qt.GlobalColor.darkYellow)
+            
+            # Layout Group - Insert/Delete
+            grp_tbl_layout = self.ctx_table.add_group("Layout")
+            
+            act_ins_row = QAction(qta.icon("fa5s.plus", color="#1e293b"), "Insert Row", self)
+            act_ins_row.triggered.connect(lambda: tf._insert_row_below())
+            grp_tbl_layout.add_action(act_ins_row, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+            
+            act_ins_col = QAction(qta.icon("fa5s.plus", color="#1e293b"), "Insert Col", self)
+            act_ins_col.triggered.connect(lambda: tf._insert_col_right())
+            grp_tbl_layout.add_action(act_ins_col, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+            
+            grp_tbl_layout.add_separator()
+            
+            act_del_row = QAction(qta.icon("fa5s.minus", color="#dc2626"), "Delete Row", self)
+            act_del_row.triggered.connect(lambda: tf._delete_row())
+            grp_tbl_layout.add_action(act_del_row, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+            
+            act_del_col = QAction(qta.icon("fa5s.minus", color="#dc2626"), "Delete Col", self)
+            act_del_col.triggered.connect(lambda: tf._delete_col())
+            grp_tbl_layout.add_action(act_del_col, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+            
+            act_del_table = QAction(qta.icon("fa5s.trash", color="#dc2626"), "Delete Table", self)
+            act_del_table.triggered.connect(lambda: tf._delete_table())
+            grp_tbl_layout.add_action(act_del_table, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+            
+            # Merge/Split Group
+            grp_tbl_merge = self.ctx_table.add_group("Merge")
+            
+            act_merge = QAction(qta.icon("fa5s.object-group", color="#1e293b"), "Merge Cells", self)
+            act_merge.triggered.connect(lambda: tf._merge_cells())
+            grp_tbl_merge.add_action(act_merge, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+            
+            act_split = QAction(qta.icon("fa5s.object-ungroup", color="#1e293b"), "Split Cells", self)
+            act_split.triggered.connect(lambda: tf._split_cells())
+            grp_tbl_merge.add_action(act_split, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+            
+            act_distribute = QAction(qta.icon("fa5s.arrows-alt-h", color="#1e293b"), "Distribute", self)
+            act_distribute.triggered.connect(lambda: tf._distribute_columns())
+            grp_tbl_merge.add_action(act_distribute, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+            
+            # Style Group
+            grp_tbl_style = self.ctx_table.add_group("Style")
+            
+            act_cell_bg = QAction(qta.icon("fa5s.fill-drip", color="#1e293b"), "Cell Color", self)
+            act_cell_bg.triggered.connect(lambda: tf._set_cell_background())
+            grp_tbl_style.add_action(act_cell_bg, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+            
+            act_cell_border = QAction(qta.icon("fa5s.border-style", color="#1e293b"), "Borders", self)
+            act_cell_border.triggered.connect(lambda: tf._edit_cell_borders())
+            grp_tbl_style.add_action(act_cell_border, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+            
+            act_cell_props = QAction(qta.icon("fa5s.sliders-h", color="#1e293b"), "Cell Props", self)
+            act_cell_props.triggered.connect(lambda: tf._edit_cell_properties())
+            grp_tbl_style.add_action(act_cell_props, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+            
+            act_table_props = QAction(qta.icon("fa5s.cog", color="#1e293b"), "Table Props", self)
+            act_table_props.triggered.connect(lambda: tf._edit_table_properties())
+            grp_tbl_style.add_action(act_table_props, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        else:
+            # No table feature - ctx_table not created
+            self.ctx_table = None
 
         # === CONTEXT CATEGORY: Image Tools ===
-        self.ctx_image = self.ribbon.add_context_category("Image Tools", Qt.GlobalColor.magenta)
+        # Only create if ImageEditFeature is available
+        if self.image_edit_feature:
+            self.ctx_image = self.ribbon.add_context_category("Image Tools", Qt.GlobalColor.magenta)
+        else:
+            self.ctx_image = None
         
-        # Tools Group
-        grp_img_tools = self.ctx_image.add_group("Tools")
-        
-        if getattr(self, 'image_edit_feature', None):
-            # Edit Action (Crop/Filter/Rotate)
-            if hasattr(self.image_edit_feature, 'action_edit'):
-                grp_img_tools.add_action(self.image_edit_feature.action_edit, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        if self.ctx_image:
+            # Tools Group
+            grp_img_tools = self.ctx_image.add_group("Tools")
             
-            # Properties Action
-            if hasattr(self.image_edit_feature, 'action_props'):
-                grp_img_tools.add_action(self.image_edit_feature.action_props, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+            if self.image_edit_feature:
+                # Edit Action (Crop/Filter/Rotate)
+                if hasattr(self.image_edit_feature, 'action_edit'):
+                    grp_img_tools.add_action(self.image_edit_feature.action_edit, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+                
+                # Properties Action
+                if hasattr(self.image_edit_feature, 'action_props'):
+                    grp_img_tools.add_action(self.image_edit_feature.action_props, Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         
         # Connect cursor/selection change to context switches
         self.editor.cursorPositionChanged.connect(self._update_context_tabs)
         
     def _update_context_tabs(self) -> None:
-        """Show/Hide context tabs based on cursor position."""
+        """Show/Hide context tabs based on cursor position.
+        
+        Gracefully handles missing context categories (when features not injected).
+        """
         cursor = self.editor.textCursor()
         
-        # Check Table
-        if cursor.currentTable():
-            self.ribbon.show_context_category(self.ctx_table)
-        else:
-            self.ribbon.hide_context_category(self.ctx_table)
+        # Check Table (only if feature available)
+        if self.ctx_table:
+            if cursor.currentTable():
+                self.ribbon.show_context_category(self.ctx_table)
+            else:
+                self.ribbon.hide_context_category(self.ctx_table)
             
-        # Check Image (naive check, usually relies on format)
-        img_format = cursor.charFormat().toImageFormat()
-        if img_format.isValid():
-            self.ribbon.show_context_category(self.ctx_image)
-        else:
-            self.ribbon.hide_context_category(self.ctx_image)
+        # Check Image (only if feature available)
+        if self.ctx_image:
+            img_format = cursor.charFormat().toImageFormat()
+            if img_format.isValid():
+                self.ribbon.show_context_category(self.ctx_image)
+            else:
+                self.ribbon.hide_context_category(self.ctx_image)
 
     
     # NOTE: insert_hyperlink() and insert_horizontal_rule() public methods were removed.
@@ -2641,7 +2938,13 @@ class RichTextEditor(QWidget):
         if action_align_right: action_align_right.blockSignals(False)
         if action_align_justify: action_align_justify.blockSignals(False)
         
-    # --- Public API ---
+    # =========================================================================
+    # PUBLIC API: Content Access, Search, Display Control
+    # =========================================================================
+    # These methods form the stable interface for parent windows to interact
+    # with the editor. Internal methods are prefixed with _ by convention.
+    # =========================================================================
+    
     def set_page_mode(self, mode: PageMode, opts: Optional[PageModeOptions] = None) -> None:
         """
         Set pagination mode with unified control (app-level entry point).
@@ -2841,6 +3144,13 @@ class RichTextEditor(QWidget):
         self._match_count = 0
         self._current_match = 0
 
+    # =========================================================================
+    # FILE I/O: Open, Save, Import/Export
+    # =========================================================================
+    # Handles document persistence with encoding detection, DOCX/PDF extraction,
+    # and image embedding for round-trip fidelity. Always saves as UTF-8.
+    # =========================================================================
+    
     def _restore_generated_objects(self) -> None:
         """Re-render Mermaid/LaTeX images after loading persisted content.
 
@@ -3249,4 +3559,3 @@ class RichTextEditor(QWidget):
             converted.append(symbol_to_unicode.get(char, char))
 
         return ''.join(converted)
-

@@ -7,6 +7,13 @@ Provides centralized error handling with:
 - Recovery strategies
 - User notification
 """
+"""
+SHARED JUSTIFICATION:
+- RATIONALE: Core Infrastructure
+- USED BY: Correspondences (4 references)
+- CRITERION: 2 (Essential for app to function)
+"""
+
 from typing import Optional, Callable, Any, TypeVar, Dict
 from contextlib import contextmanager
 from dataclasses import dataclass, field

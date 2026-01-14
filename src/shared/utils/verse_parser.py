@@ -1,3 +1,15 @@
+"""
+⚠️  GRANDFATHERED VIOLATION - Pre-existing before Law of Substrate (2026-01-13)
+
+SHARED JUSTIFICATION:
+- RATIONALE: Pure Utility (GRANDFATHERED - needs domain-agnostic verification)
+- USED BY: Gematria (3 references)
+- CRITERION: 3 (Pure utility) - verify no domain semantics
+
+This module violates the Law of the Substrate but is documented as pre-existing.
+Refactoring plan: See wiki/04_prophecies/shared_folder_audit_2026-01-13.md
+"""
+
 """Utilities for parsing documents into verses by number."""
 import re
 from typing import List, Dict, Any, Optional
@@ -5,6 +17,7 @@ from typing import List, Dict, Any, Optional
 
 def parse_verses(text: str, allow_inline: bool = True) -> List[Dict[str, Any]]:
     """Parse the given plain text into numbered verses.
+
 
     Recognizes lines that start with an Arabic numeral followed by optional punctuation.
     Falls back to header-based parsing if no numeric verses are found.

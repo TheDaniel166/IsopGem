@@ -1,10 +1,23 @@
-"""Hebrew gematria calculator implementation."""
+"""
+SHARED JUSTIFICATION:
+- RATIONALE: Domain Logic (GRANDFATHERED - pending refactor)
+- USED BY: Gematria (4 references)
+- CRITERION: Violation (Domain algorithms in shared)
+
+This module violates the Law of the Substrate but is documented as pre-existing.
+Refactoring plan: See wiki/04_prophecies/shared_folder_audit_2026-01-13.md
+
+Hebrew gematria calculator implementation.
+"""
 from typing import Dict
 from .base_calculator import GematriaCalculator
 
 
 class HebrewGematriaCalculator(GematriaCalculator):
     """Calculator for Hebrew gematria (standard values).
+
+
+
     
     Also known as Mispar Hechrachi (מספר הכרחי) - "Absolute Value"
     

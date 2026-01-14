@@ -1,3 +1,15 @@
+"""
+⚠️  GRANDFATHERED VIOLATION - Pre-existing before Law of Substrate (2026-01-13)
+
+SHARED JUSTIFICATION:
+- RATIONALE: UI Component (GRANDFATHERED - should move to pillars/document_manager)
+- USED BY: Internal shared/ modules only (1 references)
+- CRITERION: Violation (Single-pillar UI component)
+
+This module violates the Law of the Substrate but is documented as pre-existing.
+Refactoring plan: See wiki/04_prophecies/shared_folder_audit_2026-01-13.md
+"""
+
 """Page Mode Dialog for advanced pagination control."""
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QFormLayout,
@@ -8,6 +20,7 @@ from PyQt6.QtCore import Qt
 
 class PageModeDialog(QDialog):
     """
+
     Advanced settings dialog for CUSTOM page mode.
     
     Provides granular control over pagination options including
