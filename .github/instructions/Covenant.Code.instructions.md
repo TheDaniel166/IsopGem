@@ -3,7 +3,7 @@ applyTo: 'src/**,scripts/**'
 ---
 # Covenant Code Scrolls (mirror)
 
-<!-- Last Verified: 2026-01-12 -->
+<!-- Last Verified: 2026-01-13 -->
 
 ---
 

@@ -3,7 +3,7 @@ applyTo: 'wiki/**'
 ---
 # Covenant Docs Scrolls (mirror)
 
-<!-- Last Verified: 2026-01-12 -->
+<!-- Last Verified: 2026-01-13 -->
 
 ---
 
