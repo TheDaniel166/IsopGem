@@ -19,6 +19,10 @@ The sevenfold cascade (layers 1-7, innermost to outermost):
 - Layer 5: Mars
 - Layer 6: Jupiter
 - Layer 7: Saturn (outermost)
+
+NOTE: This module is EXEMPT from the Canon DSL migration (ADR-010).
+It functions as a specialized laboratory tool with complex interdependent 
+state (Golden Trisection) and custom visualization requirements.
 """
 from __future__ import annotations
 
@@ -243,6 +247,26 @@ class NestedHeptagonsService:
             circumradius=circumradius,
             incircle_circumference=2 * math.pi * inradius,
             circumcircle_circumference=2 * math.pi * circumradius,
+        )
+    
+    def get_aggregate_properties(self) -> HeptagonProperties:
+        """Get the sum of all properties across all layers.
+        
+        Returns:
+            HeptagonProperties object where each field is the sum of that field
+            for all N layers.
+        """
+        all_props = self.all_properties()
+        return HeptagonProperties(
+            edge_length=sum(p.edge_length for p in all_props),
+            perimeter=sum(p.perimeter for p in all_props),
+            area=sum(p.area for p in all_props),
+            short_diagonal=sum(p.short_diagonal for p in all_props),
+            long_diagonal=sum(p.long_diagonal for p in all_props),
+            inradius=sum(p.inradius for p in all_props),
+            circumradius=sum(p.circumradius for p in all_props),
+            incircle_circumference=sum(p.incircle_circumference for p in all_props),
+            circumcircle_circumference=sum(p.circumcircle_circumference for p in all_props),
         )
     
     def all_properties(self) -> List[HeptagonProperties]:

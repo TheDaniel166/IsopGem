@@ -122,8 +122,9 @@ class GeometryScene(QGraphicsScene):
         self._text_pen = QPen(QColor(30, 41, 59))
         self._axis_pen = QPen(QColor(148, 163, 184), 0)
         
+        # Use fixed scene rect for stable zooming (prevents auto-scaling on payload change)
         self.setBackgroundBrush(QColor(*self._themes[self._theme_name][0]))
-        self.setSceneRect(-5, -5, 10, 10)
+        self.setSceneRect(-500, -500, 1000, 1000)
 
     # ------------------------------------------------------------------
     # Public API
@@ -225,7 +226,7 @@ class GeometryScene(QGraphicsScene):
         return None
 
     def get_vertices(self) -> List[QPointF]:
-        """Vertices for measurement/highlights: polygon + diagonals endpoints and their intersections."""
+        """Vertices for measurement/highlights: polygon + diagonals endpoints and their intersections + circle sample points."""
         if not self._payload or not self._payload.primitives:
             return []
 
@@ -245,6 +246,19 @@ class GeometryScene(QGraphicsScene):
                 points.append(p1)
                 points.append(p2)
                 segments.append((p1, p2))
+            
+            elif isinstance(primitive, CirclePrimitive):
+                # Generate sample points around the circle for measurement
+                # Use 36 points (every 10 degrees) for good coverage
+                cx, cy = primitive.center
+                r = primitive.radius
+                import math
+                num_points = 36
+                for i in range(num_points):
+                    angle = 2 * math.pi * i / num_points
+                    x = cx + r * math.cos(angle)
+                    y = cy + r * math.sin(angle)
+                    points.append(QPointF(x, y))
 
         for i in range(len(segments)):
             for j in range(i + 1, len(segments)):
@@ -710,9 +724,15 @@ class GeometryScene(QGraphicsScene):
     # Internal helpers
     # ------------------------------------------------------------------
     def _rebuild_scene(self):
+        # Track if we had visible vertex highlights BEFORE clearing scene
+        had_visible_highlights = any(
+            item.isVisible() for item in self._vertex_highlight_items
+        ) if self._vertex_highlight_items else False
+        
         self.blockSignals(True)
         self.clear()
         self.blockSignals(False)
+        
         self._label_items.clear()
         self._axes_items.clear()
         self._vertex_highlight_items.clear()
@@ -726,14 +746,11 @@ class GeometryScene(QGraphicsScene):
             self.setSceneRect(-5, -5, 10, 10)
             return
 
+        # Use a fixed scene rect instead of auto-scaling to payload bounds
+        # This allows manual zoom control without auto-fit jumping
+        self.setSceneRect(-500, -500, 1000, 1000)
+        
         bounds = self._payload.bounds or self._derive_bounds(self._payload.primitives)
-        padded_bounds = bounds.padded(max(bounds.width, bounds.height) * 0.1)
-        self.setSceneRect(
-            padded_bounds.min_x,
-            padded_bounds.min_y,
-            padded_bounds.width,
-            padded_bounds.height,
-        )
 
 
 
@@ -746,6 +763,12 @@ class GeometryScene(QGraphicsScene):
 
         if self.axes_visible:
             self._axes_items = self._create_axes(bounds)
+        
+        # Recreate vertex highlights if they were visible before rebuild
+        if had_visible_highlights:
+            self._create_vertex_highlights()
+            for item in self._vertex_highlight_items:
+                item.setVisible(True)
 
 
 

@@ -387,9 +387,10 @@ class FormulaLibraryWidget(QWidget):
         self._update_list()
     
     def _update_categories(self):
-        """Update category combo box."""
+        """Update category combo box with top-level categories."""
         self.category_combo.clear()
-        categories = self.library.get_categories()
+        # Get top-level categories only (e.g., "Physics" not "Physics: Mechanics")
+        categories = self.library.get_categories(top_level_only=True)
         self.category_combo.addItems(categories)
     
     def _update_list(self):
@@ -650,11 +651,110 @@ class VisualMathEditorDialog(QDialog):
         size_layout.addStretch()
         options_layout.addLayout(size_layout)
         
-        # Color
+        # Color - Comprehensive Mathematical Palette
         color_layout = QHBoxLayout()
         color_layout.addWidget(QLabel("Color:"))
         self.color_combo = QComboBox()
-        self.color_combo.addItems(["Black", "Blue", "Red", "Green"])
+        
+        # Comprehensive color palette for mathematical expressions
+        # Organized by category for easy selection
+        math_colors = [
+            # === STANDARD ===
+            "Black",
+            "White",
+            "Gray",
+            "DarkGray",
+            "LightGray",
+            "Silver",
+            
+            # === PRIMARY COLORS ===
+            "Red",
+            "Green",
+            "Blue",
+            "Yellow",
+            "Cyan",
+            "Magenta",
+            
+            # === DARK VARIANTS ===
+            "DarkRed",
+            "DarkGreen",
+            "DarkBlue",
+            "DarkYellow",
+            "DarkCyan",
+            "DarkMagenta",
+            
+            # === EXTENDED SPECTRUM ===
+            "Orange",
+            "DarkOrange",
+            "OrangeRed",
+            "Purple",
+            "DarkPurple",
+            "Violet",
+            "DarkViolet",
+            "Indigo",
+            "Pink",
+            "DeepPink",
+            "HotPink",
+            "Crimson",
+            "Brown",
+            "SaddleBrown",
+            "Maroon",
+            "Olive",
+            "Teal",
+            "Navy",
+            
+            # === MATHEMATICAL HIGHLIGHTING ===
+            "RoyalBlue",      # For primary equations
+            "SteelBlue",      # For secondary equations
+            "CornflowerBlue", # For definitions
+            "DodgerBlue",     # For theorems
+            "DeepSkyBlue",    # For proofs
+            "SkyBlue",        # For remarks
+            
+            "ForestGreen",    # For positive terms
+            "SeaGreen",       # For convergent series
+            "MediumSeaGreen", # For solutions
+            "LimeGreen",      # For correct answers
+            "SpringGreen",    # For approximations
+            
+            "Tomato",         # For errors/corrections
+            "Coral",          # For warnings
+            "Salmon",         # For deprecated
+            "LightCoral",     # For notes
+            
+            "Gold",           # For important formulas
+            "Goldenrod",      # For key results
+            "Khaki",          # For examples
+            
+            "Orchid",         # For abstract concepts
+            "MediumOrchid",   # For transformations
+            "DarkOrchid",     # For operators
+            "BlueViolet",     # For eigenvectors
+            "MediumPurple",   # For complex numbers
+            
+            "Chocolate",      # For constants
+            "Peru",           # For parameters
+            "Sienna",         # For variables
+            
+            "SlateGray",      # For subscripts
+            "DimGray",        # For superscripts
+            "DarkSlateGray",  # For indices
+            
+            # === LIGHT TINTS (for backgrounds/highlights) ===
+            "LightBlue",
+            "LightGreen",
+            "LightYellow",
+            "LightCyan",
+            "LightPink",
+            "Lavender",
+            "MintCream",
+            "Azure",
+            "Ivory",
+            "Beige",
+        ]
+        
+        self.color_combo.addItems(math_colors)
+        self.color_combo.setCurrentText("Black")  # Default to black
         self.color_combo.currentTextChanged.connect(self._schedule_preview_update)
         color_layout.addWidget(self.color_combo)
         color_layout.addStretch()

@@ -3,23 +3,30 @@
 This window displays an interactive visualization of N nested
 regular heptagons (default 7) based on the Golden Trisection ratios.
 
+@RiteExempt: Visual Liturgy
+Note: This window is a "Visual Visualization Instrument". It intentionally uses
+bespoke styling and semantic coloring (Gold as signal, negative space darkness)
+and is exempt from standard Visual Liturgy token enforcement. The geometry and
+color are content, not chrome.
+
 Features:
-- Sevenfold planetary cascade (Moon → Mercury → Venus → Sun → Mars → Jupiter → Saturn)
+- Sevenfold planetary cascade (Moon -> Mercury -> Venus -> Sun -> Mars -> Jupiter -> Saturn)
 - Bidirectional property solving (set any property of any layer)
 - Zoom/pan canvas with mouse wheel and drag
 - Individual layer visibility controls
 
-Visual Liturgy compliant with:
-- Marble Tablet panels with drop shadows
-- Seeker/Accent color theming
-- Temple voice for labels
+Note: This module is EXEMPT from the Canon DSL migration (ADR-010).
+It functions as a specialized laboratory tool with complex interdependent 
+state (Golden Trisection) and custom visualization requirements that 
+generic Canon Realizers cannot easily replicate.
 """
 from __future__ import annotations
 
 import math
+import random
 from typing import Optional, List
 
-from PyQt6.QtCore import Qt, QPointF, pyqtSignal
+from PyQt6.QtCore import Qt, QPointF
 from PyQt6.QtGui import (
     QFont, QColor, QPainter, QPen, QPolygonF, QBrush, QWheelEvent,
     QMouseEvent, QTransform, QAction,
@@ -27,11 +34,13 @@ from PyQt6.QtGui import (
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QSplitter,
     QFrame, QLabel, QDoubleSpinBox, QCheckBox,
-    QGroupBox, QFormLayout, QTabWidget, QGridLayout,
+    QGroupBox, QFormLayout, QListWidget, QListWidgetItem, 
+    QStackedWidget, QGridLayout, QPushButton,
     QGraphicsDropShadowEffect, QComboBox, QScrollArea, QMenu,
 )
 
 from shared.ui.theme import COLORS
+from shared.signals.navigation_bus import navigation_bus
 from ..services.nested_heptagons_service import NestedHeptagonsService
 
 
@@ -53,23 +62,30 @@ class HeptagonCanvas(QWidget):
     def __init__(self, service: NestedHeptagonsService, parent: Optional[QWidget] = None):
         super().__init__(parent)
         self.service = service
-        self.setMinimumSize(400, 400)
-        self.setMouseTracking(True)
+        self._scale = 1.0
+        self._pan_offset = QPointF(0, 0)
+        self._last_pan_pos = QPointF(0, 0)
+        self._panning = False
         
         # Display options
         self.layer_visibility: List[bool] = [True] * service.num_layers
         self.show_circumcircle = True
         self.show_incircle = True
-        self.show_diagonals = False
+        self.show_short_diagonals = False
+        self.show_long_diagonals = False
         self.show_labels = True
-        self.show_measurements = True
         
-        # Transform state for zoom/pan
+        # Generate random star field (astronomical background)
+        self._stars: List[tuple[float, float, float]] = []
+        for _ in range(200):  # 200 stars
+            x = random.random()
+            y = random.random()
+            brightness = random.uniform(0.3, 1.0)
+            self._stars.append((x, y, brightness))
+        
+        self.setMouseTracking(True)
+        self.setCursor(Qt.CursorShape.CrossCursor)
         self._transform = QTransform()
-        self._scale = 1.0
-        self._pan_offset = QPointF(0, 0)
-        self._panning = False
-        self._last_pan_pos = QPointF()
         
         # Set focus policy to receive wheel events
         self.setFocusPolicy(Qt.FocusPolicy.WheelFocus)
@@ -87,8 +103,10 @@ class HeptagonCanvas(QWidget):
         factor = 1.15 if angle > 0 else 1 / 1.15
         new_scale = self._scale * factor
         
-        # Clamp zoom level
-        if 0.1 <= new_scale <= 50.0:
+        # Clamp zoom level - EXPANDED RANGE for all 7 layers
+        # Zoom out to 0.05 (5%) to see all outer layers
+        # Zoom in to 7500 (750000%) to see the innermost Moon layer in full detail
+        if 0.05 <= new_scale <= 7500.0:
             self._scale = new_scale
             self.update()
     
@@ -111,7 +129,7 @@ class HeptagonCanvas(QWidget):
         """Stop panning."""
         if event and event.button() == Qt.MouseButton.MiddleButton:
             self._panning = False
-            self.setCursor(Qt.CursorShape.ArrowCursor)
+            self.setCursor(Qt.CursorShape.CrossCursor)
     
     def reset_view(self) -> None:
         """Reset zoom and pan to default."""
@@ -124,12 +142,21 @@ class HeptagonCanvas(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         
-        # Background
-        painter.fillRect(self.rect(), QColor(COLORS['surface']))
+        # Background - Deep Geometric Void with star field
+        painter.fillRect(self.rect(), QColor("#0a0a12"))
         
-        # Calculate center and apply transform
+        # Draw astronomical star field
         width = self.width()
         height = self.height()
+        for star_x, star_y, brightness in self._stars:
+            x = int(star_x * width)
+            y = int(star_y * height)
+            size = 1 if brightness < 0.6 else 2
+            alpha = int(brightness * 255)
+            painter.setPen(QPen(QColor(255, 255, 255, alpha), size))
+            painter.drawPoint(x, y)
+        
+        # Calculate center and apply transform
         center_x = width / 2 + self._pan_offset.x()
         center_y = height / 2 + self._pan_offset.y()
         
@@ -141,13 +168,14 @@ class HeptagonCanvas(QWidget):
         
         # Draw circumcircle (outermost layer)
         if self.show_circumcircle:
-            painter.setPen(QPen(QColor(200, 200, 255, 150), 1))
+            painter.setPen(QPen(QColor(255, 255, 255, 40), 1, Qt.PenStyle.DashLine))
             r = outer_circumradius * scale
             painter.drawEllipse(QPointF(center_x, center_y), r, r)
         
         # Draw incircle (outermost layer)
+        # Draw incircle (outermost layer)
         if self.show_incircle:
-            painter.setPen(QPen(QColor(255, 200, 200, 150), 1))
+            painter.setPen(QPen(QColor(255, 255, 255, 40), 1, Qt.PenStyle.DotLine))
             r = outermost_props.inradius * scale
             painter.drawEllipse(QPointF(center_x, center_y), r, r)
         
@@ -165,6 +193,25 @@ class HeptagonCanvas(QWidget):
                 painter, center_x, center_y, scale,
                 vertices, color, label, layer
             )
+        
+        # Draw sacred geometry border frame
+        frame_color = QColor("#D4AF37")  # Gold
+        frame_color.setAlpha(80)
+        painter.setPen(QPen(frame_color, 2))
+        painter.drawRect(2, 2, width - 4, height - 4)
+        
+        # Draw zoom indicator in bottom-right
+        zoom_text = f"Zoom: {self._scale:.2f}x"
+        painter.setPen(QPen(QColor("#94A3B8"), 1))
+        painter.setFont(QFont("Arial", 9))
+        text_rect = painter.fontMetrics().boundingRect(zoom_text)
+        bg_rect = text_rect.adjusted(-6, -3, 6, 3)
+        bg_rect.moveTo(width - bg_rect.width() - 10, height - bg_rect.height() - 10)
+        
+        bg_color = QColor("#1a1a2e")
+        bg_color.setAlpha(180)
+        painter.fillRect(bg_rect, bg_color)
+        painter.drawText(bg_rect, Qt.AlignmentFlag.AlignCenter, zoom_text)
         
         painter.end()
     
@@ -191,20 +238,28 @@ class HeptagonCanvas(QWidget):
         painter.drawPolygon(polygon)
         painter.setBrush(Qt.BrushStyle.NoBrush)
         
-        # Draw diagonals
-        if self.show_diagonals:
+        # Draw short diagonals (skip 1 vertex, connects i to i+2)
+        if self.show_short_diagonals:
             painter.setPen(QPen(color.lighter(150), 1, Qt.PenStyle.DashLine))
             for i in range(7):
                 x1, y1 = scaled_verts[i]
-                # Short diagonal (skip 1 vertex)
-                j = (i + 2) % 7
+                j = (i + 2) % 7  # Short diagonal
+                x2, y2 = scaled_verts[j]
+                painter.drawLine(QPointF(x1, y1), QPointF(x2, y2))  # type: ignore[reportUnknownArgumentType]
+        
+        # Draw long diagonals (skip 2 vertices, connects i to i+3)
+        if self.show_long_diagonals:
+            painter.setPen(QPen(color.lighter(180), 1.5, Qt.PenStyle.DashDotLine))
+            for i in range(7):
+                x1, y1 = scaled_verts[i]
+                j = (i + 3) % 7  # Long diagonal
                 x2, y2 = scaled_verts[j]
                 painter.drawLine(QPointF(x1, y1), QPointF(x2, y2))  # type: ignore[reportUnknownArgumentType]
         
         # Draw vertex labels
         if self.show_labels:
-            painter.setPen(QPen(color, 1))
-            font = QFont("Georgia", 9)
+            painter.setPen(QPen(QColor("#D4AF37"), 1)) # Gold color for labels
+            font = QFont("Arial", 9)
             painter.setFont(font)
             
             for i, (x, y) in enumerate(scaled_verts):  # type: ignore[reportUnknownArgumentType, reportUnknownVariableType]
@@ -220,66 +275,111 @@ class HeptagonCanvas(QWidget):
 class NestedHeptagonsWindow(QWidget):
     """Window for the Sevenfold Nested Heptagons Golden Trisection Calculator."""
     
-    # Signal to communicate with Quadsert Analysis via service bus
-    send_to_quadsert = pyqtSignal(dict)
-    
     def __init__(self, parent: Optional[QWidget] = None, window_manager=None):
         super().__init__(parent)
         self.setWindowTitle("The Sevenfold Golden Trisection")
         self.setMinimumSize(1200, 800)
         
+        self.window_manager = window_manager
         self.service = NestedHeptagonsService(num_layers=7, canonical_edge_length=1.0)
         self._decimal_precision = 4  # Default decimal places
-        
-        # Set custom context menu policy
-        self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        self.customContextMenuRequested.connect(self._show_context_menu)
         
         self._setup_ui()
         self._update_displays()
     
     def _setup_ui(self) -> None:
         """Build the UI layout."""
-        main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(16, 16, 16, 16)
+        # Main container with title banner and footer
+        container = QVBoxLayout(self)
+        container.setContentsMargins(0, 0, 0, 0)
+        container.setSpacing(0)
+        
+        # Title Banner
+        title_banner = self._create_title_banner()
+        container.addWidget(title_banner)
+        
+        # Main content area
+        content_widget = QWidget()
+        main_layout = QHBoxLayout(content_widget)
+        main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(12)
         
         # Background
         self.setStyleSheet(f"""
-            NestedHeptagonsWindow {{
-                background: {COLORS['background']};
+            QWidget {{
+                background-color: #0f0f13;
+                color: #e0e0e0;
+                font-family: "Segoe UI", Arial, sans-serif;
+            }}
+            QLabel {{
+                background: transparent;
+                border: none;
+                color: #d0d0e0;
+            }}
+            QCheckBox {{
+                color: #d0d0e0;
+                spacing: 8px;
+            }}
+            QCheckBox::indicator {{
+                width: 16px;
+                height: 16px;
+                border: 2px solid #555;
+                border-radius: 3px;
+                background: #1a1a2e;
+            }}
+            QCheckBox::indicator:checked {{
+                border-color: #D4AF37;
+            }}
+            QComboBox {{
+                background-color: #1a1a2e;
+                color: #f0f0f8;
+                border: 1px solid #2a2a3e;
+                border-radius: 4px;
+                padding: 4px;
+            }}
+            QComboBox:hover {{
+                border-color: #3a3a5e;
+            }}
+            QComboBox::drop-down {{
+                border: none;
+            }}
+            QComboBox QAbstractItemView {{
+                background-color: #1a1a2e;
+                color: #f0f0f8;
+                selection-background-color: #2a3a4a;
+                border: 1px solid #2a2a3e;
+            }}
+            QDoubleSpinBox {{
+                background-color: #1a1a2e;
+                color: #f0f0f8;
+                border: 1px solid #2a2a3e;
+                border-radius: 4px;
+                padding: 4px;
+            }}
+            QDoubleSpinBox:hover {{
+                border-color: #3a3a5e;
             }}
         """)
-        
-        # Header
-        header = QLabel("⬡ The Sevenfold Golden Trisection ⬡")
-        header.setFont(QFont("Georgia", 22, QFont.Weight.Bold))
-        header.setStyleSheet(f"color: {COLORS['seeker']}; padding: 8px;")
-        header.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        main_layout.addWidget(header)
-        
-        subtitle = QLabel("Σ = 2.247  |  Ρ = 1.802  |  α = 0.247  |  VII Planetary Spheres")
-        subtitle.setFont(QFont("Georgia", 11))
-        subtitle.setStyleSheet(f"color: {COLORS['text_secondary']};")
-        subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        main_layout.addWidget(subtitle)
         
         # Main splitter
         splitter = QSplitter(Qt.Orientation.Horizontal)
         splitter.setStyleSheet(f"""
             QSplitter::handle {{
-                background: {COLORS['border']};
+                background: transparent;
                 width: 2px;
             }}
         """)
         
-        # Left panel: Controls
+        
+        # Center: Canvas (create FIRST so control panel can reference it)
+        self.canvas = HeptagonCanvas(self.service)
+        canvas_frame = self._wrap_in_tablet(self.canvas)
+        
+        # Left panel: Controls (references self.canvas)
         left_panel = self._create_control_panel()
         splitter.addWidget(left_panel)
         
-        # Center: Canvas
-        self.canvas = HeptagonCanvas(self.service)
-        canvas_frame = self._wrap_in_tablet(self.canvas)
+        # Add canvas to splitter
         splitter.addWidget(canvas_frame)
         
         # Right panel: Properties
@@ -288,116 +388,157 @@ class NestedHeptagonsWindow(QWidget):
         
         splitter.setSizes([300, 550, 350])
         main_layout.addWidget(splitter, 1)
+        
+        container.addWidget(content_widget)
+        
+        # Footer Status Bar
+        self.footer_bar = self._create_footer_bar()
+        container.addWidget(self.footer_bar)
+        
+        # Status label (referenced by _update_status_bar)
+        self.status_label = QLabel("Ready")
+        self.status_label.setStyleSheet("padding: 4px; font-size: 11px; background: #1a1a2e; color: #94A3B8;")
+        container.addWidget(self.status_label)
     
     def contextMenuEvent(self, event) -> None:  # type: ignore[reportIncompatibleMethodOverride, reportMissingParameterType]
-        """Handle right-click context menu."""
-        menu = QMenu(self)
-        menu.setStyleSheet(f"""
-            QMenu {{
-                background: {COLORS['surface']};
-                border: 1px solid {COLORS['border']};
-                border-radius: 6px;
-                padding: 4px;
-            }}
-            QMenu::item {{
-                padding: 8px 20px;
-                color: {COLORS['text_primary']};
-            }}
-            QMenu::item:selected {{
-                background: {COLORS['primary_light']};
-                color: {COLORS['seeker']};
-            }}
-        """)
-        
-        send_action = QAction("⬢ Send to Quadsert Analysis", self)
-        send_action.triggered.connect(self._send_to_quadsert)
-        menu.addAction(send_action)
-        
-        menu.exec(event.globalPos())
+        """Handle right-click context menu (currently disabled - use spinbox context menus instead)."""
+        # Main window context menu removed - right-click on specific spinboxes instead
+        pass
     
-    def _send_to_quadsert(self) -> None:
-        """Package current heptagon data and send to Quadsert Analysis (whole numbers only)."""
-        # Gather all layer properties (rounded to whole numbers for Quadsert)
-        layers_data = []
-        for i in range(self.service.num_layers):
-            layer = i + 1
-            props = self.service.layer_properties(layer)
-            layers_data.append({
-                "layer": layer,
-                "metal": NestedHeptagonsService.METAL_NAMES[i] if i < len(NestedHeptagonsService.METAL_NAMES) else f"Layer {layer}",
-                "planet": NestedHeptagonsService.PLANETARY_NAMES[i] if i < len(NestedHeptagonsService.PLANETARY_NAMES) else f"Layer {layer}",
-                "edge_length": round(props.edge_length),
-                "perimeter": round(props.perimeter),
-                "area": round(props.area),
-                "short_diagonal": round(props.short_diagonal),
-                "long_diagonal": round(props.long_diagonal),
-                "inradius": round(props.inradius),
-                "circumradius": round(props.circumradius),
-            })
+    def _update_status_bar(self, row: int) -> None:
+        """Update the footer status bar with current selection."""
+        # Guard: status_label created late in _setup_ui
+        if not hasattr(self, 'status_label'):
+            return
         
-        # Package for Quadsert (ratios kept precise, measurements rounded)
-        payload = {
-            "source": "NestedHeptagons",
-            "title": "Sevenfold Golden Trisection",
-            "num_layers": self.service.num_layers,
-            "canonical_layer": self.service.canonical_layer,
-            "canonical_edge": round(self.service.canonical_edge),
-            "ratios": {
-                "sigma": NestedHeptagonsService.SIGMA,
-                "rho": NestedHeptagonsService.RHO,
-                "alpha": NestedHeptagonsService.ALPHA,
-            },
-            "layers": layers_data,
-            "orientation": self.service.orientation,
-        }
+        if row < 0 or row >= self.service.num_layers + 1:  # +1 for summary
+            return
         
-        # Emit signal to service bus
-        self.send_to_quadsert.emit(payload)
+        if row < self.service.num_layers:
+            # Regular layer
+            planet = NestedHeptagonsService.PLANETARY_NAMES[row]
+            metal = NestedHeptagonsService.METAL_NAMES[row] if row < len(NestedHeptagonsService.METAL_NAMES) else ""
+            self.status_label.setText(f"Active | Layer {row + 1}: {planet} ({metal}) | Precision: {self._decimal_precision} decimals")
+        else:
+            # Summary tab
+            self.status_label.setText(f"Active | Summary Tab (Aggregate Totals) | Precision: {self._decimal_precision} decimals")
+    
+    def _send_to_quadsert(self, value: float) -> None:
+        """Send a specific value to Quadset Analysis via Navigation Bus."""
+        if not self.window_manager:
+            print("⚠️ Cannot send to Quadset: No window manager available")
+            return
         
-        print(f"📤 Sent Sevenfold Heptagon data to Quadsert Analysis (whole numbers)")
-        print(f"   Canonical layer: {self.service.canonical_layer} (Gold)")
-        print(f"   Canonical edge: {round(self.service.canonical_edge)}")
-        print(f"   Layers transmitted: {len(layers_data)}")
+        # Round to whole number for Quadset
+        value_rounded = int(round(value))
+        
+        navigation_bus.request_window.emit(
+            "quadset_analysis",
+            {
+                "window_manager": self.window_manager,
+                "initial_value": value_rounded
+            }
+        )
+        
+        print(f"📤 Sent value to Quadset Analysis: {value_rounded}")
+        print(f"   Source: Sevenfold Nested Heptagons")
     
     def _wrap_in_tablet(self, widget: QWidget) -> QFrame:
         """Wrap a widget in a Visual Liturgy tablet with drop shadow."""
         frame = QFrame()
         frame.setStyleSheet(f"""
             QFrame {{
-                background: {COLORS['surface']};
-                border: 1px solid {COLORS['border']};
+                background: #0f0f13;
+                border: 2px solid #D4AF37;
                 border-radius: 12px;
             }}
         """)
         
-        shadow = QGraphicsDropShadowEffect(frame)
-        shadow.setBlurRadius(24)
-        shadow.setOffset(0, 8)
-        shadow.setColor(QColor(0, 0, 0, 40))
-        frame.setGraphicsEffect(shadow)
-        
         layout = QVBoxLayout(frame)
-        layout.setContentsMargins(8, 8, 8, 8)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(widget)
         
         return frame
+    
+    def _create_title_banner(self) -> QFrame:
+        """Create the title banner for the window."""
+        banner = QFrame()
+        banner.setFixedHeight(60)
+        banner.setStyleSheet(f"""
+            QFrame {{
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                                            stop:0 #1a1a2e, stop:0.5 #2a2a4e, stop:1 #1a1a2e);
+                border-bottom: 1px solid #3a3a5e;
+            }}
+            QLabel {{
+                color: #D4AF37;
+                font-family: "Georgia", serif;
+                font-size: 22px;
+                font-weight: bold;
+                letter-spacing: 1px;
+            }}
+            QLabel#subtitle {{
+                color: #94A3B8;
+                font-size: 11px;
+                font-weight: normal;
+                letter-spacing: 0.5px;
+            }}
+        """)
+        
+        layout = QVBoxLayout(banner)
+        layout.setContentsMargins(16, 8, 16, 8)
+        layout.setSpacing(2)
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        header = QLabel("⬡ The Sevenfold Golden Trisection ⬡")
+        header.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(header)
+        
+        subtitle = QLabel("Σ = 2.247  |  Ρ = 1.802  |  α = 0.247  |  VII Planetary Spheres")
+        subtitle.setObjectName("subtitle")
+        subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(subtitle)
+        
+        return banner
+    
+    def _create_footer_bar(self) -> QFrame:
+        """Create footer status bar."""
+        footer = QFrame()
+        footer.setFixedHeight(32)
+        footer.setStyleSheet(f"""
+            QFrame {{
+                background: #1a1a2e;
+                border-top: 1px solid #3a3a5e;
+            }}
+            QLabel {{
+                color: #94A3B8;
+                font-size: 10px;
+                padding: 4px 12px;
+            }}
+        """)
+        
+        layout = QHBoxLayout(footer)
+        layout.setContentsMargins(8, 4, 8, 4)
+        
+        self.status_label = QLabel("Ready | Layer: Moon (Silver) | Precision: 4 decimals")
+        layout.addWidget(self.status_label)
+        layout.addStretch()
+        
+        version_label = QLabel("Golden Trisection v1.0")
+        layout.addWidget(version_label)
+        
+        return footer
     
     def _create_control_panel(self) -> QFrame:
         """Create the left control panel."""
         panel = QFrame()
         panel.setStyleSheet(f"""
             QFrame {{
-                background: {COLORS['surface']};
-                border: 1px solid {COLORS['border']};
+                background: #0f0f13;
+                border: 2px solid #D4AF37;
                 border-radius: 12px;
             }}
         """)
-        
-        shadow = QGraphicsDropShadowEffect(panel)
-        shadow.setBlurRadius(24)
-        shadow.setOffset(0, 8)
-        shadow.setColor(QColor(0, 0, 0, 40))
-        panel.setGraphicsEffect(shadow)
         
         layout = QVBoxLayout(panel)
         
@@ -405,7 +546,7 @@ class NestedHeptagonsWindow(QWidget):
         groupbox_style = f"""
             QGroupBox {{
                 color: {COLORS['seeker']};
-                border: 1px solid {COLORS['border']};
+                border: none;
                 border-radius: 6px;
                 margin-top: 12px;
                 padding-top: 12px;
@@ -423,7 +564,7 @@ class NestedHeptagonsWindow(QWidget):
         viz_group.setStyleSheet(groupbox_style.replace(COLORS['seeker'], COLORS['accent']))
         viz_layout = QVBoxLayout(viz_group)
         
-        # Planetary layer checkboxes
+        # Planetary layer checkboxes with colored indicators
         self.layer_checks: List[QCheckBox] = []
         for i in range(self.service.num_layers):
             layer = i + 1
@@ -433,6 +574,24 @@ class NestedHeptagonsWindow(QWidget):
             check = QCheckBox(f"L{layer}: {planet_name}")
             check.setChecked(True)
             check.stateChanged.connect(self._update_canvas)
+            
+            # Apply planetary color to checkbox when checked
+            if i < len(PLANETARY_COLORS):
+                color = PLANETARY_COLORS[i]
+                check.setStyleSheet(f"""
+                    QCheckBox {{
+                        color: #d0d0e0;
+                    }}
+                    QCheckBox::indicator:checked {{
+                        background-color: {color.name()};
+                        border: 2px solid {color.lighter(150).name()};
+                    }}
+                    QCheckBox:checked {{
+                        color: {color.lighter(120).name()};
+                        font-weight: bold;
+                    }}
+                """)
+            
             viz_layout.addWidget(check)
             self.layer_checks.append(check)
         
@@ -446,7 +605,9 @@ class NestedHeptagonsWindow(QWidget):
         
         # Orientation
         orientation_layout = QHBoxLayout()
-        orientation_layout.addWidget(QLabel("Orientation:"))
+        orientation_label = QLabel("Orientation:")
+        orientation_label.setStyleSheet("color: #9090a8;")
+        orientation_layout.addWidget(orientation_label)
         self.orientation_combo = QComboBox()
         self.orientation_combo.addItem("Vertex at Top", "vertex_top")
         self.orientation_combo.addItem("Side at Top", "side_top")
@@ -456,7 +617,9 @@ class NestedHeptagonsWindow(QWidget):
         
         # Decimal precision control
         precision_layout = QHBoxLayout()
-        precision_layout.addWidget(QLabel("Decimal Places:"))
+        precision_label = QLabel("Decimal Places:")
+        precision_label.setStyleSheet("color: #9090a8;")
+        precision_layout.addWidget(precision_label)
         self.precision_spin = QDoubleSpinBox()
         self.precision_spin.setRange(0, 15)
         self.precision_spin.setValue(4)
@@ -466,50 +629,98 @@ class NestedHeptagonsWindow(QWidget):
         display_layout.addLayout(precision_layout)
         
         self.circumcircle_check = QCheckBox("Circumcircle")
-        self.circumcircle_check.setChecked(True)
+        self.circumcircle_check.setChecked(False)
         self.circumcircle_check.stateChanged.connect(self._update_canvas)
         display_layout.addWidget(self.circumcircle_check)
         
         self.incircle_check = QCheckBox("Incircle")
-        self.incircle_check.setChecked(True)
+        self.incircle_check.setChecked(False)
         self.incircle_check.stateChanged.connect(self._update_canvas)
         display_layout.addWidget(self.incircle_check)
         
-        self.diagonals_check = QCheckBox("Diagonals")
-        self.diagonals_check.setChecked(False)
-        self.diagonals_check.stateChanged.connect(self._update_canvas)
-        display_layout.addWidget(self.diagonals_check)
+        self.short_diagonals_check = QCheckBox("Short Diagonals (ρ)")
+        self.short_diagonals_check.setChecked(False)
+        self.short_diagonals_check.stateChanged.connect(self._update_canvas)
+        display_layout.addWidget(self.short_diagonals_check)
+        
+        self.long_diagonals_check = QCheckBox("Long Diagonals (σ)")
+        self.long_diagonals_check.setChecked(False)
+        self.long_diagonals_check.stateChanged.connect(self._update_canvas)
+        display_layout.addWidget(self.long_diagonals_check)
         
         self.labels_check = QCheckBox("Vertex Labels")
-        self.labels_check.setChecked(True)
+        self.labels_check.setChecked(False)
         self.labels_check.stateChanged.connect(self._update_canvas)
         display_layout.addWidget(self.labels_check)
         
-        # Reset view button
-        reset_btn = QCheckBox("Reset View")  # Using QCheckBox as button for consistency
-        reset_btn.setStyleSheet("font-weight: bold;")
-        reset_btn.clicked.connect(lambda: self.canvas.reset_view())  # type: ignore[reportUnknownMemberType]
+        # Reset view button with golden hover glow
+        reset_btn = QPushButton("↺ Recenter View")
+        reset_btn_style = f"""
+            QPushButton {{
+                background-color: #2a3a4a;
+                color: #4deeea;
+                border: 1px solid #3a4a5a;
+                border-radius: 6px;
+                padding: 8px;
+                font-weight: bold;
+            }}
+            QPushButton:hover {{
+                background-color: #3a4a5a;
+                border: 2px solid #D4AF37;
+            }}
+            QPushButton:pressed {{
+                background-color: #1a2a3a;
+            }}
+        """
+        reset_btn.setStyleSheet(reset_btn_style)
+        reset_btn.clicked.connect(self.canvas.reset_view)
         display_layout.addWidget(reset_btn)
         
         layout.addWidget(display_group)
         
-        # Constants group
-        const_group = QGroupBox("Sacred Ratios")
+        # Constants Reference with golden border
+        const_group = QGroupBox("⭐ Golden Trisection Constants")
         const_group.setFont(QFont("Georgia", 11, QFont.Weight.Bold))
-        const_group.setStyleSheet(groupbox_style)
+        const_group.setStyleSheet(f"""
+            QGroupBox {{
+                color: #D4AF37;
+                border: 2px solid #D4AF37;
+                border-radius: 8px;
+                margin-top: 12px;
+                padding-top: 12px;
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                            stop:0 rgba(212, 175, 55, 0.1),
+                                            stop:1 rgba(212, 175, 55, 0.05));
+            }}
+            QGroupBox::title {{
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 5px;
+                background: #1a1a2e;
+            }}
+            QLabel {{
+                color: #9090a8;
+            }}
+        """)
         const_layout = QFormLayout(const_group)
         
+        sigma_row_label = QLabel("Σ (Long Diagonal):")
+        sigma_row_label.setStyleSheet("color: #9090a8; font-weight: normal;")
         sigma_label = QLabel(f"{NestedHeptagonsService.SIGMA:.6f}")
-        sigma_label.setToolTip("Long diagonal in unit-edge heptagon")
-        const_layout.addRow("Σ (SIGMA):", sigma_label)
+        sigma_label.setStyleSheet("color: #6a6a7a; font-weight: bold; font-size: 12pt; background: transparent;")
+        const_layout.addRow(sigma_row_label, sigma_label)
         
+        rho_row_label = QLabel("ρ (Short Diagonal):")
+        rho_row_label.setStyleSheet("color: #9090a8; font-weight: normal;")
         rho_label = QLabel(f"{NestedHeptagonsService.RHO:.6f}")
-        rho_label.setToolTip("Short diagonal in unit-edge heptagon")
-        const_layout.addRow("Ρ (RHO):", rho_label)
+        rho_label.setStyleSheet("color: #6a6a7a; font-weight: bold; font-size: 12pt; background: transparent;")
+        const_layout.addRow(rho_row_label, rho_label)
         
+        alpha_row_label = QLabel("α (Nest Ratio):")
+        alpha_row_label.setStyleSheet("color: #9090a8; font-weight: normal;")
         alpha_label = QLabel(f"{NestedHeptagonsService.ALPHA:.6f}")
-        alpha_label.setToolTip("Nested heptagon edge ratio")
-        const_layout.addRow("α (ALPHA):", alpha_label)
+        alpha_label.setStyleSheet("color: #6a6a7a; font-weight: bold; font-size: 12pt; background: transparent;")
+        const_layout.addRow(alpha_row_label, alpha_label)
         
         layout.addWidget(const_group)
         layout.addStretch()
@@ -517,102 +728,235 @@ class NestedHeptagonsWindow(QWidget):
         return panel
     
     def _create_properties_panel(self) -> QFrame:
-        """Create the right properties panel with tabs."""
+        """Create the right properties panel with vertical sidebar."""
         panel = QFrame()
+        panel.setFixedWidth(360)
         panel.setStyleSheet(f"""
             QFrame {{
-                background: {COLORS['surface']};
-                border: 1px solid {COLORS['border']};
-                border-radius: 12px;
+                background: #1a1a2e;
+                border: 2px solid #D4AF37;
+                border-radius: 8px;
             }}
         """)
-        
-        shadow = QGraphicsDropShadowEffect(panel)
-        shadow.setBlurRadius(24)
-        shadow.setOffset(0, 8)
-        shadow.setColor(QColor(0, 0, 0, 40))
-        panel.setGraphicsEffect(shadow)
         
         layout = QVBoxLayout(panel)
+
         
         title = QLabel("Calculated Properties")
-        title.setFont(QFont("Georgia", 12, QFont.Weight.Bold))
-        title.setStyleSheet(f"color: {COLORS['seeker']}; border: none;")
+        title.setFont(QFont("Arial", 12, QFont.Weight.Bold))
+        title.setStyleSheet(f"color: #D4AF37; letter-spacing: 1px; border: none; padding: 4px;")
+        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(title)
         
-        # Tabs for each layer with scrollable container (vertical orientation)
-        tabs = QTabWidget()
-        tabs.setTabPosition(QTabWidget.TabPosition.West)  # Vertical tabs on left
-        tabs.setStyleSheet(f"""
-            QTabWidget::pane {{
-                border: 1px solid {COLORS['border']};
-                border-radius: 6px;
-                background: transparent;
-                margin-left: 1px;
+        # Main content area with sidebar (List) and stack
+        content_layout = QHBoxLayout()
+        content_layout.setContentsMargins(0, 0, 0, 0)
+        content_layout.setSpacing(0)
+        
+        # Sidebar (ListWidget)
+        self.sidebar = QListWidget()
+        self.sidebar.setFixedWidth(54)  # Compact width for symbols
+        self.sidebar.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.sidebar.setStyleSheet(f"""
+            QListWidget {{
+                background: #0f0f13;
+                border: none;
+                border-right: 1px solid #1a1a2e;
+                outline: none;
             }}
-            QTabBar::tab {{
-                background: {COLORS['surface']};
-                color: {COLORS['text_secondary']};
-                padding: 12px 8px;
-                border: 1px solid {COLORS['border']};
-                border-right: none;
-                border-top-left-radius: 6px;
-                border-bottom-left-radius: 6px;
-                font-size: 10pt;
-                font-weight: bold;
-                min-width: 80px;
+            QListWidget::item {{
+                height: 48px;
+                color: #b0b0c8;
+                border-bottom: 1px solid #1a1a2e;
+                border-radius: 0px;
+                margin: 0px;
             }}
-            QTabBar::tab:selected {{
-                background: {COLORS['primary_light']};
-                color: {COLORS['text_primary']};
-                border-right: 2px solid {COLORS['seeker']};
+            QListWidget::item:selected {{
+                color: #D4AF37;
+                border-right: 3px solid #D4AF37;
+            }}
+            QListWidget::item:hover {{
+                color: #e0e0e0;
             }}
         """)
         
-        # Create property displays for all 7 layers with metal names
+        # Content Stack
+        self.stack = QStackedWidget()
+        
+        # Planetary symbols for 7 layers (innermost to outermost)
+        PLANETARY_SYMBOLS = ["☽", "☿", "♀", "☉", "♂", "♃", "♄"]
+
+        # Define subtle metal/planet background colors (visible but dark)
+        # Sequence: Moon, Mercury, Venus, Sun, Mars, Jupiter, Saturn
+        LAYER_BG_COLORS = [
+            "#2A2A38", # Moon (Silver/Blue tint)
+            "#382A20", # Mercury (Orange/Bronze tint)
+            "#203820", # Venus (Green/Copper tint)
+            "#383418", # Sun (Gold/Yellow tint)
+            "#382020", # Mars (Red/Iron tint)
+            "#202038", # Jupiter (Blue/Tin tint)
+            "#282030", # Saturn (Indigo/Lead tint)
+        ]
+        
+        # Create property displays for all 7 layers
         self.layer_props: List[QWidget] = []
         for i in range(self.service.num_layers):
             layer = i + 1
-            metal_name = (NestedHeptagonsService.METAL_NAMES[i] 
-                         if i < len(NestedHeptagonsService.METAL_NAMES) 
-                         else f"Layer {layer}")
+            symbol = (PLANETARY_SYMBOLS[i] 
+                     if i < len(PLANETARY_SYMBOLS) 
+                     else f"L{layer}")
             
             prop_widget = self._create_property_form()
             self.layer_props.append(prop_widget)
-            tabs.addTab(prop_widget, metal_name)
+            
+            # CRITICAL: Set unique object name for this content widget
+            widget_name = f"layer_prop_{i}"
+            prop_widget.setObjectName(widget_name)
+            
+            # Apply metallic background color to the CONTENT widget, not the sidebar item
+            if i < len(LAYER_BG_COLORS):
+                prop_widget.setStyleSheet(f"""
+                    QWidget#{widget_name} {{
+                        background-color: {LAYER_BG_COLORS[i]};
+                    }}
+                """)
+            
+            # Add to stack
+            self.stack.addWidget(prop_widget)
+            
+            # Add to sidebar
+            item = QListWidgetItem(symbol)
+            item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            item.setFont(QFont("Segoe UI Symbol", 16))
+            
+            # Keep sidebar item background color for visual indicator
+            if i < len(LAYER_BG_COLORS):
+                 item.setBackground(QBrush(QColor(LAYER_BG_COLORS[i])))
+            
+            if i < len(NestedHeptagonsService.PLANETARY_NAMES):
+                planet = NestedHeptagonsService.PLANETARY_NAMES[i]
+                metal = NestedHeptagonsService.METAL_NAMES[i] if i < len(NestedHeptagonsService.METAL_NAMES) else ""
+                tooltip = f"Layer {layer}: {planet} ({metal})"
+                item.setToolTip(tooltip)
+            
+            self.sidebar.addItem(item)
+
+        # -- ADD SUMMARY STAR TAB --
+        self.summary_prop = self._create_property_form(read_only=True)
         
-        layout.addWidget(tabs)
+        # Set unique object name and apply slate gray background
+        self.summary_prop.setObjectName("summary_prop_widget")
+        self.summary_prop.setStyleSheet("""
+            QWidget#summary_prop_widget {
+                background-color: #2C3E50;
+            }
+        """)
+        
+        self.stack.addWidget(self.summary_prop)
+        
+        star_item = QListWidgetItem("★")
+        star_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+        star_item.setFont(QFont("Segoe UI Symbol", 18))  # Slightly larger star
+        star_item.setToolTip("Total Aggregates (Sum of All Layers)")
+        # Style the star differently to denote its special status
+        star_item.setForeground(QColor(COLORS['accent']))
+        # Also apply slate gray to the sidebar item
+        star_item.setBackground(QBrush(QColor("#2C3E50")))
+        
+        self.sidebar.addItem(star_item)
+            
+        # Connect sidebar to stack and update status
+        self.sidebar.currentRowChanged.connect(self.stack.setCurrentIndex)
+        self.sidebar.currentRowChanged.connect(self._update_status_bar)
+        
+        # Select first item
+        self.sidebar.setCurrentRow(0)
+        
+        content_layout.addWidget(self.sidebar)
+        content_layout.addWidget(self.stack)
+        layout.addLayout(content_layout)
         
         return panel
     
-    def _create_property_form(self) -> QWidget:
+    def _create_property_form(self, read_only: bool = False) -> QWidget:
         """Create a form with editable property fields (bidirectional)."""
         widget = QWidget()
         layout = QFormLayout(widget)
         layout.setSpacing(8)
         
         spinboxes = {}
+        # Property icons and map
         property_map = [
-            ("Edge Length", "edge_length"),
-            ("Perimeter", "perimeter"),
-            ("Area", "area"),
-            ("Short Diagonal", "short_diagonal"),
-            ("Long Diagonal", "long_diagonal"),
-            ("Inradius", "inradius"),
-            ("Circumradius", "circumradius"),
-            ("Incircle Circ.", "incircle_circumference"),
-            ("Circumcircle Circ.", "circumcircle_circumference"),
+            ("⬡ Edge Length", "edge_length"),
+            ("⬢ Perimeter", "perimeter"),
+            ("▣ Area", "area"),
+            ("⬗ Short Diagonal", "short_diagonal"),
+            ("⬖ Long Diagonal", "long_diagonal"),
+            ("⊙ Inradius", "inradius"),
+            ("⊚ Circumradius", "circumradius"),
+            ("○ Incircle Circ.", "incircle_circumference"),
+            ("⊙ Circumcircle Circ.", "circumcircle_circumference"),
         ]
         
-        for display_name, prop_key in property_map:
+        # Add group separators
+        group_idx = 0
+        for idx, (display_name, prop_key) in enumerate(property_map):
+            # Add separator after Area (lengths/perimeters vs circles/radii)
+            if idx == 2 or idx == 4:
+                separator = QFrame()
+                separator.setFrameShape(QFrame.Shape.HLine)
+                separator.setStyleSheet("background-color: #3a3a5e; margin: 8px 0;")
+                separator.setFixedHeight(1)
+                layout.addRow(separator)
+            
             spinbox = QDoubleSpinBox()
             spinbox.setRange(0.0001, 1e15)  # Essentially unbounded
             spinbox.setDecimals(self._decimal_precision)
-            spinbox.setFont(QFont("Georgia", 10))
-            spinbox.setStyleSheet(f"color: {COLORS['text_primary']};")
+            spinbox.setFont(QFont("Arial", 10))
+            # Explicitly set color here to override any conflicting sheets
+            spinbox.setStyleSheet(f"""
+                QDoubleSpinBox {{
+                    color: #e0e0e0; 
+                    background-color: #1a1a2e;
+                    border: 1px solid #3a3a5e;
+                    border-radius: 4px;
+                    padding: 4px;
+                }}
+            """)
             # Store property key as object property for later retrieval
             spinbox.setProperty("prop_key", prop_key)
-            layout.addRow(f"{display_name}:", spinbox)
+            
+            # Select all text on focus for better UX
+            if not read_only:
+                from PyQt6.QtCore import QTimer
+                def on_focus_in(event, sb=spinbox):
+                    QDoubleSpinBox.focusInEvent(sb, event)
+                    QTimer.singleShot(0, lambda: sb.lineEdit().selectAll() if sb.lineEdit() else None)
+                spinbox.focusInEvent = on_focus_in
+            
+            if read_only:
+                spinbox.setReadOnly(True)
+                spinbox.setButtonSymbols(QDoubleSpinBox.ButtonSymbols.NoButtons)
+                spinbox.setStyleSheet(f"color: {COLORS['accent']}; font-weight: bold; background: transparent; border: none;")
+            
+            # Override context menu to show only "Send to Quadset Analysis"
+            spinbox.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+            spinbox.customContextMenuRequested.connect(
+                lambda pos, sb=spinbox: self._show_spinbox_context_menu(sb)
+            )
+            
+            # Also set policy on internal lineEdit as it intercepts mouse clicks
+            if spinbox.lineEdit():
+                spinbox.lineEdit().setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+                spinbox.lineEdit().customContextMenuRequested.connect(
+                    lambda pos, sb=spinbox: self._show_spinbox_context_menu(sb)
+                )
+            
+            
+            # Create styled label with bright text
+            label = QLabel(f"{display_name}:")
+            label.setStyleSheet("color: #b8c0d0; font-weight: bold; font-family: 'Arial';")
+            layout.addRow(label, spinbox)
             spinboxes[display_name] = spinbox
         
         widget.spinboxes = spinboxes
@@ -629,8 +973,9 @@ class NestedHeptagonsWindow(QWidget):
         precision = int(value)
         self._decimal_precision = precision
         
-        # Update all spinboxes in all layer tabs
-        for layer_widget in self.layer_props:
+        # Update all spinboxes in all layer tabs AND summary tab
+        all_widgets = self.layer_props + [self.summary_prop]
+        for layer_widget in all_widgets:
             spinboxes = layer_widget.spinboxes  # type: ignore[reportAttributeAccessIssue]
             for spinbox in spinboxes.values():
                 current_value = spinbox.value()
@@ -646,7 +991,8 @@ class NestedHeptagonsWindow(QWidget):
         # Update display options
         self.canvas.show_circumcircle = self.circumcircle_check.isChecked()
         self.canvas.show_incircle = self.incircle_check.isChecked()
-        self.canvas.show_diagonals = self.diagonals_check.isChecked()
+        self.canvas.show_short_diagonals = self.short_diagonals_check.isChecked()
+        self.canvas.show_long_diagonals = self.long_diagonals_check.isChecked()
         self.canvas.show_labels = self.labels_check.isChecked()
         self.canvas.update()
     
@@ -657,9 +1003,15 @@ class NestedHeptagonsWindow(QWidget):
             layer = i + 1
             props = self.service.layer_properties(layer)
             self._update_property_display(self.layer_props[i], props, layer)
+            
+        # Update summary aggregates
+        agg_props = self.service.get_aggregate_properties()
+        # For summary, we pass layer=0 or -1, but it's read-only anyway so signals aren't connected
+        self._update_property_display(self.summary_prop, agg_props, layer=-1, read_only=True)
+            
         self.canvas.update()
     
-    def _update_property_display(self, widget: QWidget, props, layer: int) -> None:
+    def _update_property_display(self, widget: QWidget, props, layer: int, read_only: bool = False) -> None:
         """Update a property form with new values and connect bidirectional signals."""
         spinboxes = widget.spinboxes  # type: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownVariableType]
         
@@ -667,27 +1019,28 @@ class NestedHeptagonsWindow(QWidget):
         for spinbox in spinboxes.values():
             spinbox.blockSignals(True)
         
-        # Update values
-        spinboxes["Edge Length"].setValue(props.edge_length)
-        spinboxes["Perimeter"].setValue(props.perimeter)
-        spinboxes["Area"].setValue(props.area)
-        spinboxes["Short Diagonal"].setValue(props.short_diagonal)
-        spinboxes["Long Diagonal"].setValue(props.long_diagonal)
-        spinboxes["Inradius"].setValue(props.inradius)
-        spinboxes["Circumradius"].setValue(props.circumradius)
-        spinboxes["Incircle Circ."].setValue(props.incircle_circumference)
-        spinboxes["Circumcircle Circ."].setValue(props.circumcircle_circumference)
+        # Update values (use exact keys from _create_property_form display_name)
+        spinboxes["⬡ Edge Length"].setValue(props.edge_length)
+        spinboxes["⬢ Perimeter"].setValue(props.perimeter)
+        spinboxes["▣ Area"].setValue(props.area)
+        spinboxes["⬗ Short Diagonal"].setValue(props.short_diagonal)
+        spinboxes["⬖ Long Diagonal"].setValue(props.long_diagonal)
+        spinboxes["⊙ Inradius"].setValue(props.inradius)
+        spinboxes["⊚ Circumradius"].setValue(props.circumradius)
+        spinboxes["○ Incircle Circ."].setValue(props.incircle_circumference)
+        spinboxes["⊙ Circumcircle Circ."].setValue(props.circumcircle_circumference)
         
-        # Reconnect signals for bidirectional solving
-        for spinbox in spinboxes.values():
-            spinbox.blockSignals(False)
-            # Disconnect any existing connections
-            try:
-                spinbox.editingFinished.disconnect()
-            except:
-                pass
-            # Connect to bidirectional solver with layer context (triggers on Enter or focus loss)
-            spinbox.editingFinished.connect(lambda l=layer, sb=spinbox: self._on_property_changed(l, sb.property("prop_key"), sb.value()))
+        # Reconnect signals for bidirectional solving (ONLY if not read_only)
+        if not read_only:
+            for spinbox in spinboxes.values():
+                spinbox.blockSignals(False)
+                # Disconnect any existing connections
+                try:
+                    spinbox.editingFinished.disconnect()
+                except:
+                    pass
+                # Connect to bidirectional solver with layer context (triggers on Enter or focus loss)
+                spinbox.editingFinished.connect(lambda l=layer, sb=spinbox: self._on_property_changed(l, sb.property("prop_key"), sb.value()))
     
     def _on_property_changed(self, layer: int, prop_key: str, value: float) -> None:
         """Handle bidirectional property change from any spinbox."""
@@ -697,8 +1050,8 @@ class NestedHeptagonsWindow(QWidget):
         except Exception as e:
             print(f"Error setting layer {layer} property {prop_key}: {e}")
     
-    def _show_context_menu(self, pos) -> None:  # type: ignore[reportMissingParameterType]
-        """Show custom context menu with only Send to Quadsert option."""
+    def _show_spinbox_context_menu(self, spinbox) -> None:  # type: ignore[reportMissingParameterType]
+        """Show custom context menu for spinboxes."""
         menu = QMenu(self)
         menu.setStyleSheet(f"""
             QMenu {{
@@ -717,8 +1070,41 @@ class NestedHeptagonsWindow(QWidget):
             }}
         """)
         
-        send_action = QAction("⬢ Send to Quadsert Analysis", self)
-        send_action.triggered.connect(self._send_to_quadsert)
+        # Standard action for all spinboxes: Send single value to Quadset
+        send_action = QAction("⬢ Send to Quadset Analysis", self)
+        send_action.triggered.connect(lambda: self._send_to_quadsert(spinbox.value()))
         menu.addAction(send_action)
         
-        menu.exec(self.mapToGlobal(pos))
+        # Special action for SUMMARY spinboxes (read-only): Send components to Transitions
+        if spinbox.isReadOnly():
+            hept_action = QAction("⬡ Send to Heptagon Transitions", self)
+            hept_action.triggered.connect(lambda: self._send_to_heptagon_transitions(spinbox.property("prop_key")))
+            menu.addAction(hept_action)
+        
+        from PyQt6.QtGui import QCursor
+        menu.exec(QCursor.pos())
+        
+    def _send_to_heptagon_transitions(self, prop_key: str) -> None:
+        """Send the 7 constituent values of a summary total to Geometric Transitions."""
+        if not self.window_manager:
+            print("⚠️ Cannot send to Transitions: No window manager available")
+            return
+            
+        # Gather the 7 individual layer values that make up this total
+        all_props = self.service.all_properties()
+        values = []
+        for prop in all_props:
+            # Get value from dataclass by key
+            val = getattr(prop, prop_key)
+            # Round to integer for TQ analysis (Transition logic requires ints)
+            values.append(int(round(val)))
+            
+        print(f"📤 Sending to Heptagon Transitions: {values} (source: {prop_key})")
+            
+        navigation_bus.request_window.emit(
+            "geometric_transitions",
+            {
+                "window_manager": self.window_manager,
+                "initial_values": values
+            }
+        )

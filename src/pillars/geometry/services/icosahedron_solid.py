@@ -1,4 +1,4 @@
 """Backward compatibility shim for IcosahedronSolidService."""
 from shared.services.geometry.icosahedron import (
-    IcosahedronSolidService, IcosahedronSolidCalculator, IcosahedronMetrics
+    IcosahedronSolidService, IcosahedronSolidResult, IcosahedronMetrics
 )

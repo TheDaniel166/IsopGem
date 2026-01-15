@@ -1,7 +1,9 @@
 {
   "venvPath": ".",
   "venv": ".venv",
-  "include": ["src"],
+  "include": [
+    "src"
+  ],
   "ignore": [
     "scripts/**",
     "tests/**",
@@ -11,14 +13,19 @@
     "saved_documents/**",
     "experiments/**",
     "anamnesis/**",
-    "workflow_scripts/**"
+    "workflow_scripts/**",
+    "sophia-tools/**",
+    ".qoder/**"
   ],
   "exclude": [
     ".venv/**",
     "**/__pycache__/**",
-    "**/node_modules/**"
+    "**/node_modules/**",
+    "sophia-tools/**"
   ],
-  "extraPaths": ["src"],
+  "extraPaths": [
+    "src"
+  ],
   "typeCheckingMode": "strict",
   "executionEnvironments": [
     {

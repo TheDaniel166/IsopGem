@@ -2,7 +2,7 @@
 
 <!-- Last Verified: 2026-01-11 -->
 
-**Status: Proposed**
+**Status: In Progress**
 
 **Depends On:**
 - ADR-010: Canon DSL Adoption
@@ -179,18 +179,19 @@ We will migrate all 99+ geometry shapes to the Canon DSL architecture over **6 p
 
 **Deliverables:**
 - ✅ Generic `GeometrySolver` ABC (already exists)
-- ✅ Generic `GeometryRealizer` ABC (may need enhancement)
+- ✅ Generic `GeometryRealizer` ABC (exists)
 - New: `CircleSolver`, `CircleRealizer`, `CircleShapeService`
 - New: `SquareSolver`, `SquareRealizer`, `SquareShapeService`
 - New: `RectangleSolver`, `RectangleRealizer`, `RectangleShapeService`
 - New: `EllipseSolver`, `EllipseRealizer`, `EllipseShapeService`
-- New: `TetrahedronSolver`, `TetrahedronRealizer`, `TetrahedronSolidService`
-- New: `CubeSolver`, `CubeRealizer`, `CubeSolidService`
+- ✅ `TetrahedronSolver`, `TetrahedronRealizer`, `TetrahedronSolidService`
+- ✅ `CubeSolver`, `CubeRealizer`, `CubeSolidService`
 - New: `OctahedronSolver`, `OctahedronRealizer`, `OctahedronSolidService`
 - New: `DodecahedronSolver`, `DodecahedronRealizer`, `DodecahedronSolidService`
 - New: `IcosahedronSolver`, `IcosahedronRealizer`, `IcosahedronSolidService`
 - Delete: `CircleShape`, `SquareShape`, `RectangleShape`, `EllipseShape`
-- Delete: `TetrahedronSolidCalculator`, `CubeSolidCalculator`, `OctahedronSolidCalculator`, `DodecahedronSolidCalculator`, `IcosahedronSolidCalculator`
+- Delete: `OctahedronSolidCalculator`, `DodecahedronSolidCalculator`, `IcosahedronSolidCalculator`
+- ✅ Delete: `TetrahedronSolidCalculator`, `CubeSolidCalculator` (Refactored to Service)
 
 ---
 
@@ -203,7 +204,7 @@ We will migrate all 99+ geometry shapes to the Canon DSL architecture over **6 p
 
 | Shape Family | Canonical Parameters | Complexity | Hours | Priority |
 |--------------|---------------------|------------|-------|----------|
-| RegularPolygon | `n_sides, circumradius` | Medium | 12 | 🔥 Critical (generic pattern) |
+| RegularPolygon | `n_sides, circumradius` | Medium | 12 | ✅ DONE (generic pattern) |
 
 **Implementation:**
 ```python
@@ -244,11 +245,11 @@ class RegularPolygonSolver(GeometrySolver):
 | GoldenTriangle | `base` (φ-mediated) | Medium | 7 |
 
 **Deliverables:**
-- New: `RegularPolygonSolver` (generic)
+- ✅ `RegularPolygonSolver` (generic)
 - New: `EquilateralTriangleSolver`, `RightTriangleSolver`, etc. (9 solvers)
 - New: Corresponding 9 Realizers
 - New: Corresponding 9 ShapeServices
-- Delete: `RegularPolygonShape` (if it exists as monolithic)
+- ✅ Delete: `RegularPolygonShape` (if it exists as monolithic)
 - Delete: 9 triangle `*Shape` classes
 - Delete: `TriangleSolverShape` (old bidirectional solver)
 
@@ -411,7 +412,7 @@ class RegularAntiprismSolver(GeometrySolver):
 | Cylinder | `radius, height` | Simple | 6 |
 | Cone | `radius, height` | Simple | 6 |
 | Torus | `major_radius, minor_radius` | Medium | 8 |
-| TorusKnot | `major_radius, minor_radius, p, q` | Complex | 10 |
+| TorusKnot | `major_radius, minor_radius, p, q` | Complex | 10 | ✅ DONE |
 
 #### 4D Projection (1 shape)
 
@@ -448,10 +449,10 @@ class RegularAntiprismSolver(GeometrySolver):
 ### Pre-Migration Setup
 
 - [ ] **Create Migration Tracking Document** — Spreadsheet with all 99+ shapes
-- [ ] **Feature Flag System** — `use_canon_solver: bool` in geometry_definitions.py
-- [ ] **Solver ABC Finalization** — Ensure `GeometrySolver` supports all patterns
-- [ ] **Realizer ABC Creation** — Define `GeometryRealizer` base class
-- [ ] **Service Naming Convention** — Rename `*Shape` → `*ShapeService`, `*SolidCalculator` → `*SolidService`
+- [x] **Feature Flag System** — `use_canon_solver: bool` in geometry_definitions.py
+- [x] **Solver ABC Finalization** — Ensure `GeometrySolver` supports all patterns
+- [x] **Realizer ABC Creation** — Define `GeometryRealizer` base class
+- [x] **Service Naming Convention** — Rename `*Shape` → `*ShapeService`, `*SolidCalculator` → `*SolidService` (Partial)
 - [ ] **Test Infrastructure** — Generic test suite for solvers/realizers
 - [ ] **Documentation Template** — Standard docstring format for Canon components
 - [ ] **Derivation Comments Audit** — Catalog all mathematical derivations to preserve (34 files identified)

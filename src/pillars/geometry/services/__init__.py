@@ -1,11 +1,11 @@
 """Geometry services module."""
 from .base_shape import GeometricShape, ShapeProperty
 from .annulus_shape import AnnulusShape
-from .circle_shape import CircleShape
+from .circle_shape import CircleShapeService
 from .crescent_shape import CrescentShape
-from .ellipse_shape import EllipseShape
+from .ellipse_shape import EllipseShapeService
 from .rose_curve_shape import RoseCurveShape
-from .square_shape import SquareShape, RectangleShape
+from .square_shape import SquareShapeService, RectangleShapeService
 from .quadrilateral_shape import (
     ParallelogramShape,
     RhombusShape,
@@ -31,6 +31,7 @@ from .triangle_shape import (
     GoldenTriangleShape,
     TriangleSolverShape,
 )
+from .triangle_shape_service import TriangleShapeService
 from .vault_of_hestia_shape import VaultOfHestiaShape
 from .polygon_shape import RegularPolygonShape
 from .vesica_piscis_shape import VesicaPiscisShape
@@ -46,11 +47,11 @@ from .polygonal_numbers import (
     star_number_points,
     max_radius,
 )
-from .tetrahedron_solid import TetrahedronSolidService, TetrahedronSolidCalculator
-from .cube_solid import CubeSolidService, CubeSolidCalculator
-from .octahedron_solid import OctahedronSolidService, OctahedronSolidCalculator
-from .dodecahedron_solid import DodecahedronSolidService, DodecahedronSolidCalculator
-from .icosahedron_solid import IcosahedronSolidService, IcosahedronSolidCalculator
+from .tetrahedron_solid import TetrahedronSolidService
+from .cube_solid import CubeSolidService
+from .octahedron_solid import OctahedronSolidService
+from .dodecahedron_solid import DodecahedronSolidService
+from .icosahedron_solid import IcosahedronSolidService
 from .tesseract_solid import TesseractSolidService, TesseractSolidCalculator
 from .square_pyramid_solid import SquarePyramidSolidService, SquarePyramidSolidCalculator
 from .square_pyramid_frustum_solid import (
@@ -164,11 +165,11 @@ __all__ = [
     'GeometricShape',
     'ShapeProperty',
     'AnnulusShape',
-    'CircleShape',
+    'CircleShapeService',
     'CrescentShape',
-    'EllipseShape',
-    'SquareShape',
-    'RectangleShape',
+    'EllipseShapeService',
+    'SquareShapeService',
+    'RectangleShapeService',
     'ParallelogramShape',
     'RhombusShape',
     'TrapezoidShape',
@@ -186,6 +187,7 @@ __all__ = [
     'ThirtySixtyNinetyTriangleShape',
     'GoldenTriangleShape',
     'TriangleSolverShape',
+    'TriangleShapeService',
     'CyclicQuadrilateralShape',
     'TangentialQuadrilateralShape',
     'BicentricQuadrilateralShape',
@@ -205,15 +207,10 @@ __all__ = [
     'VaultOfHestiaShape',
     'VesicaPiscisShape',
     'TetrahedronSolidService',
-    'TetrahedronSolidCalculator',
     'CubeSolidService',
-    'CubeSolidCalculator',
     'OctahedronSolidService',
-    'OctahedronSolidCalculator',
     'DodecahedronSolidService',
-    'DodecahedronSolidCalculator',
     'IcosahedronSolidService',
-    'IcosahedronSolidCalculator',
     'TesseractSolidService',
     'TesseractSolidCalculator',
     'SquarePyramidSolidService',
@@ -318,4 +315,3 @@ __all__ = [
     'GyroelongatedSquarePrismSolidService',
     'GyroelongatedSquarePrismSolidCalculator',
 ]
-

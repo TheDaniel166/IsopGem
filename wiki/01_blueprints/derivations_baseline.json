@@ -1,0 +1,202 @@
+{
+  "annulus_shape.py": {
+    "_update_metrics": {
+      "markers": [
+        "DERIVATIONS:",
+        "HERMETIC NOTE"
+      ],
+      "length": 2754,
+      "preview": "Compute all annulus (ring) properties.\n\nANNULUS DERIVATIONS:\n====================\n\nDefinition:\n-----------\nAn annulus is the region between two concentric circles.\n\n**Ring Width**: w = R - r\nThe radia..."
+    }
+  },
+  "cone_solid.py": {
+    "compute_metrics": {
+      "markers": [
+        "DERIVATIONS:",
+        "CORE FORMULAS",
+        "AHA MOMENT",
+        "HERMETIC NOTE"
+      ],
+      "length": 5766,
+      "preview": "Compute all geometric metrics for a right circular cone.\n\nDEFINITION:\n===========\nA cone is the solid formed by connecting all points on a circular base\nto a single apex point directly above the cente..."
+    }
+  },
+  "crescent_shape.py": {
+    "_update_metrics": {
+      "markers": [
+        "DERIVATIONS:",
+        "HERMETIC NOTE"
+      ],
+      "length": 3889,
+      "preview": "Compute crescent (lune) properties.\n\nCRESCENT (LUNE) DERIVATIONS:\n=============================\n\nDefinition:\n-----------\nA crescent (or lune) is the **region between two intersecting circular arcs**,\n..."
+    }
+  },
+  "cylinder_solid.py": {
+    "compute_metrics": {
+      "markers": [
+        "DERIVATIONS:",
+        "CORE FORMULAS",
+        "AHA MOMENT",
+        "HERMETIC NOTE"
+      ],
+      "length": 4685,
+      "preview": "Compute all geometric metrics for a right circular cylinder.\n\nDEFINITION:\n===========\nA cylinder is a prism with circular bases\u2014a solid formed by extruding\na circle along a perpendicular axis.\n\nParame..."
+    }
+  },
+  "ellipse_shape.py": {
+    "_reconcile_axes": {
+      "markers": [
+        "DERIVATIONS:",
+        "HERMETIC NOTE"
+      ],
+      "length": 3720,
+      "preview": "Compute all ellipse properties from semi-major and semi-minor axes.\n\nELLIPSE DERIVATIONS:\n====================\n\nDefinition:\n-----------\nAn ellipse is the locus of points where the sum of distances to ..."
+    }
+  },
+  "oblique_prism_solid.py": {
+    "build": {
+      "markers": [
+        "AHA MOMENT",
+        "HERMETIC NOTE"
+      ],
+      "length": 6811,
+      "preview": "Build an oblique regular prism with lateral offset (skew).\n\nTHE OBLIQUE PRISM - LEANING TOWER GEOMETRY:\n===========================================\n\nDEFINITION:\n-----------\nAn oblique prism is a prism..."
+    }
+  },
+  "rectangular_prism_solid.py": {
+    "_compute_metrics": {
+      "markers": [
+        "AHA MOMENT",
+        "HERMETIC NOTE"
+      ],
+      "length": 6064,
+      "preview": "Calculate metrics for a right rectangular prism (cuboid, box).\n\nTHE RECTANGULAR PRISM - THE FUNDAMENTAL BOX:\n============================================\n\nDEFINITION:\n-----------\nA rectangular prism (..."
+    }
+  },
+  "rectangular_pyramid_solid.py": {
+    "_compute_metrics": {
+      "markers": [
+        "AHA MOMENT",
+        "HERMETIC NOTE"
+      ],
+      "length": 7163,
+      "preview": "Calculate metrics for a right rectangular pyramid.\n\nTHE RECTANGULAR PYRAMID - CONVERGENCE TO A POINT:\n==================================================\n\nDEFINITION:\n-----------\nA rectangular pyramid ..."
+    }
+  },
+  "regular_prism_solids.py": {
+    "_compute_metrics": {
+      "markers": [
+        "AHA MOMENT",
+        "HERMETIC NOTE"
+      ],
+      "length": 6483,
+      "preview": "Calculate metrics for a right regular n-gonal prism.\n\nTHE REGULAR PRISM - EXTRUSION OF POLYGONS:\n==========================================\n\nDEFINITION:\n-----------\nA regular prism is a prism whose ba..."
+    }
+  },
+  "regular_pyramid_frustum_solids.py": {
+    "_compute_metrics": {
+      "markers": [
+        "AHA MOMENT",
+        "HERMETIC NOTE"
+      ],
+      "length": 7444,
+      "preview": "Calculate metrics for a right regular n-gonal pyramid frustum (truncated pyramid).\n\nTHE PYRAMID FRUSTUM - TRUNCATED CONVERGENCE:\n============================================\n\nDEFINITION:\n-----------\nA..."
+    }
+  },
+  "regular_pyramid_solids.py": {
+    "_compute_metrics": {
+      "markers": [
+        "AHA MOMENT",
+        "HERMETIC NOTE"
+      ],
+      "length": 7199,
+      "preview": "Calculate metrics for a right regular n-gonal pyramid.\n\nTHE REGULAR PYRAMID - TAPERING FROM POLYGON TO POINT:\n======================================================\n\nDEFINITION:\n-----------\nA regular ..."
+    }
+  },
+  "rose_curve_shape.py": {
+    "_update_metrics": {
+      "markers": [
+        "DERIVATIONS:",
+        "HERMETIC NOTE"
+      ],
+      "length": 4353,
+      "preview": "Compute rose (rhodonea) curve properties.\n\nROSE CURVE (RHODONEA) DERIVATIONS:\n===================================\n\nDefinition:\n-----------\nA rose curve (rhodonea curve) is a **polar sinusoid** defined..."
+    }
+  },
+  "sphere_solid.py": {
+    "compute_metrics": {
+      "markers": [
+        "DERIVATIONS:",
+        "CORE FORMULAS",
+        "AHA MOMENT",
+        "HERMETIC NOTE"
+      ],
+      "length": 8052,
+      "preview": "Compute all geometric metrics for a perfect sphere from radius.\n\nTHE PERFECT FORM:\n=================\nThe sphere is the MOST PERFECT three-dimensional form\u2014the embodiment\nof absolute symmetry, optimal ..."
+    }
+  },
+  "square_pyramid_solid.py": {
+    "_compute_metrics": {
+      "markers": [
+        "AHA MOMENT",
+        "HERMETIC NOTE"
+      ],
+      "length": 7548,
+      "preview": "Calculate metrics for a right square pyramid.\n\nTHE SQUARE PYRAMID - THE ICONIC PYRAMID:\n=========================================\n\nDEFINITION:\n-----------\nThe square pyramid is THE pyramid\u2014the archety..."
+    }
+  },
+  "torus_knot_solid.py": {
+    "_compute_metrics": {
+      "markers": [
+        "DERIVATIONS:",
+        "AHA MOMENT",
+        "HERMETIC NOTE"
+      ],
+      "length": 13039,
+      "preview": "Compute all geometric metrics for a (p,q)-torus knot.\n\nDERIVATIONS:\n===========\n\nParametric Definition:\n----------------------\nA (p,q)-torus knot is a closed curve that winds p times around the\nmajor ..."
+    }
+  },
+  "torus_solid.py": {
+    "_compute_metrics": {
+      "markers": [
+        "DERIVATIONS:",
+        "AHA MOMENT",
+        "HERMETIC NOTE"
+      ],
+      "length": 11197,
+      "preview": "Compute all geometric metrics for a torus from major and minor radii.\n\nDERIVATIONS:\n===========\n\nParametric Definition:\n----------------------\nA torus is the surface of revolution generated by revolvi..."
+    }
+  },
+  "vault_of_hestia_shape.py": {
+    "_update_metrics": {
+      "markers": [
+        "DERIVATIONS:",
+        "CORE FORMULAS",
+        "AHA MOMENT"
+      ],
+      "length": 5482,
+      "preview": "Compute all geometric metrics for the Vault of Hestia from side length.\n\nTHE VAULT OF HESTIA - CORE FORMULAS & DERIVATIONS:\n===================================================\n\nConstruction:\n- Square ..."
+    }
+  },
+  "vault_of_hestia_solid.py": {
+    "_compute_metrics": {
+      "markers": [
+        "DERIVATIONS:",
+        "CORE FORMULAS",
+        "AHA MOMENT"
+      ],
+      "length": 8528,
+      "preview": "Compute all geometric metrics for the 3D Vault of Hestia from side length.\n\nTHE VAULT OF HESTIA (3D) - CORE FORMULAS & DERIVATIONS:\n========================================================\n\nConstructi..."
+    }
+  },
+  "vesica_piscis_shape.py": {
+    "_update_metrics": {
+      "markers": [
+        "DERIVATIONS:",
+        "HERMETIC NOTE"
+      ],
+      "length": 3894,
+      "preview": "Compute lens (vesica piscis) properties.\n\nVESICA PISCIS DERIVATIONS:\n==========================\n\nDefinition:\n-----------\nThe vesica piscis is the **lens-shaped region** formed by the intersection\nof t..."
+    }
+  }
+}

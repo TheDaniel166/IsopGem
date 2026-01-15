@@ -27,6 +27,8 @@ from PyQt6.QtGui import QDoubleValidator, QKeySequence, QShortcut
 from PyQt6.QtWidgets import (
     QApplication,
     QCheckBox,
+    QComboBox,
+    QDialog,
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -35,6 +37,7 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QScrollArea,
     QSlider,
+    QSpinBox,
     QSplitter,
     QTabWidget,
     QTextEdit,
@@ -45,10 +48,12 @@ from PyQt6.QtWidgets import (
 from shared.ui import WindowManager
 from shared.ui.theme import COLORS, set_archetype
 
-from .adaptive_viewport import AdaptiveViewport
+from ..geometry3d.view3d import Geometry3DView
 from .history.history_entry import HistoryEntry
 from .history.history_manager import DeclarationHistory
+from .panels import PropertyPanel
 from .payloads.geometry_payload import GeometryPayload
+from .tabs import CanonTab, DisplayTab, HistoryTab, OutputTab, ToolsTab, ViewTab
 
 logger = logging.getLogger(__name__)
 
@@ -79,10 +84,10 @@ class UnifiedGeometryViewer(QMainWindow):
     Architecture:
         ┌──────────────┬─────────────────────┬──────────────────┐
         │  Properties  │      Viewport       │     Console      │
-        │    Panel     │  (AdaptiveViewport) │   (Tab Widget)   │
+        │    Panel     │  (Unified 3D View)  │   (Tab Widget)   │
         │              │                     │                  │
         │  • Title     │  ┌───────────────┐  │  Tabs:           │
-        │  • Inputs    │  │ 2D/3D View    │  │  • Display       │
+        │  • Inputs    │  │ 2D+3D Render  │  │  • Display       │
         │  • Derived   │  └───────────────┘  │  • View/Camera   │
         │              │                     │  • Output        │
         │  Canon Badge │  Status: ✓ · 24v   │  • History       │
@@ -150,11 +155,13 @@ class UnifiedGeometryViewer(QMainWindow):
         # Flag to block recalculation when restoring from history
         self._restoring_from_history = False
         
+        # Property panel manager
+        self._property_panel = PropertyPanel()
+        
         # UI references
-        self._property_inputs: Dict[str, QLineEdit] = {}
-        self._property_labels: Dict[str, QLabel] = {}
-        self._property_error_label: Optional[QLabel] = None
+        self._property_layout: Optional[QVBoxLayout] = None
         self._title_label: Optional[QLabel] = None
+        self._derivation_btn: Optional[QPushButton] = None
         self._status_label: Optional[QLabel] = None
         self._canon_badge: Optional[QPushButton] = None
         self._save_history_btn: Optional[QPushButton] = None
@@ -314,124 +321,18 @@ class UnifiedGeometryViewer(QMainWindow):
     
     def _build_properties_panel(self) -> QFrame:
         """Build the left properties panel."""
-        panel = QFrame()
-        panel.setObjectName("PropertiesPanel")
-        panel.setFrameShape(QFrame.Shape.StyledPanel)
-        panel.setStyleSheet(f"""
-            QFrame#PropertiesPanel {{
-                background-color: {COLORS['marble']};
-                border: 1px solid {COLORS['ash']};
-                border-radius: 8px;
-            }}
-        """)
+        panel, self._property_layout, self._derivation_btn, self._title_label = self._property_panel.build(
+            title="Select a Form",
+            on_formula_clicked=self._show_formula_dialog,
+            on_property_changed=self._on_property_changed,
+            on_derivation_clicked=self._show_derivation_dialog,
+            on_value_context_menu=self._show_value_context_menu,
+        )
         
-        layout = QVBoxLayout(panel)
-        layout.setContentsMargins(16, 16, 16, 16)
-        layout.setSpacing(12)
-        
-        # Title section with derivation button
-        title_row = QHBoxLayout()
-        title_row.setSpacing(12)
-        
-        self._title_label = QLabel("Select a Form")
-        self._title_label.setObjectName("FormTitle")
-        self._title_label.setStyleSheet(f"""
-            QLabel#FormTitle {{
-                color: {COLORS['void']};
-                font-size: 18px;
-                font-weight: 600;
-            }}
-        """)
-        title_row.addWidget(self._title_label)
-        title_row.addStretch()
-        
-        # Derivations button
-        self._derivation_btn = QPushButton("📖")
-        self._derivation_btn.setObjectName("DerivationBtn")
-        self._derivation_btn.setToolTip("View mathematical derivations & commentary")
-        self._derivation_btn.setFixedSize(32, 32)
-        self._derivation_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self._derivation_btn.setStyleSheet(f"""
-            QPushButton#DerivationBtn {{
-                background-color: {COLORS['seeker_soft']};
-                color: {COLORS['seeker']};
-                border: 1px solid {COLORS['seeker_mute']};
-                border-radius: 16px;
-                font-size: 16px;
-                padding: 0;
-            }}
-            QPushButton#DerivationBtn:hover {{
-                background-color: {COLORS['seeker_mute']};
-                border-color: {COLORS['seeker']};
-            }}
-            QPushButton#DerivationBtn:disabled {{
-                background-color: {COLORS['marble']};
-                color: {COLORS['mist']};
-                border-color: {COLORS['ash']};
-            }}
-        """)
-        self._derivation_btn.clicked.connect(self._show_derivation_dialog)
-        self._derivation_btn.setEnabled(False)  # Disabled until form selected
-        title_row.addWidget(self._derivation_btn)
-        
-        layout.addLayout(title_row)
-        
-        # Divider
-        divider = QFrame()
-        divider.setFrameShape(QFrame.Shape.HLine)
-        divider.setStyleSheet(f"background-color: {COLORS['ash']};")
-        divider.setFixedHeight(1)
-        layout.addWidget(divider)
-        
-        # Properties scroll area
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setFrameShape(QFrame.Shape.NoFrame)
-        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        
-        scroll_content = QWidget()
-        self._property_layout = QVBoxLayout(scroll_content)
-        self._property_layout.setContentsMargins(0, 0, 8, 0)
-        self._property_layout.setSpacing(8)
-        
-        # Placeholder
-        placeholder = QLabel("No form selected")
-        placeholder.setObjectName("PropertyPlaceholder")
-        placeholder.setStyleSheet(f"""
-            QLabel#PropertyPlaceholder {{
-                color: {COLORS['mist']};
-                font-style: italic;
-                padding: 20px;
-            }}
-        """)
-        placeholder.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self._property_layout.addWidget(placeholder)
-        self._property_placeholder = placeholder
-        
-        # Error label (hidden by default)
-        self._property_error_label = QLabel()
-        self._property_error_label.setObjectName("PropertyError")
-        self._property_error_label.setStyleSheet(f"""
-            QLabel#PropertyError {{
-                color: {COLORS['destroyer']};
-                background-color: {COLORS['destroyer_soft']};
-                padding: 8px;
-                border-radius: 4px;
-                font-size: 12px;
-            }}
-        """)
-        self._property_error_label.setWordWrap(True)
-        self._property_error_label.hide()
-        self._property_layout.addWidget(self._property_error_label)
-        
-        self._property_layout.addStretch()
-        
-        scroll.setWidget(scroll_content)
-        layout.addWidget(scroll, 1)
-        
-        # Canon Badge section
+        # Get the panel's parent layout and add Canon Badge section
+        panel_layout = panel.layout()
         canon_section = self._build_canon_badge_section()
-        layout.addWidget(canon_section)
+        panel_layout.addWidget(canon_section)
         
         return panel
     
@@ -564,10 +465,8 @@ class UnifiedGeometryViewer(QMainWindow):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         
-        # Adaptive viewport
-        self._viewport = AdaptiveViewport()
-        self._viewport.payload_changed.connect(self._on_viewport_payload_changed)
-        self._viewport.stats_changed.connect(self._on_viewport_stats_changed)
+        # Unified 3D viewport (handles both 2D and 3D)
+        self._viewport = Geometry3DView()
         layout.addWidget(self._viewport, 1)
         
         # Status bar
@@ -631,17 +530,17 @@ class UnifiedGeometryViewer(QMainWindow):
         # Tab widget
         self._console_tabs = QTabWidget()
         self._console_tabs.setObjectName("ConsoleTabs")
-        self._console_tabs.setUsesScrollButtons(False)  # Prevent scroll arrows
+        self._console_tabs.setUsesScrollButtons(True)  # Enable scroll arrows for 6+ tabs
         self._console_tabs.setStyleSheet(f"""
             QTabWidget#ConsoleTabs::pane {{
                 border: none;
                 background-color: {COLORS['marble']};
             }}
             QTabWidget#ConsoleTabs > QTabBar {{
-                qproperty-expanding: true;
+                qproperty-expanding: false;
             }}
             QTabWidget#ConsoleTabs QTabBar::scroller {{
-                width: 0px;
+                width: 20px;
             }}
             QTabWidget#ConsoleTabs QTabBar::tab {{
                 background-color: {COLORS['cloud']};
@@ -664,6 +563,7 @@ class UnifiedGeometryViewer(QMainWindow):
         # Build tabs
         self._console_tabs.addTab(self._build_display_tab(), "Display")
         self._console_tabs.addTab(self._build_view_tab(), "View")
+        self._console_tabs.addTab(self._create_tools_tab(), "Tools")
         self._console_tabs.addTab(self._build_output_tab(), "Output")
         self._console_tabs.addTab(self._build_history_tab(), "History")
         self._console_tabs.addTab(self._build_canon_tab(), "Canon")
@@ -674,121 +574,32 @@ class UnifiedGeometryViewer(QMainWindow):
     
     def _build_display_tab(self) -> QWidget:
         """Build the Display settings tab."""
-        tab = QWidget()
-        layout = QVBoxLayout(tab)
-        layout.setContentsMargins(16, 16, 16, 16)
-        layout.setSpacing(12)
+        display_tab = DisplayTab(self._viewport)
+        tab, checkboxes = display_tab.build()
         
-        # Section: Core Visibility
-        section1 = QLabel("Core Elements")
-        section1.setStyleSheet(f"""
-            color: {COLORS['stone']};
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        """)
-        layout.addWidget(section1)
-        
-        # Checkboxes for core elements
-        self._axes_checkbox = QCheckBox("Show Axes")
-        self._axes_checkbox.setChecked(True)
-        self._axes_checkbox.toggled.connect(self._viewport.set_axes_visible)
-        layout.addWidget(self._axes_checkbox)
-        
-        self._labels_checkbox = QCheckBox("Show Labels")
-        self._labels_checkbox.setChecked(False)  # Off by default
-        self._labels_checkbox.toggled.connect(self._viewport.set_labels_visible)
-        layout.addWidget(self._labels_checkbox)
-        
-        self._faces_checkbox = QCheckBox("Show Faces")
-        self._faces_checkbox.setChecked(True)
-        self._faces_checkbox.toggled.connect(self._viewport.set_show_faces)
-        layout.addWidget(self._faces_checkbox)
-        
-        self._edges_checkbox = QCheckBox("Show Edges")
-        self._edges_checkbox.setChecked(True)
-        self._edges_checkbox.toggled.connect(self._viewport.set_show_edges)
-        layout.addWidget(self._edges_checkbox)
-        
-        self._vertices_checkbox = QCheckBox("Show Vertices")
-        self._vertices_checkbox.setChecked(False)
-        self._vertices_checkbox.toggled.connect(self._viewport.set_show_vertices)
-        layout.addWidget(self._vertices_checkbox)
-        
-        # Section: 3D Special Elements
-        section2 = QLabel("3D Special")
-        section2.setStyleSheet(f"""
-            color: {COLORS['stone']};
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-top: 8px;
-        """)
-        layout.addWidget(section2)
-        
-        # Dual solid toggle (hidden for 2D)
-        self._dual_checkbox = QCheckBox("Show Dual Solid (Ghost)")
-        self._dual_checkbox.setChecked(False)
-        self._dual_checkbox.toggled.connect(self._viewport.set_dual_visible)
-        layout.addWidget(self._dual_checkbox)
-
-        # Circle/Sphere toggles (incircle, midsphere, circumsphere)
-        self._sphere_checkboxes: dict[str, QCheckBox] = {}
-        sphere_toggles = [
-            ("incircle", "Show Incircle"),
-            ("midsphere", "Show Midsphere"),
-            ("circumsphere", "Show Circumcircle"),
-        ]
-        for key, label in sphere_toggles:
-            cb = QCheckBox(label)
-            cb.setChecked(False)
-            cb.toggled.connect(lambda checked, k=key: self._viewport.set_sphere_visible(k, checked))
-            layout.addWidget(cb)
-            self._sphere_checkboxes[key] = cb
-        
-        # Section: Tools
-        section3 = QLabel("Tools")
-        section3.setStyleSheet(f"""
-            color: {COLORS['stone']};
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-top: 8px;
-        """)
-        layout.addWidget(section3)
-        
-        # Measure tool
-        self._measure_button = QPushButton("📏 Measure Tool")
-        self._measure_button.setObjectName("MeasureToolBtn")
-        self._measure_button.setCheckable(True)
-        self._measure_button.setCursor(Qt.CursorShape.PointingHandCursor)
-        self._measure_button.setStyleSheet(f"""
-            QPushButton#MeasureToolBtn {{
-                background-color: {COLORS['marble']};
-                border: 1px solid {COLORS['ash']};
-                border-radius: 8px;
-                padding: 8px 12px;
-                font-weight: 600;
-                color: {COLORS['void']};
-            }}
-            QPushButton#MeasureToolBtn:checked {{
-                background-color: {COLORS['seeker_soft']};
-                border-color: {COLORS['seeker']};
-                color: {COLORS['seeker']};
-            }}
-            QPushButton#MeasureToolBtn:hover {{
-                background-color: {COLORS['surface_hover']};
-            }}
-        """)
-        self._measure_button.toggled.connect(self._on_measure_mode_toggled)
-        layout.addWidget(self._measure_button)
-        
-        layout.addStretch()
+        # Store checkbox references
+        self._axes_checkbox = checkboxes['axes']
+        self._labels_checkbox = checkboxes['labels']
+        self._faces_checkbox = checkboxes['faces']
+        self._edges_checkbox = checkboxes['edges']
+        self._vertices_checkbox = checkboxes['vertices']
+        self._dual_checkbox = checkboxes['dual']
+        self._sphere_checkboxes = {
+            'incircle': checkboxes['sphere_incircle'],
+            'midsphere': checkboxes['sphere_midsphere'],
+            'circumsphere': checkboxes['sphere_circumsphere'],
+        }
         
         return tab
+    
+    def _create_tools_tab(self) -> QWidget:
+        """Create the tools tab with measurement and analysis features."""
+        tools_tab = ToolsTab(self._viewport)
+        return tools_tab.build(
+            on_measure_toggled=self._on_measure_mode_toggled,
+            on_snapshot_clicked=self._save_snapshot
+        )
+
     
     def _on_measure_mode_toggled(self, enabled: bool) -> None:
         """Toggle measure mode on the viewport."""
@@ -800,415 +611,34 @@ class UnifiedGeometryViewer(QMainWindow):
     
     def _build_view_tab(self) -> QWidget:
         """Build the View/Camera settings tab."""
-        tab = QWidget()
-        layout = QVBoxLayout(tab)
-        layout.setContentsMargins(16, 16, 16, 16)
-        layout.setSpacing(12)
-        
-        # Section: Camera (3D only)
-        section_label = QLabel("Camera (3D)")
-        section_label.setStyleSheet(f"""
-            color: {COLORS['stone']};
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        """)
-        layout.addWidget(section_label)
-        
-        # Elevation slider
-        elev_layout = QHBoxLayout()
-        elev_label = QLabel("Elevation:")
-        elev_label.setStyleSheet(f"color: {COLORS['stone']}; font-size: 12px;")
-        elev_layout.addWidget(elev_label)
-        
-        self._elevation_slider = QSlider(Qt.Orientation.Horizontal)
-        self._elevation_slider.setRange(-90, 90)
-        self._elevation_slider.setValue(30)
-        self._elevation_slider.valueChanged.connect(
-            lambda v: self._viewport.set_elevation(float(v))
-        )
-        elev_layout.addWidget(self._elevation_slider)
-        
-        self._elevation_value = QLabel("30°")
-        self._elevation_value.setStyleSheet(f"color: {COLORS['mist']}; font-size: 11px;")
-        self._elevation_value.setFixedWidth(40)
-        self._elevation_slider.valueChanged.connect(
-            lambda v: self._elevation_value.setText(f"{v}°")
-        )
-        elev_layout.addWidget(self._elevation_value)
-        
-        layout.addLayout(elev_layout)
-        
-        # Azimuth slider
-        azim_layout = QHBoxLayout()
-        azim_label = QLabel("Azimuth:")
-        azim_label.setStyleSheet(f"color: {COLORS['stone']}; font-size: 12px;")
-        azim_layout.addWidget(azim_label)
-        
-        self._azimuth_slider = QSlider(Qt.Orientation.Horizontal)
-        self._azimuth_slider.setRange(0, 360)
-        self._azimuth_slider.setValue(45)
-        self._azimuth_slider.valueChanged.connect(
-            lambda v: self._viewport.set_azimuth(float(v))
-        )
-        azim_layout.addWidget(self._azimuth_slider)
-        
-        self._azimuth_value = QLabel("45°")
-        self._azimuth_value.setStyleSheet(f"color: {COLORS['mist']}; font-size: 11px;")
-        self._azimuth_value.setFixedWidth(40)
-        self._azimuth_slider.valueChanged.connect(
-            lambda v: self._azimuth_value.setText(f"{v}°")
-        )
-        azim_layout.addWidget(self._azimuth_value)
-        
-        layout.addLayout(azim_layout)
-        
-        # Section: Quick Views
-        section2 = QLabel("Quick Views")
-        section2.setStyleSheet(f"""
-            color: {COLORS['stone']};
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-top: 8px;
-        """)
-        layout.addWidget(section2)
-        
-        # Quick view buttons grid
-        quick_views_layout = QHBoxLayout()
-        quick_views_layout.setSpacing(8)
-        
-        quick_views = [
-            ("Top", 0, 0),
-            ("Front", -90, 0),  # Flipped to show right-side up
-            ("Side", 0, 90),
-            ("Iso", 30, 45),
-        ]
-        for name, elev, azim in quick_views:
-            btn = QPushButton(name)
-            btn.setStyleSheet(f"""
-                QPushButton {{
-                    background-color: {COLORS['marble']};
-                    border: 1px solid {COLORS['ash']};
-                    border-radius: 4px;
-                    padding: 6px 12px;
-                    font-size: 11px;
-                    color: {COLORS['stone']};
-                }}
-                QPushButton:hover {{
-                    background-color: {COLORS['surface_hover']};
-                    color: {COLORS['void']};
-                }}
-            """)
-            btn.clicked.connect(lambda _, e=elev, a=azim: self._set_quick_view(e, a))
-            quick_views_layout.addWidget(btn)
-        
-        layout.addLayout(quick_views_layout)
-        
-        # Section: Zoom
-        section3 = QLabel("Zoom")
-        section3.setStyleSheet(f"""
-            color: {COLORS['stone']};
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-top: 8px;
-        """)
-        layout.addWidget(section3)
-        
-        zoom_layout = QHBoxLayout()
-        zoom_layout.setSpacing(8)
-        
-        zoom_in_btn = QPushButton("➕ Zoom In")
-        zoom_in_btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {COLORS['marble']};
-                border: 1px solid {COLORS['ash']};
-                border-radius: 4px;
-                padding: 6px 12px;
-                font-size: 11px;
-                color: {COLORS['stone']};
-            }}
-            QPushButton:hover {{
-                background-color: {COLORS['surface_hover']};
-                color: {COLORS['void']};
-            }}
-        """)
-        zoom_in_btn.clicked.connect(lambda: self._viewport.zoom_in())
-        zoom_layout.addWidget(zoom_in_btn)
-        
-        zoom_out_btn = QPushButton("➖ Zoom Out")
-        zoom_out_btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {COLORS['marble']};
-                border: 1px solid {COLORS['ash']};
-                border-radius: 4px;
-                padding: 6px 12px;
-                font-size: 11px;
-                color: {COLORS['stone']};
-            }}
-            QPushButton:hover {{
-                background-color: {COLORS['surface_hover']};
-                color: {COLORS['void']};
-            }}
-        """)
-        zoom_out_btn.clicked.connect(lambda: self._viewport.zoom_out())
-        zoom_layout.addWidget(zoom_out_btn)
-        
-        layout.addLayout(zoom_layout)
-        
-        fit_btn = QPushButton("🔍 Fit to View")
-        fit_btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {COLORS['marble']};
-                border: 1px solid {COLORS['ash']};
-                border-radius: 4px;
-                padding: 8px 12px;
-                font-size: 12px;
-                color: {COLORS['stone']};
-            }}
-            QPushButton:hover {{
-                background-color: {COLORS['surface_hover']};
-                color: {COLORS['void']};
-            }}
-        """)
-        fit_btn.clicked.connect(lambda: self._viewport.fit_to_view())
-        layout.addWidget(fit_btn)
-        
-        reset_btn = QPushButton("↺ Reset View")
-        set_archetype(reset_btn, "ghost")  # Light-themed button
-        reset_btn.clicked.connect(lambda: self._viewport.reset_view())
-        layout.addWidget(reset_btn)
-        
-        layout.addStretch()
-        
+        view_tab = ViewTab(self._viewport)
+        tab, self._elevation_slider, self._azimuth_slider = view_tab.build()
         return tab
-    
-    def _set_quick_view(self, elevation: int, azimuth: int) -> None:
-        """Set quick view camera position."""
-        self._elevation_slider.setValue(elevation)
-        self._azimuth_slider.setValue(azimuth)
-        self._viewport.set_elevation(float(elevation))
-        self._viewport.set_azimuth(float(azimuth))
     
     def _build_output_tab(self) -> QWidget:
         """Build the Output/Export tab."""
-        tab = QWidget()
-        layout = QVBoxLayout(tab)
-        layout.setContentsMargins(16, 16, 16, 16)
-        layout.setSpacing(12)
-        
-        # Section: Export
-        section_label = QLabel("Export")
-        section_label.setStyleSheet(f"""
-            color: {COLORS['stone']};
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        """)
-        layout.addWidget(section_label)
-        
-        # Snapshot button
-        snapshot_btn = QPushButton("📷 Save Snapshot")
-        set_archetype(snapshot_btn, "ghost")  # Light-themed button
-        snapshot_btn.clicked.connect(self._save_snapshot)
-        layout.addWidget(snapshot_btn)
-        
-        # Copy measurements button
-        copy_btn = QPushButton("📋 Copy Measurements")
-        set_archetype(copy_btn, "ghost")  # Light-themed button
-        copy_btn.clicked.connect(self._copy_measurements)
-        layout.addWidget(copy_btn)
-        
-        # Divider
-        divider = QFrame()
-        divider.setFrameShape(QFrame.Shape.HLine)
-        divider.setStyleSheet(f"background-color: {COLORS['ash']};")
-        divider.setFixedHeight(1)
-        layout.addWidget(divider)
-        
-        # Section: Canon Exports
-        canon_section = QLabel("Canon Exports")
-        canon_section.setStyleSheet(f"""
-            color: {COLORS['stone']};
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        """)
-        layout.addWidget(canon_section)
-        
-        # Copy Declaration button
-        decl_btn = QPushButton("📜 Copy Declaration (JSON)")
-        set_archetype(decl_btn, "seeker")
-        decl_btn.clicked.connect(self._copy_declaration)
-        layout.addWidget(decl_btn)
-        
-        # Copy Validation Report button
-        report_btn = QPushButton("📊 Copy Validation Report")
-        set_archetype(report_btn, "seeker")
-        report_btn.clicked.connect(self._copy_validation_report)
-        layout.addWidget(report_btn)
-        
-        layout.addStretch()
-        
-        return tab
+        output_tab = OutputTab()
+        return output_tab.build(
+            on_snapshot_clicked=self._save_snapshot,
+            on_copy_measurements_clicked=self._copy_measurements,
+            on_copy_declaration_clicked=self._copy_declaration,
+            on_copy_validation_clicked=self._copy_validation_report,
+        )
     
     def _build_history_tab(self) -> QWidget:
         """Build the History tab with timeline and controls."""
-        tab = QWidget()
-        layout = QVBoxLayout(tab)
-        layout.setContentsMargins(16, 16, 16, 16)
-        layout.setSpacing(12)
-        
-        # Section: Timeline
-        section_label = QLabel("Calculation History")
-        section_label.setStyleSheet(f"""
-            color: {COLORS['stone']};
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        """)
-        layout.addWidget(section_label)
-        
-        # Undo/Redo buttons
-        nav_layout = QHBoxLayout()
-        
-        self._undo_btn = QPushButton("↶ Undo")
-        set_archetype(self._undo_btn, "ghost")  # Light-themed button
-        self._undo_btn.setEnabled(False)
-        self._undo_btn.clicked.connect(self._on_undo)
-        nav_layout.addWidget(self._undo_btn)
-        
-        self._redo_btn = QPushButton("↷ Redo")
-        set_archetype(self._redo_btn, "ghost")  # Light-themed button
-        self._redo_btn.setEnabled(False)
-        self._redo_btn.clicked.connect(self._on_redo)
-        nav_layout.addWidget(self._redo_btn)
-        
-        layout.addLayout(nav_layout)
-        
-        # History list (scrollable)
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setFrameShape(QFrame.Shape.NoFrame)
-        scroll.setMaximumHeight(200)
-        
-        self._history_list_widget = QWidget()
-        self._history_list_layout = QVBoxLayout(self._history_list_widget)
-        self._history_list_layout.setContentsMargins(0, 0, 0, 0)
-        self._history_list_layout.setSpacing(4)
-        
-        # Empty state
-        empty_label = QLabel("No history yet")
-        empty_label.setStyleSheet(f"color: {COLORS['mist']}; font-style: italic;")
-        empty_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self._history_list_layout.addWidget(empty_label)
-        self._history_empty_label = empty_label
-        
-        self._history_list_layout.addStretch()
-        
-        scroll.setWidget(self._history_list_widget)
-        layout.addWidget(scroll, 1)
-        
-        # Tip label
-        tip_label = QLabel("Right-click an item for options (notes, rename, delete)")
-        tip_label.setStyleSheet(f"""
-            color: {COLORS['mist']};
-            font-size: 10px;
-            font-style: italic;
-            padding: 4px 0;
-        """)
-        layout.addWidget(tip_label)
-        
-        # Export session button
-        export_btn = QPushButton("💾 Export Session")
-        set_archetype(export_btn, "ghost")  # Light-themed button
-        export_btn.clicked.connect(self._export_session)
-        layout.addWidget(export_btn)
-        
+        history_tab = HistoryTab()
+        tab, self._undo_btn, self._redo_btn, self._history_list_widget, self._history_list_layout, self._history_empty_label = history_tab.build(
+            on_undo_clicked=self._on_undo,
+            on_redo_clicked=self._on_redo,
+            on_export_session_clicked=self._export_session,
+        )
         return tab
     
     def _build_canon_tab(self) -> QWidget:
         """Build the Canon validation details tab."""
-        tab = QWidget()
-        layout = QVBoxLayout(tab)
-        layout.setContentsMargins(16, 16, 16, 16)
-        layout.setSpacing(12)
-        
-        # Section: Validation Status
-        section_label = QLabel("Validation Status")
-        section_label.setStyleSheet(f"""
-            color: {COLORS['stone']};
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        """)
-        layout.addWidget(section_label)
-        
-        # Large status indicator
-        self._canon_status_frame = QFrame()
-        self._canon_status_frame.setObjectName("CanonStatusFrame")
-        self._canon_status_frame.setStyleSheet(f"""
-            QFrame#CanonStatusFrame {{
-                background-color: {COLORS['navigator_soft']};
-                border-radius: 6px;
-                padding: 12px;
-            }}
-        """)
-        
-        status_layout = QVBoxLayout(self._canon_status_frame)
-        
-        self._canon_status_icon = QLabel("⏳")
-        self._canon_status_icon.setStyleSheet("font-size: 32px;")
-        self._canon_status_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        status_layout.addWidget(self._canon_status_icon)
-        
-        self._canon_status_text = QLabel("Awaiting validation")
-        self._canon_status_text.setStyleSheet(f"""
-            color: {COLORS['stone']};
-            font-size: 14px;
-            font-weight: 500;
-        """)
-        self._canon_status_text.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        status_layout.addWidget(self._canon_status_text)
-        
-        layout.addWidget(self._canon_status_frame)
-        
-        # Findings section
-        findings_label = QLabel("Findings")
-        findings_label.setStyleSheet(f"""
-            color: {COLORS['stone']};
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        """)
-        layout.addWidget(findings_label)
-        
-        # Findings list (scrollable text area)
-        self._findings_text = QTextEdit()
-        self._findings_text.setReadOnly(True)
-        self._findings_text.setStyleSheet(f"""
-            QTextEdit {{
-                background-color: {COLORS['cloud']};
-                border: 1px solid {COLORS['ash']};
-                border-radius: 4px;
-                color: {COLORS['stone']};
-                font-family: 'JetBrains Mono', 'Consolas', monospace;
-                font-size: 11px;
-                padding: 8px;
-            }}
-        """)
-        self._findings_text.setPlaceholderText("No findings to display")
-        layout.addWidget(self._findings_text, 1)
-        
+        canon_tab = CanonTab()
+        tab, self._canon_status_frame, self._canon_status_icon, self._canon_status_text, self._findings_text = canon_tab.build()
         return tab
     
     # ═══════════════════════════════════════════════════════════════════════════
@@ -1397,7 +827,7 @@ class UnifiedGeometryViewer(QMainWindow):
                 # Validation failed
                 self._canon_result = None
                 self._update_canon_display()
-                self._show_property_error(f"Validation failed: {verdict.summary()}")
+                self._property_panel.show_error(f"Validation failed: {verdict.summary()}")
 
                 # Don't auto-add to history - user must explicitly save
                 return None
@@ -1428,9 +858,9 @@ class UnifiedGeometryViewer(QMainWindow):
                 logger.error(f"  Available artifacts: {list(result.artifacts.keys()) if hasattr(result, 'artifacts') else 'unknown'}")
                 if getattr(result, "errors", None):
                     logger.error(f"  Realizer errors: {result.errors}")
-                    self._show_property_error(f"Realization failed: {result.errors[0]}")
+                    self._property_panel.show_error(f"Realization failed: {result.errors[0]}")
                 else:
-                    self._show_property_error("Realization failed: no artifact")
+                    self._property_panel.show_error("Realization failed: no artifact")
                 return None
             
             # Create unified payload
@@ -1455,7 +885,11 @@ class UnifiedGeometryViewer(QMainWindow):
             # Update display
             self.set_payload(payload)
             self._update_canon_display()
-            self._clear_property_error()
+            self._property_panel.clear_error()
+            
+            # Update all property input fields to show calculated values
+            all_props = self._current_solver.get_all_properties(canonical_value)
+            self._update_all_property_fields(all_props)
 
             # Don't auto-add to history - user must explicitly save via button/Ctrl+S
 
@@ -1467,13 +901,13 @@ class UnifiedGeometryViewer(QMainWindow):
             self._canon_verdict = e.verdict
             self._canon_result = None
             self._update_canon_display()
-            self._show_property_error(f"Validation error: {e}")
+            self._property_panel.show_error(f"Validation error: {e}")
             logger.error(f"Canon validation error: {e}")
             return None
             
         except Exception as e:
             logger.error(f"Realization error: {e}", exc_info=True)
-            self._show_property_error(f"Error: {e}")
+            self._property_panel.show_error(f"Error: {e}")
             return None
     
     # ═══════════════════════════════════════════════════════════════════════════
@@ -1481,388 +915,19 @@ class UnifiedGeometryViewer(QMainWindow):
     # ═══════════════════════════════════════════════════════════════════════════
     
     def _rebuild_property_inputs(self) -> None:
-        """Rebuild property input fields based on current solver with tabbed categories."""
-        if not self._property_layout:
-            return
-        
-        # Clear existing inputs
-        self._property_inputs.clear()
-        self._property_labels.clear()
-        
-        # Remove all widgets
-        while self._property_layout.count() > 0:
-            item = self._property_layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
-        
+        """Rebuild property input fields based on current solver."""
         if not self._current_solver:
-            # Show placeholder
-            placeholder = QLabel("No form selected")
-            placeholder.setStyleSheet(f"color: {COLORS['mist']}; font-style: italic;")
-            placeholder.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            self._property_layout.addWidget(placeholder)
-            self._property_layout.addStretch()
+            self._property_panel.rebuild_property_inputs([], [])
             return
         
-        # Get property definitions and group by category
         editable_props = self._current_solver.get_editable_properties()
         derived_props = self._current_solver.get_derived_properties()
         
-        # Create tabbed interface for Core/Advanced
-        property_tabs = QTabWidget()
-        property_tabs.setObjectName("PropertyTabs")
-        property_tabs.setDocumentMode(True)
-        property_tabs.setUsesScrollButtons(False)  # Prevent scroll arrows
-        property_tabs.setStyleSheet(f"""
-            QTabWidget#PropertyTabs::pane {{
-                border: 1px solid {COLORS['ash']};
-                border-radius: 8px;
-                background-color: {COLORS['cloud']};
-            }}
-            QTabWidget#PropertyTabs > QTabBar {{
-                qproperty-expanding: true;
-            }}
-            QTabWidget#PropertyTabs QTabBar::scroller {{
-                width: 0px;
-            }}
-            QTabWidget#PropertyTabs QTabBar::tab {{
-                padding: 8px 16px;
-                margin: 2px;
-                font-weight: 600;
-                font-size: 11px;
-                min-width: 60px;
-            }}
-            QTabWidget#PropertyTabs QTabBar::tab:selected {{
-                background-color: {COLORS['seeker_soft']};
-                border-radius: 6px;
-                color: {COLORS['seeker_dark']};
-            }}
-            QTabWidget#PropertyTabs QTabBar::tab:!selected {{
-                background-color: {COLORS['marble']};
-                color: {COLORS['stone']};
-            }}
-            QTabWidget#PropertyTabs QTabBar::tab:!selected:hover {{
-                background-color: {COLORS['surface_hover']};
-            }}
-        """)
-        
-        # Core tab (editable properties)
-        core_scroll = QScrollArea()
-        core_scroll.setWidgetResizable(True)
-        core_scroll.setFrameShape(QFrame.Shape.NoFrame)
-        core_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        
-        core_widget = QWidget()
-        core_layout = QVBoxLayout(core_widget)
-        core_layout.setContentsMargins(8, 8, 8, 8)
-        core_layout.setSpacing(8)
-        
-        # Color Legend
-        legend_frame = QFrame()
-        legend_frame.setObjectName("ColorLegend")
-        legend_frame.setStyleSheet(f"""
-            QFrame#ColorLegend {{
-                background-color: {COLORS['marble']};
-                border: 1px solid {COLORS['ash']};
-                border-radius: 6px;
-                padding: 8px;
-            }}
-        """)
-        legend_layout = QHBoxLayout(legend_frame)
-        legend_layout.setContentsMargins(8, 6, 8, 6)
-        legend_layout.setSpacing(16)
-        
-        # Editable indicator
-        edit_legend = QLabel("✎ Editable")
-        edit_legend.setStyleSheet(f"color: {COLORS['seeker']}; font-size: 10px; font-weight: 600;")
-        legend_layout.addWidget(edit_legend)
-        
-        # Derived indicator
-        derived_legend = QLabel("◇ Derived")
-        derived_legend.setStyleSheet(f"color: {COLORS['mist']}; font-size: 10px; font-weight: 500;")
-        legend_layout.addWidget(derived_legend)
-        
-        legend_layout.addStretch()
-        core_layout.addWidget(legend_frame)
-        
-        for prop in editable_props:
-            widget = self._create_property_widget(prop, editable=True)
-            core_layout.addWidget(widget)
-        
-        core_layout.addStretch()
-        core_scroll.setWidget(core_widget)
-        property_tabs.addTab(core_scroll, f"Core ({len(editable_props)})")
-        
-        # Advanced tab (derived properties)
-        adv_scroll = QScrollArea()
-        adv_scroll.setWidgetResizable(True)
-        adv_scroll.setFrameShape(QFrame.Shape.NoFrame)
-        adv_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        
-        adv_widget = QWidget()
-        adv_layout = QVBoxLayout(adv_widget)
-        adv_layout.setContentsMargins(8, 8, 8, 8)
-        adv_layout.setSpacing(8)
-        
-        # Info banner for Advanced tab
-        info_banner = QFrame()
-        info_banner.setStyleSheet(f"""
-            background-color: {COLORS['navigator_soft']};
-            border: 1px solid {COLORS['ash']};
-            border-radius: 6px;
-        """)
-        info_layout = QHBoxLayout(info_banner)
-        info_layout.setContentsMargins(10, 8, 10, 8)
-        
-        info_icon = QLabel("◇")
-        info_icon.setStyleSheet(f"color: {COLORS['mist']}; font-size: 14px;")
-        info_layout.addWidget(info_icon)
-        
-        info_text = QLabel("Derived values — computed from the canonical parameter")
-        info_text.setStyleSheet(f"color: {COLORS['stone']}; font-size: 10px;")
-        info_layout.addWidget(info_text)
-        info_layout.addStretch()
-        
-        adv_layout.addWidget(info_banner)
-        
-        # Group by category
-        categories: dict[str, list] = {}
-        for prop in derived_props:
-            cat = getattr(prop, 'category', 'Other')
-            if cat not in categories:
-                categories[cat] = []
-            categories[cat].append(prop)
-        
-        for cat_name, cat_props in categories.items():
-            # Category header with Visual Liturgy styling
-            cat_frame = QFrame()
-            cat_frame.setStyleSheet(f"""
-                background-color: {COLORS['navigator_soft']};
-                border-radius: 4px;
-                margin-top: 8px;
-            """)
-            cat_header_layout = QHBoxLayout(cat_frame)
-            cat_header_layout.setContentsMargins(8, 4, 8, 4)
-            
-            cat_label = QLabel(cat_name.upper())
-            cat_label.setStyleSheet(f"""
-                color: {COLORS['navigator_dark']};
-                font-size: 10px;
-                font-weight: 700;
-                letter-spacing: 1px;
-            """)
-            cat_header_layout.addWidget(cat_label)
-            
-            cat_count = QLabel(f"({len(cat_props)})")
-            cat_count.setStyleSheet(f"color: {COLORS['mist']}; font-size: 10px;")
-            cat_header_layout.addWidget(cat_count)
-            cat_header_layout.addStretch()
-            
-            adv_layout.addWidget(cat_frame)
-            
-            for prop in cat_props:
-                widget = self._create_property_widget(prop, editable=False)
-                adv_layout.addWidget(widget)
-        
-        adv_layout.addStretch()
-        adv_scroll.setWidget(adv_widget)
-        property_tabs.addTab(adv_scroll, f"Advanced ({len(derived_props)})")
-        
-        self._property_layout.addWidget(property_tabs, 1)
-        
-        # Add error label at the end
-        self._property_error_label = QLabel()
-        self._property_error_label.setObjectName("PropertyError")
-        self._property_error_label.setStyleSheet(f"""
-            QLabel#PropertyError {{
-                color: {COLORS['destroyer']};
-                background-color: {COLORS['destroyer_soft']};
-                padding: 8px;
-                border-radius: 4px;
-                font-size: 12px;
-            }}
-        """)
-        self._property_error_label.setWordWrap(True)
-        self._property_error_label.hide()
-        self._property_layout.addWidget(self._property_error_label)
-    
-    def _create_property_widget(self, prop: PropertyDefinition, editable: bool) -> QFrame:
-        """
-        Create a property input widget with label and input field.
-        
-        Visual Liturgy Compliance:
-        - Editable: White bg (light), void text, amber focus border, seeker left accent
-        - Read-only: Marble bg, stone text, no focus styling, mist left accent
-        """
-        frame = QFrame()
-        frame.setObjectName(f"PropertyFrame_{prop.key}")
-        
-        # Visual Liturgy: Color-coded left border for editable vs read-only
-        if editable:
-            # Editable fields: Seeker (Gold/Amber) accent - "Uncover / Reveal"
-            border_color = COLORS['seeker']
-            bg_color = COLORS['light']  # Pure Light - The Vessel
-        else:
-            # Read-only fields: Navigator (Slate) accent - neutral/derived
-            border_color = COLORS['navigator_mute']  # Ash-like
-            bg_color = COLORS['marble']  # Marble Slate - The Tablet
-        
-        frame.setStyleSheet(f"""
-            QFrame#PropertyFrame_{prop.key} {{
-                background-color: {bg_color};
-                border: 1px solid {COLORS['ash']};
-                border-left: 3px solid {border_color};
-                border-radius: 8px;
-            }}
-        """)
-        
-        layout = QVBoxLayout(frame)
-        layout.setContentsMargins(12, 10, 12, 10)  # Visual Liturgy: padding 10-14px
-        layout.setSpacing(6)
-        
-        # Header with label, unit, and edit indicator
-        header = QHBoxLayout()
-        header.setSpacing(6)
-        
-        # Editable indicator icon
-        if editable:
-            edit_icon = QLabel("✎")  # Pencil for editable
-            edit_icon.setStyleSheet(f"color: {COLORS['seeker']}; font-size: 12px;")
-            edit_icon.setToolTip("Editable — enter a value to recalculate")
-            header.addWidget(edit_icon)
-        else:
-            lock_icon = QLabel("◇")  # Diamond for derived/computed
-            lock_icon.setStyleSheet(f"color: {COLORS['mist']}; font-size: 10px;")
-            lock_icon.setToolTip("Derived — computed from canonical parameter")
-            header.addWidget(lock_icon)
-        
-        name_label = QLabel(prop.label)
-        name_label.setStyleSheet(f"""
-            color: {COLORS['void'] if editable else COLORS['stone']};
-            font-weight: {'600' if editable else '500'};
-            font-size: 12px;
-        """)
-        header.addWidget(name_label)
-        
-        if prop.unit:
-            unit_label = QLabel(f"({prop.unit})")
-            unit_label.setStyleSheet(f"color: {COLORS['mist']}; font-size: 10px;")
-            header.addWidget(unit_label)
-        
-        # Formula/tooltip button — opens LaTeX dialog if formula available
-        formula = getattr(prop, 'formula', '')
-        tooltip = getattr(prop, 'tooltip', '')
-        
-        if formula or tooltip:
-            info_btn = QPushButton("ƒ" if formula else "?")
-            info_btn.setFixedSize(18, 18)
-            info_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            info_btn.setToolTip(tooltip if tooltip else "Show formula")
-            
-            # Style: Blue for formula, gray for tooltip-only
-            if formula:
-                info_btn.setStyleSheet(f"""
-                    QPushButton {{
-                        background-color: {COLORS['magus_soft']};
-                        color: {COLORS['magus']};
-                        border: 1px solid {COLORS['magus_mute']};
-                        border-radius: 9px;
-                        font-weight: 700;
-                        font-size: 10px;
-                        font-family: serif;
-                        padding: 0;
-                    }}
-                    QPushButton:hover {{
-                        background-color: {COLORS['magus_mute']};
-                        border-color: {COLORS['magus']};
-                    }}
-                """)
-                # Connect to formula dialog
-                info_btn.clicked.connect(
-                    lambda _, label=prop.label, frm=formula: self._show_formula_dialog(label, frm)
-                )
-            else:
-                info_btn.setStyleSheet(f"""
-                    QPushButton {{
-                        background-color: {COLORS['navigator_soft']};
-                        color: {COLORS['navigator']};
-                        border: 1px solid {COLORS['ash']};
-                        border-radius: 9px;
-                        font-weight: 700;
-                        font-size: 10px;
-                        padding: 0;
-                    }}
-                    QPushButton:hover {{
-                        background-color: {COLORS['surface_hover']};
-                    }}
-                """)
-            header.addWidget(info_btn)
-        
-        header.addStretch()
-        layout.addLayout(header)
-        
-        # Input field — Visual Liturgy Input Fields pattern
-        input_field = QLineEdit()
-        input_field.setObjectName(f"PropertyInput_{prop.key}")
-        input_field.setPlaceholderText("0.0")
-        
-        if editable:
-            # Editable: Pure Light bg, full contrast, amber focus
-            input_field.setStyleSheet(f"""
-                QLineEdit {{
-                    background-color: {COLORS['light']};
-                    border: 1px solid {COLORS['ash']};
-                    border-radius: 8px;
-                    padding: 10px 14px;
-                    color: {COLORS['void']};
-                    font-size: 11pt;
-                    font-family: 'JetBrains Mono', 'Consolas', monospace;
-                }}
-                QLineEdit:focus {{
-                    border: 1px solid {COLORS['seeker']};
-                }}
-                QLineEdit:hover {{
-                    border-color: {COLORS['seeker_mute']};
-                }}
-            """)
-        else:
-            # Read-only: Marble bg, muted text, no focus styling
-            input_field.setStyleSheet(f"""
-                QLineEdit {{
-                    background-color: {COLORS['marble']};
-                    border: 1px solid {COLORS['ash']};
-                    border-radius: 8px;
-                    padding: 10px 14px;
-                    color: {COLORS['stone']};
-                    font-size: 11pt;
-                    font-family: 'JetBrains Mono', 'Consolas', monospace;
-                }}
-            """)
-        
-        input_field.setValidator(QDoubleValidator())
-        input_field.setReadOnly(not editable)
-
-        if editable and not getattr(prop, 'readonly', False):
-            input_field.editingFinished.connect(
-                lambda key=prop.key: self._on_property_changed(key)
-            )
-
-        # Add context menu for sending to Quadset Analysis
-        input_field.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        input_field.customContextMenuRequested.connect(
-            lambda pos, field=input_field: self._show_value_context_menu(field, pos)
-        )
-
-        layout.addWidget(input_field)
-        
-        self._property_inputs[prop.key] = input_field
-        self._property_labels[prop.key] = name_label
-        
-        return frame
+        self._property_panel.rebuild_property_inputs(editable_props, derived_props)
     
     def _on_property_changed(self, key: str) -> None:
         """Handle property input change."""
-        if self._updating_inputs:
+        if self._property_panel.is_updating():
             return
         
         # Don't recalculate when restoring from history
@@ -1872,7 +937,7 @@ class UnifiedGeometryViewer(QMainWindow):
         if not self._current_solver:
             return
         
-        input_field = self._property_inputs.get(key)
+        input_field = self._property_panel.get_property_input(key)
         if not input_field:
             return
         
@@ -1883,22 +948,37 @@ class UnifiedGeometryViewer(QMainWindow):
         try:
             value = float(text)
         except ValueError:
-            self._show_property_error(f"Invalid number: {text}")
+            self._property_panel.show_error(f"Invalid number: {text}")
             return
         
         # Solve for canonical parameter
         result = self._current_solver.solve_from(key, value)
         
         if not result.ok:
-            self._show_property_error(result.message)
+            self._property_panel.show_error(result.message)
             return
         
-        # Realize
-        payload = self.realize_from_canonical(result.canonical_parameter)
+        self._property_panel.clear_error()
         
-        if payload:
-            # Update all property fields
-            self._sync_property_inputs()
+        # Get all updated property values from the canonical parameter
+        all_props = self._current_solver.get_all_properties(result.canonical_parameter)
+        
+        # Update all property input fields
+        self._update_all_property_fields(all_props)
+        
+        # Realize and update viewport
+        payload = self.realize_from_canonical(result.canonical_parameter)
+    
+    def _update_all_property_fields(self, props: dict[str, float]) -> None:
+        """Update all property input fields with new values."""
+        if not self._current_solver or not props:
+            return
+        
+        # Get property definitions for formatting
+        all_prop_defs = self._current_solver.get_all_property_definitions()
+        prop_formats = {p.key: getattr(p, 'format_spec', '.6f') for p in all_prop_defs}
+        
+        self._property_panel.update_all_property_fields(props, prop_formats)
     
     def _sync_property_inputs(self) -> None:
         """Sync all property input fields with current values."""
@@ -1925,26 +1005,7 @@ class UnifiedGeometryViewer(QMainWindow):
         prop_formats = {p.key: getattr(p, 'format_spec', '.6g') for p in all_prop_defs}
         
         # Update inputs
-        self._updating_inputs = True
-        try:
-            for key, input_field in self._property_inputs.items():
-                if key in props:
-                    value = props[key]
-                    fmt = prop_formats.get(key, '.6g')
-                    input_field.setText(format(value, fmt))
-        finally:
-            self._updating_inputs = False
-    
-    def _show_property_error(self, message: str) -> None:
-        """Show an error message in the properties panel."""
-        if self._property_error_label:
-            self._property_error_label.setText(message)
-            self._property_error_label.show()
-    
-    def _clear_property_error(self) -> None:
-        """Clear any property error message."""
-        if self._property_error_label:
-            self._property_error_label.hide()
+        self._property_panel.update_all_property_fields(props, prop_formats)
     
     # ───────────────────────────────────────────────────────────────────────────
     # Canon Display
@@ -2180,7 +1241,7 @@ class UnifiedGeometryViewer(QMainWindow):
         """Show detailed Canon validation dialog."""
         # Switch to Canon tab
         if self._console_tabs:
-            self._console_tabs.setCurrentIndex(4)  # Canon tab
+            self._console_tabs.setCurrentIndex(5)  # Canon tab (0=Display, 1=View, 2=Tools, 3=Output, 4=History, 5=Canon)
     
     # ───────────────────────────────────────────────────────────────────────────
     # History Management
@@ -2985,13 +2046,14 @@ class UnifiedGeometryViewer(QMainWindow):
         """
         try:
             # Import the math renderer
-            from shared.ui.rich_text_editor.math_renderer import MathRenderer
+            from pillars.document_manager.ui.features.math_renderer import MathRenderer
             from PyQt6.QtCore import QUrl
             from PyQt6.QtGui import QTextImageFormat, QTextCursor, QTextDocument
             import re
             import uuid
         except ImportError as e:
             logger.warning(f"Could not import LaTeX rendering dependencies: {e}")
+            # Fallback: display plain text (already set above)
             return
 
         # Reset to plain text first
@@ -2999,10 +2061,12 @@ class UnifiedGeometryViewer(QMainWindow):
 
         # Debug: Check if backslashes are in the original text
         logger.debug(f"Derivation text length: {len(derivation_text)}")
-        if '\\varphi' in derivation_text:
-            logger.debug("✓ Backslashes present in derivation_text (\\varphi found)")
+        # Check for common LaTeX commands
+        has_latex = any(cmd in derivation_text for cmd in ['\\pi', '\\sqrt', '\\frac', '\\times', '\\varphi', '\\Delta', '\\int'])
+        if has_latex:
+            logger.debug("✓ Backslashes present in derivation_text (LaTeX commands found)")
         else:
-            logger.warning("✗ Backslashes missing from derivation_text!")
+            logger.debug("ℹ No LaTeX commands detected in derivation (might be plain text only)")
 
         # Find all LaTeX blocks ($$...$$ and $...$)
         # Pattern matches:

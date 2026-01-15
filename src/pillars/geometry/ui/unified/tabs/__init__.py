@@ -1,8 +1,17 @@
 """Tab components for the Unified Geometry Viewer console."""
 
-# Tabs will be implemented in Phase B
-# - display_tab.py
-# - view_tab.py
-# - output_tab.py
-# - history_tab.py (NEW)
-# - canon_tab.py (NEW)
+from .canon_tab import CanonTab
+from .display_tab import DisplayTab
+from .history_tab import HistoryTab
+from .output_tab import OutputTab
+from .tools_tab import ToolsTab
+from .view_tab import ViewTab
+
+__all__ = [
+    'CanonTab',
+    'DisplayTab',
+    'HistoryTab',
+    'OutputTab',
+    'ToolsTab',
+    'ViewTab',
+]

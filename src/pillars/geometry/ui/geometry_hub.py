@@ -492,6 +492,13 @@ class GeometryHub(QWidget):
             if not hasattr(self, '_unified_viewers'):
                 self._unified_viewers = []
             self._unified_viewers.append(viewer)
+            
+            # Clean up reference when window is closed
+            def cleanup():
+                if viewer in self._unified_viewers:
+                    self._unified_viewers.remove(viewer)
+            viewer.destroyed.connect(cleanup)
+            
             print(f"✓ Viewer stored (total: {len(self._unified_viewers)})", flush=True)
             
         except Exception as e:
@@ -563,6 +570,13 @@ class GeometryHub(QWidget):
             if not hasattr(self, '_unified_viewers'):
                 self._unified_viewers = []
             self._unified_viewers.append(viewer)
+            
+            # Clean up reference when window is closed
+            def cleanup():
+                if viewer in self._unified_viewers:
+                    self._unified_viewers.remove(viewer)
+            viewer.destroyed.connect(cleanup)
+            
             print(f"✓ Canon shape viewer opened (total: {len(self._unified_viewers)})", flush=True)
 
         except Exception as e:

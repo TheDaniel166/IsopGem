@@ -164,145 +164,25 @@ from typing import Dict, List, Tuple
 from .base_shape import GeometricShape, ShapeProperty
 
 
-class EllipseShape(GeometricShape):
-    """Ellipse defined by its semi-major and semi-minor axes."""
+class EllipseShapeService:
+    """Builds drawing instructions for ellipses (no calculations)."""
 
-    @property
-    def name(self) -> str:
+    @staticmethod
+    def build(a: float, b: float) -> Dict:
         """
-        Name logic.
-        
-        Returns:
-            Result of name operation.
-        """
-        return "Oval (Ellipse)"
+        Generate drawing instructions for an ellipse.
 
-    @property
-    def description(self) -> str:
-        """
-        Description logic.
-        
-        Returns:
-            Result of description operation.
-        """
-        return "A regular oval shape traced by a point moving in a plane"
-
-    @property
-    def calculation_hint(self) -> str:
-        """
-        Calculation hint logic.
-        
-        Returns:
-            Result of calculation_hint operation.
-        """
-        return "Enter Semi-Major (a) + Semi-Minor (b) axes"
-
-    def _init_properties(self):
-        self.properties = {
-            'semi_major_axis': ShapeProperty(
-                name='Semi-major Axis (a)',
-                key='semi_major_axis',
-                unit='units',
-                readonly=False,
-                formula=r'a'
-            ),
-            'semi_minor_axis': ShapeProperty(
-                name='Semi-minor Axis (b)',
-                key='semi_minor_axis',
-                unit='units',
-                readonly=False,
-                formula=r'b'
-            ),
-            'major_axis': ShapeProperty(
-                name='Major Axis (2a)',
-                key='major_axis',
-                unit='units',
-                readonly=False,
-                formula=r'2a'
-            ),
-            'minor_axis': ShapeProperty(
-                name='Minor Axis (2b)',
-                key='minor_axis',
-                unit='units',
-                readonly=False,
-                formula=r'2b'
-            ),
-            'area': ShapeProperty(
-                name='Area',
-                key='area',
-                unit='units²',
-                readonly=True,
-                formula=r'A = \pi ab'
-            ),
-            'perimeter': ShapeProperty(
-                name='Perimeter (Ramanujan)',
-                key='perimeter',
-                unit='units',
-                readonly=True,
-                formula=r'P \approx \pi\left[3(a+b) - \sqrt{(3a+b)(a+3b)}\right]'
-            ),
-            'eccentricity': ShapeProperty(
-                name='Eccentricity (e)',
-                key='eccentricity',
-                readonly=True,
-                precision=4,
-                formula=r'e = \sqrt{1 - \frac{b^2}{a^2}}'
-            ),
-            'focal_distance': ShapeProperty(
-                name='Focal Distance (c)',
-                key='focal_distance',
-                unit='units',
-                readonly=True,
-                formula=r'c = \sqrt{a^2 - b^2}'
-            ),
-        }
-
-    def calculate_from_property(self, property_key: str, value: float) -> bool:
-        """
-        Compute from property logic.
-        
         Args:
-            property_key: Description of property_key.
-            value: Description of value.
-        
+            a: Semi-major axis
+            b: Semi-minor axis
+
         Returns:
-            Result of calculate_from_property operation.
+            DrawingInstructions dict
         """
-        if value <= 0:
-            return False
-
-        if property_key == 'semi_major_axis':
-            self.properties['semi_major_axis'].value = value
-            self._reconcile_axes()
-            return True
-        if property_key == 'semi_minor_axis':
-            self.properties['semi_minor_axis'].value = value
-            self._reconcile_axes()
-            return True
-        if property_key == 'major_axis':
-            self.properties['semi_major_axis'].value = value / 2
-            self._reconcile_axes()
-            return True
-        if property_key == 'minor_axis':
-            self.properties['semi_minor_axis'].value = value / 2
-            self._reconcile_axes()
-            return True
-
-        return False
-
-    def get_drawing_instructions(self) -> Dict:
-        """
-        Retrieve drawing instructions logic.
-        
-        Returns:
-            Result of get_drawing_instructions operation.
-        """
-        a = self.properties['semi_major_axis'].value
-        b = self.properties['semi_minor_axis'].value
-        if not a or not b:
+        if not a or not b or a <= 0 or b <= 0:
             return {'type': 'empty'}
 
-        points = self._ellipse_points(a, b)
+        points = EllipseShapeService._ellipse_points(a, b)
         axis_lines = [
             ((-a, 0), (a, 0)),
             ((0, -b), (0, b)),
@@ -314,31 +194,15 @@ class EllipseShape(GeometricShape):
             'axis_lines': axis_lines,
         }
 
-    def get_label_positions(self) -> List[Tuple[str, float, float]]:
-        """
-        Retrieve label positions logic.
-        
-        Returns:
-            Result of get_label_positions operation.
-        """
-        a = self.properties['semi_major_axis'].value
-        b = self.properties['semi_minor_axis'].value
-        if not a or not b:
-            return []
-
-        labels: List[Tuple[str, float, float]] = []
-        labels.append((f"a = {a:.4f}".rstrip('0').rstrip('.'), a * 0.5, 0.25))
-        labels.append((f"b = {b:.4f}".rstrip('0').rstrip('.'), 0.25, b * 0.5))
-
-        ecc = self.properties['eccentricity'].value
-        if ecc is not None:
-            labels.append((f"e = {ecc:.4f}".rstrip('0').rstrip('.'), 0, -b * 0.4))
-
-        area = self.properties['area'].value
-        if area is not None:
-            labels.append((f"A = {area:.4f}".rstrip('0').rstrip('.'), 0, 0.2))
-
-        return labels
+    @staticmethod
+    def _ellipse_points(a: float, b: float, steps: int = 180) -> List[Tuple[float, float]]:
+        points: List[Tuple[float, float]] = []
+        for i in range(steps):
+            theta = 2 * math.pi * (i / steps)
+            x = a * math.cos(theta)
+            y = b * math.sin(theta)
+            points.append((x, y))
+        return points
 
     # ------------------------------------------------------------------
     # Helpers
