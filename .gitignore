@@ -70,6 +70,8 @@ de441.bsp
 # Local data caches (exclude large datasets)
 data/lexicons/
 data/etymology_db/
+data/databases/
+data/db_archive/
 
 # Sophia Tools
 sophia-tools/node_modules/
