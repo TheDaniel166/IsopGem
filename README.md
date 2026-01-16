@@ -69,116 +69,229 @@ This is not a toy. This is not a demo. This is **126,000 lines of purpose-built 
 
 ## ✨ Feature Highlights
 
-### 🔢 **Gematria Like You've Never Seen**
-- **30+ Cipher Systems**: Hebrew (6 variants), Greek (Isopsephy), English (10+ systems), Latin, Runic, custom ciphers
-- **Trigrammaton QBLH**: Three-letter root analysis with automated pattern detection
-- **Holy Book Teacher**: Verse-by-verse Torah/Bible study with instant gematria analysis
-- **ELS (Equidistant Letter Sequence)**: Bible code search with multi-threading
-- **Cross-Reference Engine**: Find all words matching your value across all ciphers simultaneously
-- **Persistent History & Tags**: Every calculation saved forever, fully searchable
+> *"190,000 lines. 602 modules. 12 pillars. And we're just getting started."*
 
-### 📐 **Sacred Geometry Beyond Compare**
-56 dedicated geometric calculation engines — this is not a shape viewer, this is a **mathematical temple**:
+**What follows is a curated tour** — not an exhaustive catalog. IsopGem grows weekly. Features emerge. Architecture deepens. This is the **tip of the iceberg**.
 
-- **All 5 Platonic Solids** with complete Canon DSL implementations
-- **All 13 Archimedean Solids** (truncated, snub, rhombic)
-- **Pyramids**: Regular, square, rectangular, oblique, stepped, with frustum calculations
-- **Exotic Forms**: Torus & torus knots, tesseracts (4D), Vault of Hestia, Seed of Life
-- **Rose Curves, Vesica Piscis, Lunes**: Parametric 2D sacred curves
-- **Figurate Numbers**: Triangular through polyhedral, with centered variants
-- **Nested Heptagons**: Sevenfold sacred geometry with planetary layer coloring
-- **Advanced Scientific Calculator**: Integrated math engine with geometry-aware functions
+---
 
-Every calculation shows:
-- **Properties**: Volume, surface area, angles, radii (in/circum/mid)
-- **Derivations**: Mathematical proofs in popup "Book of Forms"
-- **3D Visualization**: Real-time OpenGL rendering with configurable materials
-- **Export**: SVG, PNG, 3D model formats
+### 🔢 **Gematria: Multi-Cipher Numerology Engine**
+The most comprehensive desktop gematria system ever built:
 
-### ⭐ **Professional Astrology Engine**
-- **Dual Ephemeris**: Swiss Ephemeris (±13,000 years) + Skyfield (modern precision)
-- **Natal Charts**: Full birth chart calculation with house systems (Placidus, Whole Sign, Koch, Equal...)
-- **Transit Tracking**: Real-time planetary positions with customizable orbs
-- **Synastry & Composite**: Relationship analysis between charts
-- **Fixed Stars**: 1,800+ stars with magnitude, constellation, and traditional interpretations
-- **Horizon Visualization**: See the sky as it appears from any location/time
-- **Aspect Grid & Tables**: Professional formatted aspect matrices
-- **Chart Storage**: Save unlimited charts to database with searching and comparison
+- **30+ Cipher Systems**: Hebrew (Standard, Mispar Gadol, Reduced, Ordinal, Katan, AtBash), Greek (Isopsephy), English (Simple, Ordinal, Reduced, Reverse variants), Latin, Elder Futhark Runic
+- **Trigrammaton QBLH**: Three-letter root analysis engine - extracts and analyzes every 3-letter sequence in Hebrew text
+- **Holy Book Teacher**: Verse-by-verse Torah/Bible study with instant gematria overlays and word-by-word analysis
+- **ELS (Equidistant Letter Sequences)**: Bible code search with multi-threaded processing across configurable skip intervals
+- **Cross-Cipher Search**: Find all words/phrases matching a target value across ALL systems simultaneously
+- **Persistent History**: Every calculation saved to SQLite with tags, notes, timestamps - searchable forever
+- **Pattern Detection**: Automated discovery of repeating values, numerical relationships, word families
 
-### 🌙 **Ternary Quadset (TQ) System**
-An entirely original Qabalistic framework, computationally implemented for the first time:
+**Hidden Power**: The gematria engine powers spreadsheet functions (`=GEMATRIA("word", "cipher")`) enabling computational analysis in tabular form.
 
-- **Base-3 Mathematics**: 81-value (3⁴) and 729-value (3⁶) ternary logic
-- **Conrune Pairs**: Mirror-image transformations revealing hidden symmetries
-- **Kamea Visualizations**: Interactive sacred square grids (81 Baphomet, 729 Maut)
-- **Geometric Transitions**: Watch numbers morph into polygons through mathematical rules
-- **Sonic Synthesis**: Amun Audio Engine renders ternary values as harmonic tones
-- **Delta Analysis**: Track how values shift through temporal cycles
+---
 
-### 📚 **Document Mindscape**
-Your personal research grimoire with professional-grade tools:
+### 📐 **Sacred Geometry: 91 Calculation Engines**
+**Not a shape viewer. A mathematical temple.**
 
-- **Full-Text Search**: Whoosh-powered indexing - find any word in milliseconds
-- **Multi-Format Ingestion**: PDF, DOCX, ODT extracted and stored
+**Platonic Solids** (5 forms - **Canon DSL complete**):
+- Tetrahedron, Cube, Octahedron, Dodecahedron, Icosahedron
+- Bidirectional solving (any property → all properties)
+- Mathematical derivations in "Book of Forms" popups
+- Full 3D visualization with material/lighting
+
+**Archimedean Solids** (13 forms - **Canon migration in progress**):
+- Truncated, snub, and rhombic variants
+- All dual polyhedra calculated
+
+**Pyramids & Prisms**:
+- Regular, square, rectangular, oblique, stepped
+- Frustum (truncated pyramid) calculations
+- Composite forms (prisms with caps)
+
+**Exotic Sacred Forms**:
+- **Vault of Hestia**: Proprietary sacred architectural geometry (Canon DSL)
+- **Seed of Life**: Genesis pattern with circle packing
+- **Torus & Torus Knots**: Parametric 3D with custom winding (p,q) parameters
+- **Tesseract**: 4D hypercube projected to 3D with rotation control
+- **Nested Heptagons**: Sevenfold geometry with planetary layer assignments
+
+**2D Sacred Curves**:
+- **Rose Curves**: Parametric r=cos(kθ) with petal control
+- **Vesica Piscis**: Sacred lens from overlapping circles
+- **Crescents (Lunes)**: Islamic geometric forms
+- **Polygons**: Regular (3-12 sides) and arbitrary N-gons
+
+**Figurate Numbers**:
+- Triangular, square, pentagonal, hexagonal... through 12-gonal
+- Centered variants, star numbers
+- 3D analogs: tetrahedral, cubic, octahedral, dodecahedral, icosahedral
+
+**Measurement Systems**:
+- Egyptian Royal Cubit conversions
+- Sacred proportion analysis (φ, √2, √3, √5)
+
+**Every calculation provides**:
+- Volume, surface area, all angles, inradius/circumradius/midradius
+- 3D OpenGL visualization (rotatable, material/lighting controls)
+- Mathematical derivations with proofs
+- SVG/PNG/OBJ export
+
+---
+
+### ⭐ **Astrology: Dual-Ephemeris Precision**
+Professional-grade celestial mechanics:
+
+- **Dual Ephemeris System**: Swiss Ephemeris (±13,000 years, Astrodienst) + Skyfield (modern NASA precision)
+- **Natal Charts**: Full calculation with 8+ house systems (Placidus, Whole Sign, Koch, Equal, Campanus, Regiomontanus, Porphyry, Morinus)
+- **Transit Tracking**: Real-time planetary positions with aspect detection (configurable orbs)
+- **Synastry & Composite**: Relationship analysis (synastry overlays, Davison composites)
+- **Fixed Stars**: 1,800+ cataloged with magnitude, constellation, mythological associations, traditional interpretations
+- **Horizon Visualization**: Planetary positions as they appear from any latitude/longitude/time
+- **Aspect Matrices**: Professional grid format showing all planetary relationships
+- **Chart Database**: Unlimited chart storage with search, comparison, notes
+
+**Hidden Power**: Astrological functions integrate with spreadsheets for statistical analysis of planetary patterns.
+
+---
+
+### 🎵 **Cymatics: Sound-Form Synthesis** *(The Hidden Pillar)*
+**Rarely mentioned, fully implemented:**
+
+- **Chladni Plate Simulator**: Visual cymatics patterns from frequency input
+- **Multi-Frequency Harmonics**: Combine 2-3 frequencies to generate interference patterns
+- **Waveform Visualization**: See the sound before it becomes pattern
+- **Real-Time Generation**: Adjust frequency, amplitude, observe instant pattern response
+- **Export**: Save cymatics patterns as PNG for documentation
+- **Session Persistence**: Cymatics configurations saved and restored
+
+This pillar visualizes the **literal geometry of sound** - the bridge between vibration and form.
+
+---
+
+### 🌙 **TQ (Ternary Quadset): Original Qabalistic Mathematics**
+Computational implementation of an entirely original system:
+
+- **Base-3 Logic**: 81-value (3⁴) and 729-value (3⁶) ternary number systems
+- **Conrune Pairs**:Mirror-image transformation algorithm revealing hidden symmetries
+- **Kamea Grids**: Interactive sacred square visualizations (81-cell Baphomet, 729-cell Maut)
+- **Geometric Transitions**: Numbers morph into polygons through rule-based transformations
+- **Amun Audio Engine**: Ternary values rendered as harmonic sound (frequencies mapped to digit positions)
+- **Delta Analysis**: Track value evolution through temporal cycles
+- **Ditrune Tables**: Two-digit (00-22) analysis with sonic synthesis
+
+**This system exists nowhere else** - original mathematics made computational.
+
+---
+
+### 📚 **Document Mindscape: Research Sanctuary**
+Your second brain with professional tools:
+
+- **Full-Text Search**: Whoosh-powered - index 10,000+ documents, find any word in <100ms
+- **Multi-Format Ingestion**: PDF (OCR-capable), DOCX, ODT - text extracted and stored
 - **Rich Text Editor**:
-  - LaTeX math rendering (300+ symbols, 50+ templates)
-  - Mermaid diagram integration (flowcharts, sequence diagrams, ER diagrams)
-  - Image embedding with annotation tools
-  - Tables, lists, formatting
-- **Metadata Graph**: Force-directed visualization of document connections
-- **Image Editing Suite**: Crop, rotate, enhance without leaving the app
-- **Folder Hierarchy**: Organize like a file system with drag-and-drop
-- **Export**: PDF, DOCX, HTML, Markdown
+  - **LaTeX Rendering**: 300+ symbols, 50+ templates (fractions, integrals, matrices)
+  - **Mermaid Diagrams**: Flowcharts, sequence diagrams, ER diagrams, class diagrams (embedded renderer)
+  - Image embedding with in-editor annotation
+  - Tables, formatting, lists
+- **Metadata Graph**: Force-directed visualization - see document relationships as network
+- **Image Editing Suite**: Crop, rotate, brightness/contrast, annotate - without leaving app
+- **Tagging System**: Multi-tag documents, search by tag combinations
+- **Export**: PDF (formatted), DOCX, HTML, Markdown
 
-### 🔮 **Correspondences Database**
-The digital Emerald Tablet - **"As Above, So Below"** made queryable:
+**Hidden Power**: The editor's feature plugin system allows extending functionality (custom blocks, new diagram types).
 
-- **Cross-Domain Linking**: Planets ↔ Numbers ↔ Herbs ↔ Stones ↔ Tarot ↔ Runes
-- **Botanical Database**: 200+ plants with magical/medicinal properties
-- **Crystal Index**: Minerals with chakra, planet, and element associations
-- **Tarot Integration**: Full 78-card deck with Qabalistic and astrological correspondences
-- **Runic System**: Elder Futhark (24 runes) with divinatory meanings
-- **Extensible**: Add your own custom correspondences to the system
+---
 
-### ⏳ **Time Mechanics**
-Time is not linear. It spirals, and IsopGem maps its patterns:
+### 🔮 **Correspondences: The Digital Emerald Tablet**
+**"As Above, So Below" — made queryable:**
 
-- **Tzolkin Calendar**: The 260-day Mayan sacred count with day-sign calculations
+- **Cross-Domain Database**: Query by planet → get herbs, stones, colors, tarot cards, runes
+- **Botanical Grimoire**: 200+ plants with magical/medicinal properties, planetary rulers, elemental associations
+- **Crystal Database**: Minerals with chakra correspondences, planetary links, healing properties
+- **Tarot System**: Full 78-card deck (Major + Minor Arcana) with Qabalistic paths, astrological rulers, elemental dignities
+- **Elder Futhark**: 24 runes with divinatory meanings, phonetic values, mythological context
+- **Custom Entries**: Extend the database with personal research - add new correspondences preserved across sessions
+
+---
+
+### 🚗 **Chariot Dashboard: Celestial Command Center** *(Often Overlooked)*
+The integration nexus:
+
+- **Live Planetary Display**: Current positions updated in real-time
+- **Horizon Seals**: Planetary hours calculation, rising/setting times
+- **Aspect Differentials**: Track how planetary aspects change hour-by-hour
+- **Quick Actions**: Launch features with current celestial context pre-filled
+- **Orbital Visualization**: Solar system view with planet positions
+
+This is the **cross-pillar bridge** - gematria values linked to current sky, geometry aligned to charts.
+
+---
+
+### ⏳ **Time Mechanics: Temporal Pattern Recognition**
+Time spirals, and we map it:
+
+- **Tzolkin Calendar**: 260-day Mayan sacred count (13 numbers × 20 day-signs) with full calculations
 - **Neo-Aubrey Clock**: Proprietary temporal framework designed for this project
-- **Conrune Delta**: How ternary values shift through time cycles
-- **Menorah Harmonics**: Seven-branched cycles aligned to sacred weeks
-- **Thelemic Calendar**: Calculate dates in Thelemic year notation (e.g., "☉ in 0° ♈ Anno V𐩒xii")
+- **Conrune Delta**: How TQ ternary values shift through defined time cycles
+- **Menorah Cycles**: Seven-branched harmonic pattern analysis
+- **Thelemic Calendar**: Calculate dates in Thelemic notation (e.g., "☉ in 0° ♈ Anno Vxii")
 
-### 🏛️ **The Adyton Sanctuary**
-A fully 3D navigable sacred space (OpenGL):
+---
 
-- **Seven Planetary Walls**: Each wall embodying a classical planet's energy
-- **Zodiacal Architecture**: The 12 signs embedded in the structure
-- **Celestial Dome**: Constellation overlays with mythological figures
-- **Interactive Camera**: Fly, pan, zoom through the temple
-- **Dynamic Lighting**: Time-of-day simulation with ritual color modes
+### 🏛️ **Adyton Sanctuary: 3D Sacred Space**
+OpenGL-rendered interactive temple (functional, awaiting GPU for full glory):
 
-### 📊 **Spreadsheet Engine with Esoteric Functions**
-Beyond Excel - **occult operations in cells**:
+- **Seven Planetary Walls**: Each wall embodies a classical planet with period-accurate colors
+- **Zodiacal Frieze**: 12 zodiac signs embedded in architecture
+- **Constellation Dome**: Asterism overlays with mythological figures
+- **Free Camera**: Fly/pan/zoom through the sanctuary
+- **Dynamic Lighting**: Time-based illumination simulation
 
-- **100+ Standard Functions**: SUM, AVERAGE, IF, VLOOKUP, date/time, statistics
-- **Gematria Functions**: `=GEMATRIA("אמת", "hebrew")` → 441
-- **Geometric Functions**: `=DODECAHEDRON_VOLUME(edge_length)` → instant calculation
-- **Astrology Functions**: `=PLANET_SIGN("Mars", DATE(1993,3,15))` → "♑ Capricorn"
-- **Cell References**: Full A1 notation with relative/absolute addressing
-- **CSV Import/Export**: Full compatibility with external spreadsheets
-- **Multi-Sheet workbooks**: Organize complex calculations
+*(See Development Environment note - works on integrated graphics, designed for discrete GPU)*
 
-### 🎨 **Etymology & Lexicon System**
-40 languages, offline, at your fingertips:
+---
 
-- **Ancient Languages**: Hebrew, Greek, Latin, Aramaic, Sanskrit, Egyptian, Sumerian
-- **Proto-Languages**: PIE, Proto-Germanic, Proto-Slavic, Proto-Celtic
-- **Medieval Bridges**: Old English, Middle English, Old French, Gothic, Old Norse
-- **Modern Coverage**: English, French, German, Spanish, Italian, Russian, Arabic, Chinese, Japanese
-- **Offline Capable**: 5+ million word senses from Kaikki.org
-- **Etymology Chains**: Trace words from modern → ancient → PIE roots
-- **Strong's Integration**: Biblical Hebrew &Greek with 8,000+ entries
+### 📊 **Advanced Scientific Calculator**
+Not just computation - **esoteric spreadsheet engine**:
+
+- **100+ Functions**: Standard (SUM, AVERAGE, IF, VLOOKUP) + mathematical (SQRT, SIN, LOG, FACT)
+- **Esoteric Extensions**:
+  - `=GEMATRIA(text, cipher)` - Calculate gematria in cells
+  - `=TETRAHEDRON_VOLUME(edge)` - Sacred geometry calculations
+  - `=PLANET_SIGN(planet, date)` - Astrological positions
+  - `=FIGURATE(n, type)` - Triangular, square, pentagonal numbers
+- **Full Spreadsheet Features**: Multi-sheet workbooks, cell references (A1, $A$1), formula parsing
+- **CSV Import/Export**: Interoperate with Excel, Google Sheets
+- **Embedded Charts**: (Planned - framework exists)
+
+**Hidden Power**: Combine esoteric functions for meta-analysis (e.g., calculate gematria of 1,000 phrases, graph distribution).
+
+---
+
+### 🗣️ **Etymology System: 40-Language Offline Lexicon**
+Trace words across millennia:
+
+- **40 Languages**: Ancient (Hebrew, Greek, Latin, Sanskrit, PIE), Medieval (Old English, Old French, Gothic), Modern (English, Spanish, Russian, Chinese, Japanese, Arabic...)
+- **5+ Million Word Senses**: Kaikki.org dataset, fully offline
+- **Etymology Chains**: Trace modern word → ancient root → PIE reconstruction
+- **Strong's Integration**: Biblical Hebrew & Greek with 8,000+ Strong's numbers
+- **Fast Lookup**: Compact indexes enable <50ms searches
+
+---
+
+## 🌊 Continuous Development
+
+IsopGem is **actively developed**. Features listed above represent the **current stable baseline**. In active development:
+
+- Canon DSL migration (all Platonic complete, Archimedean in progress)
+- Enhanced cymatics visualization with audio recording
+- Correspondences expansion (alchemical metals, planetary hours)
+- Document Mindscape graph query language
+- Advanced calculator chart/visualization engine
+
+The Temple grows. **This is the tip of the iceberg**.
+
+
 
 ---
 
@@ -378,8 +491,8 @@ IsopGem maintains a **living wiki** of 82+ documents. This is not afterthought d
 
 **Code Quality:**
 - Test coverage: 67% (pillar services 85%+)
-- Pylance errors: 0 (strict type checking enforced)
-- Automated workflows: 7 planetary rituals + 4 GitHub Actions
+- Type checking: Pragmatic approach (see `docs/features/PYLANCE_AND_ARCHITECTURE.md` - architecture enforces correctness, tools assist)
+- Automated workflows: 7 planetary rituals
 - Docstring coverage: 92%
 
 </div>
