@@ -8,9 +8,13 @@ venv/
 .env
 .venv/
 
-# IDEs
+# IDEs & Agent Tools
 .vscode/
 .idea/
+.agent/
+.claude/
+.cursor/
+.qoder/
 
 # Build/
 build/
