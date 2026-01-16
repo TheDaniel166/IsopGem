@@ -207,16 +207,33 @@ Your second brain with professional tools:
 
 ---
 
-### 🔮 **Correspondences: Hermetic Cross-Reference Database**
-**The connective tissue between domains:**
+### � **The Emerald Tablet: Correspondences Spreadsheet**
+**Build your own magical reference tables:**
 
-- **Relational Database**: SQLite-backed correspondence system linking planets, elements, numbers, symbols
-- **Botanical Grimoire**: 200+ medicinal/magical plants with planetary rulers, elemental associations, medicinal properties
-- **Mineral Database**: Crystals and stones with chakra, planetary, and elemental correspondences
-- **Tarot Integration**: Full 78-card deck with Qabalistic paths (Tree of Life), astrological rulers, elemental dignities, divinatory meanings
-- **Elder Futhark System**: 24 runes with phonetic values, Old Norse names, mythological context, divination meanings
-- **Spreadsheet Interface**: Query correspondences in **The Emerald Tablet** (see below) - build magical matrices in tabular form
-- **Extensible**: Add custom correspondences (personal herbs, experimental associations) - preserved permanently
+This is NOT a pre-populated database - it's a **full spreadsheet application** where YOU create correspondence tables:
+
+- **SQLite-Backed Workbooks**: Create unlimited named "Tablets" (spreadsheets), each saved to database
+- **100+ Built-in Functions**: Standard (SUM, AVERAGE, IF, VLOOKUP) + Mathematical (SQRT, SIN, LOG, FACT)
+- **Esoteric Formula Extensions**:
+  - `=GEMATRIA(text, cipher)` - Calculate gematria in cells
+  - `=TETRAHEDRON_VOLUME(edge)` - Sacred geometry calculations  
+  - `=PLANET_SIGN(planet, date)` - Astrological positions
+  - `=FIGURATE(n, type)` - Triangular, square, pentagonal numbers
+- **Multi-Sheet Workbooks**: Organize complex magical/mathematical calculations across sheets
+- **CSV/Excel Import**: Load existing correspondence tables from external files
+- **Formula Engine**: Live calculations -formulas update as you type
+- **Cell Referencing**: Full A1 notation with relative/absolute ($A$1) addressing
+- **Conditional Formatting**: Highlight cells based on value ranges (planned)
+- **Export**: Save your tablets as CSV for external use
+
+**What YOU Build**:
+- Hebrew letter correspondence tables (Aleph=1, Beth=2...)
+- Planetary hour calculations
+- Tarot/astrology cross-reference matrices
+- Custom gematria analyses  
+- Any magical/mathematical tabular data you need
+
+**This is YOUR grimoire workshop** - empty tablets awaiting your inscriptions.
 
 ---
 
@@ -255,23 +272,7 @@ OpenGL-rendered interactive temple (functional, awaiting GPU for full glory):
 
 ---
 
-### 📊 **The Emerald Tablet: Correspondences Spreadsheet**
-**"As Above, So Below" — in tabular form:**
 
-- **100+ Functions**: Standard spreadsheet (SUM, AVERAGE, IF, VLOOKUP) + mathematical (SQRT, SIN, LOG, FACT)
-- **Esoteric Extensions**:
-  - `=GEMATRIA(text, cipher)` - Calculate gematria in cells
-  - `=TETRAHEDRON_VOLUME(edge)` - Sacred geometry calculations
-  - `=PLANET_SIGN(planet, date)` - Astrological positions
-  - `=FIGURATE(n, type)` - Triangular, square, pentagonal numbers
-- **Cross-Domain Queries**: Link correspondences across planetary, elemental, numerical systems
-- **Multi-Sheet Workbooks**: Organize complex magical/mathematical calculations
-- **CSV Import/Export**: Interoperate with Excel, Google Sheets
-- **Live Calculations**: Formulas update as you type
-
-**Hidden Power**: Build correspondence matrices - e.g.,calculate gematria for all Hebrew divine names, cross-reference with planetary positions, export for analysis.
-
----
 
 ### 🗣️ **Etymology & Word Origins**
 Trace words to their ancient roots:
