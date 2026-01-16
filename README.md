@@ -239,7 +239,7 @@ A hierarchical knowledge management system inspired by OneNote:
 
 ---
 
-### � **The Emerald Tablet: Correspondences Spreadsheet**
+### 📊 **The Emerald Tablet: Correspondences Spreadsheet**
 **Build your own magical reference tables:**
 
 This is NOT a pre-populated database - it's a **full spreadsheet application** where YOU create correspondence tables:
