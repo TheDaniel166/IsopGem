@@ -105,12 +105,12 @@ The most comprehensive desktop gematria system ever built:
 
 - **Gematria Hub**: 30+ comprehensive ciphers across Hebrew, Greek, Arabic (Abjad/Maghrebi), Sanskrit, and English.
 - **Mixed-Language Integration**: Intelligent language detection automatically switches ciphers per-word for complex multi-lingual research.
-- **Equidistant Letter Sequencing (ELS)**: A "Bible Code" engine supporting:
+- **Equidistant Letter Sequencing (ELS)**: An advanced "Sacred Code" engine supporting:
   - **Standard Search**: Fixed skip intervals with direction control.
   - **Arithmetical Sequences**: Skips based on Triangular, Square, or **Fibonacci** numbers.
   - **Chain Search**: Find words by tracking the *nearest-occurrence* of each subsequent letter.
 - **Intervening Interval Analysis**: Automatic gematria calculation for the text segments between each ELS letter hit.
-- **Holy Book Teacher**: Verse-by-verse Torah/Bible study with instant gematria overlays, word-by-word analysis, and Root-Word (Trigrammaton) detection.
+- **Holy Book Teacher**: Verse-by-verse scriptural study with instant gematria overlays, word-by-word analysis, and Root-Word (Trigrammaton) detection.
 - **Persistent History**: Every calculation saved to SQLite with tags, notes, and searchable metadata.
 
 ---
@@ -301,10 +301,10 @@ Time spirals, and we map it:
 Trace words to their ancient roots:
 
 - **Multi-Script Detection**: Auto-detects Hebrew, Greek, or Latin/English scripts
-- **Core Languages**: Hebrew (kaikki.org + Strong's + Sefaria API), Ancient Greek (kaikki.org + Strong's), Latin, English, Sanskrit, Aramaic, Proto-Indo-European
-- **Etymology Graph**: 4.2M relationships from etymology-db showing word family trees
-- **Strong's Integration**: 8,000+ Biblical Hebrew & Greek entries with Strong's numbers
-- **Sefaria Integration**: Klein Dictionary + Jewish lexicons for deep Hebrew analysis
+- **Core Languages**: Ancient Hebrew, Ancient Greek, Latin, English, Sanskrit, Aramaic, Proto-Indo-European (offline lexicon support)
+- **Etymology Graph**: 4.2M relationships showing word family trees across multiple language families
+- **Standardized Indexing**: 8,000+ Ancient Hebrew & Greek entries with universal cross-reference numbers
+- **Deep Lexicon Integration**: Linguistic analysis via curated esoteric and philosophical lexicons
 - **Optional Web Fallback**: Can query online sources (ety-python, Wiktionary) if offline data lacks entry
 
 **Future**: Planned expansion to 40-language offline system with Medieval variants (Old English, Old French, Gothic, Old Norse). Framework exists; data acquisition in progress.
@@ -534,9 +534,13 @@ IsopGem maintains a **living wiki** of 82+ documents. This is not afterthought d
 **For Qabalists & Gematria Researchers:**
 - Calculate values in 30+ cipher systems simultaneously
 - Find all words that sum to a target number
-- Analyze Torah/Bible verses with instant gematria
-- Search for ELS (Bible codes) across texts
 - Build custom ciphers and save calculation history
+
+**For Scholars & Researchers:**
+- Analyze sacred verses with instant gematria
+- Search for ELS (sacred codes) across universal texts
+- Map etymological roots across language families
+- Export research to PDF/DOCX for publication
 
 **For Astrologers:**
 - Generate professional natal charts with multiple house systems
