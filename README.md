@@ -188,22 +188,54 @@ Computational implementation of an entirely original system:
 
 ---
 
-### 📚 **Document Mindscape: Research Sanctuary**
-Your second brain with professional tools:
+### ✍️ **Rich Text Editor (RTE): Pro-Level Document Authoring**
+**Production-ready, feature-complete editing engine:**
 
-- **Full-Text Search**: Whoosh-powered - index 10,000+ documents, find any word in <100ms
-- **Multi-Format Ingestion**: PDF (OCR-capable), DOCX, ODT - text extracted and stored
-- **Rich Text Editor**:
-  - **LaTeX Rendering**: 300+ symbols, 50+ templates (fractions, integrals, matrices)
-  - **Mermaid Diagrams**: Flowcharts, sequence diagrams, ER diagrams, class diagrams (embedded renderer)
-  - Image embedding with in-editor annotation
-  - Tables, formatting, lists
-- **Metadata Graph**: Force-directed visualization - see document relationships as network
-- **Image Editing Suite**: Crop, rotate, brightness/contrast, annotate - without leaving app
+The crown jewel of document creation - a **professional-grade Rich Text Editor** with unique esoteric capabilities:
+
+- **LaTeX Math Rendering**: 
+  - 300+ mathematical symbols (∫, ∑, √, ∞, ∂, ∇, ⊕, ⊗, ℝ, ℂ, etc.)
+  - 50+ templates (fractions, integrals, matrices, limits, derivatives)
+  - Live preview - see rendered equations instantly
+  - Insert via symbol palette or LaTeX code
+  
+- **Mermaid Diagram Engine**:
+  - Flowcharts, sequence diagrams, ER diagrams, class diagrams
+  - Embedded renderer - diagrams update as you type
+  - Export diagrams as PNG
+  
+- **Image Editing Suite**:
+  - Embed images directly in documents
+  - In-editor annotation tools
+  - Crop, rotate, brightness/contrast adjustments
+  - No need to leave the app
+  
+- **Advanced Formatting**:
+  - Tables (resizable, mergeable cells)
+  - Lists (bulleted, numbered, nested)
+  - Headings, bold, italic, underline, strikethrough
+  - Text/background colors, font families
+  
+- **Export Options**: PDF (formatted), DOCX, HTML, Markdown
+
+**Hidden Power**: Plugin architecture allows extending functionality - custom block types, new diagram formats. The RTE is the foundation for all textual work in IsopGem.
+
+---
+
+### 📚 **Document MindScape: Knowledge Repository** *(In Development)*
+**OneNote-style note-taking system (active development):**
+
+A hierarchical knowledge management system inspired by OneNote:
+
+- **Full-Text Search**: Whoosh-powered indexing (10,000+ documents, <100ms query)
+- **Multi-Format Ingestion**: PDF (OCR-capable), DOCX, ODT - extract and store text
+- **Metadata Graph**: Force-directed visualization showing document relationships as network
 - **Tagging System**: Multi-tag documents, search by tag combinations
-- **Export**: PDF (formatted), DOCX, HTML, Markdown
+- **Folder Hierarchy**: Organize notes like a file system with drag-and-drop
 
-**Hidden Power**: The editor's feature plugin system allows extending functionality (custom blocks, new diagram types).
+**Development Status**: Core functionality implemented. Integration with RTE for seamless editing in progress. Full release pending UI/UX refinement.
+
+**Vision**: Your personal research library - capture ideas, link concepts, visualize knowledge graphs.
 
 ---
 
@@ -237,15 +269,19 @@ This is NOT a pre-populated database - it's a **full spreadsheet application** w
 
 ---
 
-### 🚗 **Chariot Dashboard: Celestial Command Center** *(Often Overlooked)*
-The integration nexus:
+### 🚗 **The Celestial Chariot: Merkabah Analysis**
+**The Vehicle of the Soul — mapped through midpoints:**
 
-- **Live Planetary Display**: Current positions updated in real-time
-- **Horizon Seals**: Planetary hours calculation, rising/setting times
-- **Aspect Differentials**: Track how planetary aspects change hour-by-hour
-- **Quick Actions**: Launch features with current celestial context pre-filled
+A specialized esoteric engine that calculates the "Chariot of the Soul" structure from any natal chart:
 
-This is the **cross-pillar bridge** - gematria values linked to current sky, geometry aligned to charts.
+- **The 7 Trios**: 21 specific planetary midpoints grouped into functional soul-systems (Vitality, Navigation, Will, Form, Transformation, Context, Great Work)
+- **Major Arcana Mapping**: Each planetary pair linked to its Tarot Key
+- **Axles of Will**: The 7 core drive-shafts of the personality calculated from trio means
+- **The Chariot Point**: The "magnetic north" of the soul — the ultimate synthesis point of the chart
+- **Maat Symbols**: 360 Egyptian degree symbols mapped to every midpoint and axle
+- **Fateful Degrees**: Automatic detection of Galactic Center alignments (27° Fire signs)
+
+**Function**: This is not a dashboard, but a **deep-analysis engine** for understanding the structural geometry of the soul's vehicle.
 
 ---
 
