@@ -44,7 +44,7 @@ class TzolkinService:
         """Loads structural cell names (pure Greek tokens) for the 260-cell calendar."""
         csv_path = os.path.abspath(os.path.join(
             os.path.dirname(__file__),
-            "../../../../Docs/time_mechanics/Tzolkin_CellNames.csv"
+            "../../../../data/time_mechanics/Tzolkin_CellNames.csv"
         ))
 
         if not os.path.exists(csv_path):
@@ -87,8 +87,8 @@ class TzolkinService:
         # Path relative to project root
         # Ideally this path should be resolved more robustly
         csv_path = os.path.abspath(os.path.join(
-            os.path.dirname(__file__), 
-            "../../../../Docs/time_mechanics/Tzolkin Cycle.csv"
+            os.path.dirname(__file__),
+            "../../../../data/time_mechanics/Tzolkin Cycle.csv"
         ))
         
         if not os.path.exists(csv_path):

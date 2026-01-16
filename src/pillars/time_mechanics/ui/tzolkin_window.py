@@ -259,7 +259,7 @@ class TzolkinCalculatorWindow(QWidget):
     def _kin_to_cell(self, kin: int) -> tuple[int, int]:
         """Map Kin (1-260) to a cell in the source-of-truth grid layout.
 
-        The window grid matches Docs/time_mechanics/Tzolkin Cycle.csv:
+        The window grid matches data/time_mechanics/Tzolkin Cycle.csv:
         - rows = Sign (0-19)
         - cols = Tone (0-12)
         """

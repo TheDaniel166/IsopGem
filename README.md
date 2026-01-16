@@ -123,6 +123,11 @@ IsopGem is not merely a tool; it is a manifestation of a unique collaborative pa
 | <img src="src/assets/screenshots/dodecahedron_calculator.png" width="400" alt="Geometry"> | <img src="src/assets/screenshots/interlinear_view.png" width="400" alt="Interlinear"> |
 | *Bidirectional property solving for complex solids* | *Comparative study with real-time gematria overlays* |
 
+| **TQ Pillar Hub** | **Fractal Tree Kamea** |
+|:---:|:---:|
+| <img src="src/assets/screenshots/tq_pillar.png" width="400" alt="TQ Pillar"> | <img src="src/assets/screenshots/fractal_tree_kamea_maut.png" width="400" alt="Fractal Tree Kamea"> |
+| *Ternary Quadset system and Kamea navigation* | *The 729-value Kamea of Maut as fractal canopy* |
+
 | **Professional RTE** |
 |:---:|
 | <img src="src/assets/screenshots/rte_insert_tab.png" width="800" alt="Rich Text Editor"> |

@@ -234,12 +234,12 @@ class CymaticsHub(QWidget):
     def _load_help_text(self) -> str:
         try:
             root = Path(__file__).resolve().parents[4]
-            help_path = root / "Docs" / "CYMATICS_GENERATOR_HELP.md"
+            help_path = root / "docs" / "features" / "CYMATICS_GENERATOR_HELP.md"
             if not help_path.exists():
                 raise FileNotFoundError(str(help_path))
             return help_path.read_text(encoding="utf-8")
         except Exception:
             return (
                 "Cymatics Simulator help file was not found.\n"
-                "Create `Docs/CYMATICS_GENERATOR_HELP.md` to override this message."
+                "Create `docs/features/CYMATICS_GENERATOR_HELP.md` to override this message."
             )

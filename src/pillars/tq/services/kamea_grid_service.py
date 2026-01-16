@@ -32,15 +32,18 @@ class KameaGridService:
         self.variant = variant
         
         # Paths to Source of Truth CSVs
+        # Resolve project root: services -> tq -> pillars -> src -> project_root
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.abspath(os.path.join(current_dir, "..", "..", "..", ".."))
+
         if self.variant == "Baphomet":
             # Baphomet Data
-            current_dir = os.path.dirname(os.path.abspath(__file__))
             self.decimal_csv_path = os.path.join(current_dir, "..", "data", "kamea_baphomet_grid.csv")
             self.ternary_csv_path = os.path.join(current_dir, "..", "data", "kamea_baphomet_ternary.csv")
         else:
             # Default Maut Data
-            self.decimal_csv_path = "/home/burkettdaniel927/projects/isopgem/Docs/kamea/kamea_maut.csv"
-            self.ternary_csv_path = "/home/burkettdaniel927/projects/isopgem/Docs/kamea/kamea_maut_ternary - Sheet1.csv"
+            self.decimal_csv_path = os.path.join(project_root, "data", "kamea", "kamea_maut.csv")
+            self.ternary_csv_path = os.path.join(project_root, "data", "kamea", "kamea_maut_ternary - Sheet1.csv")
         
     @property
     def cells(self) -> List[KameaCell]:

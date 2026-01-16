@@ -18,7 +18,7 @@ class KameaLoaderService:
     
     # Path to the source of truth
     # We assume the user has placed the file at this location relative to project root
-    CSV_PATH = "Docs/kamea/kamea_maut_ternary - Sheet1.csv"
+    CSV_PATH = "data/kamea/kamea_maut_ternary - Sheet1.csv"
 
     def __init__(self, project_root: str):
         """
@@ -175,7 +175,7 @@ class KameaLoaderService:
         Loads the authentic Value -> Wall Index mapping from zodiacal_heptagon.csv.
         Returns: {decimal_value: wall_index (0-6)}
         """
-        path = os.path.join(self.project_root, "Docs", "adyton_walls", "zodiacal_heptagon.csv")
+        path = os.path.join(self.project_root, "data", "adyton_walls", "zodiacal_heptagon.csv")
         mapping = {}
         
         if not os.path.exists(path):

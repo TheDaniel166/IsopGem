@@ -566,11 +566,11 @@ class WallDesignerWindow(QMainWindow):
         fname = fname_map.get(wall_name)
         if not fname: return
 
-        # Path: Docs/adyton_walls/
+        # Path: data/adyton_walls/
         import csv
-        # src/pillars/adyton/ui/wall_designer.py -> ... -> isopgem/Docs
+        # src/pillars/adyton/ui/wall_designer.py -> ... -> isopgem/data
         # 1: ui -> adyton, 2: adyton -> pillars, 3: pillars -> src, 4: src -> isopgem
-        path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "Docs", "adyton_walls", fname))
+        path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "data", "adyton_walls", fname))
         logger.debug("WallDesigner: loading wall values from %s", path)
         if not os.path.exists(path):
             logger.warning("WallDesigner: wall values file not found at %s", path)

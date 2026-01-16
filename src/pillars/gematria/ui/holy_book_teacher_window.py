@@ -574,14 +574,14 @@ class HolyBookTeacherWindow(QMainWindow):
     def _open_help_dialog(self):
         try:
             root = Path(__file__).resolve().parents[4]
-            help_path = root / 'Docs' / 'HOLY_BOOK_TEACHER_HELP.md'
+            help_path = root / 'docs' / 'features' / 'HOLY_BOOK_TEACHER_HELP.md'
             if not help_path.exists():
                 raise FileNotFoundError(str(help_path))
             text = help_path.read_text(encoding='utf-8')
         except Exception:
             text = (
-                "Holy Book Teacher Help is not available in the expected Docs folder.\n"
-                "Please check repository documentation or create the file at `Docs/HOLY_BOOK_TEACHER_HELP.md`."
+                "Holy Book Teacher Help is not available in the expected docs folder.\n"
+                "Please check repository documentation or create the file at `docs/features/HOLY_BOOK_TEACHER_HELP.md`."
             )
         dlg = QDialog(self)
         dlg.setWindowTitle("Holy Book Teacher Help")
