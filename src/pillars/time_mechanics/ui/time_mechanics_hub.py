@@ -55,6 +55,11 @@ class TimeMechanicsHub(QWidget):
         self.zodiacal_btn.clicked.connect(self.launch_zodiacal_circle)
         self.grid_layout.addWidget(self.zodiacal_btn)
 
+        self.thelemic_date_btn = QPushButton("📜 Thelemic Date (Era Legis)")
+        self.thelemic_date_btn.setFixedHeight(50)
+        self.thelemic_date_btn.clicked.connect(self.launch_thelemic_date)
+        self.grid_layout.addWidget(self.thelemic_date_btn)
+
     def launch(self):
         """
         The method invoked by the WindowManager to show this sovereign domain.
@@ -109,3 +114,16 @@ class TimeMechanicsHub(QWidget):
         else:
             self.zodiacal = ZodiacalCircleWindow()
             self.zodiacal.show()
+
+    def launch_thelemic_date(self):
+        """Launch the Thelemic Date window."""
+        from .thelemic_date_window import ThelemicDateWindow
+        if self.window_manager:
+            self.window_manager.open_window(
+                "thelemic_date",
+                ThelemicDateWindow,
+                window_manager=self.window_manager
+            )
+        else:
+            self.thelemic_date = ThelemicDateWindow()
+            self.thelemic_date.show()
