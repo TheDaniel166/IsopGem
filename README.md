@@ -251,31 +251,35 @@ OpenGL-rendered interactive temple (functional, awaiting GPU for full glory):
 
 ---
 
-### 📊 **Advanced Scientific Calculator**
-Not just computation - **esoteric spreadsheet engine**:
+### 📊 **The Emerald Tablet: Correspondences Spreadsheet**
+**"As Above, So Below" — in tabular form:**
 
-- **100+ Functions**: Standard (SUM, AVERAGE, IF, VLOOKUP) + mathematical (SQRT, SIN, LOG, FACT)
+- **100+ Functions**: Standard spreadsheet (SUM, AVERAGE, IF, VLOOKUP) + mathematical (SQRT, SIN, LOG, FACT)
 - **Esoteric Extensions**:
   - `=GEMATRIA(text, cipher)` - Calculate gematria in cells
   - `=TETRAHEDRON_VOLUME(edge)` - Sacred geometry calculations
   - `=PLANET_SIGN(planet, date)` - Astrological positions
   - `=FIGURATE(n, type)` - Triangular, square, pentagonal numbers
-- **Full Spreadsheet Features**: Multi-sheet workbooks, cell references (A1, $A$1), formula parsing
+- **Cross-Domain Queries**: Link correspondences across planetary, elemental, numerical systems
+- **Multi-Sheet Workbooks**: Organize complex magical/mathematical calculations
 - **CSV Import/Export**: Interoperate with Excel, Google Sheets
-- **Embedded Charts**: (Planned - framework exists)
+- **Live Calculations**: Formulas update as you type
 
-**Hidden Power**: Combine esoteric functions for meta-analysis (e.g., calculate gematria of 1,000 phrases, graph distribution).
+**Hidden Power**: Build correspondence matrices - e.g.,calculate gematria for all Hebrew divine names, cross-reference with planetary positions, export for analysis.
 
 ---
 
-### 🗣️ **Etymology System: 40-Language Offline Lexicon**
-Trace words across millennia:
+### 🗣️ **Etymology & Word Origins**
+Trace words to their ancient roots:
 
-- **40 Languages**: Ancient (Hebrew, Greek, Latin, Sanskrit, PIE), Medieval (Old English, Old French, Gothic), Modern (English, Spanish, Russian, Chinese, Japanese, Arabic...)
-- **5+ Million Word Senses**: Kaikki.org dataset, fully offline
-- **Etymology Chains**: Trace modern word → ancient root → PIE reconstruction
-- **Strong's Integration**: Biblical Hebrew & Greek with 8,000+ Strong's numbers
-- **Fast Lookup**: Compact indexes enable <50ms searches
+- **Multi-Script Detection**: Auto-detects Hebrew, Greek, or Latin/English scripts
+- **Core Languages**: Hebrew (kaikki.org + Strong's + Sefaria API), Ancient Greek (kaikki.org + Strong's), Latin, English, Sanskrit, Aramaic, Proto-Indo-European
+- **Etymology Graph**: 4.2M relationships from etymology-db showing word family trees
+- **Strong's Integration**: 8,000+ Biblical Hebrew & Greek entries with Strong's numbers
+- **Sefaria Integration**: Klein Dictionary + Jewish lexicons for deep Hebrew analysis
+- **Optional Web Fallback**: Can query online sources (ety-python, Wiktionary) if offline data lacks entry
+
+**Future**: Planned expansion to 40-language offline system with Medieval variants (Old English, Old French, Gothic, Old Norse). Framework exists; data acquisition in progress.
 
 ---
 
