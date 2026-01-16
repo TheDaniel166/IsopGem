@@ -13,7 +13,7 @@
 
 <br>
 
-### **126,000+ Lines of Sacred Architecture**
+### **190,000+ Lines of Sacred Architecture**
 ### **Built by Human Will & Artificial Intelligence**
 ### **In Perfect Synthesis**
 
@@ -31,7 +31,7 @@
 
 <br><br>
 
-**468 Modules** · **10 Sovereign Pillars** · **56 Geometry Engines** · **97 Calculation Services** · **82 Living Documents** · **8,200+ Lines of Tests**
+**602 Modules** · **10 Sovereign Pillars** · **91 Geometry Engines** · **241 UI Components** · **202 Living Documents** · **10,500+ Lines of Tests**
 
 ---
 
@@ -369,12 +369,12 @@ IsopGem maintains a **living wiki** of 82+ documents. This is not afterthought d
 
 | Metric | Count | Metric | Count |
 |:------:|:-----:|:------:|:-----:|
-| **Lines of Code** | 126,000+ | **Python Modules** | 468 |
-| **Sovereign Pillars** | 10 | **Geometry Engines** | 56 |
-| **Test Lines** | 8,200+ | **UI Components** | 130+ |
-| **Wiki Documents** | 82 | **Spreadsheet Functions** | 100+ |
+| **Lines of Code** | 190,000+ | **Python Modules** | 602 |
+| **Sovereign Pillars** | 10 | **Geometry Engines** | 91 |
+| **Test Lines** | 10,500+ | **UI Components** | 241 |
+| **Wiki + Docs** | 202 | **Spreadsheet Functions** | 100+ |
 | **Gematria Ciphers** | 30+ | **Astrology Charts** | ∞ (database) |
-| **Sacred Geometry Forms** | 97 calculation services | **Supported Languages (etymology)** | 40 |
+| **Sacred Geometry Forms** | 91 services + Canon DSL | **Supported Languages (etymology)** | 40 |
 
 **Code Quality:**
 - Test coverage: 67% (pillar services 85%+)
@@ -582,6 +582,23 @@ We stand on the shoulders of giants:
 
 **The Human-AI Partnership:**  
 This project is living proof that artificial intelligence is not here to replace human creativity — it is here to amplify it. Every line of this codebase represents a dialogue between human vision and machine precision.
+
+**Development Environment Note:**  
+The Magus currently develops on a Chromebook running Linux (ChromeOS Crostini - Debian 11 "Bullseye" container) with Intel integrated graphics (Mesa 20.3.5, OpenGL 3.3 via llvmpipe software renderer). This imposes significant constraints:
+
+- **GPU**: Intel UHD Graphics with software fallback (no native GPU acceleration in container)
+- **OpenGL**: Limited to 3.3 compatibility profile via LLVMpipe (CPU-based)
+- **Performance**: 3D rendering operates at reduced framerates (~15-30 FPS for complex scenes)
+- **Memory**: Shared 4GB RAM between ChromeOS and Linux container
+
+As a result, certain graphical features are currently **implemented but not fully optimized**:
+- Adyton Sanctuary 3D rendering runs but lacks advanced lighting/shadows
+- Geometry 3D viewer functional but with reduced anti-aliasing
+- Some visual effects (bloom, ambient occlusion) disabled pending hardware upgrade
+
+The architecture is **designed for modern OpenGL 4.1+** and will be fully realized when The Magus acquires a dedicated development workstation with discrete GPU. All graphical subsystems are built with scalability in mind - the code awaits worthy hardware to manifest its full vision.
+
+> *"The Temple's blueprints are complete. The foundation stands. We await only the proper ritual instruments to render the vision in its full glory."*
 
 ---
 
