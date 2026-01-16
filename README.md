@@ -2,16 +2,7 @@
 
 <img src="src/assets/icons/app_icon.png" width="160" height="160" alt="IsopGem Icon">
 
-```
-                            ╔═══════════════════════════════════════════╗
-                            ║                                           ║
-                            ║     ✦  I S O P G E M  ✦                  ║
-                            ║                                           ║
-                            ║      The Temple of Integrated             ║
-                            ║         Esoteric Sciences                 ║
-                            ║                                           ║
-                            ╚═══════════════════════════════════════════╝
-```
+<img src="src/assets/images/header.png" width="800" alt="IsopGem Cinematic Header">
 
 <br>
 
