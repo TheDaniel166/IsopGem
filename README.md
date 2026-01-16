@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="src/assets/icons/app_icon.png" width="160" height="160" alt="IsopGem Icon">
+
 ```
                             ╔═══════════════════════════════════════════╗
                             ║                                           ║
@@ -89,6 +91,29 @@ IsopGem is not merely a tool; it is a manifestation of a unique collaborative pa
 - **Visual Liturgy**: The interface is not "designed" in the traditional sense; it is a ceremonial environment built to be a ritual instrument.
 - **The Burden of Longevity**: We build for a 100-year lifespan. This means strict sovereignty, zero dependency bloat, and defensive architecture that resistant to technical entropy.
 - **Substrate Sovereignty**: The code is organized into "Sovereign Pillars"—independent nations of logic that communicate only through defined signal buses.
+
+---
+
+## 🖼️ Visual Liturgy: A Glimpse into the Temple
+
+<div align="center">
+
+| **The High Dashboard** | **High-Precision Astrology** |
+|:---:|:---:|
+| <img src="src/assets/screenshots/main_window.png" width="400" alt="Main Window"> | <img src="src/assets/screenshots/astrology_chart_canvas.png" width="400" alt="Astrology"> |
+| *Unified navigation and sovereign pillar access* | *Complex celestial mechanics and Merkabah analysis* |
+
+| **Geometric Canon** | **Scriptural Analysis** |
+|:---:|:---:|
+| <img src="src/assets/screenshots/dodecahedron_calculator.png" width="400" alt="Geometry"> | <img src="src/assets/screenshots/interlinear_view.png" width="400" alt="Interlinear"> |
+| *Bidirectional property solving for complex solids* | *Comparative study with real-time gematria overlays* |
+
+| **Professional RTE** |
+|:---:|
+| <img src="src/assets/screenshots/rte_insert_tab.png" width="800" alt="Rich Text Editor"> |
+| *Authoring suite with LaTeX, Mermaid, and symbolic libraries* |
+
+</div>
 
 ---
 
