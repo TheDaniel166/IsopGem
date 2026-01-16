@@ -145,7 +145,8 @@ Professional-grade celestial mechanics:
 - **Natal Charts**: Full calculation with 8+ house systems (Placidus, Whole Sign, Koch, Equal, Campanus, Regiomontanus, Porphyry, Morinus)
 - **Transit Tracking**: Real-time planetary positions with aspect detection (configurable orbs)
 - **Synastry & Composite**: Relationship analysis (synastry overlays, Davison composites)
-- **Fixed Stars**: 1,800+ cataloged with magnitude, constellation, mythological associations, traditional interpretations
+- **Fixed Stars**: 24 astrologically significant stars (Regulus, Aldebaran, Sirius, Spica, etc.) with planetary natures and aspect detection
+- **Arabic Parts (Lots)**: 23 calculated points - Hermetic (Fortune, Spirit, Eros, etc.), Esoteric (Occultism, Nemesis, Sorcery), Traditional (Marriage, Children, Inheritance)
 - **Horizon Visualization**: Planetary positions as they appear from any latitude/longitude/time
 - **Aspect Matrices**: Professional grid format showing all planetary relationships
 - **Chart Database**: Unlimited chart storage with search, comparison, notes
@@ -155,7 +156,7 @@ Professional-grade celestial mechanics:
 ---
 
 ### 🎵 **Cymatics: Sound-Form Synthesis** *(The Hidden Pillar)*
-**Rarely mentioned, fully implemented:**
+**Baseline visualization complete, awaiting GPU acceleration:**
 
 - **Chladni Plate Simulator**: Visual cymatics patterns from frequency input
 - **Multi-Frequency Harmonics**: Combine 2-3 frequencies to generate interference patterns
@@ -163,6 +164,8 @@ Professional-grade celestial mechanics:
 - **Real-Time Generation**: Adjust frequency, amplitude, observe instant pattern response
 - **Export**: Save cymatics patterns as PNG for documentation
 - **Session Persistence**: Cymatics configurations saved and restored
+
+**Development Note**: Currently runs on CPU-rendered graphics. GPU acceleration planned for enhanced performance and visual fidelity.
 
 This pillar visualizes the **literal geometry of sound** - the bridge between vibration and form.
 
@@ -172,12 +175,14 @@ This pillar visualizes the **literal geometry of sound** - the bridge between vi
 Computational implementation of an entirely original system:
 
 - **Base-3 Logic**: 81-value (3⁴) and 729-value (3⁶) ternary number systems
-- **Conrune Pairs**:Mirror-image transformation algorithm revealing hidden symmetries
-- **Kamea Grids**: Interactive sacred square visualizations (81-cell Baphomet, 729-cell Maut)
+- **Conrune Pairs**: Mirror-image transformation algorithm revealing hidden symmetries
+- **Kamea Grids** (both 27×27 sacred squares):
+  - **Kamea of Baphomet** (81 values): Based on Converse relationships - harmonic inversions
+  - **Kamea of Maut** (729 values): Fractal Canopy structure - reveals 6D hypercube inherent in Ditrune architecture
 - **Geometric Transitions**: Numbers morph into polygons through rule-based transformations
-- **Amun Audio Engine**: Ternary values rendered as harmonic sound (frequencies mapped to digit positions)
+- **Amun Audio Engine**: *(In Development)* - Ternary values rendered as harmonic sound (frequencies mapped to digit positions)
 - **Delta Analysis**: Track value evolution through temporal cycles
-- **Ditrune Tables**: Two-digit (00-22) analysis with sonic synthesis
+- **Ditrune Tables**: Two-digit (00-22) analysis with playable tones
 
 **This system exists nowhere else** - original mathematics made computational.
 
@@ -202,15 +207,16 @@ Your second brain with professional tools:
 
 ---
 
-### 🔮 **Correspondences: The Digital Emerald Tablet**
-**"As Above, So Below" — made queryable:**
+### 🔮 **Correspondences: Hermetic Cross-Reference Database**
+**The connective tissue between domains:**
 
-- **Cross-Domain Database**: Query by planet → get herbs, stones, colors, tarot cards, runes
-- **Botanical Grimoire**: 200+ plants with magical/medicinal properties, planetary rulers, elemental associations
-- **Crystal Database**: Minerals with chakra correspondences, planetary links, healing properties
-- **Tarot System**: Full 78-card deck (Major + Minor Arcana) with Qabalistic paths, astrological rulers, elemental dignities
-- **Elder Futhark**: 24 runes with divinatory meanings, phonetic values, mythological context
-- **Custom Entries**: Extend the database with personal research - add new correspondences preserved across sessions
+- **Relational Database**: SQLite-backed correspondence system linking planets, elements, numbers, symbols
+- **Botanical Grimoire**: 200+ medicinal/magical plants with planetary rulers, elemental associations, medicinal properties
+- **Mineral Database**: Crystals and stones with chakra, planetary, and elemental correspondences
+- **Tarot Integration**: Full 78-card deck with Qabalistic paths (Tree of Life), astrological rulers, elemental dignities, divinatory meanings
+- **Elder Futhark System**: 24 runes with phonetic values, Old Norse names, mythological context, divination meanings
+- **Spreadsheet Interface**: Query correspondences in **The Emerald Tablet** (see below) - build magical matrices in tabular form
+- **Extensible**: Add custom correspondences (personal herbs, experimental associations) - preserved permanently
 
 ---
 
@@ -221,7 +227,6 @@ The integration nexus:
 - **Horizon Seals**: Planetary hours calculation, rising/setting times
 - **Aspect Differentials**: Track how planetary aspects change hour-by-hour
 - **Quick Actions**: Launch features with current celestial context pre-filled
-- **Orbital Visualization**: Solar system view with planet positions
 
 This is the **cross-pillar bridge** - gematria values linked to current sky, geometry aligned to charts.
 
@@ -230,7 +235,7 @@ This is the **cross-pillar bridge** - gematria values linked to current sky, geo
 ### ⏳ **Time Mechanics: Temporal Pattern Recognition**
 Time spirals, and we map it:
 
-- **The Dance of Days**: 260-day Aztec-inspired sacred calendar (13 Tones × 20 Signs) mapped to TQ ternary structure (ditrunes 0-728). Each Kin assigned a Greek divine name. Venus conjunctions overlay the cycle.
+- **The Dance of Days**: 260-day Aztec-inspired sacred calendar (13 Tones × 20 Signs) mapped to a **curated subset** of the 729 TQ ditrunes. Each Kin assigned a Greek divine name (e.g., Ἑρμῆς, Ἀφροδίτη, Ἄρης). Venus conjunctions overlay the 20×13 cartouche grid.
 - **Neo-Aubrey Clock**: Proprietary temporal framework designed for this project
 - **Conrune Delta**: How TQ ternary values shift through defined time cycles
 - **Thelemic Calendar**: Calculate dates in Thelemic notation (e.g., "☉ in 0° ♈ Anno Vxii")
@@ -515,7 +520,7 @@ IsopGem maintains a **living wiki** of 82+ documents. This is not afterthought d
 - Generate professional natal charts with multiple house systems
 - Track transits with customizable orb tolerances
 - Compare charts (synastry, davison, composite)
-- Explore 1,800+ fixed stars with mythology
+- Explore 24 major fixed stars (Regulus, Spica, etc.) + 23 Arabic Parts/Lots
 - Visualize horizons for any location/time
 
 **For Sacred Geometry Students:**
