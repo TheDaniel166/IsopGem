@@ -236,7 +236,8 @@ class ChartStorageService:
             house_positions=[HousePosition(**h) for h in data.get("house_positions", [])],
             aspect_summary=data.get("aspect_summary", {}),
             svg_document=data.get("svg_document"),
-            raw_payload=data.get("raw_payload", {})
+            raw_payload=data.get("raw_payload", {}),
+            julian_day=data.get("julian_day"),
         )
     def _serialize_request(self, request: ChartRequest) -> Dict[str, object]:
         return {

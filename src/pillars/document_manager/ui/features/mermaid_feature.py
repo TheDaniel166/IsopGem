@@ -16,6 +16,7 @@ Handles Mermaid diagram insertion, rendering, and management.
 """
 
 import qtawesome as qta
+import logging
 from PyQt6.QtCore import Qt, QUrl
 from PyQt6.QtGui import QAction, QIcon, QTextImageFormat, QTextDocument, QTextCursor
 from PyQt6.QtWidgets import QMenu, QMessageBox, QTextEdit
@@ -28,6 +29,8 @@ import uuid
 
 if TYPE_CHECKING:
     from shared.ui.rich_text_editor.editor import RichTextEditor
+
+logger = logging.getLogger(__name__)
 
 class MermaidFeature(EditorFeature):
     """
@@ -99,6 +102,12 @@ class MermaidFeature(EditorFeature):
         # Show a "rendering..." status or just block? 
         # Since it's network request, blocking UI for 100-200ms is "okay" but 5s is bad.
         # Ideally threading, but for MVP keep it simple (synchronous).
+        if getattr(self.editor, "_mutation_debug", False):
+            doc = self.editor.document()
+            logger.debug(
+                "mutation: insert-mermaid start | revision=%s",
+                doc.revision() if doc is not None else "None",
+            )
         
         try:
              # Basic validity check (very loose)
@@ -114,6 +123,13 @@ class MermaidFeature(EditorFeature):
                                   "Could not render Mermaid diagram.\nCheck your internet connection and syntax.")
         except Exception as e:
              QMessageBox.critical(self.parent, "Error", str(e))
+        finally:
+            if getattr(self.editor, "_mutation_debug", False):
+                doc = self.editor.document()
+                logger.debug(
+                    "mutation: insert-mermaid end | revision=%s",
+                    doc.revision() if doc is not None else "None",
+                )
 
     def _insert_rendered_image(self, image, code: str):
         """Insert the QImage into the document."""

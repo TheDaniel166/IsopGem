@@ -1,8 +1,14 @@
+import os
 import logging
 import sqlite3
-import os
+import sys
+from pathlib import Path
 
-DB_PATH = "data/isopgem.db"
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from shared.config import get_config  # noqa: E402
+
+DB_PATH = str(get_config().paths.main_db)
 
 logger = logging.getLogger(__name__)
 
@@ -70,5 +76,5 @@ def migrate_mindscape():
     logger.info("Migration Complete.")
 
 if __name__ == "__main__":
-	logging.basicConfig(level=logging.INFO, format="%(message)s")
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     migrate_mindscape()

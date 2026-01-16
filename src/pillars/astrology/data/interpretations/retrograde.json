@@ -1,0 +1,62 @@
+{
+    "_meta": {
+        "description": "Retrograde interpretation texts for the Classic 7 planets, written in the Egyptian/Maat tradition.",
+        "note": "Sun and Moon do not retrograde; they are included here only for completeness."
+    },
+    "Mercury": {
+        "text": "Mercury walks backward through the heavens, retracing the steps of Thoth. This is a time when the Ibis-headed god turns his gaze inward, reviewing the records of the soul. Messages may be delayed or misunderstood, as if the sacred scribes are revising their scrolls before the final copy is made. Contracts signed, words spoken, and journeys begun under this influence carry the mark of revision—they are drafts, not decrees. Yet this apparent chaos serves a deeper purpose: Mercury Retrograde is an invitation to re-examine, re-learn, and re-connect with wisdom from the past. Old friends, old ideas, and unfinished business rise to the surface, demanding completion before the messenger god resumes his forward march.",
+        "archetype": "The Scribe Reviewing the Scrolls",
+        "essence": "Inward reflection on communication, thought, and the pathways of the mind.",
+        "shadow": "Miscommunication, technological failures, travel delays, mental fog.",
+        "gift": "The opportunity to correct errors, revisit the past, and integrate forgotten knowledge.",
+        "keywords": ["Review", "Revision", "Re-connection", "Patience"]
+    },
+    "Venus": {
+        "text": "Venus, the goddess Hathor in her celestial form, has turned her golden mirror inward. When the planet of love and beauty retrogrades, the soul is asked to re-evaluate its deepest values and affections. Relationships that seemed stable may reveal hidden fault lines; desires once thought fulfilled may be found wanting. This is not a curse but a blessing in disguise—a chance to rediscover what truly brings joy and harmony. Old lovers may reappear, not necessarily to rekindle romance, but to teach lessons left unlearned. The aesthetics of life are questioned: What is truly beautiful? What do I genuinely value? Venus Retrograde is the soul's audit of its own treasury, separating gold from gilded lead.",
+        "archetype": "Hathor Gazing Into Her Mirror",
+        "essence": "Re-evaluation of love, beauty, values, and self-worth.",
+        "shadow": "Relationship strain, financial reassessment, resurfacing of old wounds in love.",
+        "gift": "Clarity on true values, healing of past relationship karma, deepened self-love.",
+        "keywords": ["Re-evaluation", "Self-Worth", "Past Loves", "True Beauty"]
+    },
+    "Mars": {
+        "text": "Mars, the red eye of Horus in the night sky, has sheathed his blade and turned his gaze upon past battles. When the warrior planet retrogrades, direct action becomes fraught with complication. Efforts may stall, conflicts may simmer without resolution, and the usual fire of initiative burns low. This is the time of the Warrior's Meditation—a period to review strategies, conserve energy, and question the nature of one's desires and drives. Anger suppressed during this time may later erupt; projects forced forward may need to be entirely redone. The wise soul uses Mars Retrograde not to charge the gates, but to sharpen the sword, repair the armor, and reflect on whether the battle is even worth fighting.",
+        "archetype": "The Warrior in Contemplation",
+        "essence": "Internalized drive, strategic review, the questioning of desire and aggression.",
+        "shadow": "Frustration, repressed anger, mechanical failures, accidents from impatience.",
+        "gift": "Refined purpose, conserved energy, strategic wisdom, resolution of old conflicts.",
+        "keywords": ["Strategy", "Patience", "Inner Fire", "Review of Desires"]
+    },
+    "Jupiter": {
+        "text": "Jupiter, the great Amun-Ra of expansion and fortune, has drawn his rays inward. When the planet of growth retrogrades, the soul's outward quest for meaning turns into an inward pilgrimage. The usual luck and opportunity seem to dry up, not as punishment, but as redirection. This is a time to question one's beliefs, philosophies, and the assumptions upon which life's grand plans are built. Are your gods truly your own, or were they inherited without examination? Jupiter Retrograde asks the seeker to find the temple within before building monuments in the outer world. Growth continues, but it is the growth of roots deepening in darkness, not branches reaching for the sun.",
+        "archetype": "The Pilgrim Turned Inward",
+        "essence": "Internal expansion, philosophical questioning, reassessment of faith and fortune.",
+        "shadow": "Blocked opportunities, crisis of faith, over-promising, legal delays.",
+        "gift": "Authentic belief, inner wisdom, true optimism born of tested faith.",
+        "keywords": ["Inner Growth", "Philosophy", "Faith Tested", "Authentic Belief"]
+    },
+    "Saturn": {
+        "text": "Saturn, the ancient Sobek who guards the boundaries between order and chaos, has turned his crocodile gaze upon the structures of the past. When the Lord of Time retrogrades, the karma of past actions comes due for review. Responsibilities that were shirked, corners that were cut, and foundations that were poorly laid reveal their cracks. Yet this is also a period of karmic reprieve—a chance to revisit old limitations and release bonds that have outlived their purpose. Lessons once failed may be re-taken under gentler circumstances. Saturn Retrograde is the soul's audit before the great accounting in the Hall of Ma'at, an opportunity to balance the books before the final judgment.",
+        "archetype": "The Guardian Reviewing the Ledger",
+        "essence": "Karmic review, structural reassessment, the revisiting of duties and limitations.",
+        "shadow": "Delays in achievement, confrontation with past failures, feelings of inadequacy.",
+        "gift": "Release of outdated burdens, mastery of old lessons, karmic debt forgiveness.",
+        "keywords": ["Karma", "Responsibility", "Structure", "Lessons Revisited"]
+    },
+    "Sun": {
+        "text": "The Sun does not retrograde in geocentric astrology, for Ra's barque sails ever forward across the heavens. The solar principle is one of constant, radiant expression—the eternal present that does not look back. If you are seeing this text, it may indicate an error in calculation or a symbolic use of the retrograde concept.",
+        "archetype": "Ra Eternal",
+        "essence": "The Sun's light is always direct; it does not turn inward.",
+        "shadow": "N/A",
+        "gift": "N/A",
+        "keywords": ["Constant", "Direct", "Radiant"]
+    },
+    "Moon": {
+        "text": "The Moon does not retrograde in geocentric astrology, for Khonsu's silver vessel follows a path that always moves forward through the zodiac, though it waxes and wanes in light. The lunar principle deals with phases and cycles, not apparent backward motion. If you are seeing this text, it may indicate an error in calculation or a symbolic use of the retrograde concept.",
+        "archetype": "Khonsu Ever-Cycling",
+        "essence": "The Moon's cycles are of light and darkness, not forward and backward.",
+        "shadow": "N/A",
+        "gift": "N/A",
+        "keywords": ["Phases", "Cycles", "Emotional Tides"]
+    }
+}

@@ -4,6 +4,7 @@ Main window for rich text document editing with file I/O, printing, and search c
 """
 import logging
 import os
+import json
 from typing import Optional, Any
 from pathlib import Path
 from PyQt6.QtWidgets import (
@@ -401,6 +402,17 @@ class DocumentEditorWindow(QMainWindow):
 
         self.current_doc_model = doc
         self.current_file = None
+        layout = None
+        layout_json = getattr(doc, "layout_json", None)
+        if layout_json:
+            try:
+                layout = json.loads(layout_json)
+            except (json.JSONDecodeError, TypeError) as exc:
+                logger.warning("Invalid layout_json for doc %s: %s", doc.id, exc)
+        if layout:
+            self.editor.apply_layout(layout)
+        else:
+            self.editor.reset_layout()
         
         # Use restored_html if provided (has images restored from docimg:// references)
         # Otherwise fall back to raw_content or content

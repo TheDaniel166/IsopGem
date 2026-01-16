@@ -2,11 +2,23 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field, is_dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional
 
 
 from shared.models.geo_location import GeoLocation
+
+
+def ensure_tzinfo(timestamp: datetime, timezone_offset: Optional[float] = None) -> datetime:
+    """Attach tzinfo when missing, preferring explicit offsets then local timezone."""
+    if timestamp.tzinfo is not None:
+        return timestamp
+    if timezone_offset is not None:
+        return timestamp.replace(tzinfo=timezone(timedelta(hours=timezone_offset)))
+    local_tz = datetime.now().astimezone().tzinfo
+    if local_tz is None:
+        return timestamp.replace(tzinfo=timezone.utc)
+    return timestamp.replace(tzinfo=local_tz)
 
 
 @dataclass(slots=True)
@@ -23,16 +35,15 @@ class AstrologyEvent:
         """Return the timezone offset in hours, deriving it from tzinfo when missing."""
         if self.timezone_offset is not None:
             return self.timezone_offset
-        if self.timestamp.tzinfo and self.timestamp.utcoffset() is not None:
-            offset_seconds = self.timestamp.utcoffset().total_seconds()
+        localized = ensure_tzinfo(self.timestamp)
+        if localized.tzinfo and localized.utcoffset() is not None:
+            offset_seconds = localized.utcoffset().total_seconds()
             return offset_seconds / 3600.0
         return 0.0
 
     def to_openastro_kwargs(self) -> Dict[str, Any]:
         """Serialize the event into the kwargs OpenAstro2 expects."""
-        localized = self.timestamp
-        if localized.tzinfo is None:
-            localized = localized.replace(tzinfo=timezone.utc)
+        localized = ensure_tzinfo(self.timestamp, self.timezone_offset)
         return {
             "name": self.name,
             "year": localized.year,
@@ -61,15 +72,25 @@ class ChartRequest:
     settings: Optional[Dict[str, Any]] = None
 
 
-@dataclass(slots=True)
+@dataclass
 class PlanetPosition:
     """Planet position metadata for UI consumption."""
 
     name: str
     degree: float
     sign_index: Optional[int] = None
-    speed: Optional[float] = None  # Degrees per day
+    speed: Optional[float] = None  # Degrees per day (negative = retrograde)
     declination: Optional[float] = None  # Degrees (-90 to +90)
+    _retrograde: Optional[bool] = None  # Explicit retrograde flag from OpenAstro
+
+    @property
+    def is_retrograde(self) -> bool:
+        """Planet is retrograde if explicitly flagged or speed is negative."""
+        if self._retrograde is not None:
+            return self._retrograde
+        if self.speed is not None:
+            return self.speed < 0
+        return False
 
 
 @dataclass(slots=True)
@@ -105,6 +126,7 @@ class ChartResult:
             "aspect_summary": self.aspect_summary,
             "svg_document": self.svg_document,
             "raw_payload": self.raw_payload,
+            "julian_day": self.julian_day,
         }
 
     @staticmethod

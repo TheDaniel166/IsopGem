@@ -7,7 +7,7 @@ from datetime import datetime, timedelta, timezone
 import math
 from typing import Optional, Tuple
 
-from ..models.chart_models import AstrologyEvent, ChartRequest, GeoLocation
+from ..models.chart_models import AstrologyEvent, ChartRequest, GeoLocation, ensure_tzinfo
 from shared.services.ephemeris_provider import EphemerisProvider
 
 class ReturnsService:
@@ -42,15 +42,16 @@ class ReturnsService:
             AstrologyEvent: The precise moment of the return.
         """
         # 1. Get exact Natal Longitude
+        natal_dt = ensure_tzinfo(natal_event.timestamp, natal_event.timezone_offset)
         natal_lon = self._ephemeris.get_geocentric_ecliptic_position(
-            body_name, 
-            natal_event.timestamp
+            body_name,
+            natal_dt,
         )
         
         # 2. Estimate start time
         # For Solar Return: Same Day/Month, Target Year
         # For Lunar Return: Approximate cycle is 27.32 days.
-        estimate_dt = self._estimate_start_time(natal_event.timestamp, target_year, body_name, return_count)
+        estimate_dt = self._estimate_start_time(natal_dt, target_year, body_name, return_count)
         
         # 3. Solve for exact time (Tbs = Time of Exactitude)
         exact_time = self._solve_exact_time(body_name, natal_lon, estimate_dt)
@@ -59,7 +60,7 @@ class ReturnsService:
             name=f"{body_name.title()} Return {target_year}",
             timestamp=exact_time,
             location=natal_event.location, # Usually relocated, but defaults to natal for calculation base
-            timezone_offset=0 # Output is UTC usually, caller handles localization
+            timezone_offset=natal_event.timezone_offset,
         )
 
     def _estimate_start_time(self, natal_dt: datetime, target_year: int, body_name: str, count: int) -> datetime:

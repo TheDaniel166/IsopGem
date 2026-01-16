@@ -161,3 +161,18 @@ class InterpretationRepository:
             return self._parse_content(raw)
         except (AttributeError, TypeError):
             return None
+
+    def get_retrograde_text(self, planet: str) -> Optional[RichInterpretationContent]:
+        """
+        Get retrograde interpretation text for a planet.
+
+        Args:
+            planet: Planet name (e.g., "Mercury", "Venus", "Mars")
+
+        Returns:
+            RichInterpretationContent with retrograde-specific interpretation,
+            or None if not found.
+        """
+        data = self._load_json("retrograde.json")
+        raw = data.get(planet)
+        return self._parse_content(raw)

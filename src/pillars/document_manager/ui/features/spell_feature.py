@@ -305,7 +305,9 @@ class SpellFeature(EditorFeature):
         self._rehighlight_timer.timeout.connect(self._on_rehighlight)
         
         # Connect signals
-        self.editor.textChanged.connect(self._schedule_rehighlight)
+        doc = self.editor.document()
+        if doc is not None:
+            doc.contentsChange.connect(self._on_contents_change)
 
     def initialize(self) -> None:
         pass
@@ -313,6 +315,11 @@ class SpellFeature(EditorFeature):
     def _schedule_rehighlight(self):
         """Schedule a rehighlight after a short delay (debounce)."""
         self._rehighlight_timer.start(500)  # 500ms delay
+
+    def _on_contents_change(self, position: int, chars_removed: int, chars_added: int) -> None:
+        if chars_removed == 0 and chars_added == 0:
+            return
+        self._schedule_rehighlight()
     
     def _on_rehighlight(self):
         """Rehighlight the document."""
@@ -436,6 +443,23 @@ class SpellFeature(EditorFeature):
         """Safely rehighlight, handling case where C++ object is deleted."""
         try:
             if self._highlighter is not None and self._highlighter.document() is not None:
+                if getattr(self.editor, "_mutation_debug", False):
+                    doc = self.editor.document()
+                    logger.debug(
+                        "mutation: spell-rehighlight start | revision=%s",
+                        doc.revision() if doc is not None else "None",
+                    )
+                if hasattr(self.editor, "_formatting_pass_active"):
+                    self.editor._formatting_pass_active = True
                 self._highlighter.rehighlight()
+                if getattr(self.editor, "_mutation_debug", False):
+                    doc = self.editor.document()
+                    logger.debug(
+                        "mutation: spell-rehighlight end | revision=%s",
+                        doc.revision() if doc is not None else "None",
+                    )
         except RuntimeError:
             pass
+        finally:
+            if hasattr(self.editor, "_formatting_pass_active"):
+                self.editor._formatting_pass_active = False

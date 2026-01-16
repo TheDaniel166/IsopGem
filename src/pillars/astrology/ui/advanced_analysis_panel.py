@@ -34,6 +34,7 @@ from ..services.maat_symbols_service import MaatSymbolsService
 from ..services.midpoints_service import MidpointsService, Midpoint
 from ..services.aspects_service import AspectsService
 from ..services.fixed_stars_service import FixedStarsService
+from ..services.dignities_service import DignitiesService, PlanetaryDignity
 from ..utils.conversions import to_zodiacal_string
 
 logger = logging.getLogger(__name__)
@@ -122,7 +123,8 @@ class AdvancedAnalysisPanel(QWidget):
         self._maat_service = MaatSymbolsService()
         self._midpoints_service = MidpointsService()
         self._aspects_service = AspectsService()
-        
+        self._dignities_service = DignitiesService()
+
         # Load Astronomicon font
         self._astro_font_family = self._get_astronomicon_font()
         
@@ -203,7 +205,7 @@ class AdvancedAnalysisPanel(QWidget):
         """)
         
         # Navigation items
-        nav_items = ["Fixed Stars", "Arabic Parts", "Midpoints", "Harmonics", "Maat Symbols", "Aspects"]
+        nav_items = ["Dignities", "Fixed Stars", "Arabic Parts", "Midpoints", "Harmonics", "Maat Symbols", "Aspects"]
         for item in nav_items:
             self.sidebar.addItem(item)
         
@@ -214,8 +216,9 @@ class AdvancedAnalysisPanel(QWidget):
         self.content_stack = QStackedWidget()
         self.content_stack.setStyleSheet(f"background-color: {COLORS['background']};")
         layout.addWidget(self.content_stack, stretch=1)
-        
-        # Build each tab content
+
+        # Build each tab content (order must match nav_items)
+        self._build_dignities_tab()
         self._build_fixed_stars_tab()
         self._build_arabic_parts_tab()
         self._build_midpoints_tab()
@@ -350,7 +353,67 @@ class AdvancedAnalysisPanel(QWidget):
     # =========================================================================
     # TAB BUILDERS
     # =========================================================================
-    
+
+    def _build_dignities_tab(self):
+        """Build Planetary Dignities tab."""
+        widget = QWidget()
+        widget.setStyleSheet(f"background-color: {COLORS['background']};")
+        layout = QVBoxLayout(widget)
+        layout.setContentsMargins(24, 24, 24, 24)
+        layout.setSpacing(16)
+
+        # Header
+        header = QLabel("Planetary Dignities")
+        header.setStyleSheet(f"font-size: 18pt; font-weight: 700; color: {COLORS['text_primary']};")
+        layout.addWidget(header)
+
+        # Subheader
+        subheader = QLabel("Essential & Accidental dignity analysis (Classic 7 planets)")
+        subheader.setStyleSheet(f"color: {COLORS['text_secondary']}; font-style: italic; font-size: 10pt;")
+        layout.addWidget(subheader)
+
+        # Main dignities table
+        self.dignities_table = QTableWidget(0, 6)
+        self.dignities_table.setHorizontalHeaderLabels([
+            "Planet", "Sign", "Essential", "Accidental", "Score", "Details"
+        ])
+        self.dignities_table.setStyleSheet(self._get_table_style())
+        self._stretch_last_section(self.dignities_table)
+        self.dignities_table.setColumnWidth(0, 80)
+        self.dignities_table.setColumnWidth(1, 100)
+        self.dignities_table.setColumnWidth(2, 90)
+        self.dignities_table.setColumnWidth(3, 90)
+        self.dignities_table.setColumnWidth(4, 60)
+        self.dignities_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        self.dignities_table.setWordWrap(True)
+        self._set_vertical_section_size(self.dignities_table, 40)
+        layout.addWidget(self.dignities_table)
+
+        # Summary section
+        summary_frame = QFrame()
+        summary_frame.setStyleSheet(f"""
+            QFrame {{
+                background-color: {COLORS['surface']};
+                border: 1px solid {COLORS['border']};
+                border-radius: 8px;
+                padding: 12px;
+            }}
+        """)
+        summary_layout = QHBoxLayout(summary_frame)
+
+        self.dignities_summary_label = QLabel("Total Chart Strength: --")
+        self.dignities_summary_label.setStyleSheet(f"""
+            font-size: 12pt;
+            font-weight: 600;
+            color: {COLORS['text_primary']};
+        """)
+        summary_layout.addWidget(self.dignities_summary_label)
+        summary_layout.addStretch()
+
+        layout.addWidget(summary_frame)
+
+        self.content_stack.addWidget(widget)
+
     def _build_fixed_stars_tab(self):
         """Build Fixed Stars tab."""
         widget = QWidget()
@@ -650,6 +713,7 @@ class AdvancedAnalysisPanel(QWidget):
     
     def _refresh_all(self):
         """Refresh all tabs with current data."""
+        self._render_dignities()
         self._render_fixed_stars()
         self._render_arabic_parts()
         self._render_midpoints()
@@ -660,7 +724,109 @@ class AdvancedAnalysisPanel(QWidget):
     # =========================================================================
     # RENDER METHODS
     # =========================================================================
-    
+
+    def _render_dignities(self):
+        """Populate Planetary Dignities table."""
+        self.dignities_table.setRowCount(0)
+
+        if not self._planets or not self._houses:
+            self.dignities_summary_label.setText("Total Chart Strength: --")
+            return
+
+        try:
+            # Convert PlanetPosition/HousePosition objects to dicts for the service
+            planet_data = []
+            for p in self._planets:
+                planet_data.append({
+                    "name": p.name,
+                    "degree": p.degree,
+                    "is_retrograde": p.is_retrograde,
+                })
+
+            house_data = []
+            for h in self._houses:
+                house_data.append({
+                    "number": h.number,
+                    "degree": h.degree,
+                })
+
+            dignities = self._dignities_service.calculate_dignities(planet_data, house_data)
+
+            total_score = 0
+
+            for dignity in dignities:
+                row = self.dignities_table.rowCount()
+                self.dignities_table.insertRow(row)
+
+                # Planet (with glyph)
+                p_glyph = self.PLANET_GLYPHS.get(dignity.planet, "")
+                planet_item = QTableWidgetItem(f"{p_glyph} {dignity.planet}")
+                self.dignities_table.setItem(row, 0, planet_item)
+
+                # Sign
+                self.dignities_table.setItem(row, 1, QTableWidgetItem(dignity.sign))
+
+                # Essential Dignity (color-coded)
+                essential_item = QTableWidgetItem(dignity.essential_dignity)
+                if dignity.essential_score > 0:
+                    essential_item.setForeground(QColor("#4ade80"))  # Green
+                elif dignity.essential_score < 0:
+                    essential_item.setForeground(QColor("#f87171"))  # Red
+                else:
+                    essential_item.setForeground(QColor("#94a3b8"))  # Gray for Peregrine
+                self.dignities_table.setItem(row, 2, essential_item)
+
+                # Accidental Score (color-coded)
+                accidental_item = QTableWidgetItem(f"{dignity.accidental_score:+d}")
+                if dignity.accidental_score > 0:
+                    accidental_item.setForeground(QColor("#4ade80"))
+                elif dignity.accidental_score < 0:
+                    accidental_item.setForeground(QColor("#f87171"))
+                self.dignities_table.setItem(row, 3, accidental_item)
+
+                # Total Score (color-coded)
+                score_item = QTableWidgetItem(f"{dignity.total_score:+d}")
+                if dignity.total_score > 0:
+                    score_item.setForeground(QColor("#4ade80"))
+                elif dignity.total_score < 0:
+                    score_item.setForeground(QColor("#f87171"))
+                font = score_item.font()
+                font.setBold(True)
+                score_item.setFont(font)
+                self.dignities_table.setItem(row, 4, score_item)
+
+                # Details (accidental dignities list)
+                details = ", ".join(dignity.accidental_dignities)
+                details_item = QTableWidgetItem(details)
+                details_item.setToolTip(details)
+                self.dignities_table.setItem(row, 5, details_item)
+
+                total_score += dignity.total_score
+
+            # Update summary
+            if total_score > 0:
+                strength_color = "#4ade80"
+                strength_text = "Strong"
+            elif total_score < -10:
+                strength_color = "#f87171"
+                strength_text = "Weak"
+            else:
+                strength_color = "#fbbf24"
+                strength_text = "Moderate"
+
+            self.dignities_summary_label.setText(
+                f"Total Chart Strength: {total_score:+d} ({strength_text})"
+            )
+            self.dignities_summary_label.setStyleSheet(f"""
+                font-size: 12pt;
+                font-weight: 600;
+                color: {strength_color};
+            """)
+
+        except Exception as exc:
+            logger.warning(f"Dignities calculation failed: {exc}")
+            self.dignities_summary_label.setText("Total Chart Strength: Error")
+
     def _render_fixed_stars(self):
         """Populate Fixed Stars table."""
         self.fixed_stars_table.setRowCount(0)

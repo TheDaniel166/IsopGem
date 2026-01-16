@@ -3,11 +3,18 @@ Services for calculating Progressions and Directions.
 """
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
+from dataclasses import replace
 from typing import List, Dict, Any, Optional
-import copy
 
-from ..models.chart_models import AstrologyEvent, ChartResult, PlanetPosition, ChartRequest
+from ..models.chart_models import (
+    AstrologyEvent,
+    ChartResult,
+    PlanetPosition,
+    ChartRequest,
+    HousePosition,
+    ensure_tzinfo,
+)
 from shared.services.ephemeris_provider import EphemerisProvider
 from .openastro_service import OpenAstroService
 
@@ -29,7 +36,11 @@ class ProgressionsService:
         2. Add Age (in days) to Natal Date -> Progressed Date.
         3. Cast chart for Progressed Date.
         """
-        natal_dt = natal_req.primary_event.timestamp
+        natal_dt = ensure_tzinfo(
+            natal_req.primary_event.timestamp,
+            natal_req.primary_event.timezone_offset,
+        )
+        target_date = ensure_tzinfo(target_date, natal_req.primary_event.timezone_offset)
         
         # Calculate precise age
         # Ideally: (Target - Natal).days / 365.242199... 
@@ -56,6 +67,7 @@ class ProgressionsService:
             name=f"Secondary Progressed to {target_date.date()}",
             timestamp=prog_time,
             location=natal_req.primary_event.location,
+            timezone_offset=natal_req.primary_event.timezone_offset,
             # Timezone logic: usually we keep natal timezone offset context 
             # OR we treat it as UTC for calculation then display. 
             # OpenAstro handles it if we pass correct time.
@@ -115,10 +127,10 @@ class ProgressionsService:
         # 4. Construct Result
         # Note: House cusps also receive the arc in some systems, or MC is moved and ASC derived.
         # For Phase 2, we simply arc the houses too.
-        directed_houses = []
+        directed_houses: List[HousePosition] = []
         for h in natal_chart.house_positions:
             new_deg = (h.degree + arc) % 360
-            directed_houses.append(copy.replace(h, degree=new_deg))
+            directed_houses.append(replace(h, degree=new_deg))
             
         return ChartResult(
             chart_type="Solar Arc Direction",

@@ -122,6 +122,7 @@ import os
 import base64
 from typing import Optional, Any, Union, List, Tuple, Dict, Generator, Callable, Type
 from collections import OrderedDict
+from html.parser import HTMLParser
 
 logger = logging.getLogger(__name__)
 from PyQt6.QtWidgets import (
@@ -183,41 +184,185 @@ from dataclasses import dataclass, field
 
 class PageMode(Enum):
     """
-    Pagination display and enforcement modes.
-    
-    Presets provide opinionated defaults; CUSTOM allows granular control.
+    Pagination display and enforcement modes for the rich text editor.
+
+    These presets control two independent systems:
+    1. **Visual Guides**: Dashed lines and shaded gaps at page boundaries
+    2. **Block Enforcement**: Dynamic margin adjustment to prevent blocks from
+       straddling page boundaries
+
+    Presets provide opinionated defaults for common use cases. Use CUSTOM mode
+    with PageModeOptions for fine-grained control over individual settings.
+
+    Attributes:
+        FREEFLOW: No visual guides, no enforcement. Fast free-flow editing mode
+            suitable for drafting or when pagination isn't needed.
+        GUIDES_ONLY: Shows page break lines and gap fill for visual reference.
+            When page outlines or margin guides are enabled, enforcement is
+            forced to keep content inside visible page boundaries.
+        ENFORCE_ONLY: Enforces block pagination (no straddling) but hides visual
+            guides. For clean editing with proper page breaks on export.
+        PAGED: Full document mode with both visual guides and block enforcement.
+            Closest to WYSIWYG print preview behavior.
+        CUSTOM: Manual control via PageModeOptions dataclass. Allows independent
+            toggling of each feature.
+
+    Example:
+        >>> editor.set_page_mode(PageMode.PAGED)  # Full document mode
+        >>> editor.set_page_mode(PageMode.FREEFLOW)  # Fast editing
+        >>> editor.set_page_mode(PageMode.CUSTOM, PageModeOptions(
+        ...     show_guides=True,
+        ...     enforce_pagination=False
+        ... ))
     """
-    FREEFLOW = auto()      # No guides, no enforcement (fast free-flow editor)
-    GUIDES_ONLY = auto()   # Show page break lines + gap fill, no enforcement
-    ENFORCE_ONLY = auto()  # Enforce pagination, no visual guides
-    PAGED = auto()         # Both guides and enforcement (full document mode)
-    CUSTOM = auto()        # Manual control via PageModeOptions
+    FREEFLOW = auto()
+    GUIDES_ONLY = auto()
+    ENFORCE_ONLY = auto()
+    PAGED = auto()
+    CUSTOM = auto()
 
 
 @dataclass
 class PageModeOptions:
     """
     Granular pagination control for CUSTOM mode or preset overrides.
-    
-    Presets determine default values; these can be explicitly overridden.
-    Option slots include future hooks for guide intensity, page numbers, etc.
+
+    This dataclass provides fine-grained control over the editor's pagination
+    behavior. Use with PageMode.CUSTOM for full control, or pass to other
+    PageMode presets to override specific settings.
+
+    The pagination system has two independent subsystems:
+    - **Visual**: Renders dashed lines and shaded gaps at page boundaries
+    - **Enforcement**: Adjusts block margins to prevent page-straddling
+
+    Attributes:
+        show_guides: When True, renders dashed horizontal lines at page break
+            positions. These lines appear at the bottom margin of each page.
+            Default: False.
+        show_gap_fill: When True, fills the inter-page gap with a subtle
+            semi-transparent shade (slate-200 at 80% opacity). Helps visualize
+            the non-printable area between pages. Default: False.
+        show_page_outline: When True, draws a light border around each page
+            to visualize paper size. Default: False.
+        show_margin_guides: When True, draws dashed lines for the content
+            margins inside each page. Default: False.
+        enforce_pagination: When True, activates the pagination engine which
+            dynamically adjusts block top margins to push blocks that would
+            straddle page boundaries to the next page. Uses cumulative baseline
+            calculation for stable convergence. Default: False.
+        scroll_anchor: When True, uses anchor-based scroll restoration after
+            pagination adjustments. Captures visible cursor or block position
+            before pagination and restores viewport alignment after margins
+            change. Prevents visual "jumping" during edits. Default: True.
+        couple_guides_and_enforcement: When True, automatically syncs
+            enforce_pagination to match show_guides state. Useful for UIs
+            where guides and enforcement should toggle together. Default: False.
+        page_gap: Override the default inter-page gap size in pixels. When None,
+            uses the editor's default (typically 20px). Set to 0 for no visible
+            gap between pages. Default: None.
+
+    Note:
+        When page outlines or margin guides are enabled, pagination enforcement
+        is forced on to keep content inside the visible page boundaries.
+
+    Example:
+        >>> # Full WYSIWYG mode with custom gap
+        >>> opts = PageModeOptions(
+        ...     show_guides=True,
+        ...     show_gap_fill=True,
+        ...     enforce_pagination=True,
+        ...     page_gap=30
+        ... )
+        >>> editor.set_page_mode(PageMode.CUSTOM, opts)
+
+        >>> # Visual preview only (no enforcement)
+        >>> opts = PageModeOptions(show_guides=True, show_gap_fill=True)
+        >>> editor.set_page_mode(PageMode.CUSTOM, opts)
     """
-    # Core toggles
-    show_guides: bool = False        # Dashed lines at page breaks
-    show_gap_fill: bool = False      # Shaded gutter between pages
-    enforce_pagination: bool = False # Block margin enforcement
-    scroll_anchor: bool = True       # Anchor-based scroll restoration
-    
-    # Coupling policy
-    couple_guides_and_enforcement: bool = False  # When True, guides <-> enforcement sync
-    
-    # Visual tuning
-    page_gap: Optional[int] = None   # Override gutter size (None = use default)
-    
-    # Future hooks (reserved slots)
-    # guide_style: str = "dashed"    # Future: solid, dashed, dotted
-    # guide_opacity: float = 1.0     # Future: intensity tuning
-    # show_page_numbers: bool = False # Future: page numbers in gutter
+    show_guides: bool = False
+    show_gap_fill: bool = False
+    show_page_outline: bool = False
+    show_margin_guides: bool = False
+    enforce_pagination: bool = False
+    scroll_anchor: bool = True
+    couple_guides_and_enforcement: bool = False
+    page_gap: Optional[int] = None
+
+
+@dataclass(frozen=True)
+class _GeneratedAssetTask:
+    """
+    Immutable task descriptor for restoring generated assets (LaTeX/Mermaid).
+
+    When HTML containing docimg://math/ or docimg://mermaid/ images is loaded,
+    the editor queues these tasks for background re-rendering. The source code
+    is extracted from the image's alt attribute and passed to the appropriate
+    renderer callback.
+
+    Attributes:
+        kind: The asset type, either "latex" or "mermaid". Determines which
+            renderer callback to invoke.
+        url: The full docimg:// URL from the img src attribute. Used to register
+            the rendered image back into the document's resource cache.
+        code: The source code to render. For LaTeX, this is the TeX markup.
+            For Mermaid, this is the diagram definition DSL.
+
+    Note:
+        This class is frozen (immutable) to ensure task integrity during
+        queued processing. Tasks are processed in batches by
+        _process_asset_restore_queue().
+    """
+    kind: str
+    url: str
+    code: str
+
+
+class _GeneratedImageParser(HTMLParser):
+    """
+    HTML parser that extracts generated asset references from document HTML.
+
+    Scans for <img> tags with docimg://math/ or docimg://mermaid/ src URLs
+    and collects their metadata for asset restoration. The alt attribute
+    contains the source code prefixed with "LATEX:" or "MERMAID:".
+
+    This parser is used during setHtml() to identify images that need
+    re-rendering, since generated assets are not persisted as binary data
+    but reconstructed from their source code on load.
+
+    Attributes:
+        images: List of dicts containing 'src' and 'alt' for each found
+            generated image. Populated by handle_starttag().
+
+    Example:
+        >>> parser = _GeneratedImageParser()
+        >>> parser.feed('<img src="docimg://math/uuid" alt="LATEX:E=mc^2">')
+        >>> parser.images
+        [{'src': 'docimg://math/uuid', 'alt': 'LATEX:E=mc^2'}]
+    """
+
+    def __init__(self) -> None:
+        """Initialize the parser with an empty images list."""
+        super().__init__()
+        self.images: list[dict[str, str]] = []
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, Optional[str]]]) -> None:
+        """
+        Process an opening HTML tag, extracting generated image metadata.
+
+        Only processes <img> tags with docimg://math/ or docimg://mermaid/
+        src URLs. Other tags and images are ignored.
+
+        Args:
+            tag: The HTML tag name (e.g., 'img', 'div').
+            attrs: List of (name, value) tuples for tag attributes.
+        """
+        if tag.lower() != "img":
+            return
+        attr_map = {name.lower(): (value or "") for name, value in attrs if name}
+        src = attr_map.get("src", "")
+        if not (src.startswith("docimg://math/") or src.startswith("docimg://mermaid/")):
+            return
+        self.images.append({"src": src, "alt": attr_map.get("alt", "")})
 
 
 # =============================================================================
@@ -227,42 +372,91 @@ class PageModeOptions:
 class SafeTextEdit(QTextEdit):
     """
     A hardened QTextEdit with 5 embedded engines for document editing.
-    
-    RESPONSIBILITY: Provide the raw editing surface + low-level document services.
-    Does NOT handle: UI chrome (ribbon/status), file I/O, feature orchestration.
-    
+
+    SafeTextEdit is the core editing surface for the rich text editor. It extends
+    QTextEdit with specialized subsystems for paginated document editing, custom
+    resource protocols, and defensive input handling. This class handles low-level
+    document operations while remaining decoupled from UI chrome and business logic.
+
+    RESPONSIBILITY BOUNDARY:
+        - OWNS: Editing surface, pagination logic, resource loading, paste protection
+        - DELEGATES: UI (ribbon/status bar), file I/O, feature orchestration to RichTextEditor
+
     EMBEDDED ENGINES:
-    -----------------
-    1. Pagination Engine: Atomic block pagination with scroll restoration
-    2. Resource Protocol: docimg:// URL scheme for database-backed images
-    3. Paste Guard: Mars Seal defensive pattern against clipboard bombs
-    4. Asset Restoration: Pre-render LaTeX/Mermaid on HTML load
-    5. Page Break Rendering: Visual guides for document layout mode
-    
-    INJECTION POINTS (set by parent):
-    ---------------------------------
-    - resource_provider: Callable[[int], Optional[Tuple[bytes, str]]]
-    - resource_saver: Callable[[bytes, str], Optional[int]]
-    - latex_renderer: Callable[[str], Optional[QImage]]
-    - mermaid_renderer: Callable[[str], Optional[QImage]]
-    
-    These callbacks decouple the editor from Pillar-specific implementations.
+        1. **Pagination Engine** (ENGINE 1):
+            - Ensures text blocks don't straddle page boundaries
+            - Uses cumulative baseline calculation for stable convergence
+            - Debounced via QTimer (700ms) to avoid per-keystroke runs
+            - Anchor-based scroll restoration maintains viewport position
+            - Controlled via: pagination_enabled, set_page_mode()
+
+        2. **Resource Protocol** (ENGINE 2):
+            - Custom docimg:// URL scheme for database-backed images
+            - LRU cache (32 images max) prevents repeated DB queries
+            - Supports both docimg://123 and docimg:///123 URL formats
+            - Security: validates IDs, rejects payloads > 25MB
+
+        3. **Paste Guard** (ENGINE 3):
+            - Mars Seal defensive pattern against clipboard bombs
+            - Prompts user before pasting: >100K text, >75K HTML, >12MB images
+            - Prevents UI freezing from unexpectedly large content
+
+        4. **Asset Restoration** (ENGINE 4):
+            - Re-renders LaTeX/Mermaid images when loading saved HTML
+            - Extracts source from alt attributes (LATEX:/MERMAID: prefix)
+            - Processes in batches to avoid blocking UI thread
+
+        5. **Page Break Rendering** (ENGINE 5):
+            - Paints dashed lines and shaded gaps at page boundaries
+            - Viewport culling for performance (only visible breaks rendered)
+            - Toggled via show_page_breaks property
+
+    INJECTION POINTS (callbacks set by parent window):
+        resource_provider: Callable[[int], Optional[Tuple[bytes, str]]]
+            Fetches image data from database by ID. Returns (bytes, mime_type).
+        resource_saver: Callable[[bytes, str], Optional[int]]
+            Saves image data to database. Returns assigned ID.
+        latex_renderer: Callable[[str], Optional[QImage]]
+            Renders LaTeX markup to QImage.
+        mermaid_renderer: Callable[[str], Optional[QImage]]
+            Renders Mermaid DSL to QImage.
+
+    DEBUG SUPPORT:
+        Set ISOPGEM_PAGINATION_DEBUG=1 (or "verbose") environment variable
+        to enable detailed pagination logging. Set ISOPGEM_RTE_MUTATION_DEBUG=1
+        for document mutation tracing.
+
+    Example:
+        >>> editor = SafeTextEdit(parent_widget)
+        >>> editor.resource_provider = lambda id: database.fetch_image(id)
+        >>> editor.enable_pagination(True)
+        >>> editor.set_page_mode(PageMode.PAGED)
     """
-    
+
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         """
-        Initialize the hardened text editor with pagination and resource handling.
-        
-        Sets up debounced pagination timers, scroll guards to prevent layout edits
-        during active scrolling, and connects the docimg:// resource protocol.
-        
-        **Pagination Sovereignty**: Pagination is intentionally opt-in (default: disabled).
-        This preserves stability for simple text editing while allowing the Magus to
-        awaken deeper layout rites via `enable_pagination(True)` when needed. This is
-        sovereign design, not incompleteness.
-        
+        Initialize the hardened text editor with all embedded engines.
+
+        Sets up the 5 embedded engines with their timers, guards, and callbacks.
+        Pagination is disabled by default (opt-in sovereignty design) to ensure
+        stability for simple text editing use cases.
+
+        Initialization Sequence:
+            1. Resource callbacks initialized to None (set by parent later)
+            2. Page settings initialized to defaults (8.5x11", 1" margins)
+            3. Pagination timer configured (700ms debounce, single-shot)
+            4. Scroll guard timer configured (350ms scroll-end detection)
+            5. Document signals connected for mutation tracking
+            6. Debug handlers initialized if env vars are set
+
         Args:
-            parent: Parent widget for Qt ownership hierarchy.
+            parent: Parent widget for Qt ownership hierarchy. Typically a
+                RichTextEditor instance that will inject callbacks.
+
+        Note:
+            Pagination is intentionally opt-in. Call enable_pagination(True)
+            or set_page_mode(PageMode.PAGED) to activate the pagination engine.
+            This preserves fast, stable behavior for simple editing scenarios.
         """
         super().__init__(parent)
         # Resource loading callbacks (injected by parent)
@@ -274,8 +468,19 @@ class SafeTextEdit(QTextEdit):
         self.mermaid_renderer: Optional[Callable[[str], Optional[Any]]] = None
         
         self._show_page_breaks = False
+        self._show_gap_fill = False
+        self._show_page_outline = False
+        self._show_margin_guides = False
+        self._fixed_width_layout = False
         self._page_settings = DEFAULT_PAGE_SETTINGS
         self._docimg_cache: "OrderedDict[int, Any]" = OrderedDict()
+        self._asset_restore_queue: list[_GeneratedAssetTask] = []
+        self._asset_restore_generation = 0
+        self._asset_restore_queue_generation = 0
+        self._asset_restore_batch_size = 2
+        self._asset_restore_timer = QTimer(self)
+        self._asset_restore_timer.setSingleShot(True)
+        self._asset_restore_timer.timeout.connect(self._process_asset_restore_queue)
         
         # Pagination Sovereignty: opt-in by design (see enable_pagination())
         self.pagination_enabled = False
@@ -286,13 +491,42 @@ class SafeTextEdit(QTextEdit):
         self._is_paginating = False
         self._pagination_timer = QTimer(self)
         self._pagination_timer.setSingleShot(True)
-        self._pagination_timer.setInterval(400)  # Debounce: slower to avoid post-scroll churn
+        self._pagination_timer.setInterval(700)  # Debounce: less frequent runs during rapid typing
+        self._pagination_interval_ms = 700
+        self._pagination_cooldown_interval_ms = 900
         self._pagination_timer.timeout.connect(self._do_pagination)
-        self.textChanged.connect(self._schedule_pagination)
+        self.textChanged.connect(self._on_text_changed_debug)
         
         # Monotonic pagination counter (sovereign, not relying on Qt's revision)
         self._pagination_generation = 0
         self._last_paginated_generation = -1
+        self._pagination_converge_passes = 0
+        self._pagination_converge_max = 3
+        self._pagination_converge_pending = False
+        # Track doc revision when we last wrote, to skip redundant runs
+        self._pagination_last_write_revision: Optional[int] = None
+        # Track if pagination is stable (last run found no changes needed)
+        self._pagination_stable = False
+        # Track last seen document revision and stable run count for cooldown
+        self._last_seen_revision: Optional[int] = None
+        self._pagination_idle_runs = 0
+        debug_env = os.getenv("ISOPGEM_PAGINATION_DEBUG", "").strip().lower()
+        self._pagination_debug = debug_env in ("1", "true", "yes", "on", "debug", "verbose", "trace", "2")
+        self._pagination_debug_verbose = debug_env in ("2", "verbose", "trace")
+        mutation_env = os.getenv("ISOPGEM_RTE_MUTATION_DEBUG", "").strip().lower()
+        if mutation_env:
+            self._mutation_debug = mutation_env in ("1", "true", "yes", "on", "debug", "verbose", "trace", "2")
+            self._mutation_debug_verbose = mutation_env in ("2", "verbose", "trace")
+        else:
+            self._mutation_debug = self._pagination_debug
+            self._mutation_debug_verbose = self._pagination_debug_verbose
+        self._pagination_debug_handler: Optional[logging.Handler] = None
+        self._pagination_debug_prev_level: Optional[int] = None
+        self._pagination_debug_prev_propagate: Optional[bool] = None
+        if self._pagination_debug or self._mutation_debug:
+            self._ensure_pagination_debug_handler()
+        self._contents_change_seen = False
+        self._formatting_pass_active = False
 
         # Scroll guard to avoid pagination/layout edits mid-scroll
         self._is_scrolling = False
@@ -306,6 +540,10 @@ class SafeTextEdit(QTextEdit):
         scrollbar = self.verticalScrollBar()
         if scrollbar is not None:
             scrollbar.valueChanged.connect(self._on_scroll)
+        doc = self.document()
+        if doc is not None:
+            doc.contentsChange.connect(self._on_contents_change)
+            doc.contentsChanged.connect(self._on_contents_changed_debug)
     
     # -------------------------------------------------------------------------
     # ENGINE 1: PAGINATION (Atomic Block Layout)
@@ -315,15 +553,103 @@ class SafeTextEdit(QTextEdit):
     # counter for idempotency, and employs anchor-based scroll restoration.
     # -------------------------------------------------------------------------
     
-    def _schedule_pagination(self):
-        """Schedule pagination check (debounced to avoid per-keystroke runs)."""
+    def _schedule_pagination(self, *args, converge: bool = False, reason: Optional[str] = None) -> None:
+        """
+        Schedule a pagination check with debouncing to avoid per-keystroke runs.
+
+        This method is the entry point for triggering pagination. It implements
+        several guard mechanisms to prevent unnecessary or harmful pagination runs:
+
+        Guard Mechanisms:
+            1. **Disabled check**: Skips if pagination_enabled is False
+            2. **Busy check**: Skips if already paginating (_is_paginating)
+            3. **Scroll check**: Skips if user is actively scrolling (_is_scrolling)
+            4. **Revision check**: Skips if document hasn't changed since last check
+            5. **Stability check**: Skips if pagination is stable and doc unchanged
+
+        Debounce Behavior:
+            - Normal interval: 700ms (allows typing to settle)
+            - Cooldown interval: 900ms (after 3+ idle runs, reduces CPU usage)
+            - Timer is NOT restarted if already running (prevents starvation)
+
+        The generation counter (_pagination_generation) is incremented on each
+        schedule request to signal to _do_pagination() that content may have changed.
+
+        Args:
+            *args: Ignored. Allows this method to be connected to Qt signals
+                that pass arguments (e.g., contentsChange).
+            converge: If True, this is a convergence pass (pagination just ran
+                and needs to verify stability). Convergence passes skip the
+                stability check and don't reset convergence state.
+            reason: Debug label for logging. Helps trace what triggered the
+                pagination request (e.g., "textChanged", "contentsChange").
+
+        Note:
+            This method only schedules pagination - actual work happens in
+            _do_pagination() when the timer fires.
+        """
+        if self._pagination_debug:
+            self._log_pagination(
+                "schedule-request",
+                reason=reason or "unknown",
+                converge=converge,
+                is_paginating=self._is_paginating,
+                is_scrolling=self._is_scrolling,
+                timer_active=self._pagination_timer.isActive(),
+                generation=self._pagination_generation,
+                last_generation=self._last_paginated_generation,
+            )
         if not getattr(self, "pagination_enabled", True):
+            if self._pagination_debug:
+                self._log_pagination("schedule-skip", reason=reason or "unknown", cause="disabled")
             return
         if getattr(self, "_is_paginating", False):
+            if self._pagination_debug:
+                self._log_pagination("schedule-skip", reason=reason or "unknown", cause="paginating")
             return
         if getattr(self, "_is_scrolling", False):
+            if self._pagination_debug:
+                self._log_pagination("schedule-skip", reason=reason or "unknown", cause="scrolling")
             return
-        self._pagination_timer.start()
+        if not converge:
+            doc = self.document()
+            if doc is not None:
+                current_rev = doc.revision()
+                if self._last_seen_revision is not None and current_rev == self._last_seen_revision:
+                    if self._pagination_debug:
+                        self._log_pagination(
+                            "schedule-skip",
+                            reason=reason or "unknown",
+                            cause="same_revision",
+                            doc_revision=current_rev,
+                        )
+                    return
+            # Check if we can skip due to stable pagination
+            if (self._pagination_stable and doc is not None and
+                self._pagination_last_write_revision is not None and
+                doc.revision() == self._pagination_last_write_revision):
+                if self._pagination_debug:
+                    self._log_pagination(
+                        "schedule-skip",
+                        reason=reason or "unknown",
+                        cause="stable_no_doc_change",
+                    )
+                return
+            self._pagination_converge_passes = 0
+            self._pagination_converge_pending = False
+            # New content change invalidates stable state
+            self._pagination_stable = False
+        else:
+            self._pagination_converge_pending = True
+        # Advance generation so _do_pagination knows content/layout changed.
+        self._pagination_generation += 1
+        interval = self._pagination_interval_ms
+        if self._pagination_idle_runs >= 3 and not converge:
+            interval = self._pagination_cooldown_interval_ms
+        self._pagination_timer.setInterval(interval)
+        # Only start timer if not already running - don't restart on every keystroke
+        if not self._pagination_timer.isActive():
+            self._pagination_timer.start()
     
     def enable_pagination(self, enabled: bool = True) -> None:
         """
@@ -348,33 +674,60 @@ class SafeTextEdit(QTextEdit):
         self.pagination_enabled = enabled
         if enabled:
             # Trigger immediate pagination check
-            self._schedule_pagination()
+            self._schedule_pagination(reason="enable_pagination")
     
     def set_page_mode(self, mode: PageMode, opts: Optional[PageModeOptions] = None) -> None:
         """
-        Set pagination mode with unified control.
-        
-        This is the sovereign entry point for all pagination state changes.
-        Presets provide opinionated defaults; CUSTOM mode allows full granular control.
-        
+        Set pagination mode with unified control over visual guides and enforcement.
+
+        This is the primary entry point for configuring the editor's pagination
+        behavior. It controls both the visual page break rendering (guides, gap fill)
+        and the block margin enforcement system.
+
+        Mode Resolution:
+            - FREEFLOW: All pagination features disabled (fast editing)
+            - GUIDES_ONLY: Visual guides on, enforcement off (preview mode)
+            - ENFORCE_ONLY: Enforcement on, visual guides off (clean editing)
+            - PAGED: Both guides and enforcement on (full WYSIWYG)
+            - CUSTOM: Uses provided PageModeOptions for granular control
+
+        Side Effects:
+            - Updates _show_page_breaks and _show_gap_fill flags
+            - Sets pagination_enabled and scroll_anchor_enabled
+            - Updates _page_gap if specified in options
+            - Triggers immediate pagination if enforcement is enabled
+            - Requests viewport repaint for visual changes
+            - Stores mode in _current_page_mode for introspection
+
         Args:
-            mode: The PageMode preset to apply
-            opts: Optional PageModeOptions for overrides (required for CUSTOM mode)
-        
+            mode: The PageMode preset to apply. Determines default values for
+                all pagination settings.
+            opts: Optional PageModeOptions for granular control. Required when
+                mode is CUSTOM; ignored for other presets (future: may allow
+                preset overrides).
+
         Example:
-            editor.set_page_mode(PageMode.PAGED)  # Full document mode
-            editor.set_page_mode(PageMode.FREEFLOW)  # Fast free-flow editing
-            editor.set_page_mode(PageMode.CUSTOM, PageModeOptions(
-                show_guides=True,
-                show_gap_fill=False,
-                enforce_pagination=True
-            ))
+            >>> # Full document mode with visual guides
+            >>> editor.set_page_mode(PageMode.PAGED)
+
+            >>> # Fast editing without pagination overhead
+            >>> editor.set_page_mode(PageMode.FREEFLOW)
+
+            >>> # Custom configuration
+            >>> editor.set_page_mode(PageMode.CUSTOM, PageModeOptions(
+            ...     show_guides=True,
+            ...     show_gap_fill=False,
+            ...     enforce_pagination=True,
+            ...     page_gap=30
+            ... ))
         """
         # Resolve preset to base options
         if mode == PageMode.FREEFLOW:
             resolved = PageModeOptions(
                 show_guides=False,
                 show_gap_fill=False,
+                show_page_outline=False,
+                show_margin_guides=False,
                 enforce_pagination=False,
                 scroll_anchor=True
             )
@@ -382,6 +735,8 @@ class SafeTextEdit(QTextEdit):
             resolved = PageModeOptions(
                 show_guides=True,
                 show_gap_fill=True,
+                show_page_outline=True,
+                show_margin_guides=True,
                 enforce_pagination=False,
                 scroll_anchor=True
             )
@@ -389,6 +744,8 @@ class SafeTextEdit(QTextEdit):
             resolved = PageModeOptions(
                 show_guides=False,
                 show_gap_fill=False,
+                show_page_outline=False,
+                show_margin_guides=False,
                 enforce_pagination=True,
                 scroll_anchor=True
             )
@@ -396,6 +753,8 @@ class SafeTextEdit(QTextEdit):
             resolved = PageModeOptions(
                 show_guides=True,
                 show_gap_fill=True,
+                show_page_outline=True,
+                show_margin_guides=True,
                 enforce_pagination=True,
                 scroll_anchor=True
             )
@@ -407,17 +766,15 @@ class SafeTextEdit(QTextEdit):
                 resolved = opts
         else:
             resolved = PageModeOptions()
-        
-        # Apply overrides from opts if provided (for preset customization)
-        if opts is not None and mode != PageMode.CUSTOM:
-            # Override only explicitly set values (non-default check would require more logic)
-            # For simplicity, CUSTOM mode uses opts directly; presets ignore opts currently
-            pass
-        
+
         # Handle coupling policy
         if resolved.couple_guides_and_enforcement:
             # Sync enforcement to guides state
             resolved.enforce_pagination = resolved.show_guides
+
+        if resolved.show_page_outline or resolved.show_margin_guides:
+            # Keep visible margins/gutters honest by enforcing pagination.
+            resolved.enforce_pagination = True
         
         # Apply page_gap override if specified
         if resolved.page_gap is not None:
@@ -425,25 +782,183 @@ class SafeTextEdit(QTextEdit):
         
         # Commit state to concrete flags
         self._show_page_breaks = resolved.show_guides or resolved.show_gap_fill
-        self._show_gap_fill = resolved.show_gap_fill  # Add flag if not exists
+        self._show_gap_fill = resolved.show_gap_fill
+        self._show_page_outline = resolved.show_page_outline
+        self._show_margin_guides = resolved.show_margin_guides
         self.pagination_enabled = resolved.enforce_pagination
         self.scroll_anchor_enabled = resolved.scroll_anchor
+
+        if self._pagination_debug:
+            self._log_pagination(
+                "mode-set",
+                mode=mode.name,
+                show_guides=resolved.show_guides,
+                show_gap_fill=resolved.show_gap_fill,
+                enforce_pagination=resolved.enforce_pagination,
+                page_gap=self._page_gap,
+                scroll_anchor=resolved.scroll_anchor,
+            )
         
         # Store current mode for introspection
         self._current_page_mode = mode
         self._current_page_options = resolved
         
+        use_fixed_width = resolved.show_page_outline or resolved.show_margin_guides
+        if use_fixed_width != self._fixed_width_layout:
+            self._apply_document_geometry(fixed_width=use_fixed_width)
+            self._fixed_width_layout = use_fixed_width
+
         # Trigger updates
         if resolved.enforce_pagination:
-            self._schedule_pagination()
+            self._schedule_pagination(reason=f"set_page_mode:{mode.name}")
         
         # Repaint for visual changes
         viewport = self.viewport()
         if viewport is not None:
             viewport.update()
 
+    def apply_layout(self, page_width_in: float, page_height_in: float, margins_in: tuple) -> None:
+        """
+        Apply a fixed page layout for WYSIWYG document editing.
+
+        Configures the editor to use a specific page size and margins, typically
+        matching an imported document's original layout. This enables accurate
+        WYSIWYG editing where text wraps at the same positions as the source.
+
+        The layout is applied by:
+            1. Creating a PageSettings object with custom dimensions
+            2. Setting QTextDocument page size
+            3. Configuring root frame margins
+            4. Enabling fixed-width line wrapping
+            5. Triggering pagination recalculation
+
+        Validation:
+            - Page dimensions must be positive (returns early if not)
+            - Margins must be a 4-tuple (falls back to defaults if not)
+            - Individual margins are clamped to at most half the page dimension
+
+        Args:
+            page_width_in: Page width in inches. Standard US Letter is 8.5".
+            page_height_in: Page height in inches. Standard US Letter is 11".
+            margins_in: Tuple of (top, right, bottom, left) margins in inches.
+                Typical document margins are 1" on all sides.
+
+        Example:
+            >>> # US Letter with 1" margins
+            >>> editor.apply_layout(8.5, 11.0, (1.0, 1.0, 1.0, 1.0))
+
+            >>> # A4 with narrow margins
+            >>> editor.apply_layout(8.27, 11.69, (0.5, 0.5, 0.5, 0.5))
+        """
+        if page_width_in <= 0 or page_height_in <= 0:
+            return
+        if not margins_in or len(margins_in) != 4:
+            margins_in = DEFAULT_PAGE_SETTINGS.margins_inches
+        if self._pagination_debug:
+            self._log_pagination(
+                "layout-apply",
+                page_width_in=page_width_in,
+                page_height_in=page_height_in,
+                margins_in=margins_in,
+            )
+        top, right, bottom, left = (max(0.0, float(m)) for m in margins_in)
+        max_h = max(page_height_in / 2.0, 0.1)
+        max_w = max(page_width_in / 2.0, 0.1)
+        top = min(top, max_h)
+        bottom = min(bottom, max_h)
+        left = min(left, max_w)
+        right = min(right, max_w)
+        self._page_settings = PageSettings(
+            page_size="custom",
+            margins=(top, right, bottom, left),
+            custom_dimensions=(page_width_in, page_height_in),
+        )
+        self._apply_document_geometry(fixed_width=True)
+        self._fixed_width_layout = True
+
+    def reset_layout(self) -> None:
+        """Return to the default, flexible layout mode."""
+        if self._pagination_debug:
+            self._log_pagination("layout-reset")
+        self._page_settings = DEFAULT_PAGE_SETTINGS
+        self._apply_document_geometry(fixed_width=False)
+        self._fixed_width_layout = False
+
+    def _apply_document_geometry(self, fixed_width: bool) -> None:
+        doc = self.document()
+        if doc is None:
+            return
+
+        page_settings = self._page_settings
+        dpi_x, dpi_y = self._resolve_screen_dpi()
+        page_settings.set_screen_dpi(dpi_x, dpi_y)
+        page_width_px = page_settings.page_width_pixels
+        page_height_px = page_settings.page_height_pixels
+        top_in, right_in, bottom_in, left_in = page_settings.margins_inches
+        top_px = int(top_in * dpi_y)
+        right_px = int(right_in * dpi_x)
+        bottom_px = int(bottom_in * dpi_y)
+        left_px = int(left_in * dpi_x)
+        content_width_px = max(50, page_width_px - left_px - right_px)
+        if self._pagination_debug:
+            self._log_pagination(
+                "geometry-apply",
+                fixed_width=fixed_width,
+                page_width_px=page_width_px,
+                page_height_px=page_height_px,
+                content_width_px=content_width_px,
+                margins_px=(top_px, right_px, bottom_px, left_px),
+                dpi_x=dpi_x,
+                dpi_y=dpi_y,
+            )
+
+        doc.setPageSize(QSizeF(page_width_px, page_height_px))
+        frame = doc.rootFrame()
+        frame_format = frame.frameFormat()
+        frame_format.setTopMargin(top_px)
+        frame_format.setRightMargin(right_px)
+        frame_format.setBottomMargin(bottom_px)
+        frame_format.setLeftMargin(left_px)
+        frame.setFrameFormat(frame_format)
+
+        if fixed_width:
+            self.setLineWrapMode(QTextEdit.LineWrapMode.FixedPixelWidth)
+            self.setLineWrapColumnOrWidth(int(content_width_px))
+            doc.setTextWidth(content_width_px)
+        else:
+            self.setLineWrapMode(QTextEdit.LineWrapMode.WidgetWidth)
+            viewport = self.viewport()
+            doc.setTextWidth(viewport.width() if viewport else content_width_px)
+
+        self._schedule_pagination(reason="apply_document_geometry")
+        if self._show_page_breaks:
+            viewport = self.viewport()
+            if viewport is not None:
+                viewport.update()
+
+    def _resolve_screen_dpi(self) -> tuple[float, float]:
+        """Resolve logical DPI for the current widget/screen."""
+        try:
+            dpi_x = float(self.logicalDpiX())
+            dpi_y = float(self.logicalDpiY())
+        except Exception:
+            dpi_x = PageSettings.SCREEN_DPI
+            dpi_y = PageSettings.SCREEN_DPI
+        if dpi_x <= 0:
+            dpi_x = PageSettings.SCREEN_DPI
+        if dpi_y <= 0:
+            dpi_y = PageSettings.SCREEN_DPI
+        return dpi_x, dpi_y
+
     def _on_scroll(self):
         """Mark scrolling active and debounce end marker."""
+        if self._pagination_debug and not self._is_scrolling:
+            scrollbar = self.verticalScrollBar()
+            self._log_pagination(
+                "scroll-start",
+                scroll_value=scrollbar.value() if scrollbar is not None else None,
+                timer_active=self._pagination_timer.isActive(),
+            )
         self._is_scrolling = True
         if self._pagination_timer.isActive():
             self._pagination_timer.stop()
@@ -452,6 +967,129 @@ class SafeTextEdit(QTextEdit):
     def _end_scroll(self):
         """End scroll window to allow pagination to resume."""
         self._is_scrolling = False
+        if self._pagination_debug:
+            scrollbar = self.verticalScrollBar()
+            self._log_pagination(
+                "scroll-end",
+                scroll_value=scrollbar.value() if scrollbar is not None else None,
+            )
+
+    def _on_text_changed_debug(self) -> None:
+        """Log textChanged events to trace revision churn."""
+        if not getattr(self, "_mutation_debug", False):
+            return
+        doc = self.document()
+        rev = doc.revision() if doc is not None else "None"
+        logger.debug(
+            "mutation: textChanged | revision=%s, is_paginating=%s",
+            rev,
+            self._is_paginating,
+        )
+
+    def _on_contents_change(self, position: int, chars_removed: int, chars_added: int) -> None:
+        """Log and schedule pagination on document content changes."""
+        self._contents_change_seen = True
+        if getattr(self, "_mutation_debug", False):
+            doc = self.document()
+            rev = doc.revision() if doc is not None else "None"
+            logger.debug(
+                "mutation: contentsChange | pos=%s, removed=%s, added=%s, revision=%s",
+                position,
+                chars_removed,
+                chars_added,
+                rev,
+            )
+        if chars_removed == 0 and chars_added == 0:
+            return
+        self._schedule_pagination(reason=f"contentsChange:{chars_removed}->{chars_added}")
+
+    def _on_contents_changed_debug(self) -> None:
+        """Log contentsChanged to see post-change revisions."""
+        if not getattr(self, "_mutation_debug", False):
+            if not self._contents_change_seen:
+                if not self._formatting_pass_active:
+                    self._schedule_pagination(reason="contentsChanged:format")
+            self._contents_change_seen = False
+            return
+        doc = self.document()
+        rev = doc.revision() if doc is not None else "None"
+        logger.debug("mutation: contentsChanged | revision=%s", rev)
+        if not self._contents_change_seen:
+            if self._formatting_pass_active:
+                logger.debug("mutation: contentsChanged ignored (formatting pass)")
+            else:
+                self._schedule_pagination(reason="contentsChanged:format")
+        self._contents_change_seen = False
+
+    def set_pagination_debug(self, enabled: bool, verbose: bool = False) -> None:
+        """Enable or disable pagination debug logging."""
+        self._pagination_debug = bool(enabled)
+        self._pagination_debug_verbose = bool(verbose) if enabled else False
+        if self._pagination_debug:
+            self._ensure_pagination_debug_handler()
+        else:
+            if not getattr(self, "_mutation_debug", False):
+                self._disable_pagination_debug_handler()
+
+    def _ensure_pagination_debug_handler(self) -> None:
+        """Ensure pagination debug output is visible even if global log level is higher."""
+        if not (self._pagination_debug or getattr(self, "_mutation_debug", False)):
+            return
+        root_level = logging.getLogger().getEffectiveLevel()
+        if root_level <= logging.DEBUG:
+            logger.setLevel(logging.DEBUG)
+            return
+        if self._pagination_debug_handler is None:
+            for handler in logger.handlers:
+                if getattr(handler, "_isopgem_pagination_debug", False):
+                    self._pagination_debug_handler = handler
+                    break
+        if self._pagination_debug_handler is not None:
+            logger.setLevel(logging.DEBUG)
+            return
+        handler = logging.StreamHandler()
+        handler.setLevel(logging.DEBUG)
+        handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s"))
+        setattr(handler, "_isopgem_pagination_debug", True)
+        if self._pagination_debug_prev_level is None:
+            self._pagination_debug_prev_level = logger.level
+        if self._pagination_debug_prev_propagate is None:
+            self._pagination_debug_prev_propagate = logger.propagate
+        logger.addHandler(handler)
+        logger.setLevel(logging.DEBUG)
+        logger.propagate = False
+        self._pagination_debug_handler = handler
+
+    def _disable_pagination_debug_handler(self) -> None:
+        if self._pagination_debug_handler is None:
+            return
+        try:
+            logger.removeHandler(self._pagination_debug_handler)
+        except Exception:
+            pass
+        if self._pagination_debug_prev_level is not None:
+            logger.setLevel(self._pagination_debug_prev_level)
+        if self._pagination_debug_prev_propagate is not None:
+            logger.propagate = self._pagination_debug_prev_propagate
+        self._pagination_debug_handler = None
+        self._pagination_debug_prev_level = None
+        self._pagination_debug_prev_propagate = None
+
+    def _log_pagination(self, message: str, **fields) -> None:
+        """Emit a structured pagination debug line when enabled."""
+        if not self._pagination_debug:
+            return
+        if fields:
+            parts = []
+            for key in sorted(fields.keys()):
+                value = fields[key]
+                if isinstance(value, float):
+                    parts.append(f"{key}={value:.2f}")
+                else:
+                    parts.append(f"{key}={value}")
+            logger.debug("pagination: %s | %s", message, ", ".join(parts))
+        else:
+            logger.debug("pagination: %s", message)
 
     def _find_visible_anchor_block_pos(self) -> Optional[int]:
         """
@@ -466,6 +1104,21 @@ class SafeTextEdit(QTextEdit):
         cur = self.cursorForPosition(QPoint(1, 1))
         block = cur.block()
         return int(block.position()) if block.isValid() else None
+
+    def _find_visible_cursor_pos(self) -> Optional[int]:
+        """Return the current cursor position if it is visible in the viewport."""
+        viewport = self.viewport()
+        if viewport is None:
+            return None
+        cur = self.textCursor()
+        if cur is None:
+            return None
+        rect = self.cursorRect(cur)
+        if rect.isNull():
+            return None
+        if rect.intersects(viewport.rect()):
+            return int(cur.position())
+        return None
 
     def _get_block_viewport_offset_by_pos(self, block_pos: int) -> float:
         """
@@ -487,6 +1140,18 @@ class SafeTextEdit(QTextEdit):
         # Create a cursor positioned at the block start
         cur = QTextCursor(block)
         # cursorRect gives us viewport coordinates directly
+        r = self.cursorRect(cur)
+        return float(r.top())
+
+    def _get_cursor_viewport_offset_by_pos(self, cursor_pos: int) -> float:
+        """Get the cursor's current vertical offset from the viewport top."""
+        from PyQt6.QtGui import QTextCursor
+
+        doc = self.document()
+        if doc is None:
+            return 0.0
+        cur = QTextCursor(doc)
+        cur.setPosition(cursor_pos)
         r = self.cursorRect(cur)
         return float(r.top())
 
@@ -523,6 +1188,23 @@ class SafeTextEdit(QTextEdit):
         desired = scrollbar.value() + int(delta)
         return desired
 
+    def _calculate_anchor_scroll_by_cursor_pos(self, cursor_pos: int, target_offset: float) -> Optional[int]:
+        """Compute scrollbar adjustment to restore cursor to a viewport offset."""
+        from PyQt6.QtGui import QTextCursor
+
+        doc = self.document()
+        if doc is None:
+            return None
+        scrollbar = self.verticalScrollBar()
+        if scrollbar is None:
+            return None
+        cur = QTextCursor(doc)
+        cur.setPosition(cursor_pos)
+        current_rect = self.cursorRect(cur)
+        current_offset = float(current_rect.top())
+        delta = current_offset - target_offset
+        return scrollbar.value() + int(delta)
+
     def _do_pagination(self):
         """
         Atomic Block Pagination: Ensures blocks don't straddle page boundaries.
@@ -540,158 +1222,347 @@ class SafeTextEdit(QTextEdit):
         if not getattr(self, "pagination_enabled", True):
             return
         if self._is_paginating or self._is_scrolling:
+            if self._pagination_debug:
+                self._log_pagination(
+                    "run-skip",
+                    cause="busy_or_scrolling",
+                    is_paginating=self._is_paginating,
+                    is_scrolling=self._is_scrolling,
+                )
             return
         doc = self.document()
         if doc is None:
             return
-        
+
+        # Skip if pagination is stable and doc hasn't changed since we last checked
+        # This prevents redundant runs when pagination has converged
+        current_rev = doc.revision()
+        if (self._pagination_stable and
+            self._pagination_last_write_revision is not None and
+            current_rev == self._pagination_last_write_revision and
+            not self._pagination_converge_pending):
+            if self._pagination_debug:
+                self._log_pagination(
+                    "run-skip",
+                    cause="stable_no_doc_change",
+                    doc_revision=current_rev,
+                    last_write_revision=self._pagination_last_write_revision,
+                )
+            return
+
         # Monotonic generation gate (sovereign counter, not Qt revision)
         if self._pagination_generation == self._last_paginated_generation:
+            if self._pagination_debug:
+                self._log_pagination(
+                    "run-skip",
+                    cause="no_generation_change",
+                    generation=self._pagination_generation,
+                    last_generation=self._last_paginated_generation,
+                )
             return
-            
+
         self._is_paginating = True
         changed = False  # Initialize before try to prevent UnboundLocalError in finally
+        needs_converge = False
+        push_count = 0
+        baseline_resets = 0
+        manual_breaks = 0
+        manual_forced = 0
+        invisible_blocks = 0
+        oversize_blocks = 0
+        total_blocks = 0
+        changed_samples: list[str] = []
         try:
             doc = self.document()
             if doc is None:
                 return
-            layout = doc.documentLayout()
-            if layout is None:
-                return
             scrollbar = self.verticalScrollBar()
             saved_scroll = scrollbar.value() if scrollbar is not None else None
             
-            # Anchor-based scroll restoration: capture visible block position
+            # Anchor-based scroll restoration: capture visible cursor or block position
             anchor_pos: Optional[int] = None
             anchor_offset = 0.0
+            anchor_is_cursor = False
             if getattr(self, "scroll_anchor_enabled", True) and scrollbar is not None:
-                anchor_pos = self._find_visible_anchor_block_pos()
-                if anchor_pos is not None:
-                    anchor_offset = self._get_block_viewport_offset_by_pos(anchor_pos)
+                cursor_pos = self._find_visible_cursor_pos()
+                if cursor_pos is not None:
+                    anchor_pos = cursor_pos
+                    anchor_offset = self._get_cursor_viewport_offset_by_pos(cursor_pos)
+                    anchor_is_cursor = True
+                else:
+                    anchor_pos = self._find_visible_anchor_block_pos()
+                    if anchor_pos is not None:
+                        anchor_offset = self._get_block_viewport_offset_by_pos(anchor_pos)
+            anchor_type = "cursor" if anchor_is_cursor else ("block" if anchor_pos is not None else "none")
             
             # Capture the revision after any edits we make below
             current_rev = doc.revision()
-            margin_offset = 0.0
-            if hasattr(doc, "documentMargin"):
-                margin_offset = float(doc.documentMargin())
+            dpi_x, dpi_y = self._resolve_screen_dpi()
+            self._page_settings.set_screen_dpi(dpi_x, dpi_y)
+            origin_offset = self._page_origin_offset()
             # Use property as single source of truth for page height
             page_height = self.page_height
-            cycle = page_height + self._page_gap
+            top_in, _, bottom_in, _ = self._page_settings.margins_inches
+            top_px = int(top_in * self._page_settings.screen_dpi_y)
+            bottom_px = int(bottom_in * self._page_settings.screen_dpi_y)
+            cycle = page_height + top_px + bottom_px + self._page_gap
+            if self._pagination_debug:
+                self._log_pagination(
+                    "run-start",
+                    generation=self._pagination_generation,
+                    last_generation=self._last_paginated_generation,
+                    converge_pending=self._pagination_converge_pending,
+                    doc_revision=current_rev,
+                    doc_height=doc.size().height(),
+                    doc_blocks=doc.blockCount(),
+                    scroll_start=saved_scroll,
+                    anchor_type=anchor_type,
+                    anchor_pos=anchor_pos,
+                    anchor_offset=anchor_offset,
+                    page_height=page_height,
+                    page_gap=self._page_gap,
+                    margins_top=top_px,
+                    margins_bottom=bottom_px,
+                    cycle=cycle,
+                    dpi_x=dpi_x,
+                    dpi_y=dpi_y,
+                )
             
             # Disable undo/redo - pagination is view hygiene, not authored content
             undo_enabled = doc.isUndoRedoEnabled()
             doc.setUndoRedoEnabled(False)
             
             try:
-                # Use a single cursor for all edits
-                edit_cursor = QTextCursor(doc)
-                
-                edit_cursor.beginEditBlock()
+                signals_prev = doc.blockSignals(True)
+                editor_signals_prev = self.blockSignals(True)
+                updates_prev = self.updatesEnabled()
+                self.setUpdatesEnabled(False)
                 try:
-                    # Iterate all blocks
+                    # Use a single cursor for all edits
+                    edit_cursor = QTextCursor(doc)
+
+                    # Phase 1: Read-only scan to collect current pagination state
+                    layout = doc.documentLayout()
+                    if layout is None:
+                        return
+
+                    # Collect current state: block_num -> current_total_margin (with pagination applied)
+                    current_paginated: dict[int, float] = {}
                     block = doc.begin()
                     while block.isValid():
+                        fmt = block.blockFormat()
+                        if bool(fmt.property(PAGINATION_PROP)):
+                            current_paginated[block.blockNumber()] = fmt.topMargin()
+                            baseline_resets += 1
+                        block = block.next()
+
+                    # Phase 2: Calculate desired pagination using CUMULATIVE BASELINE
+                    #
+                    # Key insight: We walk the document once, accumulating positions using
+                    # only original margins (ignoring any existing pagination margins).
+                    # This gives us a stable "what if no pagination existed" baseline for
+                    # every block, without needing to strip margins or force reflows.
+                    #
+                    # cumulative_baseline = position just BEFORE current block's margin
+                    # baseline_top = cumulative_baseline + orig_margin = where block starts
+                    #
+                    # This makes every pass see identical geometry → converges in 1-2 passes.
+
+                    desired_paginated: dict[int, tuple[float, float]] = {}  # block_num -> (orig_margin, target_margin)
+                    block = doc.begin()
+                    cumulative_baseline = 0.0  # Position just before current block (clean, no pagination)
+                    manual_next_page_start: Optional[float] = None
+
+                    while block.isValid():
+                        total_blocks += 1
                         rect = layout.blockBoundingRect(block)
-                    
-                        # Skip empty or invisible blocks
-                        if rect.height() < 1:
+                        block_height = rect.height()
+
+                        fmt = block.blockFormat()
+                        is_paginated = bool(fmt.property(PAGINATION_PROP))
+                        is_page_break = bool(fmt.property(PAGEBREAK_PROP))
+
+                        # Get the original (baseline) margin - this is what the margin
+                        # WOULD be without any pagination applied
+                        if is_paginated:
+                            orig_margin_prop = fmt.property(PAGINATION_ORIG_PROP)
+                            orig_margin = 0.0
+                            if orig_margin_prop is not None:
+                                try:
+                                    orig_margin = float(orig_margin_prop)
+                                except Exception:
+                                    orig_margin = 0.0
+                        else:
+                            orig_margin = fmt.topMargin()
+
+                        # Handle invisible/empty blocks - still accumulate their space
+                        if block_height < 1:
+                            invisible_blocks += 1
+                            cumulative_baseline += orig_margin + block_height
                             block = block.next()
                             continue
-                        
-                        # Get block geometry
-                        block_top = rect.y() - margin_offset
-                        block_bottom = rect.bottom() - margin_offset
-                        block_height = rect.height()
-                        
+
+                        # True baseline position (computed from accumulation, not Qt layout)
+                        baseline_top = cumulative_baseline + orig_margin
+                        baseline_bottom = baseline_top + block_height
+
                         # Determine which page this block starts on
-                        page_num = int(block_top / cycle)
-                        
-                        # Position within the current cycle (0 = start of page)
-                        local_top = block_top - (page_num * cycle)
-                        local_bottom = block_bottom - (page_num * cycle)
-                        
-                        # Get current block format
-                        fmt = block.blockFormat()
-                        current_margin = fmt.topMargin()
-                        # Deterministic boolean read (QVariant can return None/0/False)
-                        is_paginated = fmt.property(PAGINATION_PROP) is True
-                        orig_margin = fmt.property(PAGINATION_ORIG_PROP)
-                        
+                        page_num = int(baseline_top / cycle)
+
+                        # Position within the current cycle (0 = start of page content area)
+                        local_top = baseline_top - (page_num * cycle)
+                        local_bottom = baseline_bottom - (page_num * cycle)
+
+                        if is_page_break:
+                            manual_breaks += 1
+                            if self._pagination_debug_verbose and len(changed_samples) < 8:
+                                changed_samples.append(
+                                    f"pagebreak block#{block.blockNumber()} pos={block.position()}"
+                                )
+                            manual_next_page_start = (page_num + 1) * cycle
+                            cumulative_baseline += orig_margin + block_height
+                            block = block.next()
+                            continue
+
                         # Check if block would cross into the gap or next page
                         needs_push = False
-                        
-                        # Case 1: Block starts in the gap
-                        if local_top >= page_height:
+                        margin_needed: Optional[float] = None
+
+                        if manual_next_page_start is not None:
+                            delta = manual_next_page_start - baseline_top
+                            if delta > 1:
+                                needs_push = True
+                                margin_needed = orig_margin + delta
+                                manual_forced += 1
+                            manual_next_page_start = None
+
+                        # Case 1: Block starts in the gap (between pages)
+                        if not needs_push and local_top >= page_height:
                             needs_push = True
-                            
+
                         # Case 2: Block starts on page but extends into gap
-                        elif local_bottom > page_height and block_height < page_height:
-                            # Only push if block is smaller than a page
-                            # (Large blocks like images are allowed to overflow)
-                            needs_push = True
-                        
+                        elif not needs_push and local_bottom > page_height:
+                            if block_height < page_height:
+                                needs_push = True
+                            else:
+                                oversize_blocks += 1
+
                         if needs_push:
-                            # Calculate how much to push
-                            # We want to move the block to the start of the next page
-                            next_page_start = (page_num + 1) * cycle
-                            margin_needed = next_page_start - block_top
-                            
-                            # Idempotent guard: skip if already in perfect paginated state
-                            already_correct = (
-                                is_paginated and
-                                abs(current_margin - margin_needed) <= 1 and
-                                orig_margin is not None
-                            )
-                            if already_correct:
-                                block = block.next()
-                                continue
-                            
-                            # Apply pagination margin
-                            if not is_paginated:
-                                fmt.setProperty(PAGINATION_ORIG_PROP, current_margin)
-                            fmt.setTopMargin(margin_needed)
-                            fmt.setProperty(PAGINATION_PROP, True)
-                            edit_cursor.setPosition(block.position())
-                            edit_cursor.setBlockFormat(fmt)
-                            changed = True
-                        else:
-                            # Reset margin if block no longer needs push
-                            # Only reset if WE previously set this margin (check our property)
-                            if is_paginated:
-                                restore_margin = 0.0
-                                if orig_margin is not None:
-                                    try:
-                                        restore_margin = float(orig_margin)
-                                    except Exception:
-                                        restore_margin = 0.0
-                                
-                                # Idempotent guard: skip if already restored
-                                if abs(current_margin - restore_margin) <= 1:
-                                    # Margin already correct, just clear properties
-                                    fmt.clearProperty(PAGINATION_PROP)
-                                    fmt.clearProperty(PAGINATION_ORIG_PROP)
-                                else:
+                            # Calculate target margin: push block to next page start
+                            # margin_needed = next_page_start - cumulative_baseline
+                            # When applied: new_top = cumulative_baseline + margin_needed = next_page_start
+                            if margin_needed is None:
+                                next_page_start = (page_num + 1) * cycle
+                                margin_needed = next_page_start - cumulative_baseline
+
+                            desired_paginated[block.blockNumber()] = (orig_margin, margin_needed)
+                            push_count += 1
+
+                        # Advance cumulative baseline using ORIGINAL margin + height
+                        # This is the key: we always use orig_margin, never the paginated margin
+                        cumulative_baseline += orig_margin + block_height
+                        block = block.next()
+
+                    # Phase 3: Compare desired vs current and only write if different
+                    blocks_to_update: list[tuple[int, float, float]] = []  # (block_num, orig_margin, target_margin)
+                    blocks_to_remove: list[int] = []  # block_nums that should no longer be paginated
+                    total_delta = 0.0  # Sum of margin deltas for threshold check
+
+                    # Find blocks that need updating or adding
+                    for block_num, (orig_margin, target_margin) in desired_paginated.items():
+                        current_margin = current_paginated.get(block_num)
+                        if current_margin is None:
+                            blocks_to_update.append((block_num, orig_margin, target_margin))
+                            total_delta += abs(target_margin - orig_margin)
+                        elif abs(current_margin - target_margin) > 1:
+                            blocks_to_update.append((block_num, orig_margin, target_margin))
+                            total_delta += abs(current_margin - target_margin)
+
+                    # Find blocks that should no longer be paginated
+                    for block_num in current_paginated:
+                        if block_num not in desired_paginated:
+                            blocks_to_remove.append(block_num)
+                            total_delta += current_paginated[block_num]  # Full margin being removed
+
+                    # Only mark as changed if total delta exceeds threshold
+                    # This avoids writes for minor float precision differences
+                    if total_delta > 10.0:
+                        changed = True
+
+                    # Phase 4: Apply changes only if needed
+                    if changed and (blocks_to_update or blocks_to_remove):
+                        edit_cursor.beginEditBlock()
+                        try:
+                            # Apply updates
+                            for block_num, orig_margin, target_margin in blocks_to_update:
+                                block = doc.findBlockByNumber(block_num)
+                                if block.isValid():
+                                    fmt = block.blockFormat()
+                                    fmt.setProperty(PAGINATION_ORIG_PROP, orig_margin)
+                                    fmt.setTopMargin(target_margin)
+                                    fmt.setProperty(PAGINATION_PROP, True)
+                                    edit_cursor.setPosition(block.position())
+                                    edit_cursor.setBlockFormat(fmt)
+                                    if self._pagination_debug_verbose and len(changed_samples) < 8:
+                                        changed_samples.append(
+                                            f"push block#{block_num} margin={orig_margin:.1f}->{target_margin:.1f}"
+                                        )
+
+                            # Remove pagination from blocks that no longer need it
+                            for block_num in blocks_to_remove:
+                                block = doc.findBlockByNumber(block_num)
+                                if block.isValid():
+                                    fmt = block.blockFormat()
+                                    orig_margin_prop = fmt.property(PAGINATION_ORIG_PROP)
+                                    restore_margin = 0.0
+                                    if orig_margin_prop is not None:
+                                        try:
+                                            restore_margin = float(orig_margin_prop)
+                                        except Exception:
+                                            restore_margin = 0.0
                                     fmt.setTopMargin(restore_margin)
                                     fmt.clearProperty(PAGINATION_PROP)
                                     fmt.clearProperty(PAGINATION_ORIG_PROP)
-                                edit_cursor.setPosition(block.position())
-                                edit_cursor.setBlockFormat(fmt)
-                                changed = True
-                        
-                        block = block.next()
+                                    edit_cursor.setPosition(block.position())
+                                    edit_cursor.setBlockFormat(fmt)
+                                    if self._pagination_debug_verbose and len(changed_samples) < 8:
+                                        changed_samples.append(
+                                            f"reset block#{block_num} margin->{restore_margin:.1f}"
+                                        )
+                        finally:
+                            edit_cursor.endEditBlock()
                 finally:
-                    edit_cursor.endEditBlock()
+                    doc.blockSignals(signals_prev)
+                    self.blockSignals(editor_signals_prev)
+                    self.setUpdatesEnabled(updates_prev)
             finally:
                 # Restore undo/redo state
                 doc.setUndoRedoEnabled(undo_enabled)
+                # Record doc revision to detect future changes
+                self._pagination_last_write_revision = doc.revision()
+                self._last_seen_revision = self._pagination_last_write_revision
                 if changed:
+                    self._pagination_idle_runs = 0
+                else:
+                    self._pagination_idle_runs += 1
+                if changed:
+                    # Not stable - we made changes
+                    self._pagination_stable = False
                     # Advance sovereign generation counter
                     self._pagination_generation += 1
+                    if self._pagination_converge_passes < self._pagination_converge_max:
+                        self._pagination_converge_passes += 1
+                        needs_converge = True
+                    else:
+                        self._pagination_converge_passes = 0
                     # Restore scroll using anchor (semantic) or fallback to raw position
-                    if scrollbar is not None:
+                    if scrollbar is not None and not self._pagination_converge_pending:
                         restored = False
                         if getattr(self, "scroll_anchor_enabled", True) and anchor_pos is not None:
-                            new_scroll = self._calculate_anchor_scroll_by_pos(anchor_pos, anchor_offset)
+                            if anchor_is_cursor:
+                                new_scroll = self._calculate_anchor_scroll_by_cursor_pos(anchor_pos, anchor_offset)
+                            else:
+                                new_scroll = self._calculate_anchor_scroll_by_pos(anchor_pos, anchor_offset)
                             if new_scroll is not None:
                                 # Clamp to current scrollbar range (min and max may shift after reflow)
                                 clamped = max(scrollbar.minimum(), min(new_scroll, scrollbar.maximum()))
@@ -701,12 +1572,57 @@ class SafeTextEdit(QTextEdit):
                             # Fallback also clamped for safety
                             clamped = max(scrollbar.minimum(), min(saved_scroll, scrollbar.maximum()))
                             scrollbar.setValue(clamped)
-                
+
+                else:
+                    # Pagination is stable - no changes needed
+                    self._pagination_stable = True
+                    self._pagination_converge_passes = 0
+
                 # Always update seen generation (whether changed or not, to avoid re-running)
                 self._last_paginated_generation = self._pagination_generation
+                self._pagination_converge_pending = False
+                if self._pagination_debug:
+                    scroll_end = scrollbar.value() if scrollbar is not None else None
+                    scroll_delta = None
+                    if scroll_end is not None and saved_scroll is not None:
+                        scroll_delta = scroll_end - saved_scroll
+                    self._log_pagination(
+                        "run-end",
+                        changed=changed,
+                        pushes=push_count,
+                        baseline_resets=baseline_resets,
+                        manual_breaks=manual_breaks,
+                        manual_forced=manual_forced,
+                        invisible_blocks=invisible_blocks,
+                        oversize_blocks=oversize_blocks,
+                        total_blocks=total_blocks,
+                        scroll_end=scroll_end,
+                        scroll_delta=scroll_delta,
+                        converge_scheduled=needs_converge,
+                        converge_passes=self._pagination_converge_passes,
+                    )
+                    if self._pagination_debug_verbose and changed_samples:
+                        self._log_pagination("run-samples", samples=" | ".join(changed_samples))
                 
         finally:
             self._is_paginating = False
+            if needs_converge:
+                self._schedule_pagination(converge=True, reason="converge")
+
+    def _page_origin_offset(self) -> float:
+        """
+        Return the vertical offset from document origin to page content origin.
+
+        This accounts for QTextDocument margins and the root frame's top margin,
+        keeping pagination math aligned with the visible content area.
+        """
+        doc = self.document()
+        if doc is None:
+            return 0.0
+        doc_margin = float(doc.documentMargin()) if hasattr(doc, "documentMargin") else 0.0
+        frame = doc.rootFrame()
+        frame_margin = float(frame.frameFormat().topMargin()) if frame is not None else 0.0
+        return doc_margin + frame_margin
     
     @property
     def page_height(self) -> int:
@@ -746,6 +1662,50 @@ class SafeTextEdit(QTextEdit):
         viewport = self.viewport()
         if viewport:
             viewport.update()
+
+    def keyPressEvent(self, e) -> None:  # type: ignore[override]
+        is_return = e.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter)
+        prev_cursor_pos = None
+        prev_block_pos = None
+        prev_paginated = False
+        if is_return:
+            cursor = self.textCursor()
+            prev_cursor_pos = int(cursor.position())
+            prev_block = cursor.block()
+            if prev_block.isValid():
+                prev_block_pos = int(prev_block.position())
+                prev_paginated = bool(prev_block.blockFormat().property(PAGINATION_PROP))
+
+        super().keyPressEvent(e)
+
+        if not (is_return and prev_paginated and self.pagination_enabled):
+            return
+        if prev_cursor_pos is None or prev_block_pos is None:
+            return
+        if prev_cursor_pos == prev_block_pos:
+            return
+
+        cur_block = self.textCursor().block()
+        if not cur_block.isValid():
+            return
+        fmt = cur_block.blockFormat()
+        if not bool(fmt.property(PAGINATION_PROP)):
+            return
+        orig_margin_prop = fmt.property(PAGINATION_ORIG_PROP)
+        restore_margin = 0.0
+        if orig_margin_prop is not None:
+            try:
+                restore_margin = float(orig_margin_prop)
+            except Exception:
+                restore_margin = 0.0
+        if abs(fmt.topMargin() - restore_margin) < 0.5:
+            return
+
+        fmt.setTopMargin(restore_margin)
+        fmt.clearProperty(PAGINATION_PROP)
+        fmt.clearProperty(PAGINATION_ORIG_PROP)
+        cursor = self.textCursor()
+        cursor.setBlockFormat(fmt)
     
     # -------------------------------------------------------------------------
     # ENGINE 5: PAGE BREAK RENDERING (Visual Guides)
@@ -759,7 +1719,7 @@ class SafeTextEdit(QTextEdit):
         """Paint the text, then overlay visible page break lines and gap fills."""
         super().paintEvent(e)
 
-        if not self._show_page_breaks:
+        if not (self._show_page_breaks or self._show_page_outline or self._show_margin_guides):
             return
 
         from PyQt6.QtGui import QPainter, QPen, QBrush
@@ -779,52 +1739,102 @@ class SafeTextEdit(QTextEdit):
 
         painter = QPainter(viewport)
 
-        # Define gap fill color (subtle semi-transparent shade)
-        gap_fill_color = QColor("#e2e8f0")  # Soft slate-200
-        gap_fill_color.setAlpha(80)  # Semi-transparent
-        gap_brush = QBrush(gap_fill_color)
+        gap_brush = None
+        if self._show_gap_fill:
+            gap_fill_color = QColor("#e2e8f0")  # Soft slate-200
+            gap_fill_color.setAlpha(80)  # Semi-transparent
+            gap_brush = QBrush(gap_fill_color)
 
-        # Dashed line pen for break markers
-        pen = QPen(QColor("#94a3b8"))
-        pen.setStyle(Qt.PenStyle.DashLine)
-        pen.setWidth(1)
+        break_pen = None
+        if self._show_page_breaks:
+            break_pen = QPen(QColor("#94a3b8"))
+            break_pen.setStyle(Qt.PenStyle.DashLine)
+            break_pen.setWidth(1)
+
+        outline_pen = None
+        if self._show_page_outline:
+            outline_pen = QPen(QColor("#cbd5e1"))
+            outline_pen.setWidth(1)
+
+        margin_pen = None
+        if self._show_margin_guides:
+            margin_pen = QPen(QColor("#cbd5e1"))
+            margin_pen.setStyle(Qt.PenStyle.DashLine)
+            margin_pen.setWidth(1)
 
         scroll_y = scrollbar.value()
+        h_scroll = self.horizontalScrollBar().value() if self.horizontalScrollBar() else 0
         viewport_height = viewport.height()
+        viewport_width = viewport.width()
 
+        dpi_x, dpi_y = self._resolve_screen_dpi()
+        self._page_settings.set_screen_dpi(dpi_x, dpi_y)
         page_height = self.page_height
-        cycle = page_height + self._page_gap
+        page_width = self._page_settings.page_width_pixels
+        origin_offset = self._page_origin_offset()
+        top_in, right_in, bottom_in, left_in = self._page_settings.margins_inches
+        top_px = int(top_in * self._page_settings.screen_dpi_y)
+        bottom_px = int(bottom_in * self._page_settings.screen_dpi_y)
+        left_px = int(left_in * self._page_settings.screen_dpi_x)
+        right_px = int(right_in * self._page_settings.screen_dpi_x)
+        page_height_total = page_height + top_px + bottom_px
+        cycle = page_height_total + self._page_gap
         if cycle <= 0:
             painter.end()
             return
 
-        doc_height = doc.size().height()
+        page_top_base = origin_offset - top_px
+        doc_margin = float(doc.documentMargin()) if hasattr(doc, "documentMargin") else 0.0
+        page_left = doc_margin
+        page_left_view = page_left - h_scroll
+        doc_height = doc.size().height() - page_top_base
 
         # Draw only visible page breaks (small padded window)
         pad = 20
-        first_page = max(0, int((scroll_y - pad) / cycle))
-        last_page = int((scroll_y + viewport_height + pad) / cycle) + 2
-        max_page = int(doc_height / cycle) + 2
+        first_page = max(0, int((scroll_y - page_top_base - pad) / cycle))
+        last_page = int((scroll_y - page_top_base + viewport_height + pad) / cycle) + 2
+        max_page = int(max(0.0, doc_height) / cycle) + 2
         last_page = min(last_page, max_page)
 
         for page in range(first_page, last_page):
+            page_top = page_top_base + page * cycle
+            page_top_view = page_top - scroll_y
+
+            if outline_pen is not None:
+                page_rect = QRectF(page_left_view, page_top_view, page_width, page_height_total)
+                painter.setPen(outline_pen)
+                painter.drawRect(page_rect)
+
+            if margin_pen is not None:
+                left_x = page_left_view + left_px
+                right_x = page_left_view + page_width - right_px
+                top_y = page_top_view + top_px
+                bottom_y = page_top_view + page_height_total - bottom_px
+                painter.setPen(margin_pen)
+                painter.drawLine(int(left_x), int(top_y), int(right_x), int(top_y))
+                painter.drawLine(int(left_x), int(bottom_y), int(right_x), int(bottom_y))
+                painter.drawLine(int(left_x), int(top_y), int(left_x), int(bottom_y))
+                painter.drawLine(int(right_x), int(top_y), int(right_x), int(bottom_y))
+
             if page <= 0:
                 continue
 
             # Gap region: from break_y to break_y + _page_gap
-            break_y = page * cycle - self._page_gap
+            break_y = page_top_base + page * cycle - self._page_gap
             gap_start_viewport = break_y - scroll_y
             gap_end_viewport = gap_start_viewport + self._page_gap
 
             # Fill the gap region with subtle background
             if gap_end_viewport > -10 and gap_start_viewport < viewport_height + 10:
-                gap_rect = QRectF(0, gap_start_viewport, viewport.width(), self._page_gap)
-                painter.fillRect(gap_rect, gap_brush)
-                
-                # Draw dashed line at the top of the gap (page break marker)
-                painter.setPen(pen)
-                painter.drawLine(10, int(gap_start_viewport), viewport.width() - 10, int(gap_start_viewport))
-                painter.drawText(15, int(gap_start_viewport) - 5, f"─ Page {page + 1} ─")
+                if gap_brush is not None:
+                    gap_rect = QRectF(0, gap_start_viewport, viewport_width, self._page_gap)
+                    painter.fillRect(gap_rect, gap_brush)
+
+                if break_pen is not None:
+                    # Draw dashed line at the top of the gap (page break marker)
+                    painter.setPen(break_pen)
+                    painter.drawLine(10, int(gap_start_viewport), viewport_width - 10, int(gap_start_viewport))
+                    painter.drawText(15, int(gap_start_viewport) - 5, f"─ Page {page + 1} ─")
 
         painter.end()
     
@@ -921,7 +1931,24 @@ class SafeTextEdit(QTextEdit):
                 # Use external resource provider if available
                 # This decouples the editor from the document manager pillar
                 if hasattr(self, 'resource_provider') and self.resource_provider:
+                    if getattr(self, "_mutation_debug", False):
+                        doc = self.document()
+                        logger.debug(
+                            "mutation: resource_provider start | id=%s, revision=%s",
+                            image_id,
+                            doc.revision() if doc is not None else "None",
+                        )
                     result = self.resource_provider(image_id)
+                    if getattr(self, "_mutation_debug", False):
+                        doc = self.document()
+                        size = len(result[0]) if result else None
+                        logger.debug(
+                            "mutation: resource_provider end | id=%s, found=%s, bytes=%s, revision=%s",
+                            image_id,
+                            bool(result),
+                            size,
+                            doc.revision() if doc is not None else "None",
+                        )
                     if result:
                         data, mime_type = result
                         if len(data) > 25 * 1024 * 1024:
@@ -952,97 +1979,101 @@ class SafeTextEdit(QTextEdit):
     # survives save/load cycles without embedding in HTML.
     # -------------------------------------------------------------------------
     
+    def _collect_generated_assets(self, html: str) -> list[_GeneratedAssetTask]:
+        parser = _GeneratedImageParser()
+        parser.feed(html)
+        tasks: list[_GeneratedAssetTask] = []
+        for image in parser.images:
+            src = image.get("src", "")
+            alt_text = image.get("alt", "")
+            if src.startswith("docimg://math/") and alt_text.startswith("LATEX:"):
+                code = html_module.unescape(alt_text[len("LATEX:"):])
+                if code.strip():
+                    tasks.append(_GeneratedAssetTask("latex", src, code))
+            elif src.startswith("docimg://mermaid/") and alt_text.startswith("MERMAID:"):
+                code = html_module.unescape(alt_text[len("MERMAID:"):])
+                if code.strip():
+                    tasks.append(_GeneratedAssetTask("mermaid", src, code))
+        return tasks
+
+    def _schedule_asset_restoration(self) -> None:
+        if not self._asset_restore_queue:
+            return
+        if not self._asset_restore_timer.isActive():
+            self._asset_restore_timer.start(0)
+
+    def _process_asset_restore_queue(self) -> None:
+        if self._asset_restore_queue_generation != self._asset_restore_generation:
+            return
+        if not self._asset_restore_queue:
+            return
+        batch = self._asset_restore_queue[:self._asset_restore_batch_size]
+        del self._asset_restore_queue[:self._asset_restore_batch_size]
+        if getattr(self, "_mutation_debug", False):
+            doc = self.document()
+            logger.debug(
+                "mutation: asset-restore batch | count=%s, revision=%s",
+                len(batch),
+                doc.revision() if doc is not None else "None",
+            )
+        for task in batch:
+            self._render_generated_asset(task)
+        if batch:
+            self.document().markContentsDirty(0, self.document().characterCount())
+            self.viewport().update()
+        if self._asset_restore_queue:
+            self._asset_restore_timer.start(0)
+
+    def _render_generated_asset(self, task: _GeneratedAssetTask) -> None:
+        if getattr(self, "_mutation_debug", False):
+            doc = self.document()
+            logger.debug(
+                "mutation: render-generated start | kind=%s, url=%s, revision=%s",
+                task.kind,
+                task.url,
+                doc.revision() if doc is not None else "None",
+            )
+        renderer = self.latex_renderer if task.kind == "latex" else self.mermaid_renderer
+        if renderer is None:
+            logger.debug("Generated asset renderer missing for %s", task.kind)
+            return
+        try:
+            image = renderer(task.code)
+        except Exception:
+            logger.debug("Failed to render %s asset", task.kind, exc_info=True)
+            return
+        if not image:
+            logger.debug("Renderer returned no image for %s asset", task.kind)
+            return
+        self.document().addResource(
+            QTextDocument.ResourceType.ImageResource,
+            QUrl(task.url),
+            image,
+        )
+        if getattr(self, "_mutation_debug", False):
+            doc = self.document()
+            logger.debug(
+                "mutation: render-generated end | kind=%s, url=%s, revision=%s",
+                task.kind,
+                task.url,
+                doc.revision() if doc is not None else "None",
+            )
+
     def setHtml(self, html: str) -> None:  # type: ignore[override]
         """
-        Override setHtml to pre-render math and mermaid images from alt text.
+        Override setHtml to restore math and mermaid images from alt text.
 
-        When loading HTML that contains docimg://math/ or docimg://mermaid/ images,
-        we extract the LaTeX/Mermaid source code from the alt attribute and re-render
-        the images, adding them back to the document's resource cache.
+        We parse docimg://math/ and docimg://mermaid/ images, queue their sources,
+        and re-render them in small batches to avoid blocking the UI thread.
         """
-        import re
-
-        print("\n=== setHtml: Scanning for math/mermaid images ===")
-
-        # First, scan HTML for math/mermaid images and extract their source
-        # Pattern: <img ...> with attributes in any order
-        img_pattern = re.compile(r'<img\s+([^>]+)>', re.IGNORECASE)
-
-        for match in img_pattern.finditer(html):
-            img_attrs = match.group(1)
-
-            # Extract src and alt from attributes (order-independent)
-            src_match = re.search(r'src="(docimg://(?:math|mermaid)/[^"]+)"', img_attrs, re.IGNORECASE)
-            alt_match = re.search(r'alt="([^"]*)"', img_attrs, re.IGNORECASE)
-
-            if not src_match:
-                continue
-
-            img_url = src_match.group(1)
-            alt_text = alt_match.group(1) if alt_match else ""
-
-            print(f"\nFound image: {img_url}")
-            print(f"Alt text: {alt_text[:100] if alt_text else 'None'}...")
-
-            if alt_text:
-                # Re-render based on type
-                if "math" in img_url and alt_text.startswith("LATEX:"):
-                    code = alt_text[6:]  # Remove "LATEX:" prefix
-                    # Unescape HTML entities
-                    code = html_module.unescape(code)
-                    print(f"Re-rendering LaTeX: {code[:100]}...")
-
-                    # Use injected renderer callback (provided by parent, e.g., Document Manager)
-                    if self.latex_renderer:
-                        try:
-                            image = self.latex_renderer(code)
-                            if image:
-                                print(f"  LaTeX image size: {image.width()}x{image.height()}")
-                                # Add to document resources BEFORE setHtml
-                                self.document().addResource(
-                                    QTextDocument.ResourceType.ImageResource,
-                                    QUrl(img_url),
-                                    image
-                                )
-                                print(f"✓ LaTeX image cached: {img_url}")
-                            else:
-                                print(f"✗ LaTeX render returned None")
-                        except Exception as e:
-                            print(f"✗ Failed to render LaTeX: {e}")
-                            import traceback
-                            traceback.print_exc()
-                    else:
-                        print(f"⚠ LaTeX renderer not injected (feature not loaded)")
-
-                elif "mermaid" in img_url and alt_text.startswith("MERMAID:"):
-                    code = alt_text[8:]  # Remove "MERMAID:" prefix
-                    code = html_module.unescape(code)
-                    print(f"Re-rendering Mermaid: {code[:100]}...")
-
-                    # Use injected renderer callback (provided by parent, e.g., Document Manager)
-                    if self.mermaid_renderer:
-                        try:
-                            image = self.mermaid_renderer(code)
-                            if image:
-                                print(f"  Mermaid image size: {image.width()}x{image.height()}")
-                                # Add to document resources BEFORE setHtml
-                                self.document().addResource(
-                                    QTextDocument.ResourceType.ImageResource,
-                                    QUrl(img_url),
-                                    image
-                                )
-                                print(f"✓ Mermaid image cached: {img_url}")
-                            else:
-                                print(f"✗ Mermaid render returned None")
-                        except Exception as e:
-                            print(f"✗ Failed to render Mermaid: {e}")
-                            import traceback
-                            traceback.print_exc()
-                    else:
-                        print(f"⚠ Mermaid renderer not injected (feature not loaded)")
-
-        # Now load the HTML with images pre-cached
+        tasks = self._collect_generated_assets(html)
+        self._asset_restore_generation += 1
+        self._asset_restore_queue_generation = self._asset_restore_generation
+        self._asset_restore_queue = tasks
+        if tasks:
+            logger.debug("setHtml: queued %s generated assets", len(tasks))
         super().setHtml(html)
+        self._schedule_asset_restoration()
 
     # -------------------------------------------------------------------------
     # ENGINE 3: PASTE GUARD (Mars Seal Defensive Pattern)
@@ -1223,6 +2254,7 @@ class RichTextEditor(QWidget):
         self.image_insert_feature = None
         self.image_edit_feature = None
         self.image_gateway = None
+        self._assets_restored = False
         
         # Styles Definition
         self.styles = {
@@ -2725,6 +3757,27 @@ class RichTextEditor(QWidget):
         cursor.insertText(char)
         self.editor.setFocus()
 
+    def _apply_page_setup_to_editor(
+        self,
+        page_size: QPageSize,
+        orientation: QPageLayout.Orientation,
+        margins: QMarginsF,
+    ) -> None:
+        size_mm = page_size.size(QPageSize.Unit.Millimeter)
+        width_mm = float(size_mm.width())
+        height_mm = float(size_mm.height())
+        if orientation == QPageLayout.Orientation.Landscape:
+            width_mm, height_mm = height_mm, width_mm
+        page_width_in = width_mm / 25.4
+        page_height_in = height_mm / 25.4
+        margins_in = (
+            float(margins.top()) / 25.4,
+            float(margins.right()) / 25.4,
+            float(margins.bottom()) / 25.4,
+            float(margins.left()) / 25.4,
+        )
+        self.editor.apply_layout(page_width_in, page_height_in, margins_in)
+
     def _show_page_setup(self) -> None:
         """Show page setup dialog."""
         dialog = PageSetupDialog(self)
@@ -2733,7 +3786,16 @@ class RichTextEditor(QWidget):
             self._page_size = dialog.get_page_size()
             self._page_orientation = dialog.get_orientation()
             self._page_margins = dialog.get_margins()
-            QMessageBox.information(self, "Page Setup", "Page settings saved for printing/export.")
+            self._apply_page_setup_to_editor(
+                self._page_size,
+                self._page_orientation,
+                self._page_margins,
+            )
+            QMessageBox.information(
+                self,
+                "Page Setup",
+                "Page settings applied to the editor and saved for printing/export.",
+            )
 
     def _export_pdf(self) -> None:
         """Export document to PDF."""
@@ -2956,6 +4018,32 @@ class RichTextEditor(QWidget):
             opts: Optional PageModeOptions for overrides
         """
         self.editor.set_page_mode(mode, opts)
+
+    def set_pagination_debug(self, enabled: bool, verbose: bool = False) -> None:
+        """Toggle pagination debug logging."""
+        self.editor.set_pagination_debug(enabled, verbose)
+
+    def apply_layout(self, layout: dict) -> None:
+        """
+        Apply layout metadata captured during import (page size + margins).
+
+        Args:
+            layout: Dict with page_width_in, page_height_in, margins_in.
+        """
+        if not layout:
+            self.editor.reset_layout()
+            return
+        page_width_in = layout.get("page_width_in")
+        page_height_in = layout.get("page_height_in")
+        margins_in = layout.get("margins_in")
+        if not isinstance(page_width_in, (int, float)) or not isinstance(page_height_in, (int, float)):
+            self.editor.reset_layout()
+            return
+        self.editor.apply_layout(float(page_width_in), float(page_height_in), margins_in)
+
+    def reset_layout(self) -> None:
+        """Return the editor to its default layout behavior."""
+        self.editor.reset_layout()
     
     def get_html(self) -> str:
         """
@@ -2976,9 +4064,18 @@ class RichTextEditor(QWidget):
         Args:
             html: HTML string to load (can include images, tables, formatting).
         """
-        self.editor.setHtml(html)
-        # Ensure LTR is maintained after setting content
-        self.editor.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
+        doc = self.editor.document()
+        doc_signals_prev = doc.blockSignals(True) if doc is not None else None
+        editor_signals_prev = self.editor.blockSignals(True)
+        try:
+            self._assets_restored = False
+            self.editor.setHtml(html)
+            # Ensure LTR is maintained after setting content
+            self.editor.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
+        finally:
+            if doc is not None:
+                doc.blockSignals(doc_signals_prev)
+            self.editor.blockSignals(editor_signals_prev)
         # Re-render generated assets (Mermaid/LaTeX) that rely on in-memory resources
         self._restore_generated_objects()
         
@@ -3007,9 +4104,18 @@ class RichTextEditor(QWidget):
 
     def set_markdown(self, markdown: str):
         """Set the editor content from Markdown."""
-        self.editor.setMarkdown(markdown)
-        # Ensure LTR is maintained
-        self.editor.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
+        doc = self.editor.document()
+        doc_signals_prev = doc.blockSignals(True) if doc is not None else None
+        editor_signals_prev = self.editor.blockSignals(True)
+        try:
+            self._assets_restored = False
+            self.editor.setMarkdown(markdown)
+            # Ensure LTR is maintained
+            self.editor.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
+        finally:
+            if doc is not None:
+                doc.blockSignals(doc_signals_prev)
+            self.editor.blockSignals(editor_signals_prev)
         self._restore_generated_objects()
 
     def get_markdown(self) -> str:
@@ -3162,6 +4268,21 @@ class RichTextEditor(QWidget):
         doc = self.editor.document()
         if doc is None:
             return
+        debug = getattr(self.editor, "_mutation_debug", False)
+        verbose = getattr(self.editor, "_mutation_debug_verbose", False)
+        if self._assets_restored:
+            if debug:
+                logger.debug(
+                    "mutation: restore-generated skip | revision=%s",
+                    doc.revision(),
+                )
+            return
+        if debug:
+            logger.debug(
+                "mutation: restore-generated start | revision=%s, blocks=%s",
+                doc.revision(),
+                doc.blockCount(),
+            )
 
         mer = getattr(self, 'mermaid_feature', None)
         mth = getattr(self, 'math_feature', None)
@@ -3189,19 +4310,46 @@ class RichTextEditor(QWidget):
                 frag_iter += 1
             block = block.next()
 
+        if debug:
+            logger.debug(
+                "mutation: restore-generated tasks | count=%s, revision=%s",
+                len(tasks),
+                doc.revision(),
+            )
+
         for pos, kind, code in tasks:
             cursor = QTextCursor(doc)
             cursor.setPosition(pos)
             cursor.setPosition(pos + 1, QTextCursor.MoveMode.KeepAnchor)
             try:
+                if verbose:
+                    logger.debug(
+                        "mutation: restore-generated apply | kind=%s, pos=%s, revision=%s",
+                        kind,
+                        pos,
+                        doc.revision(),
+                    )
                 if kind == 'mermaid' and mer:
                     self.editor.setTextCursor(cursor)
                     mer.insert_mermaid(code)
                 elif kind == 'latex' and mth:
                     self.editor.setTextCursor(cursor)
                     mth.insert_math(code)
+                if verbose:
+                    logger.debug(
+                        "mutation: restore-generated applied | kind=%s, pos=%s, revision=%s",
+                        kind,
+                        pos,
+                        doc.revision(),
+                    )
             except Exception as exc:
                 logger.warning("Failed to restore %s block: %s", kind, exc)
+        self._assets_restored = True
+        if debug:
+            logger.debug(
+                "mutation: restore-generated end | revision=%s",
+                doc.revision(),
+            )
 
     def _document_with_embedded_images(self, source: QTextDocument) -> QTextDocument:
         """Clone document and embed images as data URIs so saves round-trip.

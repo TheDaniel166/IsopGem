@@ -23,7 +23,7 @@ from typing import List, Tuple, Callable
 logger = logging.getLogger(__name__)
 
 MAX_IMG_SIZE = 20 * 1024 * 1024  # 20MB limit for base64 data
-ALLOWED_MIME_SUBTYPES = {"png", "jpg", "jpeg", "gif", "webp", "bmp"}
+ALLOWED_MIME_SUBTYPES = {"png", "jpg", "jpeg", "gif", "webp", "bmp", "tif", "tiff"}
 
 
 # Pattern to match base64 image data in src attributes while preserving other attributes

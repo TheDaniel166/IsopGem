@@ -198,6 +198,23 @@ WINDOW_REGISTRY: Dict[str, Dict[str, Any]] = {
         "class": "PolygonalNumberWindow",
         "allow_multiple": True,
     },
+
+    # Cymatics Pillar
+    "cymatics_hub": {
+        "module": "pillars.cymatics.ui.cymatics_hub",
+        "class": "CymaticsHub",
+        "allow_multiple": False,
+    },
+    "cymatics_simulator": {
+        "module": "pillars.cymatics.ui.cymatics_simulator_window",
+        "class": "CymaticsSimulatorWindow",
+        "allow_multiple": True,
+    },
+    "cymatics_detector": {
+        "module": "pillars.cymatics.ui.cymatics_detector_window",
+        "class": "CymaticsDetectorWindow",
+        "allow_multiple": True,
+    },
     
     # Astrology Pillar
     "differential_natal": {

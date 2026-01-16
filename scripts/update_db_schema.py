@@ -1,7 +1,14 @@
-import sqlite3
 import os
+import sqlite3
+import sys
+from pathlib import Path
 
-DB_PATH = "src/data/isopgem.db"  # Correct path relative to project root
+REPO_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO_ROOT / "src"))
+
+from shared.config import get_config  # noqa: E402
+
+DB_PATH = str(get_config().paths.main_db)
 
 def add_column(cursor, table, column, type_def):
     try:
@@ -24,6 +31,9 @@ def update_schema():
     add_column(cursor, "documents", "tags", "TEXT")
     add_column(cursor, "documents", "author", "TEXT")
     add_column(cursor, "documents", "collection", "TEXT")
+    add_column(cursor, "documents", "section_id", "INTEGER")
+    add_column(cursor, "documents", "layout_json", "TEXT")
+    cursor.execute("CREATE INDEX IF NOT EXISTS ix_documents_section_id ON documents(section_id)")
 
     conn.commit()
     conn.close()

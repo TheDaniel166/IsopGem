@@ -40,28 +40,69 @@ class PageSettings:
     # Default margins in inches (top, right, bottom, left)
     DEFAULT_MARGINS = (1.0, 1.0, 1.0, 1.0)
     
-    def __init__(self, page_size: str = "letter", margins: tuple = None):
+    def __init__(
+        self,
+        page_size: str = "letter",
+        margins: tuple = None,
+        custom_dimensions: tuple = None,
+        screen_dpi: float | None = None,
+        screen_dpi_x: float | None = None,
+        screen_dpi_y: float | None = None,
+    ):
         """
         Initialize page settings.
         
         Args:
             page_size: One of 'letter', 'legal', 'a4', 'a3', 'a5', 'tabloid'
             margins: Tuple of (top, right, bottom, left) in inches
+            custom_dimensions: Optional (width_in, height_in) to override named sizes
         """
-        self._page_size = page_size.lower()
+        self._custom_dimensions = custom_dimensions
         self._margins = margins or self.DEFAULT_MARGINS
-        
-        if self._page_size not in self.PAGE_DIMENSIONS:
-            self._page_size = "letter"
+        if screen_dpi is not None:
+            self._screen_dpi_x = float(screen_dpi)
+            self._screen_dpi_y = float(screen_dpi)
+        else:
+            self._screen_dpi_x = float(screen_dpi_x) if screen_dpi_x else float(self.SCREEN_DPI)
+            self._screen_dpi_y = float(screen_dpi_y) if screen_dpi_y else float(self.SCREEN_DPI)
+        if self._custom_dimensions:
+            self._page_size = "custom"
+        else:
+            self._page_size = page_size.lower()
+            if self._page_size not in self.PAGE_DIMENSIONS:
+                self._page_size = "letter"
+
+    def set_screen_dpi(self, dpi_x: float, dpi_y: float | None = None) -> None:
+        """Update the screen DPI used for pixel conversions."""
+        if dpi_y is None:
+            dpi_y = dpi_x
+        if dpi_x and dpi_x > 0:
+            self._screen_dpi_x = float(dpi_x)
+        if dpi_y and dpi_y > 0:
+            self._screen_dpi_y = float(dpi_y)
+
+    @property
+    def screen_dpi_x(self) -> float:
+        """Screen DPI used for width calculations."""
+        return self._screen_dpi_x
+
+    @property
+    def screen_dpi_y(self) -> float:
+        """Screen DPI used for height calculations."""
+        return self._screen_dpi_y
     
     @property
     def page_width_inches(self) -> float:
         """Page width in inches."""
+        if self._custom_dimensions:
+            return self._custom_dimensions[0]
         return self.PAGE_DIMENSIONS[self._page_size][0]
     
     @property
     def page_height_inches(self) -> float:
         """Page height in inches."""
+        if self._custom_dimensions:
+            return self._custom_dimensions[1]
         return self.PAGE_DIMENSIONS[self._page_size][1]
     
     @property
@@ -77,17 +118,27 @@ class PageSettings:
     @property
     def page_height_pixels(self) -> int:
         """Page height in pixels at screen DPI."""
-        return int(self.page_height_inches * self.SCREEN_DPI)
+        return int(self.page_height_inches * self._screen_dpi_y)
+
+    @property
+    def page_width_pixels(self) -> int:
+        """Page width in pixels at screen DPI."""
+        return int(self.page_width_inches * self._screen_dpi_x)
     
     @property
     def content_height_pixels(self) -> int:
         """Content area height in pixels (for page break calculations)."""
-        return int(self.content_height_inches * self.SCREEN_DPI)
+        return int(self.content_height_inches * self._screen_dpi_y)
     
     @property 
     def content_width_pixels(self) -> int:
         """Content area width in pixels."""
-        return int(self.content_width_inches * self.SCREEN_DPI)
+        return int(self.content_width_inches * self._screen_dpi_x)
+
+    @property
+    def margins_inches(self) -> tuple:
+        """Return margins in inches (top, right, bottom, left)."""
+        return self._margins
 
 
 # Default page settings instance (Letter size with 1" margins)

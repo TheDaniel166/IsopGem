@@ -250,8 +250,13 @@ class OpenAstroService:
 
     def _extract_planet_positions(self, chart: Any, planet_data: Dict[str, Dict[str, Any]]) -> List[PlanetPosition]:
         positions: List[PlanetPosition] = []
+
+        # Get retrograde list from chart (indexed by planet order)
+        retrograde_list = getattr(chart, "planets_retrograde", [])
+        speed_list = getattr(chart, "planet_lon_speed", [])
+
         if planet_data:
-            for fallback_name, payload in planet_data.items():
+            for idx, (fallback_name, payload) in enumerate(planet_data.items()):
                 try:
                     degree_val = float(payload.get("planets_degree_ut", 0.0)) % 360
                 except (TypeError, ValueError):
@@ -259,19 +264,37 @@ class OpenAstroService:
                 sign_idx = payload.get("planets_sign")
                 raw_name = payload.get("planets_name") or fallback_name
                 name = raw_name.title() if raw_name else "Unknown"
+
+                # Extract retrograde status
+                is_retro = None
+                if idx < len(retrograde_list):
+                    is_retro = bool(retrograde_list[idx])
+
+                # Extract speed
+                speed = None
+                if idx < len(speed_list):
+                    try:
+                        speed = float(speed_list[idx])
+                    except (TypeError, ValueError):
+                        pass
+
                 positions.append(
                     PlanetPosition(
                         name=name,
                         degree=degree_val,
                         sign_index=int(sign_idx) if isinstance(sign_idx, (int, float)) else None,
+                        speed=speed,
+                        _retrograde=is_retro,
                     )
                 )
         if positions:
             return positions
 
+        # Fallback: extract from chart attributes directly
         names = getattr(chart, "planets_name", [])
         degrees = getattr(chart, "planets_degree_ut", [])
         signs = getattr(chart, "planets_sign", [])
+
         for idx, degree in enumerate(degrees):
             name = names[idx] if idx < len(names) else f"Planet {idx}"
             sign_idx = signs[idx] if idx < len(signs) else None
@@ -279,11 +302,27 @@ class OpenAstroService:
                 degree_val = float(degree)
             except (TypeError, ValueError):
                 continue
+
+            # Extract retrograde status
+            is_retro = None
+            if idx < len(retrograde_list):
+                is_retro = bool(retrograde_list[idx])
+
+            # Extract speed
+            speed = None
+            if idx < len(speed_list):
+                try:
+                    speed = float(speed_list[idx])
+                except (TypeError, ValueError):
+                    pass
+
             positions.append(
                 PlanetPosition(
                     name=name,
                     degree=degree_val % 360,
                     sign_index=int(sign_idx) if sign_idx is not None else None,
+                    speed=speed,
+                    _retrograde=is_retro,
                 )
             )
         return positions

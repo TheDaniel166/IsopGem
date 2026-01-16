@@ -162,7 +162,17 @@ class InterpretationService:
                     content=content,
                     tags=["Transit", aspect.planet_a, aspect.planet_b]
                 )
-                
+
+        if not report.segments:
+            report.add_segment(
+                title="Interpretation Unavailable",
+                content=(
+                    "Transit interpretation data is not available yet. "
+                    "Add `src/pillars/astrology/data/interpretations/transits.json` to enable it."
+                ),
+                tags=["Notice", "MissingData", "Transits"],
+            )
+
         return report
 
     def interpret_synastry(self, chart_a: ChartResult, chart_b: ChartResult, aspects: List[CalculatedAspect]) -> InterpretationReport:
@@ -187,7 +197,17 @@ class InterpretationService:
                     content=content,
                     tags=["Synastry", p_a, p_b]
                 )
-                
+
+        if not report.segments:
+            report.add_segment(
+                title="Interpretation Unavailable",
+                content=(
+                    "Synastry interpretation data is not available yet. "
+                    "Add `src/pillars/astrology/data/interpretations/synastry.json` to enable it."
+                ),
+                tags=["Notice", "MissingData", "Synastry"],
+            )
+
         return report
 
     def _interpret_planets(self, planets: List[PlanetPosition], houses: List[HousePosition], report: InterpretationReport) -> None:
@@ -260,6 +280,18 @@ class InterpretationService:
                         )
                     else:
                         logger.warning(f"No House content for {planet_name} in House {house_num}")
+
+            # 4. Add Retrograde interpretation if applicable
+            if planet.is_retrograde:
+                retro_content = self.repository.get_retrograde_text(planet_name)
+                if retro_content:
+                    logger.debug(f"Found Retrograde content for {planet_name}")
+                    report.add_segment(
+                        title=f"{planet_name} Retrograde",
+                        content=retro_content,
+                        tags=[planet_name, "Retrograde"],
+                        weight=1.2  # Slightly elevated importance
+                    )
 
     def _resolve_house(self, planet_degree: float, houses: List[HousePosition]) -> int:
         """Determine which house a planet is in based on house cusps."""

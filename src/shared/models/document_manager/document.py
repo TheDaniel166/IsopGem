@@ -63,6 +63,7 @@ class Document(Base):
     file_type = Column(String)  # 'txt', 'html', 'pdf', 'docx', 'rtf'
     content = Column(Text)  # Extracted text content for search
     raw_content = Column(Text, nullable=True) # HTML/RTF raw content if needed
+    layout_json = Column(Text, nullable=True)
     
     # Metadata
     author = Column(String, nullable=True)

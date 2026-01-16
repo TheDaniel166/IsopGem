@@ -16,6 +16,7 @@ Handles LaTeX insertion, rendering, and management.
 """
 
 import qtawesome as qta
+import logging
 from PyQt6.QtCore import QUrl
 from PyQt6.QtGui import QAction, QTextImageFormat, QTextDocument, QTextCursor
 from PyQt6.QtWidgets import QMenu, QMessageBox, QDialog
@@ -27,6 +28,8 @@ from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from shared.ui.rich_text_editor.editor import RichTextEditor
+
+logger = logging.getLogger(__name__)
 
 class MathFeature(EditorFeature):
     """
@@ -70,11 +73,23 @@ class MathFeature(EditorFeature):
 
     def insert_math(self, latex: str):
         """Render and insert math image at cursor."""
+        if getattr(self.editor, "_mutation_debug", False):
+            doc = self.editor.document()
+            logger.debug(
+                "mutation: insert-math start | revision=%s",
+                doc.revision() if doc is not None else "None",
+            )
         image = MathRenderer.render_latex(latex, fontsize=14)
         if image:
             self._insert_rendered_image(image, latex)
         else:
             QMessageBox.warning(self.parent, "Rendering Error", "Could not render LaTeX. Please check syntax.")
+        if getattr(self.editor, "_mutation_debug", False):
+            doc = self.editor.document()
+            logger.debug(
+                "mutation: insert-math end | revision=%s",
+                doc.revision() if doc is not None else "None",
+            )
 
     def _insert_rendered_image(self, image, latex: str):
         """Insert the QImage into the document."""

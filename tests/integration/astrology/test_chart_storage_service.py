@@ -1,8 +1,12 @@
 """Tests for the astrology chart storage service."""
 from __future__ import annotations
 
+from pathlib import Path
+import sys
 from contextlib import contextmanager
 from datetime import datetime, timezone
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "src"))
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -10,6 +14,7 @@ from sqlalchemy.orm import sessionmaker
 from shared.database import Base
 
 from src.pillars.astrology.models import AstrologyEvent, ChartRequest, ChartResult, GeoLocation
+from src.pillars.astrology.repositories.chart_repository import ChartRepository
 from src.pillars.astrology.services.chart_storage_service import ChartStorageService
 
 
@@ -42,7 +47,7 @@ def _sample_request(name: str) -> ChartRequest:
 
 
 def _sample_result() -> ChartResult:
-    return ChartResult(chart_type="Radix")
+    return ChartResult(chart_type="Radix", julian_day=2451545.0)
 
 
 def test_save_and_load_chart_round_trip():
@@ -91,3 +96,30 @@ def test_search_filters_by_category():
     only_family = service.search(categories=["family"])
     assert len(only_family) == 1
     assert only_family[0].name == "Family"
+
+
+def test_export_import_preserves_julian_day():
+    service = _build_service()
+    request = _sample_request("Exported")
+    result = _sample_result()
+
+    chart_id = service.save_chart(
+        name="Exported",
+        request=request,
+        result=result,
+        categories=[],
+        tags=[],
+    )
+
+    exported = service.export_chart_to_json(chart_id)
+    assert exported is not None
+    assert '"julian_day"' in exported
+
+    imported_id = service.import_chart_from_json(exported)
+    assert imported_id is not None
+
+    with service._session_factory() as session:
+        repo = ChartRepository(session)
+        record = repo.get_chart(imported_id)
+        assert record is not None
+        assert record.result_payload["julian_day"] == 2451545.0

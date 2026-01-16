@@ -15,6 +15,8 @@ Refactoring plan: See wiki/04_prophecies/shared_folder_audit_2026-01-13.md
 import logging
 from typing import List, Tuple, Callable, Optional
 import os
+import shutil
+import subprocess
 from pathlib import Path
 import base64
 from html.parser import HTMLParser
@@ -65,6 +67,11 @@ try:
 except ImportError:
     bleach = None
 
+try:
+    from PIL import Image
+except ImportError:
+    Image = None
+
 
 # Guard rails for embedded images pulled from DOCX
 MAX_DOCX_IMG_SIZE = 20 * 1024 * 1024  # 20MB cap for base64 embeds
@@ -107,6 +114,39 @@ class HTMLTextExtractor(HTMLParser):
 
 class DocumentParser:
     """Parses various file formats to extract text and HTML."""
+
+    @staticmethod
+    def _resolve_magick_cmd() -> Optional[str]:
+        for cmd in ("magick", "convert"):
+            if shutil.which(cmd):
+                return cmd
+        return None
+
+    @staticmethod
+    def _convert_image_with_magick(image_data: bytes) -> Optional[bytes]:
+        cmd = DocumentParser._resolve_magick_cmd()
+        if not cmd:
+            return None
+        try:
+            proc = subprocess.run(
+                [cmd, "-", "-strip", "-alpha", "on", "png:-"],
+                input=image_data,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+                timeout=5,
+            )
+        except Exception:
+            return None
+        if proc.returncode != 0 or not proc.stdout:
+            return None
+        return proc.stdout
+
+    @staticmethod
+    def _note_warning(warnings: Optional[dict], key: str) -> None:
+        if warnings is None:
+            return
+        warnings[key] = warnings.get(key, 0) + 1
 
     @staticmethod
     def _sanitize_html(html: str) -> str:
@@ -274,7 +314,7 @@ class DocumentParser:
         parts_proxy,
         store_image_callback: Optional[Callable[[bytes, str], int]] = None,
         image_budget: Optional[dict] = None,
-        warnings: Optional[list] = None,
+        warnings: Optional[dict] = None,
     ) -> list[str]:
         """Extract images from a run element and return img tags.
 
@@ -292,47 +332,85 @@ class DocumentParser:
                         # Size policy: allow larger assets when streaming to store, cap base64 embeds
                         if store_image_callback:
                             if len(image_data) > MAX_DOCX_STORE_IMG_SIZE:
-                                logger.warning("Embedded DOCX image exceeds store cap; skipping image")
-                                if warnings is not None:
-                                    warnings.append("docx_image_store_cap_exceeded")
+                                DocumentParser._note_warning(warnings, "docx_image_store_cap_exceeded")
                                 continue
                         else:
                             if len(image_data) > MAX_DOCX_IMG_SIZE:
-                                logger.warning("Embedded DOCX image exceeds base64 cap; skipping embed")
                                 image_htmls.append("<span class='docimg-omitted' aria-label='image omitted: too large'></span>")
-                                if warnings is not None:
-                                    warnings.append("docx_image_embed_cap_exceeded")
+                                DocumentParser._note_warning(warnings, "docx_image_embed_cap_exceeded")
                                 continue
+                        content_type = getattr(image_part, "content_type", None)
+                        if content_type == "image/jpg":
+                            content_type = "image/jpeg"
+                        supported_mimes = {
+                            "image/jpeg",
+                            "image/png",
+                            "image/gif",
+                            "image/webp",
+                            "image/bmp",
+                        }
+                        mime = content_type if content_type in supported_mimes else None
+                        if not mime:
+                            header = image_data[:12]
+                            if header.startswith(b'\xff\xd8'):
+                                mime = 'image/jpeg'
+                            elif header.startswith(b'\x89PNG'):
+                                mime = 'image/png'
+                            elif header.startswith(b'GIF8'):
+                                mime = 'image/gif'
+                            elif header.startswith(b'RIFF') and header[8:12] == b'WEBP':
+                                mime = 'image/webp'
+                            elif header.startswith(b'BM'):
+                                mime = 'image/bmp'
+
+                        converted = False
+                        if not mime and Image is not None:
+                            try:
+                                with Image.open(io.BytesIO(image_data)) as img:
+                                    if img.mode not in ("RGB", "RGBA"):
+                                        img = img.convert("RGBA")
+                                    output = io.BytesIO()
+                                    img.save(output, format="PNG")
+                                    image_data = output.getvalue()
+                                    mime = "image/png"
+                                    converted = True
+                            except Exception:
+                                pass
+
+                        if not mime:
+                            converted_data = DocumentParser._convert_image_with_magick(image_data)
+                            if converted_data:
+                                image_data = converted_data
+                                mime = "image/png"
+                                converted = True
+                                DocumentParser._note_warning(warnings, "docx_image_magick_converted")
+
+                        if converted:
+                            DocumentParser._note_warning(warnings, "docx_image_converted")
+                            if store_image_callback:
+                                if len(image_data) > MAX_DOCX_STORE_IMG_SIZE:
+                                    DocumentParser._note_warning(warnings, "docx_image_store_cap_exceeded")
+                                    continue
+                            else:
+                                if len(image_data) > MAX_DOCX_IMG_SIZE:
+                                    image_htmls.append("<span class='docimg-omitted' aria-label='image omitted: too large'></span>")
+                                    DocumentParser._note_warning(warnings, "docx_image_embed_cap_exceeded")
+                                    continue
+
+                        if not mime:
+                            image_htmls.append("<span class='docimg-omitted' aria-label='image omitted: unsupported format'></span>")
+                            DocumentParser._note_warning(warnings, "docx_image_unsupported_format")
+                            continue
+
                         if image_budget is not None:
                             used = image_budget.get("used", 0)
                             limit = image_budget.get("limit", MAX_DOCX_TOTAL_IMG_BUDGET)
                             if used + len(image_data) > limit:
-                                logger.warning("Embedded DOCX images exceed aggregate budget; skipping image")
                                 image_htmls.append("<span class='docimg-omitted' aria-label='image omitted: budget exceeded'></span>")
-                                if warnings is not None:
-                                    warnings.append("docx_image_budget_exceeded")
+                                DocumentParser._note_warning(warnings, "docx_image_budget_exceeded")
                                 continue
-                        header = image_data[:12]
-                        mime = None
-                        if header.startswith(b'\xff\xd8'):
-                            mime = 'image/jpeg'
-                        elif header.startswith(b'\x89PNG'):
-                            mime = 'image/png'
-                        elif header.startswith(b'GIF8'):
-                            mime = 'image/gif'
-                        elif header.startswith(b'RIFF') and header[8:12] == b'WEBP':
-                            mime = 'image/webp'
-                        elif header.startswith(b'BM'):
-                            mime = 'image/bmp'
+                            image_budget["used"] = used + len(image_data)
 
-                        if not mime:
-                            logger.warning("Embedded DOCX image has unsupported/unknown format; skipping")
-                            image_htmls.append("<span class='docimg-omitted' aria-label='image omitted: unsupported format'></span>")
-                            if warnings is not None:
-                                warnings.append("docx_image_unsupported_format")
-                            continue
-                        if image_budget is not None:
-                            image_budget["used"] = image_budget.get("used", 0) + len(image_data)
                         if store_image_callback:
                             try:
                                 image_id = store_image_callback(image_data, mime)
@@ -353,7 +431,7 @@ class DocumentParser:
         return image_htmls
 
     @staticmethod
-    def _process_docx_paragraph(para, tag_override=None, store_image_callback: Optional[Callable[[bytes, str], int]] = None, image_budget: Optional[dict] = None, warnings: Optional[list] = None) -> tuple[str, bool]:
+    def _process_docx_paragraph(para, tag_override=None, store_image_callback: Optional[Callable[[bytes, str], int]] = None, image_budget: Optional[dict] = None, warnings: Optional[dict] = None) -> tuple[str, bool]:
         """
         Convert a docx Paragraph to HTML string.
         Returns: (html_string, is_empty_boolean)
@@ -480,7 +558,7 @@ class DocumentParser:
             return f"<{tag} dir='ltr' align='{align_attr}'{para_style_attr}><br/></{tag}>", True
 
     @staticmethod
-    def _process_docx_table(table, store_image_callback: Optional[Callable[[bytes, str], int]] = None, image_budget: Optional[dict] = None, warnings: Optional[list] = None) -> str:
+    def _process_docx_table(table, store_image_callback: Optional[Callable[[bytes, str], int]] = None, image_budget: Optional[dict] = None, warnings: Optional[dict] = None) -> str:
         """Convert a docx Table to HTML string with shading and font support."""
         rows_html = []
         for row in table.rows:
@@ -744,11 +822,27 @@ class DocumentParser:
             if core_props.title: metadata['title'] = core_props.title
             if core_props.author: metadata['author'] = core_props.author
             if core_props.created: metadata['created'] = core_props.created
+            try:
+                section = doc.sections[0]
+                metadata["layout"] = {
+                    "page_width_in": float(section.page_width.inches),
+                    "page_height_in": float(section.page_height.inches),
+                    "margins_in": [
+                        float(section.top_margin.inches),
+                        float(section.right_margin.inches),
+                        float(section.bottom_margin.inches),
+                        float(section.left_margin.inches),
+                    ],
+                    "units": "in",
+                    "source": "docx",
+                }
+            except Exception:
+                pass
             
             # --- Text Extraction ---
             text = DocumentParser._extract_full_text(doc)
 
-            warnings: list[str] = []
+            warnings: dict[str, int] = {}
             image_budget = {"used": 0, "limit": MAX_DOCX_TOTAL_IMG_BUDGET}
             
             # --- Custom HTML Generation (Preserving Fonts & Order) ---
@@ -835,7 +929,9 @@ class DocumentParser:
             metadata["pipeline"] = metadata.get("pipeline", "docx:python-docx")
             metadata["image_mode"] = "docimg" if store_image_callback else "base64"
             if warnings:
-                metadata["warnings"] = warnings
+                metadata["warnings"] = sorted(warnings.keys())
+                metadata["warning_counts"] = warnings
+                logger.warning("DOCX import warnings: %s", warnings)
             
         except Exception as e:
             logger.exception("Custom DOCX parsing failed; falling back")
@@ -904,6 +1000,9 @@ class DocumentParser:
                 
                 # Now extract real PDF metadata using pypdf or fitz
                 metadata = DocumentParser._extract_pdf_metadata(path)
+                layout = DocumentParser._extract_pdf_layout(path)
+                if layout:
+                    metadata["layout"] = layout
                 
                 metadata["pipeline"] = "pdf:pdf2docx+mammoth"
                 return text, html, 'pdf', metadata
@@ -923,6 +1022,18 @@ class DocumentParser:
                 if meta:
                     if meta.get('title'): metadata['title'] = meta['title']
                     if meta.get('author'): metadata['author'] = meta['author']
+                try:
+                    if doc.page_count > 0:
+                        rect = doc[0].rect
+                        metadata["layout"] = {
+                            "page_width_in": float(rect.width) / 72.0,
+                            "page_height_in": float(rect.height) / 72.0,
+                            "margins_in": [0.0, 0.0, 0.0, 0.0],
+                            "units": "in",
+                            "source": "pdf",
+                        }
+                except Exception:
+                    pass
                 
                 html_budget = 0
                 for page in doc:
@@ -978,6 +1089,20 @@ class DocumentParser:
                     if reader.metadata:
                         if reader.metadata.title: metadata['title'] = reader.metadata.title
                         if reader.metadata.author: metadata['author'] = reader.metadata.author
+                    try:
+                        if reader.pages:
+                            page = reader.pages[0]
+                            width = float(page.mediabox.width) / 72.0
+                            height = float(page.mediabox.height) / 72.0
+                            metadata["layout"] = {
+                                "page_width_in": width,
+                                "page_height_in": height,
+                                "margins_in": [0.0, 0.0, 0.0, 0.0],
+                                "units": "in",
+                                "source": "pdf",
+                            }
+                    except Exception:
+                        pass
 
                     for page in reader.pages:
                         text_parts.append(page.extract_text() or "")
@@ -1019,6 +1144,47 @@ class DocumentParser:
              except Exception:
                  pass
         return metadata
+
+    @staticmethod
+    def _extract_pdf_layout(path: Path) -> Optional[dict]:
+        if fitz:
+            doc = None
+            try:
+                doc = fitz.open(path)
+                if doc.page_count < 1:
+                    return None
+                rect = doc[0].rect
+                return {
+                    "page_width_in": float(rect.width) / 72.0,
+                    "page_height_in": float(rect.height) / 72.0,
+                    "margins_in": [0.0, 0.0, 0.0, 0.0],
+                    "units": "in",
+                    "source": "pdf",
+                }
+            except Exception:
+                return None
+            finally:
+                if doc:
+                    doc.close()
+        if pypdf:
+            try:
+                with open(path, 'rb') as f:
+                    reader = pypdf.PdfReader(f)
+                    if not reader.pages:
+                        return None
+                    page = reader.pages[0]
+                    width = float(page.mediabox.width) / 72.0
+                    height = float(page.mediabox.height) / 72.0
+                    return {
+                        "page_width_in": width,
+                        "page_height_in": height,
+                        "margins_in": [0.0, 0.0, 0.0, 0.0],
+                        "units": "in",
+                        "source": "pdf",
+                    }
+            except Exception:
+                return None
+        return None
 
     @staticmethod
     def _parse_rtf(path: Path) -> str:

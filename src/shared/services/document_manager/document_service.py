@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Optional, List, Tuple, Dict, Any, Generator
 from contextlib import contextmanager
 import time
+import json
 import logging
 import re
 from shared.database import get_db_session
@@ -116,6 +117,14 @@ class DocumentService:
         if not doc_title or not doc_title.strip():
             doc_title = path.stem
 
+        layout_json = None
+        layout = metadata.get("layout")
+        if layout:
+            try:
+                layout_json = json.dumps(layout)
+            except TypeError:
+                layout_json = None
+
         # Create document record first (without images extracted yet)
         doc = self.repo.create(
             title=doc_title,
@@ -124,7 +133,8 @@ class DocumentService:
             file_path=str(path),
             raw_content=raw_content,  # Will be updated after image extraction
             author=metadata.get('author') or "",
-            collection=collection or ""
+            collection=collection or "",
+            layout_json=layout_json,
         )
         
         # Extract and store images separately if raw_content has embedded images

@@ -1,8 +1,15 @@
 
-import sqlite3
 import os
+import sqlite3
+import sys
+from pathlib import Path
 
-DB_PATH = os.path.join("data", "isopgem.db")
+REPO_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO_ROOT / "src"))
+
+from shared.config import get_config  # noqa: E402
+
+DB_PATH = str(get_config().paths.main_db)
 
 def check_ghosts():
     if not os.path.exists(DB_PATH):

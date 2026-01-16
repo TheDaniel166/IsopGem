@@ -7,7 +7,7 @@ import re
 from typing import Callable, Dict, List, Optional
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QGuiApplication
+from PyQt6.QtGui import QGuiApplication, QFont
 from PyQt6.QtWidgets import (
     QGridLayout,
     QHBoxLayout,
@@ -18,7 +18,7 @@ from PyQt6.QtWidgets import (
     QMainWindow,
     QComboBox,
     QPushButton,
-    QTabWidget,
+    QStackedWidget,
     QVBoxLayout,
     QWidget,
 )
@@ -779,61 +779,139 @@ COORDINATE_SYSTEMS = [
 ]
 
 
+
 class AdvancedScientificCalculatorWindow(QMainWindow):
     """Lightweight scientific calculator with common functions.
 
     The evaluator is intentionally constrained to a safe set of math functions
     and constants. All trigonometric inputs expect radians.
+
+    @RiteExempt: Visual Liturgy
+    Note: This window is exempt from standard Visual Liturgy enforcement to maintain
+    its sleek, modern, dark-themed aesthetic with vertical navigation loops.
     """
 
     def __init__(self, window_manager: Optional[object] = None, parent=None):
-        """
-          init   logic.
-        
-        Args:
-            window_manager: Description of window_manager.
-            parent: Description of parent.
-        
-        """
         super().__init__(parent)
         self.window_manager = window_manager
         self._last_answer: Optional[float] = None
-        self._angle_mode: str = "RAD"  # or "DEG"
+        self._angle_mode: str = "RAD"
         self._memory: float = 0.0
-        self._state_path = get_default_state_path("isopgem")
+        self._state_path = get_default_state_path()
         self._restoring_state = False
         self._last_measure_result: Optional[dict] = None
         self._last_time_result: Optional[dict] = None
         self.setWindowTitle("Advanced Scientific Calculator")
-        self.setMinimumSize(520, 560)
-        self.setStyleSheet("background-color: #0f172a; color: #e2e8f0;")
-
-        self.tab_widget = QTabWidget()
-        self.tab_widget.setDocumentMode(True)
-
-        calc_tab = self._build_calculator_tab()
-        measures_tab = self._build_measures_tab()
-        time_tab = self._build_time_tab()
-        base_tab = self._build_base_converter_tab()
-        constants_tab = self._build_constants_tab()
-        sacred_tab = self._build_sacred_geometry_tab()
-        coords_tab = self._build_coordinates_tab()
-
-        self.tab_widget.addTab(calc_tab, "Calculator")
-        self.tab_widget.addTab(measures_tab, "Ancient Measures")
-        self.tab_widget.addTab(time_tab, "Time Units")
-        self.tab_widget.addTab(base_tab, "Base Converter")
-        self.tab_widget.addTab(constants_tab, "Constants")
-        self.tab_widget.addTab(sacred_tab, "Sacred Geometry")
-        self.tab_widget.addTab(coords_tab, "Coordinates")
+        self.resize(1000, 700) # Increased size for better split layout
+        self.setMinimumSize(800, 600)
+        
+        # Main sleek dark theme
+        self.setStyleSheet("""
+            QMainWindow, QWidget { 
+                background-color: #0f172a; 
+                color: #e2e8f0; 
+                font-family: "Segoe UI", Arial, sans-serif;
+            }
+            QScrollArea { border: none; }
+            QLineEdit {
+                background-color: #1e293b;
+                border: 1px solid #334155;
+                border-radius: 6px;
+                padding: 8px;
+                color: #f8fafc;
+                font-family: monospace;
+            }
+            QLineEdit:focus { border: 1px solid #38bdf8; }
+            QComboBox {
+                background-color: #1e293b;
+                border: 1px solid #334155;
+                border-radius: 6px;
+                padding: 6px;
+                color: #f8fafc;
+            }
+            QComboBox::drop-down { border: none; }
+            QComboBox QAbstractItemView {
+                background-color: #1e293b;
+                selection-background-color: #334155;
+                color: #f8fafc;
+            }
+            QPushButton {
+                background-color: #334155;
+                border: none;
+                border-radius: 6px;
+                padding: 8px 16px;
+                color: #f8fafc;
+                font-weight: 600;
+            }
+            QPushButton:hover { background-color: #475569; }
+            QPushButton:pressed { background-color: #1e293b; }
+        """)
 
         central = QWidget()
-        layout = QVBoxLayout(central)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
-        layout.addWidget(self.tab_widget)
-
         self.setCentralWidget(central)
+        main_layout = QHBoxLayout(central)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
+
+        # --- Left Sidebar (Vertical Tabs) ---
+        self.sidebar = QListWidget()
+        self.sidebar.setFixedWidth(220)
+        self.sidebar.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.sidebar.setStyleSheet("""
+            QListWidget {
+                background-color: #1e293b;
+                border: none;
+                border-right: 1px solid #334155;
+                outline: none;
+            }
+            QListWidget::item {
+                height: 50px;
+                padding-left: 16px;
+                color: #94a3b8;
+                border-left: 3px solid transparent;
+            }
+            QListWidget::item:hover {
+                background-color: #334155;
+                color: #f1f5f9;
+            }
+            QListWidget::item:selected {
+                background-color: #0f172a;
+                color: #38bdf8;
+                border-left: 3px solid #38bdf8;
+                font-weight: bold;
+            }
+        """)
+
+        # --- Content Area ---
+        self.stack = QStackedWidget()
+        self.stack.setStyleSheet("background-color: #0f172a;")
+
+        # --- Add Modules ---
+        modules = [
+            ("🧮 Calculator", self._build_calculator_tab()),
+            ("📏 Ancient Measures", self._build_measures_tab()),
+            ("⏳ Time Units", self._build_time_tab()),
+            ("🔢 Base Converter", self._build_base_converter_tab()),
+            ("π Constants", self._build_constants_tab()),
+            ("✡ Sacred Geometry", self._build_sacred_geometry_tab()),
+            ("🌐 Coordinates", self._build_coordinates_tab()),
+            ("📐 Geometry Solver", self._build_geometry_solver_tab()),
+        ]
+
+        for name, widget in modules:
+            # Create list item with icon (optional, using text for now)
+            item = QListWidgetItem(name)
+            item.setFont(QFont("Segoe UI", 11))
+            self.sidebar.addItem(item)
+            self.stack.addWidget(widget)
+
+        # --- Layout Assembly ---
+        main_layout.addWidget(self.sidebar)
+        main_layout.addWidget(self.stack)
+
+        # Wire up selection
+        self.sidebar.currentRowChanged.connect(self.stack.setCurrentIndex)
+        self.sidebar.setCurrentRow(0)
 
         self._restore_persisted_state()
 
@@ -1434,6 +1512,7 @@ class AdvancedScientificCalculatorWindow(QMainWindow):
             """
         )
         self.constants_list.currentItemChanged.connect(self._show_constant_detail)
+        self.constants_list.itemDoubleClicked.connect(self._insert_constant_to_calc)
         layout.addWidget(self.constants_list)
 
         # Detail display
@@ -1546,7 +1625,8 @@ class AdvancedScientificCalculatorWindow(QMainWindow):
             current = self.display.text()
             self.display.setText(current + str(value))
             # Switch to calculator tab
-            self.tab_widget.setCurrentIndex(0)
+            if hasattr(self, "sidebar"):
+                self.sidebar.setCurrentRow(0)
 
     # ==================== SACRED GEOMETRY TAB ====================
 
@@ -1603,6 +1683,7 @@ class AdvancedScientificCalculatorWindow(QMainWindow):
             """
         )
         self.sacred_list.currentItemChanged.connect(self._show_sacred_detail)
+        self.sacred_list.itemDoubleClicked.connect(self._insert_sacred_to_calc)
         layout.addWidget(self.sacred_list)
 
         # Detail display
@@ -1793,7 +1874,8 @@ class AdvancedScientificCalculatorWindow(QMainWindow):
             current = self.display.text()
             self.display.setText(current + str(value))
             # Switch to calculator tab
-            self.tab_widget.setCurrentIndex(0)
+            if hasattr(self, "sidebar"):
+                self.sidebar.setCurrentRow(0)
 
     # ==================== COORDINATES TAB ====================
 
@@ -1950,6 +2032,192 @@ class AdvancedScientificCalculatorWindow(QMainWindow):
 
         layout.addStretch()
         return container
+
+    # ==================== GEOMETRY SOLVER TAB ====================
+
+    def _build_geometry_solver_tab(self) -> QWidget:
+        """Build a dynamic regular polygon solver."""
+        container = QWidget()
+        layout = QVBoxLayout(container)
+        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setSpacing(12)
+
+        header = QLabel("Regular Polygon Solver")
+        header.setStyleSheet("font-size: 15pt; font-weight: 700; color: #e2e8f0;")
+        layout.addWidget(header)
+
+        subtitle = QLabel("Calculate dimensions for any regular N-gon.")
+        subtitle.setStyleSheet("color: #cbd5e1; font-size: 10pt;")
+        layout.addWidget(subtitle)
+
+        # Polygon Selector
+        poly_row = QHBoxLayout()
+        poly_label = QLabel("Shape:")
+        poly_label.setStyleSheet("color: #e2e8f0; font-weight: 600;")
+        self.geo_poly_combo = QComboBox()
+        polygons = [
+            (3, "Triangle (3)"), (4, "Square (4)"), (5, "Pentagon (5)"),
+            (6, "Hexagon (6)"), (7, "Heptagon (7)"), (8, "Octagon (8)"),
+            (9, "Nonagon (9)"), (10, "Decagon (10)"), (12, "Dodecagon (12)"),
+            (0, "Custom N...")
+        ]
+        for sides, name in polygons:
+            self.geo_poly_combo.addItem(name, sides)
+        self.geo_poly_combo.setCurrentIndex(4) # Default to Heptagon
+        self.geo_poly_combo.currentIndexChanged.connect(self._update_geometry_solver)
+        
+        # Custom N input (hidden by default)
+        self.geo_custom_n = QLineEdit()
+        self.geo_custom_n.setPlaceholderText("N")
+        self.geo_custom_n.setMaximumWidth(60)
+        self.geo_custom_n.setVisible(False)
+        self.geo_custom_n.textChanged.connect(self._update_geometry_solver)
+        self.geo_custom_n.setStyleSheet("background-color: #0b1220; color: #e2e8f0; border: 1px solid #1f2937; border-radius: 4px; padding: 4px;")
+
+        poly_row.addWidget(poly_label)
+        poly_row.addWidget(self.geo_poly_combo, 1)
+        poly_row.addWidget(self.geo_custom_n)
+        layout.addLayout(poly_row)
+
+        # Input Parameter Selector
+        param_row = QHBoxLayout()
+        param_label = QLabel("Known:")
+        param_label.setStyleSheet("color: #e2e8f0; font-weight: 600;")
+        self.geo_param_combo = QComboBox()
+        self.geo_param_combo.addItem("Edge Length (s)", "edge")
+        self.geo_param_combo.addItem("Circumradius (R)", "R")
+        self.geo_param_combo.addItem("Inradius/Apothem (r)", "r")
+        self.geo_param_combo.addItem("Area (A)", "area")
+        self.geo_param_combo.currentIndexChanged.connect(self._update_geometry_solver)
+        
+        param_row.addWidget(param_label)
+        param_row.addWidget(self.geo_param_combo, 1)
+        layout.addLayout(param_row)
+
+        # Value Input
+        val_row = QHBoxLayout()
+        val_label = QLabel("Value:")
+        val_label.setStyleSheet("color: #e2e8f0; font-weight: 600;")
+        self.geo_value_input = QLineEdit()
+        self.geo_value_input.setPlaceholderText("Enter value...")
+        self.geo_value_input.textChanged.connect(self._update_geometry_solver)
+        self.geo_value_input.setStyleSheet("""
+            QLineEdit {
+                background-color: #0b1220; color: #e2e8f0; 
+                border: 1px solid #1f2937; border-radius: 8px; padding: 10px; font-size: 11pt;
+            }
+        """)
+        val_row.addWidget(val_label)
+        val_row.addWidget(self.geo_value_input, 1)
+        layout.addLayout(val_row)
+
+        layout.addSpacing(10)
+
+        # Results Display
+        self.geo_result_list = QListWidget()
+        self.geo_result_list.setStyleSheet("""
+            QListWidget {
+                background: #0b1220; color: #e2e8f0;
+                border: 1px solid #1f2937; border-radius: 8px; padding: 8px; font-family: monospace; font-size: 11pt;
+            }
+            QListWidget::item { padding: 4px; }
+            QListWidget::item:selected { background: #1f2937; }
+        """)
+        # Double click to insert result
+        self.geo_result_list.itemDoubleClicked.connect(self._insert_geo_result_to_calc)
+        layout.addWidget(self.geo_result_list)
+
+        # Info Label
+        self.geo_info = QLabel("")
+        self.geo_info.setWordWrap(True)
+        self.geo_info.setStyleSheet("color: #64748b; font-size: 9pt; font-style: italic;")
+        layout.addWidget(self.geo_info)
+
+        return container
+
+    def _update_geometry_solver(self, *_) -> None:
+        """Calculate polygon properties."""
+        # Get N
+        n_data = self.geo_poly_combo.currentData()
+        if n_data == 0:
+            self.geo_custom_n.setVisible(True)
+            try:
+                n = int(self.geo_custom_n.text().strip())
+                if n < 3: raise ValueError
+            except:
+                self.geo_result_list.clear()
+                self.geo_info.setText("Enter valid N ≥ 3")
+                return
+        else:
+            self.geo_custom_n.setVisible(False)
+            n = n_data
+
+        # Get Value
+        try:
+            val = float(self.geo_value_input.text().strip())
+            if val <= 0: raise ValueError
+        except:
+            self.geo_result_list.clear()
+            self.geo_info.setText("Enter valid positive number")
+            return
+
+        # Solve
+        mode = self.geo_param_combo.currentData()
+        pi_n = math.pi / n
+        
+        # Solving for Edge (s) first as common base
+        s = 0.0
+        if mode == "edge":
+            s = val
+        elif mode == "R":
+            # R = s / (2 * sin(pi/n))  => s = R * 2 * sin(pi/n)
+            s = val * 2 * math.sin(pi_n)
+        elif mode == "r":
+            # r = s / (2 * tan(pi/n))  => s = r * 2 * tan(pi/n)
+            s = val * 2 * math.tan(pi_n)
+        elif mode == "area":
+            # A = (n * s^2) / (4 * tan(pi/n)) => s = sqrt( (4 * A * tan(pi/n)) / n )
+            s = math.sqrt((4 * val * math.tan(pi_n)) / n)
+
+        # Calculate others from s
+        # R = s / (2 * sin(pi/n))
+        R = s / (2 * math.sin(pi_n))
+        # r = s / (2 * tan(pi/n))
+        r = s / (2 * math.tan(pi_n))
+        # Area
+        area = (n * s**2) / (4 * math.tan(pi_n))
+        # Perimeter
+        P = n * s
+        # Interior Angle
+        angle = (n - 2) * 180 / n
+
+        # Display
+        self.geo_result_list.clear()
+        
+        def add(label, v, key):
+            item = QListWidgetItem(f"{label:<20} : {v:.6g}")
+            item.setData(Qt.ItemDataRole.UserRole, v)
+            self.geo_result_list.addItem(item)
+
+        add(f"Edge Length (s)", s, "s")
+        add(f"Perimeter (P)", P, "P")
+        add(f"Circumradius (R)", R, "R")
+        add(f"Inradius/Apoth (r)", r, "r")
+        add(f"Area (A)", area, "A")
+        add(f"Interior Angle", angle, "deg")
+
+        self.geo_info.setText(f"Calculated for regular {n}-gon.")
+
+    def _insert_geo_result_to_calc(self, item: QListWidgetItem) -> None:
+        """Insert solved geometry value into calculator."""
+        val = item.data(Qt.ItemDataRole.UserRole)
+        if val is None: return
+        
+        if hasattr(self, "display"):
+            current = self.display.text()
+            self.display.setText(current + f"{val:.6g}")
+            if hasattr(self, "sidebar"):
+                self.sidebar.setCurrentRow(0)
 
     def _parse_angle_input(self, text: str, fmt: str) -> Optional[float]:
         """Parse angle input and return decimal degrees."""
@@ -2122,6 +2390,18 @@ class AdvancedScientificCalculatorWindow(QMainWindow):
         state = CalculatorState(angle_mode=self._angle_mode, memory=self._memory, history=history)
         save_state(state, self._state_path, max_history=DEFAULT_MAX_HISTORY)
 
+    def _on_history_double_clicked(self, item: QListWidgetItem) -> None:
+        """Insert history result into calculator input."""
+        text = item.text()
+        val = text
+        if "=" in text:
+            # "expr = result" -> take result
+            val = text.rsplit("=", 1)[1].strip()
+            
+        if hasattr(self, "display"):
+            current = self.display.text()
+            self.display.setText(current + val)
+
     def _build_calculator_tab(self) -> QWidget:
         container = QWidget()
         layout = QVBoxLayout(container)
@@ -2158,6 +2438,7 @@ class AdvancedScientificCalculatorWindow(QMainWindow):
         content_row.addLayout(self._build_keypad(), 3)
 
         self.history_list = QListWidget()
+        self.history_list.itemDoubleClicked.connect(self._on_history_double_clicked)
         self.history_list.setMinimumWidth(220)
         self.history_list.setStyleSheet(
             """

@@ -7,12 +7,17 @@ This service owns all relationship chart calculation logic.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import List, Dict, Any, Optional, Tuple
 
 from ..models.chart_models import (
-    AstrologyEvent, ChartRequest, ChartResult, GeoLocation,
-    PlanetPosition, HousePosition
+    AstrologyEvent,
+    ChartRequest,
+    ChartResult,
+    GeoLocation,
+    PlanetPosition,
+    HousePosition,
+    ensure_tzinfo,
 )
 from .openastro_service import OpenAstroService
 
@@ -137,13 +142,9 @@ class SynastryService:
         a real chart for a real moment and location.
         """
         # Time midpoint
-        ts_a = event_a.timestamp
-        if ts_a.tzinfo is None:
-            ts_a = ts_a.replace(tzinfo=timezone.utc)
+        ts_a = ensure_tzinfo(event_a.timestamp, event_a.timezone_offset)
         
-        ts_b = event_b.timestamp
-        if ts_b.tzinfo is None:
-            ts_b = ts_b.replace(tzinfo=timezone.utc)
+        ts_b = ensure_tzinfo(event_b.timestamp, event_b.timezone_offset)
         
         mid_timestamp = ts_a + (ts_b - ts_a) / 2
         

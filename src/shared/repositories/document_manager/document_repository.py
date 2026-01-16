@@ -140,6 +140,7 @@ class DocumentRepository:
         raw_content: Optional[str] = None,
         author: Optional[str] = None,
         collection: Optional[str] = None,
+        layout_json: Optional[str] = None,
     ) -> Document:
         """
         Create logic.
@@ -163,7 +164,8 @@ class DocumentRepository:
             file_path=file_path,
             raw_content=raw_content,
             author=author,
-            collection=collection
+            collection=collection,
+            layout_json=layout_json,
         )
         self.db.add(db_doc)
         self.db.commit()

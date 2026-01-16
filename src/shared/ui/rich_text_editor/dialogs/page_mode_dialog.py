@@ -50,6 +50,14 @@ class PageModeDialog(QDialog):
         self.chk_gap_fill = QCheckBox()
         self.chk_gap_fill.setToolTip("Show shaded gutter between pages")
         visual_layout.addRow("Show Gap Fill:", self.chk_gap_fill)
+
+        self.chk_page_outline = QCheckBox()
+        self.chk_page_outline.setToolTip("Show page border outline")
+        visual_layout.addRow("Show Page Outline:", self.chk_page_outline)
+
+        self.chk_margin_guides = QCheckBox()
+        self.chk_margin_guides.setToolTip("Show margin guides inside pages")
+        visual_layout.addRow("Show Margin Guides:", self.chk_margin_guides)
         
         self.spin_gap = QSpinBox()
         self.spin_gap.setRange(5, 100)
@@ -92,6 +100,8 @@ class PageModeDialog(QDialog):
         """Load values from PageModeOptions."""
         self.chk_guides.setChecked(opts.show_guides)
         self.chk_gap_fill.setChecked(opts.show_gap_fill)
+        self.chk_page_outline.setChecked(opts.show_page_outline)
+        self.chk_margin_guides.setChecked(opts.show_margin_guides)
         self.chk_enforce.setChecked(opts.enforce_pagination)
         self.chk_anchor.setChecked(opts.scroll_anchor)
         self.chk_coupling.setChecked(opts.couple_guides_and_enforcement)
@@ -105,6 +115,8 @@ class PageModeDialog(QDialog):
         return PageModeOptions(
             show_guides=self.chk_guides.isChecked(),
             show_gap_fill=self.chk_gap_fill.isChecked(),
+            show_page_outline=self.chk_page_outline.isChecked(),
+            show_margin_guides=self.chk_margin_guides.isChecked(),
             enforce_pagination=self.chk_enforce.isChecked(),
             scroll_anchor=self.chk_anchor.isChecked(),
             couple_guides_and_enforcement=self.chk_coupling.isChecked(),

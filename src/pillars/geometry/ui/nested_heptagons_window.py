@@ -311,13 +311,16 @@ class NestedHeptagonsWindow(QWidget):
                 color: #e0e0e0;
                 font-family: "Segoe UI", Arial, sans-serif;
             }}
+            QFrame {{
+                border: 1px solid #2a2a4e;
+                border-radius: 8px;
+            }}
             QLabel {{
                 background: transparent;
                 border: none;
-                color: #d0d0e0;
             }}
             QCheckBox {{
-                color: #d0d0e0;
+                color: #e0e0e0;
                 spacing: 8px;
             }}
             QCheckBox::indicator {{
@@ -330,42 +333,13 @@ class NestedHeptagonsWindow(QWidget):
             QCheckBox::indicator:checked {{
                 border-color: #D4AF37;
             }}
-            QComboBox {{
-                background-color: #1a1a2e;
-                color: #f0f0f8;
-                border: 1px solid #2a2a3e;
-                border-radius: 4px;
-                padding: 4px;
-            }}
-            QComboBox:hover {{
-                border-color: #3a3a5e;
-            }}
-            QComboBox::drop-down {{
-                border: none;
-            }}
-            QComboBox QAbstractItemView {{
-                background-color: #1a1a2e;
-                color: #f0f0f8;
-                selection-background-color: #2a3a4a;
-                border: 1px solid #2a2a3e;
-            }}
-            QDoubleSpinBox {{
-                background-color: #1a1a2e;
-                color: #f0f0f8;
-                border: 1px solid #2a2a3e;
-                border-radius: 4px;
-                padding: 4px;
-            }}
-            QDoubleSpinBox:hover {{
-                border-color: #3a3a5e;
-            }}
         """)
         
         # Main splitter
         splitter = QSplitter(Qt.Orientation.Horizontal)
         splitter.setStyleSheet(f"""
             QSplitter::handle {{
-                background: transparent;
+                background: {COLORS['border']};
                 width: 2px;
             }}
         """)
@@ -385,7 +359,7 @@ class NestedHeptagonsWindow(QWidget):
         # Right panel: Properties
         right_panel = self._create_properties_panel()
         splitter.addWidget(right_panel)
-        
+         
         splitter.setSizes([300, 550, 350])
         main_layout.addWidget(splitter, 1)
         
@@ -394,11 +368,6 @@ class NestedHeptagonsWindow(QWidget):
         # Footer Status Bar
         self.footer_bar = self._create_footer_bar()
         container.addWidget(self.footer_bar)
-        
-        # Status label (referenced by _update_status_bar)
-        self.status_label = QLabel("Ready")
-        self.status_label.setStyleSheet("padding: 4px; font-size: 11px; background: #1a1a2e; color: #94A3B8;")
-        container.addWidget(self.status_label)
     
     def contextMenuEvent(self, event) -> None:  # type: ignore[reportIncompatibleMethodOverride, reportMissingParameterType]
         """Handle right-click context menu (currently disabled - use spinbox context menus instead)."""
@@ -407,10 +376,6 @@ class NestedHeptagonsWindow(QWidget):
     
     def _update_status_bar(self, row: int) -> None:
         """Update the footer status bar with current selection."""
-        # Guard: status_label created late in _setup_ui
-        if not hasattr(self, 'status_label'):
-            return
-        
         if row < 0 or row >= self.service.num_layers + 1:  # +1 for summary
             return
         
@@ -448,14 +413,20 @@ class NestedHeptagonsWindow(QWidget):
         frame = QFrame()
         frame.setStyleSheet(f"""
             QFrame {{
-                background: #0f0f13;
-                border: 2px solid #D4AF37;
+                background: {COLORS['surface']};
+                border: 1px solid {COLORS['border']};
                 border-radius: 12px;
             }}
         """)
         
+        shadow = QGraphicsDropShadowEffect(frame)
+        shadow.setBlurRadius(24)
+        shadow.setOffset(0, 8)
+        shadow.setColor(QColor(0, 0, 0, 40))
+        frame.setGraphicsEffect(shadow)
+        
         layout = QVBoxLayout(frame)
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setContentsMargins(8, 8, 8, 8)
         layout.addWidget(widget)
         
         return frame
@@ -534,11 +505,17 @@ class NestedHeptagonsWindow(QWidget):
         panel = QFrame()
         panel.setStyleSheet(f"""
             QFrame {{
-                background: #0f0f13;
-                border: 2px solid #D4AF37;
+                background: {COLORS['surface']};
+                border: 1px solid {COLORS['border']};
                 border-radius: 12px;
             }}
         """)
+        
+        shadow = QGraphicsDropShadowEffect(panel)
+        shadow.setBlurRadius(24)
+        shadow.setOffset(0, 8)
+        shadow.setColor(QColor(0, 0, 0, 40))
+        panel.setGraphicsEffect(shadow)
         
         layout = QVBoxLayout(panel)
         
@@ -546,7 +523,7 @@ class NestedHeptagonsWindow(QWidget):
         groupbox_style = f"""
             QGroupBox {{
                 color: {COLORS['seeker']};
-                border: none;
+                border: 1px solid {COLORS['border']};
                 border-radius: 6px;
                 margin-top: 12px;
                 padding-top: 12px;
@@ -579,9 +556,6 @@ class NestedHeptagonsWindow(QWidget):
             if i < len(PLANETARY_COLORS):
                 color = PLANETARY_COLORS[i]
                 check.setStyleSheet(f"""
-                    QCheckBox {{
-                        color: #d0d0e0;
-                    }}
                     QCheckBox::indicator:checked {{
                         background-color: {color.name()};
                         border: 2px solid {color.lighter(150).name()};
@@ -605,9 +579,7 @@ class NestedHeptagonsWindow(QWidget):
         
         # Orientation
         orientation_layout = QHBoxLayout()
-        orientation_label = QLabel("Orientation:")
-        orientation_label.setStyleSheet("color: #9090a8;")
-        orientation_layout.addWidget(orientation_label)
+        orientation_layout.addWidget(QLabel("Orientation:"))
         self.orientation_combo = QComboBox()
         self.orientation_combo.addItem("Vertex at Top", "vertex_top")
         self.orientation_combo.addItem("Side at Top", "side_top")
@@ -617,9 +589,7 @@ class NestedHeptagonsWindow(QWidget):
         
         # Decimal precision control
         precision_layout = QHBoxLayout()
-        precision_label = QLabel("Decimal Places:")
-        precision_label.setStyleSheet("color: #9090a8;")
-        precision_layout.addWidget(precision_label)
+        precision_layout.addWidget(QLabel("Decimal Places:"))
         self.precision_spin = QDoubleSpinBox()
         self.precision_spin.setRange(0, 15)
         self.precision_spin.setValue(4)
@@ -629,12 +599,12 @@ class NestedHeptagonsWindow(QWidget):
         display_layout.addLayout(precision_layout)
         
         self.circumcircle_check = QCheckBox("Circumcircle")
-        self.circumcircle_check.setChecked(False)
+        self.circumcircle_check.setChecked(True)
         self.circumcircle_check.stateChanged.connect(self._update_canvas)
         display_layout.addWidget(self.circumcircle_check)
         
         self.incircle_check = QCheckBox("Incircle")
-        self.incircle_check.setChecked(False)
+        self.incircle_check.setChecked(True)
         self.incircle_check.stateChanged.connect(self._update_canvas)
         display_layout.addWidget(self.incircle_check)
         
@@ -649,7 +619,7 @@ class NestedHeptagonsWindow(QWidget):
         display_layout.addWidget(self.long_diagonals_check)
         
         self.labels_check = QCheckBox("Vertex Labels")
-        self.labels_check.setChecked(False)
+        self.labels_check.setChecked(True)
         self.labels_check.stateChanged.connect(self._update_canvas)
         display_layout.addWidget(self.labels_check)
         
@@ -666,7 +636,8 @@ class NestedHeptagonsWindow(QWidget):
             }}
             QPushButton:hover {{
                 background-color: #3a4a5a;
-                border: 2px solid #D4AF37;
+                border-color: #D4AF37;
+                box-shadow: 0 0 12px rgba(212, 175, 55, 0.6);
             }}
             QPushButton:pressed {{
                 background-color: #1a2a3a;
@@ -698,29 +669,20 @@ class NestedHeptagonsWindow(QWidget):
                 padding: 0 5px;
                 background: #1a1a2e;
             }}
-            QLabel {{
-                color: #9090a8;
-            }}
         """)
         const_layout = QFormLayout(const_group)
         
-        sigma_row_label = QLabel("Σ (Long Diagonal):")
-        sigma_row_label.setStyleSheet("color: #9090a8; font-weight: normal;")
         sigma_label = QLabel(f"{NestedHeptagonsService.SIGMA:.6f}")
-        sigma_label.setStyleSheet("color: #6a6a7a; font-weight: bold; font-size: 12pt; background: transparent;")
-        const_layout.addRow(sigma_row_label, sigma_label)
+        sigma_label.setStyleSheet("color: #D4AF37; font-weight: bold; font-size: 11pt;")
+        const_layout.addRow("Σ (Long Diagonal):", sigma_label)
         
-        rho_row_label = QLabel("ρ (Short Diagonal):")
-        rho_row_label.setStyleSheet("color: #9090a8; font-weight: normal;")
         rho_label = QLabel(f"{NestedHeptagonsService.RHO:.6f}")
-        rho_label.setStyleSheet("color: #6a6a7a; font-weight: bold; font-size: 12pt; background: transparent;")
-        const_layout.addRow(rho_row_label, rho_label)
+        rho_label.setStyleSheet("color: #D4AF37; font-weight: bold; font-size: 11pt;")
+        const_layout.addRow("ρ (Short Diagonal):", rho_label)
         
-        alpha_row_label = QLabel("α (Nest Ratio):")
-        alpha_row_label.setStyleSheet("color: #9090a8; font-weight: normal;")
         alpha_label = QLabel(f"{NestedHeptagonsService.ALPHA:.6f}")
-        alpha_label.setStyleSheet("color: #6a6a7a; font-weight: bold; font-size: 12pt; background: transparent;")
-        const_layout.addRow(alpha_row_label, alpha_label)
+        alpha_label.setStyleSheet("color: #D4AF37; font-weight: bold; font-size: 11pt;")
+        const_layout.addRow("α (Nest Ratio):", alpha_label)
         
         layout.addWidget(const_group)
         layout.addStretch()
@@ -734,10 +696,16 @@ class NestedHeptagonsWindow(QWidget):
         panel.setStyleSheet(f"""
             QFrame {{
                 background: #1a1a2e;
-                border: 2px solid #D4AF37;
+                border: 1px solid #2a2a4e;
                 border-radius: 8px;
             }}
         """)
+        
+        shadow = QGraphicsDropShadowEffect(panel)
+        shadow.setBlurRadius(24)
+        shadow.setOffset(0, 8)
+        shadow.setColor(QColor(0, 0, 0, 80))
+        panel.setGraphicsEffect(shadow)
         
         layout = QVBoxLayout(panel)
 
@@ -761,13 +729,13 @@ class NestedHeptagonsWindow(QWidget):
             QListWidget {{
                 background: #0f0f13;
                 border: none;
-                border-right: 1px solid #1a1a2e;
+                border-right: 1px solid #2a2a4e;
                 outline: none;
             }}
             QListWidget::item {{
                 height: 48px;
-                color: #b0b0c8;
-                border-bottom: 1px solid #1a1a2e;
+                color: #94A3B8;
+                border-bottom: 1px solid #2a2a4e;
                 border-radius: 0px;
                 margin: 0px;
             }}
@@ -926,14 +894,6 @@ class NestedHeptagonsWindow(QWidget):
             # Store property key as object property for later retrieval
             spinbox.setProperty("prop_key", prop_key)
             
-            # Select all text on focus for better UX
-            if not read_only:
-                from PyQt6.QtCore import QTimer
-                def on_focus_in(event, sb=spinbox):
-                    QDoubleSpinBox.focusInEvent(sb, event)
-                    QTimer.singleShot(0, lambda: sb.lineEdit().selectAll() if sb.lineEdit() else None)
-                spinbox.focusInEvent = on_focus_in
-            
             if read_only:
                 spinbox.setReadOnly(True)
                 spinbox.setButtonSymbols(QDoubleSpinBox.ButtonSymbols.NoButtons)
@@ -955,7 +915,7 @@ class NestedHeptagonsWindow(QWidget):
             
             # Create styled label with bright text
             label = QLabel(f"{display_name}:")
-            label.setStyleSheet("color: #b8c0d0; font-weight: bold; font-family: 'Arial';")
+            label.setStyleSheet("color: #94A3B8; font-weight: bold; font-family: 'Arial';")
             layout.addRow(label, spinbox)
             spinboxes[display_name] = spinbox
         
@@ -1019,16 +979,16 @@ class NestedHeptagonsWindow(QWidget):
         for spinbox in spinboxes.values():
             spinbox.blockSignals(True)
         
-        # Update values (use exact keys from _create_property_form display_name)
-        spinboxes["⬡ Edge Length"].setValue(props.edge_length)
-        spinboxes["⬢ Perimeter"].setValue(props.perimeter)
-        spinboxes["▣ Area"].setValue(props.area)
-        spinboxes["⬗ Short Diagonal"].setValue(props.short_diagonal)
-        spinboxes["⬖ Long Diagonal"].setValue(props.long_diagonal)
-        spinboxes["⊙ Inradius"].setValue(props.inradius)
-        spinboxes["⊚ Circumradius"].setValue(props.circumradius)
-        spinboxes["○ Incircle Circ."].setValue(props.incircle_circumference)
-        spinboxes["⊙ Circumcircle Circ."].setValue(props.circumcircle_circumference)
+        # Update values
+        spinboxes["Edge Length"].setValue(props.edge_length)
+        spinboxes["Perimeter"].setValue(props.perimeter)
+        spinboxes["Area"].setValue(props.area)
+        spinboxes["Short Diagonal"].setValue(props.short_diagonal)
+        spinboxes["Long Diagonal"].setValue(props.long_diagonal)
+        spinboxes["Inradius"].setValue(props.inradius)
+        spinboxes["Circumradius"].setValue(props.circumradius)
+        spinboxes["Incircle Circ."].setValue(props.incircle_circumference)
+        spinboxes["Circumcircle Circ."].setValue(props.circumcircle_circumference)
         
         # Reconnect signals for bidirectional solving (ONLY if not read_only)
         if not read_only:

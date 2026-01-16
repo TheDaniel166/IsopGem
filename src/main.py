@@ -32,7 +32,7 @@ from PyQt6.QtWidgets import (
     QLabel, QHBoxLayout, QFrame, QGraphicsDropShadowEffect, QPushButton
 )
 from PyQt6.QtCore import Qt, QEvent
-from PyQt6.QtGui import QCloseEvent, QIcon, QFont, QColor, QImageReader
+from PyQt6.QtGui import QCloseEvent, QIcon, QFont, QColor, QImageReader, QPixmap
 
 # Increase image allocation limit to 512MB to prevent "Rejecting image" errors
 # Default is 256MB in Qt 6
@@ -44,6 +44,7 @@ from shared.database import init_db
 from shared.ui.kinetic_enforcer import KineticEnforcer
 from pillars.gematria.ui import GematriaHub
 from pillars.geometry.ui import GeometryHub
+from pillars.cymatics.ui import CymaticsHub
 from pillars.document_manager.ui import DocumentManagerHub
 from pillars.astrology.ui import AstrologyHub
 from pillars.tq.ui import TQHub
@@ -124,6 +125,7 @@ class IsopGemMainWindow(QMainWindow):
         # Initialize pillars
         self._init_gematria_pillar()
         self._init_geometry_pillar()
+        self._init_cymatics_pillar()
         self._init_document_manager_pillar()
         self._init_astrology_pillar()
         self._init_tq_pillar()
@@ -152,25 +154,56 @@ class IsopGemMainWindow(QMainWindow):
         layout.setSpacing(0)
         
         # Logo/Brand area
-        brand = QLabel("✦ IsopGem")
-        brand.setStyleSheet("""
-            QLabel {
-                color: #ffffff;
-                font-size: 20pt;
-                font-weight: 700;
-                padding: 24px 20px;
+        brand_widget = QWidget()
+        brand_widget.setObjectName("brand_widget")
+        brand_widget.setStyleSheet("""
+            QWidget#brand_widget {
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
                     stop:0 #3b82f6, stop:1 #8b5cf6);
-                letter-spacing: 1px;
             }
         """)
-        layout.addWidget(brand)
+        brand_layout = QHBoxLayout(brand_widget)
+        brand_layout.setContentsMargins(20, 24, 20, 24)
+        brand_layout.setSpacing(12)
+
+        # Icon
+        icon_path = os.path.join(os.path.dirname(__file__), "assets/icons/app_icon.png")
+        icon_label = QLabel()
+        icon_label.setStyleSheet("background: transparent;")
+        if os.path.exists(icon_path):
+            pixmap = QPixmap(icon_path)
+            if not pixmap.isNull():
+                # Scale to convenient size (e.g. 32x32)
+                icon_label.setPixmap(pixmap.scaled(32, 32, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
+            else:
+                 icon_label.setText("✦")
+                 icon_label.setStyleSheet("font-size: 24pt; color: white; background: transparent;")
+        else:
+            icon_label.setText("✦")
+            icon_label.setStyleSheet("font-size: 24pt; color: white; background: transparent;")
+
+        # Text
+        text_label = QLabel("IsopGem")
+        text_label.setStyleSheet("""
+            color: #ffffff;
+            font-size: 20pt;
+            font-weight: 700;
+            letter-spacing: 1px;
+            background: transparent;
+        """)
+
+        brand_layout.addWidget(icon_label)
+        brand_layout.addWidget(text_label)
+        brand_layout.addStretch()
+
+        layout.addWidget(brand_widget)
         
         # Navigation buttons
         self.nav_buttons = []
         nav_items = [
             ("📖", "Gematria", "Sacred numerology"),
             ("📐", "Geometry", "Sacred geometry"),
+            ("🌊", "Cymatics", "Vibrational patterns"),
             ("📚", "Documents", "Document manager"),
             ("⭐", "Astrology", "Celestial charts"),
             ("🔺", "TQ", "Ternary quadsets"),
@@ -319,6 +352,7 @@ class IsopGemMainWindow(QMainWindow):
         titles = [
             "📖 Gematria",
             "📐 Sacred Geometry",
+            "🌊 Cymatics Lab",
             "📚 Document Manager",
             "⭐ Astrology Charts",
             "🔺 TQ Analysis",
@@ -370,6 +404,11 @@ class IsopGemMainWindow(QMainWindow):
         """Initialize the Geometry pillar."""
         geometry_hub = GeometryHub(self.window_manager)
         self.tabs.addTab(geometry_hub, "Geometry")
+
+    def _init_cymatics_pillar(self):
+        """Initialize the Cymatics pillar."""
+        cymatics_hub = CymaticsHub(self.window_manager)
+        self.tabs.addTab(cymatics_hub, "Cymatics")
     
     def _init_document_manager_pillar(self):
         """Initialize the Document Manager pillar."""
