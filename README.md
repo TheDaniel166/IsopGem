@@ -230,10 +230,9 @@ This is the **cross-pillar bridge** - gematria values linked to current sky, geo
 ### ⏳ **Time Mechanics: Temporal Pattern Recognition**
 Time spirals, and we map it:
 
-- **Tzolkin Calendar**: 260-day Mayan sacred count (13 numbers × 20 day-signs) with full calculations
+- **The Dance of Days**: 260-day Aztec-inspired sacred calendar (13 Tones × 20 Signs) mapped to TQ ternary structure (ditrunes 0-728). Each Kin assigned a Greek divine name. Venus conjunctions overlay the cycle.
 - **Neo-Aubrey Clock**: Proprietary temporal framework designed for this project
 - **Conrune Delta**: How TQ ternary values shift through defined time cycles
-- **Menorah Cycles**: Seven-branched harmonic pattern analysis
 - **Thelemic Calendar**: Calculate dates in Thelemic notation (e.g., "☉ in 0° ♈ Anno Vxii")
 
 ---
@@ -535,7 +534,7 @@ IsopGem maintains a **living wiki** of 82+ documents. This is not afterthought d
 
 **For Occultists & Ceremonial Magicians:**
 - Cross-reference planetary hours, herbs, stones, and symbols
-- Design ritual timing using Tzolkin or Thelemic calendars
+- Design ritual timing using Dance of Days or Thelemic calendars
 - Calculate gematria of ritual phrases
 - Map correspondences across multiple systems
 - Navigate the Adyton 3D sanctuary for meditation
