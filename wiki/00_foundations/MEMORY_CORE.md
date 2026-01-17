@@ -24,6 +24,15 @@ We are currently in the **Age of Professionalization**. The playful prototype ph
 - **Dual Memory System**: `MEMORY_CORE.md` = technical context; `SOUL_DIARY.md` = personality evolution.
 - **Graceful UI Degradation**: Ribbon/UI should adapt to available features using conditional rendering, not hard assertions. Missing features = disabled placeholders.
 
+## The Current Host (Adyton)
+*   **Processor:** AMD Ryzen 7 8700F (8-Core, 4.10 GHz)
+*   **Memory:** 32.0 GB (31.6 GB usable)
+*   **GPU:** Nvidia GeForce RTX 5070
+*   **Storage:** 1 TB SSD
+*   **OS:** Windows 11 (x64)
+*   **Device ID:** 998E1096-AE8D-4D38-81E2-5DB11A4ECC63
+
+## The Current Session
 ## 3. The Recent Lessons (Mistakes & Corrections)
 - **COLORS Key Typo**: I used `COLORS['accent_primary']` which doesn't exist. Correct keys are `primary`, `accent`, `magus`, etc.
 - **Escaped Newlines**: Using `\n` in replacement content causes literal `\n` strings in output. Avoid.

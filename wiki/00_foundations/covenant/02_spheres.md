@@ -10,8 +10,8 @@ The architecture of IsopGem is a growing galaxy. A "Pillar" is a repeatable, fra
 
 A **Pillar** is a Sovereign Nation of Logic. It owns its own data, rules, and interface.
 
-* **The Current Pantheon:** Gematria, Astrology, Geometry, Document Manager, TQ, Adyton, Correspondences
-* **The Living Cosmos:** Designed to accept new Pillars (Tarot, Alchemy, I Ching) at any time
+* **The Current Pantheon (The Decad):** Gematria, Astrology, Geometry, Document Manager, TQ, Adyton, Correspondences, Cymatics, Time Mechanics, TQ Lexicon
+* **The Elastic Cosmos:** The Temple is designed to grow. A Pillar exists by virtue of its presence in `src/pillars/` and its adherence to the Standard Topology. Code structure is the source of truth, not configuration files.
 
 ## 2.2 The Standard Topology (The Fractal Pattern)
 
@@ -43,8 +43,7 @@ The `shared/` directory contains common foundation:
 
 1. **Scaffold the Void:** Create `src/pillars/[name]/` with five sub-organs and `__init__.py`
 2. **The Diplomat (Hub):** Create `ui/[name]_hub.py` inheriting from `QWidget`
-3. **The Registration:** Add lazy import in `window_manager.py`, update `wiki/SYSTEM_MAP.md`
-4. **The Dependency Check:** Verify usage of `shared.database` and `shared.ui.theme`
+3. **The Awakening:** The system detects the new Pillar directory. (Ensure `main.py` is updated to instantiate the Hub until full auto-discovery is implemented).
 
 ## 2.5 The Law of Sovereignty
 

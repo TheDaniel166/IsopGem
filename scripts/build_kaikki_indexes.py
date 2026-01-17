@@ -104,6 +104,10 @@ def build_language(lang: Dict[str, str]) -> None:
         logger.warning(f"{name}: source not found at {source_path}")
         return
 
+    if mini_path.exists() and index_path.exists():
+        logger.info(f"{name}: index already exists (skipping)")
+        return
+
     logger.info(f"{name}: building compact index")
     logger.info(f"  source : {source_path}")
     logger.info(f"  mini   : {mini_path}")

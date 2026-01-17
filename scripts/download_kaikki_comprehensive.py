@@ -28,6 +28,7 @@ LEXICON_DIR.mkdir(parents=True, exist_ok=True)
 
 # Base URL for Kaikki dictionaries
 KAIKKI_BASE = "https://kaikki.org/dictionary/rawdata/"
+FULL_DUMP_URL = "https://kaikki.org/dictionary/raw-wiktextract-data.jsonl.gz"
 
 # Etymologically significant languages (organized by importance/size)
 DICTIONARIES = {
@@ -35,7 +36,7 @@ DICTIONARIES = {
     "core_ancient": [
         ("English", "English", "2.7GB", "Modern reference"),
         ("Latin", "Latin", "1GB", "Classical foundation"),
-        ("AncientGreek", "Ancient Greek", "255MB", "Classical/Biblical"),
+        ("Ancient Greek", "Ancient Greek", "255MB", "Classical/Biblical"),
         ("Hebrew", "Hebrew", "45MB", "Biblical/Semitic"),
         ("Sanskrit", "Sanskrit", "93MB", "Indo-European root"),
         ("Proto-Indo-European", "Proto-Indo-European", "11MB", "IE reconstruction"),
@@ -44,32 +45,32 @@ DICTIONARIES = {
 
     # ===== TIER 2: Critical Medieval/Bridge Languages =====
     "medieval_bridge": [
-        ("OldEnglish", "Old English", "86K senses", "Anglo-Saxon roots"),
-        ("MiddleEnglish", "Middle English", "63K senses", "English bridge"),
-        ("OldFrench", "Old French", "11K senses", "Romance bridge"),
+        ("Old English", "Old English", "86K senses", "Anglo-Saxon roots"),
+        ("Middle English", "Middle English", "63K senses", "English bridge"),
+        ("Old French", "Old French", "11K senses", "Romance bridge"),
         ("Gothic", "Gothic", "25K senses", "Earliest Germanic"),
-        ("OldNorse", "Old Norse", "15K senses", "Norse/Viking roots"),
-        ("OldHighGerman", "Old High German", "4K senses", "German roots"),
-        ("OldIrish", "Old Irish", "8K senses", "Celtic roots"),
-        ("OldChurchSlavonic", "Old Church Slavonic", "6K senses", "Slavic liturgical"),
+        ("Old Norse", "Old Norse", "15K senses", "Norse/Viking roots"),
+        ("Old High German", "Old High German", "4K senses", "German roots"),
+        ("Old Irish", "Old Irish", "8K senses", "Celtic roots"),
+        ("Old Church Slavonic", "Old Church Slavonic", "6K senses", "Slavic liturgical"),
     ],
 
     # ===== TIER 3: Additional Ancient Semitic & Near Eastern =====
     "ancient_semitic": [
         ("Akkadian", "Akkadian", "2K senses", "Mesopotamian"),
-        ("ClassicalSyriac", "Classical Syriac", "8K senses", "Eastern Aramaic"),
+        ("Classical Syriac", "Classical Syriac", "8K senses", "Eastern Aramaic"),
         ("Ugaritic", "Ugaritic", "1K senses", "Canaanite"),
         ("Coptic", "Coptic", "4K senses", "Egyptian Christian"),
     ],
 
     # ===== TIER 4: Other Ancient Indo-European =====
     "ancient_ie": [
-        ("OldPersian", "Old Persian", "619 senses", "Ancient Iranian"),
+        ("Old Persian", "Old Persian", "619 senses", "Ancient Iranian"),
         ("Pali", "Pali", "13K senses", "Buddhist texts"),
         ("Prakrit", "Prakrit", "3K senses", "Middle Indo-Aryan"),
-        ("TocharianA", "Tocharian A", "555 senses", "Extinct IE West"),
-        ("TocharianB", "Tocharian B", "3K senses", "Extinct IE East"),
-        ("MycenaeanGreek", "Mycenaean Greek", "605 senses", "Bronze Age Greek"),
+        ("Tocharian A", "Tocharian A", "555 senses", "Extinct IE West"),
+        ("Tocharian B", "Tocharian B", "3K senses", "Extinct IE East"),
+        ("Mycenaean Greek", "Mycenaean Greek", "605 senses", "Bronze Age Greek"),
     ],
 
     # ===== TIER 5: Modern Major Languages (for complete coverage) =====
@@ -117,15 +118,21 @@ def get_file_size(url: str) -> str:
 
 def download_dictionary(code: str, name: str, estimated_size: str) -> bool:
     """Download a single Kaikki dictionary."""
+    # Encode the code for URL compatibility (e.g., "Ancient Greek" -> "Ancient%20Greek")
+    import urllib.parse
+    safe_code = urllib.parse.quote(code)
+    
     # Try multiple filename patterns
+    # Pattern: https://kaikki.org/dictionary/{Language}/kaikki.org-dictionary-{Language}.jsonl
     patterns = [
-        f"kaikki.org-dictionary-{code}.jsonl",
-        f"kaikki.org-dictionary-{code}-words.jsonl",
+        f"https://kaikki.org/dictionary/{safe_code}/kaikki.org-dictionary-{safe_code}.jsonl",
+        f"https://kaikki.org/dictionary/{safe_code}/kaikki.org-dictionary-{safe_code}-words.jsonl",
+        # Fallback for old structure
+        f"https://kaikki.org/dictionary/rawdata/kaikki.org-dictionary-{safe_code}.jsonl",
     ]
 
-    for pattern in patterns:
-        url = KAIKKI_BASE + pattern
-        output_file = LEXICON_DIR / pattern
+    for url in patterns:
+        output_file = LEXICON_DIR / url.split("/")[-1]
 
         # Skip if already exists
         if output_file.exists():
@@ -197,6 +204,37 @@ def download_tier(tier_name: str, dictionaries: List[tuple], auto_confirm: bool 
     return success_count
 
 
+def download_full_dump(auto_confirm: bool = False) -> bool:
+    """Download the complete raw Wiktextract data (all languages)."""
+    logger.info("=" * 70)
+    logger.info("FULL DUMP DOWNLOAD (All Languages)")
+    logger.info("=" * 70)
+    logger.info(f"URL: {FULL_DUMP_URL}")
+    logger.info("Estimated size: ~2.3 GB (Compressed) -> ~20 GB (Raw)")
+    logger.info("Content: Complete extraction of English Wiktionary for ALL languages")
+    logger.info("")
+
+    if not auto_confirm:
+        response = input(f"Download full dump? [y/N]: ").strip().lower()
+        if response != 'y':
+            logger.info("Skipped full dump.")
+            return False
+
+    output_file = LEXICON_DIR / "raw-wiktextract-data.jsonl.gz"
+    
+    if output_file.exists():
+        logger.info(f"✓ Full dump already exists ({output_file.name})")
+        return True
+
+    try:
+        logger.info(f"Downloading full dump...")
+        urllib.request.urlretrieve(FULL_DUMP_URL, output_file)
+        logger.info(f"✓ Downloaded full dump to {output_file.name}")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to download full dump: {e}")
+        return False
+
 def main():
     """Download Kaikki dictionaries by tier."""
     logger.info("=" * 70)
@@ -207,6 +245,7 @@ def main():
 
     # Check command line arguments
     auto_mode = "--auto" in sys.argv or "-y" in sys.argv
+    full_dump_mode = "--full" in sys.argv
     tier_filter = None
 
     for arg in sys.argv[1:]:
@@ -215,19 +254,23 @@ def main():
 
     total_downloaded = 0
 
-    # Display tier summary
-    logger.info("Available tiers:")
-    for i, (tier_name, dicts) in enumerate(DICTIONARIES.items(), 1):
-        logger.info(f"  {i}. {tier_name:25} - {len(dicts):2} languages")
-    logger.info("")
+    if full_dump_mode:
+        if download_full_dump(auto_confirm=auto_mode):
+            total_downloaded = 1
+    else:
+        # Display tier summary
+        logger.info("Available tiers:")
+        for i, (tier_name, dicts) in enumerate(DICTIONARIES.items(), 1):
+            logger.info(f"  {i}. {tier_name:25} - {len(dicts):2} languages")
+        logger.info("")
 
-    # Download tiers
-    for tier_name, dicts in DICTIONARIES.items():
-        if tier_filter and tier_filter != tier_name:
-            continue
+        # Download tiers
+        for tier_name, dicts in DICTIONARIES.items():
+            if tier_filter and tier_filter != tier_name:
+                continue
 
-        count = download_tier(tier_name, dicts, auto_confirm=auto_mode)
-        total_downloaded += count
+            count = download_tier(tier_name, dicts, auto_confirm=auto_mode)
+            total_downloaded += count
 
     logger.info("=" * 70)
     logger.info(f"Download complete! Total: {total_downloaded} dictionaries")
