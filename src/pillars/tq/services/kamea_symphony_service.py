@@ -3,8 +3,8 @@ Kamea Symphony Service - The Cinematic Audio Engine.
 Generates rich, textured audio using NumPy synthesis, convolution reverb, and stereo panning based on Ditrune nucleation.
 """
 import numpy as np
-from scipy.io import wavfile
-from scipy.signal import fftconvolve
+# from scipy.io import wavfile
+# from scipy.signal import fftconvolve
 import io
 import tempfile
 from typing import Optional, List
@@ -74,6 +74,7 @@ class KameaSymphonyService:
         """Helper to write NumPy float array to 16-bit WAV."""
         temp_file = tempfile.NamedTemporaryFile(suffix='.wav', delete=False)
         scaled = np.int16(audio_data * 32767)
+        from scipy.io import wavfile
         wavfile.write(temp_file.name, self.SAMPLE_RATE, scaled)
         return temp_file.name
 
@@ -119,6 +120,7 @@ class KameaSymphonyService:
         
         # Convolution Reverb (Wet Mix)
         # We process channels independently
+        from scipy.signal import fftconvolve
         wet_l = fftconvolve(mix[:, 0], self._reverb_impulse, mode='full')[:num_samples]
         wet_r = fftconvolve(mix[:, 1], self._reverb_impulse, mode='full')[:num_samples]
         

@@ -2,7 +2,7 @@
 Smart Filter Service - The Linguistic Sieve.
 Filters Gematria phrases using Spacy NLP to remove linguistic nonsense patterns.
 """
-import spacy
+# import spacy
 from typing import List, Tuple
 import logging
 
@@ -25,6 +25,7 @@ class SmartFilterService:
                 # Disable NE, parser (parser needed for deps, but we might just use POS for speed first)
                 # Actually we DO want parser for dependency checks if we get advanced.
                 # start with efficient loading.
+                import spacy
                 self._nlp = spacy.load("en_core_web_sm", disable=["ner"])
             except Exception as e:
                 logging.error(f"Failed to load Spacy model: {e}")

@@ -70,6 +70,8 @@ coverage_html/
 # Local config
 config/app_config.py
 de441.bsp
+*.download
+
 
 # Local data caches (exclude large datasets)
 data/lexicons/

@@ -16,8 +16,9 @@ def _configure_logging() -> None:
         force=True,
     )
 
-# Force Qt to use X11 instead of Wayland (more stable with PyQt6)
-os.environ['QT_QPA_PLATFORM'] = 'xcb'
+# Force Qt to use X11 instead of Wayland (Linux only) - Disabled for Windows
+# if sys.platform != 'win32':
+#     os.environ['QT_QPA_PLATFORM'] = 'xcb'
 
 # Disable GPU acceleration for WebEngine (prevents context loss/freezes)
 os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = "--disable-gpu --single-process"

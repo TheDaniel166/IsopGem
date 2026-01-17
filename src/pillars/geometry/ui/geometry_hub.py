@@ -5,6 +5,7 @@ Redesigned following the Visual Liturgy principles with tool-launcher grid patte
 from __future__ import annotations
 
 import os
+import sys
 from typing import Callable, Optional
 
 from PyQt6.QtWidgets import (
@@ -435,8 +436,13 @@ class GeometryHub(QWidget):
         print("Creating UnifiedGeometryViewer directly...", flush=True)
         
         try:
+            # Determine parent for Windows native parenting
+            parent_window = None
+            if sys.platform == 'win32' and self.window_manager and self.window_manager.main_window:
+                 parent_window = self.window_manager.main_window
+
             # Create viewer directly (same as test script)
-            viewer = UnifiedGeometryViewer()
+            viewer = UnifiedGeometryViewer(window_manager=self.window_manager, parent=parent_window)
             print(f"✓ Viewer created: {viewer}", flush=True)
             
             viewer.setWindowTitle(f"{config.get('title', solid_id.title())} • Unified Viewer")
@@ -544,7 +550,12 @@ class GeometryHub(QWidget):
             display_name = f"Regular {n}-gon"
 
         try:
-            viewer = UnifiedGeometryViewer()
+            # Determine parent for Windows native parenting
+            parent_window = None
+            if sys.platform == 'win32' and self.window_manager and self.window_manager.main_window:
+                 parent_window = self.window_manager.main_window
+
+            viewer = UnifiedGeometryViewer(window_manager=self.window_manager, parent=parent_window)
             engine = CanonEngine()
 
             solver = solver_cls()

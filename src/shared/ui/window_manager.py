@@ -22,6 +22,7 @@ requests, performing lazy imports to preserve pillar sovereignty.
 from typing import Dict, Optional, Type, Any
 import logging
 import importlib
+import  sys
 import inspect
 from PyQt6.QtWidgets import QWidget, QMainWindow, QApplication
 from PyQt6.QtCore import Qt, QTimer
@@ -103,7 +104,13 @@ class WindowManager:
         # Create new window
         # Pass parent=None to ensure the window is a top-level independent window
         # This is critical for multi-monitor support so the OS doesn't bind it to the main window
-        window = window_class(*args, parent=None, **kwargs)
+        if sys.platform == 'win32' and self.main_window:
+            # Windows: Use native parenting (Transient Window)
+            # This keeps tool windows on top of main window automatically
+            window = window_class(*args, parent=self.main_window, **kwargs)
+        else:
+            # Linux/Others: Top-level independent windows (Orbital Physics model)
+            window = window_class(*args, parent=None, **kwargs)
         
         # Store window type for later reference
         window.setProperty("window_type", window_type)
@@ -321,7 +328,9 @@ class WindowManager:
             logger.debug("Raised %d active windows", len(visible))
         
         # Small delay to ensure proper timing after tab changes
-        QTimer.singleShot(50, do_raise)
+        # Orbital Physics: Only needed for non-Windows systems where parenting is detached
+        if sys.platform != 'win32':
+            QTimer.singleShot(50, do_raise)
 
     def _on_navigation_request(self, window_key: str, params: Dict[str, Any]):
         """
