@@ -262,40 +262,39 @@ class MermaidLinter:
     
     @classmethod
     def _check_brackets(cls, lines: list[str]) -> list[LintIssue]:
-        """Check for unbalanced brackets."""
+        """Check for unbalanced brackets across the entire document."""
         issues = []
         bracket_pairs = {'[': ']', '{': '}', '(': ')'}
-        
+        reverse_pairs = {v: k for k, v in bracket_pairs.items()}
+
         # Determine if this is an ER diagram to handle cardinality syntax
         is_er = cls._is_er_diagram(lines)
-        
+
+        # Track brackets across all lines (for multi-line constructs like classDiagram)
+        global_stack = []
+
         for i, line in enumerate(lines, 1):
             # For ER diagrams, ignore cardinality markers like o{ |{ }| }o
-            # by replacing them with spaces before checking brackets
             line_to_check = line
             if is_er:
                 line_to_check = line_to_check.replace('o{', '  ') \
                                              .replace('|{', '  ') \
                                              .replace('}|', '  ') \
                                              .replace('}o', '  ')
-            
-            stack = []
+
             for char in line_to_check:
                 if char in bracket_pairs:
-                    stack.append((char, i))
-                elif char in bracket_pairs.values():
-                    if not stack:
-                        # Extract snippet (20 chars before the error)
-                        snippet = line[:max(0, line.index(char)-10):line.index(char)+10].strip()
+                    global_stack.append((char, i))
+                elif char in reverse_pairs:
+                    if not global_stack:
                         issues.append(LintIssue(
                             line=i,
                             message=f"Unexpected closing bracket '{char}'",
                             severity=LintSeverity.ERROR,
-                            suggestion=f"Remove the extra '{char}' or add matching opening bracket",
-                            code_snippet=f"...{snippet}..." if len(snippet) < len(line) else snippet
+                            suggestion=f"Remove the extra '{char}' or add matching opening bracket"
                         ))
                     else:
-                        open_bracket, _ = stack.pop()
+                        open_bracket, open_line = global_stack.pop()
                         if bracket_pairs[open_bracket] != char:
                             issues.append(LintIssue(
                                 line=i,
@@ -303,16 +302,16 @@ class MermaidLinter:
                                 severity=LintSeverity.ERROR,
                                 suggestion=f"Replace '{char}' with '{bracket_pairs[open_bracket]}'"
                             ))
-            
-            # Check for unclosed brackets on this line
-            for bracket, line_num in stack:
-                issues.append(LintIssue(
-                    line=line_num,
-                    message=f"Unclosed bracket '{bracket}'",
-                    severity=LintSeverity.ERROR,
-                    suggestion=f"Add closing '{bracket_pairs[bracket]}'"
-                ))
-        
+
+        # Check for unclosed brackets at end of document
+        for bracket, line_num in global_stack:
+            issues.append(LintIssue(
+                line=line_num,
+                message=f"Unclosed bracket '{bracket}'",
+                severity=LintSeverity.ERROR,
+                suggestion=f"Add closing '{bracket_pairs[bracket]}'"
+            ))
+
         return issues
     
     @classmethod

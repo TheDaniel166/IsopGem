@@ -45,7 +45,8 @@ class MermaidFeature(EditorFeature):
         self._setup_actions()
 
     def initialize(self) -> None:
-        pass
+        # Allow SafeTextEdit to restore docimg://mermaid assets on load.
+        self.editor.mermaid_renderer = MermaidRenderer.render_mermaid
         
     def _setup_actions(self):
         """Initialize actions."""

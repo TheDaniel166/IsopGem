@@ -482,22 +482,92 @@ def main():
     # Configure app behavior - allow quit on last window close
     app.setQuitOnLastWindowClosed(True)
     
-    # Set up signal handler for Ctrl+C
+    # Set up signal handlers for Ctrl+C and termination
     def signal_handler(sig, frame):
-        """Handle interrupt signal (Ctrl+C)."""
-        logger.info("Received interrupt signal, shutting down...")
+        """Handle interrupt and termination signals."""
+        logger.info("Received signal %s, shutting down...", sig)
         app.quit()
     
     signal.signal(signal.SIGINT, signal_handler)
-    
+    # Also handle SIGTERM (process manager, container shutdown)
+    try:
+        signal.signal(signal.SIGTERM, signal_handler)
+    except AttributeError:
+        # Windows may not have SIGTERM
+        pass
+
+    # Install a diagnostic signal (SIGUSR1) to dump Mermaid renderer state on demand.
+    # Usage: `kill -USR1 <PID>` from another shell while app is running.
+    try:
+        def _sigusr1_handler(sig, frame):
+            logger.info("Received SIGUSR1: dumping Mermaid renderer state on demand")
+            try:
+                from pillars.document_manager.ui.features.webview_mermaid_renderer import WebViewMermaidRenderer
+                WebViewMermaidRenderer.debug_dump_state()
+            except Exception as e:
+                logger.exception("Failed to dump Mermaid state on SIGUSR1: %s", e)
+        signal.signal(signal.SIGUSR1, _sigusr1_handler)
+    except AttributeError:
+        # Windows doesn't have SIGUSR1
+        pass
+
+    # Enable Python-level fault diagnostics and a signal to dump full Python thread stacks.
+    try:
+        import faulthandler
+        faulthandler.enable()
+
+        def _sigusr2_handler(sig, frame):
+            dump_path = f"/tmp/isopgem_thread_dump.{os.getpid()}.txt"
+            try:
+                with open(dump_path, "w") as f:
+                    faulthandler.dump_traceback(file=f, all_threads=True)
+                logger.info("Wrote Python thread dump to %s", dump_path)
+            except Exception as e:
+                logger.exception("Failed to write Python thread dump: %s", e)
+
+        try:
+            signal.signal(signal.SIGUSR2, _sigusr2_handler)
+        except AttributeError:
+            # Windows doesn't have SIGUSR2
+            pass
+
+        # Attempt to register an automatic dump on SIGABRT (native abort) if supported
+        try:
+            abort_dump_path = f"/tmp/isopgem_abrt_dump.{os.getpid()}.txt"
+            faulthandler.register(signal.SIGABRT, file=open(abort_dump_path, "w"), all_threads=True)
+            logger.info("Registered faulthandler dump on SIGABRT to %s", abort_dump_path)
+        except Exception as e:
+            logger.debug("Could not register faulthandler for SIGABRT: %s", e)
+    except Exception as e:
+        logger.debug("Faulthandler diagnostics not available: %s", e)
+
+    # Ensure Mermaid renderer cleans up pooled WebEngine views on quit
+    try:
+        from pillars.document_manager.ui.features.webview_mermaid_renderer import WebViewMermaidRenderer
+
+        def _on_app_about_to_quit():
+            try:
+                logger.info("App aboutToQuit: cleaning up Mermaid renderer")
+                WebViewMermaidRenderer._cleanup_view_pool()
+            except Exception as e:
+                logger.exception("Error during mermaid cleanup: %s", e)
+
+        app.aboutToQuit.connect(_on_app_about_to_quit)
+    except Exception as e:
+        logger.warning("Could not register Mermaid cleanup: %s", e)
+
     # Create and show main window
     window = IsopGemMainWindow()
     # Use normal window size instead of maximized to test multi-monitor behavior
     window.resize(1440, 900)
     window.show()
-    
+
     # Run application event loop
-    sys.exit(app.exec())
+    exit_code = app.exec()
+
+    # Force kill if QtWebEngine is hanging (known issue with QWebEngineView cleanup)
+    logger.info("App event loop ended, forcing process exit")
+    os._exit(exit_code)
 
 
 if __name__ == "__main__":

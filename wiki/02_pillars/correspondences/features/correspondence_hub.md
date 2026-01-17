@@ -86,7 +86,23 @@ The Library of Correspondences. Launches Spreadsheet Windows.
 
 ### UI Elements
 
-**TODO**: List key UI elements:
+**Key UI Elements:**
+- QAction - (from source)
+- QColor - (from source)
+- QFormLayout - (from source)
+- QFrame - (from source)
+- QGraphicsDropShadowEffect - (from source)
+- QHBoxLayout - (from source)
+- QLabel - (from source)
+- QLineEdit - (from source)
+- QListWidget - (from source)
+- QListWidgetItem - (from source)
+- QMenu - (from source)
+- QPushButton - (from source)
+- QSpinBox - (from source)
+- QThread - (from source)
+- QVBoxLayout - (from source)
+- QWidget - (from source)
 - Input fields
 - Buttons
 - Display areas
@@ -94,7 +110,13 @@ The Library of Correspondences. Launches Spreadsheet Windows.
 
 ### User Interactions
 
-**TODO**: Describe how users interact:
+**User Interactions:**
+- `_on_import_failed()` -> Triggers internal handler.
+- `_on_import_finished()` -> Triggers internal handler.
+- `_on_table_double_click()` -> Triggers internal handler.
+- `_show_context_menu()` -> Triggers internal handler.
+- `accept()` -> Triggers internal handler.
+- `reject()` -> Triggers internal handler.:
 - Click actions
 - Keyboard shortcuts
 - Drag-and-drop
@@ -104,20 +126,21 @@ The Library of Correspondences. Launches Spreadsheet Windows.
 
 ### Core Services
 
-**TODO**: List services used by this feature:
-- ServiceName: responsibility
-- ServiceName: responsibility
+**Services:**
+- TableService - (instantiated in source)
 
 ### Calculation/Processing
 
-**TODO**: Explain the core algorithms or processing:
+**Core Algorithms & Processing:**
+- (No specific algorithmic hints found in source; check service implementations):
 - What calculations are performed?
 - What transformations happen?
 - What validations occur?
 
 ### Business Rules
 
-**TODO**: List key business rules:
+**Key Business Rules:**
+- (No explicit business rules found in source):
 - Rule 1
 - Rule 2
 - Rule 3

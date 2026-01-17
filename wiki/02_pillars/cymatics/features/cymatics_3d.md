@@ -82,7 +82,8 @@ Handles Cymatics3dView operations
 
 ### UI Elements
 
-**TODO**: List key UI elements:
+**Key UI Elements:**
+- (No Qt widgets found in source)
 - Input fields
 - Buttons
 - Display areas
@@ -90,7 +91,22 @@ Handles Cymatics3dView operations
 
 ### User Interactions
 
-**TODO**: Describe how users interact:
+**User Interactions:**
+- `_advance_animation()` -> Triggers internal handler.
+- `_analyze()` -> Triggers internal handler.
+- `_export_gif()` -> Triggers internal handler.
+- `_export_image()` -> Triggers internal handler.
+- `_load_preset()` -> Triggers internal handler.
+- `_on_freq_changed()` -> Triggers internal handler.
+- `_refresh_map_view()` -> Triggers internal handler.
+- `_render()` -> Triggers internal handler.
+- `_reset_particles()` -> Triggers internal handler.
+- `_save_preset()` -> Triggers internal handler.
+- `_toggle_3d_view()` -> Triggers internal handler.
+- `_toggle_animation()` -> Triggers internal handler.
+- `_toggle_audio()` -> Triggers internal handler.
+- `_toggle_freq_mode()` -> Triggers internal handler.
+- `_toggle_particles()` -> Triggers internal handler.:
 - Click actions
 - Keyboard shortcuts
 - Drag-and-drop
@@ -100,20 +116,22 @@ Handles Cymatics3dView operations
 
 ### Core Services
 
-**TODO**: List services used by this feature:
-- ServiceName: responsibility
-- ServiceName: responsibility
+**Services:**
+- (No services instantiated in source)
 
 ### Calculation/Processing
 
-**TODO**: Explain the core algorithms or processing:
+**Core Algorithms & Processing:**
+- Clamps numeric inputs (e.g., frequency) to safe ranges using np.clip().
+- Uses NumPy for numeric computations (grids, FFTs).:
 - What calculations are performed?
 - What transformations happen?
 - What validations occur?
 
 ### Business Rules
 
-**TODO**: List key business rules:
+**Key Business Rules:**
+- Clamps inputs to safe numerical ranges (using np.clip):
 - Rule 1
 - Rule 2
 - Rule 3

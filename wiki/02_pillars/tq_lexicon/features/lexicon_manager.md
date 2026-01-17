@@ -85,7 +85,27 @@ Sovereign Interface for managing the Holy Book Key.
 
 ### UI Elements
 
-**TODO**: List key UI elements:
+**Key UI Elements:**
+- QColor - (from source)
+- QComboBox - (from source)
+- QDialog - (from source)
+- QFormLayout - (from source)
+- QFrame - (from source)
+- QGroupBox - (from source)
+- QHBoxLayout - (from source)
+- QLabel - (from source)
+- QLineEdit - (from source)
+- QListWidget - (from source)
+- QListWidgetItem - (from source)
+- QPlainTextEdit - (from source)
+- QProgressBar - (from source)
+- QPushButton - (from source)
+- QSplitter - (from source)
+- QTabWidget - (from source)
+- QTableWidget - (from source)
+- QTableWidgetItem - (from source)
+- QTextEdit - (from source)
+- QTreeWidget - (from source)
 - Input fields
 - Buttons
 - Display areas
@@ -93,7 +113,23 @@ Sovereign Interface for managing the Holy Book Key.
 
 ### User Interactions
 
-**TODO**: Describe how users interact:
+**User Interactions:**
+- `_filter_concordance()` -> Triggers internal handler.
+- `_import_file()` -> Triggers internal handler.
+- `_load_concordance()` -> Triggers internal handler.
+- `_next_page()` -> Triggers internal handler.
+- `_on_concordance_word_selected()` -> Triggers internal handler.
+- `_on_enrich_finished()` -> Triggers internal handler.
+- `_on_enrich_progress()` -> Triggers internal handler.
+- `_on_occurrence_double_clicked()` -> Triggers internal handler.
+- `_on_tab_changed()` -> Triggers internal handler.
+- `_open_key_details()` -> Triggers internal handler.
+- `_prev_page()` -> Triggers internal handler.
+- `_process_candidates()` -> Triggers internal handler.
+- `_reset_database()` -> Triggers internal handler.
+- `_scan_text()` -> Triggers internal handler.
+- `_search_keys()` -> Triggers internal handler.
+- `_start_enrichment()` -> Triggers internal handler.:
 - Click actions
 - Keyboard shortcuts
 - Drag-and-drop
@@ -103,20 +139,22 @@ Sovereign Interface for managing the Holy Book Key.
 
 ### Core Services
 
-**TODO**: List services used by this feature:
-- ServiceName: responsibility
-- ServiceName: responsibility
+**Services:**
+- EnrichmentService - (instantiated in source)
+- HolyKeyService - (instantiated in source)
 
 ### Calculation/Processing
 
-**TODO**: Explain the core algorithms or processing:
+**Core Algorithms & Processing:**
+- Caches expensive computations (e.g., Bessel zeros) to reduce cost.:
 - What calculations are performed?
 - What transformations happen?
 - What validations occur?
 
 ### Business Rules
 
-**TODO**: List key business rules:
+**Key Business Rules:**
+- (No explicit business rules found in source):
 - Rule 1
 - Rule 2
 - Rule 3

@@ -85,7 +85,15 @@ Hub widget for the Cymatics pillar.
 
 ### UI Elements
 
-**TODO**: List key UI elements:
+**Key UI Elements:**
+- QScrollArea - (from source)
+- QLabel - (from source)
+- QFrame - (from source)
+- QGridLayout - (from source)
+- QHBoxLayout - (from source)
+- QPushButton - (from source)
+- QVBoxLayout - (from source)
+- QWidget - (from source)
 - Input fields
 - Buttons
 - Display areas
@@ -93,7 +101,8 @@ Hub widget for the Cymatics pillar.
 
 ### User Interactions
 
-**TODO**: Describe how users interact:
+**User Interactions:**
+- (No direct signal connections found; UI interactions are standard control actions):
 - Click actions
 - Keyboard shortcuts
 - Drag-and-drop
@@ -109,14 +118,16 @@ Hub widget for the Cymatics pillar.
 
 ### Calculation/Processing
 
-**TODO**: Explain the core algorithms or processing:
+**Core Algorithms & Processing:**
+- (No specific algorithmic hints found in source; check service implementations):
 - What calculations are performed?
 - What transformations happen?
 - What validations occur?
 
 ### Business Rules
 
-**TODO**: List key business rules:
+**Key Business Rules:**
+- (No explicit business rules found in source):
 - Rule 1
 - Rule 2
 - Rule 3

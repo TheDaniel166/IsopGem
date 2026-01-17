@@ -85,7 +85,17 @@ Non-modal dialog for searching and replacing text in the spreadsheet.
 
 ### UI Elements
 
-**TODO**: List key UI elements:
+**Key UI Elements:**
+- QCheckBox - (from source)
+- QGridLayout - (from source)
+- QGroupBox - (from source)
+- QHBoxLayout - (from source)
+- QLabel - (from source)
+- QLineEdit - (from source)
+- QListWidget - (from source)
+- QListWidgetItem - (from source)
+- QPushButton - (from source)
+- QVBoxLayout - (from source)
 - Input fields
 - Buttons
 - Display areas
@@ -93,7 +103,12 @@ Non-modal dialog for searching and replacing text in the spreadsheet.
 
 ### User Interactions
 
-**TODO**: Describe how users interact:
+**User Interactions:**
+- `_on_find_all()` -> Triggers internal handler.
+- `_on_find_next()` -> Triggers internal handler.
+- `_on_item_clicked()` -> Triggers internal handler.
+- `_on_replace()` -> Triggers internal handler.
+- `_on_replace_all()` -> Triggers internal handler.:
 - Click actions
 - Keyboard shortcuts
 - Drag-and-drop
@@ -103,20 +118,21 @@ Non-modal dialog for searching and replacing text in the spreadsheet.
 
 ### Core Services
 
-**TODO**: List services used by this feature:
-- ServiceName: responsibility
-- ServiceName: responsibility
+**Services:**
+- (No services instantiated in source)
 
 ### Calculation/Processing
 
-**TODO**: Explain the core algorithms or processing:
+**Core Algorithms & Processing:**
+- (No specific algorithmic hints found in source; check service implementations):
 - What calculations are performed?
 - What transformations happen?
 - What validations occur?
 
 ### Business Rules
 
-**TODO**: List key business rules:
+**Key Business Rules:**
+- (No explicit business rules found in source):
 - Rule 1
 - Rule 2
 - Rule 3

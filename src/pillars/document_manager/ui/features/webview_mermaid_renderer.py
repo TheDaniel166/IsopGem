@@ -53,12 +53,15 @@ Not thread-safe. All methods must be called from the Qt main thread.
 
 import os
 import logging
+import html as html_module
 from typing import Optional, Dict, Any
 from dataclasses import dataclass, field
-from PyQt6.QtCore import QUrl, QSize, QEventLoop, QTimer, Qt
+from PyQt6.QtCore import QUrl, QSize, QEventLoop, QTimer, Qt, QByteArray, QRectF
 from PyQt6.QtGui import QImage, QPainter
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtWebEngineCore import QWebEngineSettings
+import weakref
+
 
 logger = logging.getLogger(__name__)
 
@@ -144,6 +147,7 @@ class MermaidConfig:
     # Security & logging
     log_level: int = 4  # Error level by default
     secure: str = "strict"
+    start_on_load: bool = False
     
     def to_js_config(self) -> str:
         """
@@ -152,7 +156,11 @@ class MermaidConfig:
         Returns:
             str: JavaScript object literal for mermaid.initialize({...})
         """
-        config_parts = [f"startOnLoad: true", f"theme: '{self.theme}'", f"logLevel: {self.log_level}"]
+        config_parts = [
+            f"startOnLoad: {'true' if self.start_on_load else 'false'}",
+            f"theme: '{self.theme}'",
+            f"logLevel: {self.log_level}",
+        ]
         
         if self.theme_variables:
             vars_str = ", ".join(f"{k}: '{v}'" for k, v in self.theme_variables.items())
@@ -235,6 +243,9 @@ class WebViewMermaidRenderer:
     # View pool for performance (class-level)
     _view_pool: list[QWebEngineView] = []
     _pool_lock = False  # Simple flag to prevent concurrent access
+    # Track live views to help diagnose leaks that prevent clean shutdown
+    _live_views: "weakref.WeakSet[QWebEngineView]" = weakref.WeakSet()  # type: ignore[assignment]
+
     
     def __init__(self):
         """
@@ -242,6 +253,13 @@ class WebViewMermaidRenderer:
         All methods are static.
         """
         pass
+
+    @classmethod
+    def _configure_view(cls, view: QWebEngineView) -> None:
+        """Apply WebEngine settings required for offline Mermaid rendering."""
+        settings = view.settings()
+        settings.setAttribute(QWebEngineSettings.WebAttribute.LocalContentCanAccessFileUrls, True)
+        settings.setAttribute(QWebEngineSettings.WebAttribute.LocalContentCanAccessRemoteUrls, True)
     
     @classmethod
     def _get_view_from_pool(cls) -> QWebEngineView:
@@ -255,13 +273,22 @@ class WebViewMermaidRenderer:
             cls._pool_lock = True
             view = cls._view_pool.pop()
             cls._pool_lock = False
+            cls._configure_view(view)
+            logger.debug("MermaidRenderer: Reusing pooled view %s (pool_size=%d)", hex(id(view)), len(cls._view_pool))
             return view
         
         # Create new view
         view = QWebEngineView()
+        cls._configure_view(view)
         view.setAttribute(Qt.WidgetAttribute.WA_DontShowOnScreen, True)
         view.show()
         view.move(-10000, -10000)
+        # Track live view for diagnostics
+        try:
+            cls._live_views.add(view)
+            logger.debug("MermaidRenderer: Created new view %s (live_views=%d)", hex(id(view)), len(cls._live_views))
+        except Exception:
+            logger.exception("MermaidRenderer: Failed to track live view")
         
         return view
     
@@ -278,16 +305,113 @@ class WebViewMermaidRenderer:
             view.resize(DEFAULT_WIDTH, DEFAULT_HEIGHT)
             view.setZoomFactor(1.0)
             cls._view_pool.append(view)
+            logger.debug("MermaidRenderer: Returned view %s to pool (pool_size=%d)", hex(id(view)), len(cls._view_pool))
         else:
             # Pool full, delete this view
+            try:
+                # Remove from live views tracking if present
+                if view in cls._live_views:
+                    cls._live_views.discard(view)
+            except Exception:
+                logger.exception("MermaidRenderer: Error removing view from live set")
+            logger.debug("MermaidRenderer: Pool full - deleting view %s", hex(id(view)))
+            view.close()
             view.deleteLater()
     
     @classmethod
     def _cleanup_view_pool(cls):
         """Clear the view pool (called on app shutdown or memory pressure)."""
+        from PyQt6.QtWidgets import QApplication
+
+        logger.info("MermaidRenderer: _cleanup_view_pool called (pool_size=%d, live_views=%d)", len(cls._view_pool), len(cls._live_views))
+
+        # Clean up pooled views
         while cls._view_pool:
             view = cls._view_pool.pop()
-            view.deleteLater()
+            try:
+                logger.info("MermaidRenderer: closing pooled view %s", hex(id(view)))
+                view.page().deleteLater()  # Delete the page first
+                view.close()
+                view.deleteLater()
+            except Exception:
+                logger.exception("MermaidRenderer: Error closing view %s", hex(id(view)))
+            try:
+                cls._live_views.discard(view)
+            except Exception:
+                pass
+
+        # Force cleanup of any remaining live views (e.g., leaked references)
+        try:
+            live_views_copy = list(cls._live_views)
+            for view in live_views_copy:
+                try:
+                    logger.info("MermaidRenderer: force-closing live view %s", hex(id(view)))
+                    view.page().deleteLater()
+                    view.close()
+                    view.deleteLater()
+                except Exception:
+                    logger.exception("MermaidRenderer: Error force-closing view")
+            cls._live_views = weakref.WeakSet()
+        except Exception:
+            logger.exception("MermaidRenderer: Error cleaning up live views")
+
+        # Process pending deletions immediately
+        app = QApplication.instance()
+        if app:
+            app.processEvents()
+
+        logger.info("MermaidRenderer: cleanup complete (pool_size=%d, live_views=%d)", len(cls._view_pool), len(cls._live_views))
+
+    @classmethod
+    def _read_js(cls, view: QWebEngineView, script: str) -> Any:
+        """Run JS in the view and return the result synchronously."""
+        result: dict[str, Any] = {"value": None}
+        loop = QEventLoop()
+
+        def on_result(res: Any) -> None:
+            result["value"] = res
+            loop.quit()
+
+        view.page().runJavaScript(script, on_result)
+        loop.exec()
+        return result["value"]
+
+    @classmethod
+    def _svg_to_image(
+        cls,
+        svg_content: str,
+        width: int,
+        height: int,
+        scale: float
+    ) -> Optional[QImage]:
+        """Render SVG to QImage using QtSvg when available."""
+        try:
+            from PyQt6.QtSvg import QSvgRenderer
+        except Exception:
+            return None
+
+        renderer = QSvgRenderer(QByteArray(svg_content.encode("utf-8")))
+        if not renderer.isValid():
+            return None
+
+        if width <= 0 or height <= 0:
+            default_size = renderer.defaultSize()
+            width = default_size.width()
+            height = default_size.height()
+        if width <= 0 or height <= 0:
+            width = DEFAULT_WIDTH
+            height = DEFAULT_HEIGHT
+
+        target_width = max(1, int(width * scale))
+        target_height = max(1, int(height * scale))
+        image = QImage(target_width, target_height, QImage.Format_ARGB32_Premultiplied)
+        image.fill(Qt.GlobalColor.white)
+
+        painter = QPainter(image)
+        renderer.render(painter, QRectF(0, 0, target_width, target_height))
+        painter.end()
+
+        return image
 
     @classmethod
     def render_mermaid(
@@ -360,12 +484,13 @@ class WebViewMermaidRenderer:
         
         if not os.path.exists(js_path):
             logger.error("MermaidRenderer: JS not found at %s", js_path)
+            cls._return_view_to_pool(view)
             return None
 
         js_url = QUrl.fromLocalFile(js_path).toString()
-        
-        # Escape code for safe HTML embedding
-        escaped_code = code.replace("<", "&lt;").replace(">", "&gt;")
+
+        # Escape HTML so Mermaid receives the original text via entity decoding.
+        escaped_code = html_module.escape(code)
         
         # Scale the container padding proportionally? Or keep visual padding?
         # Standard CSS pixels will be scaled by zoom factor.
@@ -376,8 +501,8 @@ class WebViewMermaidRenderer:
         <head>
             <script src="{js_url}"></script>
             <style>
-                body {{ margin: 0; padding: 0; background: white; overflow: hidden; }}
-                #container {{ display: inline-block; padding: 10px; }}
+                body {{ margin: 0; padding: 0; background: white; overflow: hidden; color: #000; }}
+                #container {{ display: inline-block; padding: 10px; white-space: pre; }}
             </style>
         </head>
         <body>
@@ -385,10 +510,19 @@ class WebViewMermaidRenderer:
             {escaped_code}
             </div>
             <script>
-                mermaid.initialize({{ 
-                    startOnLoad: true,
-                    theme: '{theme}'
-                }});
+                window.__mermaid_render_done = false;
+                window.__mermaid_render_error = null;
+                try {{
+                    mermaid.initialize({{
+                        startOnLoad: false,
+                        theme: '{theme}'
+                    }});
+                    mermaid.run({{ nodes: [document.getElementById('container')] }})
+                        .then(() => {{ window.__mermaid_render_done = true; }})
+                        .catch((err) => {{ window.__mermaid_render_error = String(err); }});
+                }} catch (err) {{
+                    window.__mermaid_render_error = String(err);
+                }}
             </script>
         </body>
         </html>
@@ -454,9 +588,18 @@ class WebViewMermaidRenderer:
         check_timer.stop()
         timeout_timer.stop()
         
-        if not render_complete["done"]:
-            logger.warning("MermaidRenderer: Render timed out (SVG not detected)")
-            # Still attempt to continue - sometimes render completes but detection fails
+        svg_content = cls._read_js(
+            view,
+            "document.querySelector('.mermaid svg') && document.querySelector('.mermaid svg').outerHTML"
+        )
+        if not svg_content:
+            error_msg = cls._read_js(view, "window.__mermaid_render_error")
+            if error_msg:
+                logger.error("MermaidRenderer: JS render error: %s", error_msg)
+            else:
+                logger.warning("MermaidRenderer: Render timed out (SVG not detected)")
+            cls._return_view_to_pool(view)
+            return None
 
         # 5. Get Content Size
         size_data = {"w": 0, "h": 0}
@@ -481,29 +624,24 @@ class WebViewMermaidRenderer:
         if w == 0 or h == 0:
              # Fallback
              w, h = view.width(), view.height()
-        
-        # Resize view to fit content tightly
-        # If scale is 2.0, w/h (CSS pixels) are same, but view needs to be 2x CSS pixels physically?
-        # QtWebEngine setZoomFactor: "The zoom factor by which the view contents are scaled."
-        # If I have a 100px div, at zoom 2.0 it renders as 200px visually.
-        # offsetWidth returns 100 (CSS pixels).
-        # So we need to resize view to (w * scale, h * scale).
-        
-        view.resize(int(w * scale), int(h * scale))
-        
-        # Wait for resize repaint
-        repaint_loop = QEventLoop()
-        QTimer.singleShot(REPAINT_DELAY_MS, repaint_loop.quit)
-        repaint_loop.exec()
-        
-        # 6. Capture
-        image = view.grab().toImage()
-        
+
+        image = cls._svg_to_image(svg_content, w, h, scale)
+        if image is None:
+            # Resize view to fit content tightly
+            # If scale is 2.0, w/h (CSS pixels) are same, but view needs to be 2x CSS pixels physically.
+            view.resize(int(w * scale), int(h * scale))
+
+            # Wait for resize repaint
+            repaint_loop = QEventLoop()
+            QTimer.singleShot(REPAINT_DELAY_MS, repaint_loop.quit)
+            repaint_loop.exec()
+
+            # 6. Capture fallback
+            image = view.grab().toImage()
+
         # Return view to pool for reuse
         cls._return_view_to_pool(view)
-        
-        logger.debug("MermaidRenderer: Successfully rendered image (%dx%d)", image.width(), image.height())
-        
+
         return image
 
 
@@ -548,10 +686,11 @@ class WebViewMermaidRenderer:
         
         if not os.path.exists(js_path):
             logger.error("MermaidRenderer: JS not found at %s", js_path)
+            cls._return_view_to_pool(view)
             return None
 
         js_url = QUrl.fromLocalFile(js_path).toString()
-        escaped_code = code.replace("<", "&lt;").replace(">", "&gt;")
+        escaped_code = html_module.escape(code)
         
         html = f"""
         <!DOCTYPE html>
@@ -559,8 +698,8 @@ class WebViewMermaidRenderer:
         <head>
             <script src="{js_url}"></script>
             <style>
-                body {{ margin: 0; padding: 0; background: white; }}
-                #container {{ display: inline-block; padding: 10px; }}
+                body {{ margin: 0; padding: 0; background: white; color: #000; }}
+                #container {{ display: inline-block; padding: 10px; white-space: pre; }}
             </style>
         </head>
         <body>
@@ -568,10 +707,19 @@ class WebViewMermaidRenderer:
             {escaped_code}
             </div>
             <script>
-                mermaid.initialize({{ 
-                    startOnLoad: true,
-                    theme: '{theme}'
-                }});
+                window.__mermaid_render_done = false;
+                window.__mermaid_render_error = null;
+                try {{
+                    mermaid.initialize({{
+                        startOnLoad: false,
+                        theme: '{theme}'
+                    }});
+                    mermaid.run({{ nodes: [document.getElementById('container')] }})
+                        .then(() => {{ window.__mermaid_render_done = true; }})
+                        .catch((err) => {{ window.__mermaid_render_error = String(err); }});
+                }} catch (err) {{
+                    window.__mermaid_render_error = String(err);
+                }}
             </script>
         </body>
         </html>
@@ -630,28 +778,42 @@ class WebViewMermaidRenderer:
         check_timer.stop()
         timeout_timer.stop()
 
-        # 5. Extract SVG
-        svg_data = {"content": None}
-        
-        js_extract = "document.querySelector('.mermaid svg').outerHTML"
-        
-        js_loop = QEventLoop()
-        def on_result(res):
-            svg_data["content"] = res
-            js_loop.quit()
-
-        view.page().runJavaScript(js_extract, on_result)
-        js_loop.exec()
+        svg_content = cls._read_js(
+            view,
+            "document.querySelector('.mermaid svg') && document.querySelector('.mermaid svg').outerHTML"
+        )
+        if not svg_content:
+            error_msg = cls._read_js(view, "window.__mermaid_render_error")
+            if error_msg:
+                logger.error("MermaidRenderer: SVG render error: %s", error_msg)
+            else:
+                logger.warning("MermaidRenderer: SVG render timed out")
+            cls._return_view_to_pool(view)
+            return None
         
         # Return view to pool
         cls._return_view_to_pool(view)
         
-        if svg_data["content"]:
-            logger.debug("MermaidRenderer: Successfully rendered SVG (%d chars)", len(svg_data["content"]))
-        else:
-            logger.warning("MermaidRenderer: SVG extraction failed")
-        
-        return svg_data["content"]
+        logger.debug("MermaidRenderer: Successfully rendered SVG (%d chars)", len(svg_content))
+        return svg_content
+
+    @classmethod
+    def debug_dump_state(cls) -> Dict[str, Any]:
+        """Return current pool and live view diagnostic info and log it.
+
+        Use this when debugging shutdown hangs to see which views remain alive
+        and whether the pool still holds views that should have been cleaned up.
+        """
+        try:
+            live = [hex(id(v)) for v in list(cls._live_views)]
+        except Exception:
+            live = ["<error>"]
+        info = {
+            "pool_size": len(cls._view_pool),
+            "live_views": live,
+        }
+        logger.warning("MermaidRenderer: DEBUG STATE - pool_size=%d, live_views=%s", info["pool_size"], info["live_views"])
+        return info
     
     @classmethod
     def render_mermaid_advanced(
@@ -717,7 +879,7 @@ class WebViewMermaidRenderer:
             return None
         
         js_url = QUrl.fromLocalFile(js_path).toString()
-        escaped_code = code.replace("<", "&lt;").replace(">", "&gt;")
+        escaped_code = html_module.escape(code)
         
         # Build HTML with advanced config
         html = f"""
@@ -726,8 +888,8 @@ class WebViewMermaidRenderer:
         <head>
             <script src="{js_url}"></script>
             <style>
-                body {{ margin: 0; padding: 0; background: white; overflow: hidden; }}
-                #container {{ display: inline-block; padding: 10px; }}
+                body {{ margin: 0; padding: 0; background: white; overflow: hidden; color: #000; }}
+                #container {{ display: inline-block; padding: 10px; white-space: pre; }}
             </style>
         </head>
         <body>
@@ -735,7 +897,16 @@ class WebViewMermaidRenderer:
             {escaped_code}
             </div>
             <script>
-                mermaid.initialize({config.to_js_config()});
+                window.__mermaid_render_done = false;
+                window.__mermaid_render_error = null;
+                try {{
+                    mermaid.initialize({config.to_js_config()});
+                    mermaid.run({{ nodes: [document.getElementById('container')] }})
+                        .then(() => {{ window.__mermaid_render_done = true; }})
+                        .catch((err) => {{ window.__mermaid_render_error = String(err); }});
+                }} catch (err) {{
+                    window.__mermaid_render_error = String(err);
+                }}
             </script>
         </body>
         </html>
@@ -784,6 +955,19 @@ class WebViewMermaidRenderer:
         poll_timer.stop()
         check_timer.stop()
         timeout_timer.stop()
+
+        svg_content = cls._read_js(
+            view,
+            "document.querySelector('.mermaid svg') && document.querySelector('.mermaid svg').outerHTML"
+        )
+        if not svg_content:
+            error_msg = cls._read_js(view, "window.__mermaid_render_error")
+            if error_msg:
+                logger.error("MermaidRenderer: Advanced render error: %s", error_msg)
+            else:
+                logger.warning("MermaidRenderer: Advanced render timed out")
+            cls._return_view_to_pool(view)
+            return None
         
         # Get content size and resize
         size_data = {"w": 0, "h": 0}
@@ -801,16 +985,18 @@ class WebViewMermaidRenderer:
         w, h = size_data["w"], size_data["h"]
         if w == 0 or h == 0:
             w, h = view.width(), view.height()
-        
-        view.resize(int(w * scale), int(h * scale))
-        
-        # Wait for repaint
-        repaint_loop = QEventLoop()
-        QTimer.singleShot(REPAINT_DELAY_MS, repaint_loop.quit)
-        repaint_loop.exec()
-        
-        # Capture
-        image = view.grab().toImage()
+
+        image = cls._svg_to_image(svg_content, w, h, scale)
+        if image is None:
+            view.resize(int(w * scale), int(h * scale))
+
+            # Wait for repaint
+            repaint_loop = QEventLoop()
+            QTimer.singleShot(REPAINT_DELAY_MS, repaint_loop.quit)
+            repaint_loop.exec()
+
+            # Capture
+            image = view.grab().toImage()
         
         # Return view to pool
         cls._return_view_to_pool(view)

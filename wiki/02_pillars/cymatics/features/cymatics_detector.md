@@ -85,7 +85,18 @@ Detector view for cymatics patterns produced by the simulator.
 
 ### UI Elements
 
-**TODO**: List key UI elements:
+**Key UI Elements:**
+- QComboBox - (from source)
+- QDoubleSpinBox - (from source)
+- QFrame - (from source)
+- QGridLayout - (from source)
+- QHBoxLayout - (from source)
+- QImage - (from source)
+- QLabel - (from source)
+- QPushButton - (from source)
+- QTextEdit - (from source)
+- QVBoxLayout - (from source)
+- QWidget - (from source)
 - Input fields
 - Buttons
 - Display areas
@@ -93,7 +104,9 @@ Detector view for cymatics patterns produced by the simulator.
 
 ### User Interactions
 
-**TODO**: Describe how users interact:
+**User Interactions:**
+- 1. Start detection -> `_on_start_detection()` -> CymaticsDetectionService.analyze(audio or image) -> produces DetectionResult (nodal lines, symmetry metrics).
+- 2. Adjust sensitivity -> `_on_sensitivity_changed()` -> updates detection thresholds and re-runs analysis.:
 - Click actions
 - Keyboard shortcuts
 - Drag-and-drop
@@ -103,20 +116,21 @@ Detector view for cymatics patterns produced by the simulator.
 
 ### Core Services
 
-**TODO**: List services used by this feature:
-- ServiceName: responsibility
-- ServiceName: responsibility
+**Services:**
+- CymaticsDetectionService - (instantiated in source)
 
 ### Calculation/Processing
 
-**TODO**: Explain the core algorithms or processing:
+**Core Algorithms & Processing:**
+- Uses FFT and pattern recognition to identify nodal lines and symmetry; emits detailed metrics used by visualization components.:
 - What calculations are performed?
 - What transformations happen?
 - What validations occur?
 
 ### Business Rules
 
-**TODO**: List key business rules:
+**Key Business Rules:**
+- Clamps inputs to safe numerical ranges (using np.clip):
 - Rule 1
 - Rule 2
 - Rule 3

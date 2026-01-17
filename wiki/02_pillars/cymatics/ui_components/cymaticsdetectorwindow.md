@@ -130,7 +130,8 @@ stateDiagram-v2
 
 ### Keyboard Shortcuts
 
-**TODO**: List keyboard shortcuts:
+**Keyboard Shortcuts:**
+- (None found)
 - Ctrl+N: New
 - Ctrl+S: Save
 - Ctrl+Q: Quit
@@ -163,7 +164,8 @@ Detector view for cymatics patterns produced by the simulator.
 
 ### Key Methods
 
-**TODO**: List and describe key methods:
+**Event Handlers:**
+- (No event handlers found in source)
 - method_name(): description
 
 ### Styling & Theming

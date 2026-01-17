@@ -86,7 +86,12 @@ Layout: [ + ] [ ≡ ] [ Tabs ... ] [ < ] [ > ]
 
 ### UI Elements
 
-**TODO**: List key UI elements:
+**Key UI Elements:**
+- QAction - (from source)
+- QHBoxLayout - (from source)
+- QMenu - (from source)
+- QTabBar - (from source)
+- QToolButton - (from source)
 - Input fields
 - Buttons
 - Display areas
@@ -94,7 +99,9 @@ Layout: [ + ] [ ≡ ] [ Tabs ... ] [ < ] [ > ]
 
 ### User Interactions
 
-**TODO**: Describe how users interact:
+**User Interactions:**
+- `_go_next()` -> Triggers internal handler.
+- `_go_prev()` -> Triggers internal handler.:
 - Click actions
 - Keyboard shortcuts
 - Drag-and-drop
@@ -104,20 +111,21 @@ Layout: [ + ] [ ≡ ] [ Tabs ... ] [ < ] [ > ]
 
 ### Core Services
 
-**TODO**: List services used by this feature:
-- ServiceName: responsibility
-- ServiceName: responsibility
+**Services:**
+- (No services instantiated in source)
 
 ### Calculation/Processing
 
-**TODO**: Explain the core algorithms or processing:
+**Core Algorithms & Processing:**
+- (No specific algorithmic hints found in source; check service implementations):
 - What calculations are performed?
 - What transformations happen?
 - What validations occur?
 
 ### Business Rules
 
-**TODO**: List key business rules:
+**Key Business Rules:**
+- (No explicit business rules found in source):
 - Rule 1
 - Rule 2
 - Rule 3

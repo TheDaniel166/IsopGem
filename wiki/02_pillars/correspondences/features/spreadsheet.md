@@ -87,7 +87,17 @@ Spreadsheet View class definition.
 
 ### UI Elements
 
-**TODO**: List key UI elements:
+**Key UI Elements:**
+- QAction - (from source)
+- QDockWidget - (from source)
+- QHBoxLayout - (from source)
+- QLineEdit - (from source)
+- QMenu - (from source)
+- QSize - (from source)
+- QToolBar - (from source)
+- QToolButton - (from source)
+- QVBoxLayout - (from source)
+- QWidget - (from source)
 - Input fields
 - Buttons
 - Display areas
@@ -95,7 +105,20 @@ Spreadsheet View class definition.
 
 ### User Interactions
 
-**TODO**: Describe how users interact:
+**User Interactions:**
+- `_clear_conditional_rules()` -> Triggers internal handler.
+- `_on_data_changed()` -> Triggers internal handler.
+- `_on_formula_return()` -> Triggers internal handler.
+- `_on_formula_text_edited()` -> Triggers internal handler.
+- `_on_inline_text_edited()` -> Triggers internal handler.
+- `_on_range_selection_changed()` -> Triggers internal handler.
+- `_on_scroll_added()` -> Triggers internal handler.
+- `_on_scroll_changed()` -> Triggers internal handler.
+- `_on_selection_changed()` -> Triggers internal handler.
+- `_on_zoom_changed()` -> Triggers internal handler.
+- `_save_table()` -> Triggers internal handler.
+- `_toggle_keyboard()` -> Triggers internal handler.
+- `pick_border_color()` -> Triggers internal handler.:
 - Click actions
 - Keyboard shortcuts
 - Drag-and-drop
@@ -105,20 +128,21 @@ Spreadsheet View class definition.
 
 ### Core Services
 
-**TODO**: List services used by this feature:
-- ServiceName: responsibility
-- ServiceName: responsibility
+**Services:**
+- (No services instantiated in source)
 
 ### Calculation/Processing
 
-**TODO**: Explain the core algorithms or processing:
+**Core Algorithms & Processing:**
+- (No specific algorithmic hints found in source; check service implementations):
 - What calculations are performed?
 - What transformations happen?
 - What validations occur?
 
 ### Business Rules
 
-**TODO**: List key business rules:
+**Key Business Rules:**
+- (No explicit business rules found in source):
 - Rule 1
 - Rule 2
 - Rule 3

@@ -213,15 +213,18 @@ class MermaidEditorDialog(QDialog):
         self._current_theme = "default"
         self._zoom_level = 100
         self._last_rendered_image: QImage | None = None
-        
+
         # Debounce timer for live preview
         self._render_timer = QTimer(self)
         self._render_timer.setSingleShot(True)
         self._render_timer.setInterval(600)  # 600ms debounce
         self._render_timer.timeout.connect(self._render_preview)
-        
+
         # Builder sync flag (prevent infinite loops)
         self._updating_from_builder = False
+
+        # Render lock to prevent re-entrant calls (causes segfault with QWebEngineView)
+        self._render_in_progress = False
         
         self._setup_ui()
         self._apply_styles()
@@ -235,16 +238,25 @@ class MermaidEditorDialog(QDialog):
     def set_code(self, code: str):
         """Set the code in the editor and render."""
         self.code_editor.setPlainText(code)
-        self._render_preview()
+        # Defer render to avoid nested event loop
+        QTimer.singleShot(0, self._render_preview)
         
     def reject(self):
         """Hide instead of close when Cancel is clicked."""
         self.hide()
-        
+
     def closeEvent(self, event):
-        """Hide instead of close when X is clicked."""
+        """Hide instead of close when X is clicked, unless app is quitting."""
+        from PyQt6.QtWidgets import QApplication
+
+        app = QApplication.instance()
+        # Allow actual close during app shutdown to prevent hang
+        if app is None or app.closingDown():
+            event.accept()
+            return
+
         self.hide()
-        event.ignore() 
+        event.ignore()
         # Crucial: ignore the close event so Qt doesn't destroy the widget
         # The dialog remains alive but hidden, preserving the WebEngine process.
     
@@ -760,16 +772,16 @@ class MermaidEditorDialog(QDialog):
         """Handle code changes from the visual builder."""
         if self._updating_from_builder:
             return
-        
+
         try:
             self._updating_from_builder = True
-            
+
             # Update code editor
             self.code_editor.setPlainText(code)
-            
-            # Trigger render
-            self._render_preview()
-        
+
+            # Defer render to avoid nested event loop
+            QTimer.singleShot(0, self._render_preview)
+
         finally:
             self._updating_from_builder = False
     
@@ -777,8 +789,9 @@ class MermaidEditorDialog(QDialog):
         """Insert a template into the code editor."""
         if template_name in MERMAID_TEMPLATES:
             self.code_editor.setPlainText(MERMAID_TEMPLATES[template_name])
-            self._render_preview()
-            
+            # Defer render to avoid nested event loop (modal dialog + WebEngine loop = crash)
+            QTimer.singleShot(0, self._render_preview)
+
             # If builder is open, sync the template
             if self.builder_toggle_btn.isChecked():
                 try:
@@ -790,7 +803,8 @@ class MermaidEditorDialog(QDialog):
         """Change the Mermaid render theme."""
         if theme_name in MERMAID_THEMES:
             self._current_theme = MERMAID_THEMES[theme_name]
-            self._render_preview()
+            # Defer render to avoid nested event loop
+            QTimer.singleShot(0, self._render_preview)
     
     def _on_text_changed(self):
         """Start debounce timer for live preview."""
@@ -843,35 +857,43 @@ class MermaidEditorDialog(QDialog):
         self.zoom_level_label.setText(f"{self._zoom_level}%")
     
     # === RENDERING ===
-    
+
     def _render_preview(self):
         """Render the current code via WebEngine."""
+        # Guard against re-entrant calls - QWebEngineView + nested QEventLoop = segfault
+        if self._render_in_progress:
+            # Schedule a retry after current render completes
+            QTimer.singleShot(100, self._render_preview)
+            return
+
         code = self.code_editor.toPlainText().strip()
-        
+
         # Run linter
         self._run_lint(code)
-        
+
         if not code:
             self.preview_view.clear()
             self.preview_view.setText("Preview will appear here...")
             self.error_label.hide()
             return
-        
+
         # Render using headless renderer
+        self._render_in_progress = True
         try:
-             # Use a scale factor for high-resolution render, then scale down for display
-             image = WebViewMermaidRenderer.render_mermaid(code, theme=self._current_theme, scale=2.0)
-             if image:
-                 self._last_rendered_image = image
-                 self._apply_zoom_to_preview()
-                 self.error_label.hide()
-                 self._animate_preview_fade_in()
-             else:
-                 self.error_label.setText("Failed to render diagram.")
-                 self.error_label.show()
+            image = WebViewMermaidRenderer.render_mermaid(code, theme=self._current_theme, scale=2.0)
+            if image:
+                self._last_rendered_image = image
+                self._apply_zoom_to_preview()
+                self.error_label.hide()
+                self._animate_preview_fade_in()
+            else:
+                self.error_label.setText("Failed to render diagram.")
+                self.error_label.show()
         except Exception as e:
             self.error_label.setText(f"Render Error: {str(e)}")
             self.error_label.show()
+        finally:
+            self._render_in_progress = False
     
     # === LINTING ===
     
@@ -961,7 +983,8 @@ class MermaidEditorDialog(QDialog):
                 QMessageBox.critical(self, "Error", f"Failed to render PNG:\n{str(e)}")
             finally:
                 # Restore preview text if needed, or just let it stay until next render
-                self._render_preview()
+                # Defer render to avoid nested event loop
+                QTimer.singleShot(0, self._render_preview)
     
     def _save_as_svg(self):
         """Save the diagram as scalable SVG."""
@@ -1024,7 +1047,8 @@ class MermaidEditorDialog(QDialog):
     def _load_gallery_example(self, code: str):
         """Load a gallery example into the editor (replaces current content)."""
         self.code_editor.setPlainText(code)
-        self._render_preview()
+        # Defer render to avoid nested event loop
+        QTimer.singleShot(0, self._render_preview)
         self.code_editor.setFocus()
     
     # === ER GENERATOR ===
@@ -1051,9 +1075,10 @@ class MermaidEditorDialog(QDialog):
             )
         
         self.code_editor.setPlainText(code)
-        self._render_preview()
+        # Defer render to avoid nested event loop
+        QTimer.singleShot(0, self._render_preview)
         self.code_editor.setFocus()
-    
+
     def _discover_sqlalchemy_models(self) -> list[type]:
         """
         Attempt to discover SQLAlchemy models from the application.
@@ -1271,7 +1296,8 @@ class MermaidEditorDialog(QDialog):
     def _load_recent(self, code: str):
         """Load a recent diagram."""
         self.code_editor.setPlainText(code)
-        self._render_preview()
+        # Defer render to avoid nested event loop
+        QTimer.singleShot(0, self._render_preview)
         self.code_editor.setFocus()
     
     def _save_to_recent(self):

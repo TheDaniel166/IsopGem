@@ -85,7 +85,24 @@ Visual simulator for cymatics patterns with advanced features.
 
 ### UI Elements
 
-**TODO**: List key UI elements:
+**Key UI Elements:**
+- QCheckBox - (from source)
+- QComboBox - (from source)
+- QDoubleSpinBox - (from source)
+- QFrame - (from source)
+- QGridLayout - (from source)
+- QHBoxLayout - (from source)
+- QLabel - (from source)
+- QMainWindow - (from source)
+- QMessageBox - (from source)
+- QPushButton - (from source)
+- QScrollArea - (from source)
+- QSlider - (from source)
+- QSpinBox - (from source)
+- QSplitter - (from source)
+- QStackedWidget - (from source)
+- QVBoxLayout - (from source)
+- QWidget - (from source)
 - Input fields
 - Buttons
 - Display areas
@@ -93,7 +110,12 @@ Visual simulator for cymatics patterns with advanced features.
 
 ### User Interactions
 
-**TODO**: Describe how users interact:
+**User Interactions:**
+- 1. Adjust frequency slider -> `_on_frequency_changed(value)` -> updates label and, if auto-refresh enabled, regenerates pattern.
+- 2. Select plate shape dropdown -> `_on_shape_changed(index)` -> resets particle state and regenerates pattern with new boundary conditions.
+- 3. Click "Generate" -> `_on_generate()` -> builds `SimulationParams` and calls `CymaticsSimulationService.simulate(params)` -> updates views (`Cymatics3DView`, `CymaticsParticleView`).
+- 4. Toggle 3D view -> switches between 2D canvas and 3D OpenGL widget.
+- 5. Export -> `_handle_export()` -> uses `CymaticsExportService` to save PNG/GIF.:
 - Click actions
 - Keyboard shortcuts
 - Drag-and-drop
@@ -103,20 +125,29 @@ Visual simulator for cymatics patterns with advanced features.
 
 ### Core Services
 
-**TODO**: List services used by this feature:
-- ServiceName: responsibility
-- ServiceName: responsibility
+**Services:**
+- CymaticsSimulationService - (instantiated in source)
+- CymaticsGradientService - (instantiated in source)
+- CymaticsParticleService - (instantiated in source)
+- CymaticsPresetService - (instantiated in source)
+- CymaticsExportService - (instantiated in source)
+- CymaticsAudioService - (instantiated in source)
 
 ### Calculation/Processing
 
-**TODO**: Explain the core algorithms or processing:
+**Core Algorithms & Processing:**
+- Uses `hz_to_modes(frequency_hz, params)` to map frequency to (m,n) modes with material correction and logarithmic mapping.
+- `simulate(params, phase)` dispatches to shape-specific generators and returns `SimulationResult` including amplitude grid and metadata.
+- Caches Bessel function zeros (`_BESSEL_ZEROS_CACHE`) to avoid expensive recomputation and uses fallback approximations when needed.
+- Circular plates use Bessel modes and boundary conditions; rectangular/hexagonal shapes have dedicated field generators.:
 - What calculations are performed?
 - What transformations happen?
 - What validations occur?
 
 ### Business Rules
 
-**TODO**: List key business rules:
+**Key Business Rules:**
+- (No explicit business rules found in source):
 - Rule 1
 - Rule 2
 - Rule 3

@@ -85,7 +85,19 @@ Handles FormulaWizard operations
 
 ### UI Elements
 
-**TODO**: List key UI elements:
+**Key UI Elements:**
+- QComboBox - (from source)
+- QDialogButtonBox - (from source)
+- QFormLayout - (from source)
+- QHBoxLayout - (from source)
+- QLabel - (from source)
+- QLineEdit - (from source)
+- QListWidget - (from source)
+- QListWidgetItem - (from source)
+- QPushButton - (from source)
+- QScrollArea - (from source)
+- QVBoxLayout - (from source)
+- QWidget - (from source)
 - Input fields
 - Buttons
 - Display areas
@@ -93,7 +105,17 @@ Handles FormulaWizard operations
 
 ### User Interactions
 
-**TODO**: Describe how users interact:
+**User Interactions:**
+- `_add_variadic_arg()` -> Triggers internal handler.
+- `_emit_change()` -> Triggers internal handler.
+- `_on_category_changed()` -> Triggers internal handler.
+- `_on_lang_changed()` -> Triggers internal handler.
+- `_on_next_stage()` -> Triggers internal handler.
+- `_on_search()` -> Triggers internal handler.
+- `_on_selection_changed()` -> Triggers internal handler.
+- `_recalculate()` -> Triggers internal handler.
+- `accept()` -> Triggers internal handler.
+- `reject()` -> Triggers internal handler.:
 - Click actions
 - Keyboard shortcuts
 - Drag-and-drop
@@ -103,20 +125,21 @@ Handles FormulaWizard operations
 
 ### Core Services
 
-**TODO**: List services used by this feature:
-- ServiceName: responsibility
-- ServiceName: responsibility
+**Services:**
+- (No services instantiated in source)
 
 ### Calculation/Processing
 
-**TODO**: Explain the core algorithms or processing:
+**Core Algorithms & Processing:**
+- Uses NumPy for numeric computations (grids, FFTs).:
 - What calculations are performed?
 - What transformations happen?
 - What validations occur?
 
 ### Business Rules
 
-**TODO**: List key business rules:
+**Key Business Rules:**
+- (No explicit business rules found in source):
 - Rule 1
 - Rule 2
 - Rule 3

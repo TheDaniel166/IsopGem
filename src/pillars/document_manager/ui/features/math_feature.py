@@ -44,7 +44,8 @@ class MathFeature(EditorFeature):
         self._setup_actions()
     
     def initialize(self) -> None:
-        pass
+        # Allow SafeTextEdit to restore docimg://math assets on load.
+        self.editor.latex_renderer = MathRenderer.render_latex
         
     def _setup_actions(self):
         """Initialize actions."""

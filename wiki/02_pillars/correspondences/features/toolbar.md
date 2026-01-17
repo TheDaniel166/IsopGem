@@ -82,7 +82,8 @@ Handles Toolbar operations
 
 ### UI Elements
 
-**TODO**: List key UI elements:
+**Key UI Elements:**
+- (No Qt widgets found in source)
 - Input fields
 - Buttons
 - Display areas
@@ -90,7 +91,46 @@ Handles Toolbar operations
 
 ### User Interactions
 
-**TODO**: Describe how users interact:
+**User Interactions:**
+- `_add_variadic_arg()` -> Triggers internal handler.
+- `_clear_conditional_rules()` -> Triggers internal handler.
+- `_copy_selection()` -> Triggers internal handler.
+- `_copy_selection_values()` -> Triggers internal handler.
+- `_emit_change()` -> Triggers internal handler.
+- `_go_next()` -> Triggers internal handler.
+- `_go_prev()` -> Triggers internal handler.
+- `_on_category_changed()` -> Triggers internal handler.
+- `_on_data_changed()` -> Triggers internal handler.
+- `_on_find_all()` -> Triggers internal handler.
+- `_on_find_next()` -> Triggers internal handler.
+- `_on_formula_return()` -> Triggers internal handler.
+- `_on_formula_text_edited()` -> Triggers internal handler.
+- `_on_import_failed()` -> Triggers internal handler.
+- `_on_import_finished()` -> Triggers internal handler.
+- `_on_inline_text_edited()` -> Triggers internal handler.
+- `_on_item_clicked()` -> Triggers internal handler.
+- `_on_lang_changed()` -> Triggers internal handler.
+- `_on_next_stage()` -> Triggers internal handler.
+- `_on_range_selection_changed()` -> Triggers internal handler.
+- `_on_replace()` -> Triggers internal handler.
+- `_on_replace_all()` -> Triggers internal handler.
+- `_on_scroll_added()` -> Triggers internal handler.
+- `_on_scroll_changed()` -> Triggers internal handler.
+- `_on_search()` -> Triggers internal handler.
+- `_on_selection_changed()` -> Triggers internal handler.
+- `_on_table_double_click()` -> Triggers internal handler.
+- `_on_zoom_changed()` -> Triggers internal handler.
+- `_paste_from_clipboard()` -> Triggers internal handler.
+- `_recalculate()` -> Triggers internal handler.
+- `_save_table()` -> Triggers internal handler.
+- `_show_cell_menu()` -> Triggers internal handler.
+- `_show_col_menu()` -> Triggers internal handler.
+- `_show_context_menu()` -> Triggers internal handler.
+- `_show_row_menu()` -> Triggers internal handler.
+- `_toggle_keyboard()` -> Triggers internal handler.
+- `accept()` -> Triggers internal handler.
+- `pick_border_color()` -> Triggers internal handler.
+- `reject()` -> Triggers internal handler.:
 - Click actions
 - Keyboard shortcuts
 - Drag-and-drop
@@ -100,20 +140,24 @@ Handles Toolbar operations
 
 ### Core Services
 
-**TODO**: List services used by this feature:
+**Services:**
+- (No services instantiated in source)
 - ServiceName: responsibility
 - ServiceName: responsibility
 
 ### Calculation/Processing
 
-**TODO**: Explain the core algorithms or processing:
+**Core Algorithms & Processing:**
+- Caches expensive computations (e.g., Bessel zeros) to reduce cost.
+- Uses NumPy for numeric computations (grids, FFTs).:
 - What calculations are performed?
 - What transformations happen?
 - What validations occur?
 
 ### Business Rules
 
-**TODO**: List key business rules:
+**Key Business Rules:**
+- (No explicit business rules found in source):
 - Rule 1
 - Rule 2
 - Rule 3
